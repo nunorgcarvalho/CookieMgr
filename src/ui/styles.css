@@ -806,3 +806,99 @@
 #CookieMgrMenu .ca-hidden {
   display: none;
 }
+
+/* ---------- Stock transaction log + ticker ---------- */
+
+#CookieMgrMenu .cm-tx-wrap {
+  max-height: 220px;
+  overflow-y: auto;
+  margin: 0 4px 6px;
+}
+#CookieMgrMenu .cm-tx-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+#CookieMgrMenu .cm-tx-table th {
+  position: sticky;
+  top: 0;
+  text-align: left;
+  padding: 4px 8px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #93866f;
+  background: #1c150d;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+#CookieMgrMenu .cm-tx-table td {
+  padding: 3px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  white-space: nowrap;
+  color: #d8cbb0;
+}
+#CookieMgrMenu .cm-tx-row:hover td {
+  background: rgba(255, 255, 255, 0.04);
+}
+#CookieMgrMenu .cm-tx-buy {
+  color: #8f8;
+  font-weight: bold;
+}
+#CookieMgrMenu .cm-tx-sell {
+  color: #f88;
+  font-weight: bold;
+}
+#CookieMgrMenu .cm-tx-empty {
+  padding: 14px 8px;
+  text-align: center;
+  font-style: italic;
+  color: #7f735f;
+  font-size: 12px;
+}
+
+#CookieMgrMenu .cm-ticker {
+  margin: 8px 8px 10px;
+  padding: 6px 0;
+  overflow: hidden;
+  white-space: nowrap;
+  background: rgba(0, 0, 0, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+#CookieMgrMenu .cm-ticker-track {
+  display: inline-block;
+  will-change: transform;
+}
+#CookieMgrMenu .cm-tick-item {
+  display: inline-block;
+  padding: 0 16px;
+  font:
+    bold 11px Tahoma,
+    Arial,
+    sans-serif;
+  color: #cbbfa6;
+}
+#CookieMgrMenu .cm-tick-buy {
+  color: #8f8;
+}
+#CookieMgrMenu .cm-tick-sell {
+  color: #f88;
+}
+#CookieMgrMenu .cm-tick-empty {
+  color: #7f735f;
+  font-style: italic;
+  font-weight: normal;
+}
+#CookieMgrMenu .cm-tick-sep {
+  color: #4a4232;
+  padding: 0 4px;
+}
+
+@keyframes cmTickerScroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}

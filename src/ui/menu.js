@@ -60,7 +60,7 @@ CA.UI.Menu = (() => {
 
   const TABS = [
     { id: 'clickers', label: 'Autoclickers' },
-    { id: 'graphs', label: 'Graphs' },
+    { id: 'graphs', label: 'CPS' },
     { id: 'stocks', label: 'Stock market' },
     { id: 'settings', label: 'Settings' },
   ];
@@ -116,7 +116,8 @@ CA.UI.Menu = (() => {
       '<div class="ca-card-head"><div class="ca-card-title">Options</div></div>' +
       `<div class="ca-list">${CA.Settings.optionsIn('stocks').map(optionRow).join('')}</div>` +
       '</div>' +
-      CA.UI.StockGraph.html()
+      CA.UI.StockGraph.html() +
+      CA.UI.StockLog.html()
     );
   }
 
@@ -148,7 +149,7 @@ CA.UI.Menu = (() => {
       `<div class="ca-list">${CA.Settings.optionsIn('autoclickers').map(optionRow).join('')}</div>` +
       '</div>' +
       '<div class="ca-card">' +
-      '<div class="ca-card-head"><div class="ca-card-title">Graphs</div></div>' +
+      '<div class="ca-card-head"><div class="ca-card-title">CPS</div></div>' +
       `<div class="ca-list">${CA.Settings.optionsIn('graph').map(optionRow).join('')}</div>` +
       '</div>' +
       '<div class="ca-card">' +
@@ -186,10 +187,14 @@ CA.UI.Menu = (() => {
     if (!menu) return;
     CA.UI.Graph.unmount();
     CA.UI.StockGraph.unmount();
+    CA.UI.StockLog.unmount();
     menu.innerHTML = html();
     const tab = currentTab();
     if (tab === 'graphs') CA.UI.Graph.mount(menu.querySelector('.ca-page'));
-    if (tab === 'stocks') CA.UI.StockGraph.mount(menu.querySelector('.ca-page'));
+    if (tab === 'stocks') {
+      CA.UI.StockGraph.mount(menu.querySelector('.ca-page'));
+      CA.UI.StockLog.mount(menu.querySelector('.ca-page'));
+    }
     sync();
   }
 
@@ -390,6 +395,7 @@ CA.UI.Menu = (() => {
         CA.Hotkeys.cancelCapture();
         CA.UI.Graph.unmount();
         CA.UI.StockGraph.unmount();
+        CA.UI.StockLog.unmount();
       }
       CA.UI.Tab.update();
       return result;
@@ -403,7 +409,10 @@ CA.UI.Menu = (() => {
       sync();
       const tab = currentTab();
       if (tab === 'graphs') CA.UI.Graph.tick();
-      if (tab === 'stocks') CA.UI.StockGraph.tick();
+      if (tab === 'stocks') {
+        CA.UI.StockGraph.tick();
+        CA.UI.StockLog.tick();
+      }
     };
     CA.Events.on('clickers', refresh);
     CA.Events.on('settings', refresh);

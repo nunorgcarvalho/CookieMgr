@@ -31,9 +31,11 @@ const mod = {
     CA.Autoclickers.init();
     CA.Stocks.init();
     CA.StockTrader.init();
+    CA.StockLog.init();
     CA.History.init();
     CA.UI.Graph.init();
     CA.UI.StockGraph.init();
+    CA.UI.StockLog.init();
     CA.UI.BankGraph.init();
     CA.Hotkeys.init();
     CA.Ascension.init();

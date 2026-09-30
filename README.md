@@ -9,11 +9,11 @@ latest build from GitHub Pages, so pushing to this repo updates everyone's add-o
 ## Features (v1.0)
 
 The **CookieMgr** tab sits on the left beam between the cookie panel and the middle panel. It opens the CookieMgr panel
-in the game's menu area, with four tabs along the top: **Autoclickers**, **Graphs**, **Stock market** and **Settings**.
+in the game's menu area, with four tabs along the top: **Autoclickers**, **CPS**, **Stock market** and **Settings**.
 
-![Graphs tab](docs/graph.png)
+![CPS tab](docs/graph.png)
 
-### Graphs
+### CPS
 
 A live cookies-per-second chart, redrawn every second.
 
@@ -88,6 +88,9 @@ The **Stock market** tab in the CookieMgr panel has:
   between them is your unrealized gain) with stat tiles for Value, Unrealized, Realized and Total gain — switch to
   "Per stock" for the individual price lines instead. Cost basis is tracked from whenever the mod is loaded, so it
   only knows about trades made since then.
+- A **transaction history** table (time, buy/sell, stock, shares, price, total) of every trade this session, and a
+  **scrolling ticker** underneath showing them as they happen — from the autoclicker above or from clicking the Bank's
+  own buy/sell buttons yourself, both show up the same way.
 
 ## Using it
 
@@ -152,13 +155,15 @@ src/
     autoclickers.js  clicker definitions and timers — add new ones to DEFS
     stocks.js        trend badges/tints, price history, and portfolio cost-basis tracking
     stockTrader.js   the "buy fast/slow rise, sell the rest" autoclicker (own tab, no DEFS entry)
+    stockLog.js      wraps buyGood/sellGood to record every trade (auto or manual) for the log/ticker
     history.js       samples CpS every second, tracks buffs/events, persists to localStorage
   ui/
     components.js    HTML snippets: switch, hotkey chip, icon, button
     tab.js           the side tab on the left beam
     graph.js         the CpS chart (canvas), toolbar, tooltips
-    stockGraph.js    the Graphs-tab stock chart: portfolio value/gains or per-stock prices
-    bankGraph.js     small CpS/portfolio chart embedded in the Bank minigame itself
+    stockGraph.js    the Stock-market-tab chart: portfolio value/gains or per-stock prices
+    stockLog.js      the trade ticker + transaction history table, also on the Stock market tab
+    bankGraph.js     small portfolio/per-stock chart embedded in the Bank minigame itself
     menu.js          the panel and its tabs (hooks Game.ShowMenu / Game.UpdateMenu)
     styles.css       all styling, scoped to #CookieMgrTab / #CookieMgrMenu
   main.js            waits for the game, registers the mod (init/save/load)

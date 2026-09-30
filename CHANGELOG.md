@@ -6,6 +6,11 @@
   autoclicker — **buy fast/slow rise, sell the rest**: each tick it buys the max it can afford of fast-rising stocks,
   then slow-rising ones, and sells anything it holds that isn't currently rising. It is deliberately kept out of "All
   on/off" and the toggle-all hotkey — it's switched on its own row on the new tab.
+- **Trade ticker + transaction history:** the Stock market tab now has a scrolling ticker at the bottom showing every
+  buy/sell as it happens (from the autoclicker or from clicking the Bank's own buttons — both go through the same
+  code, so both show up), plus a scrollable transaction history table (time, action, stock, shares, price, total).
+  Session-only for now.
+- **CPS tab:** the Graphs tab is renamed **CPS**.
 
 ## 1.0.0 — 2026-09-30
 

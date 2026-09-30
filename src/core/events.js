@@ -5,6 +5,7 @@
 //   'settings'  (key)         an option changed
 //   'hotkeys'   (actionId)    a hotkey binding changed (or capture started/stopped)
 //   'ascend'    ()            the player just started ascending
+//   'stockTrade' (entry)      a stock was bought or sold, by the autoclicker or by hand
 
 CA.Events = (() => {
   const handlers = {};
