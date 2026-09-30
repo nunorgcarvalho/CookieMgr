@@ -29,6 +29,7 @@ const mod = {
     const hadLegacy = removeLegacyBookmarklet();
 
     CA.Autoclickers.init();
+    CA.Stocks.init();
     CA.History.init();
     CA.UI.Graph.init();
     CA.Hotkeys.init();

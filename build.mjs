@@ -27,6 +27,7 @@ const MODULES = [
   'core/hotkeys.js',
   'core/ascension.js',
   'features/autoclickers.js',
+  'features/stocks.js',
   'features/history.js',
   'ui/components.js',
   'ui/tab.js',

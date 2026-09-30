@@ -113,6 +113,10 @@ CA.UI.Menu = (() => {
       '</div>' +
       '</div>' +
       '</div>' +
+      '<div class="ca-card">' +
+      '<div class="ca-card-head"><div class="ca-card-title">Stock market</div></div>' +
+      `<div class="ca-list">${CA.Settings.optionsIn('stocks').map(optionRow).join('')}</div>` +
+      '</div>' +
       '<div class="ca-footer">' +
       `<div>CookieMgr v${CA.VERSION} &middot; <a href="https://github.com/nunorgcarvalho/CookieMgr" target="_blank" rel="noopener">GitHub</a></div>` +
       '<div>Settings are stored inside your Cookie Clicker save.</div>' +

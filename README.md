@@ -49,8 +49,14 @@ Plus **All on / All off** buttons. Hotkeys support modifiers (e.g. `Shift + G`):
 ### Settings
 
 Turn everything off when ascending (default on), notifications, remember autoclicker states across reloads, record
-history, an optional hotkey to open the panel, and reset hotkeys. Everything is stored in the normal Cookie Clicker save
-through the official mod API (`Game.registerMod`), so it survives exports and imports.
+history, an optional hotkey to open the panel, reset hotkeys, and stock market indicators. Everything is stored in the
+normal Cookie Clicker save through the official mod API (`Game.registerMod`), so it survives exports and imports.
+
+### Stock market
+
+In the Bank minigame, every stock box shows its trend (stable / slow or fast rise / slow or fast fall / chaotic) as a
+coloured symbol strip and tint, brighter while you hold the stock — no more hovering each box for the tooltip. Both the
+badge and the tint can be switched off separately in Settings.
 
 ## Using it
 
@@ -112,6 +118,7 @@ src/
     ascension.js     detects ascending (wraps Game.Ascend + watchdog)
   features/
     autoclickers.js  clicker definitions and timers — add new ones to DEFS
+    stocks.js        trend badges and tints on the Bank minigame stock boxes
     history.js       samples CpS every second, tracks buffs and golden/reindeer/ascend events
   ui/
     components.js    HTML snippets: switch, hotkey chip, icon, button

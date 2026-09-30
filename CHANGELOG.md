@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- **Stock market indicators:** every stock box in the Bank minigame now shows its trend (Stable, Slow rise, Slow fall,
+  Fast rise, Fast fall, Chaotic) as a coloured strip with a symbol, so you don't have to hover. The box is tinted in the
+  trend's colour and glows brighter (with a star) while you hold that stock. Both parts can be switched off in Settings.
+
 ## 0.3.0 — 2026-09-30
 
 - **Tabs** at the top of the panel: Autoclickers, Graphs, Settings.
