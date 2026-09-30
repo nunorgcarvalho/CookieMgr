@@ -2,34 +2,55 @@
 
 _(Previously called Cookie Agent.)_
 
-A [Cookie Clicker](https://orteil.dashnet.org/cookieclicker/) add-on for automating tasks and (soon) visualizing data.
+A [Cookie Clicker](https://orteil.dashnet.org/cookieclicker/) add-on for automating tasks and visualizing data.
 It loads like [Cookie Monster](https://github.com/CookieMonsterTeam/CookieMonster): a one-line bookmarklet pulls the
 latest build from GitHub Pages, so pushing to this repo updates everyone's add-on.
 
-## Features (v0.2)
+## Features (v0.3)
 
-- **CookieMgr tab** on the beam between the cookie panel and the middle panel. Clicking it opens the CookieMgr
-  panel in the game's menu area (same place as Options / Stats). A green badge shows how many autoclickers are running.
-- **Autoclickers**, each with an on/off switch and a rebindable hotkey:
+The **CookieMgr** tab sits on the left beam between the cookie panel and the middle panel. It opens the CookieMgr panel
+in the game's menu area, with three tabs along the top: **Autoclickers**, **Graphs** and **Settings**.
 
-  | Autoclicker    | Default key | What it does                                   |
-  | -------------- | ----------- | ---------------------------------------------- |
-  | Big cookie     | `C`         | Clicks the big cookie 20×/second               |
-  | Golden cookies | `G`         | Pops golden cookies (not wrath)                |
-  | Wrath cookies  | `W`         | Pops wrath cookies                             |
-  | Reindeer       | `R`         | Pops reindeer                                  |
-  | Fortune news   | `F`         | Clicks fortunes in the news ticker             |
-  | Wrinklers      | `K`         | Pops wrinklers as soon as they attach          |
-  | Toggle all     | `A`         | All on — or all off if everything is running   |
+![Graphs tab](docs/graph.png)
 
-- **All on / All off** buttons.
-- **Settings**: turn everything off when ascending (default on), toggle notifications, remember on/off states across
-  reloads, optional hotkey to open/close the panel.
-- Hotkeys support modifiers (e.g. `Shift + G`). Click a key chip, press the new key; `Esc` cancels, `Backspace` clears.
-  Binding a key that's already in use moves it (you get a notification).
-- Settings are stored in the regular Cookie Clicker save via the official mod API (`Game.registerMod`), so they survive
-  exports/imports.
-- If the old v0.1 bookmarklet is running, CookieMgr shuts it down on load.
+### Graphs
+
+A live cookies-per-second chart, redrawn every second.
+
+- **Window:** 1 min, 5 min, 15 min, 1 h or 3 h. **Smoothing:** raw, 5 s or 15 s. Linear or log scale.
+- **Lines:** production (what the game shows as CpS), production without effects (dashed), and production plus clicking.
+  Clicking is measured from your actual click income, so it is only counted when you really clicked (or an autoclicker did).
+- **Effect shading:** every active golden-cookie effect (Frenzy, Click frenzy, Elder frenzy, Dragonflight, Clot, and so on)
+  is a coloured band behind the chart. Overlapping effects stack in separate lanes. Hover a band for its description,
+  multipliers, duration and remaining time; effects that do not change CpS are shown too.
+- **Event markers:** golden cookie, wrath cookie and reindeer pops (with what they did) and ascensions.
+- **Crosshair tooltip** with the values at that moment and the effects active then, plus Now / Average / Peak / Clicking tiles.
+- Pause, clear, and per-series toggles. History is kept in memory for the session (rolling 4 hours) and can be turned off.
+
+### Autoclickers
+
+![Autoclickers tab](docs/autoclickers.png)
+
+Each one has an on/off switch and a rebindable hotkey:
+
+| Autoclicker    | Default key | What it does                                   |
+| -------------- | ----------- | ---------------------------------------------- |
+| Big cookie     | `C`         | Clicks the big cookie 20×/second               |
+| Golden cookies | `G`         | Pops golden cookies (not wrath)                |
+| Wrath cookies  | `W`         | Pops wrath cookies                             |
+| Reindeer       | `R`         | Pops reindeer                                  |
+| Fortune news   | `F`         | Clicks fortunes in the news ticker             |
+| Wrinklers      | `K`         | Pops wrinklers as soon as they attach          |
+| Toggle all     | `A`         | All on, or all off if everything is running   |
+
+Plus **All on / All off** buttons. Hotkeys support modifiers (e.g. `Shift + G`): click a key chip and press the new key
+(`Esc` cancels, `Backspace` clears). Binding a key that is already in use moves it.
+
+### Settings
+
+Turn everything off when ascending (default on), notifications, remember autoclicker states across reloads, record
+history, an optional hotkey to open the panel, and reset hotkeys. Everything is stored in the normal Cookie Clicker save
+through the official mod API (`Game.registerMod`), so it survives exports and imports.
 
 ## Using it
 
@@ -64,6 +85,7 @@ No dependencies — just Node 18+.
 
 ```sh
 npm run build   # src/ -> dist/CookieMgr.js
+npm run check   # fail if dist/ is out of date (CI runs this)
 npm run watch   # rebuild on every change
 npm run serve   # watch + serve dist/ at http://localhost:8080 for testing
 ```
@@ -83,21 +105,25 @@ Reload the game page between loads — the mod refuses to register twice.
 src/
   core/
     util.js          helpers: notifications, sounds, CSS injection, function wrapping
-    events.js        tiny pub/sub bus ('clickers', 'settings', 'hotkeys', 'ascend')
+    events.js        tiny pub/sub bus ('clickers', 'settings', 'hotkeys', 'ascend', 'history')
     actions.js       registry of hotkey-able actions
     settings.js      options + hotkey bindings, save/load (JSON inside the game save)
     hotkeys.js       global keydown listener + "press a key" capture mode
     ascension.js     detects ascending (wraps Game.Ascend + watchdog)
   features/
     autoclickers.js  clicker definitions and timers — add new ones to DEFS
+    history.js       samples CpS every second, tracks buffs and golden/reindeer/ascend events
   ui/
     components.js    HTML snippets: switch, hotkey chip, icon, button
     tab.js           the side tab on the left beam
-    menu.js          the panel (hooks Game.ShowMenu / Game.UpdateMenu)
+    graph.js         the CpS chart (canvas), toolbar, tooltips
+    menu.js          the panel and its tabs (hooks Game.ShowMenu / Game.UpdateMenu)
     styles.css       all styling, scoped to #CookieMgrTab / #CookieMgrMenu
   main.js            waits for the game, registers the mod (init/save/load)
 build.mjs            concatenates src/ in order into one IIFE in dist/
 legacy/              the original v0.1 bookmarklet, for reference
+docs/                screenshots
+.github/workflows/   CI: checks dist/ is current and parses
 ```
 
 Modules are plain scripts that attach to a shared `CA` namespace (exposed as `window.CookieMgr` for debugging).
@@ -108,5 +134,11 @@ If you add a file, add it to `MODULES` in `build.mjs` in the right order.
 - **A new autoclicker:** append an entry to `DEFS` in `src/features/autoclickers.js`. The panel row, hotkey, and save data
   come for free.
 - **A new setting:** call `CA.Settings.defineOption({ key, group, name, desc, default })` in a feature's `init()`, and read
-  it with `CA.Settings.get(key)`. Options in the `autoclickers` group show up in the Settings card.
+  it with `CA.Settings.get(key)`. Options in the `general` group appear on the Settings tab, `autoclickers` ones on the Autoclickers tab.
 - **A new hotkey action:** `CA.Actions.register({ id, name, group, defaultKey, run })`.
+
+CI (`.github/workflows/ci.yml`) fails a push if `dist/CookieMgr.js` does not match `src/`, so remember to build before committing.
+
+## License
+
+[MIT](LICENSE)

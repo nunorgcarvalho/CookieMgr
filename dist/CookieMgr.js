@@ -1,9 +1,9 @@
-/*! CookieMgr v0.2.0 */
+/*! CookieMgr v0.3.0 */
 (function () {
 'use strict';
 const CA = {};
-CA.VERSION = "0.2.0";
-CA.CSS = "/* ==========================================================================\n   CookieMgr — styles\n   Colours and borders borrow from the game's own \"framed\" look so the panel\n   feels native. Everything is scoped under #CookieMgrTab / #CookieMgrMenu.\n   ========================================================================== */\n\n/* ---------- Side tab (sticks out of the left beam) ---------- */\n\n#CookieMgrTab {\n  position: absolute;\n  left: 30%;\n  top: 128px;\n  margin-left: 3px; /* tuck slightly under the beam */\n  transform: translateX(-100%);\n  z-index: 110;\n  box-sizing: border-box;\n  width: 30px;\n  padding: 10px 0 12px;\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  gap: 8px;\n  cursor: pointer;\n  user-select: none;\n  background: linear-gradient(to right, #3d2716, #221409);\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-right: none;\n  border-radius: 10px 0 0 10px;\n  box-shadow: -3px 3px 10px rgba(0, 0, 0, 0.65), inset 1px 1px 0 rgba(255, 255, 255, 0.18);\n  transition: width 0.15s ease-out, background 0.2s, box-shadow 0.2s;\n  outline: none;\n}\n#CookieMgrTab:hover,\n#CookieMgrTab:focus-visible {\n  width: 34px;\n  box-shadow: -3px 3px 12px rgba(0, 0, 0, 0.75), 0 0 12px rgba(255, 215, 110, 0.35), inset 1px 1px 0 rgba(255, 255, 255, 0.25);\n}\n#CookieMgrTab.selected {\n  background: linear-gradient(to right, #7a4f22, #43290f);\n  box-shadow: -3px 3px 12px rgba(0, 0, 0, 0.75), 0 0 14px rgba(255, 215, 110, 0.55), inset 1px 1px 0 rgba(255, 255, 255, 0.3);\n}\n#CookieMgrTab .ca-tab-cookie {\n  width: 20px;\n  height: 20px;\n  background: url(img/perfectCookie.png) center / contain no-repeat;\n  filter: drop-shadow(0 1px 1px #000);\n  transition: transform 0.35s ease-out;\n}\n#CookieMgrTab:hover .ca-tab-cookie,\n#CookieMgrTab.selected .ca-tab-cookie {\n  transform: rotate(-30deg) scale(1.12);\n}\n#CookieMgrTab .ca-tab-label {\n  writing-mode: vertical-rl;\n  transform: rotate(180deg);\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-weight: bold;\n  font-size: 13px;\n  letter-spacing: 1px;\n  color: #f4e6c3;\n  text-shadow: 0 1px 2px #000, 0 0 6px rgba(255, 200, 120, 0.25);\n  white-space: nowrap;\n}\n#CookieMgrTab .ca-tab-badge {\n  display: none;\n  min-width: 16px;\n  height: 16px;\n  padding: 0 3px;\n  box-sizing: border-box;\n  border-radius: 8px;\n  font: bold 10px/16px Tahoma, Arial, sans-serif;\n  text-align: center;\n  color: #fff;\n  background: linear-gradient(#63c64a, #2f7d24);\n  box-shadow: 0 0 6px rgba(120, 240, 100, 0.8), 0 1px 1px #000;\n  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);\n}\n#CookieMgrTab.active .ca-tab-badge {\n  display: block;\n  animation: caBadgeGlow 2s infinite ease-in-out;\n}\n@keyframes caBadgeGlow {\n  0%, 100% { box-shadow: 0 0 4px rgba(120, 240, 100, 0.6), 0 1px 1px #000; }\n  50% { box-shadow: 0 0 10px rgba(120, 240, 100, 1), 0 1px 1px #000; }\n}\n#game.ascending #CookieMgrTab,\n#game.ascendIntro #CookieMgrTab,\n#game.reincarnating #CookieMgrTab {\n  display: none;\n}\n\n/* ---------- Panel ---------- */\n\n#CookieMgrMenu {\n  max-width: 780px;\n  margin: 0 auto;\n  padding: 0 12px 120px;\n  color: #ddd;\n}\n#CookieMgrMenu .ca-tagline {\n  text-align: center;\n  margin: -6px 0 14px;\n  font-size: 12px;\n  font-style: italic;\n  color: #b9ab93;\n  text-shadow: 0 1px 1px #000;\n}\n\n/* Cards */\n#CookieMgrMenu .ca-card {\n  margin: 14px 4px;\n  border-radius: 6px;\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  background: rgba(0, 0, 0, 0.38);\n  box-shadow: 0 0 1px #000, inset 0 0 1px #000, 0 6px 16px rgba(0, 0, 0, 0.35);\n  overflow: hidden;\n}\n#CookieMgrMenu .ca-card-head {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 10px;\n  padding: 9px 14px;\n  background: linear-gradient(to right, rgba(255, 235, 190, 0.09), rgba(255, 235, 190, 0));\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-card-title {\n  flex: 1;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-size: 20px;\n  color: #fff;\n  text-shadow: 0 -1px 5px rgba(255, 255, 200, 0.35), 0 1px 3px #000;\n}\n#CookieMgrMenu .ca-pill {\n  font-size: 11px;\n  white-space: nowrap;\n  padding: 3px 10px;\n  border-radius: 10px;\n  color: #bbb;\n  background: rgba(255, 255, 255, 0.07);\n  border: 1px solid rgba(255, 255, 255, 0.15);\n  transition: all 0.2s;\n}\n#CookieMgrMenu .ca-pill.on {\n  color: #cfc;\n  background: rgba(80, 200, 90, 0.16);\n  border-color: rgba(130, 235, 120, 0.5);\n}\n\n/* Rows */\n#CookieMgrMenu .ca-row {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 8px 12px;\n  padding: 8px 14px;\n  border-top: 1px solid rgba(255, 255, 255, 0.05);\n  transition: background 0.2s;\n}\n#CookieMgrMenu .ca-list .ca-row:first-child {\n  border-top: none;\n}\n#CookieMgrMenu .ca-row:hover {\n  background: rgba(255, 255, 255, 0.035);\n}\n#CookieMgrMenu .ca-row.on {\n  background: linear-gradient(to right, rgba(255, 210, 90, 0.12), rgba(255, 210, 90, 0) 65%);\n}\n#CookieMgrMenu .ca-row-master {\n  background: rgba(0, 0, 0, 0.22);\n  border-top: none;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-row-option {\n  padding-top: 10px;\n  padding-bottom: 10px;\n}\n#CookieMgrMenu .ca-row-text {\n  flex: 1 1 160px;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-row-option {\n  flex-wrap: nowrap;\n}\n#CookieMgrMenu .ca-row-option .ca-row-text {\n  flex-basis: 0;\n}\n#CookieMgrMenu .ca-controls {\n  flex: 0 1 auto;\n  max-width: 100%;\n  margin-left: auto;\n  display: flex;\n  flex-wrap: wrap;\n  justify-content: flex-end;\n  align-items: center;\n  gap: 8px;\n}\n#CookieMgrMenu .ca-row-name {\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 14px;\n  color: #f2ead2;\n  text-shadow: 0 1px 2px #000;\n}\n#CookieMgrMenu .ca-row-desc {\n  margin-top: 2px;\n  font-size: 11px;\n  color: #b3a590;\n  text-shadow: 0 1px 1px #000;\n}\n\n/* Icons */\n#CookieMgrMenu .ca-icon {\n  flex: 0 0 36px;\n  width: 36px;\n  height: 36px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  transition: filter 0.25s, transform 0.25s;\n  filter: grayscale(0.55) brightness(0.8);\n}\n#CookieMgrMenu .ca-row.on .ca-icon,\n#CookieMgrMenu .ca-row-master .ca-icon {\n  filter: drop-shadow(0 0 6px rgba(255, 220, 120, 0.75));\n}\n#CookieMgrMenu .ca-row.on .ca-icon {\n  transform: scale(1.06);\n}\n#CookieMgrMenu .ca-img {\n  width: 36px;\n  height: 36px;\n  background-size: contain;\n  background-repeat: no-repeat;\n  background-position: center;\n}\n#CookieMgrMenu .ca-sprite {\n  flex: none;\n  width: 48px;\n  height: 48px;\n  background-image: url(img/icons.png);\n  transform: scale(0.75);\n}\n\n/* Toggle switch */\n#CookieMgrMenu .ca-switch {\n  flex: none;\n  padding: 2px;\n  background: none;\n  border: none;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-switch:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-switch-track {\n  display: block;\n  position: relative;\n  width: 42px;\n  height: 22px;\n  box-sizing: border-box;\n  border-radius: 11px;\n  background: #2a211c;\n  border: 1px solid rgba(255, 255, 255, 0.22);\n  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.75);\n  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;\n}\n#CookieMgrMenu .ca-switch-knob {\n  position: absolute;\n  top: 2px;\n  left: 2px;\n  width: 16px;\n  height: 16px;\n  border-radius: 50%;\n  background: radial-gradient(circle at 35% 30%, #fff, #c9c1b5 55%, #8a8178);\n  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);\n  transition: left 0.18s ease-out;\n}\n#CookieMgrMenu .ca-switch:hover .ca-switch-track {\n  border-color: rgba(255, 225, 150, 0.6);\n}\n#CookieMgrMenu .ca-switch.on .ca-switch-track {\n  background: linear-gradient(#66c84b, #2f7d24);\n  border-color: #a5ea93;\n  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35), 0 0 9px rgba(110, 230, 90, 0.45);\n}\n#CookieMgrMenu .ca-switch.on .ca-switch-knob {\n  left: 22px;\n}\n#CookieMgrMenu .ca-switch:focus-visible .ca-switch-track {\n  outline: 2px solid #ffd76a;\n  outline-offset: 2px;\n}\n\n/* Hotkey chips */\n#CookieMgrMenu .ca-hotkey {\n  flex: none;\n  display: inline-flex;\n  align-items: center;\n}\n#CookieMgrMenu .ca-key {\n  min-width: 46px;\n  height: 26px;\n  padding: 0 10px;\n  font: bold 12px Tahoma, Arial, sans-serif;\n  color: #f4e6c3;\n  text-shadow: 0 1px 1px #000;\n  background: linear-gradient(#4d3c2d, #2a2018);\n  border: 1px solid;\n  border-color: #9a7d5b #3b2c1f #2a1f15 #74604a;\n  border-radius: 5px;\n  box-shadow: 0 2px 0 #140d08, inset 0 1px 0 rgba(255, 255, 255, 0.16);\n  cursor: pointer;\n  transition: color 0.15s, border-color 0.15s, box-shadow 0.15s;\n}\n#CookieMgrMenu .ca-key:hover {\n  color: #fff;\n  border-color: #e0c08a #5a4430 #3d2e20 #b39468;\n}\n#CookieMgrMenu .ca-key:active {\n  transform: translateY(1px);\n  box-shadow: 0 1px 0 #140d08, inset 0 1px 0 rgba(255, 255, 255, 0.16);\n}\n#CookieMgrMenu .ca-key:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-hotkey.unset .ca-key {\n  color: #8f877a;\n  font-weight: normal;\n  font-style: italic;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px dashed rgba(255, 255, 255, 0.22);\n  box-shadow: none;\n}\n#CookieMgrMenu .ca-hotkey.capturing .ca-key {\n  color: #ffe9a6;\n  border-color: #ffd76a;\n  animation: caCapture 1.1s infinite ease-in-out;\n}\n@keyframes caCapture {\n  0%, 100% { box-shadow: 0 2px 0 #140d08, 0 0 0 0 rgba(255, 215, 106, 0.5); }\n  50% { box-shadow: 0 2px 0 #140d08, 0 0 12px 2px rgba(255, 215, 106, 0.55); }\n}\n#CookieMgrMenu .ca-key-clear {\n  width: 18px;\n  height: 18px;\n  margin-left: 3px;\n  padding: 0;\n  border: none;\n  border-radius: 50%;\n  background: transparent;\n  color: #b09a8a;\n  font-size: 14px;\n  line-height: 18px;\n  cursor: pointer;\n  opacity: 0;\n  transition: opacity 0.15s, background 0.15s;\n}\n#CookieMgrMenu .ca-row:hover .ca-key-clear {\n  opacity: 0.8;\n}\n#CookieMgrMenu .ca-key-clear:hover {\n  color: #fff;\n  background: rgba(255, 80, 80, 0.35);\n}\n#CookieMgrMenu .ca-hotkey.unset .ca-key-clear,\n#CookieMgrMenu .ca-hotkey.capturing .ca-key-clear {\n  visibility: hidden;\n}\n\n/* Buttons */\n#CookieMgrMenu .ca-btn {\n  padding: 4px 12px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-weight: bold;\n  font-size: 12px;\n  color: #ddd;\n  text-shadow: 0 1px 1px #000;\n  background: linear-gradient(#3e2f23, #1d140f);\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 4px;\n  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12);\n  cursor: pointer;\n  transition: color 0.15s, box-shadow 0.15s, opacity 0.15s;\n}\n#CookieMgrMenu .ca-btn:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-btn:not(:disabled):hover {\n  color: #fff;\n  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6), 0 0 9px rgba(255, 220, 120, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.18);\n}\n#CookieMgrMenu .ca-btn:not(:disabled):active {\n  transform: translateY(1px);\n}\n#CookieMgrMenu .ca-btn-on:not(:disabled):hover {\n  color: #d6ffcc;\n}\n#CookieMgrMenu .ca-btn-off:not(:disabled):hover {\n  color: #ffd2cc;\n}\n#CookieMgrMenu .ca-btn:disabled {\n  opacity: 0.38;\n  cursor: default;\n  box-shadow: none;\n}\n#CookieMgrMenu .ca-btn-small {\n  font-size: 11px;\n  padding: 3px 10px;\n}\n\n/* Footer */\n#CookieMgrMenu .ca-footer {\n  margin: 18px 8px 0;\n  font-size: 11px;\n  line-height: 1.7;\n  text-align: center;\n  color: #9b907f;\n  text-shadow: 0 1px 1px #000;\n}\n#CookieMgrMenu .ca-footer b {\n  color: #c9bba3;\n}\n#CookieMgrMenu kbd {\n  display: inline-block;\n  padding: 0 5px;\n  font: bold 10px/16px Tahoma, Arial, sans-serif;\n  color: #e8dcc2;\n  background: #2a2018;\n  border: 1px solid #5a4632;\n  border-radius: 3px;\n  box-shadow: 0 1px 0 #140d08;\n}\n#CookieMgrMenu .ca-footer-actions {\n  margin-top: 8px;\n}\n";
+CA.VERSION = "0.3.0";
+CA.CSS = "/* ==========================================================================\n   CookieMgr — styles\n   Colours and borders borrow from the game's own \"framed\" look so the panel\n   feels native. Everything is scoped under #CookieMgrTab / #CookieMgrMenu.\n   ========================================================================== */\n\n/* ---------- Side tab (sticks out of the left beam) ---------- */\n\n#CookieMgrTab {\n  position: absolute;\n  left: 30%;\n  top: 128px;\n  margin-left: 3px; /* tuck slightly under the beam */\n  transform: translateX(-100%);\n  z-index: 110;\n  box-sizing: border-box;\n  width: 30px;\n  padding: 10px 0 12px;\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  gap: 8px;\n  cursor: pointer;\n  user-select: none;\n  background: linear-gradient(to right, #3d2716, #221409);\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-right: none;\n  border-radius: 10px 0 0 10px;\n  box-shadow:\n    -3px 3px 10px rgba(0, 0, 0, 0.65),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.18);\n  transition:\n    width 0.15s ease-out,\n    background 0.2s,\n    box-shadow 0.2s;\n  outline: none;\n}\n#CookieMgrTab:hover,\n#CookieMgrTab:focus-visible {\n  width: 34px;\n  box-shadow:\n    -3px 3px 12px rgba(0, 0, 0, 0.75),\n    0 0 12px rgba(255, 215, 110, 0.35),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.25);\n}\n#CookieMgrTab.selected {\n  background: linear-gradient(to right, #7a4f22, #43290f);\n  box-shadow:\n    -3px 3px 12px rgba(0, 0, 0, 0.75),\n    0 0 14px rgba(255, 215, 110, 0.55),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.3);\n}\n#CookieMgrTab .ca-tab-cookie {\n  width: 20px;\n  height: 20px;\n  background: url(img/perfectCookie.png) center / contain no-repeat;\n  filter: drop-shadow(0 1px 1px #000);\n  transition: transform 0.35s ease-out;\n}\n#CookieMgrTab:hover .ca-tab-cookie,\n#CookieMgrTab.selected .ca-tab-cookie {\n  transform: rotate(-30deg) scale(1.12);\n}\n#CookieMgrTab .ca-tab-label {\n  writing-mode: vertical-rl;\n  transform: rotate(180deg);\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-weight: bold;\n  font-size: 13px;\n  letter-spacing: 1px;\n  color: #f4e6c3;\n  text-shadow:\n    0 1px 2px #000,\n    0 0 6px rgba(255, 200, 120, 0.25);\n  white-space: nowrap;\n}\n#CookieMgrTab .ca-tab-badge {\n  display: none;\n  min-width: 16px;\n  height: 16px;\n  padding: 0 3px;\n  box-sizing: border-box;\n  border-radius: 8px;\n  font:\n    bold 10px/16px Tahoma,\n    Arial,\n    sans-serif;\n  text-align: center;\n  color: #fff;\n  background: linear-gradient(#63c64a, #2f7d24);\n  box-shadow:\n    0 0 6px rgba(120, 240, 100, 0.8),\n    0 1px 1px #000;\n  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);\n}\n#CookieMgrTab.active .ca-tab-badge {\n  display: block;\n  animation: caBadgeGlow 2s infinite ease-in-out;\n}\n@keyframes caBadgeGlow {\n  0%,\n  100% {\n    box-shadow:\n      0 0 4px rgba(120, 240, 100, 0.6),\n      0 1px 1px #000;\n  }\n  50% {\n    box-shadow:\n      0 0 10px rgba(120, 240, 100, 1),\n      0 1px 1px #000;\n  }\n}\n#game.ascending #CookieMgrTab,\n#game.ascendIntro #CookieMgrTab,\n#game.reincarnating #CookieMgrTab {\n  display: none;\n}\n\n/* ---------- Panel ---------- */\n\n#CookieMgrMenu {\n  max-width: 780px;\n  margin: 0 auto;\n  padding: 0 12px 120px;\n  color: #ddd;\n}\n#CookieMgrMenu .ca-tagline {\n  text-align: center;\n  margin: -6px 0 14px;\n  font-size: 12px;\n  font-style: italic;\n  color: #b9ab93;\n  text-shadow: 0 1px 1px #000;\n}\n\n/* Cards */\n#CookieMgrMenu .ca-card {\n  margin: 14px 4px;\n  border-radius: 6px;\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  background: rgba(0, 0, 0, 0.38);\n  box-shadow:\n    0 0 1px #000,\n    inset 0 0 1px #000,\n    0 6px 16px rgba(0, 0, 0, 0.35);\n  overflow: hidden;\n}\n#CookieMgrMenu .ca-card-head {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 10px;\n  padding: 9px 14px;\n  background: linear-gradient(to right, rgba(255, 235, 190, 0.09), rgba(255, 235, 190, 0));\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-card-title {\n  flex: 1;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-size: 20px;\n  color: #fff;\n  text-shadow:\n    0 -1px 5px rgba(255, 255, 200, 0.35),\n    0 1px 3px #000;\n}\n#CookieMgrMenu .ca-pill {\n  font-size: 11px;\n  white-space: nowrap;\n  padding: 3px 10px;\n  border-radius: 10px;\n  color: #bbb;\n  background: rgba(255, 255, 255, 0.07);\n  border: 1px solid rgba(255, 255, 255, 0.15);\n  transition: all 0.2s;\n}\n#CookieMgrMenu .ca-pill.on {\n  color: #cfc;\n  background: rgba(80, 200, 90, 0.16);\n  border-color: rgba(130, 235, 120, 0.5);\n}\n\n/* Rows */\n#CookieMgrMenu .ca-row {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 8px 12px;\n  padding: 8px 14px;\n  border-top: 1px solid rgba(255, 255, 255, 0.05);\n  transition: background 0.2s;\n}\n#CookieMgrMenu .ca-list .ca-row:first-child {\n  border-top: none;\n}\n#CookieMgrMenu .ca-row:hover {\n  background: rgba(255, 255, 255, 0.035);\n}\n#CookieMgrMenu .ca-row.on {\n  background: linear-gradient(to right, rgba(255, 210, 90, 0.12), rgba(255, 210, 90, 0) 65%);\n}\n#CookieMgrMenu .ca-row-master {\n  background: rgba(0, 0, 0, 0.22);\n  border-top: none;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-row-option {\n  padding-top: 10px;\n  padding-bottom: 10px;\n}\n#CookieMgrMenu .ca-row-text {\n  flex: 1 1 160px;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-row-option {\n  flex-wrap: nowrap;\n}\n#CookieMgrMenu .ca-row-option .ca-row-text {\n  flex-basis: 0;\n}\n#CookieMgrMenu .ca-controls {\n  flex: 0 1 auto;\n  max-width: 100%;\n  margin-left: auto;\n  display: flex;\n  flex-wrap: wrap;\n  justify-content: flex-end;\n  align-items: center;\n  gap: 8px;\n}\n#CookieMgrMenu .ca-row-name {\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 14px;\n  color: #f2ead2;\n  text-shadow: 0 1px 2px #000;\n}\n#CookieMgrMenu .ca-row-desc {\n  margin-top: 2px;\n  font-size: 11px;\n  color: #b3a590;\n  text-shadow: 0 1px 1px #000;\n}\n\n/* Icons */\n#CookieMgrMenu .ca-icon {\n  flex: 0 0 36px;\n  width: 36px;\n  height: 36px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  transition:\n    filter 0.25s,\n    transform 0.25s;\n  filter: grayscale(0.55) brightness(0.8);\n}\n#CookieMgrMenu .ca-row.on .ca-icon,\n#CookieMgrMenu .ca-row-master .ca-icon {\n  filter: drop-shadow(0 0 6px rgba(255, 220, 120, 0.75));\n}\n#CookieMgrMenu .ca-row.on .ca-icon {\n  transform: scale(1.06);\n}\n#CookieMgrMenu .ca-img {\n  width: 36px;\n  height: 36px;\n  background-size: contain;\n  background-repeat: no-repeat;\n  background-position: center;\n}\n#CookieMgrMenu .ca-sprite {\n  flex: none;\n  width: 48px;\n  height: 48px;\n  background-image: url(img/icons.png);\n  transform: scale(0.75);\n}\n\n/* Toggle switch */\n#CookieMgrMenu .ca-switch {\n  flex: none;\n  padding: 2px;\n  background: none;\n  border: none;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-switch:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-switch-track {\n  display: block;\n  position: relative;\n  width: 42px;\n  height: 22px;\n  box-sizing: border-box;\n  border-radius: 11px;\n  background: #2a211c;\n  border: 1px solid rgba(255, 255, 255, 0.22);\n  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.75);\n  transition:\n    background 0.2s,\n    border-color 0.2s,\n    box-shadow 0.2s;\n}\n#CookieMgrMenu .ca-switch-knob {\n  position: absolute;\n  top: 2px;\n  left: 2px;\n  width: 16px;\n  height: 16px;\n  border-radius: 50%;\n  background: radial-gradient(circle at 35% 30%, #fff, #c9c1b5 55%, #8a8178);\n  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);\n  transition: left 0.18s ease-out;\n}\n#CookieMgrMenu .ca-switch:hover .ca-switch-track {\n  border-color: rgba(255, 225, 150, 0.6);\n}\n#CookieMgrMenu .ca-switch.on .ca-switch-track {\n  background: linear-gradient(#66c84b, #2f7d24);\n  border-color: #a5ea93;\n  box-shadow:\n    inset 0 1px 3px rgba(0, 0, 0, 0.35),\n    0 0 9px rgba(110, 230, 90, 0.45);\n}\n#CookieMgrMenu .ca-switch.on .ca-switch-knob {\n  left: 22px;\n}\n#CookieMgrMenu .ca-switch:focus-visible .ca-switch-track {\n  outline: 2px solid #ffd76a;\n  outline-offset: 2px;\n}\n\n/* Hotkey chips */\n#CookieMgrMenu .ca-hotkey {\n  flex: none;\n  display: inline-flex;\n  align-items: center;\n}\n#CookieMgrMenu .ca-key {\n  min-width: 46px;\n  height: 26px;\n  padding: 0 10px;\n  font:\n    bold 12px Tahoma,\n    Arial,\n    sans-serif;\n  color: #f4e6c3;\n  text-shadow: 0 1px 1px #000;\n  background: linear-gradient(#4d3c2d, #2a2018);\n  border: 1px solid;\n  border-color: #9a7d5b #3b2c1f #2a1f15 #74604a;\n  border-radius: 5px;\n  box-shadow:\n    0 2px 0 #140d08,\n    inset 0 1px 0 rgba(255, 255, 255, 0.16);\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    border-color 0.15s,\n    box-shadow 0.15s;\n}\n#CookieMgrMenu .ca-key:hover {\n  color: #fff;\n  border-color: #e0c08a #5a4430 #3d2e20 #b39468;\n}\n#CookieMgrMenu .ca-key:active {\n  transform: translateY(1px);\n  box-shadow:\n    0 1px 0 #140d08,\n    inset 0 1px 0 rgba(255, 255, 255, 0.16);\n}\n#CookieMgrMenu .ca-key:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-hotkey.unset .ca-key {\n  color: #8f877a;\n  font-weight: normal;\n  font-style: italic;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px dashed rgba(255, 255, 255, 0.22);\n  box-shadow: none;\n}\n#CookieMgrMenu .ca-hotkey.capturing .ca-key {\n  color: #ffe9a6;\n  border-color: #ffd76a;\n  animation: caCapture 1.1s infinite ease-in-out;\n}\n@keyframes caCapture {\n  0%,\n  100% {\n    box-shadow:\n      0 2px 0 #140d08,\n      0 0 0 0 rgba(255, 215, 106, 0.5);\n  }\n  50% {\n    box-shadow:\n      0 2px 0 #140d08,\n      0 0 12px 2px rgba(255, 215, 106, 0.55);\n  }\n}\n#CookieMgrMenu .ca-key-clear {\n  width: 18px;\n  height: 18px;\n  margin-left: 3px;\n  padding: 0;\n  border: none;\n  border-radius: 50%;\n  background: transparent;\n  color: #b09a8a;\n  font-size: 14px;\n  line-height: 18px;\n  cursor: pointer;\n  opacity: 0;\n  transition:\n    opacity 0.15s,\n    background 0.15s;\n}\n#CookieMgrMenu .ca-row:hover .ca-key-clear {\n  opacity: 0.8;\n}\n#CookieMgrMenu .ca-key-clear:hover {\n  color: #fff;\n  background: rgba(255, 80, 80, 0.35);\n}\n#CookieMgrMenu .ca-hotkey.unset .ca-key-clear,\n#CookieMgrMenu .ca-hotkey.capturing .ca-key-clear {\n  visibility: hidden;\n}\n\n/* Buttons */\n#CookieMgrMenu .ca-btn {\n  padding: 4px 12px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-weight: bold;\n  font-size: 12px;\n  color: #ddd;\n  text-shadow: 0 1px 1px #000;\n  background: linear-gradient(#3e2f23, #1d140f);\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 4px;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    inset 0 1px 0 rgba(255, 255, 255, 0.12);\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    box-shadow 0.15s,\n    opacity 0.15s;\n}\n#CookieMgrMenu .ca-btn:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-btn:not(:disabled):hover {\n  color: #fff;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    0 0 9px rgba(255, 220, 120, 0.35),\n    inset 0 1px 0 rgba(255, 255, 255, 0.18);\n}\n#CookieMgrMenu .ca-btn:not(:disabled):active {\n  transform: translateY(1px);\n}\n#CookieMgrMenu .ca-btn-on:not(:disabled):hover {\n  color: #d6ffcc;\n}\n#CookieMgrMenu .ca-btn-off:not(:disabled):hover {\n  color: #ffd2cc;\n}\n#CookieMgrMenu .ca-btn:disabled {\n  opacity: 0.38;\n  cursor: default;\n  box-shadow: none;\n}\n#CookieMgrMenu .ca-btn-small {\n  font-size: 11px;\n  padding: 3px 10px;\n}\n\n/* Footer */\n#CookieMgrMenu .ca-footer {\n  margin: 18px 8px 0;\n  font-size: 11px;\n  line-height: 1.7;\n  text-align: center;\n  color: #9b907f;\n  text-shadow: 0 1px 1px #000;\n}\n#CookieMgrMenu .ca-footer b {\n  color: #c9bba3;\n}\n#CookieMgrMenu kbd {\n  display: inline-block;\n  padding: 0 5px;\n  font:\n    bold 10px/16px Tahoma,\n    Arial,\n    sans-serif;\n  color: #e8dcc2;\n  background: #2a2018;\n  border: 1px solid #5a4632;\n  border-radius: 3px;\n  box-shadow: 0 1px 0 #140d08;\n}\n#CookieMgrMenu .ca-footer-actions {\n  margin-top: 8px;\n}\n\n/* ---------- Tab row ---------- */\n\n#CookieMgrMenu .ca-tabs {\n  display: flex;\n  gap: 4px;\n  margin: 4px 4px 0;\n  padding: 0 6px;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.14);\n}\n#CookieMgrMenu .ca-tabbtn {\n  position: relative;\n  margin-bottom: -1px;\n  padding: 7px 16px 8px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-weight: bold;\n  font-size: 14px;\n  color: #b9ab93;\n  text-shadow: 0 1px 2px #000;\n  background: linear-gradient(rgba(255, 255, 255, 0.03), rgba(0, 0, 0, 0.25));\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.14);\n  border-radius: 6px 6px 0 0;\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    background 0.15s;\n}\n#CookieMgrMenu .ca-tabbtn:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-tabbtn:hover {\n  color: #fff;\n  background: linear-gradient(rgba(255, 255, 255, 0.07), rgba(0, 0, 0, 0.2));\n}\n#CookieMgrMenu .ca-tabbtn.on {\n  color: #ffeab0;\n  background: linear-gradient(#5a3d1e, #2b1c0d);\n  border-color: #b98a4e #7a5630 rgba(0, 0, 0, 0) #b98a4e;\n  border-bottom-color: #2b1c0d;\n  box-shadow: 0 -2px 10px rgba(255, 200, 110, 0.18);\n}\n#CookieMgrMenu .ca-page {\n  animation: caFade 0.18s ease-out;\n}\n@keyframes caFade {\n  from {\n    opacity: 0;\n    transform: translateY(3px);\n  }\n  to {\n    opacity: 1;\n    transform: none;\n  }\n}\n#CookieMgrMenu a {\n  color: #ffd98a;\n}\n\n/* ---------- Graph ---------- */\n\n#CookieMgrMenu .ca-live {\n  font-size: 11px;\n  padding: 3px 10px 3px 20px;\n  position: relative;\n  border-radius: 10px;\n  color: #cfc;\n  background: rgba(80, 200, 90, 0.16);\n  border: 1px solid rgba(130, 235, 120, 0.5);\n}\n#CookieMgrMenu .ca-live:before {\n  content: '';\n  position: absolute;\n  left: 8px;\n  top: 50%;\n  width: 6px;\n  height: 6px;\n  margin-top: -3px;\n  border-radius: 50%;\n  background: #7be07b;\n  box-shadow: 0 0 6px #7be07b;\n  animation: caBadgeGlow 1.6s infinite ease-in-out;\n}\n#CookieMgrMenu .ca-live.paused {\n  color: #ffd9a0;\n  background: rgba(255, 170, 60, 0.14);\n  border-color: rgba(255, 190, 100, 0.5);\n}\n#CookieMgrMenu .ca-live.paused:before {\n  background: #ffb45c;\n  box-shadow: none;\n  animation: none;\n}\n\n#CookieMgrMenu .ca-stats {\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));\n  gap: 1px;\n  background: rgba(255, 255, 255, 0.06);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-stat {\n  padding: 8px 12px;\n  background: rgba(0, 0, 0, 0.32);\n}\n#CookieMgrMenu .ca-stat-label {\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #a89a83;\n}\n#CookieMgrMenu .ca-stat-value {\n  margin-top: 2px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 17px;\n  color: #ffeab0;\n  text-shadow: 0 1px 3px #000;\n  white-space: nowrap;\n}\n#CookieMgrMenu .ca-stat-sub {\n  margin-top: 1px;\n  font-size: 10px;\n  color: #93866f;\n  white-space: nowrap;\n}\n\n#CookieMgrMenu .ca-toolbar {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  justify-content: space-between;\n  gap: 6px 12px;\n  padding: 8px 12px;\n}\n#CookieMgrMenu .ca-toolbar-bottom {\n  padding-top: 6px;\n}\n#CookieMgrMenu .ca-chipgroup {\n  display: inline-flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 4px;\n}\n#CookieMgrMenu .ca-chip-label {\n  margin-right: 2px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-chip {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  padding: 3px 9px;\n  font:\n    bold 11px Tahoma,\n    Arial,\n    sans-serif;\n  color: #b9ab93;\n  text-shadow: 0 1px 1px #000;\n  background: rgba(255, 255, 255, 0.05);\n  border: 1px solid rgba(255, 255, 255, 0.14);\n  border-radius: 11px;\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    background 0.15s,\n    border-color 0.15s;\n}\n#CookieMgrMenu .ca-chip:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-chip:hover {\n  color: #fff;\n  border-color: rgba(255, 225, 150, 0.5);\n}\n#CookieMgrMenu .ca-chip.on {\n  color: #fff3cf;\n  background: rgba(255, 200, 100, 0.18);\n  border-color: rgba(255, 210, 120, 0.6);\n}\n#CookieMgrMenu .ca-chip-series:not(.on) .ca-sw {\n  opacity: 0.3;\n}\n#CookieMgrMenu .ca-sw {\n  display: inline-block;\n  width: 9px;\n  height: 9px;\n  margin-right: 1px;\n  border-radius: 50%;\n  vertical-align: -1px;\n  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);\n}\n\n#CookieMgrMenu .ca-graph-wrap {\n  position: relative;\n  margin: 0 8px;\n}\n#CookieMgrMenu canvas.ca-graph {\n  display: block;\n  width: 100%;\n  height: 300px;\n  cursor: crosshair;\n}\n#CookieMgrMenu .ca-tip {\n  display: none;\n  position: absolute;\n  z-index: 5;\n  max-width: 270px;\n  min-width: 150px;\n  padding: 7px 10px;\n  pointer-events: none;\n  font-size: 11px;\n  line-height: 1.35;\n  color: #e6dcc6;\n  background: rgba(14, 10, 6, 0.95);\n  border: 1px solid;\n  border-color: #b98a4e #6a4626 #55301c #a0764a;\n  border-radius: 5px;\n  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7);\n}\n#CookieMgrMenu .ca-tip-head {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  margin-bottom: 4px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 12px;\n  color: #ffeab0;\n}\n#CookieMgrMenu .ca-tip-head span {\n  margin-left: auto;\n  padding-left: 10px;\n  font:\n    normal 10px Tahoma,\n    Arial,\n    sans-serif;\n  color: #a89a83;\n}\n#CookieMgrMenu .ca-tip-row {\n  display: flex;\n  align-items: center;\n  gap: 5px;\n  padding: 1px 0;\n}\n#CookieMgrMenu .ca-tip-row b {\n  font-weight: normal;\n  color: #b9ab93;\n}\n#CookieMgrMenu .ca-tip-row span {\n  margin-left: auto;\n  padding-left: 12px;\n  text-align: right;\n  color: #f2ead2;\n}\n#CookieMgrMenu .ca-tip-row.strong b,\n#CookieMgrMenu .ca-tip-row.strong span {\n  color: #fff3cf;\n  font-weight: bold;\n}\n#CookieMgrMenu .ca-tip-sep {\n  height: 1px;\n  margin: 5px 0;\n  background: rgba(255, 255, 255, 0.14);\n}\n#CookieMgrMenu .ca-tip-note {\n  margin: 2px 0 4px;\n  font-style: italic;\n  color: #a89a83;\n}\n\n#CookieMgrMenu .ca-legend {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 4px 12px;\n  min-height: 16px;\n  padding: 2px 14px 12px;\n  font-size: 11px;\n  color: #b9ab93;\n}\n#CookieMgrMenu .ca-legend-item em {\n  font-style: normal;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-legend-empty {\n  font-style: italic;\n  color: #7f735f;\n}\n";
 
 // ---- src/core/util.js ------------------------------------------------
 // Small helpers shared by every module.
@@ -25,7 +25,7 @@ CA.Util = {
   },
 
   escapeHtml(str) {
-    return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   },
 
   /** Plays one of the game's built-in sounds, e.g. 'snd/tick.mp3'. Never throws. */
@@ -280,16 +280,49 @@ CA.Settings = (() => {
 // bindings stable across keyboard layouts and Shift states.
 
 CA.Hotkeys = (() => {
-  const MODIFIER_CODES = ['ShiftLeft', 'ShiftRight', 'ControlLeft', 'ControlRight', 'AltLeft', 'AltRight', 'MetaLeft', 'MetaRight', 'CapsLock'];
+  const MODIFIER_CODES = [
+    'ShiftLeft',
+    'ShiftRight',
+    'ControlLeft',
+    'ControlRight',
+    'AltLeft',
+    'AltRight',
+    'MetaLeft',
+    'MetaRight',
+    'CapsLock',
+  ];
   const RESERVED = ['Ctrl+KeyS', 'Ctrl+KeyO']; // the game's own save/import shortcuts
 
   const PRETTY = {
-    Space: 'Space', Enter: 'Enter', Tab: 'Tab', Backquote: '`', Minus: '-', Equal: '=',
-    BracketLeft: '[', BracketRight: ']', Backslash: '\\', Semicolon: ';', Quote: "'",
-    Comma: ',', Period: '.', Slash: '/', ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→',
-    PageUp: 'PgUp', PageDown: 'PgDn', Insert: 'Ins', Home: 'Home', End: 'End',
-    NumpadAdd: 'Num +', NumpadSubtract: 'Num -', NumpadMultiply: 'Num *', NumpadDivide: 'Num /',
-    NumpadDecimal: 'Num .', NumpadEnter: 'Num Enter',
+    Space: 'Space',
+    Enter: 'Enter',
+    Tab: 'Tab',
+    Backquote: '`',
+    Minus: '-',
+    Equal: '=',
+    BracketLeft: '[',
+    BracketRight: ']',
+    Backslash: '\\',
+    Semicolon: ';',
+    Quote: "'",
+    Comma: ',',
+    Period: '.',
+    Slash: '/',
+    ArrowUp: '↑',
+    ArrowDown: '↓',
+    ArrowLeft: '←',
+    ArrowRight: '→',
+    PageUp: 'PgUp',
+    PageDown: 'PgDn',
+    Insert: 'Ins',
+    Home: 'Home',
+    End: 'End',
+    NumpadAdd: 'Num +',
+    NumpadSubtract: 'Num -',
+    NumpadMultiply: 'Num *',
+    NumpadDivide: 'Num /',
+    NumpadDecimal: 'Num .',
+    NumpadEnter: 'Num Enter',
   };
 
   let capture = null; // { actionId, onDone }
@@ -636,6 +669,286 @@ CA.Autoclickers = (() => {
   return { init, set, toggle, setAll, toggleAll, isOn, allOn, activeCount, list, snapshot, restore, get: (id) => byId[id] };
 })();
 
+// ---- src/features/history.js -----------------------------------------
+// Records what the bakery is doing over time so the graph has something to draw.
+//
+//   samples    once per second: displayed CPS, "unbuffed" CPS and measured click income
+//   intervals  every buff/effect that was active, with start and end (they can overlap = stacking)
+//   events     one-off things: golden cookie / reindeer pops (with their outcome) and ascensions
+//
+// Data lives in memory for the current session only.
+
+CA.History = (() => {
+  const SAMPLE_MS = 1000;
+  const MAX_SAMPLES = 4 * 3600; // keep 4 hours
+  const MAX_EVENTS = 500;
+  const MAX_INTERVALS = 1500;
+  const FPS = 30; // buff timers are counted in logic frames
+
+  const samples = []; // { t, cps, base, click }
+  const intervals = []; // { name, label, desc, icon, start, end|null, multCps, multClick, ... }
+  const events = []; // { t, kind, title, text, gain }
+  const open = {}; // buff name -> currently open interval
+  let lastT = 0;
+  let lastHandmade = null;
+  let timer = null;
+
+  // ---- colours -------------------------------------------------------------------
+
+  const KNOWN_COLORS = {
+    Frenzy: '#f4c430',
+    'Elder frenzy': '#ef5350',
+    'Click frenzy': '#42a5f5',
+    Dragonflight: '#ff8a3d',
+    'Dragon Harvest': '#aeea00',
+    'Blood frenzy': '#c62828',
+    Clot: '#8e6bbf',
+    'Cursed finger': '#8d6e63',
+    'Cookie storm': '#26c6da',
+    'Everything must go': '#ec407a',
+    'Sugar frenzy': '#f8bbd0',
+    Devastation: '#b71c1c',
+    'Sugar blessing': '#ffd54f',
+  };
+  const colorCache = {};
+  function colorFor(name) {
+    if (KNOWN_COLORS[name]) return KNOWN_COLORS[name];
+    if (!colorCache[name]) {
+      let h = 0;
+      for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+      colorCache[name] = `hsl(${(h * 137.508) % 360}, 62%, 58%)`;
+    }
+    return colorCache[name];
+  }
+
+  // ---- helpers -------------------------------------------------------------------
+
+  const stripHtml = (s) =>
+    String(s || '')
+      .replace(/<br\s*\/?>/gi, ' ')
+      .replace(/<[^>]*>/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  function capArray(arr, max) {
+    if (arr.length > max + 200) arr.splice(0, arr.length - max);
+  }
+
+  const inAscension = () => Game.OnAscend || Game.AscendTimer > 0;
+
+  function closeInterval(iv, now) {
+    iv.end = Math.min(now, iv.projEnd || now);
+    delete open[iv.name];
+  }
+
+  function openInterval(b, now) {
+    const elapsed = Math.max(0, ((b.maxTime || 0) - (b.time || 0)) / FPS) * 1000;
+    const iv = {
+      name: b.name,
+      label: b.dname || b.name,
+      desc: stripHtml(b.desc),
+      icon: b.icon || [0, 0],
+      start: now - Math.min(elapsed, SAMPLE_MS),
+      end: null,
+      projEnd: now + ((b.time || 0) / FPS) * 1000,
+      duration: (b.maxTime || 0) / FPS,
+      multCps: typeof b.multCpS === 'number' ? b.multCpS : 1,
+      multClick: typeof b.multClick === 'number' ? b.multClick : 1,
+      ref: b,
+    };
+    open[b.name] = iv;
+    intervals.push(iv);
+    capArray(intervals, MAX_INTERVALS);
+    return iv;
+  }
+
+  function trackBuffs(now) {
+    const seen = {};
+    for (const name in Game.buffs) {
+      const b = Game.buffs[name];
+      if (!b || b.time <= 0) continue;
+      seen[name] = true;
+      let iv = open[name];
+      if (iv && iv.ref !== b) {
+        closeInterval(iv, now);
+        iv = null;
+      }
+      if (!iv) iv = openInterval(b, now);
+      iv.projEnd = now + (b.time / FPS) * 1000;
+      iv.duration = Math.max(iv.duration, (now - iv.start) / 1000 + b.time / FPS);
+      if (typeof b.multCpS === 'number') iv.multCps = b.multCpS;
+      if (typeof b.multClick === 'number') iv.multClick = b.multClick;
+    }
+    Object.keys(open).forEach((name) => {
+      if (!seen[name]) closeInterval(open[name], now);
+    });
+  }
+
+  function closeAll(now) {
+    Object.keys(open).forEach((name) => closeInterval(open[name], now));
+  }
+
+  function addEvent(ev) {
+    events.push({ t: Date.now(), ...ev });
+    capArray(events, MAX_EVENTS);
+    CA.Events.emit('history', 'event');
+  }
+
+  // ---- sampling -------------------------------------------------------------------
+
+  function sample() {
+    if (typeof Game === 'undefined' || !Game.ready) return;
+    if (!CA.Settings.get('trackHistory')) return;
+    const now = Date.now();
+
+    if (inAscension()) {
+      // nothing to measure while the ascension screen is up; start clean afterwards
+      closeAll(now);
+      lastHandmade = null;
+      lastT = 0;
+      return;
+    }
+
+    const dt = lastT ? (now - lastT) / 1000 : 0;
+    const handmade = Game.handmadeCookies;
+    let click = 0;
+    if (lastHandmade !== null && dt > 0 && handmade >= lastHandmade) click = (handmade - lastHandmade) / dt;
+    lastHandmade = handmade;
+    lastT = now;
+
+    const shown = 1 - (Game.cpsSucked || 0);
+    samples.push({
+      t: now,
+      cps: Game.cookiesPs * shown,
+      base: (Game.unbuffedCps || Game.cookiesPs) * shown,
+      click,
+    });
+    capArray(samples, MAX_SAMPLES);
+    trackBuffs(now);
+    CA.Events.emit('history', 'sample');
+  }
+
+  // ---- one-off events -------------------------------------------------------------
+
+  /** Wraps a shimmer type's popFunc so we can log what each pop actually did. */
+  function watchShimmers() {
+    if (!Game.shimmerTypes) return;
+    const kinds = { golden: 'golden', reindeer: 'reindeer' };
+    Object.keys(kinds).forEach((type) => {
+      const st = Game.shimmerTypes[type];
+      if (!st || typeof st.popFunc !== 'function') return;
+      const original = st.popFunc;
+      st.popFunc = function (me) {
+        if (!CA.Settings.get('trackHistory')) return original.apply(this, arguments);
+        const before = Game.cookies;
+        const texts = [];
+        const popup = Game.Popup;
+        const notify = Game.Notify;
+        Game.Popup = function (text) {
+          texts.push(stripHtml(text));
+          return popup.apply(this, arguments);
+        };
+        Game.Notify = function (title) {
+          if (title) texts.push(stripHtml(title));
+          return notify.apply(this, arguments);
+        };
+        let result;
+        try {
+          result = original.apply(this, arguments);
+        } finally {
+          Game.Popup = popup;
+          Game.Notify = notify;
+        }
+        try {
+          const wrath = type === 'golden' && me && me.wrath;
+          addEvent({
+            kind: wrath ? 'wrath' : type,
+            title: type === 'reindeer' ? 'Reindeer' : wrath ? 'Wrath cookie' : 'Golden cookie',
+            text: texts.filter(Boolean).slice(0, 2).join(' — '),
+            gain: Game.cookies - before,
+          });
+        } catch (e) {
+          /* never break the game over a log entry */
+        }
+        return result;
+      };
+    });
+  }
+
+  // ---- queries ---------------------------------------------------------------------
+
+  /** Index of the first sample with t >= time (binary search). */
+  function lowerBound(time) {
+    let lo = 0;
+    let hi = samples.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (samples[mid].t < time) lo = mid + 1;
+      else hi = mid;
+    }
+    return lo;
+  }
+
+  /** Summary numbers for [t0, t1]. */
+  function stats(t0, t1) {
+    const from = lowerBound(t0);
+    let n = 0;
+    let sumCps = 0;
+    let sumClick = 0;
+    let peak = 0;
+    let peakT = 0;
+    for (let i = from; i < samples.length && samples[i].t <= t1; i++) {
+      const s = samples[i];
+      n++;
+      sumCps += s.cps;
+      sumClick += s.click;
+      if (s.cps >= peak) {
+        peak = s.cps;
+        peakT = s.t;
+      }
+    }
+    const avg = n ? sumCps / n : 0;
+    const avgClick = n ? sumClick / n : 0;
+    return { n, avg, avgClick, peak, peakT, clickShare: avg + avgClick > 0 ? avgClick / (avg + avgClick) : 0 };
+  }
+
+  /** Intervals overlapping [t0, t1]; open ones end "now". */
+  function intervalsIn(t0, t1) {
+    const now = Date.now();
+    return intervals.filter((iv) => (iv.end || now) >= t0 && iv.start <= t1);
+  }
+
+  function clear() {
+    samples.length = 0;
+    intervals.length = 0;
+    events.length = 0;
+    Object.keys(open).forEach((k) => delete open[k]);
+    lastT = 0;
+    lastHandmade = null;
+    CA.Events.emit('history', 'clear');
+  }
+
+  function init() {
+    CA.Settings.defineOption({
+      key: 'trackHistory',
+      group: 'general',
+      name: 'Record history',
+      desc: 'Keeps a rolling 4-hour record of your CpS and active effects for the graphs.',
+      default: true,
+    });
+    watchShimmers();
+    CA.Events.on('ascend', () => {
+      const now = Date.now();
+      closeAll(now);
+      addEvent({ kind: 'ascend', title: 'Ascended', text: 'A new run begins.', gain: 0 });
+    });
+    timer = setInterval(sample, SAMPLE_MS);
+    sample();
+  }
+
+  return { init, samples, intervals, events, colorFor, lowerBound, stats, intervalsIn, clear, addEvent, sampleNow: sample };
+})();
+
 // ---- src/ui/components.js --------------------------------------------
 // HTML snippets for the CookieMgr panel. Everything is plain strings; interactivity
 // is handled by one delegated click listener in menu.js via data-ca="…" attributes.
@@ -726,6 +1039,757 @@ CA.UI.Tab = (() => {
   return { init, update };
 })();
 
+// ---- src/ui/graph.js -------------------------------------------------
+// The live CpS graph: a canvas line chart with shaded regions for active effects,
+// event markers, and a hover tooltip. Data comes from CA.History; the view is driven by
+// settings so the choices survive reloads.
+
+CA.UI = CA.UI || {};
+
+CA.UI.Graph = (() => {
+  const WINDOWS = [
+    { s: 60, label: '1m' },
+    { s: 300, label: '5m' },
+    { s: 900, label: '15m' },
+    { s: 3600, label: '1h' },
+    { s: 10800, label: '3h' },
+  ];
+  const SMOOTHING = [
+    { s: 0, label: 'Raw' },
+    { s: 5, label: '5s' },
+    { s: 15, label: '15s' },
+  ];
+  const SERIES = {
+    base: { color: '#9db4cc', name: 'Unbuffed CpS' },
+    cps: { color: '#f5c451', name: 'Production' },
+    total: { color: '#7fe08b', name: 'With clicking' },
+  };
+  const PAD = { l: 54, r: 14, t: 14, b: 26 };
+  const LANE_H = 8;
+  const LANE_GAP = 2;
+  const MAX_LANES = 6;
+  const GAP_MS = 5000; // a longer hole between samples breaks the line
+
+  let root = null;
+  let canvas = null;
+  let ctx = null;
+  let tip = null;
+  let observer = null;
+  let timer = null;
+  let hover = null; // { x, y } in css px
+  let paused = false;
+  let pausedAt = 0;
+  let layout = null; // hit-test info from the last draw
+
+  const S = () => CA.Settings;
+
+  // ---- formatting ----------------------------------------------------------------
+
+  const SUFFIX = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
+  function short(v) {
+    if (!isFinite(v)) return '0';
+    const sign = v < 0 ? '-' : '';
+    v = Math.abs(v);
+    if (v < 1000) return sign + (v < 10 ? v.toFixed(v < 1 && v > 0 ? 2 : 1).replace(/\.0+$/, '') : Math.round(v));
+    let i = 0;
+    while (v >= 1000 && i < SUFFIX.length - 1) {
+      v /= 1000;
+      i++;
+    }
+    return sign + (v < 10 ? v.toFixed(2) : v < 100 ? v.toFixed(1) : Math.round(v)).toString().replace(/\.0+$/, '') + SUFFIX[i];
+  }
+  const beautify = (v) => (typeof Beautify === 'function' ? Beautify(v, 1) : short(v));
+
+  function two(n) {
+    return n < 10 ? '0' + n : '' + n;
+  }
+  function clock(t, withSeconds) {
+    const d = new Date(t);
+    return `${two(d.getHours())}:${two(d.getMinutes())}` + (withSeconds ? `:${two(d.getSeconds())}` : '');
+  }
+  function span(sec) {
+    sec = Math.max(0, Math.round(sec));
+    if (sec < 60) return `${sec}s`;
+    if (sec < 3600) return `${Math.floor(sec / 60)}m ${two(sec % 60)}s`;
+    return `${Math.floor(sec / 3600)}h ${two(Math.floor((sec % 3600) / 60))}m`;
+  }
+
+  function niceStep(raw) {
+    const p = Math.pow(10, Math.floor(Math.log10(raw)));
+    const f = raw / p;
+    return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p;
+  }
+
+  // ---- data preparation ----------------------------------------------------------
+
+  const windowMs = () => Math.max(10, S().get('graphWindow')) * 1000;
+  const endTime = () => (paused ? pausedAt : Date.now());
+
+  /** Rolling mean over the previous k samples (k <= 1 leaves the values alone). */
+  function smooth(values, k) {
+    if (k <= 1) return values;
+    const out = new Array(values.length);
+    let sum = 0;
+    for (let i = 0; i < values.length; i++) {
+      sum += values[i];
+      if (i >= k) sum -= values[i - k];
+      out[i] = sum / Math.min(i + 1, k);
+    }
+    return out;
+  }
+
+  /** Splits into segments at gaps, then averages down to about one point per pixel. */
+  function buildSegments(list, valueOf, t0, W, plotW) {
+    const segs = [];
+    let cur = [];
+    for (let i = 0; i < list.length; i++) {
+      if (i && list[i].t - list[i - 1].t > GAP_MS) {
+        if (cur.length) segs.push(cur);
+        cur = [];
+      }
+      cur.push({ t: list[i].t, v: valueOf(i) });
+    }
+    if (cur.length) segs.push(cur);
+    if (list.length <= plotW * 1.5) return segs;
+    return segs.map((seg) => {
+      const buckets = new Map();
+      seg.forEach((p) => {
+        const key = Math.floor(((p.t - t0) / W) * plotW);
+        const b = buckets.get(key) || { t: 0, v: 0, n: 0 };
+        b.t += p.t;
+        b.v += p.v;
+        b.n++;
+        buckets.set(key, b);
+      });
+      return [...buckets.values()].map((b) => ({ t: b.t / b.n, v: b.v / b.n }));
+    });
+  }
+
+  function assignLanes(ivs, now) {
+    const sorted = ivs.slice().sort((a, b) => a.start - b.start);
+    const ends = [];
+    const lanes = new Map();
+    sorted.forEach((iv) => {
+      let lane = ends.findIndex((e) => e <= iv.start);
+      if (lane === -1) lane = ends.length;
+      ends[lane] = iv.end || now;
+      lanes.set(iv, lane);
+    });
+    return { lanes, count: ends.length };
+  }
+
+  // ---- drawing -------------------------------------------------------------------
+
+  function fitCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+    }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { w, h };
+  }
+
+  function draw() {
+    if (!canvas || !canvas.isConnected) return;
+    const { w, h } = fitCanvas();
+    if (w < 50 || h < 50) return;
+    ctx.clearRect(0, 0, w, h);
+
+    const W = windowMs();
+    const t1 = endTime();
+    const t0 = t1 - W;
+    const now = Date.now();
+    const plot = { x: PAD.l, y: PAD.t, w: w - PAD.l - PAD.r, h: h - PAD.t - PAD.b };
+    const xOf = (t) => plot.x + ((t - t0) / W) * plot.w;
+
+    const showEffects = S().get('graphEffects');
+    const ivs = showEffects ? CA.History.intervalsIn(t0, t1) : [];
+    const laneInfo = assignLanes(ivs, now);
+    const laneCount = Math.min(MAX_LANES, laneInfo.count);
+    const lanesH = laneCount ? laneCount * (LANE_H + LANE_GAP) + 2 : 0;
+    const lanesTop = plot.y + plot.h - lanesH;
+    const chartH = plot.h - lanesH - (laneCount ? 4 : 0); // vertical room for the lines
+
+    // --- visible samples (one extra before/after so lines reach the edges)
+    const all = CA.History.samples;
+    const smoothK = Math.max(1, S().get('graphSmooth'));
+    const lo = Math.max(0, CA.History.lowerBound(t0) - 1 - smoothK);
+    let hi = CA.History.lowerBound(t1);
+    hi = Math.min(all.length, hi + 1);
+    const list = all.slice(lo, hi);
+    const visStart = list.findIndex((s) => s.t >= t0 - 1000);
+    const cutoff = visStart === -1 ? list.length : visStart;
+
+    const want = {
+      base: S().get('graphShowBase'),
+      cps: S().get('graphShowCps'),
+      total: S().get('graphShowTotal'),
+    };
+    const raw = {
+      base: list.map((s) => s.base),
+      cps: list.map((s) => s.cps),
+      total: list.map((s) => s.cps + s.click),
+    };
+    const series = {};
+    Object.keys(want).forEach((k) => {
+      if (!want[k]) return;
+      const vals = smooth(raw[k], smoothK);
+      series[k] = buildSegments(list.slice(cutoff), (i) => vals[i + cutoff], t0, W, plot.w);
+    });
+
+    // --- y scale
+    const log = S().get('graphLog');
+    let maxV = 0;
+    let minPos = Infinity;
+    Object.values(series).forEach((segs) =>
+      segs.forEach((seg) =>
+        seg.forEach((p) => {
+          if (p.v > maxV) maxV = p.v;
+          if (p.v > 0 && p.v < minPos) minPos = p.v;
+        })
+      )
+    );
+    let yMin = 0;
+    let yMax = 1;
+    let ticks = [];
+    if (log) {
+      if (!isFinite(minPos)) minPos = 1;
+      if (maxV <= 0) maxV = 10;
+      yMin = Math.pow(10, Math.floor(Math.log10(minPos)));
+      yMax = Math.pow(10, Math.ceil(Math.log10(maxV * 1.02)));
+      if (yMax / yMin < 10) yMax = yMin * 10;
+      for (let v = yMin; v <= yMax * 1.0001; v *= 10) ticks.push(v);
+      while (ticks.length > 7) ticks = ticks.filter((_, i) => i % 2 === 0);
+    } else {
+      yMax = maxV > 0 ? maxV * 1.08 : 10;
+      const step = niceStep(yMax / 4);
+      yMax = Math.ceil(yMax / step) * step;
+      for (let v = 0; v <= yMax * 1.0001; v += step) ticks.push(v);
+    }
+    const yOf = (v) => {
+      let f;
+      if (log) f = (Math.log10(Math.max(v, yMin)) - Math.log10(yMin)) / (Math.log10(yMax) - Math.log10(yMin));
+      else f = (v - yMin) / (yMax - yMin);
+      return plot.y + chartH - Math.max(0, Math.min(1, f)) * chartH;
+    };
+
+    // --- background
+    const bg = ctx.createLinearGradient(0, plot.y, 0, plot.y + plot.h);
+    bg.addColorStop(0, 'rgba(255,255,255,0.045)');
+    bg.addColorStop(1, 'rgba(255,255,255,0.01)');
+    ctx.fillStyle = bg;
+    ctx.fillRect(plot.x, plot.y, plot.w, plot.h);
+
+    // --- effect shading (overlaps simply add up, which is how stacking shows)
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(plot.x, plot.y, plot.w, plot.h);
+    ctx.clip();
+    const hoverIv = layout && layout.hoverIv;
+    ivs.forEach((iv) => {
+      const x0 = Math.max(plot.x, xOf(iv.start));
+      const x1 = Math.min(plot.x + plot.w, xOf(iv.end || now));
+      if (x1 <= x0) return;
+      ctx.globalAlpha = iv === hoverIv ? 0.3 : 0.13;
+      ctx.fillStyle = CA.History.colorFor(iv.name);
+      ctx.fillRect(x0, plot.y, x1 - x0, plot.h);
+    });
+    ctx.globalAlpha = 1;
+    ctx.restore();
+
+    // --- grid + y labels
+    ctx.font = '10px Tahoma, Arial, sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'right';
+    ctx.lineWidth = 1;
+    ticks.forEach((v) => {
+      const y = Math.round(yOf(v)) + 0.5;
+      ctx.strokeStyle = 'rgba(255,255,255,0.09)';
+      ctx.beginPath();
+      ctx.moveTo(plot.x, y);
+      ctx.lineTo(plot.x + plot.w, y);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(230,220,200,0.75)';
+      ctx.fillText(short(v), plot.x - 6, y);
+    });
+
+    // --- x grid + labels (aligned to wall-clock time so labels stay put while scrolling)
+    const steps = [5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200].map((x) => x * 1000);
+    const stepMs = steps.find((s) => W / s <= Math.max(3, Math.floor(plot.w / 78))) || steps[steps.length - 1];
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    const tz = new Date(t0).getTimezoneOffset() * 60000;
+    for (let t = Math.ceil((t0 - tz) / stepMs) * stepMs + tz; t <= t1; t += stepMs) {
+      const x = Math.round(xOf(t)) + 0.5;
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      ctx.beginPath();
+      ctx.moveTo(x, plot.y);
+      ctx.lineTo(x, plot.y + plot.h);
+      ctx.stroke();
+      if (x > plot.x + 16 && x < plot.x + plot.w - 16) {
+        ctx.fillStyle = 'rgba(230,220,200,0.7)';
+        ctx.fillText(clock(t, stepMs < 60000), x, plot.y + plot.h + 7);
+      }
+    }
+
+    // --- lines
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(plot.x, plot.y - 4, plot.w, chartH + 8);
+    ctx.clip();
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    const trace = (segs, close) => {
+      segs.forEach((seg) => {
+        if (!seg.length) return;
+        ctx.beginPath();
+        seg.forEach((p, i) => (i ? ctx.lineTo(xOf(p.t), yOf(p.v)) : ctx.moveTo(xOf(p.t), yOf(p.v))));
+        if (seg.length === 1) ctx.lineTo(xOf(seg[0].t) + 0.01, yOf(seg[0].v));
+        if (close) {
+          ctx.lineTo(xOf(seg[seg.length - 1].t), plot.y + chartH);
+          ctx.lineTo(xOf(seg[0].t), plot.y + chartH);
+          ctx.closePath();
+        }
+      });
+    };
+    const strokeSeries = (key, width, dash) => {
+      const segs = series[key];
+      if (!segs) return;
+      ctx.strokeStyle = SERIES[key].color;
+      ctx.lineWidth = width;
+      ctx.setLineDash(dash || []);
+      segs.forEach((seg) => {
+        trace([seg], false);
+        ctx.stroke();
+      });
+      ctx.setLineDash([]);
+    };
+    // fill under the main visible series
+    const fillKey = series.cps ? 'cps' : series.total ? 'total' : series.base ? 'base' : null;
+    if (fillKey) {
+      const grad = ctx.createLinearGradient(0, plot.y, 0, plot.y + chartH);
+      grad.addColorStop(0, hexToRgba(SERIES[fillKey].color, 0.3));
+      grad.addColorStop(1, hexToRgba(SERIES[fillKey].color, 0.02));
+      ctx.fillStyle = grad;
+      series[fillKey].forEach((seg) => {
+        trace([seg], true);
+        ctx.fill();
+      });
+    }
+    strokeSeries('base', 1.4, [4, 3]);
+    strokeSeries('total', 1.6);
+    strokeSeries('cps', 2);
+    ctx.restore();
+
+    // --- effect lanes
+    const laneRects = [];
+    ivs.forEach((iv) => {
+      const lane = laneInfo.lanes.get(iv);
+      if (lane >= MAX_LANES) return;
+      const x0 = Math.max(plot.x, xOf(iv.start));
+      const x1 = Math.min(plot.x + plot.w, xOf(iv.end || now));
+      if (x1 <= x0) return;
+      const y = lanesTop + 2 + lane * (LANE_H + LANE_GAP);
+      const color = CA.History.colorFor(iv.name);
+      ctx.fillStyle = color;
+      ctx.globalAlpha = iv === hoverIv ? 1 : 0.85;
+      roundRect(ctx, x0, y, Math.max(2, x1 - x0), LANE_H, 3);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      if (x1 - x0 > 46) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(x0, y, x1 - x0, LANE_H);
+        ctx.clip();
+        ctx.font = 'bold 8px Tahoma, Arial, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = 'rgba(0,0,0,0.75)';
+        ctx.fillText(iv.label, x0 + 4, y + LANE_H / 2 + 0.5);
+        ctx.restore();
+      }
+      laneRects.push({ iv, x0, x1, y, y1: y + LANE_H });
+    });
+
+    // --- events (ascension lines, golden/reindeer markers)
+    const evRects = [];
+    if (S().get('graphEvents')) {
+      CA.History.events.forEach((ev) => {
+        if (ev.t < t0 || ev.t > t1) return;
+        const x = xOf(ev.t);
+        if (ev.kind === 'ascend') {
+          ctx.strokeStyle = 'rgba(200,190,255,0.7)';
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath();
+          ctx.moveTo(Math.round(x) + 0.5, plot.y);
+          ctx.lineTo(Math.round(x) + 0.5, plot.y + plot.h);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+        const y = plot.y + 7;
+        ctx.fillStyle = eventColor(ev.kind);
+        ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x, y - 5);
+        ctx.lineTo(x + 4.5, y);
+        ctx.lineTo(x, y + 5);
+        ctx.lineTo(x - 4.5, y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        evRects.push({ ev, x, y });
+      });
+    }
+
+    layout = { plot, xOf, yOf, t0, t1, laneRects, evRects, hoverIv: null, series, chartH };
+
+    // --- hover
+    if (hover && hover.x >= plot.x && hover.x <= plot.x + plot.w && hover.y >= 0 && hover.y <= h) {
+      drawHover(w, h, plot, t0, W, laneRects, evRects, list);
+    } else if (tip) {
+      tip.style.display = 'none';
+    }
+
+    // --- empty state
+    if (!list.length) {
+      ctx.fillStyle = 'rgba(230,220,200,0.6)';
+      ctx.font = '12px Tahoma, Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(
+        S().get('trackHistory') ? 'Collecting data…' : 'History recording is off (Settings tab)',
+        plot.x + plot.w / 2,
+        plot.y + plot.h / 2
+      );
+    }
+  }
+
+  function drawHover(w, h, plot, t0, W, laneRects, evRects, list) {
+    const t = t0 + ((hover.x - plot.x) / plot.w) * W;
+    // what is under the pointer?
+    const hitEv = evRects.find((r) => Math.abs(r.x - hover.x) < 7 && Math.abs(r.y - hover.y) < 9);
+    const hitLane = laneRects.find((r) => hover.x >= r.x0 && hover.x <= r.x1 && hover.y >= r.y - 1 && hover.y <= r.y1 + 1);
+    layout.hoverIv = hitLane ? hitLane.iv : null;
+
+    // crosshair
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(Math.round(hover.x) + 0.5, plot.y);
+    ctx.lineTo(Math.round(hover.x) + 0.5, plot.y + plot.h);
+    ctx.stroke();
+
+    // nearest sample
+    const all = CA.History.samples;
+    let idx = CA.History.lowerBound(t);
+    if (idx > 0 && (idx >= all.length || t - all[idx - 1].t < all[idx].t - t)) idx--;
+    const s = all[idx];
+    const near = s && Math.abs(s.t - t) < Math.max(3000, W / 40) ? s : null;
+
+    let html = '';
+    if (hitEv) html = eventTip(hitEv.ev);
+    else if (hitLane) html = intervalTip(hitLane.iv);
+    else html = sampleTip(t, near);
+
+    if (near && !hitEv && !hitLane) {
+      const dots = [
+        ['base', near.base],
+        ['cps', near.cps],
+        ['total', near.cps + near.click],
+      ];
+      dots.forEach(([k, v]) => {
+        if (!layout.series[k]) return;
+        ctx.fillStyle = SERIES[k].color;
+        ctx.strokeStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(layout.xOf(near.t), layout.yOf(v), 3.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      });
+    }
+
+    tip.innerHTML = html;
+    tip.style.display = 'block';
+    const tw = tip.offsetWidth;
+    const th = tip.offsetHeight;
+    let left = hover.x + 16;
+    if (left + tw > w - 4) left = hover.x - tw - 16;
+    let top = hover.y + 12;
+    if (top + th > h) top = Math.max(2, h - th - 2);
+    tip.style.left = Math.max(2, left) + 'px';
+    tip.style.top = top + 'px';
+  }
+
+  // ---- tooltips ------------------------------------------------------------------
+
+  const esc = (s) => CA.Util.escapeHtml(s);
+  const swatch = (c) => `<i class="ca-sw" style="background:${c}"></i>`;
+
+  function activeAt(t) {
+    const now = Date.now();
+    return CA.History.intervals.filter((iv) => iv.start <= t && (iv.end || now) >= t);
+  }
+
+  function sampleTip(t, s) {
+    const ago = (Date.now() - t) / 1000;
+    let h = `<div class="ca-tip-head">${clock(t, true)}<span>${paused || ago > 1.5 ? span(ago) + ' ago' : 'now'}</span></div>`;
+    if (s) {
+      const total = s.cps + s.click;
+      h += row(SERIES.cps.color, SERIES.cps.name, beautify(s.cps) + '/s');
+      if (s.click > 0.01) h += row(SERIES.total.color, 'Clicking', '+' + beautify(s.click) + '/s');
+      h += row(SERIES.total.color, 'Total', beautify(total) + '/s', true);
+      if (Math.abs(s.base - s.cps) > 0.01) h += row(SERIES.base.color, 'Without effects', beautify(s.base) + '/s');
+    } else {
+      h += '<div class="ca-tip-note">No data here yet.</div>';
+    }
+    const act = activeAt(t);
+    if (act.length) {
+      h += '<div class="ca-tip-sep"></div>';
+      act.forEach((iv) => {
+        const left = Math.max(0, ((iv.end || Date.now()) - t) / 1000);
+        h += row(CA.History.colorFor(iv.name), iv.label, mults(iv) + ' · ' + span(left) + ' left');
+      });
+    }
+    return h;
+  }
+
+  function mults(iv) {
+    const bits = [];
+    if (Math.abs(iv.multCps - 1) > 0.001) bits.push(`×${trim(iv.multCps)} CpS`);
+    if (Math.abs(iv.multClick - 1) > 0.001) bits.push(`×${trim(iv.multClick)} clicks`);
+    return bits.length ? bits.join(', ') : 'no CpS change';
+  }
+  const trim = (n) => (n >= 100 ? Math.round(n) : Math.round(n * 100) / 100);
+
+  function row(color, name, value, strong) {
+    return `<div class="ca-tip-row${strong ? ' strong' : ''}">${swatch(color)}<b>${esc(name)}</b><span>${esc(value)}</span></div>`;
+  }
+
+  function intervalTip(iv) {
+    const now = Date.now();
+    const end = iv.end || now;
+    let h = `<div class="ca-tip-head">${swatch(CA.History.colorFor(iv.name))}${esc(iv.label)}<span>${iv.end ? '' : 'active'}</span></div>`;
+    if (iv.desc) h += `<div class="ca-tip-note">${esc(iv.desc)}</div>`;
+    h += row('transparent', 'Effect', mults(iv));
+    h += row('transparent', 'Lasted', span((end - iv.start) / 1000) + (iv.end ? '' : ' so far'));
+    h += row('transparent', 'Started', clock(iv.start, true));
+    if (iv.end) h += row('transparent', 'Ended', clock(iv.end, true));
+    return h;
+  }
+
+  function eventTip(ev) {
+    let h = `<div class="ca-tip-head">${swatch(eventColor(ev.kind))}${esc(ev.title)}<span>${clock(ev.t, true)}</span></div>`;
+    if (ev.text) h += `<div class="ca-tip-note">${esc(ev.text)}</div>`;
+    if (ev.kind !== 'ascend' && Math.abs(ev.gain) >= 1)
+      h += row('transparent', ev.gain >= 0 ? 'Cookies gained' : 'Cookies lost', (ev.gain >= 0 ? '+' : '−') + beautify(Math.abs(ev.gain)));
+    return h;
+  }
+
+  function eventColor(kind) {
+    return { golden: '#ffd54a', wrath: '#e5484d', reindeer: '#c48a5a', ascend: '#c9bcff' }[kind] || '#fff';
+  }
+
+  // ---- little canvas helpers ---------------------------------------------------------
+
+  function hexToRgba(hex, a) {
+    const n = parseInt(hex.slice(1), 16);
+    return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+  }
+
+  function roundRect(c, x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r);
+    c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r);
+    c.arcTo(x, y, x + w, y, r);
+    c.closePath();
+  }
+
+  // ---- panel HTML + wiring ---------------------------------------------------------------
+
+  function chip(label, attrs, title) {
+    return `<button type="button" class="ca-chip" ${attrs}${title ? ` title="${esc(title)}"` : ''}>${label}</button>`;
+  }
+  function seriesChip(key, optKey) {
+    return `<button type="button" class="ca-chip ca-chip-series" data-ca="option" data-key="${optKey}" data-pressed-key="${optKey}">${swatch(SERIES[key].color)}${SERIES[key].name}</button>`;
+  }
+
+  function html() {
+    return (
+      '<div class="ca-card ca-graph-card">' +
+      '<div class="ca-card-head"><div class="ca-card-title">Cookies per second</div>' +
+      '<div class="ca-card-meta"><span class="ca-live" data-ca-live></span></div></div>' +
+      '<div class="ca-stats" data-ca-stats></div>' +
+      '<div class="ca-toolbar">' +
+      '<div class="ca-chipgroup" title="How much history to show">' +
+      WINDOWS.map((o) => chip(o.label, `data-ca="gwin" data-val="${o.s}" data-pressed-key="graphWindow" data-pressed-val="${o.s}"`)).join(
+        ''
+      ) +
+      '</div>' +
+      '<div class="ca-chipgroup" title="Show or hide each line">' +
+      seriesChip('cps', 'graphShowCps') +
+      seriesChip('total', 'graphShowTotal') +
+      seriesChip('base', 'graphShowBase') +
+      '</div>' +
+      '</div>' +
+      '<div class="ca-graph-wrap"><canvas class="ca-graph" data-ca-canvas></canvas><div class="ca-tip" data-ca-tip></div></div>' +
+      '<div class="ca-toolbar ca-toolbar-bottom">' +
+      '<div class="ca-chipgroup" title="Average over the last few seconds">' +
+      '<span class="ca-chip-label">Smooth</span>' +
+      SMOOTHING.map((o) =>
+        chip(o.label, `data-ca="gsmooth" data-val="${o.s}" data-pressed-key="graphSmooth" data-pressed-val="${o.s}"`)
+      ).join('') +
+      '</div>' +
+      '<div class="ca-chipgroup">' +
+      chip(
+        'Log scale',
+        'data-ca="option" data-key="graphLog" data-pressed-key="graphLog"',
+        'Logarithmic vertical axis — handy when CpS grows by orders of magnitude'
+      ) +
+      chip(
+        'Effects',
+        'data-ca="option" data-key="graphEffects" data-pressed-key="graphEffects"',
+        'Shade the periods when golden cookie effects are active'
+      ) +
+      chip(
+        'Events',
+        'data-ca="option" data-key="graphEvents" data-pressed-key="graphEvents"',
+        'Mark golden cookie pops, reindeer and ascensions'
+      ) +
+      '</div>' +
+      '<div class="ca-chipgroup">' +
+      chip('', 'data-ca="gpause" data-ca-pause') +
+      chip('Clear', 'data-ca="gclear"', 'Erase the recorded history') +
+      '</div>' +
+      '</div>' +
+      '<div class="ca-legend" data-ca-legend></div>' +
+      '</div>'
+    );
+  }
+
+  function statTile(label, value, sub) {
+    return `<div class="ca-stat"><div class="ca-stat-label">${label}</div><div class="ca-stat-value">${value}</div><div class="ca-stat-sub">${sub || '&nbsp;'}</div></div>`;
+  }
+
+  /** Cheap dynamic bits (stat tiles, legend, pause button). */
+  function refreshInfo() {
+    if (!root) return;
+    const W = windowMs();
+    const t1 = endTime();
+    const st = CA.History.stats(t1 - W, t1);
+    const last = CA.History.samples[CA.History.samples.length - 1];
+    const cur = last ? last.cps : 0;
+    const box = root.querySelector('[data-ca-stats]');
+    if (box) {
+      box.innerHTML =
+        statTile('Now', short(cur) + '/s', last && last.click > 0.01 ? '+' + short(last.click) + ' from clicks' : '') +
+        statTile('Average', short(st.avg) + '/s', 'last ' + (W >= 3600000 ? W / 3600000 + 'h' : W / 60000 + 'm')) +
+        statTile('Peak', short(st.peak) + '/s', st.peakT ? clock(st.peakT, true) : '') +
+        statTile('Clicking', short(st.avgClick) + '/s', Math.round(st.clickShare * 100) + '% of income');
+    }
+    const live = root.querySelector('[data-ca-live]');
+    if (live) {
+      live.textContent = paused ? 'Paused' : 'Live';
+      live.classList.toggle('paused', paused);
+    }
+    const pause = root.querySelector('[data-ca-pause]');
+    if (pause) pause.textContent = paused ? 'Resume' : 'Pause';
+
+    const legend = root.querySelector('[data-ca-legend]');
+    if (legend) {
+      const counts = new Map();
+      CA.History.intervalsIn(t1 - W, t1).forEach((iv) => counts.set(iv.name, { iv, n: (counts.get(iv.name) || { n: 0 }).n + 1 }));
+      legend.innerHTML = counts.size
+        ? [...counts.values()]
+            .map(
+              ({ iv, n }) =>
+                `<span class="ca-legend-item">${swatch(CA.History.colorFor(iv.name))}${esc(iv.label)}${n > 1 ? ` <em>×${n}</em>` : ''}</span>`
+            )
+            .join('')
+        : '<span class="ca-legend-empty">Golden cookie effects will show up here.</span>';
+    }
+  }
+
+  function tick() {
+    if (!root) return;
+    if (!root.isConnected) {
+      unmount(); // the game redrew the menu underneath us
+      return;
+    }
+    refreshInfo();
+    draw();
+  }
+
+  function mount(el) {
+    unmount();
+    root = el;
+    canvas = el.querySelector('[data-ca-canvas]');
+    tip = el.querySelector('[data-ca-tip]');
+    if (!canvas) return;
+    ctx = canvas.getContext('2d');
+    canvas.addEventListener('mousemove', (e) => {
+      const r = canvas.getBoundingClientRect();
+      hover = { x: e.clientX - r.left, y: e.clientY - r.top };
+      const prev = layout && layout.hoverIv;
+      draw();
+      if (layout && layout.hoverIv !== prev) draw(); // repaint once so the highlighted effect shows immediately
+    });
+    canvas.addEventListener('mouseleave', () => {
+      hover = null;
+      if (layout) layout.hoverIv = null;
+      draw();
+    });
+    if (window.ResizeObserver) {
+      observer = new ResizeObserver(() => draw());
+      observer.observe(canvas);
+    }
+    timer = setInterval(tick, 250);
+    tick();
+  }
+
+  function unmount() {
+    clearInterval(timer);
+    timer = null;
+    if (observer) observer.disconnect();
+    observer = null;
+    root = canvas = ctx = tip = null;
+    hover = null;
+    layout = null;
+  }
+
+  function setPaused(p) {
+    if (p === paused) return;
+    paused = p;
+    pausedAt = Date.now();
+    tick();
+  }
+  const isPaused = () => paused;
+
+  function init() {
+    const S_ = CA.Settings;
+    const def = (key, dflt) => S_.defineOption({ key, group: 'graph', name: key, desc: '', default: dflt });
+    def('graphWindow', 300);
+    def('graphSmooth', 0);
+    def('graphShowCps', true);
+    def('graphShowTotal', true);
+    def('graphShowBase', false);
+    def('graphLog', false);
+    def('graphEffects', true);
+    def('graphEvents', true);
+    CA.Events.on('history', () => {
+      if (root) tick();
+    });
+  }
+
+  return { init, html, mount, unmount, draw, tick, setPaused, isPaused };
+})();
+
 // ---- src/ui/menu.js --------------------------------------------------
 // The CookieMgr panel. It lives in the game's own menu slot (the same place as
 // Options / Stats / Info), so it inherits the game's look and closes like any other menu.
@@ -770,14 +1834,31 @@ CA.UI.Menu = (() => {
     );
   }
 
-  function html() {
-    const clickers = CA.Autoclickers.list();
+  // ---- tabs ----------------------------------------------------------------------
+
+  const TABS = [
+    { id: 'clickers', label: 'Autoclickers' },
+    { id: 'graphs', label: 'Graphs' },
+    { id: 'settings', label: 'Settings' },
+  ];
+  const currentTab = () => {
+    const t = CA.Settings.get('tab');
+    return TABS.some((x) => x.id === t) ? t : 'clickers';
+  };
+
+  function tabBar() {
     return (
-      '<div class="close menuClose" data-ca="close">x</div>' +
-      '<div id="CookieMgrMenu">' +
-      '<div class="section">CookieMgr</div>' +
-      `<div class="ca-tagline">v${CA.VERSION} &middot; automation &amp; insights for your bakery</div>` +
-      // --- Autoclickers ---
+      '<div class="ca-tabs" role="tablist">' +
+      TABS.map(
+        (t) =>
+          `<button type="button" role="tab" class="ca-tabbtn" data-ca="tab" data-tab="${t.id}" data-tab-btn="${t.id}">${t.label}</button>`
+      ).join('') +
+      '</div>'
+    );
+  }
+
+  function clickersPage() {
+    return (
       '<div class="ca-card">' +
       '<div class="ca-card-head">' +
       '<div class="ca-card-title">Autoclickers</div>' +
@@ -793,24 +1874,54 @@ CA.UI.Menu = (() => {
       C.hotkey('clickers.toggleAll') +
       '</div>' +
       '</div>' +
-      `<div class="ca-list">${clickers.map(clickerRow).join('')}</div>` +
+      `<div class="ca-list">${CA.Autoclickers.list().map(clickerRow).join('')}</div>` +
       '</div>' +
-      // --- Settings ---
       '<div class="ca-card">' +
-      '<div class="ca-card-head"><div class="ca-card-title">Settings</div></div>' +
-      `<div class="ca-list">${CA.Settings.optionsIn('autoclickers').map(optionRow).join('')}` +
+      '<div class="ca-card-head"><div class="ca-card-title">Options</div></div>' +
+      `<div class="ca-list">${CA.Settings.optionsIn('autoclickers').map(optionRow).join('')}</div>` +
+      '</div>'
+    );
+  }
+
+  function settingsPage() {
+    return (
+      '<div class="ca-card">' +
+      '<div class="ca-card-head"><div class="ca-card-title">General</div></div>' +
+      '<div class="ca-list">' +
+      CA.Settings.optionsIn('general').map(optionRow).join('') +
       '<div class="ca-row ca-row-option">' +
       '<div class="ca-row-text"><div class="ca-row-name">Open / close this panel</div>' +
       '<div class="ca-row-desc">Optional hotkey for the CookieMgr panel.</div></div>' +
       C.hotkey('panel.toggle') +
       '</div>' +
+      '<div class="ca-row ca-row-option">' +
+      '<div class="ca-row-text"><div class="ca-row-name">Recorded history</div>' +
+      '<div class="ca-row-desc" data-ca-history-info></div></div>' +
+      C.button('Clear', 'data-ca="gclear"', 'ca-btn-small') +
+      '</div>' +
+      '<div class="ca-row ca-row-option">' +
+      '<div class="ca-row-text"><div class="ca-row-name">Hotkeys</div>' +
+      '<div class="ca-row-desc">Click a key chip, then press the new key. <kbd>Esc</kbd> cancels, <kbd>Backspace</kbd> removes it; modifiers work too.</div></div>' +
+      C.button('Reset to defaults', 'data-ca="reset-hotkeys"', 'ca-btn-small') +
       '</div>' +
       '</div>' +
-      // --- Footer ---
+      '</div>' +
       '<div class="ca-footer">' +
-      '<div><b>Hotkeys:</b> click a key, then press the new one. <kbd>Esc</kbd> cancels, <kbd>Backspace</kbd> removes it. Modifiers (Shift, Ctrl, Alt) work too.</div>' +
+      `<div>CookieMgr v${CA.VERSION} &middot; <a href="https://github.com/nunorgcarvalho/CookieMgr" target="_blank" rel="noopener">GitHub</a></div>` +
       '<div>Settings are stored inside your Cookie Clicker save.</div>' +
-      `<div class="ca-footer-actions">${C.button('Reset hotkeys to defaults', 'data-ca="reset-hotkeys"', 'ca-btn-small')}</div>` +
+      '</div>'
+    );
+  }
+
+  function html() {
+    const tab = currentTab();
+    return (
+      '<div class="close menuClose" data-ca="close">x</div>' +
+      '<div id="CookieMgrMenu">' +
+      '<div class="section">CookieMgr</div>' +
+      tabBar() +
+      `<div class="ca-page" data-page="${tab}">` +
+      (tab === 'clickers' ? clickersPage() : tab === 'graphs' ? CA.UI.Graph.html() : settingsPage()) +
       '</div>' +
       '</div>'
     );
@@ -819,7 +1930,9 @@ CA.UI.Menu = (() => {
   function render() {
     const menu = document.getElementById('menu');
     if (!menu) return;
+    CA.UI.Graph.unmount();
     menu.innerHTML = html();
+    if (currentTab() === 'graphs') CA.UI.Graph.mount(menu.querySelector('.ca-page'));
     sync();
   }
 
@@ -839,10 +1952,35 @@ CA.UI.Menu = (() => {
     const total = CA.Autoclickers.list().length;
     const active = CA.Autoclickers.activeCount();
     const pill = root.querySelector('[data-ca-count]');
-    pill.textContent = `${active} / ${total} running`;
-    pill.classList.toggle('on', active > 0);
-    root.querySelector('[data-ca="all-on"]').disabled = active === total;
-    root.querySelector('[data-ca="all-off"]').disabled = active === 0;
+    if (pill) {
+      pill.textContent = `${active} / ${total} running`;
+      pill.classList.toggle('on', active > 0);
+      root.querySelector('[data-ca="all-on"]').disabled = active === total;
+      root.querySelector('[data-ca="all-off"]').disabled = active === 0;
+    }
+
+    const tab = currentTab();
+    root.querySelectorAll('[data-tab-btn]').forEach((b) => {
+      const on = b.dataset.tabBtn === tab;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-selected', String(on));
+    });
+
+    // chips / pills bound to a setting
+    root.querySelectorAll('[data-pressed-key]').forEach((el) => {
+      const v = CA.Settings.get(el.dataset.pressedKey);
+      const on = 'pressedVal' in el.dataset ? String(v) === el.dataset.pressedVal : !!v;
+      el.classList.toggle('on', on);
+      el.setAttribute('aria-pressed', String(on));
+    });
+
+    const info = root.querySelector('[data-ca-history-info]');
+    if (info) {
+      const n = CA.History.samples.length;
+      const span = n < 120 ? `${n} seconds` : n < 7200 ? `${Math.round(n / 60)} minutes` : `${(n / 3600).toFixed(1)} hours`;
+      const fx = CA.History.intervals.length;
+      info.textContent = n ? `${span} of CpS data and ${fx} effect${fx === 1 ? '' : 's'} recorded this session.` : 'Nothing recorded yet.';
+    }
 
     root.querySelectorAll('[data-option]').forEach((row) => {
       setSwitch(row.querySelector('.ca-switch'), !!CA.Settings.get(row.dataset.option));
@@ -905,6 +2043,28 @@ CA.UI.Menu = (() => {
         CA.Settings.set(key, next);
         break;
       }
+      case 'tab':
+        CA.Util.sound('snd/tick.mp3');
+        CA.Settings.set('tab', t.dataset.tab);
+        render();
+        break;
+      case 'gwin':
+        CA.Util.sound('snd/tick.mp3');
+        CA.Settings.set('graphWindow', Number(t.dataset.val));
+        break;
+      case 'gsmooth':
+        CA.Util.sound('snd/tick.mp3');
+        CA.Settings.set('graphSmooth', Number(t.dataset.val));
+        break;
+      case 'gpause':
+        CA.Util.sound('snd/tick.mp3');
+        CA.UI.Graph.setPaused(!CA.UI.Graph.isPaused());
+        break;
+      case 'gclear':
+        CA.Util.sound('snd/tick.mp3');
+        CA.History.clear();
+        sync();
+        break;
       case 'bind': {
         const id = t.dataset.action;
         CA.Util.sound('snd/tick.mp3');
@@ -937,6 +2097,7 @@ CA.UI.Menu = (() => {
 
   function init() {
     CA.Actions.register({ id: 'panel.toggle', name: 'Open / close panel', group: 'general', defaultKey: '', run: toggle });
+    CA.Settings.defineOption({ key: 'tab', group: 'ui', name: 'Panel tab', desc: '', default: 'clickers' });
 
     // Game.resPath points at wherever the game serves its images from (CDN on the web, local on Steam).
     CA.Util.injectCss('CookieMgrStyles', CA.CSS.replace(/url\(img\//g, `url(${CA.Util.res('img/')}`));
@@ -953,7 +2114,10 @@ CA.UI.Menu = (() => {
     // Keep the tab highlight in sync, and stop listening for keys when leaving.
     CA.Util.wrap(Game, 'ShowMenu', (original, args, self) => {
       const result = original.apply(self, args);
-      if (!isOpen()) CA.Hotkeys.cancelCapture();
+      if (!isOpen()) {
+        CA.Hotkeys.cancelCapture();
+        CA.UI.Graph.unmount();
+      }
       CA.UI.Tab.update();
       return result;
     });
@@ -962,7 +2126,9 @@ CA.UI.Menu = (() => {
     if (menu) menu.addEventListener('click', onClick);
 
     const refresh = () => {
-      if (isOpen()) sync();
+      if (!isOpen()) return;
+      sync();
+      if (currentTab() === 'graphs') CA.UI.Graph.tick();
     };
     CA.Events.on('clickers', refresh);
     CA.Events.on('settings', refresh);
@@ -1004,6 +2170,8 @@ const mod = {
     const hadLegacy = removeLegacyBookmarklet();
 
     CA.Autoclickers.init();
+    CA.History.init();
+    CA.UI.Graph.init();
     CA.Hotkeys.init();
     CA.Ascension.init();
     CA.UI.Menu.init();
@@ -1012,7 +2180,9 @@ const mod = {
 
     CA.Util.notify(
       `CookieMgr v${CA.VERSION} loaded`,
-      hadLegacy ? 'Replaced the old v0.1 bookmarklet. Open the tab on the left beam for settings.' : 'Open the tab on the left beam for settings.',
+      hadLegacy
+        ? 'Replaced the old v0.1 bookmarklet. Open the tab on the left beam for settings.'
+        : 'Open the tab on the left beam for settings.',
       CA.ICON,
       4
     );
@@ -1033,11 +2203,13 @@ function register() {
 }
 
 if (window.CookieMgr) {
-  if (typeof Game !== 'undefined' && Game.Notify) Game.Notify('CookieMgr', 'Already loaded — reload the page to load a new version.', CA.ICON, 3, 1);
+  if (typeof Game !== 'undefined' && Game.Notify)
+    Game.Notify('CookieMgr', 'Already loaded — reload the page to load a new version.', CA.ICON, 3, 1);
 } else {
   window.CookieMgr = CA; // handy for debugging from the console
   const start = () => {
-    if (typeof Steam !== 'undefined') setTimeout(register, 2000); // same delay Cookie Monster uses on Steam
+    if (typeof Steam !== 'undefined')
+      setTimeout(register, 2000); // same delay Cookie Monster uses on Steam
     else register();
   };
   if (typeof Game !== 'undefined' && Game.ready) start();

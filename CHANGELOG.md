@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0 — 2026-09-30
+
+- **Tabs** at the top of the panel: Autoclickers, Graphs, Settings.
+- **CpS graph:** live, adjustable window (1 m–3 h), smoothing, log scale, unbuffed / production / with-clicking lines,
+  measured click income, pause and clear.
+- **Effect shading:** every active buff as a coloured, stackable band with hover details; golden / wrath / reindeer /
+  ascension markers.
+- History recorder (session-only, rolling 4 h) with a setting to turn it off.
+- Repo: CI check, MIT license, Prettier/EditorConfig, `npm run check`, docs and screenshots.
+
 ## 0.2.0 — 2026-09-29
 
 First version as a proper add-on (was a single-line bookmarklet). Renamed from Cookie Agent to CookieMgr.

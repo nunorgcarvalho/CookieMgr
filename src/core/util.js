@@ -17,7 +17,7 @@ CA.Util = {
   },
 
   escapeHtml(str) {
-    return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   },
 
   /** Plays one of the game's built-in sounds, e.g. 'snd/tick.mp3'. Never throws. */

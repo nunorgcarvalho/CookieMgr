@@ -41,14 +41,31 @@ CA.UI.Menu = (() => {
     );
   }
 
-  function html() {
-    const clickers = CA.Autoclickers.list();
+  // ---- tabs ----------------------------------------------------------------------
+
+  const TABS = [
+    { id: 'clickers', label: 'Autoclickers' },
+    { id: 'graphs', label: 'Graphs' },
+    { id: 'settings', label: 'Settings' },
+  ];
+  const currentTab = () => {
+    const t = CA.Settings.get('tab');
+    return TABS.some((x) => x.id === t) ? t : 'clickers';
+  };
+
+  function tabBar() {
     return (
-      '<div class="close menuClose" data-ca="close">x</div>' +
-      '<div id="CookieMgrMenu">' +
-      '<div class="section">CookieMgr</div>' +
-      `<div class="ca-tagline">v${CA.VERSION} &middot; automation &amp; insights for your bakery</div>` +
-      // --- Autoclickers ---
+      '<div class="ca-tabs" role="tablist">' +
+      TABS.map(
+        (t) =>
+          `<button type="button" role="tab" class="ca-tabbtn" data-ca="tab" data-tab="${t.id}" data-tab-btn="${t.id}">${t.label}</button>`
+      ).join('') +
+      '</div>'
+    );
+  }
+
+  function clickersPage() {
+    return (
       '<div class="ca-card">' +
       '<div class="ca-card-head">' +
       '<div class="ca-card-title">Autoclickers</div>' +
@@ -64,24 +81,54 @@ CA.UI.Menu = (() => {
       C.hotkey('clickers.toggleAll') +
       '</div>' +
       '</div>' +
-      `<div class="ca-list">${clickers.map(clickerRow).join('')}</div>` +
+      `<div class="ca-list">${CA.Autoclickers.list().map(clickerRow).join('')}</div>` +
       '</div>' +
-      // --- Settings ---
       '<div class="ca-card">' +
-      '<div class="ca-card-head"><div class="ca-card-title">Settings</div></div>' +
-      `<div class="ca-list">${CA.Settings.optionsIn('autoclickers').map(optionRow).join('')}` +
+      '<div class="ca-card-head"><div class="ca-card-title">Options</div></div>' +
+      `<div class="ca-list">${CA.Settings.optionsIn('autoclickers').map(optionRow).join('')}</div>` +
+      '</div>'
+    );
+  }
+
+  function settingsPage() {
+    return (
+      '<div class="ca-card">' +
+      '<div class="ca-card-head"><div class="ca-card-title">General</div></div>' +
+      '<div class="ca-list">' +
+      CA.Settings.optionsIn('general').map(optionRow).join('') +
       '<div class="ca-row ca-row-option">' +
       '<div class="ca-row-text"><div class="ca-row-name">Open / close this panel</div>' +
       '<div class="ca-row-desc">Optional hotkey for the CookieMgr panel.</div></div>' +
       C.hotkey('panel.toggle') +
       '</div>' +
+      '<div class="ca-row ca-row-option">' +
+      '<div class="ca-row-text"><div class="ca-row-name">Recorded history</div>' +
+      '<div class="ca-row-desc" data-ca-history-info></div></div>' +
+      C.button('Clear', 'data-ca="gclear"', 'ca-btn-small') +
+      '</div>' +
+      '<div class="ca-row ca-row-option">' +
+      '<div class="ca-row-text"><div class="ca-row-name">Hotkeys</div>' +
+      '<div class="ca-row-desc">Click a key chip, then press the new key. <kbd>Esc</kbd> cancels, <kbd>Backspace</kbd> removes it; modifiers work too.</div></div>' +
+      C.button('Reset to defaults', 'data-ca="reset-hotkeys"', 'ca-btn-small') +
       '</div>' +
       '</div>' +
-      // --- Footer ---
+      '</div>' +
       '<div class="ca-footer">' +
-      '<div><b>Hotkeys:</b> click a key, then press the new one. <kbd>Esc</kbd> cancels, <kbd>Backspace</kbd> removes it. Modifiers (Shift, Ctrl, Alt) work too.</div>' +
+      `<div>CookieMgr v${CA.VERSION} &middot; <a href="https://github.com/nunorgcarvalho/CookieMgr" target="_blank" rel="noopener">GitHub</a></div>` +
       '<div>Settings are stored inside your Cookie Clicker save.</div>' +
-      `<div class="ca-footer-actions">${C.button('Reset hotkeys to defaults', 'data-ca="reset-hotkeys"', 'ca-btn-small')}</div>` +
+      '</div>'
+    );
+  }
+
+  function html() {
+    const tab = currentTab();
+    return (
+      '<div class="close menuClose" data-ca="close">x</div>' +
+      '<div id="CookieMgrMenu">' +
+      '<div class="section">CookieMgr</div>' +
+      tabBar() +
+      `<div class="ca-page" data-page="${tab}">` +
+      (tab === 'clickers' ? clickersPage() : tab === 'graphs' ? CA.UI.Graph.html() : settingsPage()) +
       '</div>' +
       '</div>'
     );
@@ -90,7 +137,9 @@ CA.UI.Menu = (() => {
   function render() {
     const menu = document.getElementById('menu');
     if (!menu) return;
+    CA.UI.Graph.unmount();
     menu.innerHTML = html();
+    if (currentTab() === 'graphs') CA.UI.Graph.mount(menu.querySelector('.ca-page'));
     sync();
   }
 
@@ -110,10 +159,35 @@ CA.UI.Menu = (() => {
     const total = CA.Autoclickers.list().length;
     const active = CA.Autoclickers.activeCount();
     const pill = root.querySelector('[data-ca-count]');
-    pill.textContent = `${active} / ${total} running`;
-    pill.classList.toggle('on', active > 0);
-    root.querySelector('[data-ca="all-on"]').disabled = active === total;
-    root.querySelector('[data-ca="all-off"]').disabled = active === 0;
+    if (pill) {
+      pill.textContent = `${active} / ${total} running`;
+      pill.classList.toggle('on', active > 0);
+      root.querySelector('[data-ca="all-on"]').disabled = active === total;
+      root.querySelector('[data-ca="all-off"]').disabled = active === 0;
+    }
+
+    const tab = currentTab();
+    root.querySelectorAll('[data-tab-btn]').forEach((b) => {
+      const on = b.dataset.tabBtn === tab;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-selected', String(on));
+    });
+
+    // chips / pills bound to a setting
+    root.querySelectorAll('[data-pressed-key]').forEach((el) => {
+      const v = CA.Settings.get(el.dataset.pressedKey);
+      const on = 'pressedVal' in el.dataset ? String(v) === el.dataset.pressedVal : !!v;
+      el.classList.toggle('on', on);
+      el.setAttribute('aria-pressed', String(on));
+    });
+
+    const info = root.querySelector('[data-ca-history-info]');
+    if (info) {
+      const n = CA.History.samples.length;
+      const span = n < 120 ? `${n} seconds` : n < 7200 ? `${Math.round(n / 60)} minutes` : `${(n / 3600).toFixed(1)} hours`;
+      const fx = CA.History.intervals.length;
+      info.textContent = n ? `${span} of CpS data and ${fx} effect${fx === 1 ? '' : 's'} recorded this session.` : 'Nothing recorded yet.';
+    }
 
     root.querySelectorAll('[data-option]').forEach((row) => {
       setSwitch(row.querySelector('.ca-switch'), !!CA.Settings.get(row.dataset.option));
@@ -176,6 +250,28 @@ CA.UI.Menu = (() => {
         CA.Settings.set(key, next);
         break;
       }
+      case 'tab':
+        CA.Util.sound('snd/tick.mp3');
+        CA.Settings.set('tab', t.dataset.tab);
+        render();
+        break;
+      case 'gwin':
+        CA.Util.sound('snd/tick.mp3');
+        CA.Settings.set('graphWindow', Number(t.dataset.val));
+        break;
+      case 'gsmooth':
+        CA.Util.sound('snd/tick.mp3');
+        CA.Settings.set('graphSmooth', Number(t.dataset.val));
+        break;
+      case 'gpause':
+        CA.Util.sound('snd/tick.mp3');
+        CA.UI.Graph.setPaused(!CA.UI.Graph.isPaused());
+        break;
+      case 'gclear':
+        CA.Util.sound('snd/tick.mp3');
+        CA.History.clear();
+        sync();
+        break;
       case 'bind': {
         const id = t.dataset.action;
         CA.Util.sound('snd/tick.mp3');
@@ -208,6 +304,7 @@ CA.UI.Menu = (() => {
 
   function init() {
     CA.Actions.register({ id: 'panel.toggle', name: 'Open / close panel', group: 'general', defaultKey: '', run: toggle });
+    CA.Settings.defineOption({ key: 'tab', group: 'ui', name: 'Panel tab', desc: '', default: 'clickers' });
 
     // Game.resPath points at wherever the game serves its images from (CDN on the web, local on Steam).
     CA.Util.injectCss('CookieMgrStyles', CA.CSS.replace(/url\(img\//g, `url(${CA.Util.res('img/')}`));
@@ -224,7 +321,10 @@ CA.UI.Menu = (() => {
     // Keep the tab highlight in sync, and stop listening for keys when leaving.
     CA.Util.wrap(Game, 'ShowMenu', (original, args, self) => {
       const result = original.apply(self, args);
-      if (!isOpen()) CA.Hotkeys.cancelCapture();
+      if (!isOpen()) {
+        CA.Hotkeys.cancelCapture();
+        CA.UI.Graph.unmount();
+      }
       CA.UI.Tab.update();
       return result;
     });
@@ -233,7 +333,9 @@ CA.UI.Menu = (() => {
     if (menu) menu.addEventListener('click', onClick);
 
     const refresh = () => {
-      if (isOpen()) sync();
+      if (!isOpen()) return;
+      sync();
+      if (currentTab() === 'graphs') CA.UI.Graph.tick();
     };
     CA.Events.on('clickers', refresh);
     CA.Events.on('settings', refresh);

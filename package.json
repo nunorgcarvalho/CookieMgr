@@ -1,19 +1,34 @@
 {
   "name": "cookie-mgr",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "CookieMgr: a Cookie Clicker add-on for automating tasks and visualizing data.",
   "private": true,
   "type": "module",
+  "license": "MIT",
+  "author": "Nuno Carvalho",
+  "homepage": "https://github.com/nunorgcarvalho/CookieMgr#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nunorgcarvalho/CookieMgr.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nunorgcarvalho/CookieMgr/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "build": "node build.mjs",
+    "check": "node build.mjs --check",
     "watch": "node build.mjs --watch",
     "serve": "node build.mjs --watch --serve"
   },
   "keywords": [
-    "Cookie Clicker",
+    "cookie-clicker",
     "mod",
     "addon",
-    "autoclicker"
-  ],
-  "license": "MIT"
+    "autoclicker",
+    "bookmarklet",
+    "graph"
+  ]
 }

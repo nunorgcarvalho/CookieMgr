@@ -29,6 +29,8 @@ const mod = {
     const hadLegacy = removeLegacyBookmarklet();
 
     CA.Autoclickers.init();
+    CA.History.init();
+    CA.UI.Graph.init();
     CA.Hotkeys.init();
     CA.Ascension.init();
     CA.UI.Menu.init();
@@ -37,7 +39,9 @@ const mod = {
 
     CA.Util.notify(
       `CookieMgr v${CA.VERSION} loaded`,
-      hadLegacy ? 'Replaced the old v0.1 bookmarklet. Open the tab on the left beam for settings.' : 'Open the tab on the left beam for settings.',
+      hadLegacy
+        ? 'Replaced the old v0.1 bookmarklet. Open the tab on the left beam for settings.'
+        : 'Open the tab on the left beam for settings.',
       CA.ICON,
       4
     );
@@ -58,11 +62,13 @@ function register() {
 }
 
 if (window.CookieMgr) {
-  if (typeof Game !== 'undefined' && Game.Notify) Game.Notify('CookieMgr', 'Already loaded — reload the page to load a new version.', CA.ICON, 3, 1);
+  if (typeof Game !== 'undefined' && Game.Notify)
+    Game.Notify('CookieMgr', 'Already loaded — reload the page to load a new version.', CA.ICON, 3, 1);
 } else {
   window.CookieMgr = CA; // handy for debugging from the console
   const start = () => {
-    if (typeof Steam !== 'undefined') setTimeout(register, 2000); // same delay Cookie Monster uses on Steam
+    if (typeof Steam !== 'undefined')
+      setTimeout(register, 2000); // same delay Cookie Monster uses on Steam
     else register();
   };
   if (typeof Game !== 'undefined' && Game.ready) start();

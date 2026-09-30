@@ -2,6 +2,7 @@
 //
 //   node build.mjs            -> writes dist/CookieMgr.js
 //   node build.mjs --watch    -> rebuilds whenever src/ changes
+//   node build.mjs --check    -> exits 1 if dist/CookieMgr.js is out of date (used by CI)
 //   node build.mjs --serve    -> also serves dist/ on http://localhost:8080 (for local testing)
 //
 // Source files are plain scripts that attach themselves to a shared `CA` namespace.
@@ -26,14 +27,16 @@ const MODULES = [
   'core/hotkeys.js',
   'core/ascension.js',
   'features/autoclickers.js',
+  'features/history.js',
   'ui/components.js',
   'ui/tab.js',
+  'ui/graph.js',
   'ui/menu.js',
   'main.js',
 ];
 const STYLES = ['ui/styles.css'];
 
-function build() {
+function render() {
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
   const css = STYLES.map((f) => fs.readFileSync(path.join(SRC, f), 'utf8')).join('\n');
 
@@ -50,10 +53,15 @@ function build() {
   }
   parts.push('})();\n');
 
+  return { code: parts.join('\n'), version: pkg.version };
+}
+
+function build() {
+  const { code, version } = render();
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
-  fs.writeFileSync(OUT, parts.join('\n'));
+  fs.writeFileSync(OUT, code);
   const kb = (fs.statSync(OUT).size / 1024).toFixed(1);
-  console.log(`[build] dist/CookieMgr.js  v${pkg.version}  ${kb} KB`);
+  console.log(`[build] dist/CookieMgr.js  v${version}  ${kb} KB`);
 }
 
 function safeBuild() {
@@ -65,6 +73,17 @@ function safeBuild() {
 }
 
 const args = new Set(process.argv.slice(2));
+
+if (args.has('--check')) {
+  const current = fs.existsSync(OUT) ? fs.readFileSync(OUT, 'utf8') : '';
+  if (current === render().code) {
+    console.log('[check] dist/CookieMgr.js is up to date');
+    process.exit(0);
+  }
+  console.error('[check] dist/CookieMgr.js is stale — run `npm run build` and commit the result');
+  process.exit(1);
+}
+
 safeBuild();
 
 if (args.has('--watch') || args.has('--serve')) {

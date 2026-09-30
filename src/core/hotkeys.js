@@ -5,16 +5,49 @@
 // bindings stable across keyboard layouts and Shift states.
 
 CA.Hotkeys = (() => {
-  const MODIFIER_CODES = ['ShiftLeft', 'ShiftRight', 'ControlLeft', 'ControlRight', 'AltLeft', 'AltRight', 'MetaLeft', 'MetaRight', 'CapsLock'];
+  const MODIFIER_CODES = [
+    'ShiftLeft',
+    'ShiftRight',
+    'ControlLeft',
+    'ControlRight',
+    'AltLeft',
+    'AltRight',
+    'MetaLeft',
+    'MetaRight',
+    'CapsLock',
+  ];
   const RESERVED = ['Ctrl+KeyS', 'Ctrl+KeyO']; // the game's own save/import shortcuts
 
   const PRETTY = {
-    Space: 'Space', Enter: 'Enter', Tab: 'Tab', Backquote: '`', Minus: '-', Equal: '=',
-    BracketLeft: '[', BracketRight: ']', Backslash: '\\', Semicolon: ';', Quote: "'",
-    Comma: ',', Period: '.', Slash: '/', ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→',
-    PageUp: 'PgUp', PageDown: 'PgDn', Insert: 'Ins', Home: 'Home', End: 'End',
-    NumpadAdd: 'Num +', NumpadSubtract: 'Num -', NumpadMultiply: 'Num *', NumpadDivide: 'Num /',
-    NumpadDecimal: 'Num .', NumpadEnter: 'Num Enter',
+    Space: 'Space',
+    Enter: 'Enter',
+    Tab: 'Tab',
+    Backquote: '`',
+    Minus: '-',
+    Equal: '=',
+    BracketLeft: '[',
+    BracketRight: ']',
+    Backslash: '\\',
+    Semicolon: ';',
+    Quote: "'",
+    Comma: ',',
+    Period: '.',
+    Slash: '/',
+    ArrowUp: '↑',
+    ArrowDown: '↓',
+    ArrowLeft: '←',
+    ArrowRight: '→',
+    PageUp: 'PgUp',
+    PageDown: 'PgDn',
+    Insert: 'Ins',
+    Home: 'Home',
+    End: 'End',
+    NumpadAdd: 'Num +',
+    NumpadSubtract: 'Num -',
+    NumpadMultiply: 'Num *',
+    NumpadDivide: 'Num /',
+    NumpadDecimal: 'Num .',
+    NumpadEnter: 'Num Enter',
   };
 
   let capture = null; // { actionId, onDone }
