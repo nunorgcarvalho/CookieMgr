@@ -34,6 +34,7 @@ const MODULES = [
   'features/stockLog.js',
   'features/history.js',
   'ui/components.js',
+  'ui/chart.js',
   'ui/tab.js',
   'ui/graph.js',
   'ui/stockGraph.js',

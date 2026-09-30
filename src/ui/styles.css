@@ -856,6 +856,59 @@
   font-size: 12px;
 }
 
+#CookieMgrMenu .cm-tickbars {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 8px 8px;
+}
+#CookieMgrMenu .cm-tickbar {
+  flex: 1 1 90px;
+  min-width: 70px;
+  padding: 5px 6px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  font-size: 10px;
+}
+#CookieMgrMenu .cm-tickbar-time {
+  color: #93866f;
+  text-align: center;
+  margin-bottom: 3px;
+  white-space: nowrap;
+}
+#CookieMgrMenu .cm-tickbar-row {
+  height: 5px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+  margin-bottom: 2px;
+  overflow: hidden;
+}
+#CookieMgrMenu .cm-tickbar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+}
+#CookieMgrMenu .cm-tickbar-buy {
+  background: #8f8;
+}
+#CookieMgrMenu .cm-tickbar-sell {
+  background: #f88;
+}
+#CookieMgrMenu .cm-tickbar-net {
+  text-align: center;
+  font-weight: bold;
+  margin-top: 3px;
+}
+#CookieMgrMenu .cm-ticks-empty {
+  margin: 0 8px 8px;
+  padding: 10px;
+  text-align: center;
+  font-style: italic;
+  color: #7f735f;
+  font-size: 11px;
+}
+
 #CookieMgrMenu .cm-ticker {
   margin: 8px 8px 10px;
   padding: 6px 0;

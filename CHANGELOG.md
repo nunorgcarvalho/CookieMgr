@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.1.0 — 2026-09-30
+
 - **Stock market tab:** the stock chart moved off the Graphs tab onto its own new **Stock market** tab, alongside a new
   autoclicker — **buy fast/slow rise, sell the rest**: each tick it buys the max it can afford of fast-rising stocks,
   then slow-rising ones, and sells anything it holds that isn't currently rising. It is deliberately kept out of "All
@@ -11,6 +13,25 @@
   code, so both show up), plus a scrollable transaction history table (time, action, stock, shares, price, total).
   Session-only for now.
 - **CPS tab:** the Graphs tab is renamed **CPS**.
+- **Shared chart framework:** the CPS graph, stock chart and Bank-embedded chart now share one
+  core (`ui/chart.js`) for canvas sizing, dynamic axis padding, and time bucketing — less
+  duplicated code, and the fix below applies to every chart at once.
+- **Scrollable graphs:** the CPS and stock charts can now be dragged (or scrolled sideways) to
+  look further back in time, independent of the live edge; a "Jump to live" control snaps back.
+  Pausing is now just a manual way to freeze the same view a drag would.
+- **Fixed bar-jitter while live or scrolling:** the CpS graph's bars are bucketed on an absolute
+  time grid instead of one relative to the visible window, so live tracking (or panning) no
+  longer reshuffles which raw samples land in which bar — bars only slide into/out of view, they
+  don't reflow.
+- **Average line:** the CpS graph now draws a dashed horizontal line at the average CpS for
+  whatever period is currently shown, labelled with the value.
+- **Fast golden cookie notifications:** popping a golden/wrath cookie (or a reindeer) now shows
+  an immediate, short-lived notification of its own; can be turned off in Settings ("Golden
+  cookie notifications"). Each pop's event now also records which buff(s) it granted (name,
+  duration, multipliers) as structured data, not just the scraped popup text — for future use.
+- **Stock ticker summary:** the Stock market tab's transaction history now leads with session
+  stat tiles (Bought, Sold, Spent, Earned, Net), plus a row of compact bar tiles for the last 5
+  one-second ticks that had a trade (bought vs. sold, and net cookies for that tick).
 
 ## 1.0.0 — 2026-09-30
 

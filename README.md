@@ -6,7 +6,7 @@ A [Cookie Clicker](https://orteil.dashnet.org/cookieclicker/) add-on for automat
 It loads like [Cookie Monster](https://github.com/CookieMonsterTeam/CookieMonster): a one-line bookmarklet pulls the
 latest build from GitHub Pages, so pushing to this repo updates everyone's add-on.
 
-## Features (v1.0)
+## Features (v1.1)
 
 The **CookieMgr** tab sits on the left beam between the cookie panel and the middle panel. It opens the CookieMgr panel
 in the game's menu area, with four tabs along the top: **Autoclickers**, **CPS**, **Stock market** and **Settings**.
@@ -22,7 +22,9 @@ A live cookies-per-second chart, redrawn every second.
 - **Stacked bars:** each bar is Production (what the game shows as CpS) with Clicking stacked on top, so the bar's full
   height is your combined income. Clicking is measured from your actual click income, so it is only counted when you
   really clicked (or an autoclicker did). A dashed **Unbuffed CpS** line (production with every temporary effect
-  removed) is always drawn over the bars.
+  removed) is always drawn over the bars, along with a dashed **average** line for whatever period is shown.
+- **Scrollable:** drag the chart (or scroll it sideways) to look further back in time — this and the Stock market
+  chart share the same underlying framework. A "Jump to live" control (also reachable via Pause) snaps back to now.
 - **Effect shading:** every active golden-cookie effect (Frenzy, Click frenzy, Elder frenzy, Dragonflight, Clot, and so on)
   is a coloured band behind the chart. Overlapping effects stack in separate lanes. Hover a band for its description,
   multipliers, duration and remaining time; effects that do not change CpS are shown too.
@@ -57,10 +59,13 @@ The **stock market buy** autoclicker (see below) lives on its own Stock market t
 
 ### Settings
 
-Turn everything off when ascending (default on), notifications, remember autoclicker states across reloads, record
-history, an optional hotkey to open the panel, reset hotkeys, checking for updates, and stock market indicators.
-Everything is stored in the normal Cookie Clicker save through the official mod API (`Game.registerMod`), so it
-survives exports and imports.
+Turn everything off when ascending (default on), notifications, golden cookie notifications (a quick popup the moment
+one is popped), remember autoclicker states across reloads, record history, an optional hotkey to open the panel,
+reset hotkeys, checking for updates, and stock market indicators. Everything is stored in the normal Cookie Clicker
+save through the official mod API (`Game.registerMod`), so it survives exports and imports.
+
+Every golden/wrath cookie and reindeer pop is also recorded with which buff(s) it granted (name, duration,
+multipliers) as structured data, not just a text summary — for future use.
 
 ### Staying up to date
 
@@ -87,10 +92,13 @@ The **Stock market** tab in the CookieMgr panel has:
 - The stock chart, defaulting to your **portfolio value** over time (a value line plus a cost-basis line, so the gap
   between them is your unrealized gain) with stat tiles for Value, Unrealized, Realized and Total gain — switch to
   "Per stock" for the individual price lines instead. Cost basis is tracked from whenever the mod is loaded, so it
-  only knows about trades made since then.
-- A **transaction history** table (time, buy/sell, stock, shares, price, total) of every trade this session, and a
-  **scrolling ticker** underneath showing them as they happen — from the autoclicker above or from clicking the Bank's
-  own buy/sell buttons yourself, both show up the same way.
+  only knows about trades made since then. Drag the chart (or scroll it sideways) to look further back; "Jump to
+  live" (also reachable via Pause) snaps back to now.
+- A **transaction history** table (time, buy/sell, stock, shares, price, total) of every trade this session, led by
+  session stat tiles (Bought, Sold, Spent, Earned, Net); a row of compact bar tiles for the **last 5 one-second
+  ticks** that had a trade (bought vs. sold, and net cookies, for each); and a **scrolling ticker** at the bottom
+  showing every trade as it happens — from the autoclicker above or from clicking the Bank's own buy/sell buttons
+  yourself, both show up the same way.
 
 ## Using it
 
@@ -159,6 +167,7 @@ src/
     history.js       samples CpS every second, tracks buffs/events, persists to localStorage
   ui/
     components.js    HTML snippets: switch, hotkey chip, icon, button
+    chart.js         shared chart core: canvas sizing, axis padding, time bucketing, scroll/live view
     tab.js           the side tab on the left beam
     graph.js         the CpS chart (canvas), toolbar, tooltips
     stockGraph.js    the Stock-market-tab chart: portfolio value/gains or per-stock prices

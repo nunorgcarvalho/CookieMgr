@@ -160,7 +160,11 @@ CA.History = (() => {
 
   // ---- one-off events -------------------------------------------------------------
 
-  /** Wraps a shimmer type's popFunc so we can log what each pop actually did. */
+  const EVENT_ICON = { golden: [10, 14], wrath: [15, 5], reindeer: [12, 9] };
+
+  /** Wraps a shimmer type's popFunc so we can log what each pop actually did, notify about it
+   *  right away, and — for possible future use — record exactly which buffs it granted
+   *  (name/duration/multipliers), not just the scraped popup text. */
   function watchShimmers() {
     if (!Game.shimmerTypes) return;
     const kinds = { golden: 'golden', reindeer: 'reindeer' };
@@ -171,6 +175,7 @@ CA.History = (() => {
       st.popFunc = function (me) {
         if (!CA.Settings.get('trackHistory')) return original.apply(this, arguments);
         const before = Game.cookies;
+        const buffsBefore = Object.keys(Game.buffs || {});
         const texts = [];
         const popup = Game.Popup;
         const notify = Game.Notify;
@@ -191,12 +196,29 @@ CA.History = (() => {
         }
         try {
           const wrath = type === 'golden' && me && me.wrath;
-          addEvent({
-            kind: wrath ? 'wrath' : type,
-            title: type === 'reindeer' ? 'Reindeer' : wrath ? 'Wrath cookie' : 'Golden cookie',
-            text: texts.filter(Boolean).slice(0, 2).join(' — '),
-            gain: Game.cookies - before,
-          });
+          const kind = wrath ? 'wrath' : type;
+          const title = type === 'reindeer' ? 'Reindeer' : wrath ? 'Wrath cookie' : 'Golden cookie';
+          const text = texts.filter(Boolean).slice(0, 2).join(' — ');
+          const gain = Game.cookies - before;
+          // Buffs that didn't exist a moment ago must have come from this pop — structured data
+          // (name/duration/multipliers) rather than just the free-text popup, for future use.
+          const effects = Object.keys(Game.buffs || {})
+            .filter((name) => !buffsBefore.includes(name))
+            .map((name) => {
+              const b = Game.buffs[name];
+              return {
+                name,
+                duration: (b.maxTime || 0) / FPS,
+                multCps: typeof b.multCpS === 'number' ? b.multCpS : 1,
+                multClick: typeof b.multClick === 'number' ? b.multClick : 1,
+              };
+            });
+          addEvent({ kind, title, text, gain, effects });
+          if (CA.Settings.get('goldenNotify')) {
+            const beautify = (v) => (typeof Beautify === 'function' ? Beautify(v) : Math.round(v).toString());
+            const desc = text || (Math.abs(gain) >= 1 ? `${gain >= 0 ? '+' : '−'}${beautify(Math.abs(gain))} cookies` : '');
+            CA.Util.notify(title, desc, EVENT_ICON[kind] || CA.ICON, 1.5);
+          }
         } catch (e) {
           /* never break the game over a log entry */
         }
@@ -334,6 +356,13 @@ CA.History = (() => {
       group: 'general',
       name: 'Record history',
       desc: 'Keeps a rolling 4-hour record of your CpS and active effects for the graphs, saved across page reloads.',
+      default: true,
+    });
+    CA.Settings.defineOption({
+      key: 'goldenNotify',
+      group: 'general',
+      name: 'Golden cookie notifications',
+      desc: 'A quick notification the moment a golden or wrath cookie (or reindeer) is popped.',
       default: true,
     });
     restore();

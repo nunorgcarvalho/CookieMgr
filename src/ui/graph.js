@@ -41,10 +41,10 @@ CA.UI.Graph = (() => {
   let timer = null;
   let hover = null; // { x, y } in css px
   let padL = 54; // dynamic left padding — last frame's width, refined each draw()
-  let paused = false;
-  let pausedAt = 0;
   let layout = null; // hit-test info from the last draw
+  let panCtl = null; // from CA.UI.Chart.createView().attachPan(), set on mount
 
+  const view = CA.UI.Chart.createView(); // module-level: survives tab switches, not just one mount
   const S = () => CA.Settings;
 
   // ---- formatting ----------------------------------------------------------------
@@ -90,7 +90,7 @@ CA.UI.Graph = (() => {
   // ---- data preparation ----------------------------------------------------------
 
   const windowMs = () => Math.max(10, S().get('graphWindow')) * 1000;
-  const endTime = () => (paused ? pausedAt : Date.now());
+  const endTime = () => view.getEnd(Date.now());
 
   /** Rolling mean over the previous k samples (k <= 1 leaves the values alone). */
   function smooth(values, k) {
@@ -132,29 +132,6 @@ CA.UI.Graph = (() => {
     });
   }
 
-  /** Buckets samples into `barCount` equal time slices, averaging cps/click per bucket.
-   *  A bucket with no samples in it is left out (drawn as a gap) rather than interpolated. */
-  function buildBars(list, cpsOf, clickOf, t0, W, barCount) {
-    const bars = new Array(barCount);
-    for (let i = 0; i < barCount; i++) bars[i] = { sumCps: 0, sumClick: 0, n: 0 };
-    const bucketMs = W / barCount;
-    list.forEach((s, i) => {
-      let idx = Math.floor((s.t - t0) / bucketMs);
-      if (idx < 0) idx = 0;
-      else if (idx >= barCount) idx = barCount - 1;
-      const b = bars[idx];
-      b.sumCps += cpsOf(i);
-      b.sumClick += clickOf(i);
-      b.n++;
-    });
-    return bars.map((b, i) => ({
-      t0: t0 + i * bucketMs,
-      t1: t0 + (i + 1) * bucketMs,
-      cps: b.n ? b.sumCps / b.n : null,
-      click: b.n ? b.sumClick / b.n : null,
-    }));
-  }
-
   function assignLanes(ivs, now) {
     const sorted = ivs.slice().sort((a, b) => a.start - b.start);
     const ends = [];
@@ -170,21 +147,9 @@ CA.UI.Graph = (() => {
 
   // ---- drawing -------------------------------------------------------------------
 
-  function fitCanvas() {
-    const dpr = window.devicePixelRatio || 1;
-    const w = canvas.clientWidth;
-    const h = canvas.clientHeight;
-    if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
-      canvas.width = Math.round(w * dpr);
-      canvas.height = Math.round(h * dpr);
-    }
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    return { w, h };
-  }
-
   function draw() {
     if (!canvas || !canvas.isConnected) return;
-    const { w, h } = fitCanvas();
+    const { w, h } = CA.UI.Chart.fitCanvas(canvas, ctx);
     if (w < 50 || h < 50) return;
     ctx.clearRect(0, 0, w, h);
 
@@ -230,7 +195,14 @@ CA.UI.Graph = (() => {
     // Capped so a bucket is never narrower than one sample (~1s) — otherwise a short window
     // would ask for more buckets than there is data, striping every other bar empty.
     const barCount = Math.max(12, Math.min(240, Math.round(plot.w / BAR_PX), Math.floor(W / 1000)));
-    const bars = buildBars(list.slice(cutoff), (i) => cpsVals[i + cutoff], (i) => clickVals[i + cutoff], t0, W, barCount);
+    const bucketMs = W / barCount;
+    const bars = CA.UI.Chart.alignedBuckets(
+      list.slice(cutoff),
+      { cps: (i) => cpsVals[i + cutoff], click: (i) => clickVals[i + cutoff] },
+      t0,
+      t1,
+      bucketMs
+    );
 
     // --- y scale
     const log = S().get('graphLog');
@@ -243,7 +215,6 @@ CA.UI.Graph = (() => {
       })
     );
     bars.forEach((b) => {
-      if (b.cps == null) return;
       const top = b.cps + b.click;
       if (top > maxV) maxV = top;
       if (b.cps > 0 && b.cps < minPos) minPos = b.cps;
@@ -269,8 +240,7 @@ CA.UI.Graph = (() => {
     // Left padding fits whatever these tick labels actually render as (long-form Numbers
     // preferences, decillion+ names, ...) instead of a fixed guess that clips them.
     const tickLabels = ticks.map((v) => beautify(v, 0));
-    const labelW = CA.Util.maxTextWidth(ctx, '10px Tahoma, Arial, sans-serif', tickLabels);
-    padL = Math.max(MIN_PAD_L, Math.round(labelW) + PAD_L_MARGIN);
+    padL = CA.UI.Chart.dynamicPadLeft(ctx, '10px Tahoma, Arial, sans-serif', tickLabels, MIN_PAD_L, PAD_L_MARGIN);
     plot = { x: padL, y: PAD.t, w: w - padL - PAD.r, h: h - PAD.t - PAD.b };
     xOf = (t) => plot.x + ((t - t0) / W) * plot.w;
 
@@ -348,7 +318,6 @@ CA.UI.Graph = (() => {
 
     const yBase = plot.y + chartH;
     bars.forEach((b) => {
-      if (b.cps == null) return;
       const xL = xOf(b.t0);
       const xR = xOf(b.t1);
       const full = xR - xL;
@@ -384,6 +353,30 @@ CA.UI.Graph = (() => {
     });
     ctx.setLineDash([]);
     ctx.restore();
+
+    // --- average line for the shown period
+    const avgStats = CA.History.stats(t0, t1);
+    if (avgStats.n > 0) {
+      const yAvg = Math.round(yOf(avgStats.avg)) + 0.5;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(plot.x, plot.y - 4, plot.w, chartH + 8);
+      ctx.clip();
+      ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2, 3]);
+      ctx.beginPath();
+      ctx.moveTo(plot.x, yAvg);
+      ctx.lineTo(plot.x + plot.w, yAvg);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.font = 'bold 9px Tahoma, Arial, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = yAvg - plot.y < 12 ? 'top' : 'bottom';
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      ctx.fillText(`avg ${beautify(avgStats.avg)}/s`, plot.x + 4, yAvg + (yAvg - plot.y < 12 ? 2 : -2));
+      ctx.restore();
+    }
 
     // --- effect lanes
     const laneRects = [];
@@ -453,8 +446,9 @@ CA.UI.Graph = (() => {
 
     layout = { plot, xOf, yOf, t0, t1, laneRects, evRects, hoverIv: null, chartH };
 
-    // --- hover
-    if (hover && hover.x >= plot.x && hover.x <= plot.x + plot.w && hover.y >= 0 && hover.y <= h) {
+    // --- hover (suppressed mid-drag so the tooltip doesn't fight with panning)
+    const dragging = panCtl && panCtl.isDragging();
+    if (!dragging && hover && hover.x >= plot.x && hover.x <= plot.x + plot.w && hover.y >= 0 && hover.y <= h) {
       drawHover(w, h, plot, t0, W, laneRects, evRects, list);
     } else if (tip) {
       tip.style.display = 'none';
@@ -536,7 +530,7 @@ CA.UI.Graph = (() => {
 
   function sampleTip(t, s) {
     const ago = (Date.now() - t) / 1000;
-    let h = `<div class="ca-tip-head">${clock(t, true)}<span>${paused || ago > 1.5 ? span(ago) + ' ago' : 'now'}</span></div>`;
+    let h = `<div class="ca-tip-head">${clock(t, true)}<span>${!view.isLive() || ago > 1.5 ? span(ago) + ' ago' : 'now'}</span></div>`;
     if (s) {
       const total = s.cps + s.click;
       h += row(SERIES.cps.color, SERIES.cps.name, beautify(s.cps) + '/s');
@@ -659,7 +653,7 @@ CA.UI.Graph = (() => {
       ) +
       '</div>' +
       '<div class="ca-chipgroup">' +
-      chip('', 'data-ca="gpause" data-ca-pause') +
+      chip('', 'data-ca="gpause" data-ca-pause', 'Drag the chart (or scroll it sideways) to look further back') +
       chip('Clear', 'data-ca="gclear"', 'Erase the recorded history') +
       '</div>' +
       '</div>' +
@@ -690,11 +684,11 @@ CA.UI.Graph = (() => {
     }
     const live = root.querySelector('[data-ca-live]');
     if (live) {
-      live.textContent = paused ? 'Paused' : 'Live';
-      live.classList.toggle('paused', paused);
+      live.textContent = view.isLive() ? 'Live' : 'Paused';
+      live.classList.toggle('paused', !view.isLive());
     }
     const pause = root.querySelector('[data-ca-pause]');
-    if (pause) pause.textContent = paused ? 'Resume' : 'Pause';
+    if (pause) pause.textContent = view.isLive() ? 'Pause' : 'Jump to live';
 
     const legend = root.querySelector('[data-ca-legend]');
     if (legend) {
@@ -744,6 +738,16 @@ CA.UI.Graph = (() => {
       observer = new ResizeObserver(() => draw());
       observer.observe(canvas);
     }
+    panCtl = view.attachPan(
+      canvas,
+      () => ({
+        windowMs: windowMs(),
+        plotWidthPx: (layout && layout.plot.w) || canvas.clientWidth,
+        liveNow: Date.now(),
+        minT: CA.History.samples[0] && CA.History.samples[0].t,
+      }),
+      draw
+    );
     timer = setInterval(tick, 250);
     tick();
   }
@@ -753,18 +757,20 @@ CA.UI.Graph = (() => {
     timer = null;
     if (observer) observer.disconnect();
     observer = null;
+    if (panCtl) panCtl.detach();
+    panCtl = null;
     root = canvas = ctx = tip = null;
     hover = null;
     layout = null;
   }
 
   function setPaused(p) {
-    if (p === paused) return;
-    paused = p;
-    pausedAt = Date.now();
+    if (p === !view.isLive()) return;
+    if (p) view.freeze(Date.now());
+    else view.resume();
     tick();
   }
-  const isPaused = () => paused;
+  const isPaused = () => !view.isLive();
 
   function init() {
     const S_ = CA.Settings;

@@ -1,20 +1,27 @@
-// Two views onto CA.StockLog's trade records, both on the Stock market tab: a scrolling ticker
-// (a running "here's what just got bought/sold" feed, auto or manual) and a scrollable
-// transaction history table (time, action, stock, shares, price, total).
+// Views onto CA.StockLog's trade records, all on the Stock market tab:
+//   - summary stat tiles (bought/sold/spent/earned/net) for the whole session
+//   - "tick bars": a compact bought/sold bar per each of the last 5 one-second ticks with trades
+//   - a scrollable transaction history table (time, action, stock, shares, price, total)
+//   - a scrolling ticker — a running "here's what just got bought/sold" feed, at the bottom
+// All four read the same underlying log, so a manual trade and an autoclicker trade show up
+// identically everywhere.
 
 CA.UI = CA.UI || {};
 
 CA.UI.StockLog = (() => {
   const TICK_MS = 1000;
-  const MAX_LOG_ROWS = 100; // the underlying log keeps more (CA.StockLog.MAX_RECORDS); this is just what's rendered
+  const MAX_LOG_ROWS = 100; // the underlying log keeps more (CA.StockLog's own cap); this is just what's rendered
   const MAX_TICKER_ITEMS = 30;
   const PX_PER_SEC = 55; // ticker scroll speed
+  const TICK_BUCKET_MS = 1000; // matches the stock-trader autoclicker's own cadence
+  const MAX_TICK_BARS = 5;
 
   let root = null;
   let timer = null;
   let lastCount = -1;
 
   const beautify = (v, floats) => (typeof Beautify === 'function' ? Beautify(v, floats == null ? 1 : floats) : Math.round(v).toString());
+  const signed = (v) => (v < 0 ? '-' : '+') + beautify(Math.abs(v));
   const esc = (s) => CA.Util.escapeHtml(s);
 
   function two(n) {
@@ -24,6 +31,92 @@ CA.UI.StockLog = (() => {
     const d = new Date(t);
     return `${two(d.getHours())}:${two(d.getMinutes())}:${two(d.getSeconds())}`;
   }
+
+  function statTile(label, value, sub) {
+    return `<div class="ca-stat"><div class="ca-stat-label">${label}</div><div class="ca-stat-value">${value}</div><div class="ca-stat-sub">${sub || '&nbsp;'}</div></div>`;
+  }
+
+  // ---- summary (whole session) ------------------------------------------------------
+
+  function summary() {
+    let bought = 0,
+      sold = 0,
+      spent = 0,
+      earned = 0,
+      buys = 0,
+      sells = 0;
+    CA.StockLog.list().forEach((r) => {
+      if (r.kind === 'buy') {
+        bought += r.shares;
+        spent += r.cookies;
+        buys++;
+      } else {
+        sold += r.shares;
+        earned += r.cookies;
+        sells++;
+      }
+    });
+    return { bought, sold, spent, earned, net: earned - spent, buys, sells };
+  }
+
+  function summaryHtml() {
+    const s = summary();
+    return (
+      statTile('Bought', beautify(s.bought), s.buys + (s.buys === 1 ? ' buy' : ' buys')) +
+      statTile('Sold', beautify(s.sold), s.sells + (s.sells === 1 ? ' sell' : ' sells')) +
+      statTile('Spent', beautify(s.spent)) +
+      statTile('Earned', beautify(s.earned)) +
+      statTile('Net', signed(s.net), 'earned − spent')
+    );
+  }
+
+  // ---- tick bars (last 5 one-second ticks that had a trade) -------------------------
+
+  function tickBuckets() {
+    const map = new Map();
+    CA.StockLog.list().forEach((r) => {
+      const idx = Math.floor(r.t / TICK_BUCKET_MS);
+      let b = map.get(idx);
+      if (!b) {
+        b = { idx, bought: 0, sold: 0, spent: 0, earned: 0 };
+        map.set(idx, b);
+      }
+      if (r.kind === 'buy') {
+        b.bought += r.shares;
+        b.spent += r.cookies;
+      } else {
+        b.sold += r.shares;
+        b.earned += r.cookies;
+      }
+    });
+    return [...map.values()]
+      .sort((a, b) => a.idx - b.idx)
+      .slice(-MAX_TICK_BARS);
+  }
+
+  function tickBarHtml(b, maxShares) {
+    const t = b.idx * TICK_BUCKET_MS;
+    const buyPct = Math.round((b.bought / maxShares) * 100);
+    const sellPct = Math.round((b.sold / maxShares) * 100);
+    const net = b.earned - b.spent;
+    return (
+      `<div class="cm-tickbar" title="${esc(clock(t))} — bought ${beautify(b.bought)}, sold ${beautify(b.sold)}">` +
+      `<div class="cm-tickbar-time">${clock(t)}</div>` +
+      `<div class="cm-tickbar-row"><span class="cm-tickbar-fill cm-tickbar-buy" style="width:${buyPct}%"></span></div>` +
+      `<div class="cm-tickbar-row"><span class="cm-tickbar-fill cm-tickbar-sell" style="width:${sellPct}%"></span></div>` +
+      `<div class="cm-tickbar-net ${net >= 0 ? 'cm-tx-buy' : 'cm-tx-sell'}">${signed(net)}</div>` +
+      '</div>'
+    );
+  }
+
+  function tickBarsHtml() {
+    const buckets = tickBuckets();
+    if (!buckets.length) return '<div class="cm-ticks-empty">No recent ticks with trades.</div>';
+    const maxShares = Math.max(1, ...buckets.map((b) => Math.max(b.bought, b.sold)));
+    return buckets.map((b) => tickBarHtml(b, maxShares)).join('');
+  }
+
+  // ---- ticker + transaction table -----------------------------------------------------
 
   function tickerItemHtml(e) {
     const arrow = e.kind === 'buy' ? '▲' : '▼';
@@ -48,6 +141,7 @@ CA.UI.StockLog = (() => {
     return (
       '<div class="ca-card">' +
       '<div class="ca-card-head"><div class="ca-card-title">Transaction history</div></div>' +
+      '<div class="ca-stats" data-cm-tx-stats></div>' +
       '<div class="cm-tx-wrap">' +
       '<table class="cm-tx-table">' +
       '<thead><tr><th>Time</th><th>Action</th><th>Stock</th><th>Shares</th><th>Price</th><th>Total</th></tr></thead>' +
@@ -56,10 +150,21 @@ CA.UI.StockLog = (() => {
       '<div class="cm-tx-empty" data-cm-tx-empty>No trades yet this session.</div>' +
       '</div>' +
       '</div>' +
+      '<div class="cm-tickbars" data-cm-tickbars title="Bought/sold per second, last 5 ticks with activity"></div>' +
       '<div class="cm-ticker" data-cm-ticker title="Every buy/sell, from the autoclicker or from clicking the Bank\'s own buttons">' +
       '<div class="cm-ticker-track" data-cm-ticker-track></div>' +
       '</div>'
     );
+  }
+
+  function renderStats() {
+    const box = root.querySelector('[data-cm-tx-stats]');
+    if (box) box.innerHTML = summaryHtml();
+  }
+
+  function renderTickBars() {
+    const box = root.querySelector('[data-cm-tickbars]');
+    if (box) box.innerHTML = tickBarsHtml();
   }
 
   function renderLog() {
@@ -95,6 +200,8 @@ CA.UI.StockLog = (() => {
     const count = CA.StockLog.list().length;
     if (count === lastCount) return;
     lastCount = count;
+    renderStats();
+    renderTickBars();
     renderLog();
     renderTicker();
   }

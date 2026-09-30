@@ -21,7 +21,9 @@ CA.UI.StockGraph = (() => {
   let hover = null;
   let padL = 54;
   let layout = null;
+  let panCtl = null;
 
+  const view = CA.UI.Chart.createView(); // module-level: survives tab switches
   const S = () => CA.Settings;
   const esc = (s) => CA.Util.escapeHtml(s);
   const beautify = (v, floats) => (typeof Beautify === 'function' ? Beautify(v, floats == null ? 1 : floats) : Math.round(v).toString());
@@ -48,6 +50,7 @@ CA.UI.StockGraph = (() => {
   }
 
   const mode = () => (S().get('stockGraphMode') === 'perStock' ? 'perStock' : 'portfolio');
+  const dragging = () => !!(panCtl && panCtl.isDragging());
 
   function visibleStocks() {
     const all = CA.Stocks.list();
@@ -55,18 +58,6 @@ CA.UI.StockGraph = (() => {
   }
 
   // ---- drawing -------------------------------------------------------------------
-
-  function fitCanvas() {
-    const dpr = window.devicePixelRatio || 1;
-    const w = canvas.clientWidth;
-    const h = canvas.clientHeight;
-    if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
-      canvas.width = Math.round(w * dpr);
-      canvas.height = Math.round(h * dpr);
-    }
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    return { w, h };
-  }
 
   /** Builds { x, w, yMin, yMax, yOf, ticks } for a set of values, sizing the left padding
    *  to whatever those tick labels actually render as (so they never clip). */
@@ -91,8 +82,13 @@ CA.UI.StockGraph = (() => {
     const ticks = [];
     for (let i = 0; i <= 4; i++) ticks.push(yMin + ((yMax - yMin) * i) / 4);
 
-    const labelW = CA.Util.maxTextWidth(ctx, FONT, ticks.map((v) => beautify(v, 0)));
-    padL = Math.max(MIN_PAD_L, Math.round(labelW) + PAD_L_MARGIN);
+    padL = CA.UI.Chart.dynamicPadLeft(
+      ctx,
+      FONT,
+      ticks.map((v) => beautify(v, 0)),
+      MIN_PAD_L,
+      PAD_L_MARGIN
+    );
     const x = padL;
     const pw = w - padL - PAD.r;
     const yOf = (v) => plotY + plotH - ((v - yMin) / (yMax - yMin || 1)) * plotH;
@@ -151,7 +147,7 @@ CA.UI.StockGraph = (() => {
 
   function drawPortfolio(w, h) {
     const W = Math.max(10, S().get('graphWindow')) * 1000;
-    const t1 = Date.now();
+    const t1 = view.getEnd(Date.now());
     const t0 = t1 - W;
     const hist = CA.Stocks.portfolioHistory();
     const lo = Math.max(0, lowerBound(hist, t0) - 1);
@@ -170,7 +166,7 @@ CA.UI.StockGraph = (() => {
 
     layout = { mode: 'portfolio', plot, xOf, yOf: scale.yOf, t0, t1, pts };
 
-    if (hover && hover.x >= plot.x && hover.x <= plot.x + plot.w && hover.y >= 0 && hover.y <= h) drawHoverPortfolio(w, h);
+    if (!dragging() && hover && hover.x >= plot.x && hover.x <= plot.x + plot.w && hover.y >= 0 && hover.y <= h) drawHoverPortfolio(w, h);
     else if (tip) tip.style.display = 'none';
 
     if (!pts.length) emptyMsg(plot, 'Buy or sell a stock to start tracking your portfolio.');
@@ -179,7 +175,7 @@ CA.UI.StockGraph = (() => {
   function drawPerStock(w, h) {
     const stocks = visibleStocks();
     const W = Math.max(10, S().get('graphWindow')) * 1000;
-    const t1 = Date.now();
+    const t1 = view.getEnd(Date.now());
     const t0 = t1 - W;
 
     const lines = stocks.map((g, i) => {
@@ -205,7 +201,7 @@ CA.UI.StockGraph = (() => {
 
     layout = { mode: 'perStock', plot, xOf, yOf: scale.yOf, t0, t1, lines };
 
-    if (hover && hover.x >= plot.x && hover.x <= plot.x + plot.w && hover.y >= 0 && hover.y <= h) drawHoverPerStock(w, h);
+    if (!dragging() && hover && hover.x >= plot.x && hover.x <= plot.x + plot.w && hover.y >= 0 && hover.y <= h) drawHoverPerStock(w, h);
     else if (tip) tip.style.display = 'none';
 
     if (!stocks.length) {
@@ -215,7 +211,7 @@ CA.UI.StockGraph = (() => {
 
   function draw() {
     if (!canvas || !canvas.isConnected) return;
-    const { w, h } = fitCanvas();
+    const { w, h } = CA.UI.Chart.fitCanvas(canvas, ctx);
     if (w < 50 || h < 50) return;
     ctx.clearRect(0, 0, w, h);
     if (mode() === 'perStock') drawPerStock(w, h);
@@ -291,7 +287,8 @@ CA.UI.StockGraph = (() => {
   function html() {
     return (
       '<div class="ca-card ca-graph-card">' +
-      '<div class="ca-card-head"><div class="ca-card-title">Stock market</div></div>' +
+      '<div class="ca-card-head"><div class="ca-card-title">Stock market</div>' +
+      '<div class="ca-card-meta"><span class="ca-live" data-ca-stock-live></span></div></div>' +
       '<div class="ca-stats" data-ca-stock-stats></div>' +
       '<div class="ca-toolbar">' +
       '<div class="ca-chipgroup" title="What the chart plots">' +
@@ -305,6 +302,9 @@ CA.UI.StockGraph = (() => {
         'Only plot stocks you currently hold; turn off to show all of them.'
       ) +
       '</div>' +
+      '<div class="ca-chipgroup">' +
+      chip('', 'data-ca="sgpause" data-ca-stock-pause', 'Drag the chart (or scroll it sideways) to look further back') +
+      '</div>' +
       '</div>' +
       '<div class="ca-graph-wrap"><canvas class="ca-graph ca-graph-small" data-ca-stock-canvas></canvas><div class="ca-tip" data-ca-stock-tip></div></div>' +
       '<div class="ca-legend" data-ca-stock-legend></div>' +
@@ -316,11 +316,31 @@ CA.UI.StockGraph = (() => {
     return `<div class="ca-stat"><div class="ca-stat-label">${label}</div><div class="ca-stat-value">${value}</div><div class="ca-stat-sub">${sub || '&nbsp;'}</div></div>`;
   }
 
+  function earliestDataT() {
+    if (mode() === 'perStock') {
+      const times = visibleStocks()
+        .map((g) => CA.Stocks.history(g.id)[0])
+        .filter(Boolean)
+        .map((p) => p.t);
+      return times.length ? Math.min(...times) : undefined;
+    }
+    const hist = CA.Stocks.portfolioHistory();
+    return hist.length ? hist[0].t : undefined;
+  }
+
   function refreshInfo() {
     if (!root) return;
     const perStock = mode() === 'perStock';
     const only = root.querySelector('[data-ca-perstock-only]');
     if (only) only.classList.toggle('ca-hidden', !perStock);
+
+    const live = root.querySelector('[data-ca-stock-live]');
+    if (live) {
+      live.textContent = view.isLive() ? 'Live' : 'Paused';
+      live.classList.toggle('paused', !view.isLive());
+    }
+    const pause = root.querySelector('[data-ca-stock-pause]');
+    if (pause) pause.textContent = view.isLive() ? 'Pause' : 'Jump to live';
 
     const stats = root.querySelector('[data-ca-stock-stats]');
     if (stats) {
@@ -386,6 +406,16 @@ CA.UI.StockGraph = (() => {
       observer = new ResizeObserver(() => draw());
       observer.observe(canvas);
     }
+    panCtl = view.attachPan(
+      canvas,
+      () => ({
+        windowMs: Math.max(10, S().get('graphWindow')) * 1000,
+        plotWidthPx: (layout && layout.plot.w) || canvas.clientWidth,
+        liveNow: Date.now(),
+        minT: earliestDataT(),
+      }),
+      draw
+    );
     timer = setInterval(tick, 250);
     tick();
   }
@@ -395,12 +425,22 @@ CA.UI.StockGraph = (() => {
     timer = null;
     if (observer) observer.disconnect();
     observer = null;
+    if (panCtl) panCtl.detach();
+    panCtl = null;
     root = canvas = ctx = tip = null;
     hover = null;
     layout = null;
   }
 
+  function setPaused(p) {
+    if (p === !view.isLive()) return;
+    if (p) view.freeze(Date.now());
+    else view.resume();
+    tick();
+  }
+  const isPaused = () => !view.isLive();
+
   function init() {}
 
-  return { init, html, mount, unmount, tick };
+  return { init, html, mount, unmount, tick, setPaused, isPaused };
 })();

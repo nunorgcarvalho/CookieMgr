@@ -333,6 +333,10 @@ CA.UI.Menu = (() => {
         CA.Util.sound('snd/tick.mp3');
         CA.Settings.set('stockGraphMode', t.dataset.val);
         break;
+      case 'sgpause':
+        CA.Util.sound('snd/tick.mp3');
+        CA.UI.StockGraph.setPaused(!CA.UI.StockGraph.isPaused());
+        break;
       case 'gpause':
         CA.Util.sound('snd/tick.mp3');
         CA.UI.Graph.setPaused(!CA.UI.Graph.isPaused());

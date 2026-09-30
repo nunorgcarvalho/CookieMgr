@@ -101,18 +101,6 @@ CA.UI.BankGraph = (() => {
 
   // ---- drawing ---------------------------------------------------------------------
 
-  function fitCanvas(canvas, ctx) {
-    const dpr = window.devicePixelRatio || 1;
-    const w = canvas.clientWidth;
-    const h = canvas.clientHeight;
-    if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
-      canvas.width = Math.round(w * dpr);
-      canvas.height = Math.round(h * dpr);
-    }
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    return { w, h };
-  }
-
   function portfolioLines() {
     const t1 = Date.now();
     const t0 = t1 - WINDOW_MS;
@@ -135,7 +123,7 @@ CA.UI.BankGraph = (() => {
   function draw(wrap) {
     const canvas = wrap.querySelector('canvas');
     const ctx = canvas.getContext('2d');
-    const { w, h } = fitCanvas(canvas, ctx);
+    const { w, h } = CA.UI.Chart.fitCanvas(canvas, ctx);
     ctx.clearRect(0, 0, w, h);
     if (w < 30 || h < 20) return;
 
@@ -166,8 +154,7 @@ CA.UI.BankGraph = (() => {
     const yMin = minV - padV;
     const yMax = maxV + padV;
 
-    const labelW = CA.Util.maxTextWidth(ctx, FONT, [beautify(yMin, 0), beautify(yMax, 0)]);
-    const padL = Math.max(MIN_PAD_L, Math.round(labelW) + PAD_L_MARGIN);
+    const padL = CA.UI.Chart.dynamicPadLeft(ctx, FONT, [beautify(yMin, 0), beautify(yMax, 0)], MIN_PAD_L, PAD_L_MARGIN);
     const plot = { x: padL, y: PAD.t, w: w - padL - PAD.r, h: h - PAD.t - PAD.b };
     const xOf = (t) => plot.x + ((t - t0) / WINDOW_MS) * plot.w;
     const yOf = (v) => plot.y + plot.h - ((v - yMin) / (yMax - yMin || 1)) * plot.h;
