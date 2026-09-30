@@ -6,7 +6,7 @@ A [Cookie Clicker](https://orteil.dashnet.org/cookieclicker/) add-on for automat
 It loads like [Cookie Monster](https://github.com/CookieMonsterTeam/CookieMonster): a one-line bookmarklet pulls the
 latest build from GitHub Pages, so pushing to this repo updates everyone's add-on.
 
-## Features (v0.3)
+## Features (v1.0)
 
 The **CookieMgr** tab sits on the left beam between the cookie panel and the middle panel. It opens the CookieMgr panel
 in the game's menu area, with three tabs along the top: **Autoclickers**, **Graphs** and **Settings**.
