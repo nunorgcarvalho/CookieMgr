@@ -52,8 +52,9 @@ CA.Stocks = (() => {
   };
 
   // ---- price history --------------------------------------------------------------
-  // Session-only, one sample per second per stock, same rolling window as CA.History
-  // so the price graph can cover the same time range as the CpS graph.
+  // One sample per second per stock, same rolling window as CA.History so the price graph
+  // can cover the same time range as the CpS graph. Mirrored to localStorage the same way
+  // CA.History does (see persist()/restore() below), so it survives a page refresh too.
 
   const SAMPLE_MS = 1000;
   const MAX_SAMPLES = 4 * 3600; // 4 hours
@@ -65,8 +66,9 @@ CA.Stocks = (() => {
   // The game only shows you the current price and share count, not what you paid for
   // them, so we watch `good.stock` ourselves: any increase is a buy at the current price
   // (rolled into a running average cost), any decrease is a sell that realizes the gap
-  // between that average cost and the current price. Session-only, same as price history —
-  // there is no way to know what happened before the mod was loaded.
+  // between that average cost and the current price. There is no way to know what happened
+  // before the mod was first loaded, but from then on this (like price history) survives a
+  // page refresh.
   const holdings = {}; // good.id -> { shares, avgCost, realized }
   const portfolioHistory = []; // [{ t, value, cost, unrealized, realized, gain }]
 
@@ -149,6 +151,59 @@ CA.Stocks = (() => {
   /** Recorded price samples for one stock (empty if never seen). */
   function history(id) {
     return priceHistory[id] || [];
+  }
+
+  // ---- persistence (survives a page refresh, same approach as CA.History) ----------
+
+  const STORE_KEY = 'CookieMgr.stocks.v1';
+  const PERSIST_MS = 20000;
+  let persistTimer = null;
+
+  function persist() {
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify({ v: 1, savedAt: Date.now(), priceHistory, portfolioHistory, holdings }));
+    } catch (e) {
+      /* storage full/blocked (private mode, quota, ...) — this is a convenience cache, never fatal */
+    }
+  }
+
+  function restore() {
+    let raw;
+    try {
+      raw = localStorage.getItem(STORE_KEY);
+    } catch (e) {
+      return;
+    }
+    if (!raw) return;
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch (e) {
+      return;
+    }
+    if (!data || typeof data !== 'object') return;
+    // A little past the rolling window, so data left over from days ago doesn't linger.
+    const cutoff = Date.now() - MAX_SAMPLES * SAMPLE_MS - 3600000;
+
+    Object.keys(data.priceHistory || {}).forEach((id) => {
+      const arr = (data.priceHistory[id] || []).filter((p) => p && typeof p.t === 'number' && p.t > cutoff);
+      if (arr.length) priceHistory[id] = arr;
+    });
+
+    (data.portfolioHistory || []).forEach((p) => {
+      if (p && typeof p.t === 'number' && p.t > cutoff) portfolioHistory.push(p);
+    });
+    if (portfolioHistory.length > MAX_SAMPLES + 200) portfolioHistory.splice(0, portfolioHistory.length - MAX_SAMPLES);
+
+    // Cost basis / realized gain are running totals, not a time series, so they're restored
+    // regardless of the cutoff above — the very next sample() reconciles `shares` against the
+    // game's real current `good.stock` right away, so a stale share count can't linger either.
+    Object.keys(data.holdings || {}).forEach((id) => {
+      const h = data.holdings[id];
+      if (h && typeof h.shares === 'number' && typeof h.avgCost === 'number' && typeof h.realized === 'number') {
+        holdings[id] = { shares: h.shares, avgCost: h.avgCost, realized: h.realized };
+      }
+    });
   }
 
   function clear(el) {
@@ -235,9 +290,13 @@ CA.Stocks = (() => {
       default: 'portfolio', // 'portfolio' | 'perStock' — independent of the Graphs-tab stockGraphMode
     });
     CA.Util.injectCss('CookieMgrStocksStyles', CSS);
+    restore();
     CA.Events.on('settings', refresh);
     timer = setInterval(refresh, TICK_MS);
     sampleTimer = setInterval(sample, SAMPLE_MS);
+    persistTimer = setInterval(persist, PERSIST_MS);
+    addEventListener('pagehide', persist);
+    addEventListener('beforeunload', persist);
     refresh();
     sample();
   }

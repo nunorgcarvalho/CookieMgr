@@ -20,7 +20,9 @@
   line is now always on (no longer a toggle) as a dashed reference line over the bars.
   Defaults otherwise: Log scale, 5 minute window, 5 s smoothing. (Your own choices are still remembered from here on.)
 - **History survives a page refresh:** the rolling 4-hour CpS/effect record is now mirrored to localStorage every 20s
-  (and on page close), separate from the actual game save, so reloading the page doesn't blank the graphs.
+  (and on page close), separate from the actual game save, so reloading the page doesn't blank the graphs. Stock price
+  history and portfolio value/cost-basis history now do the same — cost basis and realized profit carry over too,
+  instead of resetting to the current price on every reload.
 - **Fewer redundant markers:** a golden/wrath cookie pop no longer gets its own diamond marker when the effect it
   granted is already visible as a shaded band right there — reindeer pops and effect-less pops still show one.
 - **Y-axis labels:** the CpS and stock graphs now size their left margin to whatever the numbers actually render as

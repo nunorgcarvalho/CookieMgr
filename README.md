@@ -30,7 +30,8 @@ A live cookies-per-second chart, redrawn every second.
   pop that already shows as a shaded band doesn't also get a marker — only pops without a visible effect do.
 - **Crosshair tooltip** with the values at that moment and the effects active then, plus Now / Average / Peak / Clicking tiles.
 - Pause, clear, and per-series toggles. History (rolling 4 hours) survives a page refresh (mirrored to localStorage
-  every 20s, separate from your Cookie Clicker save) and can be turned off in Settings.
+  every 20s, separate from your Cookie Clicker save) and can be turned off in Settings. Stock price and portfolio
+  history do the same, including cost basis and realized profit — a refresh won't reset your unrealized gain to zero.
 
 ### Autoclickers
 
