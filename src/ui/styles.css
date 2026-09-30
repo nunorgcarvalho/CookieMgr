@@ -1,0 +1,441 @@
+/* ==========================================================================
+   CookieMgr — styles
+   Colours and borders borrow from the game's own "framed" look so the panel
+   feels native. Everything is scoped under #CookieMgrTab / #CookieMgrMenu.
+   ========================================================================== */
+
+/* ---------- Side tab (sticks out of the left beam) ---------- */
+
+#CookieMgrTab {
+  position: absolute;
+  left: 30%;
+  top: 128px;
+  margin-left: 3px; /* tuck slightly under the beam */
+  transform: translateX(-100%);
+  z-index: 110;
+  box-sizing: border-box;
+  width: 30px;
+  padding: 10px 0 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  background: linear-gradient(to right, #3d2716, #221409);
+  border: 1px solid;
+  border-color: #ece2b6 #875526 #733726 #dfbc9a;
+  border-right: none;
+  border-radius: 10px 0 0 10px;
+  box-shadow: -3px 3px 10px rgba(0, 0, 0, 0.65), inset 1px 1px 0 rgba(255, 255, 255, 0.18);
+  transition: width 0.15s ease-out, background 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+#CookieMgrTab:hover,
+#CookieMgrTab:focus-visible {
+  width: 34px;
+  box-shadow: -3px 3px 12px rgba(0, 0, 0, 0.75), 0 0 12px rgba(255, 215, 110, 0.35), inset 1px 1px 0 rgba(255, 255, 255, 0.25);
+}
+#CookieMgrTab.selected {
+  background: linear-gradient(to right, #7a4f22, #43290f);
+  box-shadow: -3px 3px 12px rgba(0, 0, 0, 0.75), 0 0 14px rgba(255, 215, 110, 0.55), inset 1px 1px 0 rgba(255, 255, 255, 0.3);
+}
+#CookieMgrTab .ca-tab-cookie {
+  width: 20px;
+  height: 20px;
+  background: url(img/perfectCookie.png) center / contain no-repeat;
+  filter: drop-shadow(0 1px 1px #000);
+  transition: transform 0.35s ease-out;
+}
+#CookieMgrTab:hover .ca-tab-cookie,
+#CookieMgrTab.selected .ca-tab-cookie {
+  transform: rotate(-30deg) scale(1.12);
+}
+#CookieMgrTab .ca-tab-label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-family: 'Merriweather', Georgia, serif;
+  font-variant: small-caps;
+  font-weight: bold;
+  font-size: 13px;
+  letter-spacing: 1px;
+  color: #f4e6c3;
+  text-shadow: 0 1px 2px #000, 0 0 6px rgba(255, 200, 120, 0.25);
+  white-space: nowrap;
+}
+#CookieMgrTab .ca-tab-badge {
+  display: none;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  font: bold 10px/16px Tahoma, Arial, sans-serif;
+  text-align: center;
+  color: #fff;
+  background: linear-gradient(#63c64a, #2f7d24);
+  box-shadow: 0 0 6px rgba(120, 240, 100, 0.8), 0 1px 1px #000;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);
+}
+#CookieMgrTab.active .ca-tab-badge {
+  display: block;
+  animation: caBadgeGlow 2s infinite ease-in-out;
+}
+@keyframes caBadgeGlow {
+  0%, 100% { box-shadow: 0 0 4px rgba(120, 240, 100, 0.6), 0 1px 1px #000; }
+  50% { box-shadow: 0 0 10px rgba(120, 240, 100, 1), 0 1px 1px #000; }
+}
+#game.ascending #CookieMgrTab,
+#game.ascendIntro #CookieMgrTab,
+#game.reincarnating #CookieMgrTab {
+  display: none;
+}
+
+/* ---------- Panel ---------- */
+
+#CookieMgrMenu {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 0 12px 120px;
+  color: #ddd;
+}
+#CookieMgrMenu .ca-tagline {
+  text-align: center;
+  margin: -6px 0 14px;
+  font-size: 12px;
+  font-style: italic;
+  color: #b9ab93;
+  text-shadow: 0 1px 1px #000;
+}
+
+/* Cards */
+#CookieMgrMenu .ca-card {
+  margin: 14px 4px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.38);
+  box-shadow: 0 0 1px #000, inset 0 0 1px #000, 0 6px 16px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+#CookieMgrMenu .ca-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  background: linear-gradient(to right, rgba(255, 235, 190, 0.09), rgba(255, 235, 190, 0));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+#CookieMgrMenu .ca-card-title {
+  flex: 1;
+  font-family: 'Merriweather', Georgia, serif;
+  font-variant: small-caps;
+  font-size: 20px;
+  color: #fff;
+  text-shadow: 0 -1px 5px rgba(255, 255, 200, 0.35), 0 1px 3px #000;
+}
+#CookieMgrMenu .ca-pill {
+  font-size: 11px;
+  white-space: nowrap;
+  padding: 3px 10px;
+  border-radius: 10px;
+  color: #bbb;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: all 0.2s;
+}
+#CookieMgrMenu .ca-pill.on {
+  color: #cfc;
+  background: rgba(80, 200, 90, 0.16);
+  border-color: rgba(130, 235, 120, 0.5);
+}
+
+/* Rows */
+#CookieMgrMenu .ca-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 8px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background 0.2s;
+}
+#CookieMgrMenu .ca-list .ca-row:first-child {
+  border-top: none;
+}
+#CookieMgrMenu .ca-row:hover {
+  background: rgba(255, 255, 255, 0.035);
+}
+#CookieMgrMenu .ca-row.on {
+  background: linear-gradient(to right, rgba(255, 210, 90, 0.12), rgba(255, 210, 90, 0) 65%);
+}
+#CookieMgrMenu .ca-row-master {
+  background: rgba(0, 0, 0, 0.22);
+  border-top: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+#CookieMgrMenu .ca-row-option {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+#CookieMgrMenu .ca-row-text {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+#CookieMgrMenu .ca-row-option {
+  flex-wrap: nowrap;
+}
+#CookieMgrMenu .ca-row-option .ca-row-text {
+  flex-basis: 0;
+}
+#CookieMgrMenu .ca-controls {
+  flex: 0 1 auto;
+  max-width: 100%;
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+#CookieMgrMenu .ca-row-name {
+  font-family: 'Merriweather', Georgia, serif;
+  font-weight: bold;
+  font-size: 14px;
+  color: #f2ead2;
+  text-shadow: 0 1px 2px #000;
+}
+#CookieMgrMenu .ca-row-desc {
+  margin-top: 2px;
+  font-size: 11px;
+  color: #b3a590;
+  text-shadow: 0 1px 1px #000;
+}
+
+/* Icons */
+#CookieMgrMenu .ca-icon {
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: filter 0.25s, transform 0.25s;
+  filter: grayscale(0.55) brightness(0.8);
+}
+#CookieMgrMenu .ca-row.on .ca-icon,
+#CookieMgrMenu .ca-row-master .ca-icon {
+  filter: drop-shadow(0 0 6px rgba(255, 220, 120, 0.75));
+}
+#CookieMgrMenu .ca-row.on .ca-icon {
+  transform: scale(1.06);
+}
+#CookieMgrMenu .ca-img {
+  width: 36px;
+  height: 36px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+#CookieMgrMenu .ca-sprite {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  background-image: url(img/icons.png);
+  transform: scale(0.75);
+}
+
+/* Toggle switch */
+#CookieMgrMenu .ca-switch {
+  flex: none;
+  padding: 2px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+#CookieMgrMenu .ca-switch:focus {
+  outline: none;
+}
+#CookieMgrMenu .ca-switch-track {
+  display: block;
+  position: relative;
+  width: 42px;
+  height: 22px;
+  box-sizing: border-box;
+  border-radius: 11px;
+  background: #2a211c;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.75);
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+#CookieMgrMenu .ca-switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff, #c9c1b5 55%, #8a8178);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+  transition: left 0.18s ease-out;
+}
+#CookieMgrMenu .ca-switch:hover .ca-switch-track {
+  border-color: rgba(255, 225, 150, 0.6);
+}
+#CookieMgrMenu .ca-switch.on .ca-switch-track {
+  background: linear-gradient(#66c84b, #2f7d24);
+  border-color: #a5ea93;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35), 0 0 9px rgba(110, 230, 90, 0.45);
+}
+#CookieMgrMenu .ca-switch.on .ca-switch-knob {
+  left: 22px;
+}
+#CookieMgrMenu .ca-switch:focus-visible .ca-switch-track {
+  outline: 2px solid #ffd76a;
+  outline-offset: 2px;
+}
+
+/* Hotkey chips */
+#CookieMgrMenu .ca-hotkey {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+}
+#CookieMgrMenu .ca-key {
+  min-width: 46px;
+  height: 26px;
+  padding: 0 10px;
+  font: bold 12px Tahoma, Arial, sans-serif;
+  color: #f4e6c3;
+  text-shadow: 0 1px 1px #000;
+  background: linear-gradient(#4d3c2d, #2a2018);
+  border: 1px solid;
+  border-color: #9a7d5b #3b2c1f #2a1f15 #74604a;
+  border-radius: 5px;
+  box-shadow: 0 2px 0 #140d08, inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+#CookieMgrMenu .ca-key:hover {
+  color: #fff;
+  border-color: #e0c08a #5a4430 #3d2e20 #b39468;
+}
+#CookieMgrMenu .ca-key:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 #140d08, inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+#CookieMgrMenu .ca-key:focus {
+  outline: none;
+}
+#CookieMgrMenu .ca-hotkey.unset .ca-key {
+  color: #8f877a;
+  font-weight: normal;
+  font-style: italic;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px dashed rgba(255, 255, 255, 0.22);
+  box-shadow: none;
+}
+#CookieMgrMenu .ca-hotkey.capturing .ca-key {
+  color: #ffe9a6;
+  border-color: #ffd76a;
+  animation: caCapture 1.1s infinite ease-in-out;
+}
+@keyframes caCapture {
+  0%, 100% { box-shadow: 0 2px 0 #140d08, 0 0 0 0 rgba(255, 215, 106, 0.5); }
+  50% { box-shadow: 0 2px 0 #140d08, 0 0 12px 2px rgba(255, 215, 106, 0.55); }
+}
+#CookieMgrMenu .ca-key-clear {
+  width: 18px;
+  height: 18px;
+  margin-left: 3px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #b09a8a;
+  font-size: 14px;
+  line-height: 18px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+}
+#CookieMgrMenu .ca-row:hover .ca-key-clear {
+  opacity: 0.8;
+}
+#CookieMgrMenu .ca-key-clear:hover {
+  color: #fff;
+  background: rgba(255, 80, 80, 0.35);
+}
+#CookieMgrMenu .ca-hotkey.unset .ca-key-clear,
+#CookieMgrMenu .ca-hotkey.capturing .ca-key-clear {
+  visibility: hidden;
+}
+
+/* Buttons */
+#CookieMgrMenu .ca-btn {
+  padding: 4px 12px;
+  font-family: 'Merriweather', Georgia, serif;
+  font-variant: small-caps;
+  font-weight: bold;
+  font-size: 12px;
+  color: #ddd;
+  text-shadow: 0 1px 1px #000;
+  background: linear-gradient(#3e2f23, #1d140f);
+  border: 1px solid;
+  border-color: #ece2b6 #875526 #733726 #dfbc9a;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  transition: color 0.15s, box-shadow 0.15s, opacity 0.15s;
+}
+#CookieMgrMenu .ca-btn:focus {
+  outline: none;
+}
+#CookieMgrMenu .ca-btn:not(:disabled):hover {
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6), 0 0 9px rgba(255, 220, 120, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+#CookieMgrMenu .ca-btn:not(:disabled):active {
+  transform: translateY(1px);
+}
+#CookieMgrMenu .ca-btn-on:not(:disabled):hover {
+  color: #d6ffcc;
+}
+#CookieMgrMenu .ca-btn-off:not(:disabled):hover {
+  color: #ffd2cc;
+}
+#CookieMgrMenu .ca-btn:disabled {
+  opacity: 0.38;
+  cursor: default;
+  box-shadow: none;
+}
+#CookieMgrMenu .ca-btn-small {
+  font-size: 11px;
+  padding: 3px 10px;
+}
+
+/* Footer */
+#CookieMgrMenu .ca-footer {
+  margin: 18px 8px 0;
+  font-size: 11px;
+  line-height: 1.7;
+  text-align: center;
+  color: #9b907f;
+  text-shadow: 0 1px 1px #000;
+}
+#CookieMgrMenu .ca-footer b {
+  color: #c9bba3;
+}
+#CookieMgrMenu kbd {
+  display: inline-block;
+  padding: 0 5px;
+  font: bold 10px/16px Tahoma, Arial, sans-serif;
+  color: #e8dcc2;
+  background: #2a2018;
+  border: 1px solid #5a4632;
+  border-radius: 3px;
+  box-shadow: 0 1px 0 #140d08;
+}
+#CookieMgrMenu .ca-footer-actions {
+  margin-top: 8px;
+}

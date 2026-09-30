@@ -1,0 +1,19 @@
+{
+  "name": "cookie-mgr",
+  "version": "0.2.0",
+  "description": "CookieMgr: a Cookie Clicker add-on for automating tasks and visualizing data.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "watch": "node build.mjs --watch",
+    "serve": "node build.mjs --watch --serve"
+  },
+  "keywords": [
+    "Cookie Clicker",
+    "mod",
+    "addon",
+    "autoclicker"
+  ],
+  "license": "MIT"
+}
