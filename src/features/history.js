@@ -4,7 +4,9 @@
 //   intervals  every buff/effect that was active, with start and end (they can overlap = stacking)
 //   events     one-off things: golden cookie / reindeer pops (with their outcome) and ascensions
 //
-// Data lives in memory for the current session only.
+// Kept in memory for the current rolling window, and mirrored to localStorage every so often
+// so a page refresh doesn't lose it — separate from the actual Cookie Clicker save, since this
+// is disposable convenience data, not game progress.
 
 CA.History = (() => {
   const SAMPLE_MS = 1000;
@@ -253,7 +255,77 @@ CA.History = (() => {
     Object.keys(open).forEach((k) => delete open[k]);
     lastT = 0;
     lastHandmade = null;
+    clearStore();
     CA.Events.emit('history', 'clear');
+  }
+
+  // ---- persistence (survives a page refresh) ---------------------------------------
+
+  const STORE_KEY = 'CookieMgr.history.v1';
+  const PERSIST_MS = 20000;
+  let persistTimer = null;
+
+  function persist() {
+    if (!CA.Settings.get('trackHistory')) return;
+    try {
+      localStorage.setItem(
+        STORE_KEY,
+        JSON.stringify({
+          v: 1,
+          savedAt: Date.now(),
+          samples,
+          intervals: intervals.map(({ ref, ...rest }) => rest), // ref points at a live game buff object — not serializable
+          events,
+        })
+      );
+    } catch (e) {
+      /* storage full/blocked (private mode, quota, ...) — this is a convenience cache, never fatal */
+    }
+  }
+
+  function clearStore() {
+    try {
+      localStorage.removeItem(STORE_KEY);
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function restore() {
+    let raw;
+    try {
+      raw = localStorage.getItem(STORE_KEY);
+    } catch (e) {
+      return;
+    }
+    if (!raw) return;
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch (e) {
+      return;
+    }
+    if (!data || typeof data !== 'object') return;
+    // A little past the rolling window, so data left over from days ago doesn't linger.
+    const cutoff = Date.now() - MAX_SAMPLES * SAMPLE_MS - 3600000;
+    (data.samples || []).forEach((s) => {
+      if (s && typeof s.t === 'number' && s.t > cutoff) samples.push(s);
+    });
+    (data.intervals || []).forEach((iv) => {
+      if (!iv || typeof iv.start !== 'number' || iv.start <= cutoff) return;
+      // An interval still "open" as of the last save can't be trusted to still be running after
+      // a reload (we have no live Game.buffs reference for it any more) — close it at the last
+      // point we actually know about. If the buff is genuinely still active, the next sample()
+      // will open a fresh interval for it right away.
+      if (iv.end == null) iv.end = data.savedAt || iv.start;
+      intervals.push(iv);
+    });
+    (data.events || []).forEach((ev) => {
+      if (ev && typeof ev.t === 'number' && ev.t > cutoff) events.push(ev);
+    });
+    capArray(samples, MAX_SAMPLES);
+    capArray(intervals, MAX_INTERVALS);
+    capArray(events, MAX_EVENTS);
   }
 
   function init() {
@@ -261,9 +333,10 @@ CA.History = (() => {
       key: 'trackHistory',
       group: 'general',
       name: 'Record history',
-      desc: 'Keeps a rolling 4-hour record of your CpS and active effects for the graphs.',
+      desc: 'Keeps a rolling 4-hour record of your CpS and active effects for the graphs, saved across page reloads.',
       default: true,
     });
+    restore();
     watchShimmers();
     CA.Events.on('ascend', () => {
       const now = Date.now();
@@ -271,6 +344,9 @@ CA.History = (() => {
       addEvent({ kind: 'ascend', title: 'Ascended', text: 'A new run begins.', gain: 0 });
     });
     timer = setInterval(sample, SAMPLE_MS);
+    persistTimer = setInterval(persist, PERSIST_MS);
+    addEventListener('pagehide', persist);
+    addEventListener('beforeunload', persist);
     sample();
   }
 

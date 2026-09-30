@@ -19,15 +19,18 @@ A live cookies-per-second chart, redrawn every second.
 
 - **Window:** 1 min, 5 min, 15 min, 1 h or 3 h (default 5 min). **Smoothing:** raw, 5 s or 15 s (default 5 s). Linear or
   log scale (default log). Your choices are remembered across reloads.
-- **Lines:** production (what the game shows as CpS), production without effects (dashed), and production plus clicking.
-  Clicking is measured from your actual click income, so it is only counted when you really clicked (or an autoclicker did).
-  By default the unbuffed and with-clicking lines show and production is hidden.
+- **Stacked bars:** each bar is Production (what the game shows as CpS) with Clicking stacked on top, so the bar's full
+  height is your combined income. Clicking is measured from your actual click income, so it is only counted when you
+  really clicked (or an autoclicker did). A dashed **Unbuffed CpS** line (production with every temporary effect
+  removed) is always drawn over the bars.
 - **Effect shading:** every active golden-cookie effect (Frenzy, Click frenzy, Elder frenzy, Dragonflight, Clot, and so on)
   is a coloured band behind the chart. Overlapping effects stack in separate lanes. Hover a band for its description,
   multipliers, duration and remaining time; effects that do not change CpS are shown too.
-- **Event markers:** golden cookie, wrath cookie and reindeer pops (with what they did) and ascensions.
+- **Event markers:** golden cookie, wrath cookie and reindeer pops (with what they did) and ascensions. A golden/wrath
+  pop that already shows as a shaded band doesn't also get a marker — only pops without a visible effect do.
 - **Crosshair tooltip** with the values at that moment and the effects active then, plus Now / Average / Peak / Clicking tiles.
-- Pause, clear, and per-series toggles. History is kept in memory for the session (rolling 4 hours) and can be turned off.
+- Pause, clear, and per-series toggles. History (rolling 4 hours) survives a page refresh (mirrored to localStorage
+  every 20s, separate from your Cookie Clicker save) and can be turned off in Settings.
 
 ### Autoclickers
 
@@ -129,7 +132,7 @@ src/
   features/
     autoclickers.js  clicker definitions and timers — add new ones to DEFS
     stocks.js        trend badges/tints, price history, and portfolio cost-basis tracking
-    history.js       samples CpS every second, tracks buffs and golden/reindeer/ascend events
+    history.js       samples CpS every second, tracks buffs/events, persists to localStorage
   ui/
     components.js    HTML snippets: switch, hotkey chip, icon, button
     tab.js           the side tab on the left beam

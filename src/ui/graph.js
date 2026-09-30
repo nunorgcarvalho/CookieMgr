@@ -20,7 +20,7 @@ CA.UI.Graph = (() => {
   const SERIES = {
     base: { color: '#9db4cc', name: 'Unbuffed CpS' },
     cps: { color: '#f5c451', name: 'Production' },
-    total: { color: '#7fe08b', name: 'With clicking' },
+    click: { color: '#7fe08b', name: 'Clicking' },
   };
   const PAD = { r: 8, t: 10, b: 22 };
   const MIN_PAD_L = 30;
@@ -28,7 +28,10 @@ CA.UI.Graph = (() => {
   const LANE_H = 8;
   const LANE_GAP = 2;
   const MAX_LANES = 6;
-  const GAP_MS = 5000; // a longer hole between samples breaks the line
+  const GAP_MS = 5000; // a longer hole between samples breaks the unbuffed line
+  const BAR_PX = 5; // target on-screen width (bar + gap) of one stacked bar
+  const BAR_GAP_FRAC = 0.18;
+  const EVENT_SHADED_TOLERANCE_MS = 3000; // treat a golden/wrath pop as "shown by shading" if an effect starts this close to it
 
   let root = null;
   let canvas = null;
@@ -129,6 +132,29 @@ CA.UI.Graph = (() => {
     });
   }
 
+  /** Buckets samples into `barCount` equal time slices, averaging cps/click per bucket.
+   *  A bucket with no samples in it is left out (drawn as a gap) rather than interpolated. */
+  function buildBars(list, cpsOf, clickOf, t0, W, barCount) {
+    const bars = new Array(barCount);
+    for (let i = 0; i < barCount; i++) bars[i] = { sumCps: 0, sumClick: 0, n: 0 };
+    const bucketMs = W / barCount;
+    list.forEach((s, i) => {
+      let idx = Math.floor((s.t - t0) / bucketMs);
+      if (idx < 0) idx = 0;
+      else if (idx >= barCount) idx = barCount - 1;
+      const b = bars[idx];
+      b.sumCps += cpsOf(i);
+      b.sumClick += clickOf(i);
+      b.n++;
+    });
+    return bars.map((b, i) => ({
+      t0: t0 + i * bucketMs,
+      t1: t0 + (i + 1) * bucketMs,
+      cps: b.n ? b.sumCps / b.n : null,
+      click: b.n ? b.sumClick / b.n : null,
+    }));
+  }
+
   function assignLanes(ivs, now) {
     const sorted = ivs.slice().sort((a, b) => a.start - b.start);
     const ends = [];
@@ -187,35 +213,41 @@ CA.UI.Graph = (() => {
     const visStart = list.findIndex((s) => s.t >= t0 - 1000);
     const cutoff = visStart === -1 ? list.length : visStart;
 
-    const want = {
-      base: S().get('graphShowBase'),
-      cps: S().get('graphShowCps'),
-      total: S().get('graphShowTotal'),
-    };
-    const raw = {
-      base: list.map((s) => s.base),
-      cps: list.map((s) => s.cps),
-      total: list.map((s) => s.cps + s.click),
-    };
-    const series = {};
-    Object.keys(want).forEach((k) => {
-      if (!want[k]) return;
-      const vals = smooth(raw[k], smoothK);
-      series[k] = buildSegments(list.slice(cutoff), (i) => vals[i + cutoff], t0, W, plot.w);
-    });
+    // Unbuffed CpS is always shown as a reference line; production and clicking are stacked bars.
+    const baseVals = smooth(
+      list.map((s) => s.base),
+      smoothK
+    );
+    const cpsVals = smooth(
+      list.map((s) => s.cps),
+      smoothK
+    );
+    const clickVals = smooth(
+      list.map((s) => s.click),
+      smoothK
+    );
+    const baseSeg = buildSegments(list.slice(cutoff), (i) => baseVals[i + cutoff], t0, W, plot.w);
+    // Capped so a bucket is never narrower than one sample (~1s) — otherwise a short window
+    // would ask for more buckets than there is data, striping every other bar empty.
+    const barCount = Math.max(12, Math.min(240, Math.round(plot.w / BAR_PX), Math.floor(W / 1000)));
+    const bars = buildBars(list.slice(cutoff), (i) => cpsVals[i + cutoff], (i) => clickVals[i + cutoff], t0, W, barCount);
 
     // --- y scale
     const log = S().get('graphLog');
     let maxV = 0;
     let minPos = Infinity;
-    Object.values(series).forEach((segs) =>
-      segs.forEach((seg) =>
-        seg.forEach((p) => {
-          if (p.v > maxV) maxV = p.v;
-          if (p.v > 0 && p.v < minPos) minPos = p.v;
-        })
-      )
+    baseSeg.forEach((seg) =>
+      seg.forEach((p) => {
+        if (p.v > maxV) maxV = p.v;
+        if (p.v > 0 && p.v < minPos) minPos = p.v;
+      })
     );
+    bars.forEach((b) => {
+      if (b.cps == null) return;
+      const top = b.cps + b.click;
+      if (top > maxV) maxV = top;
+      if (b.cps > 0 && b.cps < minPos) minPos = b.cps;
+    });
     let yMin = 0;
     let yMax = 1;
     let ticks = [];
@@ -308,53 +340,49 @@ CA.UI.Graph = (() => {
       }
     }
 
-    // --- lines
+    // --- bars (production stacked with clicking) + unbuffed reference line
     ctx.save();
     ctx.beginPath();
     ctx.rect(plot.x, plot.y - 4, plot.w, chartH + 8);
     ctx.clip();
+
+    const yBase = plot.y + chartH;
+    bars.forEach((b) => {
+      if (b.cps == null) return;
+      const xL = xOf(b.t0);
+      const xR = xOf(b.t1);
+      const full = xR - xL;
+      const gap = full * BAR_GAP_FRAC;
+      const x0 = xL + gap / 2;
+      const wBar = Math.max(1, full - gap);
+      const yCps = yOf(b.cps);
+      ctx.fillStyle = SERIES.cps.color;
+      ctx.fillRect(x0, yCps, wBar, Math.max(0, yBase - yCps));
+      if (b.click > 0) {
+        const yTotal = yOf(b.cps + b.click);
+        ctx.fillStyle = SERIES.click.color;
+        ctx.fillRect(x0, yTotal, wBar, Math.max(0, yCps - yTotal));
+      }
+    });
+
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
-    const trace = (segs, close) => {
+    const trace = (segs) => {
       segs.forEach((seg) => {
         if (!seg.length) return;
         ctx.beginPath();
         seg.forEach((p, i) => (i ? ctx.lineTo(xOf(p.t), yOf(p.v)) : ctx.moveTo(xOf(p.t), yOf(p.v))));
         if (seg.length === 1) ctx.lineTo(xOf(seg[0].t) + 0.01, yOf(seg[0].v));
-        if (close) {
-          ctx.lineTo(xOf(seg[seg.length - 1].t), plot.y + chartH);
-          ctx.lineTo(xOf(seg[0].t), plot.y + chartH);
-          ctx.closePath();
-        }
       });
     };
-    const strokeSeries = (key, width, dash) => {
-      const segs = series[key];
-      if (!segs) return;
-      ctx.strokeStyle = SERIES[key].color;
-      ctx.lineWidth = width;
-      ctx.setLineDash(dash || []);
-      segs.forEach((seg) => {
-        trace([seg], false);
-        ctx.stroke();
-      });
-      ctx.setLineDash([]);
-    };
-    // fill under the main visible series
-    const fillKey = series.cps ? 'cps' : series.total ? 'total' : series.base ? 'base' : null;
-    if (fillKey) {
-      const grad = ctx.createLinearGradient(0, plot.y, 0, plot.y + chartH);
-      grad.addColorStop(0, hexToRgba(SERIES[fillKey].color, 0.3));
-      grad.addColorStop(1, hexToRgba(SERIES[fillKey].color, 0.02));
-      ctx.fillStyle = grad;
-      series[fillKey].forEach((seg) => {
-        trace([seg], true);
-        ctx.fill();
-      });
-    }
-    strokeSeries('base', 1.4, [4, 3]);
-    strokeSeries('total', 1.6);
-    strokeSeries('cps', 2);
+    ctx.strokeStyle = SERIES.base.color;
+    ctx.lineWidth = 1.4;
+    ctx.setLineDash([4, 3]);
+    baseSeg.forEach((seg) => {
+      trace([seg]);
+      ctx.stroke();
+    });
+    ctx.setLineDash([]);
     ctx.restore();
 
     // --- effect lanes
@@ -392,6 +420,11 @@ CA.UI.Graph = (() => {
     if (S().get('graphEvents')) {
       CA.History.events.forEach((ev) => {
         if (ev.t < t0 || ev.t > t1) return;
+        // A golden/wrath pop that opened a shaded effect band right at this moment is already
+        // visible via the shading — skip the diamond so it isn't shown twice.
+        const shownByShading =
+          (ev.kind === 'golden' || ev.kind === 'wrath') && ivs.some((iv) => Math.abs(iv.start - ev.t) < EVENT_SHADED_TOLERANCE_MS);
+        if (shownByShading) return;
         const x = xOf(ev.t);
         if (ev.kind === 'ascend') {
           ctx.strokeStyle = 'rgba(200,190,255,0.7)';
@@ -418,7 +451,7 @@ CA.UI.Graph = (() => {
       });
     }
 
-    layout = { plot, xOf, yOf, t0, t1, laneRects, evRects, hoverIv: null, series, chartH };
+    layout = { plot, xOf, yOf, t0, t1, laneRects, evRects, hoverIv: null, chartH };
 
     // --- hover
     if (hover && hover.x >= plot.x && hover.x <= plot.x + plot.w && hover.y >= 0 && hover.y <= h) {
@@ -469,20 +502,14 @@ CA.UI.Graph = (() => {
     else html = sampleTip(t, near);
 
     if (near && !hitEv && !hitLane) {
-      const dots = [
-        ['base', near.base],
-        ['cps', near.cps],
-        ['total', near.cps + near.click],
-      ];
-      dots.forEach(([k, v]) => {
-        if (!layout.series[k]) return;
-        ctx.fillStyle = SERIES[k].color;
-        ctx.strokeStyle = '#000';
-        ctx.beginPath();
-        ctx.arc(layout.xOf(near.t), layout.yOf(v), 3.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-      });
+      // The bars are bucket averages, not point values, so only the continuous unbuffed
+      // line gets a hover dot.
+      ctx.fillStyle = SERIES.base.color;
+      ctx.strokeStyle = '#000';
+      ctx.beginPath();
+      ctx.arc(layout.xOf(near.t), layout.yOf(near.base), 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
     }
 
     tip.innerHTML = html;
@@ -513,8 +540,8 @@ CA.UI.Graph = (() => {
     if (s) {
       const total = s.cps + s.click;
       h += row(SERIES.cps.color, SERIES.cps.name, beautify(s.cps) + '/s');
-      if (s.click > 0.01) h += row(SERIES.total.color, 'Clicking', '+' + beautify(s.click) + '/s');
-      h += row(SERIES.total.color, 'Total', beautify(total) + '/s', true);
+      if (s.click > 0.01) h += row(SERIES.click.color, SERIES.click.name, '+' + beautify(s.click) + '/s');
+      h += row('transparent', 'Total', beautify(total) + '/s', true);
       if (Math.abs(s.base - s.cps) > 0.01) h += row(SERIES.base.color, 'Without effects', beautify(s.base) + '/s');
     } else {
       h += '<div class="ca-tip-note">No data here yet.</div>';
@@ -568,11 +595,6 @@ CA.UI.Graph = (() => {
 
   // ---- little canvas helpers ---------------------------------------------------------
 
-  function hexToRgba(hex, a) {
-    const n = parseInt(hex.slice(1), 16);
-    return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
-  }
-
   function roundRect(c, x, y, w, h, r) {
     r = Math.min(r, w / 2, h / 2);
     c.beginPath();
@@ -589,8 +611,8 @@ CA.UI.Graph = (() => {
   function chip(label, attrs, title) {
     return `<button type="button" class="ca-chip" ${attrs}${title ? ` title="${esc(title)}"` : ''}>${label}</button>`;
   }
-  function seriesChip(key, optKey) {
-    return `<button type="button" class="ca-chip ca-chip-series" data-ca="option" data-key="${optKey}" data-pressed-key="${optKey}">${swatch(SERIES[key].color)}${SERIES[key].name}</button>`;
+  function seriesLabel(key) {
+    return `<span class="ca-legend-item">${swatch(SERIES[key].color)}${SERIES[key].name}</span>`;
   }
 
   function html() {
@@ -605,10 +627,10 @@ CA.UI.Graph = (() => {
         ''
       ) +
       '</div>' +
-      '<div class="ca-chipgroup" title="Show or hide each line">' +
-      seriesChip('cps', 'graphShowCps') +
-      seriesChip('total', 'graphShowTotal') +
-      seriesChip('base', 'graphShowBase') +
+      '<div class="ca-chipgroup" title="What the bars and line show">' +
+      seriesLabel('cps') +
+      seriesLabel('click') +
+      seriesLabel('base') +
       '</div>' +
       '</div>' +
       '<div class="ca-graph-wrap"><canvas class="ca-graph" data-ca-canvas></canvas><div class="ca-tip" data-ca-tip></div></div>' +
@@ -750,27 +772,6 @@ CA.UI.Graph = (() => {
     // the toolbar chips above are still the way to change them.
     S_.defineOption({ key: 'graphWindow', group: 'graph-select', name: 'Time window', desc: '', default: 300 });
     S_.defineOption({ key: 'graphSmooth', group: 'graph-select', name: 'Smoothing', desc: '', default: 5 });
-    S_.defineOption({
-      key: 'graphShowCps',
-      group: 'graph',
-      name: 'Show production line',
-      desc: 'The CpS line the game itself reports.',
-      default: false,
-    });
-    S_.defineOption({
-      key: 'graphShowTotal',
-      group: 'graph',
-      name: 'Show total (with clicking)',
-      desc: 'Adds your measured click income on top of production.',
-      default: true,
-    });
-    S_.defineOption({
-      key: 'graphShowBase',
-      group: 'graph',
-      name: 'Show unbuffed line',
-      desc: 'Dashed line for CpS with every temporary effect removed.',
-      default: true,
-    });
     S_.defineOption({
       key: 'graphLog',
       group: 'graph',

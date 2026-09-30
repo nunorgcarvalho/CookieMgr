@@ -12,8 +12,14 @@
   about trades made before that.
 - **Graph in the Bank minigame:** a small chart now sits right under the stock list in the Bank minigame itself, toggled
   between CpS and portfolio value. Can be turned off in Settings.
-- **CpS graph defaults:** now Log scale, 5 minute window, 5 s smoothing, "With clicking" and "Unbuffed" lines on,
-  "Production" line off. (Your own choices are still remembered from here on.)
+- **CpS graph is now a stacked bar chart:** each bar is Production (bottom) with Clicking stacked on top, so the total
+  bar height is your combined income — replaces the old "with clicking"/"production" line toggles. The Unbuffed CpS
+  line is now always on (no longer a toggle) as a dashed reference line over the bars.
+  Defaults otherwise: Log scale, 5 minute window, 5 s smoothing. (Your own choices are still remembered from here on.)
+- **History survives a page refresh:** the rolling 4-hour CpS/effect record is now mirrored to localStorage every 20s
+  (and on page close), separate from the actual game save, so reloading the page doesn't blank the graphs.
+- **Fewer redundant markers:** a golden/wrath cookie pop no longer gets its own diamond marker when the effect it
+  granted is already visible as a shaded band right there — reindeer pops and effect-less pops still show one.
 - **Y-axis labels:** the CpS and stock graphs now size their left margin to whatever the numbers actually render as
   (long Numbers-preference names included), instead of clipping wide labels; freed-up space went to the plot itself.
 
