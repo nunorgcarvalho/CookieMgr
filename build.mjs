@@ -30,6 +30,7 @@ const MODULES = [
   'core/update.js',
   'features/autoclickers.js',
   'features/stocks.js',
+  'features/stockTrader.js',
   'features/history.js',
   'ui/components.js',
   'ui/tab.js',

@@ -79,7 +79,10 @@ CA.Settings = (() => {
 
   function serialize() {
     const data = { v: SAVE_VERSION, options: { ...options }, hotkeys: { ...hotkeyOverrides } };
-    if (options.rememberStates && CA.Autoclickers) data.clickers = CA.Autoclickers.snapshot();
+    if (options.rememberStates) {
+      if (CA.Autoclickers) data.clickers = CA.Autoclickers.snapshot();
+      if (CA.StockTrader) data.stockTrader = CA.StockTrader.isOn();
+    }
     return JSON.stringify(data);
   }
 

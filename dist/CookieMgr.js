@@ -250,7 +250,10 @@ CA.Settings = (() => {
 
   function serialize() {
     const data = { v: SAVE_VERSION, options: { ...options }, hotkeys: { ...hotkeyOverrides } };
-    if (options.rememberStates && CA.Autoclickers) data.clickers = CA.Autoclickers.snapshot();
+    if (options.rememberStates) {
+      if (CA.Autoclickers) data.clickers = CA.Autoclickers.snapshot();
+      if (CA.StockTrader) data.stockTrader = CA.StockTrader.isOn();
+    }
     return JSON.stringify(data);
   }
 
@@ -1050,6 +1053,78 @@ CA.Stocks = (() => {
   }
 
   return { init, refresh, MODES, list, history, portfolioNow, portfolioHistory: () => portfolioHistory, minigame };
+})();
+
+// ---- src/features/stockTrader.js -------------------------------------
+// Stock market autoclicker: buys the max it can afford of fast-rising stocks, then slow-rising
+// ones, and sells anything it holds that isn't currently rising. That's the whole strategy —
+// no price targets, no per-stock tuning.
+//
+// Kept separate from CA.Autoclickers (rather than another DEFS entry) on purpose: it lives on
+// its own Stock market tab and must NOT be swept up by "All on/off" or the toggle-all hotkey.
+//
+// Uses the Bank minigame's own buy/sell API (M.buyGood/M.sellGood with the amount `10000`,
+// the same sentinel value the game's own "buy max"/"sell max" buttons use — verified against
+// minigameMarket.js) rather than computing an affordable amount ourselves.
+
+CA.StockTrader = (() => {
+  const TICK_MS = 1000;
+  const RISING = [3, 1]; // fast rise, then slow rise — good.mode values (see features/stocks.js)
+
+  let timer = null;
+  let enabled = false;
+
+  function trade(m) {
+    const goods = m.goodsById.filter((g) => g.active);
+    goods.forEach((g) => {
+      if (g.stock > 0 && !RISING.includes(g.mode)) m.sellGood(g.id, 10000);
+    });
+    RISING.forEach((mode) => goods.forEach((g) => g.mode === mode && m.buyGood(g.id, 10000)));
+  }
+
+  function tick() {
+    if (Game.OnAscend || Game.AscendTimer > 0) return;
+    const m = CA.Stocks.minigame();
+    if (!m) return;
+    try {
+      trade(m);
+    } catch (e) {
+      console.error('[CookieMgr] Stock market autoclicker error', e);
+    }
+  }
+
+  function announce(on) {
+    if (!CA.Settings.get('notifications')) return;
+    CA.Util.notify('Stock market buy autoclicker', on ? '<b style="color:#8f8">ON</b>' : '<b style="color:#f88">OFF</b>', [9, 33], 2);
+  }
+
+  function set(on, { silent = false } = {}) {
+    on = !!on;
+    if (enabled === on && (!on || timer)) return;
+    clearInterval(timer);
+    timer = null;
+    enabled = on;
+    if (on) timer = setInterval(tick, TICK_MS);
+    if (!silent) announce(on);
+    CA.Events.emit('clickers', 'stockTrader');
+  }
+
+  function toggle() {
+    set(!enabled);
+  }
+  const isOn = () => enabled;
+
+  function init() {
+    CA.Actions.register({
+      id: 'clicker.stockTrader',
+      name: 'Stock market buy',
+      group: 'stocks',
+      defaultKey: '',
+      run: toggle,
+    });
+  }
+
+  return { init, set, toggle, isOn };
 })();
 
 // ---- src/features/history.js -----------------------------------------
@@ -2982,6 +3057,21 @@ CA.UI.Menu = (() => {
     );
   }
 
+  function stockTraderRow() {
+    return (
+      '<div class="ca-row" data-stock-trader>' +
+      C.icon({ icon: [9, 33] }) +
+      '<div class="ca-row-text"><div class="ca-row-name">Buy fast/slow rise, sell the rest</div>' +
+      '<div class="ca-row-desc">Buys the max it can afford of fast-rising stocks, then slow-rising ones. Sells anything it holds ' +
+      "that isn't currently rising. That's the whole strategy.</div></div>" +
+      '<div class="ca-controls">' +
+      C.hotkey('clicker.stockTrader') +
+      C.toggle(false, 'data-ca="stockTrader"', 'Stock market buy') +
+      '</div>' +
+      '</div>'
+    );
+  }
+
   function optionRow(def) {
     return (
       `<div class="ca-row ca-row-option" data-option="${def.key}">` +
@@ -2996,6 +3086,7 @@ CA.UI.Menu = (() => {
   const TABS = [
     { id: 'clickers', label: 'Autoclickers' },
     { id: 'graphs', label: 'Graphs' },
+    { id: 'stocks', label: 'Stock market' },
     { id: 'settings', label: 'Settings' },
   ];
   const currentTab = () => {
@@ -3037,6 +3128,20 @@ CA.UI.Menu = (() => {
       '<div class="ca-card-head"><div class="ca-card-title">Options</div></div>' +
       `<div class="ca-list">${CA.Settings.optionsIn('autoclickers').map(optionRow).join('')}</div>` +
       '</div>'
+    );
+  }
+
+  function stocksPage() {
+    return (
+      '<div class="ca-card">' +
+      '<div class="ca-card-head"><div class="ca-card-title">Stock market</div></div>' +
+      `<div class="ca-list">${stockTraderRow()}</div>` +
+      '</div>' +
+      '<div class="ca-card">' +
+      '<div class="ca-card-head"><div class="ca-card-title">Options</div></div>' +
+      `<div class="ca-list">${CA.Settings.optionsIn('stocks').map(optionRow).join('')}</div>` +
+      '</div>' +
+      CA.UI.StockGraph.html()
     );
   }
 
@@ -3082,6 +3187,13 @@ CA.UI.Menu = (() => {
     );
   }
 
+  function pageHtml(tab) {
+    if (tab === 'clickers') return clickersPage();
+    if (tab === 'graphs') return CA.UI.Graph.html();
+    if (tab === 'stocks') return stocksPage();
+    return settingsPage();
+  }
+
   function html() {
     const tab = currentTab();
     return (
@@ -3089,9 +3201,7 @@ CA.UI.Menu = (() => {
       '<div id="CookieMgrMenu">' +
       '<div class="section">CookieMgr</div>' +
       tabBar() +
-      `<div class="ca-page" data-page="${tab}">` +
-      (tab === 'clickers' ? clickersPage() : tab === 'graphs' ? CA.UI.Graph.html() + CA.UI.StockGraph.html() : settingsPage()) +
-      '</div>' +
+      `<div class="ca-page" data-page="${tab}">${pageHtml(tab)}</div>` +
       '</div>'
     );
   }
@@ -3102,10 +3212,9 @@ CA.UI.Menu = (() => {
     CA.UI.Graph.unmount();
     CA.UI.StockGraph.unmount();
     menu.innerHTML = html();
-    if (currentTab() === 'graphs') {
-      CA.UI.Graph.mount(menu.querySelector('.ca-page'));
-      CA.UI.StockGraph.mount(menu.querySelector('.ca-page'));
-    }
+    const tab = currentTab();
+    if (tab === 'graphs') CA.UI.Graph.mount(menu.querySelector('.ca-page'));
+    if (tab === 'stocks') CA.UI.StockGraph.mount(menu.querySelector('.ca-page'));
     sync();
   }
 
@@ -3121,6 +3230,13 @@ CA.UI.Menu = (() => {
       row.classList.toggle('on', on);
       setSwitch(row.querySelector('.ca-switch'), on);
     });
+
+    const stRow = root.querySelector('[data-stock-trader]');
+    if (stRow) {
+      const on = CA.StockTrader.isOn();
+      stRow.classList.toggle('on', on);
+      setSwitch(stRow.querySelector('.ca-switch'), on);
+    }
 
     const total = CA.Autoclickers.list().length;
     const active = CA.Autoclickers.activeCount();
@@ -3201,6 +3317,10 @@ CA.UI.Menu = (() => {
         CA.Autoclickers.toggle(id);
         break;
       }
+      case 'stockTrader':
+        CA.Util.sound(CA.StockTrader.isOn() ? 'snd/clickOff2.mp3' : 'snd/clickOn2.mp3');
+        CA.StockTrader.toggle();
+        break;
       case 'all-on':
         CA.Util.sound('snd/clickOn2.mp3');
         CA.Autoclickers.setAll(true);
@@ -3306,10 +3426,9 @@ CA.UI.Menu = (() => {
     const refresh = () => {
       if (!isOpen()) return;
       sync();
-      if (currentTab() === 'graphs') {
-        CA.UI.Graph.tick();
-        CA.UI.StockGraph.tick();
-      }
+      const tab = currentTab();
+      if (tab === 'graphs') CA.UI.Graph.tick();
+      if (tab === 'stocks') CA.UI.StockGraph.tick();
     };
     CA.Events.on('clickers', refresh);
     CA.Events.on('settings', refresh);
@@ -3352,6 +3471,7 @@ const mod = {
 
     CA.Autoclickers.init();
     CA.Stocks.init();
+    CA.StockTrader.init();
     CA.History.init();
     CA.UI.Graph.init();
     CA.UI.StockGraph.init();
@@ -3379,7 +3499,10 @@ const mod = {
 
   load(str) {
     const data = CA.Settings.deserialize(str);
-    if (data && data.clickers && CA.Settings.get('rememberStates')) CA.Autoclickers.restore(data.clickers);
+    if (data && CA.Settings.get('rememberStates')) {
+      if (data.clickers) CA.Autoclickers.restore(data.clickers);
+      if (typeof data.stockTrader === 'boolean') CA.StockTrader.set(data.stockTrader, { silent: true });
+    }
   },
 };
 

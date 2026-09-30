@@ -9,7 +9,7 @@ latest build from GitHub Pages, so pushing to this repo updates everyone's add-o
 ## Features (v1.0)
 
 The **CookieMgr** tab sits on the left beam between the cookie panel and the middle panel. It opens the CookieMgr panel
-in the game's menu area, with three tabs along the top: **Autoclickers**, **Graphs** and **Settings**.
+in the game's menu area, with four tabs along the top: **Autoclickers**, **Graphs**, **Stock market** and **Settings**.
 
 ![Graphs tab](docs/graph.png)
 
@@ -52,6 +52,9 @@ Each one has an on/off switch and a rebindable hotkey:
 Plus **All on / All off** buttons. Hotkeys support modifiers (e.g. `Shift + G`): click a key chip and press the new key
 (`Esc` cancels, `Backspace` clears). Binding a key that is already in use moves it.
 
+The **stock market buy** autoclicker (see below) lives on its own Stock market tab and is deliberately left out of
+"All on/off" and the toggle-all hotkey — it's switched independently.
+
 ### Settings
 
 Turn everything off when ascending (default on), notifications, remember autoclicker states across reloads, record
@@ -76,10 +79,15 @@ A small chart also sits right under the stock list in the Bank minigame itself, 
 per-stock prices — the same "Sync to owned stocks" setting as below applies here too, so buying a stock adds it to
 both views automatically. Turn the Bank graph off in Settings if you'd rather not have it there.
 
-The stock chart on the Graphs tab defaults to your **portfolio value** over time (a value line plus a cost-basis line,
-so the gap between them is your unrealized gain) with stat tiles for Value, Unrealized, Realized and Total gain —
-switch to "Per stock" for the individual price lines instead. Cost basis is tracked from whenever the mod is loaded, so
-it only knows about trades made since then.
+The **Stock market** tab in the CookieMgr panel has:
+
+- **Buy fast/slow rise, sell the rest** — an autoclicker (own on/off switch and hotkey, not affected by "All on/off" or
+  the toggle-all hotkey) that, once a second, buys the max it can afford of fast-rising stocks, then slow-rising ones,
+  and sells anything it holds that isn't currently rising. That's the entire strategy.
+- The stock chart, defaulting to your **portfolio value** over time (a value line plus a cost-basis line, so the gap
+  between them is your unrealized gain) with stat tiles for Value, Unrealized, Realized and Total gain — switch to
+  "Per stock" for the individual price lines instead. Cost basis is tracked from whenever the mod is loaded, so it
+  only knows about trades made since then.
 
 ## Using it
 
@@ -143,6 +151,7 @@ src/
   features/
     autoclickers.js  clicker definitions and timers — add new ones to DEFS
     stocks.js        trend badges/tints, price history, and portfolio cost-basis tracking
+    stockTrader.js   the "buy fast/slow rise, sell the rest" autoclicker (own tab, no DEFS entry)
     history.js       samples CpS every second, tracks buffs/events, persists to localStorage
   ui/
     components.js    HTML snippets: switch, hotkey chip, icon, button

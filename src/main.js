@@ -30,6 +30,7 @@ const mod = {
 
     CA.Autoclickers.init();
     CA.Stocks.init();
+    CA.StockTrader.init();
     CA.History.init();
     CA.UI.Graph.init();
     CA.UI.StockGraph.init();
@@ -57,7 +58,10 @@ const mod = {
 
   load(str) {
     const data = CA.Settings.deserialize(str);
-    if (data && data.clickers && CA.Settings.get('rememberStates')) CA.Autoclickers.restore(data.clickers);
+    if (data && CA.Settings.get('rememberStates')) {
+      if (data.clickers) CA.Autoclickers.restore(data.clickers);
+      if (typeof data.stockTrader === 'boolean') CA.StockTrader.set(data.stockTrader, { silent: true });
+    }
   },
 };
 

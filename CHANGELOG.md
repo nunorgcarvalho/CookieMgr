@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **Stock market tab:** the stock chart moved off the Graphs tab onto its own new **Stock market** tab, alongside a new
+  autoclicker — **buy fast/slow rise, sell the rest**: each tick it buys the max it can afford of fast-rising stocks,
+  then slow-rising ones, and sells anything it holds that isn't currently rising. It is deliberately kept out of "All
+  on/off" and the toggle-all hotkey — it's switched on its own row on the new tab.
+
 ## 1.0.0 — 2026-09-30
 
 - **Stock market indicators:** every stock box in the Bank minigame now shows its trend (Stable, Slow rise, Slow fall,

@@ -32,6 +32,21 @@ CA.UI.Menu = (() => {
     );
   }
 
+  function stockTraderRow() {
+    return (
+      '<div class="ca-row" data-stock-trader>' +
+      C.icon({ icon: [9, 33] }) +
+      '<div class="ca-row-text"><div class="ca-row-name">Buy fast/slow rise, sell the rest</div>' +
+      '<div class="ca-row-desc">Buys the max it can afford of fast-rising stocks, then slow-rising ones. Sells anything it holds ' +
+      "that isn't currently rising. That's the whole strategy.</div></div>" +
+      '<div class="ca-controls">' +
+      C.hotkey('clicker.stockTrader') +
+      C.toggle(false, 'data-ca="stockTrader"', 'Stock market buy') +
+      '</div>' +
+      '</div>'
+    );
+  }
+
   function optionRow(def) {
     return (
       `<div class="ca-row ca-row-option" data-option="${def.key}">` +
@@ -46,6 +61,7 @@ CA.UI.Menu = (() => {
   const TABS = [
     { id: 'clickers', label: 'Autoclickers' },
     { id: 'graphs', label: 'Graphs' },
+    { id: 'stocks', label: 'Stock market' },
     { id: 'settings', label: 'Settings' },
   ];
   const currentTab = () => {
@@ -87,6 +103,20 @@ CA.UI.Menu = (() => {
       '<div class="ca-card-head"><div class="ca-card-title">Options</div></div>' +
       `<div class="ca-list">${CA.Settings.optionsIn('autoclickers').map(optionRow).join('')}</div>` +
       '</div>'
+    );
+  }
+
+  function stocksPage() {
+    return (
+      '<div class="ca-card">' +
+      '<div class="ca-card-head"><div class="ca-card-title">Stock market</div></div>' +
+      `<div class="ca-list">${stockTraderRow()}</div>` +
+      '</div>' +
+      '<div class="ca-card">' +
+      '<div class="ca-card-head"><div class="ca-card-title">Options</div></div>' +
+      `<div class="ca-list">${CA.Settings.optionsIn('stocks').map(optionRow).join('')}</div>` +
+      '</div>' +
+      CA.UI.StockGraph.html()
     );
   }
 
@@ -132,6 +162,13 @@ CA.UI.Menu = (() => {
     );
   }
 
+  function pageHtml(tab) {
+    if (tab === 'clickers') return clickersPage();
+    if (tab === 'graphs') return CA.UI.Graph.html();
+    if (tab === 'stocks') return stocksPage();
+    return settingsPage();
+  }
+
   function html() {
     const tab = currentTab();
     return (
@@ -139,9 +176,7 @@ CA.UI.Menu = (() => {
       '<div id="CookieMgrMenu">' +
       '<div class="section">CookieMgr</div>' +
       tabBar() +
-      `<div class="ca-page" data-page="${tab}">` +
-      (tab === 'clickers' ? clickersPage() : tab === 'graphs' ? CA.UI.Graph.html() + CA.UI.StockGraph.html() : settingsPage()) +
-      '</div>' +
+      `<div class="ca-page" data-page="${tab}">${pageHtml(tab)}</div>` +
       '</div>'
     );
   }
@@ -152,10 +187,9 @@ CA.UI.Menu = (() => {
     CA.UI.Graph.unmount();
     CA.UI.StockGraph.unmount();
     menu.innerHTML = html();
-    if (currentTab() === 'graphs') {
-      CA.UI.Graph.mount(menu.querySelector('.ca-page'));
-      CA.UI.StockGraph.mount(menu.querySelector('.ca-page'));
-    }
+    const tab = currentTab();
+    if (tab === 'graphs') CA.UI.Graph.mount(menu.querySelector('.ca-page'));
+    if (tab === 'stocks') CA.UI.StockGraph.mount(menu.querySelector('.ca-page'));
     sync();
   }
 
@@ -171,6 +205,13 @@ CA.UI.Menu = (() => {
       row.classList.toggle('on', on);
       setSwitch(row.querySelector('.ca-switch'), on);
     });
+
+    const stRow = root.querySelector('[data-stock-trader]');
+    if (stRow) {
+      const on = CA.StockTrader.isOn();
+      stRow.classList.toggle('on', on);
+      setSwitch(stRow.querySelector('.ca-switch'), on);
+    }
 
     const total = CA.Autoclickers.list().length;
     const active = CA.Autoclickers.activeCount();
@@ -251,6 +292,10 @@ CA.UI.Menu = (() => {
         CA.Autoclickers.toggle(id);
         break;
       }
+      case 'stockTrader':
+        CA.Util.sound(CA.StockTrader.isOn() ? 'snd/clickOff2.mp3' : 'snd/clickOn2.mp3');
+        CA.StockTrader.toggle();
+        break;
       case 'all-on':
         CA.Util.sound('snd/clickOn2.mp3');
         CA.Autoclickers.setAll(true);
@@ -356,10 +401,9 @@ CA.UI.Menu = (() => {
     const refresh = () => {
       if (!isOpen()) return;
       sync();
-      if (currentTab() === 'graphs') {
-        CA.UI.Graph.tick();
-        CA.UI.StockGraph.tick();
-      }
+      const tab = currentTab();
+      if (tab === 'graphs') CA.UI.Graph.tick();
+      if (tab === 'stocks') CA.UI.StockGraph.tick();
     };
     CA.Events.on('clickers', refresh);
     CA.Events.on('settings', refresh);
