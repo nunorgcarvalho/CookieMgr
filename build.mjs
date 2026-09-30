@@ -17,6 +17,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const SRC = path.join(ROOT, 'src');
 const OUT = path.join(ROOT, 'dist', 'CookieMgr.js');
+const VERSION_OUT = path.join(ROOT, 'dist', 'version.txt'); // tiny file CA.Update polls instead of the whole bundle
 
 // Load order matters: later modules may reference earlier ones at load time.
 const MODULES = [
@@ -26,6 +27,7 @@ const MODULES = [
   'core/settings.js',
   'core/hotkeys.js',
   'core/ascension.js',
+  'core/update.js',
   'features/autoclickers.js',
   'features/stocks.js',
   'features/history.js',
@@ -63,6 +65,7 @@ function build() {
   const { code, version } = render();
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
   fs.writeFileSync(OUT, code);
+  fs.writeFileSync(VERSION_OUT, version + '\n');
   const kb = (fs.statSync(OUT).size / 1024).toFixed(1);
   console.log(`[build] dist/CookieMgr.js  v${version}  ${kb} KB`);
 }
@@ -79,11 +82,13 @@ const args = new Set(process.argv.slice(2));
 
 if (args.has('--check')) {
   const current = fs.existsSync(OUT) ? fs.readFileSync(OUT, 'utf8') : '';
-  if (current === render().code) {
+  const currentVersion = fs.existsSync(VERSION_OUT) ? fs.readFileSync(VERSION_OUT, 'utf8') : '';
+  const { code, version } = render();
+  if (current === code && currentVersion === version + '\n') {
     console.log('[check] dist/CookieMgr.js is up to date');
     process.exit(0);
   }
-  console.error('[check] dist/CookieMgr.js is stale — run `npm run build` and commit the result');
+  console.error('[check] dist/ is stale — run `npm run build` and commit the result');
   process.exit(1);
 }
 

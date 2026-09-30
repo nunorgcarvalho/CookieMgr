@@ -54,8 +54,16 @@ Plus **All on / All off** buttons. Hotkeys support modifiers (e.g. `Shift + G`):
 ### Settings
 
 Turn everything off when ascending (default on), notifications, remember autoclicker states across reloads, record
-history, an optional hotkey to open the panel, reset hotkeys, and stock market indicators. Everything is stored in the
-normal Cookie Clicker save through the official mod API (`Game.registerMod`), so it survives exports and imports.
+history, an optional hotkey to open the panel, reset hotkeys, checking for updates, and stock market indicators.
+Everything is stored in the normal Cookie Clicker save through the official mod API (`Game.registerMod`), so it
+survives exports and imports.
+
+### Staying up to date
+
+CookieMgr checks GitHub every 15 minutes for a newer build and, if there is one, shows a notification with a one-click
+reload — it never updates itself silently. It can't hot-swap itself in place without a page reload (see the note at
+the top of `src/core/update.js` for why), so a click (or just refreshing normally) is always how an update actually
+applies. Turn this off in Settings if you'd rather check manually.
 
 ### Stock market
 
@@ -63,8 +71,9 @@ In the Bank minigame, every stock box shows its trend (stable / slow or fast ris
 coloured symbol strip and tint, brighter while you hold the stock — no more hovering each box for the tooltip. Both the
 badge and the tint can be switched off separately in Settings.
 
-A small chart also sits right under the stock list in the Bank minigame itself, toggled between your CpS and your
-portfolio value; turn it off in Settings if you'd rather not have it there.
+A small chart also sits right under the stock list in the Bank minigame itself, toggled between portfolio value and
+per-stock prices — the same "Sync to owned stocks" setting as below applies here too, so buying a stock adds it to
+both views automatically. Turn the Bank graph off in Settings if you'd rather not have it there.
 
 The stock chart on the Graphs tab defaults to your **portfolio value** over time (a value line plus a cost-basis line,
 so the gap between them is your unrealized gain) with stat tiles for Value, Unrealized, Realized and Total gain —
@@ -129,6 +138,7 @@ src/
     settings.js      options + hotkey bindings, save/load (JSON inside the game save)
     hotkeys.js       global keydown listener + "press a key" capture mode
     ascension.js     detects ascending (wraps Game.Ascend + watchdog)
+    update.js        polls GitHub for a newer build, notifies with a one-click reload
   features/
     autoclickers.js  clicker definitions and timers — add new ones to DEFS
     stocks.js        trend badges/tints, price history, and portfolio cost-basis tracking

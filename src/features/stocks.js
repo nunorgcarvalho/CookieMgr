@@ -232,7 +232,7 @@ CA.Stocks = (() => {
       group: 'graph-select',
       name: 'Bank graph view',
       desc: '',
-      default: 'portfolio', // 'portfolio' | 'cps'
+      default: 'portfolio', // 'portfolio' | 'perStock' — independent of the Graphs-tab stockGraphMode
     });
     CA.Util.injectCss('CookieMgrStocksStyles', CSS);
     CA.Events.on('settings', refresh);

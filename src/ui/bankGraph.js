@@ -1,7 +1,8 @@
 // A small graph inserted directly under the stock list in the Bank minigame itself, so you
 // don't have to open the CookieMgr panel to see how you're doing. A little toggle switches it
-// between your CpS and your stock portfolio value — "Bank graph view" in Settings remembers
-// which one you last picked.
+// between individual stock prices and your total portfolio value — same two views as the
+// Graphs-tab stock chart, just a separate "Bank graph view" setting so this one can be left on
+// whichever you check while actually trading.
 //
 // NOTE: this reaches into the Bank minigame's own DOM (there is no mod API for adding a panel
 // there), by inserting itself right after whichever element holds the `bankGood-*` boxes. If a
@@ -18,6 +19,7 @@ CA.UI.BankGraph = (() => {
   const MIN_PAD_L = 28;
   const PAD_L_MARGIN = 8;
   const FONT = '10px Tahoma, Arial, sans-serif';
+  const COLORS = ['#f5c451', '#7fe08b', '#9db4cc', '#ff8a65', '#c77dff', '#4fd6e0', '#e5484d', '#a6e35a'];
 
   const CSS = `
 #${WRAP_ID} { margin: 6px 0 2px; padding: 6px 8px 4px; background: rgba(0,0,0,.28); border: 1px solid rgba(255,255,255,.12); border-radius: 4px; }
@@ -44,6 +46,13 @@ CA.UI.BankGraph = (() => {
       else hi = mid;
     }
     return lo;
+  }
+
+  function visibleStocks() {
+    const all = CA.Stocks.list();
+    // Same "Sync to owned stocks" setting as the Graphs-tab per-stock view, so buying a stock
+    // makes it show up here too without any extra toggling.
+    return S().get('stockGraphSync') ? all.filter((g) => g.owned) : all;
   }
 
   // ---- finding a home in the Bank minigame's own DOM ------------------------------
@@ -73,7 +82,7 @@ CA.UI.BankGraph = (() => {
         '<div class="cm-bg-head"><span class="cm-bg-readout" data-cm-bg-readout></span>' +
         '<span class="cm-bg-toggle">' +
         '<button type="button" data-cm-bg-mode="portfolio">Portfolio</button>' +
-        '<button type="button" data-cm-bg-mode="cps">CpS</button>' +
+        '<button type="button" data-cm-bg-mode="perStock">Per stock</button>' +
         '</span></div>' +
         '<canvas></canvas>';
       wrap.addEventListener('click', (e) => {
@@ -104,21 +113,23 @@ CA.UI.BankGraph = (() => {
     return { w, h };
   }
 
-  function cpsSeries() {
-    const t1 = Date.now();
-    const t0 = t1 - WINDOW_MS;
-    const lo = Math.max(0, CA.History.lowerBound(t0) - 1);
-    const list = CA.History.samples.slice(lo).filter((s) => s.t <= t1);
-    return { pts: list.map((s) => ({ t: s.t, v: s.cps })), color: '#f5c451' };
-  }
-
-  function portfolioSeries() {
+  function portfolioLines() {
     const t1 = Date.now();
     const t0 = t1 - WINDOW_MS;
     const hist = CA.Stocks.portfolioHistory();
     const lo = Math.max(0, lowerBound(hist, t0) - 1);
     const list = hist.slice(lo).filter((p) => p.t <= t1);
-    return { pts: list.map((p) => ({ t: p.t, v: p.value })), color: '#f5c451' };
+    return [{ pts: list.map((p) => ({ t: p.t, v: p.value })), color: COLORS[0] }];
+  }
+
+  function perStockLines() {
+    const t1 = Date.now();
+    const t0 = t1 - WINDOW_MS;
+    return visibleStocks().map((g, i) => {
+      const hist = CA.Stocks.history(g.id);
+      const lo = Math.max(0, lowerBound(hist, t0) - 1);
+      return { g, pts: hist.slice(lo).filter((p) => p.t <= t1).map((p) => ({ t: p.t, v: p.v })), color: COLORS[i % COLORS.length] };
+    });
   }
 
   function draw(wrap) {
@@ -128,19 +139,21 @@ CA.UI.BankGraph = (() => {
     ctx.clearRect(0, 0, w, h);
     if (w < 30 || h < 20) return;
 
-    const mode = S().get('bankGraphMode') === 'cps' ? 'cps' : 'portfolio';
+    const mode = S().get('bankGraphMode') === 'perStock' ? 'perStock' : 'portfolio';
     wrap.querySelectorAll('[data-cm-bg-mode]').forEach((b) => b.classList.toggle('on', b.dataset.cmBgMode === mode));
 
-    const { pts } = mode === 'cps' ? cpsSeries() : portfolioSeries();
+    const lines = mode === 'perStock' ? perStockLines() : portfolioLines();
     const t1 = Date.now();
     const t0 = t1 - WINDOW_MS;
 
     let minV = Infinity;
     let maxV = -Infinity;
-    pts.forEach((p) => {
-      if (p.v < minV) minV = p.v;
-      if (p.v > maxV) maxV = p.v;
-    });
+    lines.forEach((l) =>
+      l.pts.forEach((p) => {
+        if (p.v < minV) minV = p.v;
+        if (p.v > maxV) maxV = p.v;
+      })
+    );
     if (!isFinite(minV)) {
       minV = 0;
       maxV = 10;
@@ -150,7 +163,7 @@ CA.UI.BankGraph = (() => {
       maxV += 1;
     }
     const padV = (maxV - minV) * 0.1 || 1;
-    const yMin = mode === 'cps' ? Math.max(0, minV - padV) : minV - padV;
+    const yMin = minV - padV;
     const yMax = maxV + padV;
 
     const labelW = CA.Util.maxTextWidth(ctx, FONT, [beautify(yMin, 0), beautify(yMax, 0)]);
@@ -173,29 +186,33 @@ CA.UI.BankGraph = (() => {
       ctx.fillText(beautify(v, 0), plot.x - 5, y);
     });
 
-    if (pts.length >= 2) {
-      ctx.save();
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(plot.x, plot.y - 3, plot.w, plot.h + 6);
+    ctx.clip();
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 1.6;
+    lines.forEach((l) => {
+      if (l.pts.length < 2) return;
+      ctx.strokeStyle = l.color;
       ctx.beginPath();
-      ctx.rect(plot.x, plot.y - 3, plot.w, plot.h + 6);
-      ctx.clip();
-      ctx.lineJoin = 'round';
-      ctx.lineCap = 'round';
-      ctx.lineWidth = 1.6;
-      ctx.strokeStyle = '#f5c451';
-      ctx.beginPath();
-      pts.forEach((p, i) => (i ? ctx.lineTo(xOf(p.t), yOf(p.v)) : ctx.moveTo(xOf(p.t), yOf(p.v))));
+      l.pts.forEach((p, i) => (i ? ctx.lineTo(xOf(p.t), yOf(p.v)) : ctx.moveTo(xOf(p.t), yOf(p.v))));
       ctx.stroke();
-      ctx.restore();
-    }
+    });
+    ctx.restore();
 
     const readout = wrap.querySelector('[data-cm-bg-readout]');
     if (readout) {
-      if (mode === 'cps') {
-        const last = CA.History.samples[CA.History.samples.length - 1];
-        readout.textContent = last ? `${beautify(last.cps)}/s` : 'Collecting data…';
+      if (mode === 'perStock') {
+        readout.textContent = lines.length
+          ? lines.map((l) => `${l.g.name} ${beautify(l.pts.length ? l.pts[l.pts.length - 1].v : 0)}`).join('  ·  ')
+          : S().get('stockGraphSync')
+            ? "You don't own any stocks right now."
+            : 'Open the Bank minigame to start tracking prices.';
       } else {
         const p = CA.Stocks.portfolioNow();
-        readout.textContent = pts.length
+        readout.textContent = lines[0].pts.length
           ? `${beautify(p.value)}  ·  unrealized ${signed(p.unrealized)}  ·  total gain ${signed(p.gain)}`
           : 'Buy a stock to start tracking.';
       }

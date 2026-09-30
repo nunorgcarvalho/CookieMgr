@@ -11,7 +11,10 @@
   old price-lines view. Cost basis is tracked from when the mod loads (buys/sells raise or realize it); it can't know
   about trades made before that.
 - **Graph in the Bank minigame:** a small chart now sits right under the stock list in the Bank minigame itself, toggled
-  between CpS and portfolio value. Can be turned off in Settings.
+  between portfolio value and per-stock prices (same "Sync to owned stocks" setting as the Graphs-tab chart, so buying
+  a stock shows it in both places automatically). Can be turned off in Settings.
+- **Update check:** CookieMgr now checks GitHub every 15 minutes for a newer build and, if there is one, shows a
+  notification with a one-click reload. It never updates itself silently — see the note in src/core/update.js for why.
 - **CpS graph is now a stacked bar chart:** each bar is Production (bottom) with Clicking stacked on top, so the total
   bar height is your combined income — replaces the old "with clicking"/"production" line toggles. The Unbuffed CpS
   line is now always on (no longer a toggle) as a dashed reference line over the bars.

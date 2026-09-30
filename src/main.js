@@ -38,6 +38,7 @@ const mod = {
     CA.Ascension.init();
     CA.UI.Menu.init();
     CA.UI.Tab.init();
+    CA.Update.init();
     migrateOldSaveData();
 
     CA.Util.notify(
