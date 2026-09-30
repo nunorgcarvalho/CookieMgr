@@ -22,7 +22,9 @@ CA.UI.Graph = (() => {
     cps: { color: '#f5c451', name: 'Production' },
     total: { color: '#7fe08b', name: 'With clicking' },
   };
-  const PAD = { l: 54, r: 14, t: 14, b: 26 };
+  const PAD = { r: 8, t: 10, b: 22 };
+  const MIN_PAD_L = 30;
+  const PAD_L_MARGIN = 10;
   const LANE_H = 8;
   const LANE_GAP = 2;
   const MAX_LANES = 6;
@@ -35,6 +37,7 @@ CA.UI.Graph = (() => {
   let observer = null;
   let timer = null;
   let hover = null; // { x, y } in css px
+  let padL = 54; // dynamic left padding — last frame's width, refined each draw()
   let paused = false;
   let pausedAt = 0;
   let layout = null; // hit-test info from the last draw
@@ -163,8 +166,8 @@ CA.UI.Graph = (() => {
     const t1 = endTime();
     const t0 = t1 - W;
     const now = Date.now();
-    const plot = { x: PAD.l, y: PAD.t, w: w - PAD.l - PAD.r, h: h - PAD.t - PAD.b };
-    const xOf = (t) => plot.x + ((t - t0) / W) * plot.w;
+    let plot = { x: padL, y: PAD.t, w: w - padL - PAD.r, h: h - PAD.t - PAD.b };
+    let xOf = (t) => plot.x + ((t - t0) / W) * plot.w;
 
     const showEffects = S().get('graphEffects');
     const ivs = showEffects ? CA.History.intervalsIn(t0, t1) : [];
@@ -230,6 +233,15 @@ CA.UI.Graph = (() => {
       yMax = Math.ceil(yMax / step) * step;
       for (let v = 0; v <= yMax * 1.0001; v += step) ticks.push(v);
     }
+
+    // Left padding fits whatever these tick labels actually render as (long-form Numbers
+    // preferences, decillion+ names, ...) instead of a fixed guess that clips them.
+    const tickLabels = ticks.map((v) => beautify(v, 0));
+    const labelW = CA.Util.maxTextWidth(ctx, '10px Tahoma, Arial, sans-serif', tickLabels);
+    padL = Math.max(MIN_PAD_L, Math.round(labelW) + PAD_L_MARGIN);
+    plot = { x: padL, y: PAD.t, w: w - padL - PAD.r, h: h - PAD.t - PAD.b };
+    xOf = (t) => plot.x + ((t - t0) / W) * plot.w;
+
     const yOf = (v) => {
       let f;
       if (log) f = (Math.log10(Math.max(v, yMin)) - Math.log10(yMin)) / (Math.log10(yMax) - Math.log10(yMin));
@@ -737,13 +749,13 @@ CA.UI.Graph = (() => {
     // Chip-selected (not boolean), so they're kept out of the generic Settings-tab option list;
     // the toolbar chips above are still the way to change them.
     S_.defineOption({ key: 'graphWindow', group: 'graph-select', name: 'Time window', desc: '', default: 300 });
-    S_.defineOption({ key: 'graphSmooth', group: 'graph-select', name: 'Smoothing', desc: '', default: 0 });
+    S_.defineOption({ key: 'graphSmooth', group: 'graph-select', name: 'Smoothing', desc: '', default: 5 });
     S_.defineOption({
       key: 'graphShowCps',
       group: 'graph',
       name: 'Show production line',
       desc: 'The CpS line the game itself reports.',
-      default: true,
+      default: false,
     });
     S_.defineOption({
       key: 'graphShowTotal',
@@ -757,7 +769,7 @@ CA.UI.Graph = (() => {
       group: 'graph',
       name: 'Show unbuffed line',
       desc: 'Dashed line for CpS with every temporary effect removed.',
-      default: false,
+      default: true,
     });
     S_.defineOption({
       key: 'graphLog',

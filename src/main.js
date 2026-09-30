@@ -33,6 +33,7 @@ const mod = {
     CA.History.init();
     CA.UI.Graph.init();
     CA.UI.StockGraph.init();
+    CA.UI.BankGraph.init();
     CA.Hotkeys.init();
     CA.Ascension.init();
     CA.UI.Menu.init();

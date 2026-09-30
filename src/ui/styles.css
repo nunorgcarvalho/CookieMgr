@@ -805,3 +805,7 @@
   font-style: italic;
   color: #7f735f;
 }
+
+#CookieMgrMenu .ca-hidden {
+  display: none;
+}

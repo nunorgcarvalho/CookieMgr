@@ -3,7 +3,7 @@
 'use strict';
 const CA = {};
 CA.VERSION = "0.3.0";
-CA.CSS = "/* ==========================================================================\n   CookieMgr — styles\n   Colours and borders borrow from the game's own \"framed\" look so the panel\n   feels native. Everything is scoped under #CookieMgrTab / #CookieMgrMenu.\n   ========================================================================== */\n\n/* ---------- Side tab (sticks out of the left beam) ---------- */\n\n#CookieMgrTab {\n  position: absolute;\n  left: 30%;\n  top: 128px;\n  margin-left: 3px; /* tuck slightly under the beam */\n  transform: translateX(-100%);\n  z-index: 110;\n  box-sizing: border-box;\n  width: 30px;\n  padding: 10px 0 12px;\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  gap: 8px;\n  cursor: pointer;\n  user-select: none;\n  background: linear-gradient(to right, #3d2716, #221409);\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-right: none;\n  border-radius: 10px 0 0 10px;\n  box-shadow:\n    -3px 3px 10px rgba(0, 0, 0, 0.65),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.18);\n  transition:\n    width 0.15s ease-out,\n    background 0.2s,\n    box-shadow 0.2s;\n  outline: none;\n}\n#CookieMgrTab:hover,\n#CookieMgrTab:focus-visible {\n  width: 34px;\n  box-shadow:\n    -3px 3px 12px rgba(0, 0, 0, 0.75),\n    0 0 12px rgba(255, 215, 110, 0.35),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.25);\n}\n#CookieMgrTab.selected {\n  background: linear-gradient(to right, #7a4f22, #43290f);\n  box-shadow:\n    -3px 3px 12px rgba(0, 0, 0, 0.75),\n    0 0 14px rgba(255, 215, 110, 0.55),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.3);\n}\n#CookieMgrTab .ca-tab-cookie {\n  width: 20px;\n  height: 20px;\n  background: url(img/perfectCookie.png) center / contain no-repeat;\n  filter: drop-shadow(0 1px 1px #000);\n  transition: transform 0.35s ease-out;\n}\n#CookieMgrTab:hover .ca-tab-cookie,\n#CookieMgrTab.selected .ca-tab-cookie {\n  transform: rotate(-30deg) scale(1.12);\n}\n#CookieMgrTab .ca-tab-label {\n  writing-mode: vertical-rl;\n  transform: rotate(180deg);\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-weight: bold;\n  font-size: 13px;\n  letter-spacing: 1px;\n  color: #f4e6c3;\n  text-shadow:\n    0 1px 2px #000,\n    0 0 6px rgba(255, 200, 120, 0.25);\n  white-space: nowrap;\n}\n#CookieMgrTab .ca-tab-badge {\n  display: none;\n  min-width: 16px;\n  height: 16px;\n  padding: 0 3px;\n  box-sizing: border-box;\n  border-radius: 8px;\n  font:\n    bold 10px/16px Tahoma,\n    Arial,\n    sans-serif;\n  text-align: center;\n  color: #fff;\n  background: linear-gradient(#63c64a, #2f7d24);\n  box-shadow:\n    0 0 6px rgba(120, 240, 100, 0.8),\n    0 1px 1px #000;\n  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);\n}\n#CookieMgrTab.active .ca-tab-badge {\n  display: block;\n  animation: caBadgeGlow 2s infinite ease-in-out;\n}\n@keyframes caBadgeGlow {\n  0%,\n  100% {\n    box-shadow:\n      0 0 4px rgba(120, 240, 100, 0.6),\n      0 1px 1px #000;\n  }\n  50% {\n    box-shadow:\n      0 0 10px rgba(120, 240, 100, 1),\n      0 1px 1px #000;\n  }\n}\n#game.ascending #CookieMgrTab,\n#game.ascendIntro #CookieMgrTab,\n#game.reincarnating #CookieMgrTab {\n  display: none;\n}\n\n/* ---------- Panel ---------- */\n\n#CookieMgrMenu {\n  max-width: 780px;\n  margin: 0 auto;\n  padding: 0 12px 120px;\n  color: #ddd;\n}\n#CookieMgrMenu .ca-tagline {\n  text-align: center;\n  margin: -6px 0 14px;\n  font-size: 12px;\n  font-style: italic;\n  color: #b9ab93;\n  text-shadow: 0 1px 1px #000;\n}\n\n/* Cards */\n#CookieMgrMenu .ca-card {\n  margin: 14px 4px;\n  border-radius: 6px;\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  background: rgba(0, 0, 0, 0.38);\n  box-shadow:\n    0 0 1px #000,\n    inset 0 0 1px #000,\n    0 6px 16px rgba(0, 0, 0, 0.35);\n  overflow: hidden;\n}\n#CookieMgrMenu .ca-card-head {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 10px;\n  padding: 9px 14px;\n  background: linear-gradient(to right, rgba(255, 235, 190, 0.09), rgba(255, 235, 190, 0));\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-card-title {\n  flex: 1;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-size: 20px;\n  color: #fff;\n  text-shadow:\n    0 -1px 5px rgba(255, 255, 200, 0.35),\n    0 1px 3px #000;\n}\n#CookieMgrMenu .ca-pill {\n  font-size: 11px;\n  white-space: nowrap;\n  padding: 3px 10px;\n  border-radius: 10px;\n  color: #bbb;\n  background: rgba(255, 255, 255, 0.07);\n  border: 1px solid rgba(255, 255, 255, 0.15);\n  transition: all 0.2s;\n}\n#CookieMgrMenu .ca-pill.on {\n  color: #cfc;\n  background: rgba(80, 200, 90, 0.16);\n  border-color: rgba(130, 235, 120, 0.5);\n}\n\n/* Rows */\n#CookieMgrMenu .ca-row {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 8px 12px;\n  padding: 8px 14px;\n  border-top: 1px solid rgba(255, 255, 255, 0.05);\n  transition: background 0.2s;\n}\n#CookieMgrMenu .ca-list .ca-row:first-child {\n  border-top: none;\n}\n#CookieMgrMenu .ca-row:hover {\n  background: rgba(255, 255, 255, 0.035);\n}\n#CookieMgrMenu .ca-row.on {\n  background: linear-gradient(to right, rgba(255, 210, 90, 0.12), rgba(255, 210, 90, 0) 65%);\n}\n#CookieMgrMenu .ca-row-master {\n  background: rgba(0, 0, 0, 0.22);\n  border-top: none;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-row-option {\n  padding-top: 10px;\n  padding-bottom: 10px;\n}\n#CookieMgrMenu .ca-row-text {\n  flex: 1 1 160px;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-row-option {\n  flex-wrap: nowrap;\n}\n#CookieMgrMenu .ca-row-option .ca-row-text {\n  flex-basis: 0;\n}\n#CookieMgrMenu .ca-controls {\n  flex: 0 1 auto;\n  max-width: 100%;\n  margin-left: auto;\n  display: flex;\n  flex-wrap: wrap;\n  justify-content: flex-end;\n  align-items: center;\n  gap: 8px;\n}\n#CookieMgrMenu .ca-row-name {\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 14px;\n  color: #f2ead2;\n  text-shadow: 0 1px 2px #000;\n}\n#CookieMgrMenu .ca-row-desc {\n  margin-top: 2px;\n  font-size: 11px;\n  color: #b3a590;\n  text-shadow: 0 1px 1px #000;\n}\n\n/* Icons */\n#CookieMgrMenu .ca-icon {\n  flex: 0 0 36px;\n  width: 36px;\n  height: 36px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  transition:\n    filter 0.25s,\n    transform 0.25s;\n  filter: grayscale(0.55) brightness(0.8);\n}\n#CookieMgrMenu .ca-row.on .ca-icon,\n#CookieMgrMenu .ca-row-master .ca-icon {\n  filter: drop-shadow(0 0 6px rgba(255, 220, 120, 0.75));\n}\n#CookieMgrMenu .ca-row.on .ca-icon {\n  transform: scale(1.06);\n}\n#CookieMgrMenu .ca-img {\n  width: 36px;\n  height: 36px;\n  background-size: contain;\n  background-repeat: no-repeat;\n  background-position: center;\n}\n#CookieMgrMenu .ca-sprite {\n  flex: none;\n  width: 48px;\n  height: 48px;\n  background-image: url(img/icons.png);\n  transform: scale(0.75);\n}\n\n/* Toggle switch */\n#CookieMgrMenu .ca-switch {\n  flex: none;\n  padding: 2px;\n  background: none;\n  border: none;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-switch:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-switch-track {\n  display: block;\n  position: relative;\n  width: 42px;\n  height: 22px;\n  box-sizing: border-box;\n  border-radius: 11px;\n  background: #2a211c;\n  border: 1px solid rgba(255, 255, 255, 0.22);\n  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.75);\n  transition:\n    background 0.2s,\n    border-color 0.2s,\n    box-shadow 0.2s;\n}\n#CookieMgrMenu .ca-switch-knob {\n  position: absolute;\n  top: 2px;\n  left: 2px;\n  width: 16px;\n  height: 16px;\n  border-radius: 50%;\n  background: radial-gradient(circle at 35% 30%, #fff, #c9c1b5 55%, #8a8178);\n  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);\n  transition: left 0.18s ease-out;\n}\n#CookieMgrMenu .ca-switch:hover .ca-switch-track {\n  border-color: rgba(255, 225, 150, 0.6);\n}\n#CookieMgrMenu .ca-switch.on .ca-switch-track {\n  background: linear-gradient(#66c84b, #2f7d24);\n  border-color: #a5ea93;\n  box-shadow:\n    inset 0 1px 3px rgba(0, 0, 0, 0.35),\n    0 0 9px rgba(110, 230, 90, 0.45);\n}\n#CookieMgrMenu .ca-switch.on .ca-switch-knob {\n  left: 22px;\n}\n#CookieMgrMenu .ca-switch:focus-visible .ca-switch-track {\n  outline: 2px solid #ffd76a;\n  outline-offset: 2px;\n}\n\n/* Hotkey chips */\n#CookieMgrMenu .ca-hotkey {\n  flex: none;\n  display: inline-flex;\n  align-items: center;\n}\n#CookieMgrMenu .ca-key {\n  min-width: 46px;\n  height: 26px;\n  padding: 0 10px;\n  font:\n    bold 12px Tahoma,\n    Arial,\n    sans-serif;\n  color: #f4e6c3;\n  text-shadow: 0 1px 1px #000;\n  background: linear-gradient(#4d3c2d, #2a2018);\n  border: 1px solid;\n  border-color: #9a7d5b #3b2c1f #2a1f15 #74604a;\n  border-radius: 5px;\n  box-shadow:\n    0 2px 0 #140d08,\n    inset 0 1px 0 rgba(255, 255, 255, 0.16);\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    border-color 0.15s,\n    box-shadow 0.15s;\n}\n#CookieMgrMenu .ca-key:hover {\n  color: #fff;\n  border-color: #e0c08a #5a4430 #3d2e20 #b39468;\n}\n#CookieMgrMenu .ca-key:active {\n  transform: translateY(1px);\n  box-shadow:\n    0 1px 0 #140d08,\n    inset 0 1px 0 rgba(255, 255, 255, 0.16);\n}\n#CookieMgrMenu .ca-key:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-hotkey.unset .ca-key {\n  color: #8f877a;\n  font-weight: normal;\n  font-style: italic;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px dashed rgba(255, 255, 255, 0.22);\n  box-shadow: none;\n}\n#CookieMgrMenu .ca-hotkey.capturing .ca-key {\n  color: #ffe9a6;\n  border-color: #ffd76a;\n  animation: caCapture 1.1s infinite ease-in-out;\n}\n@keyframes caCapture {\n  0%,\n  100% {\n    box-shadow:\n      0 2px 0 #140d08,\n      0 0 0 0 rgba(255, 215, 106, 0.5);\n  }\n  50% {\n    box-shadow:\n      0 2px 0 #140d08,\n      0 0 12px 2px rgba(255, 215, 106, 0.55);\n  }\n}\n#CookieMgrMenu .ca-key-clear {\n  width: 18px;\n  height: 18px;\n  margin-left: 3px;\n  padding: 0;\n  border: none;\n  border-radius: 50%;\n  background: transparent;\n  color: #b09a8a;\n  font-size: 14px;\n  line-height: 18px;\n  cursor: pointer;\n  opacity: 0;\n  transition:\n    opacity 0.15s,\n    background 0.15s;\n}\n#CookieMgrMenu .ca-row:hover .ca-key-clear {\n  opacity: 0.8;\n}\n#CookieMgrMenu .ca-key-clear:hover {\n  color: #fff;\n  background: rgba(255, 80, 80, 0.35);\n}\n#CookieMgrMenu .ca-hotkey.unset .ca-key-clear,\n#CookieMgrMenu .ca-hotkey.capturing .ca-key-clear {\n  visibility: hidden;\n}\n\n/* Buttons */\n#CookieMgrMenu .ca-btn {\n  padding: 4px 12px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-weight: bold;\n  font-size: 12px;\n  color: #ddd;\n  text-shadow: 0 1px 1px #000;\n  background: linear-gradient(#3e2f23, #1d140f);\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 4px;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    inset 0 1px 0 rgba(255, 255, 255, 0.12);\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    box-shadow 0.15s,\n    opacity 0.15s;\n}\n#CookieMgrMenu .ca-btn:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-btn:not(:disabled):hover {\n  color: #fff;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    0 0 9px rgba(255, 220, 120, 0.35),\n    inset 0 1px 0 rgba(255, 255, 255, 0.18);\n}\n#CookieMgrMenu .ca-btn:not(:disabled):active {\n  transform: translateY(1px);\n}\n#CookieMgrMenu .ca-btn-on:not(:disabled):hover {\n  color: #d6ffcc;\n}\n#CookieMgrMenu .ca-btn-off:not(:disabled):hover {\n  color: #ffd2cc;\n}\n#CookieMgrMenu .ca-btn:disabled {\n  opacity: 0.38;\n  cursor: default;\n  box-shadow: none;\n}\n#CookieMgrMenu .ca-btn-small {\n  font-size: 11px;\n  padding: 3px 10px;\n}\n\n/* Footer */\n#CookieMgrMenu .ca-footer {\n  margin: 18px 8px 0;\n  font-size: 11px;\n  line-height: 1.7;\n  text-align: center;\n  color: #9b907f;\n  text-shadow: 0 1px 1px #000;\n}\n#CookieMgrMenu .ca-footer b {\n  color: #c9bba3;\n}\n#CookieMgrMenu kbd {\n  display: inline-block;\n  padding: 0 5px;\n  font:\n    bold 10px/16px Tahoma,\n    Arial,\n    sans-serif;\n  color: #e8dcc2;\n  background: #2a2018;\n  border: 1px solid #5a4632;\n  border-radius: 3px;\n  box-shadow: 0 1px 0 #140d08;\n}\n#CookieMgrMenu .ca-footer-actions {\n  margin-top: 8px;\n}\n\n/* ---------- Tab row ---------- */\n\n#CookieMgrMenu .ca-tabs {\n  display: flex;\n  gap: 4px;\n  margin: 4px 4px 0;\n  padding: 0 6px;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.14);\n}\n#CookieMgrMenu .ca-tabbtn {\n  position: relative;\n  margin-bottom: -1px;\n  padding: 7px 16px 8px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-weight: bold;\n  font-size: 14px;\n  color: #b9ab93;\n  text-shadow: 0 1px 2px #000;\n  background: linear-gradient(rgba(255, 255, 255, 0.03), rgba(0, 0, 0, 0.25));\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.14);\n  border-radius: 6px 6px 0 0;\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    background 0.15s;\n}\n#CookieMgrMenu .ca-tabbtn:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-tabbtn:hover {\n  color: #fff;\n  background: linear-gradient(rgba(255, 255, 255, 0.07), rgba(0, 0, 0, 0.2));\n}\n#CookieMgrMenu .ca-tabbtn.on {\n  color: #ffeab0;\n  background: linear-gradient(#5a3d1e, #2b1c0d);\n  border-color: #b98a4e #7a5630 rgba(0, 0, 0, 0) #b98a4e;\n  border-bottom-color: #2b1c0d;\n  box-shadow: 0 -2px 10px rgba(255, 200, 110, 0.18);\n}\n#CookieMgrMenu .ca-page {\n  animation: caFade 0.18s ease-out;\n}\n@keyframes caFade {\n  from {\n    opacity: 0;\n    transform: translateY(3px);\n  }\n  to {\n    opacity: 1;\n    transform: none;\n  }\n}\n#CookieMgrMenu a {\n  color: #ffd98a;\n}\n\n/* ---------- Graph ---------- */\n\n#CookieMgrMenu .ca-live {\n  font-size: 11px;\n  padding: 3px 10px 3px 20px;\n  position: relative;\n  border-radius: 10px;\n  color: #cfc;\n  background: rgba(80, 200, 90, 0.16);\n  border: 1px solid rgba(130, 235, 120, 0.5);\n}\n#CookieMgrMenu .ca-live:before {\n  content: '';\n  position: absolute;\n  left: 8px;\n  top: 50%;\n  width: 6px;\n  height: 6px;\n  margin-top: -3px;\n  border-radius: 50%;\n  background: #7be07b;\n  box-shadow: 0 0 6px #7be07b;\n  animation: caBadgeGlow 1.6s infinite ease-in-out;\n}\n#CookieMgrMenu .ca-live.paused {\n  color: #ffd9a0;\n  background: rgba(255, 170, 60, 0.14);\n  border-color: rgba(255, 190, 100, 0.5);\n}\n#CookieMgrMenu .ca-live.paused:before {\n  background: #ffb45c;\n  box-shadow: none;\n  animation: none;\n}\n\n#CookieMgrMenu .ca-stats {\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));\n  gap: 1px;\n  background: rgba(255, 255, 255, 0.06);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-stat {\n  padding: 8px 12px;\n  background: rgba(0, 0, 0, 0.32);\n}\n#CookieMgrMenu .ca-stat-label {\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #a89a83;\n}\n#CookieMgrMenu .ca-stat-value {\n  margin-top: 2px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 17px;\n  color: #ffeab0;\n  text-shadow: 0 1px 3px #000;\n  white-space: nowrap;\n}\n#CookieMgrMenu .ca-stat-sub {\n  margin-top: 1px;\n  font-size: 10px;\n  color: #93866f;\n  white-space: nowrap;\n}\n\n#CookieMgrMenu .ca-toolbar {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  justify-content: space-between;\n  gap: 6px 12px;\n  padding: 8px 12px;\n}\n#CookieMgrMenu .ca-toolbar-bottom {\n  padding-top: 6px;\n}\n#CookieMgrMenu .ca-chipgroup {\n  display: inline-flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 4px;\n}\n#CookieMgrMenu .ca-chip-label {\n  margin-right: 2px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-chip {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  padding: 3px 9px;\n  font:\n    bold 11px Tahoma,\n    Arial,\n    sans-serif;\n  color: #b9ab93;\n  text-shadow: 0 1px 1px #000;\n  background: rgba(255, 255, 255, 0.05);\n  border: 1px solid rgba(255, 255, 255, 0.14);\n  border-radius: 11px;\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    background 0.15s,\n    border-color 0.15s;\n}\n#CookieMgrMenu .ca-chip:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-chip:hover {\n  color: #fff;\n  border-color: rgba(255, 225, 150, 0.5);\n}\n#CookieMgrMenu .ca-chip.on {\n  color: #fff3cf;\n  background: rgba(255, 200, 100, 0.18);\n  border-color: rgba(255, 210, 120, 0.6);\n}\n#CookieMgrMenu .ca-chip-series:not(.on) .ca-sw {\n  opacity: 0.3;\n}\n#CookieMgrMenu .ca-sw {\n  display: inline-block;\n  width: 9px;\n  height: 9px;\n  margin-right: 1px;\n  border-radius: 50%;\n  vertical-align: -1px;\n  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);\n}\n\n#CookieMgrMenu .ca-graph-wrap {\n  position: relative;\n  margin: 0 8px;\n}\n#CookieMgrMenu canvas.ca-graph {\n  display: block;\n  width: 100%;\n  height: 300px;\n  cursor: crosshair;\n}\n#CookieMgrMenu canvas.ca-graph.ca-graph-small {\n  height: 160px;\n}\n#CookieMgrMenu .ca-tip {\n  display: none;\n  position: absolute;\n  z-index: 5;\n  max-width: 270px;\n  min-width: 150px;\n  padding: 7px 10px;\n  pointer-events: none;\n  font-size: 11px;\n  line-height: 1.35;\n  color: #e6dcc6;\n  background: rgba(14, 10, 6, 0.95);\n  border: 1px solid;\n  border-color: #b98a4e #6a4626 #55301c #a0764a;\n  border-radius: 5px;\n  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7);\n}\n#CookieMgrMenu .ca-tip-head {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  margin-bottom: 4px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 12px;\n  color: #ffeab0;\n}\n#CookieMgrMenu .ca-tip-head span {\n  margin-left: auto;\n  padding-left: 10px;\n  font:\n    normal 10px Tahoma,\n    Arial,\n    sans-serif;\n  color: #a89a83;\n}\n#CookieMgrMenu .ca-tip-row {\n  display: flex;\n  align-items: center;\n  gap: 5px;\n  padding: 1px 0;\n}\n#CookieMgrMenu .ca-tip-row b {\n  font-weight: normal;\n  color: #b9ab93;\n}\n#CookieMgrMenu .ca-tip-row span {\n  margin-left: auto;\n  padding-left: 12px;\n  text-align: right;\n  color: #f2ead2;\n}\n#CookieMgrMenu .ca-tip-row.strong b,\n#CookieMgrMenu .ca-tip-row.strong span {\n  color: #fff3cf;\n  font-weight: bold;\n}\n#CookieMgrMenu .ca-tip-sep {\n  height: 1px;\n  margin: 5px 0;\n  background: rgba(255, 255, 255, 0.14);\n}\n#CookieMgrMenu .ca-tip-note {\n  margin: 2px 0 4px;\n  font-style: italic;\n  color: #a89a83;\n}\n\n#CookieMgrMenu .ca-legend {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 4px 12px;\n  min-height: 16px;\n  padding: 2px 14px 12px;\n  font-size: 11px;\n  color: #b9ab93;\n}\n#CookieMgrMenu .ca-legend-item em {\n  font-style: normal;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-legend-empty {\n  font-style: italic;\n  color: #7f735f;\n}\n";
+CA.CSS = "/* ==========================================================================\n   CookieMgr — styles\n   Colours and borders borrow from the game's own \"framed\" look so the panel\n   feels native. Everything is scoped under #CookieMgrTab / #CookieMgrMenu.\n   ========================================================================== */\n\n/* ---------- Side tab (sticks out of the left beam) ---------- */\n\n#CookieMgrTab {\n  position: absolute;\n  left: 30%;\n  top: 128px;\n  margin-left: 3px; /* tuck slightly under the beam */\n  transform: translateX(-100%);\n  z-index: 110;\n  box-sizing: border-box;\n  width: 30px;\n  padding: 10px 0 12px;\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  gap: 8px;\n  cursor: pointer;\n  user-select: none;\n  background: linear-gradient(to right, #3d2716, #221409);\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-right: none;\n  border-radius: 10px 0 0 10px;\n  box-shadow:\n    -3px 3px 10px rgba(0, 0, 0, 0.65),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.18);\n  transition:\n    width 0.15s ease-out,\n    background 0.2s,\n    box-shadow 0.2s;\n  outline: none;\n}\n#CookieMgrTab:hover,\n#CookieMgrTab:focus-visible {\n  width: 34px;\n  box-shadow:\n    -3px 3px 12px rgba(0, 0, 0, 0.75),\n    0 0 12px rgba(255, 215, 110, 0.35),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.25);\n}\n#CookieMgrTab.selected {\n  background: linear-gradient(to right, #7a4f22, #43290f);\n  box-shadow:\n    -3px 3px 12px rgba(0, 0, 0, 0.75),\n    0 0 14px rgba(255, 215, 110, 0.55),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.3);\n}\n#CookieMgrTab .ca-tab-cookie {\n  width: 20px;\n  height: 20px;\n  background: url(img/perfectCookie.png) center / contain no-repeat;\n  filter: drop-shadow(0 1px 1px #000);\n  transition: transform 0.35s ease-out;\n}\n#CookieMgrTab:hover .ca-tab-cookie,\n#CookieMgrTab.selected .ca-tab-cookie {\n  transform: rotate(-30deg) scale(1.12);\n}\n#CookieMgrTab .ca-tab-label {\n  writing-mode: vertical-rl;\n  transform: rotate(180deg);\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-weight: bold;\n  font-size: 13px;\n  letter-spacing: 1px;\n  color: #f4e6c3;\n  text-shadow:\n    0 1px 2px #000,\n    0 0 6px rgba(255, 200, 120, 0.25);\n  white-space: nowrap;\n}\n#CookieMgrTab .ca-tab-badge {\n  display: none;\n  min-width: 16px;\n  height: 16px;\n  padding: 0 3px;\n  box-sizing: border-box;\n  border-radius: 8px;\n  font:\n    bold 10px/16px Tahoma,\n    Arial,\n    sans-serif;\n  text-align: center;\n  color: #fff;\n  background: linear-gradient(#63c64a, #2f7d24);\n  box-shadow:\n    0 0 6px rgba(120, 240, 100, 0.8),\n    0 1px 1px #000;\n  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);\n}\n#CookieMgrTab.active .ca-tab-badge {\n  display: block;\n  animation: caBadgeGlow 2s infinite ease-in-out;\n}\n@keyframes caBadgeGlow {\n  0%,\n  100% {\n    box-shadow:\n      0 0 4px rgba(120, 240, 100, 0.6),\n      0 1px 1px #000;\n  }\n  50% {\n    box-shadow:\n      0 0 10px rgba(120, 240, 100, 1),\n      0 1px 1px #000;\n  }\n}\n#game.ascending #CookieMgrTab,\n#game.ascendIntro #CookieMgrTab,\n#game.reincarnating #CookieMgrTab {\n  display: none;\n}\n\n/* ---------- Panel ---------- */\n\n#CookieMgrMenu {\n  max-width: 780px;\n  margin: 0 auto;\n  padding: 0 12px 120px;\n  color: #ddd;\n}\n#CookieMgrMenu .ca-tagline {\n  text-align: center;\n  margin: -6px 0 14px;\n  font-size: 12px;\n  font-style: italic;\n  color: #b9ab93;\n  text-shadow: 0 1px 1px #000;\n}\n\n/* Cards */\n#CookieMgrMenu .ca-card {\n  margin: 14px 4px;\n  border-radius: 6px;\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  background: rgba(0, 0, 0, 0.38);\n  box-shadow:\n    0 0 1px #000,\n    inset 0 0 1px #000,\n    0 6px 16px rgba(0, 0, 0, 0.35);\n  overflow: hidden;\n}\n#CookieMgrMenu .ca-card-head {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 10px;\n  padding: 9px 14px;\n  background: linear-gradient(to right, rgba(255, 235, 190, 0.09), rgba(255, 235, 190, 0));\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-card-title {\n  flex: 1;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-size: 20px;\n  color: #fff;\n  text-shadow:\n    0 -1px 5px rgba(255, 255, 200, 0.35),\n    0 1px 3px #000;\n}\n#CookieMgrMenu .ca-pill {\n  font-size: 11px;\n  white-space: nowrap;\n  padding: 3px 10px;\n  border-radius: 10px;\n  color: #bbb;\n  background: rgba(255, 255, 255, 0.07);\n  border: 1px solid rgba(255, 255, 255, 0.15);\n  transition: all 0.2s;\n}\n#CookieMgrMenu .ca-pill.on {\n  color: #cfc;\n  background: rgba(80, 200, 90, 0.16);\n  border-color: rgba(130, 235, 120, 0.5);\n}\n\n/* Rows */\n#CookieMgrMenu .ca-row {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 8px 12px;\n  padding: 8px 14px;\n  border-top: 1px solid rgba(255, 255, 255, 0.05);\n  transition: background 0.2s;\n}\n#CookieMgrMenu .ca-list .ca-row:first-child {\n  border-top: none;\n}\n#CookieMgrMenu .ca-row:hover {\n  background: rgba(255, 255, 255, 0.035);\n}\n#CookieMgrMenu .ca-row.on {\n  background: linear-gradient(to right, rgba(255, 210, 90, 0.12), rgba(255, 210, 90, 0) 65%);\n}\n#CookieMgrMenu .ca-row-master {\n  background: rgba(0, 0, 0, 0.22);\n  border-top: none;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-row-option {\n  padding-top: 10px;\n  padding-bottom: 10px;\n}\n#CookieMgrMenu .ca-row-text {\n  flex: 1 1 160px;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-row-option {\n  flex-wrap: nowrap;\n}\n#CookieMgrMenu .ca-row-option .ca-row-text {\n  flex-basis: 0;\n}\n#CookieMgrMenu .ca-controls {\n  flex: 0 1 auto;\n  max-width: 100%;\n  margin-left: auto;\n  display: flex;\n  flex-wrap: wrap;\n  justify-content: flex-end;\n  align-items: center;\n  gap: 8px;\n}\n#CookieMgrMenu .ca-row-name {\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 14px;\n  color: #f2ead2;\n  text-shadow: 0 1px 2px #000;\n}\n#CookieMgrMenu .ca-row-desc {\n  margin-top: 2px;\n  font-size: 11px;\n  color: #b3a590;\n  text-shadow: 0 1px 1px #000;\n}\n\n/* Icons */\n#CookieMgrMenu .ca-icon {\n  flex: 0 0 36px;\n  width: 36px;\n  height: 36px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  transition:\n    filter 0.25s,\n    transform 0.25s;\n  filter: grayscale(0.55) brightness(0.8);\n}\n#CookieMgrMenu .ca-row.on .ca-icon,\n#CookieMgrMenu .ca-row-master .ca-icon {\n  filter: drop-shadow(0 0 6px rgba(255, 220, 120, 0.75));\n}\n#CookieMgrMenu .ca-row.on .ca-icon {\n  transform: scale(1.06);\n}\n#CookieMgrMenu .ca-img {\n  width: 36px;\n  height: 36px;\n  background-size: contain;\n  background-repeat: no-repeat;\n  background-position: center;\n}\n#CookieMgrMenu .ca-sprite {\n  flex: none;\n  width: 48px;\n  height: 48px;\n  background-image: url(img/icons.png);\n  transform: scale(0.75);\n}\n\n/* Toggle switch */\n#CookieMgrMenu .ca-switch {\n  flex: none;\n  padding: 2px;\n  background: none;\n  border: none;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-switch:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-switch-track {\n  display: block;\n  position: relative;\n  width: 42px;\n  height: 22px;\n  box-sizing: border-box;\n  border-radius: 11px;\n  background: #2a211c;\n  border: 1px solid rgba(255, 255, 255, 0.22);\n  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.75);\n  transition:\n    background 0.2s,\n    border-color 0.2s,\n    box-shadow 0.2s;\n}\n#CookieMgrMenu .ca-switch-knob {\n  position: absolute;\n  top: 2px;\n  left: 2px;\n  width: 16px;\n  height: 16px;\n  border-radius: 50%;\n  background: radial-gradient(circle at 35% 30%, #fff, #c9c1b5 55%, #8a8178);\n  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);\n  transition: left 0.18s ease-out;\n}\n#CookieMgrMenu .ca-switch:hover .ca-switch-track {\n  border-color: rgba(255, 225, 150, 0.6);\n}\n#CookieMgrMenu .ca-switch.on .ca-switch-track {\n  background: linear-gradient(#66c84b, #2f7d24);\n  border-color: #a5ea93;\n  box-shadow:\n    inset 0 1px 3px rgba(0, 0, 0, 0.35),\n    0 0 9px rgba(110, 230, 90, 0.45);\n}\n#CookieMgrMenu .ca-switch.on .ca-switch-knob {\n  left: 22px;\n}\n#CookieMgrMenu .ca-switch:focus-visible .ca-switch-track {\n  outline: 2px solid #ffd76a;\n  outline-offset: 2px;\n}\n\n/* Hotkey chips */\n#CookieMgrMenu .ca-hotkey {\n  flex: none;\n  display: inline-flex;\n  align-items: center;\n}\n#CookieMgrMenu .ca-key {\n  min-width: 46px;\n  height: 26px;\n  padding: 0 10px;\n  font:\n    bold 12px Tahoma,\n    Arial,\n    sans-serif;\n  color: #f4e6c3;\n  text-shadow: 0 1px 1px #000;\n  background: linear-gradient(#4d3c2d, #2a2018);\n  border: 1px solid;\n  border-color: #9a7d5b #3b2c1f #2a1f15 #74604a;\n  border-radius: 5px;\n  box-shadow:\n    0 2px 0 #140d08,\n    inset 0 1px 0 rgba(255, 255, 255, 0.16);\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    border-color 0.15s,\n    box-shadow 0.15s;\n}\n#CookieMgrMenu .ca-key:hover {\n  color: #fff;\n  border-color: #e0c08a #5a4430 #3d2e20 #b39468;\n}\n#CookieMgrMenu .ca-key:active {\n  transform: translateY(1px);\n  box-shadow:\n    0 1px 0 #140d08,\n    inset 0 1px 0 rgba(255, 255, 255, 0.16);\n}\n#CookieMgrMenu .ca-key:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-hotkey.unset .ca-key {\n  color: #8f877a;\n  font-weight: normal;\n  font-style: italic;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px dashed rgba(255, 255, 255, 0.22);\n  box-shadow: none;\n}\n#CookieMgrMenu .ca-hotkey.capturing .ca-key {\n  color: #ffe9a6;\n  border-color: #ffd76a;\n  animation: caCapture 1.1s infinite ease-in-out;\n}\n@keyframes caCapture {\n  0%,\n  100% {\n    box-shadow:\n      0 2px 0 #140d08,\n      0 0 0 0 rgba(255, 215, 106, 0.5);\n  }\n  50% {\n    box-shadow:\n      0 2px 0 #140d08,\n      0 0 12px 2px rgba(255, 215, 106, 0.55);\n  }\n}\n#CookieMgrMenu .ca-key-clear {\n  width: 18px;\n  height: 18px;\n  margin-left: 3px;\n  padding: 0;\n  border: none;\n  border-radius: 50%;\n  background: transparent;\n  color: #b09a8a;\n  font-size: 14px;\n  line-height: 18px;\n  cursor: pointer;\n  opacity: 0;\n  transition:\n    opacity 0.15s,\n    background 0.15s;\n}\n#CookieMgrMenu .ca-row:hover .ca-key-clear {\n  opacity: 0.8;\n}\n#CookieMgrMenu .ca-key-clear:hover {\n  color: #fff;\n  background: rgba(255, 80, 80, 0.35);\n}\n#CookieMgrMenu .ca-hotkey.unset .ca-key-clear,\n#CookieMgrMenu .ca-hotkey.capturing .ca-key-clear {\n  visibility: hidden;\n}\n\n/* Buttons */\n#CookieMgrMenu .ca-btn {\n  padding: 4px 12px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-weight: bold;\n  font-size: 12px;\n  color: #ddd;\n  text-shadow: 0 1px 1px #000;\n  background: linear-gradient(#3e2f23, #1d140f);\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 4px;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    inset 0 1px 0 rgba(255, 255, 255, 0.12);\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    box-shadow 0.15s,\n    opacity 0.15s;\n}\n#CookieMgrMenu .ca-btn:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-btn:not(:disabled):hover {\n  color: #fff;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    0 0 9px rgba(255, 220, 120, 0.35),\n    inset 0 1px 0 rgba(255, 255, 255, 0.18);\n}\n#CookieMgrMenu .ca-btn:not(:disabled):active {\n  transform: translateY(1px);\n}\n#CookieMgrMenu .ca-btn-on:not(:disabled):hover {\n  color: #d6ffcc;\n}\n#CookieMgrMenu .ca-btn-off:not(:disabled):hover {\n  color: #ffd2cc;\n}\n#CookieMgrMenu .ca-btn:disabled {\n  opacity: 0.38;\n  cursor: default;\n  box-shadow: none;\n}\n#CookieMgrMenu .ca-btn-small {\n  font-size: 11px;\n  padding: 3px 10px;\n}\n\n/* Footer */\n#CookieMgrMenu .ca-footer {\n  margin: 18px 8px 0;\n  font-size: 11px;\n  line-height: 1.7;\n  text-align: center;\n  color: #9b907f;\n  text-shadow: 0 1px 1px #000;\n}\n#CookieMgrMenu .ca-footer b {\n  color: #c9bba3;\n}\n#CookieMgrMenu kbd {\n  display: inline-block;\n  padding: 0 5px;\n  font:\n    bold 10px/16px Tahoma,\n    Arial,\n    sans-serif;\n  color: #e8dcc2;\n  background: #2a2018;\n  border: 1px solid #5a4632;\n  border-radius: 3px;\n  box-shadow: 0 1px 0 #140d08;\n}\n#CookieMgrMenu .ca-footer-actions {\n  margin-top: 8px;\n}\n\n/* ---------- Tab row ---------- */\n\n#CookieMgrMenu .ca-tabs {\n  display: flex;\n  gap: 4px;\n  margin: 4px 4px 0;\n  padding: 0 6px;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.14);\n}\n#CookieMgrMenu .ca-tabbtn {\n  position: relative;\n  margin-bottom: -1px;\n  padding: 7px 16px 8px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-weight: bold;\n  font-size: 14px;\n  color: #b9ab93;\n  text-shadow: 0 1px 2px #000;\n  background: linear-gradient(rgba(255, 255, 255, 0.03), rgba(0, 0, 0, 0.25));\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.14);\n  border-radius: 6px 6px 0 0;\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    background 0.15s;\n}\n#CookieMgrMenu .ca-tabbtn:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-tabbtn:hover {\n  color: #fff;\n  background: linear-gradient(rgba(255, 255, 255, 0.07), rgba(0, 0, 0, 0.2));\n}\n#CookieMgrMenu .ca-tabbtn.on {\n  color: #ffeab0;\n  background: linear-gradient(#5a3d1e, #2b1c0d);\n  border-color: #b98a4e #7a5630 rgba(0, 0, 0, 0) #b98a4e;\n  border-bottom-color: #2b1c0d;\n  box-shadow: 0 -2px 10px rgba(255, 200, 110, 0.18);\n}\n#CookieMgrMenu .ca-page {\n  animation: caFade 0.18s ease-out;\n}\n@keyframes caFade {\n  from {\n    opacity: 0;\n    transform: translateY(3px);\n  }\n  to {\n    opacity: 1;\n    transform: none;\n  }\n}\n#CookieMgrMenu a {\n  color: #ffd98a;\n}\n\n/* ---------- Graph ---------- */\n\n#CookieMgrMenu .ca-live {\n  font-size: 11px;\n  padding: 3px 10px 3px 20px;\n  position: relative;\n  border-radius: 10px;\n  color: #cfc;\n  background: rgba(80, 200, 90, 0.16);\n  border: 1px solid rgba(130, 235, 120, 0.5);\n}\n#CookieMgrMenu .ca-live:before {\n  content: '';\n  position: absolute;\n  left: 8px;\n  top: 50%;\n  width: 6px;\n  height: 6px;\n  margin-top: -3px;\n  border-radius: 50%;\n  background: #7be07b;\n  box-shadow: 0 0 6px #7be07b;\n  animation: caBadgeGlow 1.6s infinite ease-in-out;\n}\n#CookieMgrMenu .ca-live.paused {\n  color: #ffd9a0;\n  background: rgba(255, 170, 60, 0.14);\n  border-color: rgba(255, 190, 100, 0.5);\n}\n#CookieMgrMenu .ca-live.paused:before {\n  background: #ffb45c;\n  box-shadow: none;\n  animation: none;\n}\n\n#CookieMgrMenu .ca-stats {\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));\n  gap: 1px;\n  background: rgba(255, 255, 255, 0.06);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-stat {\n  padding: 8px 12px;\n  background: rgba(0, 0, 0, 0.32);\n}\n#CookieMgrMenu .ca-stat-label {\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #a89a83;\n}\n#CookieMgrMenu .ca-stat-value {\n  margin-top: 2px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 17px;\n  color: #ffeab0;\n  text-shadow: 0 1px 3px #000;\n  white-space: nowrap;\n}\n#CookieMgrMenu .ca-stat-sub {\n  margin-top: 1px;\n  font-size: 10px;\n  color: #93866f;\n  white-space: nowrap;\n}\n\n#CookieMgrMenu .ca-toolbar {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  justify-content: space-between;\n  gap: 6px 12px;\n  padding: 8px 12px;\n}\n#CookieMgrMenu .ca-toolbar-bottom {\n  padding-top: 6px;\n}\n#CookieMgrMenu .ca-chipgroup {\n  display: inline-flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 4px;\n}\n#CookieMgrMenu .ca-chip-label {\n  margin-right: 2px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-chip {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  padding: 3px 9px;\n  font:\n    bold 11px Tahoma,\n    Arial,\n    sans-serif;\n  color: #b9ab93;\n  text-shadow: 0 1px 1px #000;\n  background: rgba(255, 255, 255, 0.05);\n  border: 1px solid rgba(255, 255, 255, 0.14);\n  border-radius: 11px;\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    background 0.15s,\n    border-color 0.15s;\n}\n#CookieMgrMenu .ca-chip:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-chip:hover {\n  color: #fff;\n  border-color: rgba(255, 225, 150, 0.5);\n}\n#CookieMgrMenu .ca-chip.on {\n  color: #fff3cf;\n  background: rgba(255, 200, 100, 0.18);\n  border-color: rgba(255, 210, 120, 0.6);\n}\n#CookieMgrMenu .ca-chip-series:not(.on) .ca-sw {\n  opacity: 0.3;\n}\n#CookieMgrMenu .ca-sw {\n  display: inline-block;\n  width: 9px;\n  height: 9px;\n  margin-right: 1px;\n  border-radius: 50%;\n  vertical-align: -1px;\n  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);\n}\n\n#CookieMgrMenu .ca-graph-wrap {\n  position: relative;\n  margin: 0 8px;\n}\n#CookieMgrMenu canvas.ca-graph {\n  display: block;\n  width: 100%;\n  height: 300px;\n  cursor: crosshair;\n}\n#CookieMgrMenu canvas.ca-graph.ca-graph-small {\n  height: 160px;\n}\n#CookieMgrMenu .ca-tip {\n  display: none;\n  position: absolute;\n  z-index: 5;\n  max-width: 270px;\n  min-width: 150px;\n  padding: 7px 10px;\n  pointer-events: none;\n  font-size: 11px;\n  line-height: 1.35;\n  color: #e6dcc6;\n  background: rgba(14, 10, 6, 0.95);\n  border: 1px solid;\n  border-color: #b98a4e #6a4626 #55301c #a0764a;\n  border-radius: 5px;\n  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7);\n}\n#CookieMgrMenu .ca-tip-head {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  margin-bottom: 4px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 12px;\n  color: #ffeab0;\n}\n#CookieMgrMenu .ca-tip-head span {\n  margin-left: auto;\n  padding-left: 10px;\n  font:\n    normal 10px Tahoma,\n    Arial,\n    sans-serif;\n  color: #a89a83;\n}\n#CookieMgrMenu .ca-tip-row {\n  display: flex;\n  align-items: center;\n  gap: 5px;\n  padding: 1px 0;\n}\n#CookieMgrMenu .ca-tip-row b {\n  font-weight: normal;\n  color: #b9ab93;\n}\n#CookieMgrMenu .ca-tip-row span {\n  margin-left: auto;\n  padding-left: 12px;\n  text-align: right;\n  color: #f2ead2;\n}\n#CookieMgrMenu .ca-tip-row.strong b,\n#CookieMgrMenu .ca-tip-row.strong span {\n  color: #fff3cf;\n  font-weight: bold;\n}\n#CookieMgrMenu .ca-tip-sep {\n  height: 1px;\n  margin: 5px 0;\n  background: rgba(255, 255, 255, 0.14);\n}\n#CookieMgrMenu .ca-tip-note {\n  margin: 2px 0 4px;\n  font-style: italic;\n  color: #a89a83;\n}\n\n#CookieMgrMenu .ca-legend {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 4px 12px;\n  min-height: 16px;\n  padding: 2px 14px 12px;\n  font-size: 11px;\n  color: #b9ab93;\n}\n#CookieMgrMenu .ca-legend-item em {\n  font-style: normal;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-legend-empty {\n  font-style: italic;\n  color: #7f735f;\n}\n\n#CookieMgrMenu .ca-hidden {\n  display: none;\n}\n";
 
 // ---- src/core/util.js ------------------------------------------------
 // Small helpers shared by every module.
@@ -75,6 +75,19 @@ CA.Util = {
 
   log(...args) {
     console.log('[CookieMgr]', ...args);
+  },
+
+  /** Widest rendered width among `texts` in the given canvas font (0 if ctx/texts is empty). */
+  maxTextWidth(ctx, font, texts) {
+    const prevFont = ctx.font;
+    ctx.font = font;
+    let max = 0;
+    texts.forEach((t) => {
+      const w = ctx.measureText(t).width;
+      if (w > max) max = w;
+    });
+    ctx.font = prevFont;
+    return max;
   },
 };
 
@@ -733,15 +746,82 @@ CA.Stocks = (() => {
 
   const priceOf = (good) => (typeof good.val === 'number' ? good.val : 0);
 
+  // ---- portfolio (cost basis + realized/unrealized gain) ---------------------------
+  // The game only shows you the current price and share count, not what you paid for
+  // them, so we watch `good.stock` ourselves: any increase is a buy at the current price
+  // (rolled into a running average cost), any decrease is a sell that realizes the gap
+  // between that average cost and the current price. Session-only, same as price history —
+  // there is no way to know what happened before the mod was loaded.
+  const holdings = {}; // good.id -> { shares, avgCost, realized }
+  const portfolioHistory = []; // [{ t, value, cost, unrealized, realized, gain }]
+
+  function holdingOf(id) {
+    return holdings[id] || (holdings[id] = { shares: 0, avgCost: 0, realized: 0 });
+  }
+
+  function updateHolding(good) {
+    const h = holdingOf(good.id);
+    const shares = good.stock || 0;
+    const price = priceOf(good);
+    const delta = shares - h.shares;
+    if (delta > 0) {
+      h.avgCost = (h.avgCost * h.shares + delta * price) / shares;
+    } else if (delta < 0) {
+      h.realized += -delta * (price - h.avgCost);
+    }
+    h.shares = shares;
+    return h;
+  }
+
   function sample() {
     const m = minigame();
     if (!m) return;
     const now = Date.now();
+    let value = 0;
+    let cost = 0;
+    let realized = 0;
     m.goodsById.forEach((good) => {
       const arr = priceHistory[good.id] || (priceHistory[good.id] = []);
-      arr.push({ t: now, v: priceOf(good) });
+      const price = priceOf(good);
+      arr.push({ t: now, v: price });
       if (arr.length > MAX_SAMPLES + 200) arr.splice(0, arr.length - MAX_SAMPLES);
+
+      const h = updateHolding(good);
+      value += h.shares * price;
+      cost += h.shares * h.avgCost;
+      realized += h.realized;
     });
+    const unrealized = value - cost;
+    portfolioHistory.push({ t: now, value, cost, unrealized, realized, gain: unrealized + realized });
+    if (portfolioHistory.length > MAX_SAMPLES + 200) portfolioHistory.splice(0, portfolioHistory.length - MAX_SAMPLES);
+  }
+
+  /** Current totals plus a per-stock breakdown, for stat tiles / tooltips. */
+  function portfolioNow() {
+    const m = minigame();
+    const rows = (m ? m.goodsById : []).map((good) => {
+      const h = holdingOf(good.id);
+      const price = priceOf(good);
+      return {
+        id: good.id,
+        name: good.name,
+        shares: h.shares,
+        price,
+        value: h.shares * price,
+        avgCost: h.avgCost,
+        unrealized: h.shares * (price - h.avgCost),
+        realized: h.realized,
+      };
+    });
+    const last = portfolioHistory[portfolioHistory.length - 1];
+    return {
+      value: last ? last.value : 0,
+      cost: last ? last.cost : 0,
+      unrealized: last ? last.unrealized : 0,
+      realized: last ? last.realized : 0,
+      gain: last ? last.gain : 0,
+      rows,
+    };
   }
 
   /** Every stock, with its display name and whether you currently hold any. */
@@ -815,8 +895,29 @@ CA.Stocks = (() => {
       key: 'stockGraphSync',
       group: 'stocks',
       name: 'Sync graph to owned stocks',
-      desc: 'The stock price graph only plots stocks you currently hold; turn off to show all of them.',
+      desc: 'The per-stock price view only plots stocks you currently hold; turn off to show all of them.',
       default: true,
+    });
+    CA.Settings.defineOption({
+      key: 'stockGraphMode',
+      group: 'graph-select',
+      name: 'Stock graph view',
+      desc: '',
+      default: 'portfolio', // 'portfolio' | 'perStock'
+    });
+    CA.Settings.defineOption({
+      key: 'bankGraphEnabled',
+      group: 'stocks',
+      name: 'Graph in the Bank minigame',
+      desc: 'Shows a small graph underneath the stock market itself, not just on the Graphs tab.',
+      default: true,
+    });
+    CA.Settings.defineOption({
+      key: 'bankGraphMode',
+      group: 'graph-select',
+      name: 'Bank graph view',
+      desc: '',
+      default: 'portfolio', // 'portfolio' | 'cps'
     });
     CA.Util.injectCss('CookieMgrStocksStyles', CSS);
     CA.Events.on('settings', refresh);
@@ -826,7 +927,7 @@ CA.Stocks = (() => {
     sample();
   }
 
-  return { init, refresh, MODES, list, history };
+  return { init, refresh, MODES, list, history, portfolioNow, portfolioHistory: () => portfolioHistory, minigame };
 })();
 
 // ---- src/features/history.js -----------------------------------------
@@ -1224,7 +1325,9 @@ CA.UI.Graph = (() => {
     cps: { color: '#f5c451', name: 'Production' },
     total: { color: '#7fe08b', name: 'With clicking' },
   };
-  const PAD = { l: 54, r: 14, t: 14, b: 26 };
+  const PAD = { r: 8, t: 10, b: 22 };
+  const MIN_PAD_L = 30;
+  const PAD_L_MARGIN = 10;
   const LANE_H = 8;
   const LANE_GAP = 2;
   const MAX_LANES = 6;
@@ -1237,6 +1340,7 @@ CA.UI.Graph = (() => {
   let observer = null;
   let timer = null;
   let hover = null; // { x, y } in css px
+  let padL = 54; // dynamic left padding — last frame's width, refined each draw()
   let paused = false;
   let pausedAt = 0;
   let layout = null; // hit-test info from the last draw
@@ -1365,8 +1469,8 @@ CA.UI.Graph = (() => {
     const t1 = endTime();
     const t0 = t1 - W;
     const now = Date.now();
-    const plot = { x: PAD.l, y: PAD.t, w: w - PAD.l - PAD.r, h: h - PAD.t - PAD.b };
-    const xOf = (t) => plot.x + ((t - t0) / W) * plot.w;
+    let plot = { x: padL, y: PAD.t, w: w - padL - PAD.r, h: h - PAD.t - PAD.b };
+    let xOf = (t) => plot.x + ((t - t0) / W) * plot.w;
 
     const showEffects = S().get('graphEffects');
     const ivs = showEffects ? CA.History.intervalsIn(t0, t1) : [];
@@ -1432,6 +1536,15 @@ CA.UI.Graph = (() => {
       yMax = Math.ceil(yMax / step) * step;
       for (let v = 0; v <= yMax * 1.0001; v += step) ticks.push(v);
     }
+
+    // Left padding fits whatever these tick labels actually render as (long-form Numbers
+    // preferences, decillion+ names, ...) instead of a fixed guess that clips them.
+    const tickLabels = ticks.map((v) => beautify(v, 0));
+    const labelW = CA.Util.maxTextWidth(ctx, '10px Tahoma, Arial, sans-serif', tickLabels);
+    padL = Math.max(MIN_PAD_L, Math.round(labelW) + PAD_L_MARGIN);
+    plot = { x: padL, y: PAD.t, w: w - padL - PAD.r, h: h - PAD.t - PAD.b };
+    xOf = (t) => plot.x + ((t - t0) / W) * plot.w;
+
     const yOf = (v) => {
       let f;
       if (log) f = (Math.log10(Math.max(v, yMin)) - Math.log10(yMin)) / (Math.log10(yMax) - Math.log10(yMin));
@@ -1939,13 +2052,13 @@ CA.UI.Graph = (() => {
     // Chip-selected (not boolean), so they're kept out of the generic Settings-tab option list;
     // the toolbar chips above are still the way to change them.
     S_.defineOption({ key: 'graphWindow', group: 'graph-select', name: 'Time window', desc: '', default: 300 });
-    S_.defineOption({ key: 'graphSmooth', group: 'graph-select', name: 'Smoothing', desc: '', default: 0 });
+    S_.defineOption({ key: 'graphSmooth', group: 'graph-select', name: 'Smoothing', desc: '', default: 5 });
     S_.defineOption({
       key: 'graphShowCps',
       group: 'graph',
       name: 'Show production line',
       desc: 'The CpS line the game itself reports.',
-      default: true,
+      default: false,
     });
     S_.defineOption({
       key: 'graphShowTotal',
@@ -1959,7 +2072,7 @@ CA.UI.Graph = (() => {
       group: 'graph',
       name: 'Show unbuffed line',
       desc: 'Dashed line for CpS with every temporary effect removed.',
-      default: false,
+      default: true,
     });
     S_.defineOption({
       key: 'graphLog',
@@ -1991,15 +2104,19 @@ CA.UI.Graph = (() => {
 })();
 
 // ---- src/ui/stockGraph.js --------------------------------------------
-// A small multi-line price chart for the Bank minigame's stocks, shown under the CpS graph
-// on the Graphs tab. Data comes from CA.Stocks' price history; which stocks are plotted is
-// controlled by the "Sync graph to owned stocks" setting (defined in features/stocks.js).
+// A small chart for the Bank minigame's stocks, shown under the CpS graph on the Graphs tab.
+// Default view is portfolio value (what your holdings are worth right now, and how much of
+// that is profit) rather than a wall of per-stock price lines you'd have to mentally total
+// yourself; "Per stock" switches back to individual price lines. Data comes from CA.Stocks.
 
 CA.UI = CA.UI || {};
 
 CA.UI.StockGraph = (() => {
   const COLORS = ['#f5c451', '#7fe08b', '#9db4cc', '#ff8a65', '#c77dff', '#4fd6e0', '#e5484d', '#a6e35a'];
-  const PAD = { l: 54, r: 14, t: 10, b: 20 };
+  const PAD = { r: 8, t: 10, b: 20 };
+  const MIN_PAD_L = 30;
+  const PAD_L_MARGIN = 10;
+  const FONT = '10px Tahoma, Arial, sans-serif';
 
   let root = null;
   let canvas = null;
@@ -2008,11 +2125,13 @@ CA.UI.StockGraph = (() => {
   let observer = null;
   let timer = null;
   let hover = null;
+  let padL = 54;
   let layout = null;
 
   const S = () => CA.Settings;
   const esc = (s) => CA.Util.escapeHtml(s);
   const beautify = (v, floats) => (typeof Beautify === 'function' ? Beautify(v, floats == null ? 1 : floats) : Math.round(v).toString());
+  const signed = (v) => (v < 0 ? '-' : '+') + beautify(Math.abs(v));
 
   function two(n) {
     return n < 10 ? '0' + n : '' + n;
@@ -2034,6 +2153,8 @@ CA.UI.StockGraph = (() => {
     return lo;
   }
 
+  const mode = () => (S().get('stockGraphMode') === 'perStock' ? 'perStock' : 'portfolio');
+
   function visibleStocks() {
     const all = CA.Stocks.list();
     return S().get('stockGraphSync') ? all.filter((g) => g.owned) : all;
@@ -2053,33 +2174,15 @@ CA.UI.StockGraph = (() => {
     return { w, h };
   }
 
-  function draw() {
-    if (!canvas || !canvas.isConnected) return;
-    const { w, h } = fitCanvas();
-    if (w < 50 || h < 50) return;
-    ctx.clearRect(0, 0, w, h);
-
-    const stocks = visibleStocks();
-    const W = Math.max(10, S().get('graphWindow')) * 1000;
-    const t1 = Date.now();
-    const t0 = t1 - W;
-    const plot = { x: PAD.l, y: PAD.t, w: w - PAD.l - PAD.r, h: h - PAD.t - PAD.b };
-    const xOf = (t) => plot.x + ((t - t0) / W) * plot.w;
-
-    const lines = stocks.map((g, i) => {
-      const hist = CA.Stocks.history(g.id);
-      const lo = Math.max(0, lowerBound(hist, t0) - 1);
-      return { g, color: COLORS[i % COLORS.length], pts: hist.slice(lo).filter((p) => p.t <= t1) };
-    });
-
+  /** Builds { x, w, yMin, yMax, yOf, ticks } for a set of values, sizing the left padding
+   *  to whatever those tick labels actually render as (so they never clip). */
+  function scaleFor(w, plotY, plotH, values) {
     let minV = Infinity;
     let maxV = -Infinity;
-    lines.forEach((l) =>
-      l.pts.forEach((p) => {
-        if (p.v < minV) minV = p.v;
-        if (p.v > maxV) maxV = p.v;
-      })
-    );
+    values.forEach((v) => {
+      if (v < minV) minV = v;
+      if (v > maxV) maxV = v;
+    });
     if (!isFinite(minV)) {
       minV = 0;
       maxV = 10;
@@ -2089,36 +2192,45 @@ CA.UI.StockGraph = (() => {
       maxV += 1;
     }
     const padV = (maxV - minV) * 0.08 || 1;
-    const yMin = Math.max(0, minV - padV);
+    const yMin = minV - padV;
     const yMax = maxV + padV;
-    const yOf = (v) => plot.y + plot.h - ((v - yMin) / (yMax - yMin || 1)) * plot.h;
+    const ticks = [];
+    for (let i = 0; i <= 4; i++) ticks.push(yMin + ((yMax - yMin) * i) / 4);
 
-    // grid + y labels
-    ctx.font = '10px Tahoma, Arial, sans-serif';
+    const labelW = CA.Util.maxTextWidth(ctx, FONT, ticks.map((v) => beautify(v, 0)));
+    padL = Math.max(MIN_PAD_L, Math.round(labelW) + PAD_L_MARGIN);
+    const x = padL;
+    const pw = w - padL - PAD.r;
+    const yOf = (v) => plotY + plotH - ((v - yMin) / (yMax - yMin || 1)) * plotH;
+    return { x, w: pw, yMin, yMax, yOf, ticks };
+  }
+
+  function drawAxes(plot, scale) {
+    ctx.font = FONT;
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'right';
-    for (let i = 0; i <= 4; i++) {
-      const v = yMin + ((yMax - yMin) * i) / 4;
-      const y = Math.round(yOf(v)) + 0.5;
+    scale.ticks.forEach((v) => {
+      const y = Math.round(scale.yOf(v)) + 0.5;
       ctx.strokeStyle = 'rgba(255,255,255,0.09)';
       ctx.beginPath();
-      ctx.moveTo(plot.x, y);
-      ctx.lineTo(plot.x + plot.w, y);
+      ctx.moveTo(scale.x, y);
+      ctx.lineTo(scale.x + scale.w, y);
       ctx.stroke();
       ctx.fillStyle = 'rgba(230,220,200,0.75)';
-      ctx.fillText(beautify(v, 0), plot.x - 6, y);
-    }
+      ctx.fillText(beautify(v, 0), scale.x - 6, y);
+    });
+  }
 
-    // x labels (just the window edges — a full grid isn't worth the room here)
+  function drawXLabels(plot, t0, t1) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillStyle = 'rgba(230,220,200,0.7)';
-    if (lines.some((l) => l.pts.length)) {
-      ctx.fillText(clock(t0), plot.x + 28, plot.y + plot.h + 5);
-      ctx.fillText(clock(t1), plot.x + plot.w - 28, plot.y + plot.h + 5);
-    }
+    ctx.fillText(clock(t0), plot.x + 28, plot.y + plot.h + 5);
+    ctx.fillText(clock(t1), plot.x + plot.w - 28, plot.y + plot.h + 5);
+  }
 
-    // lines
+  function drawLine(plot, xOf, yOf, pts, color, dash) {
+    if (pts.length < 2) return;
     ctx.save();
     ctx.beginPath();
     ctx.rect(plot.x, plot.y - 4, plot.w, plot.h + 8);
@@ -2126,60 +2238,106 @@ CA.UI.StockGraph = (() => {
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
     ctx.lineWidth = 1.8;
-    lines.forEach((l) => {
-      if (l.pts.length < 2) return;
-      ctx.strokeStyle = l.color;
-      ctx.beginPath();
-      l.pts.forEach((p, i) => (i ? ctx.lineTo(xOf(p.t), yOf(p.v)) : ctx.moveTo(xOf(p.t), yOf(p.v))));
-      ctx.stroke();
-    });
+    ctx.strokeStyle = color;
+    ctx.setLineDash(dash || []);
+    ctx.beginPath();
+    pts.forEach((p, i) => (i ? ctx.lineTo(xOf(p.t), yOf(p.v)) : ctx.moveTo(xOf(p.t), yOf(p.v))));
+    ctx.stroke();
+    ctx.setLineDash([]);
     ctx.restore();
+  }
 
-    layout = { plot, xOf, t0, t1, lines };
+  function emptyMsg(plot, text) {
+    ctx.fillStyle = 'rgba(230,220,200,0.6)';
+    ctx.font = '12px Tahoma, Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, plot.x + plot.w / 2, plot.y + plot.h / 2);
+  }
 
-    if (hover && hover.x >= plot.x && hover.x <= plot.x + plot.w && hover.y >= 0 && hover.y <= h) {
-      drawHover(w, h);
-    } else if (tip) {
-      tip.style.display = 'none';
-    }
+  function drawPortfolio(w, h) {
+    const W = Math.max(10, S().get('graphWindow')) * 1000;
+    const t1 = Date.now();
+    const t0 = t1 - W;
+    const hist = CA.Stocks.portfolioHistory();
+    const lo = Math.max(0, lowerBound(hist, t0) - 1);
+    const pts = hist.slice(lo).filter((p) => p.t <= t1);
+
+    const plotY = PAD.t;
+    const plotH = h - PAD.t - PAD.b;
+    const scale = scaleFor(w, plotY, plotH, pts.flatMap((p) => [p.value, p.cost]));
+    const plot = { x: scale.x, y: plotY, w: scale.w, h: plotH };
+    const xOf = (t) => plot.x + ((t - t0) / W) * plot.w;
+
+    drawAxes(plot, scale);
+    if (pts.length) drawXLabels(plot, t0, t1);
+    drawLine(plot, xOf, scale.yOf, pts.map((p) => ({ t: p.t, v: p.cost })), '#9db4cc', [4, 3]);
+    drawLine(plot, xOf, scale.yOf, pts.map((p) => ({ t: p.t, v: p.value })), '#f5c451');
+
+    layout = { mode: 'portfolio', plot, xOf, yOf: scale.yOf, t0, t1, pts };
+
+    if (hover && hover.x >= plot.x && hover.x <= plot.x + plot.w && hover.y >= 0 && hover.y <= h) drawHoverPortfolio(w, h);
+    else if (tip) tip.style.display = 'none';
+
+    if (!pts.length) emptyMsg(plot, 'Buy or sell a stock to start tracking your portfolio.');
+  }
+
+  function drawPerStock(w, h) {
+    const stocks = visibleStocks();
+    const W = Math.max(10, S().get('graphWindow')) * 1000;
+    const t1 = Date.now();
+    const t0 = t1 - W;
+
+    const lines = stocks.map((g, i) => {
+      const hist = CA.Stocks.history(g.id);
+      const lo = Math.max(0, lowerBound(hist, t0) - 1);
+      return { g, color: COLORS[i % COLORS.length], pts: hist.slice(lo).filter((p) => p.t <= t1) };
+    });
+
+    const plotY = PAD.t;
+    const plotH = h - PAD.t - PAD.b;
+    const scale = scaleFor(
+      w,
+      plotY,
+      plotH,
+      lines.flatMap((l) => l.pts.map((p) => p.v))
+    );
+    const plot = { x: scale.x, y: plotY, w: scale.w, h: plotH };
+    const xOf = (t) => plot.x + ((t - t0) / W) * plot.w;
+
+    drawAxes(plot, scale);
+    if (lines.some((l) => l.pts.length)) drawXLabels(plot, t0, t1);
+    lines.forEach((l) => drawLine(plot, xOf, scale.yOf, l.pts, l.color));
+
+    layout = { mode: 'perStock', plot, xOf, yOf: scale.yOf, t0, t1, lines };
+
+    if (hover && hover.x >= plot.x && hover.x <= plot.x + plot.w && hover.y >= 0 && hover.y <= h) drawHoverPerStock(w, h);
+    else if (tip) tip.style.display = 'none';
 
     if (!stocks.length) {
-      ctx.fillStyle = 'rgba(230,220,200,0.6)';
-      ctx.font = '12px Tahoma, Arial, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(
-        S().get('stockGraphSync') ? "You don't own any stocks right now." : 'Open the Bank minigame to start tracking prices.',
-        plot.x + plot.w / 2,
-        plot.y + plot.h / 2
-      );
+      emptyMsg(plot, S().get('stockGraphSync') ? "You don't own any stocks right now." : 'Open the Bank minigame to start tracking prices.');
     }
   }
 
-  function drawHover(w, h) {
-    const { plot, xOf, t0, t1, lines } = layout;
-    const t = t0 + ((hover.x - plot.x) / plot.w) * (t1 - t0);
+  function draw() {
+    if (!canvas || !canvas.isConnected) return;
+    const { w, h } = fitCanvas();
+    if (w < 50 || h < 50) return;
+    ctx.clearRect(0, 0, w, h);
+    if (mode() === 'perStock') drawPerStock(w, h);
+    else drawPortfolio(w, h);
+  }
 
+  function crosshair(plot) {
     ctx.strokeStyle = 'rgba(255,255,255,0.35)';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(Math.round(hover.x) + 0.5, plot.y);
     ctx.lineTo(Math.round(hover.x) + 0.5, plot.y + plot.h);
     ctx.stroke();
+  }
 
-    let html = `<div class="ca-tip-head">${clock(t, true)}</div>`;
-    let any = false;
-    lines.forEach((l) => {
-      if (!l.pts.length) return;
-      const idx = Math.min(lowerBound(l.pts, t), l.pts.length - 1);
-      const p = l.pts[idx];
-      if (!p) return;
-      any = true;
-      html += `<div class="ca-tip-row"><i class="ca-sw" style="background:${l.color}"></i><b>${esc(l.g.name)}</b><span>${beautify(p.v)}</span></div>`;
-    });
-    if (!any) html += '<div class="ca-tip-note">No data here yet.</div>';
-
-    tip.innerHTML = html;
+  function placeTip(w, h) {
     tip.style.display = 'block';
     const tw = tip.offsetWidth;
     const th = tip.offsetHeight;
@@ -2191,6 +2349,45 @@ CA.UI.StockGraph = (() => {
     tip.style.top = top + 'px';
   }
 
+  function drawHoverPortfolio(w, h) {
+    const { plot, t0, t1, pts } = layout;
+    crosshair(plot);
+    const t = t0 + ((hover.x - plot.x) / plot.w) * (t1 - t0);
+    let html = `<div class="ca-tip-head">${clock(t, true)}</div>`;
+    const idx = Math.min(lowerBound(pts, t), pts.length - 1);
+    const p = pts[idx];
+    if (p) {
+      html += `<div class="ca-tip-row"><i class="ca-sw" style="background:#f5c451"></i><b>Value</b><span>${beautify(p.value)}</span></div>`;
+      html += `<div class="ca-tip-row"><i class="ca-sw" style="background:#9db4cc"></i><b>Cost basis</b><span>${beautify(p.cost)}</span></div>`;
+      html += `<div class="ca-tip-row strong"><b>Unrealized</b><span>${signed(p.unrealized)}</span></div>`;
+      html += `<div class="ca-tip-row"><b>Realized</b><span>${signed(p.realized)}</span></div>`;
+      html += `<div class="ca-tip-row strong"><b>Total gain</b><span>${signed(p.gain)}</span></div>`;
+    } else {
+      html += '<div class="ca-tip-note">No data here yet.</div>';
+    }
+    tip.innerHTML = html;
+    placeTip(w, h);
+  }
+
+  function drawHoverPerStock(w, h) {
+    const { plot, t0, t1, lines } = layout;
+    crosshair(plot);
+    const t = t0 + ((hover.x - plot.x) / plot.w) * (t1 - t0);
+    let html = `<div class="ca-tip-head">${clock(t, true)}</div>`;
+    let any = false;
+    lines.forEach((l) => {
+      if (!l.pts.length) return;
+      const idx = Math.min(lowerBound(l.pts, t), l.pts.length - 1);
+      const p = l.pts[idx];
+      if (!p) return;
+      any = true;
+      html += `<div class="ca-tip-row"><i class="ca-sw" style="background:${l.color}"></i><b>${esc(l.g.name)}</b><span>${beautify(p.v)}</span></div>`;
+    });
+    if (!any) html += '<div class="ca-tip-note">No data here yet.</div>';
+    tip.innerHTML = html;
+    placeTip(w, h);
+  }
+
   // ---- panel HTML + wiring ---------------------------------------------------------
 
   function chip(label, attrs, title) {
@@ -2200,9 +2397,14 @@ CA.UI.StockGraph = (() => {
   function html() {
     return (
       '<div class="ca-card ca-graph-card">' +
-      '<div class="ca-card-head"><div class="ca-card-title">Stock prices</div></div>' +
+      '<div class="ca-card-head"><div class="ca-card-title">Stock market</div></div>' +
+      '<div class="ca-stats" data-ca-stock-stats></div>' +
       '<div class="ca-toolbar">' +
-      '<div class="ca-chipgroup">' +
+      '<div class="ca-chipgroup" title="What the chart plots">' +
+      chip('Portfolio value', 'data-ca="sgmode" data-val="portfolio" data-pressed-key="stockGraphMode" data-pressed-val="portfolio"') +
+      chip('Per stock', 'data-ca="sgmode" data-val="perStock" data-pressed-key="stockGraphMode" data-pressed-val="perStock"') +
+      '</div>' +
+      '<div class="ca-chipgroup" data-ca-perstock-only>' +
       chip(
         'Sync to owned stocks',
         'data-ca="option" data-key="stockGraphSync" data-pressed-key="stockGraphSync"',
@@ -2216,19 +2418,48 @@ CA.UI.StockGraph = (() => {
     );
   }
 
-  function refreshLegend() {
+  function statTile(label, value, sub) {
+    return `<div class="ca-stat"><div class="ca-stat-label">${label}</div><div class="ca-stat-value">${value}</div><div class="ca-stat-sub">${sub || '&nbsp;'}</div></div>`;
+  }
+
+  function refreshInfo() {
     if (!root) return;
+    const perStock = mode() === 'perStock';
+    const only = root.querySelector('[data-ca-perstock-only]');
+    if (only) only.classList.toggle('ca-hidden', !perStock);
+
+    const stats = root.querySelector('[data-ca-stock-stats]');
+    if (stats) {
+      if (perStock) {
+        stats.innerHTML = '';
+      } else {
+        const p = CA.Stocks.portfolioNow();
+        stats.innerHTML =
+          statTile('Value', beautify(p.value)) +
+          statTile('Unrealized', signed(p.unrealized), 'if you sold everything now') +
+          statTile('Realized', signed(p.realized), 'from past sales') +
+          statTile('Total gain', signed(p.gain), 'realized + unrealized');
+      }
+    }
+
     const legend = root.querySelector('[data-ca-stock-legend]');
-    if (!legend) return;
-    const stocks = visibleStocks();
-    legend.innerHTML = stocks.length
-      ? stocks
-          .map(
-            (g, i) =>
-              `<span class="ca-legend-item"><i class="ca-sw" style="background:${COLORS[i % COLORS.length]}"></i>${esc(g.name)}</span>`
-          )
-          .join('')
-      : '<span class="ca-legend-empty">No stocks to show.</span>';
+    if (legend) {
+      if (perStock) {
+        const stocks = visibleStocks();
+        legend.innerHTML = stocks.length
+          ? stocks
+              .map(
+                (g, i) =>
+                  `<span class="ca-legend-item"><i class="ca-sw" style="background:${COLORS[i % COLORS.length]}"></i>${esc(g.name)}</span>`
+              )
+              .join('')
+          : '<span class="ca-legend-empty">No stocks to show.</span>';
+      } else {
+        legend.innerHTML =
+          '<span class="ca-legend-item"><i class="ca-sw" style="background:#f5c451"></i>Value</span>' +
+          '<span class="ca-legend-item"><i class="ca-sw" style="background:#9db4cc"></i>Cost basis (solid gap above it = unrealized gain)</span>';
+      }
+    }
   }
 
   function tick() {
@@ -2238,7 +2469,7 @@ CA.UI.StockGraph = (() => {
       return;
     }
     draw();
-    refreshLegend();
+    refreshInfo();
   }
 
   function mount(el) {
@@ -2278,6 +2509,226 @@ CA.UI.StockGraph = (() => {
   function init() {}
 
   return { init, html, mount, unmount, tick };
+})();
+
+// ---- src/ui/bankGraph.js ---------------------------------------------
+// A small graph inserted directly under the stock list in the Bank minigame itself, so you
+// don't have to open the CookieMgr panel to see how you're doing. A little toggle switches it
+// between your CpS and your stock portfolio value — "Bank graph view" in Settings remembers
+// which one you last picked.
+//
+// NOTE: this reaches into the Bank minigame's own DOM (there is no mod API for adding a panel
+// there), by inserting itself right after whichever element holds the `bankGood-*` boxes. If a
+// future game update changes that markup, this quietly stops appearing rather than breaking
+// anything else — check that it still shows up after a game update.
+
+CA.UI = CA.UI || {};
+
+CA.UI.BankGraph = (() => {
+  const TICK_MS = 1000;
+  const WRAP_ID = 'cm-bank-graph';
+  const WINDOW_MS = 5 * 60 * 1000; // fixed 5 min window — this is a glanceable mini chart, not the full Graphs tab
+  const PAD = { r: 8, t: 6, b: 16 };
+  const MIN_PAD_L = 28;
+  const PAD_L_MARGIN = 8;
+  const FONT = '10px Tahoma, Arial, sans-serif';
+
+  const CSS = `
+#${WRAP_ID} { margin: 6px 0 2px; padding: 6px 8px 4px; background: rgba(0,0,0,.28); border: 1px solid rgba(255,255,255,.12); border-radius: 4px; }
+#${WRAP_ID} .cm-bg-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; font: 10px Tahoma, Arial, sans-serif; color: #cbbfa6; }
+#${WRAP_ID} .cm-bg-readout { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#${WRAP_ID} .cm-bg-toggle { display: flex; gap: 3px; flex: none; }
+#${WRAP_ID} .cm-bg-toggle button { font: bold 9px Tahoma, Arial, sans-serif; padding: 2px 7px; color: #b9ab93; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.14); border-radius: 9px; cursor: pointer; }
+#${WRAP_ID} .cm-bg-toggle button.on { color: #fff3cf; background: rgba(255,200,100,.18); border-color: rgba(255,210,120,.6); }
+#${WRAP_ID} canvas { display: block; width: 100%; height: 70px; }
+`;
+
+  let timer = null;
+
+  const S = () => CA.Settings;
+  const beautify = (v, floats) => (typeof Beautify === 'function' ? Beautify(v, floats == null ? 1 : floats) : Math.round(v).toString());
+  const signed = (v) => (v < 0 ? '-' : '+') + beautify(Math.abs(v));
+
+  function lowerBound(arr, time) {
+    let lo = 0;
+    let hi = arr.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (arr[mid].t < time) lo = mid + 1;
+      else hi = mid;
+    }
+    return lo;
+  }
+
+  // ---- finding a home in the Bank minigame's own DOM ------------------------------
+
+  function goodsContainer() {
+    const m = CA.Stocks.minigame();
+    if (!m || !m.goodsById || !m.goodsById.length) return null;
+    const first = document.getElementById(`bankGood-${m.goodsById[0].id}`);
+    return first ? first.parentElement : null;
+  }
+
+  function ensureMounted() {
+    const goods = goodsContainer();
+    if (!goods || !S().get('bankGraphEnabled')) {
+      remove();
+      return null;
+    }
+    let wrap = document.getElementById(WRAP_ID);
+    if (wrap && wrap.previousElementSibling !== goods) {
+      wrap.remove();
+      wrap = null;
+    }
+    if (!wrap) {
+      wrap = document.createElement('div');
+      wrap.id = WRAP_ID;
+      wrap.innerHTML =
+        '<div class="cm-bg-head"><span class="cm-bg-readout" data-cm-bg-readout></span>' +
+        '<span class="cm-bg-toggle">' +
+        '<button type="button" data-cm-bg-mode="portfolio">Portfolio</button>' +
+        '<button type="button" data-cm-bg-mode="cps">CpS</button>' +
+        '</span></div>' +
+        '<canvas></canvas>';
+      wrap.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-cm-bg-mode]');
+        if (b) S().set('bankGraphMode', b.dataset.cmBgMode);
+      });
+      goods.insertAdjacentElement('afterend', wrap);
+    }
+    return wrap;
+  }
+
+  function remove() {
+    const wrap = document.getElementById(WRAP_ID);
+    if (wrap) wrap.remove();
+  }
+
+  // ---- drawing ---------------------------------------------------------------------
+
+  function fitCanvas(canvas, ctx) {
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+    }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { w, h };
+  }
+
+  function cpsSeries() {
+    const t1 = Date.now();
+    const t0 = t1 - WINDOW_MS;
+    const lo = Math.max(0, CA.History.lowerBound(t0) - 1);
+    const list = CA.History.samples.slice(lo).filter((s) => s.t <= t1);
+    return { pts: list.map((s) => ({ t: s.t, v: s.cps })), color: '#f5c451' };
+  }
+
+  function portfolioSeries() {
+    const t1 = Date.now();
+    const t0 = t1 - WINDOW_MS;
+    const hist = CA.Stocks.portfolioHistory();
+    const lo = Math.max(0, lowerBound(hist, t0) - 1);
+    const list = hist.slice(lo).filter((p) => p.t <= t1);
+    return { pts: list.map((p) => ({ t: p.t, v: p.value })), color: '#f5c451' };
+  }
+
+  function draw(wrap) {
+    const canvas = wrap.querySelector('canvas');
+    const ctx = canvas.getContext('2d');
+    const { w, h } = fitCanvas(canvas, ctx);
+    ctx.clearRect(0, 0, w, h);
+    if (w < 30 || h < 20) return;
+
+    const mode = S().get('bankGraphMode') === 'cps' ? 'cps' : 'portfolio';
+    wrap.querySelectorAll('[data-cm-bg-mode]').forEach((b) => b.classList.toggle('on', b.dataset.cmBgMode === mode));
+
+    const { pts } = mode === 'cps' ? cpsSeries() : portfolioSeries();
+    const t1 = Date.now();
+    const t0 = t1 - WINDOW_MS;
+
+    let minV = Infinity;
+    let maxV = -Infinity;
+    pts.forEach((p) => {
+      if (p.v < minV) minV = p.v;
+      if (p.v > maxV) maxV = p.v;
+    });
+    if (!isFinite(minV)) {
+      minV = 0;
+      maxV = 10;
+    }
+    if (minV === maxV) {
+      minV -= 1;
+      maxV += 1;
+    }
+    const padV = (maxV - minV) * 0.1 || 1;
+    const yMin = mode === 'cps' ? Math.max(0, minV - padV) : minV - padV;
+    const yMax = maxV + padV;
+
+    const labelW = CA.Util.maxTextWidth(ctx, FONT, [beautify(yMin, 0), beautify(yMax, 0)]);
+    const padL = Math.max(MIN_PAD_L, Math.round(labelW) + PAD_L_MARGIN);
+    const plot = { x: padL, y: PAD.t, w: w - padL - PAD.r, h: h - PAD.t - PAD.b };
+    const xOf = (t) => plot.x + ((t - t0) / WINDOW_MS) * plot.w;
+    const yOf = (v) => plot.y + plot.h - ((v - yMin) / (yMax - yMin || 1)) * plot.h;
+
+    ctx.font = FONT;
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'right';
+    [yMin, yMax].forEach((v) => {
+      const y = Math.round(yOf(v)) + 0.5;
+      ctx.strokeStyle = 'rgba(255,255,255,0.09)';
+      ctx.beginPath();
+      ctx.moveTo(plot.x, y);
+      ctx.lineTo(plot.x + plot.w, y);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(230,220,200,0.75)';
+      ctx.fillText(beautify(v, 0), plot.x - 5, y);
+    });
+
+    if (pts.length >= 2) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(plot.x, plot.y - 3, plot.w, plot.h + 6);
+      ctx.clip();
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.lineWidth = 1.6;
+      ctx.strokeStyle = '#f5c451';
+      ctx.beginPath();
+      pts.forEach((p, i) => (i ? ctx.lineTo(xOf(p.t), yOf(p.v)) : ctx.moveTo(xOf(p.t), yOf(p.v))));
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    const readout = wrap.querySelector('[data-cm-bg-readout]');
+    if (readout) {
+      if (mode === 'cps') {
+        const last = CA.History.samples[CA.History.samples.length - 1];
+        readout.textContent = last ? `${beautify(last.cps)}/s` : 'Collecting data…';
+      } else {
+        const p = CA.Stocks.portfolioNow();
+        readout.textContent = pts.length
+          ? `${beautify(p.value)}  ·  unrealized ${signed(p.unrealized)}  ·  total gain ${signed(p.gain)}`
+          : 'Buy a stock to start tracking.';
+      }
+    }
+  }
+
+  function tick() {
+    const wrap = ensureMounted();
+    if (wrap) draw(wrap);
+  }
+
+  function init() {
+    CA.Util.injectCss('CookieMgrBankGraphStyles', CSS);
+    CA.Events.on('settings', tick);
+    timer = setInterval(tick, TICK_MS);
+    tick();
+  }
+
+  return { init };
 })();
 
 // ---- src/ui/menu.js --------------------------------------------------
@@ -2562,6 +3013,10 @@ CA.UI.Menu = (() => {
         CA.Util.sound('snd/tick.mp3');
         CA.Settings.set('graphSmooth', Number(t.dataset.val));
         break;
+      case 'sgmode':
+        CA.Util.sound('snd/tick.mp3');
+        CA.Settings.set('stockGraphMode', t.dataset.val);
+        break;
       case 'gpause':
         CA.Util.sound('snd/tick.mp3');
         CA.UI.Graph.setPaused(!CA.UI.Graph.isPaused());
@@ -2684,6 +3139,7 @@ const mod = {
     CA.History.init();
     CA.UI.Graph.init();
     CA.UI.StockGraph.init();
+    CA.UI.BankGraph.init();
     CA.Hotkeys.init();
     CA.Ascension.init();
     CA.UI.Menu.init();

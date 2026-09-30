@@ -61,15 +61,82 @@ CA.Stocks = (() => {
 
   const priceOf = (good) => (typeof good.val === 'number' ? good.val : 0);
 
+  // ---- portfolio (cost basis + realized/unrealized gain) ---------------------------
+  // The game only shows you the current price and share count, not what you paid for
+  // them, so we watch `good.stock` ourselves: any increase is a buy at the current price
+  // (rolled into a running average cost), any decrease is a sell that realizes the gap
+  // between that average cost and the current price. Session-only, same as price history —
+  // there is no way to know what happened before the mod was loaded.
+  const holdings = {}; // good.id -> { shares, avgCost, realized }
+  const portfolioHistory = []; // [{ t, value, cost, unrealized, realized, gain }]
+
+  function holdingOf(id) {
+    return holdings[id] || (holdings[id] = { shares: 0, avgCost: 0, realized: 0 });
+  }
+
+  function updateHolding(good) {
+    const h = holdingOf(good.id);
+    const shares = good.stock || 0;
+    const price = priceOf(good);
+    const delta = shares - h.shares;
+    if (delta > 0) {
+      h.avgCost = (h.avgCost * h.shares + delta * price) / shares;
+    } else if (delta < 0) {
+      h.realized += -delta * (price - h.avgCost);
+    }
+    h.shares = shares;
+    return h;
+  }
+
   function sample() {
     const m = minigame();
     if (!m) return;
     const now = Date.now();
+    let value = 0;
+    let cost = 0;
+    let realized = 0;
     m.goodsById.forEach((good) => {
       const arr = priceHistory[good.id] || (priceHistory[good.id] = []);
-      arr.push({ t: now, v: priceOf(good) });
+      const price = priceOf(good);
+      arr.push({ t: now, v: price });
       if (arr.length > MAX_SAMPLES + 200) arr.splice(0, arr.length - MAX_SAMPLES);
+
+      const h = updateHolding(good);
+      value += h.shares * price;
+      cost += h.shares * h.avgCost;
+      realized += h.realized;
     });
+    const unrealized = value - cost;
+    portfolioHistory.push({ t: now, value, cost, unrealized, realized, gain: unrealized + realized });
+    if (portfolioHistory.length > MAX_SAMPLES + 200) portfolioHistory.splice(0, portfolioHistory.length - MAX_SAMPLES);
+  }
+
+  /** Current totals plus a per-stock breakdown, for stat tiles / tooltips. */
+  function portfolioNow() {
+    const m = minigame();
+    const rows = (m ? m.goodsById : []).map((good) => {
+      const h = holdingOf(good.id);
+      const price = priceOf(good);
+      return {
+        id: good.id,
+        name: good.name,
+        shares: h.shares,
+        price,
+        value: h.shares * price,
+        avgCost: h.avgCost,
+        unrealized: h.shares * (price - h.avgCost),
+        realized: h.realized,
+      };
+    });
+    const last = portfolioHistory[portfolioHistory.length - 1];
+    return {
+      value: last ? last.value : 0,
+      cost: last ? last.cost : 0,
+      unrealized: last ? last.unrealized : 0,
+      realized: last ? last.realized : 0,
+      gain: last ? last.gain : 0,
+      rows,
+    };
   }
 
   /** Every stock, with its display name and whether you currently hold any. */
@@ -143,8 +210,29 @@ CA.Stocks = (() => {
       key: 'stockGraphSync',
       group: 'stocks',
       name: 'Sync graph to owned stocks',
-      desc: 'The stock price graph only plots stocks you currently hold; turn off to show all of them.',
+      desc: 'The per-stock price view only plots stocks you currently hold; turn off to show all of them.',
       default: true,
+    });
+    CA.Settings.defineOption({
+      key: 'stockGraphMode',
+      group: 'graph-select',
+      name: 'Stock graph view',
+      desc: '',
+      default: 'portfolio', // 'portfolio' | 'perStock'
+    });
+    CA.Settings.defineOption({
+      key: 'bankGraphEnabled',
+      group: 'stocks',
+      name: 'Graph in the Bank minigame',
+      desc: 'Shows a small graph underneath the stock market itself, not just on the Graphs tab.',
+      default: true,
+    });
+    CA.Settings.defineOption({
+      key: 'bankGraphMode',
+      group: 'graph-select',
+      name: 'Bank graph view',
+      desc: '',
+      default: 'portfolio', // 'portfolio' | 'cps'
     });
     CA.Util.injectCss('CookieMgrStocksStyles', CSS);
     CA.Events.on('settings', refresh);
@@ -154,5 +242,5 @@ CA.Stocks = (() => {
     sample();
   }
 
-  return { init, refresh, MODES, list, history };
+  return { init, refresh, MODES, list, history, portfolioNow, portfolioHistory: () => portfolioHistory, minigame };
 })();

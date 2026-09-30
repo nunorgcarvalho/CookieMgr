@@ -17,9 +17,11 @@ in the game's menu area, with three tabs along the top: **Autoclickers**, **Grap
 
 A live cookies-per-second chart, redrawn every second.
 
-- **Window:** 1 min, 5 min, 15 min, 1 h or 3 h. **Smoothing:** raw, 5 s or 15 s. Linear or log scale.
+- **Window:** 1 min, 5 min, 15 min, 1 h or 3 h (default 5 min). **Smoothing:** raw, 5 s or 15 s (default 5 s). Linear or
+  log scale (default log). Your choices are remembered across reloads.
 - **Lines:** production (what the game shows as CpS), production without effects (dashed), and production plus clicking.
   Clicking is measured from your actual click income, so it is only counted when you really clicked (or an autoclicker did).
+  By default the unbuffed and with-clicking lines show and production is hidden.
 - **Effect shading:** every active golden-cookie effect (Frenzy, Click frenzy, Elder frenzy, Dragonflight, Clot, and so on)
   is a coloured band behind the chart. Overlapping effects stack in separate lanes. Hover a band for its description,
   multipliers, duration and remaining time; effects that do not change CpS are shown too.
@@ -57,6 +59,14 @@ normal Cookie Clicker save through the official mod API (`Game.registerMod`), so
 In the Bank minigame, every stock box shows its trend (stable / slow or fast rise / slow or fast fall / chaotic) as a
 coloured symbol strip and tint, brighter while you hold the stock — no more hovering each box for the tooltip. Both the
 badge and the tint can be switched off separately in Settings.
+
+A small chart also sits right under the stock list in the Bank minigame itself, toggled between your CpS and your
+portfolio value; turn it off in Settings if you'd rather not have it there.
+
+The stock chart on the Graphs tab defaults to your **portfolio value** over time (a value line plus a cost-basis line,
+so the gap between them is your unrealized gain) with stat tiles for Value, Unrealized, Realized and Total gain —
+switch to "Per stock" for the individual price lines instead. Cost basis is tracked from whenever the mod is loaded, so
+it only knows about trades made since then.
 
 ## Using it
 
@@ -118,12 +128,14 @@ src/
     ascension.js     detects ascending (wraps Game.Ascend + watchdog)
   features/
     autoclickers.js  clicker definitions and timers — add new ones to DEFS
-    stocks.js        trend badges and tints on the Bank minigame stock boxes
+    stocks.js        trend badges/tints, price history, and portfolio cost-basis tracking
     history.js       samples CpS every second, tracks buffs and golden/reindeer/ascend events
   ui/
     components.js    HTML snippets: switch, hotkey chip, icon, button
     tab.js           the side tab on the left beam
     graph.js         the CpS chart (canvas), toolbar, tooltips
+    stockGraph.js    the Graphs-tab stock chart: portfolio value/gains or per-stock prices
+    bankGraph.js     small CpS/portfolio chart embedded in the Bank minigame itself
     menu.js          the panel and its tabs (hooks Game.ShowMenu / Game.UpdateMenu)
     styles.css       all styling, scoped to #CookieMgrTab / #CookieMgrMenu
   main.js            waits for the game, registers the mod (init/save/load)

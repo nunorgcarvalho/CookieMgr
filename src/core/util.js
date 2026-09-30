@@ -68,4 +68,17 @@ CA.Util = {
   log(...args) {
     console.log('[CookieMgr]', ...args);
   },
+
+  /** Widest rendered width among `texts` in the given canvas font (0 if ctx/texts is empty). */
+  maxTextWidth(ctx, font, texts) {
+    const prevFont = ctx.font;
+    ctx.font = font;
+    let max = 0;
+    texts.forEach((t) => {
+      const w = ctx.measureText(t).width;
+      if (w > max) max = w;
+    });
+    ctx.font = prevFont;
+    return max;
+  },
 };

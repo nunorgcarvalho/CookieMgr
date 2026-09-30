@@ -5,6 +5,17 @@
 - **Stock market indicators:** every stock box in the Bank minigame now shows its trend (Stable, Slow rise, Slow fall,
   Fast rise, Fast fall, Chaotic) as a coloured strip with a symbol, so you don't have to hover. The box is tinted in the
   trend's colour and glows brighter (with a star) while you hold that stock. Both parts can be switched off in Settings.
+- **Portfolio value & unrealized gains:** the stock chart on the Graphs tab now defaults to your total portfolio value
+  over time plus a cost-basis line, with stat tiles for Value, Unrealized gain, Realized profit and Total gain — instead
+  of a wall of individual stock prices you'd have to add up yourself. "Per stock" in the toolbar switches back to the
+  old price-lines view. Cost basis is tracked from when the mod loads (buys/sells raise or realize it); it can't know
+  about trades made before that.
+- **Graph in the Bank minigame:** a small chart now sits right under the stock list in the Bank minigame itself, toggled
+  between CpS and portfolio value. Can be turned off in Settings.
+- **CpS graph defaults:** now Log scale, 5 minute window, 5 s smoothing, "With clicking" and "Unbuffed" lines on,
+  "Production" line off. (Your own choices are still remembered from here on.)
+- **Y-axis labels:** the CpS and stock graphs now size their left margin to whatever the numbers actually render as
+  (long Numbers-preference names included), instead of clipping wide labels; freed-up space went to the plot itself.
 
 ## 0.3.0 — 2026-09-30
 
