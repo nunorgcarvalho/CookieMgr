@@ -56,7 +56,10 @@ CA.UI.Graph = (() => {
     }
     return sign + (v < 10 ? v.toFixed(2) : v < 100 ? v.toFixed(1) : Math.round(v)).toString().replace(/\.0+$/, '') + SUFFIX[i];
   }
-  const beautify = (v) => (typeof Beautify === 'function' ? Beautify(v, 1) : short(v));
+  // Defers to the game's own number formatter (handles Cookie Clicker's full illion naming —
+  // octodecillion and beyond — and respects the player's own Numbers preference), so we never
+  // have to maintain our own name list or cap out once CpS blows past our SUFFIX table.
+  const beautify = (v, floats) => (typeof Beautify === 'function' ? Beautify(v, floats == null ? 1 : floats) : short(v));
 
   function two(n) {
     return n < 10 ? '0' + n : '' + n;
@@ -271,7 +274,7 @@ CA.UI.Graph = (() => {
       ctx.lineTo(plot.x + plot.w, y);
       ctx.stroke();
       ctx.fillStyle = 'rgba(230,220,200,0.75)';
-      ctx.fillText(short(v), plot.x - 6, y);
+      ctx.fillText(beautify(v, 0), plot.x - 6, y);
     });
 
     // --- x grid + labels (aligned to wall-clock time so labels stay put while scrolling)
@@ -646,10 +649,10 @@ CA.UI.Graph = (() => {
     const box = root.querySelector('[data-ca-stats]');
     if (box) {
       box.innerHTML =
-        statTile('Now', short(cur) + '/s', last && last.click > 0.01 ? '+' + short(last.click) + ' from clicks' : '') +
-        statTile('Average', short(st.avg) + '/s', 'last ' + (W >= 3600000 ? W / 3600000 + 'h' : W / 60000 + 'm')) +
-        statTile('Peak', short(st.peak) + '/s', st.peakT ? clock(st.peakT, true) : '') +
-        statTile('Clicking', short(st.avgClick) + '/s', Math.round(st.clickShare * 100) + '% of income');
+        statTile('Now', beautify(cur) + '/s', last && last.click > 0.01 ? '+' + beautify(last.click) + ' from clicks' : '') +
+        statTile('Average', beautify(st.avg) + '/s', 'last ' + (W >= 3600000 ? W / 3600000 + 'h' : W / 60000 + 'm')) +
+        statTile('Peak', beautify(st.peak) + '/s', st.peakT ? clock(st.peakT, true) : '') +
+        statTile('Clicking', beautify(st.avgClick) + '/s', Math.round(st.clickShare * 100) + '% of income');
     }
     const live = root.querySelector('[data-ca-live]');
     if (live) {
@@ -731,15 +734,52 @@ CA.UI.Graph = (() => {
 
   function init() {
     const S_ = CA.Settings;
-    const def = (key, dflt) => S_.defineOption({ key, group: 'graph', name: key, desc: '', default: dflt });
-    def('graphWindow', 300);
-    def('graphSmooth', 0);
-    def('graphShowCps', true);
-    def('graphShowTotal', true);
-    def('graphShowBase', false);
-    def('graphLog', false);
-    def('graphEffects', true);
-    def('graphEvents', true);
+    // Chip-selected (not boolean), so they're kept out of the generic Settings-tab option list;
+    // the toolbar chips above are still the way to change them.
+    S_.defineOption({ key: 'graphWindow', group: 'graph-select', name: 'Time window', desc: '', default: 300 });
+    S_.defineOption({ key: 'graphSmooth', group: 'graph-select', name: 'Smoothing', desc: '', default: 0 });
+    S_.defineOption({
+      key: 'graphShowCps',
+      group: 'graph',
+      name: 'Show production line',
+      desc: 'The CpS line the game itself reports.',
+      default: true,
+    });
+    S_.defineOption({
+      key: 'graphShowTotal',
+      group: 'graph',
+      name: 'Show total (with clicking)',
+      desc: 'Adds your measured click income on top of production.',
+      default: true,
+    });
+    S_.defineOption({
+      key: 'graphShowBase',
+      group: 'graph',
+      name: 'Show unbuffed line',
+      desc: 'Dashed line for CpS with every temporary effect removed.',
+      default: false,
+    });
+    S_.defineOption({
+      key: 'graphLog',
+      group: 'graph',
+      name: 'Log scale',
+      desc: 'Logarithmic vertical axis — multiplicative effects become equal-sized jumps.',
+      default: true,
+    });
+    S_.defineOption({
+      key: 'graphEffects',
+      group: 'graph',
+      name: 'Effect shading',
+      desc: 'Shade the periods when golden cookie effects are active.',
+      default: true,
+    });
+    S_.defineOption({
+      key: 'graphEvents',
+      group: 'graph',
+      name: 'Event markers',
+      desc: 'Mark golden cookie pops, reindeer pops and ascensions.',
+      default: true,
+    });
     CA.Events.on('history', () => {
       if (root) tick();
     });

@@ -717,6 +717,9 @@
   height: 300px;
   cursor: crosshair;
 }
+#CookieMgrMenu canvas.ca-graph.ca-graph-small {
+  height: 160px;
+}
 #CookieMgrMenu .ca-tip {
   display: none;
   position: absolute;

@@ -114,6 +114,14 @@ CA.UI.Menu = (() => {
       '</div>' +
       '</div>' +
       '<div class="ca-card">' +
+      '<div class="ca-card-head"><div class="ca-card-title">Autoclickers</div></div>' +
+      `<div class="ca-list">${CA.Settings.optionsIn('autoclickers').map(optionRow).join('')}</div>` +
+      '</div>' +
+      '<div class="ca-card">' +
+      '<div class="ca-card-head"><div class="ca-card-title">Graphs</div></div>' +
+      `<div class="ca-list">${CA.Settings.optionsIn('graph').map(optionRow).join('')}</div>` +
+      '</div>' +
+      '<div class="ca-card">' +
       '<div class="ca-card-head"><div class="ca-card-title">Stock market</div></div>' +
       `<div class="ca-list">${CA.Settings.optionsIn('stocks').map(optionRow).join('')}</div>` +
       '</div>' +
@@ -132,7 +140,7 @@ CA.UI.Menu = (() => {
       '<div class="section">CookieMgr</div>' +
       tabBar() +
       `<div class="ca-page" data-page="${tab}">` +
-      (tab === 'clickers' ? clickersPage() : tab === 'graphs' ? CA.UI.Graph.html() : settingsPage()) +
+      (tab === 'clickers' ? clickersPage() : tab === 'graphs' ? CA.UI.Graph.html() + CA.UI.StockGraph.html() : settingsPage()) +
       '</div>' +
       '</div>'
     );
@@ -142,8 +150,12 @@ CA.UI.Menu = (() => {
     const menu = document.getElementById('menu');
     if (!menu) return;
     CA.UI.Graph.unmount();
+    CA.UI.StockGraph.unmount();
     menu.innerHTML = html();
-    if (currentTab() === 'graphs') CA.UI.Graph.mount(menu.querySelector('.ca-page'));
+    if (currentTab() === 'graphs') {
+      CA.UI.Graph.mount(menu.querySelector('.ca-page'));
+      CA.UI.StockGraph.mount(menu.querySelector('.ca-page'));
+    }
     sync();
   }
 
@@ -328,6 +340,7 @@ CA.UI.Menu = (() => {
       if (!isOpen()) {
         CA.Hotkeys.cancelCapture();
         CA.UI.Graph.unmount();
+        CA.UI.StockGraph.unmount();
       }
       CA.UI.Tab.update();
       return result;
@@ -339,7 +352,10 @@ CA.UI.Menu = (() => {
     const refresh = () => {
       if (!isOpen()) return;
       sync();
-      if (currentTab() === 'graphs') CA.UI.Graph.tick();
+      if (currentTab() === 'graphs') {
+        CA.UI.Graph.tick();
+        CA.UI.StockGraph.tick();
+      }
     };
     CA.Events.on('clickers', refresh);
     CA.Events.on('settings', refresh);

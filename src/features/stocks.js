@@ -43,12 +43,46 @@ CA.Stocks = (() => {
 `;
 
   let timer = null;
+  let sampleTimer = null;
 
   const minigame = () => {
     const bank = typeof Game !== 'undefined' && Game.Objects && Game.Objects.Bank;
     const m = bank && bank.minigame;
     return m && m.goodsById ? m : null;
   };
+
+  // ---- price history --------------------------------------------------------------
+  // Session-only, one sample per second per stock, same rolling window as CA.History
+  // so the price graph can cover the same time range as the CpS graph.
+
+  const SAMPLE_MS = 1000;
+  const MAX_SAMPLES = 4 * 3600; // 4 hours
+  const priceHistory = {}; // good.id -> [{ t, v }]
+
+  const priceOf = (good) => (typeof good.val === 'number' ? good.val : 0);
+
+  function sample() {
+    const m = minigame();
+    if (!m) return;
+    const now = Date.now();
+    m.goodsById.forEach((good) => {
+      const arr = priceHistory[good.id] || (priceHistory[good.id] = []);
+      arr.push({ t: now, v: priceOf(good) });
+      if (arr.length > MAX_SAMPLES + 200) arr.splice(0, arr.length - MAX_SAMPLES);
+    });
+  }
+
+  /** Every stock, with its display name and whether you currently hold any. */
+  function list() {
+    const m = minigame();
+    if (!m) return [];
+    return m.goodsById.map((good) => ({ id: good.id, name: good.name, owned: good.stock > 0 }));
+  }
+
+  /** Recorded price samples for one stock (empty if never seen). */
+  function history(id) {
+    return priceHistory[id] || [];
+  }
 
   function clear(el) {
     el.classList.remove('cm-stock', 'cm-owned', 'cm-notint');
@@ -105,11 +139,20 @@ CA.Stocks = (() => {
       desc: 'Colours each stock box by its trend; boxes glow brighter while you hold that stock.',
       default: true,
     });
+    CA.Settings.defineOption({
+      key: 'stockGraphSync',
+      group: 'stocks',
+      name: 'Sync graph to owned stocks',
+      desc: 'The stock price graph only plots stocks you currently hold; turn off to show all of them.',
+      default: true,
+    });
     CA.Util.injectCss('CookieMgrStocksStyles', CSS);
     CA.Events.on('settings', refresh);
     timer = setInterval(refresh, TICK_MS);
+    sampleTimer = setInterval(sample, SAMPLE_MS);
     refresh();
+    sample();
   }
 
-  return { init, refresh, MODES };
+  return { init, refresh, MODES, list, history };
 })();

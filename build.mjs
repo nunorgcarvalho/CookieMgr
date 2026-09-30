@@ -32,6 +32,7 @@ const MODULES = [
   'ui/components.js',
   'ui/tab.js',
   'ui/graph.js',
+  'ui/stockGraph.js',
   'ui/menu.js',
   'main.js',
 ];
