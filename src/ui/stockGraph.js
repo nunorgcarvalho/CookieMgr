@@ -1,7 +1,9 @@
 // A small chart for the Bank minigame's stocks, shown under the CpS graph on the Graphs tab.
 // Default view is portfolio value (what your holdings are worth right now, and how much of
 // that is profit) rather than a wall of per-stock price lines you'd have to mentally total
-// yourself; "Per stock" switches back to individual price lines. Data comes from CA.Stocks.
+// yourself; "Per stock" switches back to individual price lines. Data comes from the recorder
+// (core/recorder.js): the price:<id> and portfolio* states defined by features/stocks.js and
+// features/gameStates.js.
 
 CA.UI = CA.UI || {};
 
@@ -47,6 +49,27 @@ CA.UI.StockGraph = (() => {
       else hi = mid;
     }
     return lo;
+  }
+
+  /** One stock's recorded price as { t, v } points. */
+  const priceHistory = (id) => CA.Recorder.series(`price:${id}`);
+
+  let portfolioCache = { rev: -1, pts: [] };
+  /** Recorded portfolio totals as { t, value, cost, unrealized, realized, gain } points. */
+  function portfolioHistory() {
+    const rev = CA.Recorder.revision();
+    if (portfolioCache.rev !== rev) {
+      const pts = [];
+      CA.Recorder.frames().forEach((f) => {
+        if (!Number.isFinite(f.portfolioValue)) return;
+        const cost = f.portfolioCost || 0;
+        const realized = f.portfolioRealized || 0;
+        const unrealized = f.portfolioValue - cost;
+        pts.push({ t: f.t, value: f.portfolioValue, cost, unrealized, realized, gain: unrealized + realized });
+      });
+      portfolioCache = { rev, pts };
+    }
+    return portfolioCache.pts;
   }
 
   const mode = () => (S().get('stockGraphMode') === 'perStock' ? 'perStock' : 'portfolio');
@@ -139,7 +162,7 @@ CA.UI.StockGraph = (() => {
     const W = Math.max(10, S().get('graphWindow')) * 1000;
     const t1 = view.getEnd(Date.now());
     const t0 = t1 - W;
-    const hist = CA.Stocks.portfolioHistory();
+    const hist = portfolioHistory();
     const lo = Math.max(0, lowerBound(hist, t0) - 1);
     const pts = hist.slice(lo).filter((p) => p.t <= t1);
 
@@ -159,7 +182,7 @@ CA.UI.StockGraph = (() => {
     if (!dragging() && hover && hover.x >= plot.x && hover.x <= plot.x + plot.w && hover.y >= 0 && hover.y <= h) drawHoverPortfolio(w, h);
     else if (tip) tip.style.display = 'none';
 
-    if (!pts.length) emptyMsg(plot, 'Buy or sell a stock to start tracking your portfolio.');
+    if (!pts.length) emptyMsg(plot, 'Open the Bank minigame to start tracking your portfolio.');
   }
 
   function drawPerStock(w, h) {
@@ -169,7 +192,7 @@ CA.UI.StockGraph = (() => {
     const t0 = t1 - W;
 
     const lines = stocks.map((g, i) => {
-      const hist = CA.Stocks.history(g.id);
+      const hist = priceHistory(g.id);
       const lo = Math.max(0, lowerBound(hist, t0) - 1);
       return { g, color: COLORS[i % COLORS.length], pts: hist.slice(lo).filter((p) => p.t <= t1) };
     });
@@ -309,12 +332,12 @@ CA.UI.StockGraph = (() => {
   function earliestDataT() {
     if (mode() === 'perStock') {
       const times = visibleStocks()
-        .map((g) => CA.Stocks.history(g.id)[0])
+        .map((g) => priceHistory(g.id)[0])
         .filter(Boolean)
         .map((p) => p.t);
       return times.length ? Math.min(...times) : undefined;
     }
-    const hist = CA.Stocks.portfolioHistory();
+    const hist = portfolioHistory();
     return hist.length ? hist[0].t : undefined;
   }
 

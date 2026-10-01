@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+## 1.4.0 — 2026-10-01
+
+- **Recorded history moved out of localStorage, into IndexedDB, per save.** The game's own save lives in
+  localStorage and fails silently when it runs out of room; nothing CookieMgr records can crowd it out any more.
+  Legacy localStorage keys (`CookieMgr.history.v1`, `CookieMgr.stocks.v1`) are removed on load; stock cost basis is
+  migrated across.
+- **States + recorder:** a registry of measurable states (`core/states.js`) sampled every second into frames
+  (`core/recorder.js`), counting **active play time** only. Progressive resolution: 1 s for the last 3 h of play,
+  15 s to 24 h, 2 min to 7 days, 15 min beyond — merged by mean / last / sum depending on the state's kind, so
+  totals stay exact. Kept indefinitely.
+- **New recorded states:** cookies baked (this ascension / all time), earnings split by source (production,
+  clicking, golden cookies & reindeer, other), spending, wrinkler withering, prestige (level, level if ascending now,
+  gain this run, heavenly chips), portfolio value / cost / realized profit, every stock price, Grimoire magic.
+- **Central event log** (`core/eventLog.js`): golden/wrath cookies, reindeer, ascensions and stock trades in one
+  persisted, filterable log — the base for the upcoming Events page.
+- **Settings → History data:** recorded-history summary, **Export** to a file, **Import** from one (replaces this
+  save's history), and **Clear** — destructive ones need a confirming second click.
+- The CpS graph and the Stock market chart now read from the recorder; the stock chart keeps its history across
+  browser restarts.
+
 ## 1.3.0 — 2026-10-01
 
 - **Sidebar of icons:** the beam tabs are now small icons; hovering one slides its page name out to the left.

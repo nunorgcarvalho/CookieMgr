@@ -1,7 +1,6 @@
 // Records every stock trade — bought or sold, by the "buy fast/slow rise" autoclicker or by you
-// clicking the Bank minigame's own buy/sell buttons — so the Stock market tab can show a ticker
-// and a transaction history. Session-only (not mirrored to localStorage like CA.History/
-// CA.Stocks are, at least for now).
+// clicking the Bank minigame's own buy/sell buttons — as 'trade' events in the central event log
+// (core/eventLog.js), so they're persisted per save and show up anywhere events are listed.
 //
 // There is no separate "manual trade" event to hook: the Bank minigame's own UI buttons call
 // straight into `minigame.buyGood`/`minigame.sellGood` (verified against minigameMarket.js), the
@@ -10,10 +9,8 @@
 
 CA.StockLog = (() => {
   const POLL_MS = 1000;
-  const MAX_RECORDS = 500;
 
-  let timer = null;
-  const records = []; // [{ t, kind: 'buy'|'sell', id, name, shares, price, cookies }]
+  let cache = { version: -1, list: [] };
 
   function wrap(m) {
     if (m.__cmLogWrapped) return;
@@ -47,11 +44,17 @@ CA.StockLog = (() => {
     };
   }
 
+  /** `cookies` is the unsigned amount the trade cost or paid out. */
   function record(kind, good, shares, cookies) {
-    const entry = { t: Date.now(), kind, id: good.id, name: good.name, shares, price: good.val, cookies };
-    records.push(entry);
-    if (records.length > MAX_RECORDS) records.splice(0, records.length - MAX_RECORDS);
-    CA.Events.emit('stockTrade', entry);
+    const verb = kind === 'buy' ? 'Bought' : 'Sold';
+    const e = CA.EventLog.add({
+      type: 'trade',
+      title: `${verb} ${shares} ${good.name}`,
+      text: `@ $${Math.round(good.val * 100) / 100}`,
+      cookies: kind === 'buy' ? -cookies : cookies,
+      data: { kind, id: good.id, name: good.name, shares, price: good.val },
+    });
+    CA.Events.emit('stockTrade', e);
   }
 
   function poll() {
@@ -59,11 +62,21 @@ CA.StockLog = (() => {
     if (m) wrap(m);
   }
 
-  /** Every trade recorded this session, oldest first. */
-  const list = () => records;
+  /** Every logged trade, oldest first, in the flat shape the Stock market page uses:
+   *  { t, kind: 'buy'|'sell', id, name, shares, price, cookies (unsigned) }. */
+  function list() {
+    const v = CA.EventLog.version();
+    if (cache.version !== v) {
+      cache = {
+        version: v,
+        list: CA.EventLog.list(['trade']).map((e) => ({ t: e.t, ...e.data, cookies: Math.abs(e.cookies) })),
+      };
+    }
+    return cache.list;
+  }
 
   function init() {
-    timer = setInterval(poll, POLL_MS);
+    setInterval(poll, POLL_MS);
     poll();
   }
 

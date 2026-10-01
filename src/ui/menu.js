@@ -137,17 +137,13 @@ CA.UI.Menu = (() => {
       C.hotkey('panel.toggle') +
       '</div>' +
       '<div class="ca-row ca-row-option">' +
-      '<div class="ca-row-text"><div class="ca-row-name">Recorded history</div>' +
-      '<div class="ca-row-desc" data-ca-history-info></div></div>' +
-      C.button('Clear', 'data-ca="gclear"', 'ca-btn-small') +
-      '</div>' +
-      '<div class="ca-row ca-row-option">' +
       '<div class="ca-row-text"><div class="ca-row-name">Hotkeys</div>' +
       '<div class="ca-row-desc">Click a key chip, then press the new key. <kbd>Esc</kbd> cancels, <kbd>Backspace</kbd> removes it; modifiers work too.</div></div>' +
       C.button('Reset to defaults', 'data-ca="reset-hotkeys"', 'ca-btn-small') +
       '</div>' +
       '</div>' +
       '</div>' +
+      historyCard() +
       '<div class="ca-card">' +
       '<div class="ca-card-head"><div class="ca-card-title">Autoclickers</div></div>' +
       `<div class="ca-list">${CA.Settings.optionsIn('autoclickers').map(optionRow).join('')}</div>` +
@@ -163,9 +159,98 @@ CA.UI.Menu = (() => {
       integrationsCard() +
       '<div class="ca-footer">' +
       `<div>CookieMgr v${CA.VERSION} &middot; <a href="https://github.com/nunorgcarvalho/CookieMgr" target="_blank" rel="noopener">GitHub</a></div>` +
-      '<div>Settings are stored inside your Cookie Clicker save.</div>' +
+      '<div>Settings are stored inside your Cookie Clicker save; recorded history stays in this browser.</div>' +
       '</div>'
     );
+  }
+
+  // ---- history data ---------------------------------------------------------------
+  // Recorded history lives in this browser's IndexedDB, never in the game save (see
+  // core/store.js), so this card is the way to move it between browsers or back it up.
+
+  function historyCard() {
+    return (
+      '<div class="ca-card">' +
+      `<div class="ca-card-head"><div class="ca-card-title">History data</div></div>` +
+      '<div class="ca-list">' +
+      '<div class="ca-row ca-row-option">' +
+      '<div class="ca-row-text"><div class="ca-row-name">Recorded for this save</div>' +
+      '<div class="ca-row-desc" data-ca-history-info></div></div>' +
+      '</div>' +
+      '<div class="ca-row ca-row-option">' +
+      '<div class="ca-row-text"><div class="ca-row-name">Back up or move</div>' +
+      '<div class="ca-row-desc">Export saves everything recorded for this save to a file. Importing a file <b>replaces</b> what this save has recorded.</div></div>' +
+      '<div class="ca-controls">' +
+      C.button(`${CA.UI.Icons.html('download', 14)} Export`, 'data-ca="hexport"', 'ca-btn-small') +
+      C.button(`${CA.UI.Icons.html('upload', 14)} Import`, 'data-ca="himport" data-arm-label="Replace history?"', 'ca-btn-small') +
+      C.button(`${CA.UI.Icons.html('trash', 14)} Clear`, 'data-ca="gclear" data-arm-label="Erase everything?"', 'ca-btn-small ca-btn-off') +
+      '<input type="file" accept=".json,application/json" data-ca-history-file hidden>' +
+      '</div>' +
+      '</div>' +
+      '</div>' +
+      '</div>'
+    );
+  }
+
+  function duration(ms) {
+    const m = Math.floor(ms / 60000);
+    if (m < 1) return `${Math.floor(ms / 1000)} s`;
+    if (m < 60) return `${m} min`;
+    const h = Math.floor(m / 60);
+    if (h < 48) return `${h} h ${m % 60} min`;
+    return `${Math.floor(h / 24)} d ${h % 24} h`;
+  }
+
+  function historyInfo() {
+    const r = CA.Recorder.summary();
+    if (!r.ready) return 'Loading…';
+    if (!r.frames) return 'Nothing recorded yet.';
+    const tiers = r.perTier
+      .filter((t) => t.frames)
+      .map((t) => `${t.frames.toLocaleString()} × ${t.label}`)
+      .join(', ');
+    const ev = CA.EventLog.list().length;
+    const fx = CA.History.intervals.length;
+    return (
+      `${duration(r.active)} of active play since ${new Date(r.first.t).toLocaleString()} — ` +
+      `${tiers} frames, ${ev.toLocaleString()} event${ev === 1 ? '' : 's'}, ${fx.toLocaleString()} buff${fx === 1 ? '' : 's'}.`
+    );
+  }
+
+  /** Destructive buttons take two clicks: the first arms them (and relabels them) for a few seconds. */
+  function armed(btn) {
+    if (btn.dataset.armed) {
+      clearTimeout(Number(btn.dataset.armed));
+      delete btn.dataset.armed;
+      btn.innerHTML = btn.dataset.idleHtml;
+      btn.classList.remove('ca-armed');
+      return true;
+    }
+    btn.dataset.idleHtml = btn.innerHTML;
+    btn.textContent = btn.dataset.armLabel;
+    btn.classList.add('ca-armed');
+    btn.dataset.armed = String(
+      setTimeout(() => {
+        if (!btn.dataset.armed) return;
+        delete btn.dataset.armed;
+        btn.innerHTML = btn.dataset.idleHtml;
+        btn.classList.remove('ca-armed');
+      }, 4000)
+    );
+    return false;
+  }
+
+  function onHistoryFile(e) {
+    const input = e.target;
+    if (!input.matches || !input.matches('[data-ca-history-file]') || !input.files || !input.files[0]) return;
+    const file = input.files[0];
+    input.value = '';
+    CA.Recorder.importFile(file)
+      .then((n) => {
+        CA.Util.notify('History imported', `${n.chunks} chunks and ${n.events} events from ${C.esc(file.name)}.`, CA.ICON, 3);
+        sync();
+      })
+      .catch((err) => CA.Util.notify('Import failed', C.esc(err.message || String(err)), CA.ICON, 4));
   }
 
   function integrationsCard() {
@@ -305,12 +390,7 @@ CA.UI.Menu = (() => {
     });
 
     const info = root.querySelector('[data-ca-history-info]');
-    if (info) {
-      const n = CA.History.samples.length;
-      const span = n < 120 ? `${n} seconds` : n < 7200 ? `${Math.round(n / 60)} minutes` : `${(n / 3600).toFixed(1)} hours`;
-      const fx = CA.History.intervals.length;
-      info.textContent = n ? `${span} of CpS data and ${fx} effect${fx === 1 ? '' : 's'} recorded this session.` : 'Nothing recorded yet.';
-    }
+    if (info) info.textContent = historyInfo();
 
     root.querySelectorAll('[data-option]').forEach((row) => {
       setSwitch(row.querySelector('.ca-switch'), !!CA.Settings.get(row.dataset.option));
@@ -403,9 +483,18 @@ CA.UI.Menu = (() => {
         break;
       case 'gclear':
         CA.Util.sound('snd/tick.mp3');
-        CA.History.clear();
-        sync();
+        if (armed(t)) CA.History.clear().then(sync);
         break;
+      case 'hexport':
+        CA.Util.sound('snd/tick.mp3');
+        CA.Recorder.exportFile().catch((err) => CA.Util.notify('Export failed', C.esc(err.message || String(err)), CA.ICON, 4));
+        break;
+      case 'himport': {
+        CA.Util.sound('snd/tick.mp3');
+        const input = t.parentNode.querySelector('[data-ca-history-file]');
+        if (armed(t) && input) input.click();
+        break;
+      }
       case 'bind': {
         const id = t.dataset.action;
         CA.Util.sound('snd/tick.mp3');
@@ -468,7 +557,10 @@ CA.UI.Menu = (() => {
     });
 
     const menu = document.getElementById('menu');
-    if (menu) menu.addEventListener('click', onClick);
+    if (menu) {
+      menu.addEventListener('click', onClick);
+      menu.addEventListener('change', onHistoryFile);
+    }
 
     const refresh = () => {
       if (!isOpen()) return;
@@ -478,6 +570,10 @@ CA.UI.Menu = (() => {
     CA.Events.on('clickers', refresh);
     CA.Events.on('settings', refresh);
     CA.Events.on('hotkeys', refresh);
+    CA.Events.on('history', () => {
+      const info = isOpen() && currentTab() === 'settings' && document.querySelector('#CookieMgrMenu [data-ca-history-info]');
+      if (info) info.textContent = historyInfo();
+    });
     CA.Events.on('integrations', () => {
       if (isOpen() && currentTab() === 'settings') render();
     });

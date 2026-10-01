@@ -1,9 +1,9 @@
-/*! CookieMgr v1.3.0 */
+/*! CookieMgr v1.4.0 */
 (function () {
 'use strict';
 const CA = {};
-CA.VERSION = "1.3.0";
-CA.CSS = "/* ==========================================================================\n   CookieMgr — styles\n   Colours and borders borrow from the game's own \"framed\" look so the panel\n   feels native. Everything is scoped under #CookieMgrTab / #CookieMgrMenu.\n   ========================================================================== */\n\n/* ---------- Sidebar (icon tabs sticking out of the left beam, one per page) ---------- */\n\n#CookieMgrTab {\n  position: absolute;\n  left: 30%;\n  top: 128px;\n  margin-left: 3px; /* tuck slightly under the beam */\n  transform: translateX(-100%);\n  z-index: 110;\n  display: flex;\n  flex-direction: column;\n  align-items: flex-end; /* items grow leftwards, away from the beam */\n  gap: 4px;\n}\n#CookieMgrTab .ca-tab-item {\n  box-sizing: border-box;\n  height: 32px;\n  display: flex;\n  align-items: center;\n  cursor: pointer;\n  user-select: none;\n  background: linear-gradient(to right, #3d2716, #221409);\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-right: none;\n  border-radius: 8px 0 0 8px;\n  box-shadow:\n    -3px 3px 10px rgba(0, 0, 0, 0.65),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.18);\n  transition:\n    background 0.2s,\n    box-shadow 0.2s;\n  outline: none;\n}\n#CookieMgrTab .ca-tab-item:hover,\n#CookieMgrTab .ca-tab-item:focus-visible {\n  box-shadow:\n    -3px 3px 12px rgba(0, 0, 0, 0.75),\n    0 0 12px rgba(255, 215, 110, 0.35),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.25);\n}\n#CookieMgrTab .ca-tab-item.selected {\n  background: linear-gradient(to right, #7a4f22, #43290f);\n  box-shadow:\n    -3px 3px 12px rgba(0, 0, 0, 0.75),\n    0 0 14px rgba(255, 215, 110, 0.55),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.3);\n}\n#CookieMgrTab .ca-tab-label {\n  max-width: 0;\n  overflow: hidden;\n  opacity: 0;\n  padding: 0;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-weight: bold;\n  font-size: 13px;\n  letter-spacing: 0.5px;\n  color: #f4e6c3;\n  text-shadow:\n    0 1px 2px #000,\n    0 0 6px rgba(255, 200, 120, 0.25);\n  white-space: nowrap;\n  transition:\n    max-width 0.22s ease-out,\n    opacity 0.15s,\n    padding 0.22s ease-out;\n}\n#CookieMgrTab .ca-tab-item:hover .ca-tab-label,\n#CookieMgrTab .ca-tab-item:focus-visible .ca-tab-label {\n  max-width: 180px;\n  opacity: 1;\n  padding: 0 2px 0 12px;\n}\n#CookieMgrTab .ca-tab-icon {\n  position: relative;\n  flex: none;\n  width: 30px;\n  height: 30px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  color: #f4e6c3;\n  filter: drop-shadow(0 1px 1px #000);\n}\n#CookieMgrTab .ca-tab-item.selected .ca-tab-icon,\n#CookieMgrTab .ca-tab-item:hover .ca-tab-icon {\n  color: #ffeab0;\n}\n#CookieMgrTab .ca-tab-badge {\n  display: none;\n  position: absolute;\n  top: -5px;\n  left: -5px;\n  min-width: 15px;\n  height: 15px;\n  padding: 0 3px;\n  box-sizing: border-box;\n  border-radius: 8px;\n  font:\n    bold 9px/15px Tahoma,\n    Arial,\n    sans-serif;\n  text-align: center;\n  color: #fff;\n  background: linear-gradient(#63c64a, #2f7d24);\n  box-shadow:\n    0 0 6px rgba(120, 240, 100, 0.8),\n    0 1px 1px #000;\n  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);\n}\n#CookieMgrTab .ca-tab-item.active .ca-tab-badge {\n  display: block;\n  animation: caBadgeGlow 2s infinite ease-in-out;\n}\n@keyframes caBadgeGlow {\n  0%,\n  100% {\n    box-shadow:\n      0 0 4px rgba(120, 240, 100, 0.6),\n      0 1px 1px #000;\n  }\n  50% {\n    box-shadow:\n      0 0 10px rgba(120, 240, 100, 1),\n      0 1px 1px #000;\n  }\n}\n#game.ascending #CookieMgrTab,\n#game.ascendIntro #CookieMgrTab,\n#game.reincarnating #CookieMgrTab {\n  display: none;\n}\n\n/* ---------- Icons (used everywhere, not just inside the panel) ---------- */\n\n.ca-ico {\n  display: inline-block;\n  flex: none;\n  vertical-align: middle;\n}\n.ca-ico-cookie {\n  background: url(img/perfectCookie.png) center / contain no-repeat;\n}\n\n/* ---------- Stock market toolbar inside the Bank minigame ---------- */\n\n#cm-bank-toolbar {\n  position: relative;\n  z-index: 10;\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  justify-content: center;\n  gap: 6px;\n  padding: 4px 4px 6px;\n}\n#cm-bank-toolbar .bankButton {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  font-size: 11px;\n  padding: 3px 9px;\n}\n#cm-bank-toolbar .cm-bt-open {\n  color: #f4e6c3;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n}\n\n/* ---------- Panel ---------- */\n\n#CookieMgrMenu {\n  max-width: 780px;\n  margin: 0 auto;\n  padding: 0 12px 120px;\n  color: #ddd;\n}\n#CookieMgrMenu .ca-tagline {\n  text-align: center;\n  margin: -6px 0 14px;\n  font-size: 12px;\n  font-style: italic;\n  color: #b9ab93;\n  text-shadow: 0 1px 1px #000;\n}\n\n/* Cards */\n#CookieMgrMenu .ca-card {\n  margin: 14px 4px;\n  border-radius: 6px;\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  background: rgba(0, 0, 0, 0.38);\n  box-shadow:\n    0 0 1px #000,\n    inset 0 0 1px #000,\n    0 6px 16px rgba(0, 0, 0, 0.35);\n  overflow: hidden;\n}\n#CookieMgrMenu .ca-card-head {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 10px;\n  padding: 9px 14px;\n  background: linear-gradient(to right, rgba(255, 235, 190, 0.09), rgba(255, 235, 190, 0));\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-card-title {\n  flex: 1;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-size: 20px;\n  color: #fff;\n  text-shadow:\n    0 -1px 5px rgba(255, 255, 200, 0.35),\n    0 1px 3px #000;\n}\n#CookieMgrMenu .ca-pill {\n  font-size: 11px;\n  white-space: nowrap;\n  padding: 3px 10px;\n  border-radius: 10px;\n  color: #bbb;\n  background: rgba(255, 255, 255, 0.07);\n  border: 1px solid rgba(255, 255, 255, 0.15);\n  transition: all 0.2s;\n}\n#CookieMgrMenu .ca-pill.on {\n  color: #cfc;\n  background: rgba(80, 200, 90, 0.16);\n  border-color: rgba(130, 235, 120, 0.5);\n}\n\n/* Rows */\n#CookieMgrMenu .ca-row {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 8px 12px;\n  padding: 8px 14px;\n  border-top: 1px solid rgba(255, 255, 255, 0.05);\n  transition: background 0.2s;\n}\n#CookieMgrMenu .ca-list .ca-row:first-child {\n  border-top: none;\n}\n#CookieMgrMenu .ca-row:hover {\n  background: rgba(255, 255, 255, 0.035);\n}\n#CookieMgrMenu .ca-row.on {\n  background: linear-gradient(to right, rgba(255, 210, 90, 0.12), rgba(255, 210, 90, 0) 65%);\n}\n#CookieMgrMenu .ca-row-master {\n  background: rgba(0, 0, 0, 0.22);\n  border-top: none;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-row-option {\n  padding-top: 10px;\n  padding-bottom: 10px;\n}\n#CookieMgrMenu .ca-row-text {\n  flex: 1 1 160px;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-row-option {\n  flex-wrap: nowrap;\n}\n#CookieMgrMenu .ca-row-option .ca-row-text {\n  flex-basis: 0;\n}\n#CookieMgrMenu .ca-controls {\n  flex: 0 1 auto;\n  max-width: 100%;\n  margin-left: auto;\n  display: flex;\n  flex-wrap: wrap;\n  justify-content: flex-end;\n  align-items: center;\n  gap: 8px;\n}\n#CookieMgrMenu .ca-row-name {\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 14px;\n  color: #f2ead2;\n  text-shadow: 0 1px 2px #000;\n}\n#CookieMgrMenu .ca-row-desc {\n  margin-top: 2px;\n  font-size: 11px;\n  color: #b3a590;\n  text-shadow: 0 1px 1px #000;\n}\n\n/* Icons */\n#CookieMgrMenu .ca-icon {\n  flex: 0 0 36px;\n  width: 36px;\n  height: 36px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  transition:\n    filter 0.25s,\n    transform 0.25s;\n  filter: grayscale(0.55) brightness(0.8);\n}\n#CookieMgrMenu .ca-row.on .ca-icon,\n#CookieMgrMenu .ca-row-master .ca-icon {\n  filter: drop-shadow(0 0 6px rgba(255, 220, 120, 0.75));\n}\n#CookieMgrMenu .ca-row.on .ca-icon {\n  transform: scale(1.06);\n}\n#CookieMgrMenu .ca-img {\n  width: 36px;\n  height: 36px;\n  background-size: contain;\n  background-repeat: no-repeat;\n  background-position: center;\n}\n#CookieMgrMenu .ca-sprite {\n  flex: none;\n  width: 48px;\n  height: 48px;\n  background-image: url(img/icons.png);\n  transform: scale(0.75);\n}\n\n/* Toggle switch */\n#CookieMgrMenu .ca-switch {\n  flex: none;\n  padding: 2px;\n  background: none;\n  border: none;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-switch:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-switch-track {\n  display: block;\n  position: relative;\n  width: 42px;\n  height: 22px;\n  box-sizing: border-box;\n  border-radius: 11px;\n  background: #2a211c;\n  border: 1px solid rgba(255, 255, 255, 0.22);\n  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.75);\n  transition:\n    background 0.2s,\n    border-color 0.2s,\n    box-shadow 0.2s;\n}\n#CookieMgrMenu .ca-switch-knob {\n  position: absolute;\n  top: 2px;\n  left: 2px;\n  width: 16px;\n  height: 16px;\n  border-radius: 50%;\n  background: radial-gradient(circle at 35% 30%, #fff, #c9c1b5 55%, #8a8178);\n  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);\n  transition: left 0.18s ease-out;\n}\n#CookieMgrMenu .ca-switch:hover .ca-switch-track {\n  border-color: rgba(255, 225, 150, 0.6);\n}\n#CookieMgrMenu .ca-switch.on .ca-switch-track {\n  background: linear-gradient(#66c84b, #2f7d24);\n  border-color: #a5ea93;\n  box-shadow:\n    inset 0 1px 3px rgba(0, 0, 0, 0.35),\n    0 0 9px rgba(110, 230, 90, 0.45);\n}\n#CookieMgrMenu .ca-switch.on .ca-switch-knob {\n  left: 22px;\n}\n#CookieMgrMenu .ca-switch:focus-visible .ca-switch-track {\n  outline: 2px solid #ffd76a;\n  outline-offset: 2px;\n}\n\n/* Hotkey chips */\n#CookieMgrMenu .ca-hotkey {\n  flex: none;\n  display: inline-flex;\n  align-items: center;\n}\n#CookieMgrMenu .ca-key {\n  min-width: 46px;\n  height: 26px;\n  padding: 0 10px;\n  font:\n    bold 12px Tahoma,\n    Arial,\n    sans-serif;\n  color: #f4e6c3;\n  text-shadow: 0 1px 1px #000;\n  background: linear-gradient(#4d3c2d, #2a2018);\n  border: 1px solid;\n  border-color: #9a7d5b #3b2c1f #2a1f15 #74604a;\n  border-radius: 5px;\n  box-shadow:\n    0 2px 0 #140d08,\n    inset 0 1px 0 rgba(255, 255, 255, 0.16);\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    border-color 0.15s,\n    box-shadow 0.15s;\n}\n#CookieMgrMenu .ca-key:hover {\n  color: #fff;\n  border-color: #e0c08a #5a4430 #3d2e20 #b39468;\n}\n#CookieMgrMenu .ca-key:active {\n  transform: translateY(1px);\n  box-shadow:\n    0 1px 0 #140d08,\n    inset 0 1px 0 rgba(255, 255, 255, 0.16);\n}\n#CookieMgrMenu .ca-key:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-hotkey.unset .ca-key {\n  color: #8f877a;\n  font-weight: normal;\n  font-style: italic;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px dashed rgba(255, 255, 255, 0.22);\n  box-shadow: none;\n}\n#CookieMgrMenu .ca-hotkey.capturing .ca-key {\n  color: #ffe9a6;\n  border-color: #ffd76a;\n  animation: caCapture 1.1s infinite ease-in-out;\n}\n@keyframes caCapture {\n  0%,\n  100% {\n    box-shadow:\n      0 2px 0 #140d08,\n      0 0 0 0 rgba(255, 215, 106, 0.5);\n  }\n  50% {\n    box-shadow:\n      0 2px 0 #140d08,\n      0 0 12px 2px rgba(255, 215, 106, 0.55);\n  }\n}\n#CookieMgrMenu .ca-key-clear {\n  width: 18px;\n  height: 18px;\n  margin-left: 3px;\n  padding: 0;\n  border: none;\n  border-radius: 50%;\n  background: transparent;\n  color: #b09a8a;\n  font-size: 14px;\n  line-height: 18px;\n  cursor: pointer;\n  opacity: 0;\n  transition:\n    opacity 0.15s,\n    background 0.15s;\n}\n#CookieMgrMenu .ca-row:hover .ca-key-clear {\n  opacity: 0.8;\n}\n#CookieMgrMenu .ca-key-clear:hover {\n  color: #fff;\n  background: rgba(255, 80, 80, 0.35);\n}\n#CookieMgrMenu .ca-hotkey.unset .ca-key-clear,\n#CookieMgrMenu .ca-hotkey.capturing .ca-key-clear {\n  visibility: hidden;\n}\n\n/* Buttons */\n#CookieMgrMenu .ca-btn {\n  padding: 4px 12px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-weight: bold;\n  font-size: 12px;\n  color: #ddd;\n  text-shadow: 0 1px 1px #000;\n  background: linear-gradient(#3e2f23, #1d140f);\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 4px;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    inset 0 1px 0 rgba(255, 255, 255, 0.12);\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    box-shadow 0.15s,\n    opacity 0.15s;\n}\n#CookieMgrMenu .ca-btn:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-btn:not(:disabled):hover {\n  color: #fff;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    0 0 9px rgba(255, 220, 120, 0.35),\n    inset 0 1px 0 rgba(255, 255, 255, 0.18);\n}\n#CookieMgrMenu .ca-btn:not(:disabled):active {\n  transform: translateY(1px);\n}\n#CookieMgrMenu .ca-btn-on:not(:disabled):hover {\n  color: #d6ffcc;\n}\n#CookieMgrMenu .ca-btn-off:not(:disabled):hover {\n  color: #ffd2cc;\n}\n#CookieMgrMenu .ca-btn:disabled {\n  opacity: 0.38;\n  cursor: default;\n  box-shadow: none;\n}\n#CookieMgrMenu .ca-btn-small {\n  font-size: 11px;\n  padding: 3px 10px;\n}\n#CookieMgrMenu .ca-btn-lg {\n  padding: 10px 20px;\n  font-size: 15px;\n  border-radius: 6px;\n}\n#CookieMgrMenu .ca-btn-danger {\n  color: #ffdcd2;\n  background: linear-gradient(#6b2420, #3a1210);\n  border-color: #ffb199 #7a2a1e #5c1b12 #d98a6e;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    0 0 10px rgba(255, 90, 60, 0.25),\n    inset 0 1px 0 rgba(255, 255, 255, 0.15);\n}\n#CookieMgrMenu .ca-btn-danger:not(:disabled):hover {\n  color: #fff;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    0 0 16px rgba(255, 90, 60, 0.5),\n    inset 0 1px 0 rgba(255, 255, 255, 0.2);\n}\n#CookieMgrMenu .ca-card-danger {\n  border-color: rgba(255, 110, 80, 0.3);\n  box-shadow:\n    0 0 1px #000,\n    inset 0 0 1px #000,\n    0 0 14px rgba(255, 70, 40, 0.12),\n    0 6px 16px rgba(0, 0, 0, 0.35);\n}\n#CookieMgrMenu .ca-row-sellall {\n  align-items: center;\n  justify-content: space-between;\n  gap: 12px;\n}\n\n/* Footer */\n#CookieMgrMenu .ca-footer {\n  margin: 18px 8px 0;\n  font-size: 11px;\n  line-height: 1.7;\n  text-align: center;\n  color: #9b907f;\n  text-shadow: 0 1px 1px #000;\n}\n#CookieMgrMenu .ca-footer b {\n  color: #c9bba3;\n}\n#CookieMgrMenu kbd {\n  display: inline-block;\n  padding: 0 5px;\n  font:\n    bold 10px/16px Tahoma,\n    Arial,\n    sans-serif;\n  color: #e8dcc2;\n  background: #2a2018;\n  border: 1px solid #5a4632;\n  border-radius: 3px;\n  box-shadow: 0 1px 0 #140d08;\n}\n#CookieMgrMenu .ca-footer-actions {\n  margin-top: 8px;\n}\n\n#CookieMgrMenu .ca-page {\n  animation: caFade 0.18s ease-out;\n}\n@keyframes caFade {\n  from {\n    opacity: 0;\n    transform: translateY(3px);\n  }\n  to {\n    opacity: 1;\n    transform: none;\n  }\n}\n#CookieMgrMenu a {\n  color: #ffd98a;\n}\n\n/* ---------- Graph ---------- */\n\n#CookieMgrMenu .ca-live {\n  font-size: 11px;\n  padding: 3px 10px 3px 20px;\n  position: relative;\n  border-radius: 10px;\n  color: #cfc;\n  background: rgba(80, 200, 90, 0.16);\n  border: 1px solid rgba(130, 235, 120, 0.5);\n}\n#CookieMgrMenu .ca-live:before {\n  content: '';\n  position: absolute;\n  left: 8px;\n  top: 50%;\n  width: 6px;\n  height: 6px;\n  margin-top: -3px;\n  border-radius: 50%;\n  background: #7be07b;\n  box-shadow: 0 0 6px #7be07b;\n  animation: caBadgeGlow 1.6s infinite ease-in-out;\n}\n#CookieMgrMenu .ca-live.paused {\n  color: #ffd9a0;\n  background: rgba(255, 170, 60, 0.14);\n  border-color: rgba(255, 190, 100, 0.5);\n}\n#CookieMgrMenu .ca-live.paused:before {\n  background: #ffb45c;\n  box-shadow: none;\n  animation: none;\n}\n\n#CookieMgrMenu .ca-stats {\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));\n  gap: 1px;\n  background: rgba(255, 255, 255, 0.06);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-stat {\n  min-width: 0; /* lets the grid cell shrink below its content so overflow/ellipsis below can work */\n  padding: 8px 12px;\n  background: rgba(0, 0, 0, 0.32);\n}\n#CookieMgrMenu .ca-stat-label {\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #a89a83;\n}\n#CookieMgrMenu .ca-stat-value {\n  margin-top: 2px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 17px;\n  color: #ffeab0;\n  text-shadow: 0 1px 3px #000;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n#CookieMgrMenu .ca-stat-sub {\n  margin-top: 1px;\n  font-size: 10px;\n  color: #93866f;\n  white-space: nowrap;\n}\n\n#CookieMgrMenu .ca-toolbar {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  justify-content: space-between;\n  gap: 6px 12px;\n  padding: 8px 12px;\n}\n#CookieMgrMenu .ca-toolbar-bottom {\n  padding-top: 6px;\n}\n#CookieMgrMenu .ca-chipgroup {\n  display: inline-flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 4px;\n}\n#CookieMgrMenu .ca-chip-label {\n  margin-right: 2px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-chip {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  padding: 3px 9px;\n  font:\n    bold 11px Tahoma,\n    Arial,\n    sans-serif;\n  color: #b9ab93;\n  text-shadow: 0 1px 1px #000;\n  background: rgba(255, 255, 255, 0.05);\n  border: 1px solid rgba(255, 255, 255, 0.14);\n  border-radius: 11px;\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    background 0.15s,\n    border-color 0.15s;\n}\n#CookieMgrMenu .ca-chip:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-chip:hover {\n  color: #fff;\n  border-color: rgba(255, 225, 150, 0.5);\n}\n#CookieMgrMenu .ca-chip.on {\n  color: #fff3cf;\n  background: rgba(255, 200, 100, 0.18);\n  border-color: rgba(255, 210, 120, 0.6);\n}\n#CookieMgrMenu .ca-sw {\n  display: inline-block;\n  width: 9px;\n  height: 9px;\n  margin-right: 1px;\n  border-radius: 50%;\n  vertical-align: -1px;\n  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);\n}\n\n#CookieMgrMenu .ca-graph-wrap {\n  position: relative;\n  margin: 0 8px;\n}\n#CookieMgrMenu canvas.ca-graph {\n  display: block;\n  width: 100%;\n  height: 300px;\n  cursor: crosshair;\n}\n#CookieMgrMenu canvas.ca-graph.ca-graph-small {\n  height: 160px;\n}\n#CookieMgrMenu .ca-tip {\n  display: none;\n  position: absolute;\n  z-index: 5;\n  max-width: 270px;\n  min-width: 150px;\n  padding: 7px 10px;\n  pointer-events: none;\n  font-size: 11px;\n  line-height: 1.35;\n  color: #e6dcc6;\n  background: rgba(14, 10, 6, 0.95);\n  border: 1px solid;\n  border-color: #b98a4e #6a4626 #55301c #a0764a;\n  border-radius: 5px;\n  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7);\n}\n#CookieMgrMenu .ca-tip-head {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  margin-bottom: 4px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 12px;\n  color: #ffeab0;\n}\n#CookieMgrMenu .ca-tip-head span {\n  margin-left: auto;\n  padding-left: 10px;\n  font:\n    normal 10px Tahoma,\n    Arial,\n    sans-serif;\n  color: #a89a83;\n}\n#CookieMgrMenu .ca-tip-row {\n  display: flex;\n  align-items: center;\n  gap: 5px;\n  padding: 1px 0;\n}\n#CookieMgrMenu .ca-tip-row b {\n  font-weight: normal;\n  color: #b9ab93;\n}\n#CookieMgrMenu .ca-tip-row span {\n  margin-left: auto;\n  padding-left: 12px;\n  text-align: right;\n  color: #f2ead2;\n}\n#CookieMgrMenu .ca-tip-row.strong b,\n#CookieMgrMenu .ca-tip-row.strong span {\n  color: #fff3cf;\n  font-weight: bold;\n}\n#CookieMgrMenu .ca-tip-sep {\n  height: 1px;\n  margin: 5px 0;\n  background: rgba(255, 255, 255, 0.14);\n}\n#CookieMgrMenu .ca-tip-note {\n  margin: 2px 0 4px;\n  font-style: italic;\n  color: #a89a83;\n}\n\n#CookieMgrMenu .ca-legend {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 4px 12px;\n  min-height: 16px;\n  padding: 2px 14px 12px;\n  font-size: 11px;\n  color: #b9ab93;\n}\n#CookieMgrMenu .ca-legend-item em {\n  font-style: normal;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-legend-empty {\n  font-style: italic;\n  color: #7f735f;\n}\n\n#CookieMgrMenu .ca-hidden {\n  display: none;\n}\n\n/* ---------- Stock transaction log + ticker ---------- */\n\n#CookieMgrMenu .cm-tx-wrap {\n  max-height: 220px;\n  overflow-y: auto;\n  margin: 0 4px 6px;\n}\n#CookieMgrMenu .cm-tx-table {\n  width: 100%;\n  border-collapse: collapse;\n  font-size: 11px;\n}\n#CookieMgrMenu .cm-tx-table th {\n  position: sticky;\n  top: 0;\n  text-align: left;\n  padding: 4px 8px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.06em;\n  color: #93866f;\n  background: #1c150d;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.1);\n}\n#CookieMgrMenu .cm-tx-table td {\n  padding: 3px 8px;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.05);\n  white-space: nowrap;\n  color: #d8cbb0;\n}\n#CookieMgrMenu .cm-tx-row:hover td {\n  background: rgba(255, 255, 255, 0.04);\n}\n#CookieMgrMenu .cm-tx-buy {\n  color: #8f8;\n  font-weight: bold;\n}\n#CookieMgrMenu .cm-tx-sell {\n  color: #f88;\n  font-weight: bold;\n}\n#CookieMgrMenu .cm-tx-empty {\n  padding: 14px 8px;\n  text-align: center;\n  font-style: italic;\n  color: #7f735f;\n  font-size: 12px;\n}\n\n#CookieMgrMenu .cm-tickbars {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 6px;\n  margin: 0 8px 8px;\n}\n#CookieMgrMenu .cm-tickbar {\n  flex: 1 1 90px;\n  min-width: 70px;\n  padding: 5px 6px;\n  background: rgba(0, 0, 0, 0.28);\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  border-radius: 4px;\n  font-size: 10px;\n}\n#CookieMgrMenu .cm-tickbar-time {\n  color: #93866f;\n  text-align: center;\n  margin-bottom: 3px;\n  white-space: nowrap;\n}\n#CookieMgrMenu .cm-tickbar-row {\n  height: 5px;\n  background: rgba(255, 255, 255, 0.06);\n  border-radius: 3px;\n  margin-bottom: 2px;\n  overflow: hidden;\n}\n#CookieMgrMenu .cm-tickbar-fill {\n  display: block;\n  height: 100%;\n  border-radius: 3px;\n}\n#CookieMgrMenu .cm-tickbar-buy {\n  background: #8f8;\n}\n#CookieMgrMenu .cm-tickbar-sell {\n  background: #f88;\n}\n#CookieMgrMenu .cm-tickbar-net {\n  text-align: center;\n  font-weight: bold;\n  margin-top: 3px;\n}\n#CookieMgrMenu .cm-ticks-empty {\n  margin: 0 8px 8px;\n  padding: 10px;\n  text-align: center;\n  font-style: italic;\n  color: #7f735f;\n  font-size: 11px;\n}\n\n#CookieMgrMenu .cm-ticker {\n  margin: 8px 8px 10px;\n  padding: 6px 0;\n  overflow: hidden;\n  white-space: nowrap;\n  background: rgba(0, 0, 0, 0.32);\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  border-radius: 4px;\n}\n#CookieMgrMenu .cm-ticker-track {\n  display: inline-block;\n  will-change: transform;\n}\n#CookieMgrMenu .cm-tick-item {\n  display: inline-block;\n  padding: 0 16px;\n  font:\n    bold 11px Tahoma,\n    Arial,\n    sans-serif;\n  color: #cbbfa6;\n}\n#CookieMgrMenu .cm-tick-buy {\n  color: #8f8;\n}\n#CookieMgrMenu .cm-tick-sell {\n  color: #f88;\n}\n#CookieMgrMenu .cm-tick-empty {\n  color: #7f735f;\n  font-style: italic;\n  font-weight: normal;\n}\n#CookieMgrMenu .cm-tick-sep {\n  color: #4a4232;\n  padding: 0 4px;\n}\n\n@keyframes cmTickerScroll {\n  from {\n    transform: translateX(0);\n  }\n  to {\n    transform: translateX(-50%);\n  }\n}\n";
+CA.VERSION = "1.4.0";
+CA.CSS = "/* ==========================================================================\r\n   CookieMgr — styles\r\n   Colours and borders borrow from the game's own \"framed\" look so the panel\r\n   feels native. Everything is scoped under #CookieMgrTab / #CookieMgrMenu.\r\n   ========================================================================== */\r\n\r\n/* ---------- Sidebar (icon tabs sticking out of the left beam, one per page) ---------- */\r\n\r\n#CookieMgrTab {\r\n  position: absolute;\r\n  left: 30%;\r\n  top: 128px;\r\n  margin-left: 3px; /* tuck slightly under the beam */\r\n  transform: translateX(-100%);\r\n  z-index: 110;\r\n  display: flex;\r\n  flex-direction: column;\r\n  align-items: flex-end; /* items grow leftwards, away from the beam */\r\n  gap: 4px;\r\n}\r\n#CookieMgrTab .ca-tab-item {\r\n  box-sizing: border-box;\r\n  height: 32px;\r\n  display: flex;\r\n  align-items: center;\r\n  cursor: pointer;\r\n  user-select: none;\r\n  background: linear-gradient(to right, #3d2716, #221409);\r\n  border: 1px solid;\r\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\r\n  border-right: none;\r\n  border-radius: 8px 0 0 8px;\r\n  box-shadow:\r\n    -3px 3px 10px rgba(0, 0, 0, 0.65),\r\n    inset 1px 1px 0 rgba(255, 255, 255, 0.18);\r\n  transition:\r\n    background 0.2s,\r\n    box-shadow 0.2s;\r\n  outline: none;\r\n}\r\n#CookieMgrTab .ca-tab-item:hover,\r\n#CookieMgrTab .ca-tab-item:focus-visible {\r\n  box-shadow:\r\n    -3px 3px 12px rgba(0, 0, 0, 0.75),\r\n    0 0 12px rgba(255, 215, 110, 0.35),\r\n    inset 1px 1px 0 rgba(255, 255, 255, 0.25);\r\n}\r\n#CookieMgrTab .ca-tab-item.selected {\r\n  background: linear-gradient(to right, #7a4f22, #43290f);\r\n  box-shadow:\r\n    -3px 3px 12px rgba(0, 0, 0, 0.75),\r\n    0 0 14px rgba(255, 215, 110, 0.55),\r\n    inset 1px 1px 0 rgba(255, 255, 255, 0.3);\r\n}\r\n#CookieMgrTab .ca-tab-label {\r\n  max-width: 0;\r\n  overflow: hidden;\r\n  opacity: 0;\r\n  padding: 0;\r\n  font-family: 'Merriweather', Georgia, serif;\r\n  font-variant: small-caps;\r\n  font-weight: bold;\r\n  font-size: 13px;\r\n  letter-spacing: 0.5px;\r\n  color: #f4e6c3;\r\n  text-shadow:\r\n    0 1px 2px #000,\r\n    0 0 6px rgba(255, 200, 120, 0.25);\r\n  white-space: nowrap;\r\n  transition:\r\n    max-width 0.22s ease-out,\r\n    opacity 0.15s,\r\n    padding 0.22s ease-out;\r\n}\r\n#CookieMgrTab .ca-tab-item:hover .ca-tab-label,\r\n#CookieMgrTab .ca-tab-item:focus-visible .ca-tab-label {\r\n  max-width: 180px;\r\n  opacity: 1;\r\n  padding: 0 2px 0 12px;\r\n}\r\n#CookieMgrTab .ca-tab-icon {\r\n  position: relative;\r\n  flex: none;\r\n  width: 30px;\r\n  height: 30px;\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  color: #f4e6c3;\r\n  filter: drop-shadow(0 1px 1px #000);\r\n}\r\n#CookieMgrTab .ca-tab-item.selected .ca-tab-icon,\r\n#CookieMgrTab .ca-tab-item:hover .ca-tab-icon {\r\n  color: #ffeab0;\r\n}\r\n#CookieMgrTab .ca-tab-badge {\r\n  display: none;\r\n  position: absolute;\r\n  top: -5px;\r\n  left: -5px;\r\n  min-width: 15px;\r\n  height: 15px;\r\n  padding: 0 3px;\r\n  box-sizing: border-box;\r\n  border-radius: 8px;\r\n  font:\r\n    bold 9px/15px Tahoma,\r\n    Arial,\r\n    sans-serif;\r\n  text-align: center;\r\n  color: #fff;\r\n  background: linear-gradient(#63c64a, #2f7d24);\r\n  box-shadow:\r\n    0 0 6px rgba(120, 240, 100, 0.8),\r\n    0 1px 1px #000;\r\n  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);\r\n}\r\n#CookieMgrTab .ca-tab-item.active .ca-tab-badge {\r\n  display: block;\r\n  animation: caBadgeGlow 2s infinite ease-in-out;\r\n}\r\n@keyframes caBadgeGlow {\r\n  0%,\r\n  100% {\r\n    box-shadow:\r\n      0 0 4px rgba(120, 240, 100, 0.6),\r\n      0 1px 1px #000;\r\n  }\r\n  50% {\r\n    box-shadow:\r\n      0 0 10px rgba(120, 240, 100, 1),\r\n      0 1px 1px #000;\r\n  }\r\n}\r\n#game.ascending #CookieMgrTab,\r\n#game.ascendIntro #CookieMgrTab,\r\n#game.reincarnating #CookieMgrTab {\r\n  display: none;\r\n}\r\n\r\n/* ---------- Icons (used everywhere, not just inside the panel) ---------- */\r\n\r\n.ca-ico {\r\n  display: inline-block;\r\n  flex: none;\r\n  vertical-align: middle;\r\n}\r\n.ca-ico-cookie {\r\n  background: url(img/perfectCookie.png) center / contain no-repeat;\r\n}\r\n\r\n/* ---------- Stock market toolbar inside the Bank minigame ---------- */\r\n\r\n#cm-bank-toolbar {\r\n  position: relative;\r\n  z-index: 10;\r\n  display: flex;\r\n  flex-wrap: wrap;\r\n  align-items: center;\r\n  justify-content: center;\r\n  gap: 6px;\r\n  padding: 4px 4px 6px;\r\n}\r\n#cm-bank-toolbar .bankButton {\r\n  display: inline-flex;\r\n  align-items: center;\r\n  gap: 5px;\r\n  font-size: 11px;\r\n  padding: 3px 9px;\r\n}\r\n#cm-bank-toolbar .cm-bt-open {\r\n  color: #f4e6c3;\r\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\r\n}\r\n\r\n/* ---------- Panel ---------- */\r\n\r\n#CookieMgrMenu {\r\n  max-width: 780px;\r\n  margin: 0 auto;\r\n  padding: 0 12px 120px;\r\n  color: #ddd;\r\n}\r\n#CookieMgrMenu .ca-tagline {\r\n  text-align: center;\r\n  margin: -6px 0 14px;\r\n  font-size: 12px;\r\n  font-style: italic;\r\n  color: #b9ab93;\r\n  text-shadow: 0 1px 1px #000;\r\n}\r\n\r\n/* Cards */\r\n#CookieMgrMenu .ca-card {\r\n  margin: 14px 4px;\r\n  border-radius: 6px;\r\n  border: 1px solid rgba(255, 255, 255, 0.1);\r\n  background: rgba(0, 0, 0, 0.38);\r\n  box-shadow:\r\n    0 0 1px #000,\r\n    inset 0 0 1px #000,\r\n    0 6px 16px rgba(0, 0, 0, 0.35);\r\n  overflow: hidden;\r\n}\r\n#CookieMgrMenu .ca-card-head {\r\n  display: flex;\r\n  flex-wrap: wrap;\r\n  align-items: center;\r\n  gap: 10px;\r\n  padding: 9px 14px;\r\n  background: linear-gradient(to right, rgba(255, 235, 190, 0.09), rgba(255, 235, 190, 0));\r\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\r\n}\r\n#CookieMgrMenu .ca-card-title {\r\n  flex: 1;\r\n  font-family: 'Merriweather', Georgia, serif;\r\n  font-variant: small-caps;\r\n  font-size: 20px;\r\n  color: #fff;\r\n  text-shadow:\r\n    0 -1px 5px rgba(255, 255, 200, 0.35),\r\n    0 1px 3px #000;\r\n}\r\n#CookieMgrMenu .ca-pill {\r\n  font-size: 11px;\r\n  white-space: nowrap;\r\n  padding: 3px 10px;\r\n  border-radius: 10px;\r\n  color: #bbb;\r\n  background: rgba(255, 255, 255, 0.07);\r\n  border: 1px solid rgba(255, 255, 255, 0.15);\r\n  transition: all 0.2s;\r\n}\r\n#CookieMgrMenu .ca-pill.on {\r\n  color: #cfc;\r\n  background: rgba(80, 200, 90, 0.16);\r\n  border-color: rgba(130, 235, 120, 0.5);\r\n}\r\n\r\n/* Rows */\r\n#CookieMgrMenu .ca-row {\r\n  display: flex;\r\n  flex-wrap: wrap;\r\n  align-items: center;\r\n  gap: 8px 12px;\r\n  padding: 8px 14px;\r\n  border-top: 1px solid rgba(255, 255, 255, 0.05);\r\n  transition: background 0.2s;\r\n}\r\n#CookieMgrMenu .ca-list .ca-row:first-child {\r\n  border-top: none;\r\n}\r\n#CookieMgrMenu .ca-row:hover {\r\n  background: rgba(255, 255, 255, 0.035);\r\n}\r\n#CookieMgrMenu .ca-row.on {\r\n  background: linear-gradient(to right, rgba(255, 210, 90, 0.12), rgba(255, 210, 90, 0) 65%);\r\n}\r\n#CookieMgrMenu .ca-row-master {\r\n  background: rgba(0, 0, 0, 0.22);\r\n  border-top: none;\r\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\r\n}\r\n#CookieMgrMenu .ca-row-option {\r\n  padding-top: 10px;\r\n  padding-bottom: 10px;\r\n}\r\n#CookieMgrMenu .ca-row-text {\r\n  flex: 1 1 160px;\r\n  min-width: 0;\r\n}\r\n#CookieMgrMenu .ca-row-option {\r\n  flex-wrap: nowrap;\r\n}\r\n#CookieMgrMenu .ca-row-option .ca-row-text {\r\n  flex-basis: 0;\r\n}\r\n#CookieMgrMenu .ca-controls {\r\n  flex: 0 1 auto;\r\n  max-width: 100%;\r\n  margin-left: auto;\r\n  display: flex;\r\n  flex-wrap: wrap;\r\n  justify-content: flex-end;\r\n  align-items: center;\r\n  gap: 8px;\r\n}\r\n#CookieMgrMenu .ca-row-name {\r\n  font-family: 'Merriweather', Georgia, serif;\r\n  font-weight: bold;\r\n  font-size: 14px;\r\n  color: #f2ead2;\r\n  text-shadow: 0 1px 2px #000;\r\n}\r\n#CookieMgrMenu .ca-row-desc {\r\n  margin-top: 2px;\r\n  font-size: 11px;\r\n  color: #b3a590;\r\n  text-shadow: 0 1px 1px #000;\r\n}\r\n\r\n/* Icons */\r\n#CookieMgrMenu .ca-icon {\r\n  flex: 0 0 36px;\r\n  width: 36px;\r\n  height: 36px;\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  transition:\r\n    filter 0.25s,\r\n    transform 0.25s;\r\n  filter: grayscale(0.55) brightness(0.8);\r\n}\r\n#CookieMgrMenu .ca-row.on .ca-icon,\r\n#CookieMgrMenu .ca-row-master .ca-icon {\r\n  filter: drop-shadow(0 0 6px rgba(255, 220, 120, 0.75));\r\n}\r\n#CookieMgrMenu .ca-row.on .ca-icon {\r\n  transform: scale(1.06);\r\n}\r\n#CookieMgrMenu .ca-img {\r\n  width: 36px;\r\n  height: 36px;\r\n  background-size: contain;\r\n  background-repeat: no-repeat;\r\n  background-position: center;\r\n}\r\n#CookieMgrMenu .ca-sprite {\r\n  flex: none;\r\n  width: 48px;\r\n  height: 48px;\r\n  background-image: url(img/icons.png);\r\n  transform: scale(0.75);\r\n}\r\n\r\n/* Toggle switch */\r\n#CookieMgrMenu .ca-switch {\r\n  flex: none;\r\n  padding: 2px;\r\n  background: none;\r\n  border: none;\r\n  cursor: pointer;\r\n}\r\n#CookieMgrMenu .ca-switch:focus {\r\n  outline: none;\r\n}\r\n#CookieMgrMenu .ca-switch-track {\r\n  display: block;\r\n  position: relative;\r\n  width: 42px;\r\n  height: 22px;\r\n  box-sizing: border-box;\r\n  border-radius: 11px;\r\n  background: #2a211c;\r\n  border: 1px solid rgba(255, 255, 255, 0.22);\r\n  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.75);\r\n  transition:\r\n    background 0.2s,\r\n    border-color 0.2s,\r\n    box-shadow 0.2s;\r\n}\r\n#CookieMgrMenu .ca-switch-knob {\r\n  position: absolute;\r\n  top: 2px;\r\n  left: 2px;\r\n  width: 16px;\r\n  height: 16px;\r\n  border-radius: 50%;\r\n  background: radial-gradient(circle at 35% 30%, #fff, #c9c1b5 55%, #8a8178);\r\n  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);\r\n  transition: left 0.18s ease-out;\r\n}\r\n#CookieMgrMenu .ca-switch:hover .ca-switch-track {\r\n  border-color: rgba(255, 225, 150, 0.6);\r\n}\r\n#CookieMgrMenu .ca-switch.on .ca-switch-track {\r\n  background: linear-gradient(#66c84b, #2f7d24);\r\n  border-color: #a5ea93;\r\n  box-shadow:\r\n    inset 0 1px 3px rgba(0, 0, 0, 0.35),\r\n    0 0 9px rgba(110, 230, 90, 0.45);\r\n}\r\n#CookieMgrMenu .ca-switch.on .ca-switch-knob {\r\n  left: 22px;\r\n}\r\n#CookieMgrMenu .ca-switch:focus-visible .ca-switch-track {\r\n  outline: 2px solid #ffd76a;\r\n  outline-offset: 2px;\r\n}\r\n\r\n/* Hotkey chips */\r\n#CookieMgrMenu .ca-hotkey {\r\n  flex: none;\r\n  display: inline-flex;\r\n  align-items: center;\r\n}\r\n#CookieMgrMenu .ca-key {\r\n  min-width: 46px;\r\n  height: 26px;\r\n  padding: 0 10px;\r\n  font:\r\n    bold 12px Tahoma,\r\n    Arial,\r\n    sans-serif;\r\n  color: #f4e6c3;\r\n  text-shadow: 0 1px 1px #000;\r\n  background: linear-gradient(#4d3c2d, #2a2018);\r\n  border: 1px solid;\r\n  border-color: #9a7d5b #3b2c1f #2a1f15 #74604a;\r\n  border-radius: 5px;\r\n  box-shadow:\r\n    0 2px 0 #140d08,\r\n    inset 0 1px 0 rgba(255, 255, 255, 0.16);\r\n  cursor: pointer;\r\n  transition:\r\n    color 0.15s,\r\n    border-color 0.15s,\r\n    box-shadow 0.15s;\r\n}\r\n#CookieMgrMenu .ca-key:hover {\r\n  color: #fff;\r\n  border-color: #e0c08a #5a4430 #3d2e20 #b39468;\r\n}\r\n#CookieMgrMenu .ca-key:active {\r\n  transform: translateY(1px);\r\n  box-shadow:\r\n    0 1px 0 #140d08,\r\n    inset 0 1px 0 rgba(255, 255, 255, 0.16);\r\n}\r\n#CookieMgrMenu .ca-key:focus {\r\n  outline: none;\r\n}\r\n#CookieMgrMenu .ca-hotkey.unset .ca-key {\r\n  color: #8f877a;\r\n  font-weight: normal;\r\n  font-style: italic;\r\n  background: rgba(0, 0, 0, 0.3);\r\n  border: 1px dashed rgba(255, 255, 255, 0.22);\r\n  box-shadow: none;\r\n}\r\n#CookieMgrMenu .ca-hotkey.capturing .ca-key {\r\n  color: #ffe9a6;\r\n  border-color: #ffd76a;\r\n  animation: caCapture 1.1s infinite ease-in-out;\r\n}\r\n@keyframes caCapture {\r\n  0%,\r\n  100% {\r\n    box-shadow:\r\n      0 2px 0 #140d08,\r\n      0 0 0 0 rgba(255, 215, 106, 0.5);\r\n  }\r\n  50% {\r\n    box-shadow:\r\n      0 2px 0 #140d08,\r\n      0 0 12px 2px rgba(255, 215, 106, 0.55);\r\n  }\r\n}\r\n#CookieMgrMenu .ca-key-clear {\r\n  width: 18px;\r\n  height: 18px;\r\n  margin-left: 3px;\r\n  padding: 0;\r\n  border: none;\r\n  border-radius: 50%;\r\n  background: transparent;\r\n  color: #b09a8a;\r\n  font-size: 14px;\r\n  line-height: 18px;\r\n  cursor: pointer;\r\n  opacity: 0;\r\n  transition:\r\n    opacity 0.15s,\r\n    background 0.15s;\r\n}\r\n#CookieMgrMenu .ca-row:hover .ca-key-clear {\r\n  opacity: 0.8;\r\n}\r\n#CookieMgrMenu .ca-key-clear:hover {\r\n  color: #fff;\r\n  background: rgba(255, 80, 80, 0.35);\r\n}\r\n#CookieMgrMenu .ca-hotkey.unset .ca-key-clear,\r\n#CookieMgrMenu .ca-hotkey.capturing .ca-key-clear {\r\n  visibility: hidden;\r\n}\r\n\r\n/* Buttons */\r\n#CookieMgrMenu .ca-btn {\r\n  padding: 4px 12px;\r\n  font-family: 'Merriweather', Georgia, serif;\r\n  font-variant: small-caps;\r\n  font-weight: bold;\r\n  font-size: 12px;\r\n  color: #ddd;\r\n  text-shadow: 0 1px 1px #000;\r\n  background: linear-gradient(#3e2f23, #1d140f);\r\n  border: 1px solid;\r\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\r\n  border-radius: 4px;\r\n  box-shadow:\r\n    0 1px 3px rgba(0, 0, 0, 0.6),\r\n    inset 0 1px 0 rgba(255, 255, 255, 0.12);\r\n  cursor: pointer;\r\n  transition:\r\n    color 0.15s,\r\n    box-shadow 0.15s,\r\n    opacity 0.15s;\r\n}\r\n#CookieMgrMenu .ca-btn:focus {\r\n  outline: none;\r\n}\r\n#CookieMgrMenu .ca-btn:not(:disabled):hover {\r\n  color: #fff;\r\n  box-shadow:\r\n    0 1px 3px rgba(0, 0, 0, 0.6),\r\n    0 0 9px rgba(255, 220, 120, 0.35),\r\n    inset 0 1px 0 rgba(255, 255, 255, 0.18);\r\n}\r\n#CookieMgrMenu .ca-btn:not(:disabled):active {\r\n  transform: translateY(1px);\r\n}\r\n#CookieMgrMenu .ca-btn-on:not(:disabled):hover {\r\n  color: #d6ffcc;\r\n}\r\n#CookieMgrMenu .ca-btn-off:not(:disabled):hover {\r\n  color: #ffd2cc;\r\n}\r\n#CookieMgrMenu .ca-btn:disabled {\r\n  opacity: 0.38;\r\n  cursor: default;\r\n  box-shadow: none;\r\n}\r\n#CookieMgrMenu .ca-btn-small {\r\n  font-size: 11px;\r\n  padding: 3px 10px;\r\n}\r\n#CookieMgrMenu .ca-btn .ca-ico {\r\n  vertical-align: -2px;\r\n}\r\n#CookieMgrMenu .ca-btn.ca-armed {\r\n  color: #fff;\r\n  background: #8a2a22;\r\n  box-shadow: 0 0 0 1px #e5484d, 0 0 8px rgba(229, 72, 77, 0.6);\r\n}\r\n#CookieMgrMenu .ca-btn-lg {\r\n  padding: 10px 20px;\r\n  font-size: 15px;\r\n  border-radius: 6px;\r\n}\r\n#CookieMgrMenu .ca-btn-danger {\r\n  color: #ffdcd2;\r\n  background: linear-gradient(#6b2420, #3a1210);\r\n  border-color: #ffb199 #7a2a1e #5c1b12 #d98a6e;\r\n  box-shadow:\r\n    0 1px 3px rgba(0, 0, 0, 0.6),\r\n    0 0 10px rgba(255, 90, 60, 0.25),\r\n    inset 0 1px 0 rgba(255, 255, 255, 0.15);\r\n}\r\n#CookieMgrMenu .ca-btn-danger:not(:disabled):hover {\r\n  color: #fff;\r\n  box-shadow:\r\n    0 1px 3px rgba(0, 0, 0, 0.6),\r\n    0 0 16px rgba(255, 90, 60, 0.5),\r\n    inset 0 1px 0 rgba(255, 255, 255, 0.2);\r\n}\r\n#CookieMgrMenu .ca-card-danger {\r\n  border-color: rgba(255, 110, 80, 0.3);\r\n  box-shadow:\r\n    0 0 1px #000,\r\n    inset 0 0 1px #000,\r\n    0 0 14px rgba(255, 70, 40, 0.12),\r\n    0 6px 16px rgba(0, 0, 0, 0.35);\r\n}\r\n#CookieMgrMenu .ca-row-sellall {\r\n  align-items: center;\r\n  justify-content: space-between;\r\n  gap: 12px;\r\n}\r\n\r\n/* Footer */\r\n#CookieMgrMenu .ca-footer {\r\n  margin: 18px 8px 0;\r\n  font-size: 11px;\r\n  line-height: 1.7;\r\n  text-align: center;\r\n  color: #9b907f;\r\n  text-shadow: 0 1px 1px #000;\r\n}\r\n#CookieMgrMenu .ca-footer b {\r\n  color: #c9bba3;\r\n}\r\n#CookieMgrMenu kbd {\r\n  display: inline-block;\r\n  padding: 0 5px;\r\n  font:\r\n    bold 10px/16px Tahoma,\r\n    Arial,\r\n    sans-serif;\r\n  color: #e8dcc2;\r\n  background: #2a2018;\r\n  border: 1px solid #5a4632;\r\n  border-radius: 3px;\r\n  box-shadow: 0 1px 0 #140d08;\r\n}\r\n#CookieMgrMenu .ca-footer-actions {\r\n  margin-top: 8px;\r\n}\r\n\r\n#CookieMgrMenu .ca-page {\r\n  animation: caFade 0.18s ease-out;\r\n}\r\n@keyframes caFade {\r\n  from {\r\n    opacity: 0;\r\n    transform: translateY(3px);\r\n  }\r\n  to {\r\n    opacity: 1;\r\n    transform: none;\r\n  }\r\n}\r\n#CookieMgrMenu a {\r\n  color: #ffd98a;\r\n}\r\n\r\n/* ---------- Graph ---------- */\r\n\r\n#CookieMgrMenu .ca-live {\r\n  font-size: 11px;\r\n  padding: 3px 10px 3px 20px;\r\n  position: relative;\r\n  border-radius: 10px;\r\n  color: #cfc;\r\n  background: rgba(80, 200, 90, 0.16);\r\n  border: 1px solid rgba(130, 235, 120, 0.5);\r\n}\r\n#CookieMgrMenu .ca-live:before {\r\n  content: '';\r\n  position: absolute;\r\n  left: 8px;\r\n  top: 50%;\r\n  width: 6px;\r\n  height: 6px;\r\n  margin-top: -3px;\r\n  border-radius: 50%;\r\n  background: #7be07b;\r\n  box-shadow: 0 0 6px #7be07b;\r\n  animation: caBadgeGlow 1.6s infinite ease-in-out;\r\n}\r\n#CookieMgrMenu .ca-live.paused {\r\n  color: #ffd9a0;\r\n  background: rgba(255, 170, 60, 0.14);\r\n  border-color: rgba(255, 190, 100, 0.5);\r\n}\r\n#CookieMgrMenu .ca-live.paused:before {\r\n  background: #ffb45c;\r\n  box-shadow: none;\r\n  animation: none;\r\n}\r\n\r\n#CookieMgrMenu .ca-stats {\r\n  display: grid;\r\n  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));\r\n  gap: 1px;\r\n  background: rgba(255, 255, 255, 0.06);\r\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\r\n}\r\n#CookieMgrMenu .ca-stat {\r\n  min-width: 0; /* lets the grid cell shrink below its content so overflow/ellipsis below can work */\r\n  padding: 8px 12px;\r\n  background: rgba(0, 0, 0, 0.32);\r\n}\r\n#CookieMgrMenu .ca-stat-label {\r\n  font-size: 10px;\r\n  text-transform: uppercase;\r\n  letter-spacing: 0.08em;\r\n  color: #a89a83;\r\n}\r\n#CookieMgrMenu .ca-stat-value {\r\n  margin-top: 2px;\r\n  font-family: 'Merriweather', Georgia, serif;\r\n  font-weight: bold;\r\n  font-size: 17px;\r\n  color: #ffeab0;\r\n  text-shadow: 0 1px 3px #000;\r\n  white-space: nowrap;\r\n  overflow: hidden;\r\n  text-overflow: ellipsis;\r\n}\r\n#CookieMgrMenu .ca-stat-sub {\r\n  margin-top: 1px;\r\n  font-size: 10px;\r\n  color: #93866f;\r\n  white-space: nowrap;\r\n}\r\n\r\n#CookieMgrMenu .ca-toolbar {\r\n  display: flex;\r\n  flex-wrap: wrap;\r\n  align-items: center;\r\n  justify-content: space-between;\r\n  gap: 6px 12px;\r\n  padding: 8px 12px;\r\n}\r\n#CookieMgrMenu .ca-toolbar-bottom {\r\n  padding-top: 6px;\r\n}\r\n#CookieMgrMenu .ca-chipgroup {\r\n  display: inline-flex;\r\n  flex-wrap: wrap;\r\n  align-items: center;\r\n  gap: 4px;\r\n}\r\n#CookieMgrMenu .ca-chip-label {\r\n  margin-right: 2px;\r\n  font-size: 10px;\r\n  text-transform: uppercase;\r\n  letter-spacing: 0.08em;\r\n  color: #93866f;\r\n}\r\n#CookieMgrMenu .ca-chip {\r\n  display: inline-flex;\r\n  align-items: center;\r\n  gap: 5px;\r\n  padding: 3px 9px;\r\n  font:\r\n    bold 11px Tahoma,\r\n    Arial,\r\n    sans-serif;\r\n  color: #b9ab93;\r\n  text-shadow: 0 1px 1px #000;\r\n  background: rgba(255, 255, 255, 0.05);\r\n  border: 1px solid rgba(255, 255, 255, 0.14);\r\n  border-radius: 11px;\r\n  cursor: pointer;\r\n  transition:\r\n    color 0.15s,\r\n    background 0.15s,\r\n    border-color 0.15s;\r\n}\r\n#CookieMgrMenu .ca-chip:focus {\r\n  outline: none;\r\n}\r\n#CookieMgrMenu .ca-chip:hover {\r\n  color: #fff;\r\n  border-color: rgba(255, 225, 150, 0.5);\r\n}\r\n#CookieMgrMenu .ca-chip.on {\r\n  color: #fff3cf;\r\n  background: rgba(255, 200, 100, 0.18);\r\n  border-color: rgba(255, 210, 120, 0.6);\r\n}\r\n#CookieMgrMenu .ca-sw {\r\n  display: inline-block;\r\n  width: 9px;\r\n  height: 9px;\r\n  margin-right: 1px;\r\n  border-radius: 50%;\r\n  vertical-align: -1px;\r\n  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);\r\n}\r\n\r\n#CookieMgrMenu .ca-graph-wrap {\r\n  position: relative;\r\n  margin: 0 8px;\r\n}\r\n#CookieMgrMenu canvas.ca-graph {\r\n  display: block;\r\n  width: 100%;\r\n  height: 300px;\r\n  cursor: crosshair;\r\n}\r\n#CookieMgrMenu canvas.ca-graph.ca-graph-small {\r\n  height: 160px;\r\n}\r\n#CookieMgrMenu .ca-tip {\r\n  display: none;\r\n  position: absolute;\r\n  z-index: 5;\r\n  max-width: 270px;\r\n  min-width: 150px;\r\n  padding: 7px 10px;\r\n  pointer-events: none;\r\n  font-size: 11px;\r\n  line-height: 1.35;\r\n  color: #e6dcc6;\r\n  background: rgba(14, 10, 6, 0.95);\r\n  border: 1px solid;\r\n  border-color: #b98a4e #6a4626 #55301c #a0764a;\r\n  border-radius: 5px;\r\n  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7);\r\n}\r\n#CookieMgrMenu .ca-tip-head {\r\n  display: flex;\r\n  align-items: center;\r\n  gap: 6px;\r\n  margin-bottom: 4px;\r\n  font-family: 'Merriweather', Georgia, serif;\r\n  font-weight: bold;\r\n  font-size: 12px;\r\n  color: #ffeab0;\r\n}\r\n#CookieMgrMenu .ca-tip-head span {\r\n  margin-left: auto;\r\n  padding-left: 10px;\r\n  font:\r\n    normal 10px Tahoma,\r\n    Arial,\r\n    sans-serif;\r\n  color: #a89a83;\r\n}\r\n#CookieMgrMenu .ca-tip-row {\r\n  display: flex;\r\n  align-items: center;\r\n  gap: 5px;\r\n  padding: 1px 0;\r\n}\r\n#CookieMgrMenu .ca-tip-row b {\r\n  font-weight: normal;\r\n  color: #b9ab93;\r\n}\r\n#CookieMgrMenu .ca-tip-row span {\r\n  margin-left: auto;\r\n  padding-left: 12px;\r\n  text-align: right;\r\n  color: #f2ead2;\r\n}\r\n#CookieMgrMenu .ca-tip-row.strong b,\r\n#CookieMgrMenu .ca-tip-row.strong span {\r\n  color: #fff3cf;\r\n  font-weight: bold;\r\n}\r\n#CookieMgrMenu .ca-tip-sep {\r\n  height: 1px;\r\n  margin: 5px 0;\r\n  background: rgba(255, 255, 255, 0.14);\r\n}\r\n#CookieMgrMenu .ca-tip-note {\r\n  margin: 2px 0 4px;\r\n  font-style: italic;\r\n  color: #a89a83;\r\n}\r\n\r\n#CookieMgrMenu .ca-legend {\r\n  display: flex;\r\n  flex-wrap: wrap;\r\n  gap: 4px 12px;\r\n  min-height: 16px;\r\n  padding: 2px 14px 12px;\r\n  font-size: 11px;\r\n  color: #b9ab93;\r\n}\r\n#CookieMgrMenu .ca-legend-item em {\r\n  font-style: normal;\r\n  color: #93866f;\r\n}\r\n#CookieMgrMenu .ca-legend-empty {\r\n  font-style: italic;\r\n  color: #7f735f;\r\n}\r\n\r\n#CookieMgrMenu .ca-hidden {\r\n  display: none;\r\n}\r\n\r\n/* ---------- Stock transaction log + ticker ---------- */\r\n\r\n#CookieMgrMenu .cm-tx-wrap {\r\n  max-height: 220px;\r\n  overflow-y: auto;\r\n  margin: 0 4px 6px;\r\n}\r\n#CookieMgrMenu .cm-tx-table {\r\n  width: 100%;\r\n  border-collapse: collapse;\r\n  font-size: 11px;\r\n}\r\n#CookieMgrMenu .cm-tx-table th {\r\n  position: sticky;\r\n  top: 0;\r\n  text-align: left;\r\n  padding: 4px 8px;\r\n  font-size: 10px;\r\n  text-transform: uppercase;\r\n  letter-spacing: 0.06em;\r\n  color: #93866f;\r\n  background: #1c150d;\r\n  border-bottom: 1px solid rgba(255, 255, 255, 0.1);\r\n}\r\n#CookieMgrMenu .cm-tx-table td {\r\n  padding: 3px 8px;\r\n  border-bottom: 1px solid rgba(255, 255, 255, 0.05);\r\n  white-space: nowrap;\r\n  color: #d8cbb0;\r\n}\r\n#CookieMgrMenu .cm-tx-row:hover td {\r\n  background: rgba(255, 255, 255, 0.04);\r\n}\r\n#CookieMgrMenu .cm-tx-buy {\r\n  color: #8f8;\r\n  font-weight: bold;\r\n}\r\n#CookieMgrMenu .cm-tx-sell {\r\n  color: #f88;\r\n  font-weight: bold;\r\n}\r\n#CookieMgrMenu .cm-tx-empty {\r\n  padding: 14px 8px;\r\n  text-align: center;\r\n  font-style: italic;\r\n  color: #7f735f;\r\n  font-size: 12px;\r\n}\r\n\r\n#CookieMgrMenu .cm-tickbars {\r\n  display: flex;\r\n  flex-wrap: wrap;\r\n  gap: 6px;\r\n  margin: 0 8px 8px;\r\n}\r\n#CookieMgrMenu .cm-tickbar {\r\n  flex: 1 1 90px;\r\n  min-width: 70px;\r\n  padding: 5px 6px;\r\n  background: rgba(0, 0, 0, 0.28);\r\n  border: 1px solid rgba(255, 255, 255, 0.1);\r\n  border-radius: 4px;\r\n  font-size: 10px;\r\n}\r\n#CookieMgrMenu .cm-tickbar-time {\r\n  color: #93866f;\r\n  text-align: center;\r\n  margin-bottom: 3px;\r\n  white-space: nowrap;\r\n}\r\n#CookieMgrMenu .cm-tickbar-row {\r\n  height: 5px;\r\n  background: rgba(255, 255, 255, 0.06);\r\n  border-radius: 3px;\r\n  margin-bottom: 2px;\r\n  overflow: hidden;\r\n}\r\n#CookieMgrMenu .cm-tickbar-fill {\r\n  display: block;\r\n  height: 100%;\r\n  border-radius: 3px;\r\n}\r\n#CookieMgrMenu .cm-tickbar-buy {\r\n  background: #8f8;\r\n}\r\n#CookieMgrMenu .cm-tickbar-sell {\r\n  background: #f88;\r\n}\r\n#CookieMgrMenu .cm-tickbar-net {\r\n  text-align: center;\r\n  font-weight: bold;\r\n  margin-top: 3px;\r\n}\r\n#CookieMgrMenu .cm-ticks-empty {\r\n  margin: 0 8px 8px;\r\n  padding: 10px;\r\n  text-align: center;\r\n  font-style: italic;\r\n  color: #7f735f;\r\n  font-size: 11px;\r\n}\r\n\r\n#CookieMgrMenu .cm-ticker {\r\n  margin: 8px 8px 10px;\r\n  padding: 6px 0;\r\n  overflow: hidden;\r\n  white-space: nowrap;\r\n  background: rgba(0, 0, 0, 0.32);\r\n  border: 1px solid rgba(255, 255, 255, 0.1);\r\n  border-radius: 4px;\r\n}\r\n#CookieMgrMenu .cm-ticker-track {\r\n  display: inline-block;\r\n  will-change: transform;\r\n}\r\n#CookieMgrMenu .cm-tick-item {\r\n  display: inline-block;\r\n  padding: 0 16px;\r\n  font:\r\n    bold 11px Tahoma,\r\n    Arial,\r\n    sans-serif;\r\n  color: #cbbfa6;\r\n}\r\n#CookieMgrMenu .cm-tick-buy {\r\n  color: #8f8;\r\n}\r\n#CookieMgrMenu .cm-tick-sell {\r\n  color: #f88;\r\n}\r\n#CookieMgrMenu .cm-tick-empty {\r\n  color: #7f735f;\r\n  font-style: italic;\r\n  font-weight: normal;\r\n}\r\n#CookieMgrMenu .cm-tick-sep {\r\n  color: #4a4232;\r\n  padding: 0 4px;\r\n}\r\n\r\n@keyframes cmTickerScroll {\r\n  from {\r\n    transform: translateX(0);\r\n  }\r\n  to {\r\n    transform: translateX(-50%);\r\n  }\r\n}\r\n";
 
 // ---- src/core/util.js ------------------------------------------------
 // Small helpers shared by every module.
@@ -348,6 +348,700 @@ CA.Settings = (() => {
     restoreFromLocal,
     startAutoPersist,
   };
+})();
+
+// ---- src/core/store.js -----------------------------------------------
+// Persistent storage for everything CookieMgr *records* (state history, the event log, small
+// key/value blobs), in IndexedDB rather than localStorage.
+//
+// Why not localStorage: the real Cookie Clicker save lives in localStorage, browsers give
+// localStorage only ~5-10MB per site, and the game silently swallows its own quota errors —
+// so add-on data there can quietly stop the game from saving (see v1.2.2). IndexedDB has its
+// own, far larger quota, so nothing we store here can crowd out the game's save.
+//
+// Three object stores, each record carrying the save it belongs to (`s`, see saveId()):
+//   chunks  { id, s, tier, start, frames: [...] }   recorded state history (core/recorder.js)
+//   events  { id, s, t, ... }                       the event log (core/eventLog.js)
+//   kv      { id, s, k, v }                         small blobs (stock cost basis, buff log, …)
+// If IndexedDB is unavailable (very old browser, some private modes) every call resolves to an
+// empty result and CookieMgr just runs without persistence.
+
+CA.Store = (() => {
+  const DB_NAME = 'CookieMgr';
+  const DB_VERSION = 1;
+  const STORES = ['chunks', 'events', 'kv'];
+  let dbPromise = null;
+
+  /** Identifies the current save, so two bakeries in one browser don't mix their history. */
+  function saveId() {
+    return typeof Game !== 'undefined' && Game.fullDate ? String(Game.fullDate) : 'default';
+  }
+
+  function open() {
+    if (dbPromise) return dbPromise;
+    dbPromise = new Promise((resolve, reject) => {
+      const idb = typeof indexedDB !== 'undefined' ? indexedDB : null;
+      if (!idb) {
+        reject(new Error('IndexedDB unavailable'));
+        return;
+      }
+      const req = idb.open(DB_NAME, DB_VERSION);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        STORES.forEach((name) => {
+          if (!db.objectStoreNames.contains(name)) db.createObjectStore(name, { keyPath: 'id' }).createIndex('s', 's');
+        });
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    dbPromise.catch((e) => CA.Util.log('IndexedDB unavailable — recorded history will not persist.', e));
+    return dbPromise;
+  }
+
+  /** Runs `fn(objectStore)` in one transaction; resolves with fn's IDBRequest result (if any). */
+  function run(store, mode, fn) {
+    return open().then(
+      (db) =>
+        new Promise((resolve, reject) => {
+          const tx = db.transaction(store, mode);
+          const req = fn(tx.objectStore(store));
+          tx.oncomplete = () => resolve(req && 'result' in req ? req.result : undefined);
+          tx.onerror = () => reject(tx.error);
+          tx.onabort = () => reject(tx.error);
+        })
+    );
+  }
+
+  const quiet = (p, fallback) => p.catch(() => fallback);
+
+  const put = (store, record) => quiet(run(store, 'readwrite', (os) => os.put(record)));
+  const putMany = (store, records) =>
+    records.length
+      ? quiet(
+          run(store, 'readwrite', (os) => {
+            records.forEach((r) => os.put(r));
+          })
+        )
+      : Promise.resolve();
+  const remove = (store, id) => quiet(run(store, 'readwrite', (os) => os.delete(id)));
+  const removeMany = (store, ids) =>
+    ids.length
+      ? quiet(
+          run(store, 'readwrite', (os) => {
+            ids.forEach((id) => os.delete(id));
+          })
+        )
+      : Promise.resolve();
+  /** Every record in `store` belonging to save `s`. */
+  const allFor = (store, s) => quiet(run(store, 'readonly', (os) => os.index('s').getAll(s)), []);
+
+  /** Deletes every record for save `s` across all stores. */
+  function clearSave(s) {
+    return Promise.all(
+      STORES.map((store) =>
+        quiet(
+          run(store, 'readwrite', (os) => {
+            const req = os.index('s').openKeyCursor(s);
+            req.onsuccess = () => {
+              const cur = req.result;
+              if (!cur) return;
+              os.delete(cur.primaryKey);
+              cur.continue();
+            };
+          })
+        )
+      )
+    );
+  }
+
+  // ---- key/value convenience ------------------------------------------------------------
+  const kvId = (s, k) => `${s}|${k}`;
+  const getKV = (k, s = saveId()) => quiet(run('kv', 'readonly', (os) => os.get(kvId(s, k)))).then((r) => (r ? r.v : undefined));
+  const setKV = (k, v, s = saveId()) => put('kv', { id: kvId(s, k), s, k, v });
+
+  const available = () => open().then(
+    () => true,
+    () => false
+  );
+
+  return { saveId, open, available, put, putMany, remove, removeMany, allFor, clearSave, getKV, setKV };
+})();
+
+// ---- src/core/states.js ----------------------------------------------
+// Registry of **states**: named values CookieMgr can read from the game at any moment. Plots
+// are just ways of drawing recorded states, and (from v2) macro conditions test them.
+//
+//   CA.States.define({
+//     id: 'cps',                 // stable — it's a field name in recorded frames
+//     name: 'CpS', unit: '/s',   // for UI
+//     kind: 'gauge',             // 'gauge'   a level (bank, CpS)          — downsampled by mean
+//                                // 'counter' a running total (cookies baked) — downsampled by last value
+//                                // 'flow'    an amount during one frame (earned from clicks) — summed
+//     record: true,              // sample it into the recorder (false = live-only, e.g. conditions)
+//     get(ctx) { ... },          // returns a number; ctx = { dt, prev, frame, events } (see recorder)
+//   });
+//
+// Flows are computed after gauges and counters, so a flow's get() can compare ctx.frame (this
+// frame's gauges/counters so far) against ctx.prev (the previous frame).
+
+CA.States = (() => {
+  const defs = [];
+  const byId = {};
+  const AGG = { gauge: 'mean', counter: 'last', flow: 'sum' };
+
+  function define(def) {
+    if (byId[def.id]) throw new Error(`State "${def.id}" already defined`);
+    const d = { record: true, unit: '', group: 'game', kind: 'gauge', ...def };
+    d.agg = d.agg || AGG[d.kind] || 'mean';
+    defs.push(d);
+    byId[d.id] = d;
+    return d;
+  }
+
+  const get = (id) => byId[id] || null;
+  const list = () => defs.slice();
+  /** Recorded states in evaluation order: gauges and counters first, then flows. */
+  const recorded = () => defs.filter((d) => d.record && d.kind !== 'flow').concat(defs.filter((d) => d.record && d.kind === 'flow'));
+
+  /** Reads one state now; undefined if it isn't defined or its getter throws. */
+  function value(id, ctx) {
+    const d = byId[id];
+    if (!d) return undefined;
+    try {
+      return d.get(ctx || {});
+    } catch (e) {
+      return undefined;
+    }
+  }
+
+  return { define, get, list, recorded, value };
+})();
+
+// ---- src/core/recorder.js --------------------------------------------
+// Records every recorded state (core/states.js) once a second into **frames**:
+//   { t: wall-clock ms, a: active-play ms, dt: seconds covered, <stateId>: value, ... }
+//
+// Active play time: time only counts while the game is actually running. A gap of more than
+// MAX_GAP_MS between ticks (page closed, computer asleep, a throttled background tab) adds just
+// one tick's worth, and flows aren't computed across it — so offline/background earnings never
+// land in a 1-second frame, and graphs can drop inactive time entirely (frame.a).
+//
+// Progressive resolution, by active-time age:
+//   tier 0  every second    for the last 3 hours of active play
+//   tier 1  every 15 s      up to 24 hours back
+//   tier 2  every 2 min     up to 7 days back
+//   tier 3  every 15 min    beyond that, kept indefinitely
+// Frames are grouped into chunks (per tier); once a chunk ages past its tier it is merged into
+// the next tier's resolution (gauges by time-weighted mean, counters by last value, flows by
+// sum — see CA.States) and deleted. Everything lives in IndexedDB (core/store.js) per save,
+// and the whole history can be exported to / imported from a file.
+
+CA.Recorder = (() => {
+  const SAMPLE_MS = 1000;
+  const MAX_GAP_MS = 5000;
+  const FLUSH_MS = 15000;
+  const COMPACT_MS = 60000;
+  const HOUR = 3600 * 1000;
+  const TIERS = [
+    { res: 1000, maxAge: 3 * HOUR, chunk: 600, label: '1 s' },
+    { res: 15000, maxAge: 24 * HOUR, chunk: 480, label: '15 s' },
+    { res: 120000, maxAge: 7 * 24 * HOUR, chunk: 720, label: '2 min' },
+    { res: 900000, maxAge: Infinity, chunk: 672, label: '15 min' },
+  ];
+  const EXPORT_FORMAT = 'cookiemgr-history';
+
+  let saveId = null;
+  let tiers = TIERS.map(() => []); // per tier: chunks { id, s, tier, start, frames }, oldest first
+  let all = []; // every frame across tiers, oldest first (tiers cover disjoint, ordered spans)
+  let active = 0;
+  let lastTick = 0;
+  let prev = null;
+  let ready = false;
+  let loading = null;
+  let rev = 0; // bumped whenever frames() changes
+  const dirty = new Set();
+  let toDelete = [];
+
+  const inAscension = () => Game.OnAscend || Game.AscendTimer > 0;
+
+  // ---- frames ----------------------------------------------------------------------------
+
+  /** Merges consecutive frames into one: gauges by dt-weighted mean, counters by last value,
+   *  flows by sum. Keys from states no longer defined fall back to mean. */
+  function merge(group) {
+    const last = group[group.length - 1];
+    const out = { t: last.t, a: last.a, dt: 0 };
+    const keys = new Set();
+    group.forEach((f) => {
+      out.dt += f.dt || 0;
+      Object.keys(f).forEach((k) => {
+        if (k !== 't' && k !== 'a' && k !== 'dt') keys.add(k);
+      });
+    });
+    keys.forEach((k) => {
+      const def = CA.States.get(k);
+      const agg = def ? def.agg : 'mean';
+      let sum = 0;
+      let w = 0;
+      let lastV;
+      let n = 0;
+      group.forEach((f) => {
+        const v = f[k];
+        if (!Number.isFinite(v)) return;
+        n++;
+        lastV = v;
+        const fw = f.dt || 0;
+        if (agg === 'mean') {
+          sum += v * fw;
+          w += fw;
+        } else sum += v;
+      });
+      if (!n) return;
+      if (agg === 'last') out[k] = lastV;
+      else if (agg === 'sum') out[k] = sum;
+      else out[k] = w > 0 ? sum / w : lastV;
+    });
+    return out;
+  }
+
+  /** Groups frames into `res`-ms buckets of active time and merges each bucket. */
+  function downsample(frames, res) {
+    const out = [];
+    let group = [];
+    let idx = null;
+    frames.forEach((f) => {
+      const b = Math.floor(f.a / res);
+      if (idx !== null && b !== idx) {
+        out.push(merge(group));
+        group = [];
+      }
+      idx = b;
+      group.push(f);
+    });
+    if (group.length) out.push(merge(group));
+    return out;
+  }
+
+  // ---- chunks ----------------------------------------------------------------------------
+
+  const newChunk = (tier, start) => ({ id: `${saveId}|${tier}|${start}`, s: saveId, tier, start, frames: [] });
+
+  function appendTo(tier, frames) {
+    if (!frames.length) return;
+    const list = tiers[tier];
+    const res = TIERS[tier].res;
+    let chunk = list[list.length - 1];
+    frames.forEach((f) => {
+      // A bucket can straddle two source chunks; fold its second half into the first.
+      if (tier > 0 && chunk && chunk.frames.length) {
+        const tail = chunk.frames[chunk.frames.length - 1];
+        if (Math.floor(tail.a / res) === Math.floor(f.a / res)) {
+          chunk.frames[chunk.frames.length - 1] = merge([tail, f]);
+          dirty.add(chunk);
+          return;
+        }
+      }
+      if (!chunk || chunk.frames.length >= TIERS[tier].chunk) {
+        chunk = newChunk(tier, f.a);
+        list.push(chunk);
+      }
+      chunk.frames.push(f);
+      dirty.add(chunk);
+    });
+  }
+
+  function rebuildAll() {
+    rev++;
+    all = [];
+    for (let k = TIERS.length - 1; k >= 0; k--) tiers[k].forEach((c) => (all = all.concat(c.frames)));
+  }
+
+  /** Moves chunks that have aged out of their tier into the next tier's resolution. */
+  function compact() {
+    let changed = false;
+    for (let k = 0; k < TIERS.length - 1; k++) {
+      while (tiers[k].length > 1) {
+        const c = tiers[k][0];
+        const end = c.frames.length ? c.frames[c.frames.length - 1].a : c.start;
+        if (active - end <= TIERS[k].maxAge) break;
+        appendTo(k + 1, downsample(c.frames, TIERS[k + 1].res));
+        tiers[k].shift();
+        dirty.delete(c);
+        toDelete.push(c.id);
+        changed = true;
+      }
+    }
+    if (changed) {
+      rebuildAll();
+      CA.Events.emit('history', 'compact');
+    }
+    return changed;
+  }
+
+  // ---- sampling --------------------------------------------------------------------------
+
+  function tick() {
+    if (!ready || typeof Game === 'undefined' || !Game.ready) return;
+    if (CA.Store.saveId() !== saveId) {
+      switchSave();
+      return;
+    }
+    if (!CA.Settings.get('trackHistory') || inAscension()) {
+      // nothing to measure; start clean afterwards
+      lastTick = 0;
+      prev = null;
+      return;
+    }
+    const now = Date.now();
+    const gap = lastTick ? now - lastTick : SAMPLE_MS;
+    const continuous = lastTick && gap <= MAX_GAP_MS;
+    const step = continuous ? gap : SAMPLE_MS;
+    active += step;
+    lastTick = now;
+    const frame = { t: now, a: active, dt: step / 1000 };
+    const ctx = {
+      dt: frame.dt,
+      prev: continuous ? prev : null,
+      frame,
+      events: CA.EventLog.since(continuous && prev ? prev.t : now),
+    };
+    CA.States.recorded().forEach((d) => {
+      const v = CA.States.value(d.id, ctx);
+      if (Number.isFinite(v)) frame[d.id] = v;
+    });
+    prev = frame;
+    appendTo(0, [frame]);
+    all.push(frame);
+    rev++;
+    CA.Events.emit('history', 'sample');
+  }
+
+  // ---- persistence -----------------------------------------------------------------------
+
+  function flush() {
+    if (!saveId) return Promise.resolve();
+    const chunks = [...dirty];
+    dirty.clear();
+    const dels = toDelete;
+    toDelete = [];
+    return Promise.all([
+      CA.Store.putMany('chunks', chunks),
+      CA.Store.removeMany('chunks', dels),
+      CA.Store.setKV('recorder', { active }, saveId),
+    ]);
+  }
+
+  function load() {
+    ready = false;
+    saveId = CA.Store.saveId();
+    const s = saveId;
+    loading = Promise.all([CA.Store.allFor('chunks', s), CA.Store.getKV('recorder', s)]).then(([chunks, meta]) => {
+      if (s !== saveId) return; // switched again meanwhile
+      tiers = TIERS.map(() => []);
+      chunks
+        .filter((c) => tiers[c.tier] && Array.isArray(c.frames))
+        .sort((x, y) => x.tier - y.tier || x.start - y.start)
+        .forEach((c) => tiers[c.tier].push(c));
+      let maxA = 0;
+      tiers.forEach((list) => list.forEach((c) => c.frames.forEach((f) => (maxA = Math.max(maxA, f.a)))));
+      active = Math.max((meta && meta.active) || 0, maxA);
+      dirty.clear();
+      toDelete = [];
+      rebuildAll();
+      compact();
+      prev = null;
+      lastTick = 0;
+      ready = true;
+      CA.Events.emit('history', 'load');
+    });
+    return loading;
+  }
+
+  function switchSave() {
+    ready = false;
+    flush().then(load);
+  }
+
+  /** Erases this save's recorded state history (chunks only). */
+  function clear() {
+    const ids = [];
+    tiers.forEach((list) => list.forEach((c) => ids.push(c.id)));
+    tiers = TIERS.map(() => []);
+    all = [];
+    rev++;
+    dirty.clear();
+    toDelete = [];
+    prev = null;
+    return CA.Store.removeMany('chunks', ids).then(() => CA.Events.emit('history', 'clear'));
+  }
+
+  // ---- queries ---------------------------------------------------------------------------
+
+  const frames = () => all;
+
+  /** Frames that have `key`, as { t, a, v } points — cached until the frames change. */
+  const seriesCache = new Map();
+  function series(key) {
+    let c = seriesCache.get(key);
+    if (c && c.rev === rev) return c.pts;
+    // sampling only appends; anything else (load/compact/clear) replaces `all` → rebuild
+    if (!c || c.src !== all) c = { src: all, n: 0, pts: [] };
+    for (let i = c.n; i < all.length; i++) {
+      const f = all[i];
+      if (Number.isFinite(f[key])) c.pts.push({ t: f.t, a: f.a, v: f[key] });
+    }
+    c.n = all.length;
+    c.rev = rev;
+    seriesCache.set(key, c);
+    return c.pts;
+  }
+
+  /** Index of the first frame with `key` (default t) >= value — binary search. */
+  function lowerBound(value, key = 't') {
+    let lo = 0;
+    let hi = all.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (all[mid][key] < value) lo = mid + 1;
+      else hi = mid;
+    }
+    return lo;
+  }
+
+  function summary() {
+    const perTier = tiers.map((list, k) => ({
+      label: TIERS[k].label,
+      frames: list.reduce((n, c) => n + c.frames.length, 0),
+      chunks: list.length,
+    }));
+    return { active, frames: all.length, perTier, first: all[0] || null, ready };
+  }
+
+  // ---- export / import -------------------------------------------------------------------
+
+  /** Everything recorded for this save (state history, event log, small blobs) as one object. */
+  function exportData() {
+    return flush()
+      .then(() => CA.EventLog.flush())
+      .then(() => Promise.all([CA.Store.allFor('chunks', saveId), CA.Store.allFor('events', saveId), CA.Store.allFor('kv', saveId)]))
+      .then(([chunks, events, kv]) => ({
+        format: EXPORT_FORMAT,
+        version: 1,
+        cookieMgr: CA.VERSION,
+        exportedAt: Date.now(),
+        bakery: typeof Game !== 'undefined' ? Game.bakeryName : '',
+        saveId,
+        chunks,
+        events,
+        kv,
+      }));
+  }
+
+  /** Replaces this save's recorded data with an export (from any save/browser). */
+  function importData(data) {
+    if (!data || data.format !== EXPORT_FORMAT || !Array.isArray(data.chunks)) {
+      return Promise.reject(new Error('Not a CookieMgr history export.'));
+    }
+    const s = saveId;
+    const rekey = (r, rest) => ({ ...r, s, id: `${s}|${rest}` });
+    const chunks = data.chunks.filter((c) => c && Array.isArray(c.frames)).map((c) => rekey(c, `${c.tier}|${c.start}`));
+    const events = (data.events || []).filter((e) => e && Number.isFinite(e.t)).map((e, i) => rekey(e, `${e.t}|i${i}`));
+    const kv = (data.kv || []).filter((r) => r && r.k).map((r) => rekey(r, r.k));
+    return CA.Store.clearSave(s)
+      .then(() => Promise.all([CA.Store.putMany('chunks', chunks), CA.Store.putMany('events', events), CA.Store.putMany('kv', kv)]))
+      .then(() => {
+        CA.Events.emit('storeReloaded');
+        return load();
+      })
+      .then(() => ({ chunks: chunks.length, events: events.length }));
+  }
+
+  /** Downloads exportData() as a .json file. */
+  function exportFile() {
+    return exportData().then((data) => {
+      const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const name = String(data.bakery || 'bakery').replace(/[^\w-]+/g, '_');
+      a.href = url;
+      a.download = `cookiemgr-history-${name}-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      return data;
+    });
+  }
+
+  /** Reads a File chosen by the user and imports it. */
+  function importFile(file) {
+    return file.text().then((txt) => importData(JSON.parse(txt)));
+  }
+
+  function init() {
+    CA.Settings.defineOption({
+      key: 'trackHistory',
+      group: 'general',
+      name: 'Record history',
+      desc: 'Records CpS, cookies, prestige and more over time for the graphs — every second for the last 3 hours of play, coarser further back. Kept in this browser (not in your game save); export it from Settings.',
+      default: true,
+    });
+    load();
+    setInterval(tick, SAMPLE_MS);
+    setInterval(flush, FLUSH_MS);
+    setInterval(compact, COMPACT_MS);
+    addEventListener('pagehide', flush);
+  }
+
+  return {
+    init,
+    frames,
+    series,
+    revision: () => rev,
+    lowerBound,
+    summary,
+    clear,
+    flush,
+    compact,
+    exportData,
+    importData,
+    exportFile,
+    importFile,
+    activeNow: () => active,
+    isReady: () => ready,
+    whenLoaded: () => loading,
+    TIERS,
+    _merge: merge,
+    _downsample: downsample,
+  };
+})();
+
+// ---- src/core/eventLog.js --------------------------------------------
+// The central **event** log: one place for everything that *happened* — golden/wrath cookies,
+// reindeer, ascensions, stock trades, and (later) spells and macro runs. Pages show filtered
+// views of it; the recorder uses it to attribute golden-cookie income.
+//
+//   CA.EventLog.add({ type: 'golden', title, text, cookies: +1234, data: {...} })
+//
+// Each event also gets t (wall ms), a (active-play ms, see core/recorder.js) and an id.
+// `cookies` is the signed change to the bank the event caused (0 if none). Persisted per save
+// in IndexedDB (core/store.js); the newest MAX_MEMORY are kept in memory.
+
+CA.EventLog = (() => {
+  const MAX_MEMORY = 5000;
+  const MAX_STORED = 20000;
+  const FLUSH_MS = 5000;
+
+  const TYPES = {}; // type -> { name, icon, color, income }
+  let saveId = null;
+  let events = []; // oldest first
+  let pending = [];
+  let seq = 0;
+  let version = 0;
+
+  /** Describes an event type for filters/legends. `income`: its cookies count as income. */
+  function defineType(type, meta) {
+    TYPES[type] = { name: type, icon: '', color: '#ccc', income: false, ...meta };
+  }
+
+  function add(ev) {
+    const t = Date.now();
+    const s = saveId || CA.Store.saveId();
+    const e = {
+      title: '',
+      text: '',
+      cookies: 0,
+      data: {},
+      ...ev,
+      t,
+      a: CA.Recorder.activeNow(),
+      s,
+      id: `${s}|${t}|${++seq}`,
+    };
+    events.push(e);
+    if (events.length > MAX_MEMORY + 200) events.splice(0, events.length - MAX_MEMORY);
+    pending.push(e);
+    version++;
+    CA.Events.emit('eventLogged', e);
+    return e;
+  }
+
+  function flush() {
+    const batch = pending;
+    pending = [];
+    return CA.Store.putMany('events', batch);
+  }
+
+  function load() {
+    const s = CA.Store.saveId();
+    saveId = s;
+    const addedMeanwhile = events.filter((e) => e.s === s);
+    return CA.Store.allFor('events', s).then((stored) => {
+      if (s !== saveId) return;
+      stored.sort((x, y) => x.t - y.t);
+      if (stored.length > MAX_STORED) {
+        const drop = stored.splice(0, stored.length - MAX_STORED);
+        CA.Store.removeMany(
+          'events',
+          drop.map((e) => e.id)
+        );
+      }
+      const ids = new Set(stored.map((e) => e.id));
+      events = stored.concat(addedMeanwhile.filter((e) => !ids.has(e.id))).slice(-MAX_MEMORY);
+      seq = Math.max(seq, stored.length);
+      version++;
+      CA.Events.emit('eventLogged', null);
+    });
+  }
+
+  /** Erases this save's event log. */
+  function clear() {
+    const ids = events.map((e) => e.id);
+    events = [];
+    pending = [];
+    version++;
+    return CA.Store.allFor('events', saveId).then((stored) =>
+      CA.Store.removeMany('events', ids.concat(stored.map((e) => e.id)))
+    );
+  }
+
+  /** Events of the given types (all if omitted), oldest first. */
+  function list(types) {
+    if (!types) return events;
+    const set = new Set(types);
+    return events.filter((e) => set.has(e.type));
+  }
+
+  /** Events strictly after wall time `t`. */
+  function since(t) {
+    let lo = 0;
+    let hi = events.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (events[mid].t <= t) lo = mid + 1;
+      else hi = mid;
+    }
+    return events.slice(lo);
+  }
+
+  function init() {
+    defineType('golden', { name: 'Golden cookie', icon: 'cookie', color: '#ffd54a', income: true });
+    defineType('wrath', { name: 'Wrath cookie', icon: 'cookie', color: '#e5484d', income: true });
+    defineType('reindeer', { name: 'Reindeer', icon: 'star', color: '#c48a5a', income: true });
+    defineType('ascend', { name: 'Ascension', icon: 'star', color: '#c9bcff' });
+    defineType('trade', { name: 'Stock trade', icon: 'stocks', color: '#7fe08b' });
+    load();
+    setInterval(flush, FLUSH_MS);
+    addEventListener('pagehide', flush);
+    CA.Events.on('storeReloaded', load);
+    // A different save was loaded (import/hard reset): switch logs along with the recorder.
+    CA.Events.on('history', (why) => {
+      if (why === 'load' && CA.Store.saveId() !== saveId) load();
+    });
+  }
+
+  return { init, add, list, since, flush, clear, defineType, types: () => TYPES, version: () => version };
 })();
 
 // ---- src/core/hotkeys.js ---------------------------------------------
@@ -855,8 +1549,6 @@ CA.Stocks = (() => {
 .bankGood.cm-owned .cm-stockbadge::before { content: '\\2605'; color: #fff; margin-right: 4px; text-shadow: 0 0 3px #000; }
 `;
 
-  let timer = null;
-  let sampleTimer = null;
 
   const minigame = () => {
     const bank = typeof Game !== 'undefined' && Game.Objects && Game.Objects.Bank;
@@ -864,26 +1556,25 @@ CA.Stocks = (() => {
     return m && m.goodsById ? m : null;
   };
 
-  // ---- price history --------------------------------------------------------------
-  // One sample per second per stock, same rolling window as CA.History so the price graph
-  // can cover the same time range as the CpS graph. Mirrored to localStorage the same way
-  // CA.History does (see persist()/restore() below), so it survives a page refresh too.
-
-  const SAMPLE_MS = 1000;
-  const MAX_SAMPLES = 4 * 3600; // 4 hours
-  const priceHistory = {}; // good.id -> [{ t, v }]
-
-  const priceOf = (good) => (typeof good.val === 'number' ? good.val : 0);
-
   // ---- portfolio (cost basis + realized/unrealized gain) ---------------------------
   // The game only shows you the current price and share count, not what you paid for
   // them, so we watch `good.stock` ourselves: any increase is a buy at the current price
   // (rolled into a running average cost), any decrease is a sell that realizes the gap
   // between that average cost and the current price. There is no way to know what happened
-  // before the mod was first loaded, but from then on this (like price history) survives a
-  // page refresh.
-  const holdings = {}; // good.id -> { shares, avgCost, realized }
-  const portfolioHistory = []; // [{ t, value, cost, unrealized, realized, gain }]
+  // before the mod was first loaded. Holdings are stored per save in IndexedDB.
+  //
+  // Prices and portfolio totals are recorded over time as states (price:<id>, portfolioValue,
+  // portfolioCost, portfolioRealized) by core/recorder.js — this module keeps no history.
+
+  const SAMPLE_MS = 1000;
+  const PERSIST_MS = 10000;
+  const LEGACY_KEY = 'CookieMgr.stocks.v1';
+
+  const priceOf = (good) => (typeof good.val === 'number' ? good.val : 0);
+
+  let holdings = {}; // good.id -> { shares, avgCost, realized }
+  let holdingsFor = null; // save the loaded holdings belong to
+  let dirty = false;
 
   function holdingOf(id) {
     return holdings[id] || (holdings[id] = { shares: 0, avgCost: 0, realized: 0 });
@@ -899,39 +1590,52 @@ CA.Stocks = (() => {
     } else if (delta < 0) {
       h.realized += -delta * (price - h.avgCost);
     }
+    if (delta) dirty = true;
     h.shares = shares;
     return h;
   }
 
+  /** One recorded state per stock price, defined the first time the Bank minigame is seen. */
+  function ensurePriceStates(m) {
+    m.goodsById.forEach((good) => {
+      const id = `price:${good.id}`;
+      if (CA.States.get(id)) return;
+      CA.States.define({
+        id,
+        name: `${good.name} price`,
+        unit: '$',
+        group: 'stocks',
+        kind: 'gauge',
+        get: () => {
+          const mm = minigame();
+          const g = mm && mm.goodsById[good.id];
+          return g ? priceOf(g) : undefined;
+        },
+      });
+    });
+  }
+
   function sample() {
     const m = minigame();
-    if (!m) return;
-    const now = Date.now();
+    if (!m || holdingsFor !== CA.Store.saveId()) return;
+    ensurePriceStates(m);
+    m.goodsById.forEach(updateHolding);
+  }
+
+  /** Current totals plus a per-stock breakdown; null while the Bank minigame isn't open. */
+  function portfolioNow() {
+    const m = minigame();
+    if (!m) return null;
+    sample();
     let value = 0;
     let cost = 0;
     let realized = 0;
-    m.goodsById.forEach((good) => {
-      const arr = priceHistory[good.id] || (priceHistory[good.id] = []);
+    const rows = m.goodsById.map((good) => {
+      const h = holdingOf(good.id);
       const price = priceOf(good);
-      arr.push({ t: now, v: price });
-      if (arr.length > MAX_SAMPLES + 200) arr.splice(0, arr.length - MAX_SAMPLES);
-
-      const h = updateHolding(good);
       value += h.shares * price;
       cost += h.shares * h.avgCost;
       realized += h.realized;
-    });
-    const unrealized = value - cost;
-    portfolioHistory.push({ t: now, value, cost, unrealized, realized, gain: unrealized + realized });
-    if (portfolioHistory.length > MAX_SAMPLES + 200) portfolioHistory.splice(0, portfolioHistory.length - MAX_SAMPLES);
-  }
-
-  /** Current totals plus a per-stock breakdown, for stat tiles / tooltips. */
-  function portfolioNow() {
-    const m = minigame();
-    const rows = (m ? m.goodsById : []).map((good) => {
-      const h = holdingOf(good.id);
-      const price = priceOf(good);
       return {
         id: good.id,
         name: good.name,
@@ -943,15 +1647,8 @@ CA.Stocks = (() => {
         realized: h.realized,
       };
     });
-    const last = portfolioHistory[portfolioHistory.length - 1];
-    return {
-      value: last ? last.value : 0,
-      cost: last ? last.cost : 0,
-      unrealized: last ? last.unrealized : 0,
-      realized: last ? last.realized : 0,
-      gain: last ? last.gain : 0,
-      rows,
-    };
+    const unrealized = value - cost;
+    return { value, cost, unrealized, realized, gain: unrealized + realized, rows };
   }
 
   /** Every stock, with its display name and whether you currently hold any. */
@@ -961,88 +1658,46 @@ CA.Stocks = (() => {
     return m.goodsById.map((good) => ({ id: good.id, name: good.name, owned: good.stock > 0 }));
   }
 
-  /** Recorded price samples for one stock (empty if never seen). */
-  function history(id) {
-    return priceHistory[id] || [];
+  // ---- persistence ------------------------------------------------------------------
+
+  function cleanHoldings(obj) {
+    const out = {};
+    Object.keys(obj || {}).forEach((id) => {
+      const h = obj[id];
+      if (h && typeof h.shares === 'number' && typeof h.avgCost === 'number' && typeof h.realized === 'number') {
+        out[id] = { shares: h.shares, avgCost: h.avgCost, realized: h.realized };
+      }
+    });
+    return out;
   }
-
-  // ---- persistence (survives a page refresh, same approach as CA.History) ----------
-  //
-  // IMPORTANT: only the last PERSIST_WINDOW_MS of priceHistory/portfolioHistory is persisted,
-  // not the full in-memory buffer (which can hold up to MAX_SAMPLES — 4 hours — per stock, and
-  // Cookie Clicker has 11 stock types). Writing all of that to localStorage every 20s can run
-  // into multiple megabytes, which risks pushing the browser's per-origin localStorage quota
-  // (typically 5-10MB) over the edge. The real Cookie Clicker save also lives in localStorage,
-  // and the game's own save write silently swallows a quota-exceeded error (see
-  // features/history.js's persist() for the full explanation) — so a mod bloating localStorage
-  // doesn't throw or warn anywhere, it just makes the *game's* own save quietly stop landing.
-  // `holdings` (cost basis / realized gain) is a tiny running total, not a time series, so it's
-  // always persisted in full regardless.
-
-  const STORE_KEY = 'CookieMgr.stocks.v1';
-  const PERSIST_MS = 20000;
-  const PERSIST_WINDOW_MS = 10 * 60 * 1000;
-  let persistTimer = null;
 
   function persist() {
-    try {
-      const cutoff = Date.now() - PERSIST_WINDOW_MS;
-      const trimmedPriceHistory = {};
-      Object.keys(priceHistory).forEach((id) => {
-        const arr = priceHistory[id].filter((p) => p.t > cutoff);
-        if (arr.length) trimmedPriceHistory[id] = arr;
-      });
-      localStorage.setItem(
-        STORE_KEY,
-        JSON.stringify({
-          v: 1,
-          savedAt: Date.now(),
-          priceHistory: trimmedPriceHistory,
-          portfolioHistory: portfolioHistory.filter((p) => p.t > cutoff),
-          holdings,
-        })
-      );
-    } catch (e) {
-      /* storage full/blocked (private mode, quota, ...) — this is a convenience cache, never fatal */
-    }
+    if (!dirty || !holdingsFor) return Promise.resolve();
+    dirty = false;
+    return CA.Store.setKV('stockHoldings', holdings, holdingsFor);
   }
 
-  function restore() {
-    let raw;
+  /** Up to v1.3 holdings lived in localStorage (with price history). Take the holdings, free the rest. */
+  function takeLegacyHoldings() {
+    let legacy = null;
     try {
-      raw = localStorage.getItem(STORE_KEY);
+      const raw = localStorage.getItem(LEGACY_KEY);
+      if (raw) legacy = cleanHoldings((JSON.parse(raw) || {}).holdings);
+      localStorage.removeItem(LEGACY_KEY);
     } catch (e) {
-      return;
+      /* unreadable — nothing to migrate */
     }
-    if (!raw) return;
-    let data;
-    try {
-      data = JSON.parse(raw);
-    } catch (e) {
-      return;
-    }
-    if (!data || typeof data !== 'object') return;
-    // A little past the rolling window, so data left over from days ago doesn't linger.
-    const cutoff = Date.now() - MAX_SAMPLES * SAMPLE_MS - 3600000;
+    return legacy;
+  }
 
-    Object.keys(data.priceHistory || {}).forEach((id) => {
-      const arr = (data.priceHistory[id] || []).filter((p) => p && typeof p.t === 'number' && p.t > cutoff);
-      if (arr.length) priceHistory[id] = arr;
-    });
-
-    (data.portfolioHistory || []).forEach((p) => {
-      if (p && typeof p.t === 'number' && p.t > cutoff) portfolioHistory.push(p);
-    });
-    if (portfolioHistory.length > MAX_SAMPLES + 200) portfolioHistory.splice(0, portfolioHistory.length - MAX_SAMPLES);
-
-    // Cost basis / realized gain are running totals, not a time series, so they're restored
-    // regardless of the cutoff above — the very next sample() reconciles `shares` against the
-    // game's real current `good.stock` right away, so a stale share count can't linger either.
-    Object.keys(data.holdings || {}).forEach((id) => {
-      const h = data.holdings[id];
-      if (h && typeof h.shares === 'number' && typeof h.avgCost === 'number' && typeof h.realized === 'number') {
-        holdings[id] = { shares: h.shares, avgCost: h.avgCost, realized: h.realized };
-      }
+  function load() {
+    const s = CA.Store.saveId();
+    holdingsFor = null;
+    return CA.Store.getKV('stockHoldings', s).then((stored) => {
+      const legacy = takeLegacyHoldings();
+      holdings = stored ? cleanHoldings(stored) : legacy || {};
+      holdingsFor = s;
+      dirty = !stored && !!legacy;
     });
   }
 
@@ -1116,19 +1771,146 @@ CA.Stocks = (() => {
       default: 'portfolio', // 'portfolio' | 'perStock'
     });
     CA.Util.injectCss('CookieMgrStocksStyles', CSS);
-    restore();
+    load();
     CA.Events.on('settings', refresh);
-    timer = setInterval(refresh, TICK_MS);
-    sampleTimer = setInterval(sample, SAMPLE_MS);
-    persistTimer = setInterval(persist, PERSIST_MS);
+    CA.Events.on('storeReloaded', load);
+    CA.Events.on('history', (why) => {
+      if (why === 'load' && holdingsFor && holdingsFor !== CA.Store.saveId()) persist().then(load); // a different save
+    });
+    setInterval(refresh, TICK_MS);
+    setInterval(sample, SAMPLE_MS);
+    setInterval(persist, PERSIST_MS);
     addEventListener('pagehide', persist);
-    addEventListener('beforeunload', persist);
     refresh();
-    sample();
-    persist(); // shrink an oversized blob from an older version right away, not after PERSIST_MS
   }
 
-  return { init, refresh, MODES, list, history, portfolioNow, portfolioHistory: () => portfolioHistory, minigame };
+  return { init, refresh, MODES, list, portfolioNow, minigame };
+})();
+
+// ---- src/features/gameStates.js --------------------------------------
+// The built-in states (core/states.js) — what the recorder samples every second and what the
+// graphs are built from. Grouped:
+//
+//   CpS        cps, base (unbuffed), click (cookies/s from clicking)
+//   cookies    cookies (bank), baked (this ascension), bakedAllTime, handmade
+//   earnings   per-frame flows splitting "baked" by source — see attribute() below
+//   bank       per-frame flows for what else moves the bank: spending, wrinkler withering, other
+//   prestige   prestige, prestigeTotal (level if you ascended now), prestigeGain, heavenlyChips
+//   stocks     portfolioValue/Cost/Realized (+ one price:<id> per stock, see features/stocks.js)
+//   magic      grimoire magic, when the Wizard tower minigame is open
+//
+// Game facts this relies on (from the game's own source): each logic frame does
+// Game.Earn(Game.cookiesPs / fps), adding to both Game.cookies and Game.cookiesEarned; wrinklers
+// then dissolve cookiesPs × cpsSucked from the bank only; clicks add to handmadeCookies;
+// ascending resets cookiesEarned (so a negative delta means "new run", not negative income).
+
+CA.GameStates = (() => {
+  const S = (def) => CA.States.define(def);
+  const shown = () => 1 - (Game.cpsSucked || 0);
+  const delta = (ctx, id) => (ctx.prev && Number.isFinite(ctx.prev[id]) && Number.isFinite(ctx.frame[id]) ? ctx.frame[id] - ctx.prev[id] : 0);
+  const INCOME_TYPES = new Set(['golden', 'wrath', 'reindeer']);
+
+  /**
+   * Splits this frame's increase in cookies baked into sources, in this order (each takes at
+   * most what's left, so the parts always add up to the total):
+   *   click       what clicking added (handmadeCookies)
+   *   golden      instant golden/wrath/reindeer payouts logged this frame, plus the extra
+   *               production buffs added on top of unbuffed CpS (Frenzy & co.)
+   *   production  unbuffed CpS × time
+   *   other       whatever's left (wrinkler pops, sugar lumps, …)
+   * Computed once per frame and cached on ctx.
+   */
+  function attribute(ctx) {
+    if (ctx._earn) return ctx._earn;
+    const total = Math.max(0, delta(ctx, 'baked'));
+    let left = total;
+    const take = (want) => {
+      const v = Math.max(0, Math.min(left, want));
+      left -= v;
+      return v;
+    };
+    const click = take(delta(ctx, 'handmade'));
+    let instant = 0;
+    (ctx.events || []).forEach((e) => {
+      if (INCOME_TYPES.has(e.type) && e.cookies > 0) instant += e.cookies;
+    });
+    const buffExtra = Math.max(0, (Game.cookiesPs || 0) - (Game.unbuffedCps || Game.cookiesPs || 0)) * ctx.dt;
+    const golden = take(instant + buffExtra);
+    const production = take((Game.unbuffedCps || Game.cookiesPs || 0) * ctx.dt);
+    const other = left;
+    ctx._earn = { total, click, golden, production, other };
+    return ctx._earn;
+  }
+
+  function bankFlows(ctx) {
+    if (ctx._bank) return ctx._bank;
+    const earned = attribute(ctx).total;
+    const withered = ctx.prev ? (Game.cookiesPs || 0) * (Game.cpsSucked || 0) * ctx.dt : 0;
+    const change = delta(ctx, 'cookies');
+    const expected = earned - withered;
+    ctx._bank = {
+      withered,
+      spent: Math.max(0, expected - change), // buildings, upgrades, stock purchases, …
+      otherIn: Math.max(0, change - expected), // stock sales and anything else not "baked"
+    };
+    return ctx._bank;
+  }
+
+  function init() {
+    // cookies — defined first: states below compute deltas of these within the same frame
+    S({ id: 'cookies', name: 'Cookies in bank', group: 'cookies', kind: 'gauge', get: () => Game.cookies });
+    S({ id: 'baked', name: 'Cookies baked (this ascension)', group: 'cookies', kind: 'counter', get: () => Game.cookiesEarned });
+    S({ id: 'bakedAllTime', name: 'Cookies baked (all time)', group: 'cookies', kind: 'counter', get: () => (Game.cookiesEarned || 0) + (Game.cookiesReset || 0) });
+    S({ id: 'handmade', name: 'Cookies from clicking (total)', group: 'cookies', kind: 'counter', get: () => Game.handmadeCookies });
+
+    // CpS — field names match what the CpS graph has always read (s.cps, s.base, s.click)
+    S({ id: 'cps', name: 'CpS', unit: '/s', group: 'cps', kind: 'gauge', get: () => (Game.cookiesPs || 0) * shown() });
+    S({ id: 'base', name: 'Unbuffed CpS', unit: '/s', group: 'cps', kind: 'gauge', get: () => (Game.unbuffedCps || Game.cookiesPs || 0) * shown() });
+    S({ id: 'click', name: 'Clicking', unit: '/s', group: 'cps', kind: 'gauge', get: (ctx) => (ctx.dt ? Math.max(0, delta(ctx, 'handmade')) / ctx.dt : 0) });
+
+    // earnings — where this frame's baked cookies came from
+    S({ id: 'earned', name: 'Baked', group: 'earnings', kind: 'flow', get: (ctx) => attribute(ctx).total });
+    S({ id: 'earnProduction', name: 'Production', group: 'earnings', kind: 'flow', get: (ctx) => attribute(ctx).production });
+    S({ id: 'earnClick', name: 'Clicking', group: 'earnings', kind: 'flow', get: (ctx) => attribute(ctx).click });
+    S({ id: 'earnGolden', name: 'Golden cookies & reindeer', group: 'earnings', kind: 'flow', get: (ctx) => attribute(ctx).golden });
+    S({ id: 'earnOther', name: 'Other', group: 'earnings', kind: 'flow', get: (ctx) => attribute(ctx).other });
+
+    // bank — what else moves the bank besides baking
+    S({ id: 'spent', name: 'Spent', group: 'bank', kind: 'flow', get: (ctx) => bankFlows(ctx).spent });
+    S({ id: 'withered', name: 'Withered by wrinklers', group: 'bank', kind: 'flow', get: (ctx) => bankFlows(ctx).withered });
+    S({ id: 'bankOtherIn', name: 'Other income (stock sales, …)', group: 'bank', kind: 'flow', get: (ctx) => bankFlows(ctx).otherIn });
+
+    // prestige
+    const totalLevel = () => Math.floor(Game.HowMuchPrestige((Game.cookiesReset || 0) + (Game.cookiesEarned || 0)));
+    S({ id: 'prestige', name: 'Prestige level', group: 'prestige', kind: 'counter', get: () => Game.prestige });
+    S({ id: 'prestigeTotal', name: 'Prestige level if you ascended now', group: 'prestige', kind: 'counter', get: totalLevel });
+    S({ id: 'prestigeGain', name: 'Prestige gained this run', group: 'prestige', kind: 'counter', get: () => totalLevel() - (Game.prestige || 0) });
+    S({ id: 'heavenlyChips', name: 'Heavenly chips', group: 'prestige', kind: 'counter', get: () => Game.heavenlyChips });
+
+    // stocks (undefined while the Bank minigame isn't open — the recorder then skips them)
+    const p = (k) => () => {
+      const now = CA.Stocks.portfolioNow();
+      return now ? now[k] : undefined;
+    };
+    S({ id: 'portfolioValue', name: 'Portfolio value', unit: '$', group: 'stocks', kind: 'gauge', get: p('value') });
+    S({ id: 'portfolioCost', name: 'Portfolio cost basis', unit: '$', group: 'stocks', kind: 'gauge', get: p('cost') });
+    S({ id: 'portfolioRealized', name: 'Realized stock profit', unit: '$', group: 'stocks', kind: 'counter', get: p('realized') });
+
+    // magic
+    S({
+      id: 'magic',
+      name: 'Magic',
+      group: 'magic',
+      kind: 'gauge',
+      get: () => {
+        const tower = Game.Objects && Game.Objects['Wizard tower'];
+        const m = tower && tower.minigame;
+        return m && Number.isFinite(m.magic) ? m.magic : undefined;
+      },
+    });
+  }
+
+  return { init, attribute };
 })();
 
 // ---- src/features/stockTrader.js -------------------------------------
@@ -1237,9 +2019,8 @@ CA.StockTrader = (() => {
 
 // ---- src/features/stockLog.js ----------------------------------------
 // Records every stock trade — bought or sold, by the "buy fast/slow rise" autoclicker or by you
-// clicking the Bank minigame's own buy/sell buttons — so the Stock market tab can show a ticker
-// and a transaction history. Session-only (not mirrored to localStorage like CA.History/
-// CA.Stocks are, at least for now).
+// clicking the Bank minigame's own buy/sell buttons — as 'trade' events in the central event log
+// (core/eventLog.js), so they're persisted per save and show up anywhere events are listed.
 //
 // There is no separate "manual trade" event to hook: the Bank minigame's own UI buttons call
 // straight into `minigame.buyGood`/`minigame.sellGood` (verified against minigameMarket.js), the
@@ -1248,10 +2029,8 @@ CA.StockTrader = (() => {
 
 CA.StockLog = (() => {
   const POLL_MS = 1000;
-  const MAX_RECORDS = 500;
 
-  let timer = null;
-  const records = []; // [{ t, kind: 'buy'|'sell', id, name, shares, price, cookies }]
+  let cache = { version: -1, list: [] };
 
   function wrap(m) {
     if (m.__cmLogWrapped) return;
@@ -1285,11 +2064,17 @@ CA.StockLog = (() => {
     };
   }
 
+  /** `cookies` is the unsigned amount the trade cost or paid out. */
   function record(kind, good, shares, cookies) {
-    const entry = { t: Date.now(), kind, id: good.id, name: good.name, shares, price: good.val, cookies };
-    records.push(entry);
-    if (records.length > MAX_RECORDS) records.splice(0, records.length - MAX_RECORDS);
-    CA.Events.emit('stockTrade', entry);
+    const verb = kind === 'buy' ? 'Bought' : 'Sold';
+    const e = CA.EventLog.add({
+      type: 'trade',
+      title: `${verb} ${shares} ${good.name}`,
+      text: `@ $${Math.round(good.val * 100) / 100}`,
+      cookies: kind === 'buy' ? -cookies : cookies,
+      data: { kind, id: good.id, name: good.name, shares, price: good.val },
+    });
+    CA.Events.emit('stockTrade', e);
   }
 
   function poll() {
@@ -1297,11 +2082,21 @@ CA.StockLog = (() => {
     if (m) wrap(m);
   }
 
-  /** Every trade recorded this session, oldest first. */
-  const list = () => records;
+  /** Every logged trade, oldest first, in the flat shape the Stock market page uses:
+   *  { t, kind: 'buy'|'sell', id, name, shares, price, cookies (unsigned) }. */
+  function list() {
+    const v = CA.EventLog.version();
+    if (cache.version !== v) {
+      cache = {
+        version: v,
+        list: CA.EventLog.list(['trade']).map((e) => ({ t: e.t, ...e.data, cookies: Math.abs(e.cookies) })),
+      };
+    }
+    return cache.list;
+  }
 
   function init() {
-    timer = setInterval(poll, POLL_MS);
+    setInterval(poll, POLL_MS);
     poll();
   }
 
@@ -1309,30 +2104,28 @@ CA.StockLog = (() => {
 })();
 
 // ---- src/features/history.js -----------------------------------------
-// Records what the bakery is doing over time so the graph has something to draw.
+// What the CpS graph needs beyond plain state history:
 //
-//   samples    once per second: displayed CPS, "unbuffed" CPS and measured click income
+//   samples    the recorder's frames (core/recorder.js) — t, cps, base, click and every other
+//              recorded state; this module no longer samples anything itself
 //   intervals  every buff/effect that was active, with start and end (they can overlap = stacking)
-//   events     one-off things: golden cookie / reindeer pops (with their outcome) and ascensions
+//   events     golden/wrath cookie and reindeer pops (with their outcome) and ascensions, as
+//              entries in the central event log (core/eventLog.js)
 //
-// Kept in memory for the current rolling window, and mirrored to localStorage every so often
-// so a page refresh doesn't lose it — separate from the actual Cookie Clicker save, since this
-// is disposable convenience data, not game progress.
+// The buff log is stored in IndexedDB (core/store.js) per save. Nothing here touches
+// localStorage — see core/store.js for why that matters.
 
 CA.History = (() => {
-  const SAMPLE_MS = 1000;
-  const MAX_SAMPLES = 4 * 3600; // keep 4 hours
-  const MAX_EVENTS = 500;
+  const TICK_MS = 1000;
   const MAX_INTERVALS = 1500;
+  const PERSIST_MS = 30000;
   const FPS = 30; // buff timers are counted in logic frames
+  const MARKER_TYPES = ['golden', 'wrath', 'reindeer', 'ascend'];
+  const LEGACY_KEY = 'CookieMgr.history.v1';
 
-  const samples = []; // { t, cps, base, click }
-  const intervals = []; // { name, label, desc, icon, start, end|null, multCps, multClick, ... }
-  const events = []; // { t, kind, title, text, gain }
+  let intervals = []; // { name, label, desc, icon, start, end|null, multCps, multClick, ... }
   const open = {}; // buff name -> currently open interval
-  let lastT = 0;
-  let lastHandmade = null;
-  let timer = null;
+  let dirty = false;
 
   // ---- colours -------------------------------------------------------------------
 
@@ -1371,15 +2164,14 @@ CA.History = (() => {
       .replace(/\s+/g, ' ')
       .trim();
 
-  function capArray(arr, max) {
-    if (arr.length > max + 200) arr.splice(0, arr.length - max);
-  }
-
   const inAscension = () => Game.OnAscend || Game.AscendTimer > 0;
+
+  // ---- buff intervals --------------------------------------------------------------
 
   function closeInterval(iv, now) {
     iv.end = Math.min(now, iv.projEnd || now);
     delete open[iv.name];
+    dirty = true;
   }
 
   function openInterval(b, now) {
@@ -1389,7 +2181,7 @@ CA.History = (() => {
       label: b.dname || b.name,
       desc: stripHtml(b.desc),
       icon: b.icon || [0, 0],
-      start: now - Math.min(elapsed, SAMPLE_MS),
+      start: now - Math.min(elapsed, TICK_MS),
       end: null,
       projEnd: now + ((b.time || 0) / FPS) * 1000,
       duration: (b.maxTime || 0) / FPS,
@@ -1399,7 +2191,8 @@ CA.History = (() => {
     };
     open[b.name] = iv;
     intervals.push(iv);
-    capArray(intervals, MAX_INTERVALS);
+    if (intervals.length > MAX_INTERVALS + 200) intervals.splice(0, intervals.length - MAX_INTERVALS);
+    dirty = true;
     return iv;
   }
 
@@ -1429,58 +2222,30 @@ CA.History = (() => {
     Object.keys(open).forEach((name) => closeInterval(open[name], now));
   }
 
-  function addEvent(ev) {
-    events.push({ t: Date.now(), ...ev });
-    capArray(events, MAX_EVENTS);
-    CA.Events.emit('history', 'event');
-  }
-
-  // ---- sampling -------------------------------------------------------------------
-
-  function sample() {
-    if (typeof Game === 'undefined' || !Game.ready) return;
-    if (!CA.Settings.get('trackHistory')) return;
+  function tick() {
+    if (typeof Game === 'undefined' || !Game.ready || !CA.Settings.get('trackHistory')) return;
     const now = Date.now();
-
-    if (inAscension()) {
-      // nothing to measure while the ascension screen is up; start clean afterwards
-      closeAll(now);
-      lastHandmade = null;
-      lastT = 0;
-      return;
-    }
-
-    const dt = lastT ? (now - lastT) / 1000 : 0;
-    const handmade = Game.handmadeCookies;
-    let click = 0;
-    if (lastHandmade !== null && dt > 0 && handmade >= lastHandmade) click = (handmade - lastHandmade) / dt;
-    lastHandmade = handmade;
-    lastT = now;
-
-    const shown = 1 - (Game.cpsSucked || 0);
-    samples.push({
-      t: now,
-      cps: Game.cookiesPs * shown,
-      base: (Game.unbuffedCps || Game.cookiesPs) * shown,
-      click,
-    });
-    capArray(samples, MAX_SAMPLES);
-    trackBuffs(now);
-    CA.Events.emit('history', 'sample');
+    if (inAscension()) closeAll(now);
+    else trackBuffs(now);
   }
 
   // ---- one-off events -------------------------------------------------------------
 
   const EVENT_ICON = { golden: [10, 14], wrath: [15, 5], reindeer: [12, 9] };
 
+  function addEvent(ev) {
+    const e = CA.EventLog.add(ev);
+    CA.Events.emit('history', 'event');
+    return e;
+  }
+
   /** Wraps a shimmer type's popFunc so we can log what each pop actually did, notify about it
-   *  right away, and — for possible future use — record exactly which buffs it granted
-   *  (name/duration/multipliers), not just the scraped popup text. */
+   *  right away, and record exactly which buffs it granted (name/duration/multipliers), not
+   *  just the scraped popup text. */
   function watchShimmers() {
     if (!Game.shimmerTypes) return;
-    const kinds = { golden: 'golden', reindeer: 'reindeer' };
-    Object.keys(kinds).forEach((type) => {
-      const st = Game.shimmerTypes[type];
+    ['golden', 'reindeer'].forEach((shimmer) => {
+      const st = Game.shimmerTypes[shimmer];
       if (!st || typeof st.popFunc !== 'function') return;
       const original = st.popFunc;
       st.popFunc = function (me) {
@@ -1506,13 +2271,12 @@ CA.History = (() => {
           Game.Notify = notify;
         }
         try {
-          const wrath = type === 'golden' && me && me.wrath;
-          const kind = wrath ? 'wrath' : type;
-          const title = type === 'reindeer' ? 'Reindeer' : wrath ? 'Wrath cookie' : 'Golden cookie';
+          const wrath = shimmer === 'golden' && me && me.wrath;
+          const type = wrath ? 'wrath' : shimmer;
+          const title = shimmer === 'reindeer' ? 'Reindeer' : wrath ? 'Wrath cookie' : 'Golden cookie';
           const text = texts.filter(Boolean).slice(0, 2).join(' — ');
-          const gain = Game.cookies - before;
-          // Buffs that didn't exist a moment ago must have come from this pop — structured data
-          // (name/duration/multipliers) rather than just the free-text popup, for future use.
+          const cookies = Game.cookies - before;
+          // Buffs that didn't exist a moment ago must have come from this pop.
           const effects = Object.keys(Game.buffs || {})
             .filter((name) => !buffsBefore.includes(name))
             .map((name) => {
@@ -1524,11 +2288,11 @@ CA.History = (() => {
                 multClick: typeof b.multClick === 'number' ? b.multClick : 1,
               };
             });
-          addEvent({ kind, title, text, gain, effects });
+          addEvent({ type, title, text, cookies, data: { effects } });
           if (CA.Settings.get('goldenNotify')) {
             const beautify = (v) => (typeof Beautify === 'function' ? Beautify(v) : Math.round(v).toString());
-            const desc = text || (Math.abs(gain) >= 1 ? `${gain >= 0 ? '+' : '−'}${beautify(Math.abs(gain))} cookies` : '');
-            CA.Util.notify(title, desc, EVENT_ICON[kind] || CA.ICON, 1.5);
+            const desc = text || (Math.abs(cookies) >= 1 ? `${cookies >= 0 ? '+' : '−'}${beautify(Math.abs(cookies))} cookies` : '');
+            CA.Util.notify(title, desc, EVENT_ICON[type] || CA.ICON, 1.5);
           }
         } catch (e) {
           /* never break the game over a log entry */
@@ -1540,33 +2304,28 @@ CA.History = (() => {
 
   // ---- queries ---------------------------------------------------------------------
 
-  /** Index of the first sample with t >= time (binary search). */
-  function lowerBound(time) {
-    let lo = 0;
-    let hi = samples.length;
-    while (lo < hi) {
-      const mid = (lo + hi) >> 1;
-      if (samples[mid].t < time) lo = mid + 1;
-      else hi = mid;
-    }
-    return lo;
-  }
+  const samples = () => CA.Recorder.frames();
+  const lowerBound = (time) => CA.Recorder.lowerBound(time);
+  /** Golden/wrath/reindeer pops and ascensions, oldest first. */
+  const events = () => CA.EventLog.list(MARKER_TYPES);
 
   /** Summary numbers for [t0, t1]. */
   function stats(t0, t1) {
+    const all = samples();
     const from = lowerBound(t0);
     let n = 0;
     let sumCps = 0;
     let sumClick = 0;
     let peak = 0;
     let peakT = 0;
-    for (let i = from; i < samples.length && samples[i].t <= t1; i++) {
-      const s = samples[i];
+    for (let i = from; i < all.length && all[i].t <= t1; i++) {
+      const s = all[i];
+      const cps = s.cps || 0;
       n++;
-      sumCps += s.cps;
-      sumClick += s.click;
-      if (s.cps >= peak) {
-        peak = s.cps;
+      sumCps += cps;
+      sumClick += s.click || 0;
+      if (cps >= peak) {
+        peak = cps;
         peakT = s.t;
       }
     }
@@ -1581,107 +2340,45 @@ CA.History = (() => {
     return intervals.filter((iv) => (iv.end || now) >= t0 && iv.start <= t1);
   }
 
-  function clear() {
-    samples.length = 0;
-    intervals.length = 0;
-    events.length = 0;
-    Object.keys(open).forEach((k) => delete open[k]);
-    lastT = 0;
-    lastHandmade = null;
-    clearStore();
-    CA.Events.emit('history', 'clear');
-  }
-
-  // ---- persistence (survives a page refresh) ---------------------------------------
-  //
-  // IMPORTANT: only a short recent window is persisted, not the whole in-memory buffer. The
-  // in-memory `samples`/`intervals`/`events` arrays can hold up to 4 hours (MAX_SAMPLES) for the
-  // live graph, but writing that much to localStorage every 20s — megabytes of it, once
-  // CA.Stocks' own per-stock price history is added on top — can push the browser's per-origin
-  // localStorage quota (typically 5-10MB) past its limit. The real Cookie Clicker save also
-  // lives in localStorage, and the game's own write wraps setItem in a try/catch that silently
-  // swallows a quota error (see localStorageSet in the game's own source) — so a mod bloating
-  // localStorage doesn't throw or warn, it just makes the *game's* save quietly stop landing.
-  // A refresh then reverts you to whenever the last successful save was, with no error shown.
-  // 10 minutes is far more than a "quick refresh" needs and keeps this persisted slice small.
-
-  const STORE_KEY = 'CookieMgr.history.v1';
-  const PERSIST_MS = 20000;
-  const PERSIST_WINDOW_MS = 10 * 60 * 1000;
-  let persistTimer = null;
+  // ---- persistence -------------------------------------------------------------------
 
   function persist() {
-    if (!CA.Settings.get('trackHistory')) return;
-    try {
-      const cutoff = Date.now() - PERSIST_WINDOW_MS;
-      localStorage.setItem(
-        STORE_KEY,
-        JSON.stringify({
-          v: 1,
-          savedAt: Date.now(),
-          samples: samples.filter((s) => s.t > cutoff),
-          intervals: intervals.filter((iv) => (iv.end || Date.now()) > cutoff).map(({ ref, ...rest }) => rest), // ref points at a live game buff object — not serializable
-          events: events.filter((ev) => ev.t > cutoff),
-        })
-      );
-    } catch (e) {
-      /* storage full/blocked (private mode, quota, ...) — this is a convenience cache, never fatal */
-    }
+    if (!dirty || loadedFor !== CA.Store.saveId()) return Promise.resolve();
+    dirty = false;
+    // ref points at a live game buff object — not storable
+    return CA.Store.setKV(
+      'buffs',
+      intervals.map(({ ref, ...rest }) => rest),
+      loadedFor
+    );
   }
 
-  function clearStore() {
-    try {
-      localStorage.removeItem(STORE_KEY);
-    } catch (e) {
-      /* ignore */
-    }
+  let loadedFor = null;
+
+  function load() {
+    Object.keys(open).forEach((k) => delete open[k]);
+    loadedFor = CA.Store.saveId();
+    return CA.Store.getKV('buffs').then((stored) => {
+      intervals = (Array.isArray(stored) ? stored : []).map((iv) => {
+        // An interval still "open" as of the last save can't be trusted to still be running
+        // (there's no live Game.buffs reference for it any more): close it where we last saw it.
+        // If the buff really is still active, the next tick opens a fresh interval for it.
+        if (iv.end == null) iv.end = iv.projEnd ? Math.min(iv.projEnd, Date.now()) : iv.start;
+        return iv;
+      });
+      CA.Events.emit('history', 'buffs');
+    });
   }
 
-  function restore() {
-    let raw;
-    try {
-      raw = localStorage.getItem(STORE_KEY);
-    } catch (e) {
-      return;
-    }
-    if (!raw) return;
-    let data;
-    try {
-      data = JSON.parse(raw);
-    } catch (e) {
-      return;
-    }
-    if (!data || typeof data !== 'object') return;
-    // A little past the rolling window, so data left over from days ago doesn't linger.
-    const cutoff = Date.now() - MAX_SAMPLES * SAMPLE_MS - 3600000;
-    (data.samples || []).forEach((s) => {
-      if (s && typeof s.t === 'number' && s.t > cutoff) samples.push(s);
-    });
-    (data.intervals || []).forEach((iv) => {
-      if (!iv || typeof iv.start !== 'number' || iv.start <= cutoff) return;
-      // An interval still "open" as of the last save can't be trusted to still be running after
-      // a reload (we have no live Game.buffs reference for it any more) — close it at the last
-      // point we actually know about. If the buff is genuinely still active, the next sample()
-      // will open a fresh interval for it right away.
-      if (iv.end == null) iv.end = data.savedAt || iv.start;
-      intervals.push(iv);
-    });
-    (data.events || []).forEach((ev) => {
-      if (ev && typeof ev.t === 'number' && ev.t > cutoff) events.push(ev);
-    });
-    capArray(samples, MAX_SAMPLES);
-    capArray(intervals, MAX_INTERVALS);
-    capArray(events, MAX_EVENTS);
+  /** Erases everything recorded for this save: state history, event log, buff log. */
+  function clear() {
+    intervals = [];
+    Object.keys(open).forEach((k) => delete open[k]);
+    dirty = true;
+    return Promise.all([CA.Recorder.clear(), CA.EventLog.clear(), persist()]).then(() => CA.Events.emit('history', 'clear'));
   }
 
   function init() {
-    CA.Settings.defineOption({
-      key: 'trackHistory',
-      group: 'general',
-      name: 'Record history',
-      desc: 'Keeps a rolling 4-hour record of your CpS and active effects for the graphs, saved across page reloads.',
-      default: true,
-    });
     CA.Settings.defineOption({
       key: 'goldenNotify',
       group: 'general',
@@ -1689,22 +2386,45 @@ CA.History = (() => {
       desc: 'A quick notification the moment a golden or wrath cookie (or reindeer) is popped.',
       default: true,
     });
-    restore();
+    // Up to v1.2 the history lived in localStorage; it's in IndexedDB now. Free that space.
+    try {
+      localStorage.removeItem(LEGACY_KEY);
+    } catch (e) {
+      /* ignore */
+    }
+    load();
     watchShimmers();
     CA.Events.on('ascend', () => {
-      const now = Date.now();
-      closeAll(now);
-      addEvent({ kind: 'ascend', title: 'Ascended', text: 'A new run begins.', gain: 0 });
+      closeAll(Date.now());
+      addEvent({ type: 'ascend', title: 'Ascended', text: 'A new run begins.' });
     });
-    timer = setInterval(sample, SAMPLE_MS);
-    persistTimer = setInterval(persist, PERSIST_MS);
+    CA.Events.on('storeReloaded', load);
+    CA.Events.on('history', (why) => {
+      if (why === 'load' && loadedFor !== CA.Store.saveId()) load(); // a different save was loaded
+    });
+    setInterval(tick, TICK_MS);
+    setInterval(persist, PERSIST_MS);
     addEventListener('pagehide', persist);
-    addEventListener('beforeunload', persist);
-    sample();
-    persist(); // shrink an oversized blob from an older version right away, not after PERSIST_MS
   }
 
-  return { init, samples, intervals, events, colorFor, lowerBound, stats, intervalsIn, clear, addEvent, sampleNow: sample };
+  return {
+    init,
+    get samples() {
+      return samples();
+    },
+    get intervals() {
+      return intervals;
+    },
+    get events() {
+      return events();
+    },
+    colorFor,
+    lowerBound,
+    stats,
+    intervalsIn,
+    clear,
+    addEvent,
+  };
 })();
 
 // ---- src/features/cookieMonster.js -----------------------------------
@@ -2245,7 +2965,8 @@ CA.UI.Graph = (() => {
     const segs = [];
     let cur = [];
     for (let i = 0; i < list.length; i++) {
-      if (i && list[i].t - list[i - 1].t > GAP_MS) {
+      // older history is coarser (core/recorder.js): a frame covers dt seconds
+      if (i && list[i].t - list[i - 1].t > Math.max(GAP_MS, 1500 * (list[i].dt || 1))) {
         if (cur.length) segs.push(cur);
         cur = [];
       }
@@ -2551,10 +3272,10 @@ CA.UI.Graph = (() => {
         // A golden/wrath pop that opened a shaded effect band right at this moment is already
         // visible via the shading — skip the diamond so it isn't shown twice.
         const shownByShading =
-          (ev.kind === 'golden' || ev.kind === 'wrath') && ivs.some((iv) => Math.abs(iv.start - ev.t) < EVENT_SHADED_TOLERANCE_MS);
+          (ev.type === 'golden' || ev.type === 'wrath') && ivs.some((iv) => Math.abs(iv.start - ev.t) < EVENT_SHADED_TOLERANCE_MS);
         if (shownByShading) return;
         const x = xOf(ev.t);
-        if (ev.kind === 'ascend') {
+        if (ev.type === 'ascend') {
           ctx.strokeStyle = 'rgba(200,190,255,0.7)';
           ctx.setLineDash([3, 3]);
           ctx.beginPath();
@@ -2564,7 +3285,7 @@ CA.UI.Graph = (() => {
           ctx.setLineDash([]);
         }
         const y = plot.y + 7;
-        ctx.fillStyle = eventColor(ev.kind);
+        ctx.fillStyle = eventColor(ev.type);
         ctx.strokeStyle = 'rgba(0,0,0,0.7)';
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -2711,10 +3432,10 @@ CA.UI.Graph = (() => {
   }
 
   function eventTip(ev) {
-    let h = `<div class="ca-tip-head">${swatch(eventColor(ev.kind))}${esc(ev.title)}<span>${clock(ev.t, true)}</span></div>`;
+    let h = `<div class="ca-tip-head">${swatch(eventColor(ev.type))}${esc(ev.title)}<span>${clock(ev.t, true)}</span></div>`;
     if (ev.text) h += `<div class="ca-tip-note">${esc(ev.text)}</div>`;
-    if (ev.kind !== 'ascend' && Math.abs(ev.gain) >= 1)
-      h += row('transparent', ev.gain >= 0 ? 'Cookies gained' : 'Cookies lost', (ev.gain >= 0 ? '+' : '−') + beautify(Math.abs(ev.gain)));
+    if (ev.type !== 'ascend' && Math.abs(ev.cookies) >= 1)
+      h += row('transparent', ev.cookies >= 0 ? 'Cookies gained' : 'Cookies lost', (ev.cookies >= 0 ? '+' : '−') + beautify(Math.abs(ev.cookies)));
     return h;
   }
 
@@ -2946,7 +3667,9 @@ CA.UI.Graph = (() => {
 // A small chart for the Bank minigame's stocks, shown under the CpS graph on the Graphs tab.
 // Default view is portfolio value (what your holdings are worth right now, and how much of
 // that is profit) rather than a wall of per-stock price lines you'd have to mentally total
-// yourself; "Per stock" switches back to individual price lines. Data comes from CA.Stocks.
+// yourself; "Per stock" switches back to individual price lines. Data comes from the recorder
+// (core/recorder.js): the price:<id> and portfolio* states defined by features/stocks.js and
+// features/gameStates.js.
 
 CA.UI = CA.UI || {};
 
@@ -2992,6 +3715,27 @@ CA.UI.StockGraph = (() => {
       else hi = mid;
     }
     return lo;
+  }
+
+  /** One stock's recorded price as { t, v } points. */
+  const priceHistory = (id) => CA.Recorder.series(`price:${id}`);
+
+  let portfolioCache = { rev: -1, pts: [] };
+  /** Recorded portfolio totals as { t, value, cost, unrealized, realized, gain } points. */
+  function portfolioHistory() {
+    const rev = CA.Recorder.revision();
+    if (portfolioCache.rev !== rev) {
+      const pts = [];
+      CA.Recorder.frames().forEach((f) => {
+        if (!Number.isFinite(f.portfolioValue)) return;
+        const cost = f.portfolioCost || 0;
+        const realized = f.portfolioRealized || 0;
+        const unrealized = f.portfolioValue - cost;
+        pts.push({ t: f.t, value: f.portfolioValue, cost, unrealized, realized, gain: unrealized + realized });
+      });
+      portfolioCache = { rev, pts };
+    }
+    return portfolioCache.pts;
   }
 
   const mode = () => (S().get('stockGraphMode') === 'perStock' ? 'perStock' : 'portfolio');
@@ -3084,7 +3828,7 @@ CA.UI.StockGraph = (() => {
     const W = Math.max(10, S().get('graphWindow')) * 1000;
     const t1 = view.getEnd(Date.now());
     const t0 = t1 - W;
-    const hist = CA.Stocks.portfolioHistory();
+    const hist = portfolioHistory();
     const lo = Math.max(0, lowerBound(hist, t0) - 1);
     const pts = hist.slice(lo).filter((p) => p.t <= t1);
 
@@ -3104,7 +3848,7 @@ CA.UI.StockGraph = (() => {
     if (!dragging() && hover && hover.x >= plot.x && hover.x <= plot.x + plot.w && hover.y >= 0 && hover.y <= h) drawHoverPortfolio(w, h);
     else if (tip) tip.style.display = 'none';
 
-    if (!pts.length) emptyMsg(plot, 'Buy or sell a stock to start tracking your portfolio.');
+    if (!pts.length) emptyMsg(plot, 'Open the Bank minigame to start tracking your portfolio.');
   }
 
   function drawPerStock(w, h) {
@@ -3114,7 +3858,7 @@ CA.UI.StockGraph = (() => {
     const t0 = t1 - W;
 
     const lines = stocks.map((g, i) => {
-      const hist = CA.Stocks.history(g.id);
+      const hist = priceHistory(g.id);
       const lo = Math.max(0, lowerBound(hist, t0) - 1);
       return { g, color: COLORS[i % COLORS.length], pts: hist.slice(lo).filter((p) => p.t <= t1) };
     });
@@ -3254,12 +3998,12 @@ CA.UI.StockGraph = (() => {
   function earliestDataT() {
     if (mode() === 'perStock') {
       const times = visibleStocks()
-        .map((g) => CA.Stocks.history(g.id)[0])
+        .map((g) => priceHistory(g.id)[0])
         .filter(Boolean)
         .map((p) => p.t);
       return times.length ? Math.min(...times) : undefined;
     }
-    const hist = CA.Stocks.portfolioHistory();
+    const hist = portfolioHistory();
     return hist.length ? hist[0].t : undefined;
   }
 
@@ -3856,17 +4600,13 @@ CA.UI.Menu = (() => {
       C.hotkey('panel.toggle') +
       '</div>' +
       '<div class="ca-row ca-row-option">' +
-      '<div class="ca-row-text"><div class="ca-row-name">Recorded history</div>' +
-      '<div class="ca-row-desc" data-ca-history-info></div></div>' +
-      C.button('Clear', 'data-ca="gclear"', 'ca-btn-small') +
-      '</div>' +
-      '<div class="ca-row ca-row-option">' +
       '<div class="ca-row-text"><div class="ca-row-name">Hotkeys</div>' +
       '<div class="ca-row-desc">Click a key chip, then press the new key. <kbd>Esc</kbd> cancels, <kbd>Backspace</kbd> removes it; modifiers work too.</div></div>' +
       C.button('Reset to defaults', 'data-ca="reset-hotkeys"', 'ca-btn-small') +
       '</div>' +
       '</div>' +
       '</div>' +
+      historyCard() +
       '<div class="ca-card">' +
       '<div class="ca-card-head"><div class="ca-card-title">Autoclickers</div></div>' +
       `<div class="ca-list">${CA.Settings.optionsIn('autoclickers').map(optionRow).join('')}</div>` +
@@ -3882,9 +4622,98 @@ CA.UI.Menu = (() => {
       integrationsCard() +
       '<div class="ca-footer">' +
       `<div>CookieMgr v${CA.VERSION} &middot; <a href="https://github.com/nunorgcarvalho/CookieMgr" target="_blank" rel="noopener">GitHub</a></div>` +
-      '<div>Settings are stored inside your Cookie Clicker save.</div>' +
+      '<div>Settings are stored inside your Cookie Clicker save; recorded history stays in this browser.</div>' +
       '</div>'
     );
+  }
+
+  // ---- history data ---------------------------------------------------------------
+  // Recorded history lives in this browser's IndexedDB, never in the game save (see
+  // core/store.js), so this card is the way to move it between browsers or back it up.
+
+  function historyCard() {
+    return (
+      '<div class="ca-card">' +
+      `<div class="ca-card-head"><div class="ca-card-title">History data</div></div>` +
+      '<div class="ca-list">' +
+      '<div class="ca-row ca-row-option">' +
+      '<div class="ca-row-text"><div class="ca-row-name">Recorded for this save</div>' +
+      '<div class="ca-row-desc" data-ca-history-info></div></div>' +
+      '</div>' +
+      '<div class="ca-row ca-row-option">' +
+      '<div class="ca-row-text"><div class="ca-row-name">Back up or move</div>' +
+      '<div class="ca-row-desc">Export saves everything recorded for this save to a file. Importing a file <b>replaces</b> what this save has recorded.</div></div>' +
+      '<div class="ca-controls">' +
+      C.button(`${CA.UI.Icons.html('download', 14)} Export`, 'data-ca="hexport"', 'ca-btn-small') +
+      C.button(`${CA.UI.Icons.html('upload', 14)} Import`, 'data-ca="himport" data-arm-label="Replace history?"', 'ca-btn-small') +
+      C.button(`${CA.UI.Icons.html('trash', 14)} Clear`, 'data-ca="gclear" data-arm-label="Erase everything?"', 'ca-btn-small ca-btn-off') +
+      '<input type="file" accept=".json,application/json" data-ca-history-file hidden>' +
+      '</div>' +
+      '</div>' +
+      '</div>' +
+      '</div>'
+    );
+  }
+
+  function duration(ms) {
+    const m = Math.floor(ms / 60000);
+    if (m < 1) return `${Math.floor(ms / 1000)} s`;
+    if (m < 60) return `${m} min`;
+    const h = Math.floor(m / 60);
+    if (h < 48) return `${h} h ${m % 60} min`;
+    return `${Math.floor(h / 24)} d ${h % 24} h`;
+  }
+
+  function historyInfo() {
+    const r = CA.Recorder.summary();
+    if (!r.ready) return 'Loading…';
+    if (!r.frames) return 'Nothing recorded yet.';
+    const tiers = r.perTier
+      .filter((t) => t.frames)
+      .map((t) => `${t.frames.toLocaleString()} × ${t.label}`)
+      .join(', ');
+    const ev = CA.EventLog.list().length;
+    const fx = CA.History.intervals.length;
+    return (
+      `${duration(r.active)} of active play since ${new Date(r.first.t).toLocaleString()} — ` +
+      `${tiers} frames, ${ev.toLocaleString()} event${ev === 1 ? '' : 's'}, ${fx.toLocaleString()} buff${fx === 1 ? '' : 's'}.`
+    );
+  }
+
+  /** Destructive buttons take two clicks: the first arms them (and relabels them) for a few seconds. */
+  function armed(btn) {
+    if (btn.dataset.armed) {
+      clearTimeout(Number(btn.dataset.armed));
+      delete btn.dataset.armed;
+      btn.innerHTML = btn.dataset.idleHtml;
+      btn.classList.remove('ca-armed');
+      return true;
+    }
+    btn.dataset.idleHtml = btn.innerHTML;
+    btn.textContent = btn.dataset.armLabel;
+    btn.classList.add('ca-armed');
+    btn.dataset.armed = String(
+      setTimeout(() => {
+        if (!btn.dataset.armed) return;
+        delete btn.dataset.armed;
+        btn.innerHTML = btn.dataset.idleHtml;
+        btn.classList.remove('ca-armed');
+      }, 4000)
+    );
+    return false;
+  }
+
+  function onHistoryFile(e) {
+    const input = e.target;
+    if (!input.matches || !input.matches('[data-ca-history-file]') || !input.files || !input.files[0]) return;
+    const file = input.files[0];
+    input.value = '';
+    CA.Recorder.importFile(file)
+      .then((n) => {
+        CA.Util.notify('History imported', `${n.chunks} chunks and ${n.events} events from ${C.esc(file.name)}.`, CA.ICON, 3);
+        sync();
+      })
+      .catch((err) => CA.Util.notify('Import failed', C.esc(err.message || String(err)), CA.ICON, 4));
   }
 
   function integrationsCard() {
@@ -4024,12 +4853,7 @@ CA.UI.Menu = (() => {
     });
 
     const info = root.querySelector('[data-ca-history-info]');
-    if (info) {
-      const n = CA.History.samples.length;
-      const span = n < 120 ? `${n} seconds` : n < 7200 ? `${Math.round(n / 60)} minutes` : `${(n / 3600).toFixed(1)} hours`;
-      const fx = CA.History.intervals.length;
-      info.textContent = n ? `${span} of CpS data and ${fx} effect${fx === 1 ? '' : 's'} recorded this session.` : 'Nothing recorded yet.';
-    }
+    if (info) info.textContent = historyInfo();
 
     root.querySelectorAll('[data-option]').forEach((row) => {
       setSwitch(row.querySelector('.ca-switch'), !!CA.Settings.get(row.dataset.option));
@@ -4122,9 +4946,18 @@ CA.UI.Menu = (() => {
         break;
       case 'gclear':
         CA.Util.sound('snd/tick.mp3');
-        CA.History.clear();
-        sync();
+        if (armed(t)) CA.History.clear().then(sync);
         break;
+      case 'hexport':
+        CA.Util.sound('snd/tick.mp3');
+        CA.Recorder.exportFile().catch((err) => CA.Util.notify('Export failed', C.esc(err.message || String(err)), CA.ICON, 4));
+        break;
+      case 'himport': {
+        CA.Util.sound('snd/tick.mp3');
+        const input = t.parentNode.querySelector('[data-ca-history-file]');
+        if (armed(t) && input) input.click();
+        break;
+      }
       case 'bind': {
         const id = t.dataset.action;
         CA.Util.sound('snd/tick.mp3');
@@ -4187,7 +5020,10 @@ CA.UI.Menu = (() => {
     });
 
     const menu = document.getElementById('menu');
-    if (menu) menu.addEventListener('click', onClick);
+    if (menu) {
+      menu.addEventListener('click', onClick);
+      menu.addEventListener('change', onHistoryFile);
+    }
 
     const refresh = () => {
       if (!isOpen()) return;
@@ -4197,6 +5033,10 @@ CA.UI.Menu = (() => {
     CA.Events.on('clickers', refresh);
     CA.Events.on('settings', refresh);
     CA.Events.on('hotkeys', refresh);
+    CA.Events.on('history', () => {
+      const info = isOpen() && currentTab() === 'settings' && document.querySelector('#CookieMgrMenu [data-ca-history-info]');
+      if (info) info.textContent = historyInfo();
+    });
     CA.Events.on('integrations', () => {
       if (isOpen() && currentTab() === 'settings') render();
     });
@@ -4236,11 +5076,15 @@ const mod = {
   init() {
     const hadLegacy = removeLegacyBookmarklet();
 
+    // data backbone first: the event log and states must exist before the recorder's first tick
+    CA.EventLog.init();
     CA.Autoclickers.init();
     CA.Stocks.init();
     CA.StockTrader.init();
     CA.StockLog.init();
     CA.History.init();
+    CA.GameStates.init();
+    CA.Recorder.init();
     CA.UI.Graph.init();
     CA.UI.StockGraph.init();
     CA.UI.StockLog.init();

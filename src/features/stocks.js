@@ -42,8 +42,6 @@ CA.Stocks = (() => {
 .bankGood.cm-owned .cm-stockbadge::before { content: '\\2605'; color: #fff; margin-right: 4px; text-shadow: 0 0 3px #000; }
 `;
 
-  let timer = null;
-  let sampleTimer = null;
 
   const minigame = () => {
     const bank = typeof Game !== 'undefined' && Game.Objects && Game.Objects.Bank;
@@ -51,26 +49,25 @@ CA.Stocks = (() => {
     return m && m.goodsById ? m : null;
   };
 
-  // ---- price history --------------------------------------------------------------
-  // One sample per second per stock, same rolling window as CA.History so the price graph
-  // can cover the same time range as the CpS graph. Mirrored to localStorage the same way
-  // CA.History does (see persist()/restore() below), so it survives a page refresh too.
-
-  const SAMPLE_MS = 1000;
-  const MAX_SAMPLES = 4 * 3600; // 4 hours
-  const priceHistory = {}; // good.id -> [{ t, v }]
-
-  const priceOf = (good) => (typeof good.val === 'number' ? good.val : 0);
-
   // ---- portfolio (cost basis + realized/unrealized gain) ---------------------------
   // The game only shows you the current price and share count, not what you paid for
   // them, so we watch `good.stock` ourselves: any increase is a buy at the current price
   // (rolled into a running average cost), any decrease is a sell that realizes the gap
   // between that average cost and the current price. There is no way to know what happened
-  // before the mod was first loaded, but from then on this (like price history) survives a
-  // page refresh.
-  const holdings = {}; // good.id -> { shares, avgCost, realized }
-  const portfolioHistory = []; // [{ t, value, cost, unrealized, realized, gain }]
+  // before the mod was first loaded. Holdings are stored per save in IndexedDB.
+  //
+  // Prices and portfolio totals are recorded over time as states (price:<id>, portfolioValue,
+  // portfolioCost, portfolioRealized) by core/recorder.js — this module keeps no history.
+
+  const SAMPLE_MS = 1000;
+  const PERSIST_MS = 10000;
+  const LEGACY_KEY = 'CookieMgr.stocks.v1';
+
+  const priceOf = (good) => (typeof good.val === 'number' ? good.val : 0);
+
+  let holdings = {}; // good.id -> { shares, avgCost, realized }
+  let holdingsFor = null; // save the loaded holdings belong to
+  let dirty = false;
 
   function holdingOf(id) {
     return holdings[id] || (holdings[id] = { shares: 0, avgCost: 0, realized: 0 });
@@ -86,39 +83,52 @@ CA.Stocks = (() => {
     } else if (delta < 0) {
       h.realized += -delta * (price - h.avgCost);
     }
+    if (delta) dirty = true;
     h.shares = shares;
     return h;
   }
 
+  /** One recorded state per stock price, defined the first time the Bank minigame is seen. */
+  function ensurePriceStates(m) {
+    m.goodsById.forEach((good) => {
+      const id = `price:${good.id}`;
+      if (CA.States.get(id)) return;
+      CA.States.define({
+        id,
+        name: `${good.name} price`,
+        unit: '$',
+        group: 'stocks',
+        kind: 'gauge',
+        get: () => {
+          const mm = minigame();
+          const g = mm && mm.goodsById[good.id];
+          return g ? priceOf(g) : undefined;
+        },
+      });
+    });
+  }
+
   function sample() {
     const m = minigame();
-    if (!m) return;
-    const now = Date.now();
+    if (!m || holdingsFor !== CA.Store.saveId()) return;
+    ensurePriceStates(m);
+    m.goodsById.forEach(updateHolding);
+  }
+
+  /** Current totals plus a per-stock breakdown; null while the Bank minigame isn't open. */
+  function portfolioNow() {
+    const m = minigame();
+    if (!m) return null;
+    sample();
     let value = 0;
     let cost = 0;
     let realized = 0;
-    m.goodsById.forEach((good) => {
-      const arr = priceHistory[good.id] || (priceHistory[good.id] = []);
+    const rows = m.goodsById.map((good) => {
+      const h = holdingOf(good.id);
       const price = priceOf(good);
-      arr.push({ t: now, v: price });
-      if (arr.length > MAX_SAMPLES + 200) arr.splice(0, arr.length - MAX_SAMPLES);
-
-      const h = updateHolding(good);
       value += h.shares * price;
       cost += h.shares * h.avgCost;
       realized += h.realized;
-    });
-    const unrealized = value - cost;
-    portfolioHistory.push({ t: now, value, cost, unrealized, realized, gain: unrealized + realized });
-    if (portfolioHistory.length > MAX_SAMPLES + 200) portfolioHistory.splice(0, portfolioHistory.length - MAX_SAMPLES);
-  }
-
-  /** Current totals plus a per-stock breakdown, for stat tiles / tooltips. */
-  function portfolioNow() {
-    const m = minigame();
-    const rows = (m ? m.goodsById : []).map((good) => {
-      const h = holdingOf(good.id);
-      const price = priceOf(good);
       return {
         id: good.id,
         name: good.name,
@@ -130,15 +140,8 @@ CA.Stocks = (() => {
         realized: h.realized,
       };
     });
-    const last = portfolioHistory[portfolioHistory.length - 1];
-    return {
-      value: last ? last.value : 0,
-      cost: last ? last.cost : 0,
-      unrealized: last ? last.unrealized : 0,
-      realized: last ? last.realized : 0,
-      gain: last ? last.gain : 0,
-      rows,
-    };
+    const unrealized = value - cost;
+    return { value, cost, unrealized, realized, gain: unrealized + realized, rows };
   }
 
   /** Every stock, with its display name and whether you currently hold any. */
@@ -148,88 +151,46 @@ CA.Stocks = (() => {
     return m.goodsById.map((good) => ({ id: good.id, name: good.name, owned: good.stock > 0 }));
   }
 
-  /** Recorded price samples for one stock (empty if never seen). */
-  function history(id) {
-    return priceHistory[id] || [];
+  // ---- persistence ------------------------------------------------------------------
+
+  function cleanHoldings(obj) {
+    const out = {};
+    Object.keys(obj || {}).forEach((id) => {
+      const h = obj[id];
+      if (h && typeof h.shares === 'number' && typeof h.avgCost === 'number' && typeof h.realized === 'number') {
+        out[id] = { shares: h.shares, avgCost: h.avgCost, realized: h.realized };
+      }
+    });
+    return out;
   }
-
-  // ---- persistence (survives a page refresh, same approach as CA.History) ----------
-  //
-  // IMPORTANT: only the last PERSIST_WINDOW_MS of priceHistory/portfolioHistory is persisted,
-  // not the full in-memory buffer (which can hold up to MAX_SAMPLES — 4 hours — per stock, and
-  // Cookie Clicker has 11 stock types). Writing all of that to localStorage every 20s can run
-  // into multiple megabytes, which risks pushing the browser's per-origin localStorage quota
-  // (typically 5-10MB) over the edge. The real Cookie Clicker save also lives in localStorage,
-  // and the game's own save write silently swallows a quota-exceeded error (see
-  // features/history.js's persist() for the full explanation) — so a mod bloating localStorage
-  // doesn't throw or warn anywhere, it just makes the *game's* own save quietly stop landing.
-  // `holdings` (cost basis / realized gain) is a tiny running total, not a time series, so it's
-  // always persisted in full regardless.
-
-  const STORE_KEY = 'CookieMgr.stocks.v1';
-  const PERSIST_MS = 20000;
-  const PERSIST_WINDOW_MS = 10 * 60 * 1000;
-  let persistTimer = null;
 
   function persist() {
-    try {
-      const cutoff = Date.now() - PERSIST_WINDOW_MS;
-      const trimmedPriceHistory = {};
-      Object.keys(priceHistory).forEach((id) => {
-        const arr = priceHistory[id].filter((p) => p.t > cutoff);
-        if (arr.length) trimmedPriceHistory[id] = arr;
-      });
-      localStorage.setItem(
-        STORE_KEY,
-        JSON.stringify({
-          v: 1,
-          savedAt: Date.now(),
-          priceHistory: trimmedPriceHistory,
-          portfolioHistory: portfolioHistory.filter((p) => p.t > cutoff),
-          holdings,
-        })
-      );
-    } catch (e) {
-      /* storage full/blocked (private mode, quota, ...) — this is a convenience cache, never fatal */
-    }
+    if (!dirty || !holdingsFor) return Promise.resolve();
+    dirty = false;
+    return CA.Store.setKV('stockHoldings', holdings, holdingsFor);
   }
 
-  function restore() {
-    let raw;
+  /** Up to v1.3 holdings lived in localStorage (with price history). Take the holdings, free the rest. */
+  function takeLegacyHoldings() {
+    let legacy = null;
     try {
-      raw = localStorage.getItem(STORE_KEY);
+      const raw = localStorage.getItem(LEGACY_KEY);
+      if (raw) legacy = cleanHoldings((JSON.parse(raw) || {}).holdings);
+      localStorage.removeItem(LEGACY_KEY);
     } catch (e) {
-      return;
+      /* unreadable — nothing to migrate */
     }
-    if (!raw) return;
-    let data;
-    try {
-      data = JSON.parse(raw);
-    } catch (e) {
-      return;
-    }
-    if (!data || typeof data !== 'object') return;
-    // A little past the rolling window, so data left over from days ago doesn't linger.
-    const cutoff = Date.now() - MAX_SAMPLES * SAMPLE_MS - 3600000;
+    return legacy;
+  }
 
-    Object.keys(data.priceHistory || {}).forEach((id) => {
-      const arr = (data.priceHistory[id] || []).filter((p) => p && typeof p.t === 'number' && p.t > cutoff);
-      if (arr.length) priceHistory[id] = arr;
-    });
-
-    (data.portfolioHistory || []).forEach((p) => {
-      if (p && typeof p.t === 'number' && p.t > cutoff) portfolioHistory.push(p);
-    });
-    if (portfolioHistory.length > MAX_SAMPLES + 200) portfolioHistory.splice(0, portfolioHistory.length - MAX_SAMPLES);
-
-    // Cost basis / realized gain are running totals, not a time series, so they're restored
-    // regardless of the cutoff above — the very next sample() reconciles `shares` against the
-    // game's real current `good.stock` right away, so a stale share count can't linger either.
-    Object.keys(data.holdings || {}).forEach((id) => {
-      const h = data.holdings[id];
-      if (h && typeof h.shares === 'number' && typeof h.avgCost === 'number' && typeof h.realized === 'number') {
-        holdings[id] = { shares: h.shares, avgCost: h.avgCost, realized: h.realized };
-      }
+  function load() {
+    const s = CA.Store.saveId();
+    holdingsFor = null;
+    return CA.Store.getKV('stockHoldings', s).then((stored) => {
+      const legacy = takeLegacyHoldings();
+      holdings = stored ? cleanHoldings(stored) : legacy || {};
+      holdingsFor = s;
+      dirty = !stored && !!legacy;
     });
   }
 
@@ -303,17 +264,18 @@ CA.Stocks = (() => {
       default: 'portfolio', // 'portfolio' | 'perStock'
     });
     CA.Util.injectCss('CookieMgrStocksStyles', CSS);
-    restore();
+    load();
     CA.Events.on('settings', refresh);
-    timer = setInterval(refresh, TICK_MS);
-    sampleTimer = setInterval(sample, SAMPLE_MS);
-    persistTimer = setInterval(persist, PERSIST_MS);
+    CA.Events.on('storeReloaded', load);
+    CA.Events.on('history', (why) => {
+      if (why === 'load' && holdingsFor && holdingsFor !== CA.Store.saveId()) persist().then(load); // a different save
+    });
+    setInterval(refresh, TICK_MS);
+    setInterval(sample, SAMPLE_MS);
+    setInterval(persist, PERSIST_MS);
     addEventListener('pagehide', persist);
-    addEventListener('beforeunload', persist);
     refresh();
-    sample();
-    persist(); // shrink an oversized blob from an older version right away, not after PERSIST_MS
   }
 
-  return { init, refresh, MODES, list, history, portfolioNow, portfolioHistory: () => portfolioHistory, minigame };
+  return { init, refresh, MODES, list, portfolioNow, minigame };
 })();

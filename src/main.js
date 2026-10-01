@@ -28,11 +28,15 @@ const mod = {
   init() {
     const hadLegacy = removeLegacyBookmarklet();
 
+    // data backbone first: the event log and states must exist before the recorder's first tick
+    CA.EventLog.init();
     CA.Autoclickers.init();
     CA.Stocks.init();
     CA.StockTrader.init();
     CA.StockLog.init();
     CA.History.init();
+    CA.GameStates.init();
+    CA.Recorder.init();
     CA.UI.Graph.init();
     CA.UI.StockGraph.init();
     CA.UI.StockLog.init();

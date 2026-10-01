@@ -1,27 +1,25 @@
-// Records what the bakery is doing over time so the graph has something to draw.
+// What the CpS graph needs beyond plain state history:
 //
-//   samples    once per second: displayed CPS, "unbuffed" CPS and measured click income
+//   samples    the recorder's frames (core/recorder.js) — t, cps, base, click and every other
+//              recorded state; this module no longer samples anything itself
 //   intervals  every buff/effect that was active, with start and end (they can overlap = stacking)
-//   events     one-off things: golden cookie / reindeer pops (with their outcome) and ascensions
+//   events     golden/wrath cookie and reindeer pops (with their outcome) and ascensions, as
+//              entries in the central event log (core/eventLog.js)
 //
-// Kept in memory for the current rolling window, and mirrored to localStorage every so often
-// so a page refresh doesn't lose it — separate from the actual Cookie Clicker save, since this
-// is disposable convenience data, not game progress.
+// The buff log is stored in IndexedDB (core/store.js) per save. Nothing here touches
+// localStorage — see core/store.js for why that matters.
 
 CA.History = (() => {
-  const SAMPLE_MS = 1000;
-  const MAX_SAMPLES = 4 * 3600; // keep 4 hours
-  const MAX_EVENTS = 500;
+  const TICK_MS = 1000;
   const MAX_INTERVALS = 1500;
+  const PERSIST_MS = 30000;
   const FPS = 30; // buff timers are counted in logic frames
+  const MARKER_TYPES = ['golden', 'wrath', 'reindeer', 'ascend'];
+  const LEGACY_KEY = 'CookieMgr.history.v1';
 
-  const samples = []; // { t, cps, base, click }
-  const intervals = []; // { name, label, desc, icon, start, end|null, multCps, multClick, ... }
-  const events = []; // { t, kind, title, text, gain }
+  let intervals = []; // { name, label, desc, icon, start, end|null, multCps, multClick, ... }
   const open = {}; // buff name -> currently open interval
-  let lastT = 0;
-  let lastHandmade = null;
-  let timer = null;
+  let dirty = false;
 
   // ---- colours -------------------------------------------------------------------
 
@@ -60,15 +58,14 @@ CA.History = (() => {
       .replace(/\s+/g, ' ')
       .trim();
 
-  function capArray(arr, max) {
-    if (arr.length > max + 200) arr.splice(0, arr.length - max);
-  }
-
   const inAscension = () => Game.OnAscend || Game.AscendTimer > 0;
+
+  // ---- buff intervals --------------------------------------------------------------
 
   function closeInterval(iv, now) {
     iv.end = Math.min(now, iv.projEnd || now);
     delete open[iv.name];
+    dirty = true;
   }
 
   function openInterval(b, now) {
@@ -78,7 +75,7 @@ CA.History = (() => {
       label: b.dname || b.name,
       desc: stripHtml(b.desc),
       icon: b.icon || [0, 0],
-      start: now - Math.min(elapsed, SAMPLE_MS),
+      start: now - Math.min(elapsed, TICK_MS),
       end: null,
       projEnd: now + ((b.time || 0) / FPS) * 1000,
       duration: (b.maxTime || 0) / FPS,
@@ -88,7 +85,8 @@ CA.History = (() => {
     };
     open[b.name] = iv;
     intervals.push(iv);
-    capArray(intervals, MAX_INTERVALS);
+    if (intervals.length > MAX_INTERVALS + 200) intervals.splice(0, intervals.length - MAX_INTERVALS);
+    dirty = true;
     return iv;
   }
 
@@ -118,58 +116,30 @@ CA.History = (() => {
     Object.keys(open).forEach((name) => closeInterval(open[name], now));
   }
 
-  function addEvent(ev) {
-    events.push({ t: Date.now(), ...ev });
-    capArray(events, MAX_EVENTS);
-    CA.Events.emit('history', 'event');
-  }
-
-  // ---- sampling -------------------------------------------------------------------
-
-  function sample() {
-    if (typeof Game === 'undefined' || !Game.ready) return;
-    if (!CA.Settings.get('trackHistory')) return;
+  function tick() {
+    if (typeof Game === 'undefined' || !Game.ready || !CA.Settings.get('trackHistory')) return;
     const now = Date.now();
-
-    if (inAscension()) {
-      // nothing to measure while the ascension screen is up; start clean afterwards
-      closeAll(now);
-      lastHandmade = null;
-      lastT = 0;
-      return;
-    }
-
-    const dt = lastT ? (now - lastT) / 1000 : 0;
-    const handmade = Game.handmadeCookies;
-    let click = 0;
-    if (lastHandmade !== null && dt > 0 && handmade >= lastHandmade) click = (handmade - lastHandmade) / dt;
-    lastHandmade = handmade;
-    lastT = now;
-
-    const shown = 1 - (Game.cpsSucked || 0);
-    samples.push({
-      t: now,
-      cps: Game.cookiesPs * shown,
-      base: (Game.unbuffedCps || Game.cookiesPs) * shown,
-      click,
-    });
-    capArray(samples, MAX_SAMPLES);
-    trackBuffs(now);
-    CA.Events.emit('history', 'sample');
+    if (inAscension()) closeAll(now);
+    else trackBuffs(now);
   }
 
   // ---- one-off events -------------------------------------------------------------
 
   const EVENT_ICON = { golden: [10, 14], wrath: [15, 5], reindeer: [12, 9] };
 
+  function addEvent(ev) {
+    const e = CA.EventLog.add(ev);
+    CA.Events.emit('history', 'event');
+    return e;
+  }
+
   /** Wraps a shimmer type's popFunc so we can log what each pop actually did, notify about it
-   *  right away, and — for possible future use — record exactly which buffs it granted
-   *  (name/duration/multipliers), not just the scraped popup text. */
+   *  right away, and record exactly which buffs it granted (name/duration/multipliers), not
+   *  just the scraped popup text. */
   function watchShimmers() {
     if (!Game.shimmerTypes) return;
-    const kinds = { golden: 'golden', reindeer: 'reindeer' };
-    Object.keys(kinds).forEach((type) => {
-      const st = Game.shimmerTypes[type];
+    ['golden', 'reindeer'].forEach((shimmer) => {
+      const st = Game.shimmerTypes[shimmer];
       if (!st || typeof st.popFunc !== 'function') return;
       const original = st.popFunc;
       st.popFunc = function (me) {
@@ -195,13 +165,12 @@ CA.History = (() => {
           Game.Notify = notify;
         }
         try {
-          const wrath = type === 'golden' && me && me.wrath;
-          const kind = wrath ? 'wrath' : type;
-          const title = type === 'reindeer' ? 'Reindeer' : wrath ? 'Wrath cookie' : 'Golden cookie';
+          const wrath = shimmer === 'golden' && me && me.wrath;
+          const type = wrath ? 'wrath' : shimmer;
+          const title = shimmer === 'reindeer' ? 'Reindeer' : wrath ? 'Wrath cookie' : 'Golden cookie';
           const text = texts.filter(Boolean).slice(0, 2).join(' — ');
-          const gain = Game.cookies - before;
-          // Buffs that didn't exist a moment ago must have come from this pop — structured data
-          // (name/duration/multipliers) rather than just the free-text popup, for future use.
+          const cookies = Game.cookies - before;
+          // Buffs that didn't exist a moment ago must have come from this pop.
           const effects = Object.keys(Game.buffs || {})
             .filter((name) => !buffsBefore.includes(name))
             .map((name) => {
@@ -213,11 +182,11 @@ CA.History = (() => {
                 multClick: typeof b.multClick === 'number' ? b.multClick : 1,
               };
             });
-          addEvent({ kind, title, text, gain, effects });
+          addEvent({ type, title, text, cookies, data: { effects } });
           if (CA.Settings.get('goldenNotify')) {
             const beautify = (v) => (typeof Beautify === 'function' ? Beautify(v) : Math.round(v).toString());
-            const desc = text || (Math.abs(gain) >= 1 ? `${gain >= 0 ? '+' : '−'}${beautify(Math.abs(gain))} cookies` : '');
-            CA.Util.notify(title, desc, EVENT_ICON[kind] || CA.ICON, 1.5);
+            const desc = text || (Math.abs(cookies) >= 1 ? `${cookies >= 0 ? '+' : '−'}${beautify(Math.abs(cookies))} cookies` : '');
+            CA.Util.notify(title, desc, EVENT_ICON[type] || CA.ICON, 1.5);
           }
         } catch (e) {
           /* never break the game over a log entry */
@@ -229,33 +198,28 @@ CA.History = (() => {
 
   // ---- queries ---------------------------------------------------------------------
 
-  /** Index of the first sample with t >= time (binary search). */
-  function lowerBound(time) {
-    let lo = 0;
-    let hi = samples.length;
-    while (lo < hi) {
-      const mid = (lo + hi) >> 1;
-      if (samples[mid].t < time) lo = mid + 1;
-      else hi = mid;
-    }
-    return lo;
-  }
+  const samples = () => CA.Recorder.frames();
+  const lowerBound = (time) => CA.Recorder.lowerBound(time);
+  /** Golden/wrath/reindeer pops and ascensions, oldest first. */
+  const events = () => CA.EventLog.list(MARKER_TYPES);
 
   /** Summary numbers for [t0, t1]. */
   function stats(t0, t1) {
+    const all = samples();
     const from = lowerBound(t0);
     let n = 0;
     let sumCps = 0;
     let sumClick = 0;
     let peak = 0;
     let peakT = 0;
-    for (let i = from; i < samples.length && samples[i].t <= t1; i++) {
-      const s = samples[i];
+    for (let i = from; i < all.length && all[i].t <= t1; i++) {
+      const s = all[i];
+      const cps = s.cps || 0;
       n++;
-      sumCps += s.cps;
-      sumClick += s.click;
-      if (s.cps >= peak) {
-        peak = s.cps;
+      sumCps += cps;
+      sumClick += s.click || 0;
+      if (cps >= peak) {
+        peak = cps;
         peakT = s.t;
       }
     }
@@ -270,107 +234,45 @@ CA.History = (() => {
     return intervals.filter((iv) => (iv.end || now) >= t0 && iv.start <= t1);
   }
 
-  function clear() {
-    samples.length = 0;
-    intervals.length = 0;
-    events.length = 0;
-    Object.keys(open).forEach((k) => delete open[k]);
-    lastT = 0;
-    lastHandmade = null;
-    clearStore();
-    CA.Events.emit('history', 'clear');
-  }
-
-  // ---- persistence (survives a page refresh) ---------------------------------------
-  //
-  // IMPORTANT: only a short recent window is persisted, not the whole in-memory buffer. The
-  // in-memory `samples`/`intervals`/`events` arrays can hold up to 4 hours (MAX_SAMPLES) for the
-  // live graph, but writing that much to localStorage every 20s — megabytes of it, once
-  // CA.Stocks' own per-stock price history is added on top — can push the browser's per-origin
-  // localStorage quota (typically 5-10MB) past its limit. The real Cookie Clicker save also
-  // lives in localStorage, and the game's own write wraps setItem in a try/catch that silently
-  // swallows a quota error (see localStorageSet in the game's own source) — so a mod bloating
-  // localStorage doesn't throw or warn, it just makes the *game's* save quietly stop landing.
-  // A refresh then reverts you to whenever the last successful save was, with no error shown.
-  // 10 minutes is far more than a "quick refresh" needs and keeps this persisted slice small.
-
-  const STORE_KEY = 'CookieMgr.history.v1';
-  const PERSIST_MS = 20000;
-  const PERSIST_WINDOW_MS = 10 * 60 * 1000;
-  let persistTimer = null;
+  // ---- persistence -------------------------------------------------------------------
 
   function persist() {
-    if (!CA.Settings.get('trackHistory')) return;
-    try {
-      const cutoff = Date.now() - PERSIST_WINDOW_MS;
-      localStorage.setItem(
-        STORE_KEY,
-        JSON.stringify({
-          v: 1,
-          savedAt: Date.now(),
-          samples: samples.filter((s) => s.t > cutoff),
-          intervals: intervals.filter((iv) => (iv.end || Date.now()) > cutoff).map(({ ref, ...rest }) => rest), // ref points at a live game buff object — not serializable
-          events: events.filter((ev) => ev.t > cutoff),
-        })
-      );
-    } catch (e) {
-      /* storage full/blocked (private mode, quota, ...) — this is a convenience cache, never fatal */
-    }
+    if (!dirty || loadedFor !== CA.Store.saveId()) return Promise.resolve();
+    dirty = false;
+    // ref points at a live game buff object — not storable
+    return CA.Store.setKV(
+      'buffs',
+      intervals.map(({ ref, ...rest }) => rest),
+      loadedFor
+    );
   }
 
-  function clearStore() {
-    try {
-      localStorage.removeItem(STORE_KEY);
-    } catch (e) {
-      /* ignore */
-    }
+  let loadedFor = null;
+
+  function load() {
+    Object.keys(open).forEach((k) => delete open[k]);
+    loadedFor = CA.Store.saveId();
+    return CA.Store.getKV('buffs').then((stored) => {
+      intervals = (Array.isArray(stored) ? stored : []).map((iv) => {
+        // An interval still "open" as of the last save can't be trusted to still be running
+        // (there's no live Game.buffs reference for it any more): close it where we last saw it.
+        // If the buff really is still active, the next tick opens a fresh interval for it.
+        if (iv.end == null) iv.end = iv.projEnd ? Math.min(iv.projEnd, Date.now()) : iv.start;
+        return iv;
+      });
+      CA.Events.emit('history', 'buffs');
+    });
   }
 
-  function restore() {
-    let raw;
-    try {
-      raw = localStorage.getItem(STORE_KEY);
-    } catch (e) {
-      return;
-    }
-    if (!raw) return;
-    let data;
-    try {
-      data = JSON.parse(raw);
-    } catch (e) {
-      return;
-    }
-    if (!data || typeof data !== 'object') return;
-    // A little past the rolling window, so data left over from days ago doesn't linger.
-    const cutoff = Date.now() - MAX_SAMPLES * SAMPLE_MS - 3600000;
-    (data.samples || []).forEach((s) => {
-      if (s && typeof s.t === 'number' && s.t > cutoff) samples.push(s);
-    });
-    (data.intervals || []).forEach((iv) => {
-      if (!iv || typeof iv.start !== 'number' || iv.start <= cutoff) return;
-      // An interval still "open" as of the last save can't be trusted to still be running after
-      // a reload (we have no live Game.buffs reference for it any more) — close it at the last
-      // point we actually know about. If the buff is genuinely still active, the next sample()
-      // will open a fresh interval for it right away.
-      if (iv.end == null) iv.end = data.savedAt || iv.start;
-      intervals.push(iv);
-    });
-    (data.events || []).forEach((ev) => {
-      if (ev && typeof ev.t === 'number' && ev.t > cutoff) events.push(ev);
-    });
-    capArray(samples, MAX_SAMPLES);
-    capArray(intervals, MAX_INTERVALS);
-    capArray(events, MAX_EVENTS);
+  /** Erases everything recorded for this save: state history, event log, buff log. */
+  function clear() {
+    intervals = [];
+    Object.keys(open).forEach((k) => delete open[k]);
+    dirty = true;
+    return Promise.all([CA.Recorder.clear(), CA.EventLog.clear(), persist()]).then(() => CA.Events.emit('history', 'clear'));
   }
 
   function init() {
-    CA.Settings.defineOption({
-      key: 'trackHistory',
-      group: 'general',
-      name: 'Record history',
-      desc: 'Keeps a rolling 4-hour record of your CpS and active effects for the graphs, saved across page reloads.',
-      default: true,
-    });
     CA.Settings.defineOption({
       key: 'goldenNotify',
       group: 'general',
@@ -378,20 +280,43 @@ CA.History = (() => {
       desc: 'A quick notification the moment a golden or wrath cookie (or reindeer) is popped.',
       default: true,
     });
-    restore();
+    // Up to v1.2 the history lived in localStorage; it's in IndexedDB now. Free that space.
+    try {
+      localStorage.removeItem(LEGACY_KEY);
+    } catch (e) {
+      /* ignore */
+    }
+    load();
     watchShimmers();
     CA.Events.on('ascend', () => {
-      const now = Date.now();
-      closeAll(now);
-      addEvent({ kind: 'ascend', title: 'Ascended', text: 'A new run begins.', gain: 0 });
+      closeAll(Date.now());
+      addEvent({ type: 'ascend', title: 'Ascended', text: 'A new run begins.' });
     });
-    timer = setInterval(sample, SAMPLE_MS);
-    persistTimer = setInterval(persist, PERSIST_MS);
+    CA.Events.on('storeReloaded', load);
+    CA.Events.on('history', (why) => {
+      if (why === 'load' && loadedFor !== CA.Store.saveId()) load(); // a different save was loaded
+    });
+    setInterval(tick, TICK_MS);
+    setInterval(persist, PERSIST_MS);
     addEventListener('pagehide', persist);
-    addEventListener('beforeunload', persist);
-    sample();
-    persist(); // shrink an oversized blob from an older version right away, not after PERSIST_MS
   }
 
-  return { init, samples, intervals, events, colorFor, lowerBound, stats, intervalsIn, clear, addEvent, sampleNow: sample };
+  return {
+    init,
+    get samples() {
+      return samples();
+    },
+    get intervals() {
+      return intervals;
+    },
+    get events() {
+      return events();
+    },
+    colorFor,
+    lowerBound,
+    stats,
+    intervalsIn,
+    clear,
+    addEvent,
+  };
 })();

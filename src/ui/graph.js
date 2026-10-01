@@ -104,7 +104,8 @@ CA.UI.Graph = (() => {
     const segs = [];
     let cur = [];
     for (let i = 0; i < list.length; i++) {
-      if (i && list[i].t - list[i - 1].t > GAP_MS) {
+      // older history is coarser (core/recorder.js): a frame covers dt seconds
+      if (i && list[i].t - list[i - 1].t > Math.max(GAP_MS, 1500 * (list[i].dt || 1))) {
         if (cur.length) segs.push(cur);
         cur = [];
       }
@@ -410,10 +411,10 @@ CA.UI.Graph = (() => {
         // A golden/wrath pop that opened a shaded effect band right at this moment is already
         // visible via the shading — skip the diamond so it isn't shown twice.
         const shownByShading =
-          (ev.kind === 'golden' || ev.kind === 'wrath') && ivs.some((iv) => Math.abs(iv.start - ev.t) < EVENT_SHADED_TOLERANCE_MS);
+          (ev.type === 'golden' || ev.type === 'wrath') && ivs.some((iv) => Math.abs(iv.start - ev.t) < EVENT_SHADED_TOLERANCE_MS);
         if (shownByShading) return;
         const x = xOf(ev.t);
-        if (ev.kind === 'ascend') {
+        if (ev.type === 'ascend') {
           ctx.strokeStyle = 'rgba(200,190,255,0.7)';
           ctx.setLineDash([3, 3]);
           ctx.beginPath();
@@ -423,7 +424,7 @@ CA.UI.Graph = (() => {
           ctx.setLineDash([]);
         }
         const y = plot.y + 7;
-        ctx.fillStyle = eventColor(ev.kind);
+        ctx.fillStyle = eventColor(ev.type);
         ctx.strokeStyle = 'rgba(0,0,0,0.7)';
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -570,10 +571,10 @@ CA.UI.Graph = (() => {
   }
 
   function eventTip(ev) {
-    let h = `<div class="ca-tip-head">${swatch(eventColor(ev.kind))}${esc(ev.title)}<span>${clock(ev.t, true)}</span></div>`;
+    let h = `<div class="ca-tip-head">${swatch(eventColor(ev.type))}${esc(ev.title)}<span>${clock(ev.t, true)}</span></div>`;
     if (ev.text) h += `<div class="ca-tip-note">${esc(ev.text)}</div>`;
-    if (ev.kind !== 'ascend' && Math.abs(ev.gain) >= 1)
-      h += row('transparent', ev.gain >= 0 ? 'Cookies gained' : 'Cookies lost', (ev.gain >= 0 ? '+' : '−') + beautify(Math.abs(ev.gain)));
+    if (ev.type !== 'ascend' && Math.abs(ev.cookies) >= 1)
+      h += row('transparent', ev.cookies >= 0 ? 'Cookies gained' : 'Cookies lost', (ev.cookies >= 0 ? '+' : '−') + beautify(Math.abs(ev.cookies)));
     return h;
   }
 

@@ -19,8 +19,9 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Hotkey** | A key combination bound to a macro or action.                                           |
 | **Event**  | Something that happened in the game (a golden cookie popped, a stock was sold, …).      |
 | **State**  | A value that can be measured over time (cookies in the bank, CpS, …).                   |
+| **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 
-## Features (v1.3)
+## Features (v1.4)
 
 A column of small icons sticks out of the left beam between the cookie panel and the middle panel, one per page:
 **Autoclickers**, **Graphs**, **Stock market** and **Settings**. Hovering an icon slides its name out to the left.
@@ -47,11 +48,27 @@ A live cookies-per-second chart, redrawn every second.
 - **Event markers:** golden cookie, wrath cookie and reindeer pops (with what they did) and ascensions. A golden/wrath
   pop that already shows as a shaded band doesn't also get a marker — only pops without a visible effect do.
 - **Crosshair tooltip** with the values at that moment and the effects active then, plus Now / Average / Peak / Clicking tiles.
-- Pause, clear, and per-series toggles. History (rolling 4 hours in memory) survives a page refresh and can be turned
-  off in Settings. Stock price and portfolio history do the same, including cost basis and realized profit — a
-  refresh won't reset your unrealized gain to zero. Only the last 10 minutes is actually mirrored to localStorage
-  (plenty for surviving a quick refresh) — writing the full 4-hour buffer, times 11 stock types, risked pushing the
-  browser's localStorage quota over the edge and silently breaking the *game's own* save.
+- Pause and per-series toggles. Everything shown is read from the recorded history (see below), so it survives
+  refreshes and browser restarts.
+
+### Recorded history
+
+CookieMgr records a set of **states** every second while you play: CpS (total, unbuffed, clicking), cookies in the
+bank, cookies baked (this ascension and all time), where each second's cookies came from (production, clicking,
+golden cookies & reindeer, other), what left the bank (spending, wrinklers), prestige, every stock price and your
+portfolio's value / cost basis / realized profit, and Grimoire magic. Alongside it, an **event log** keeps golden and
+wrath cookies, reindeer, ascensions and stock trades.
+
+- **Kept out of the game save.** All of it lives in the browser's IndexedDB, per save (two bakeries in one browser
+  don't mix), never in localStorage — the game's own save lives there and the game silently ignores running out of
+  room (the 1.2.2 bug). Nothing CookieMgr records can stop the game from saving.
+- **Active play time only.** Time only counts while the game is actually running; a closed tab or sleeping computer
+  doesn't leave hours of empty space or get lumped into one second.
+- **Progressively coarser with age:** every second for the last 3 hours of active play, every 15 s up to 24 hours,
+  every 2 minutes up to a week, then every 15 minutes, kept indefinitely. Older data is merged sensibly — averages for
+  rates, last value for totals, sums for "cookies earned this frame" — so totals stay exact.
+- **Settings → History data:** see how much is recorded, **Export** it to a file, **Import** a file (replacing this
+  save's history — handy for moving browsers), or **Clear** it. Import and Clear ask for a second click.
 
 ### Autoclickers
 
@@ -79,7 +96,7 @@ The **stock market buy** autoclicker (see below) lives on its own Stock market t
 
 Turn everything off when ascending (default on), notifications, golden cookie notifications (a quick popup the moment
 one is popped), remember autoclicker states across reloads, record history, an optional hotkey to open the panel,
-reset hotkeys, checking for updates, and stock market indicators. Under **Integrations**, a **Load now** button loads
+reset hotkeys, checking for updates, stock market indicators, and the History data card (export / import / clear). Under **Integrations**, a **Load now** button loads
 the latest [Cookie Monster](https://github.com/CookieMonsterTeam/CookieMonster) release, and a toggle loads it
 automatically whenever CookieMgr starts (skipped if Cookie Monster is already running). Everything is stored in the normal Cookie Clicker
 save through the official mod API (`Game.registerMod`), so it survives exports and imports. Settings are also
@@ -182,15 +199,20 @@ src/
     events.js        tiny pub/sub bus ('clickers', 'settings', 'hotkeys', 'ascend', 'history')
     actions.js       registry of hotkey-able actions
     settings.js      options + hotkey bindings, save/load (JSON inside the game save)
+    store.js         IndexedDB storage for everything recorded, per save (never localStorage)
+    states.js        registry of states: id, name, unit, kind (gauge / counter / flow), getter
+    recorder.js      samples every state each second into frames; tiers, compaction, export/import
+    eventLog.js      the central event log (golden cookies, trades, ascensions, …)
     hotkeys.js       global keydown listener + "press a key" capture mode
     ascension.js     detects ascending (wraps Game.Ascend + watchdog)
     update.js        polls GitHub for a newer build, notifies with a one-click reload
   features/
     autoclickers.js  clicker definitions and timers — add new ones to DEFS
-    stocks.js        trend badges/tints, price history, and portfolio cost-basis tracking
+    stocks.js        trend badges/tints, per-stock price states, and portfolio cost-basis tracking
+    gameStates.js    the built-in states (CpS, cookies, earnings by source, prestige, portfolio, magic)
     stockTrader.js   the "buy fast/slow rise, sell the rest" autoclicker (own tab, no DEFS entry)
-    stockLog.js      wraps buyGood/sellGood to record every trade (auto or manual) for the log/ticker
-    history.js       samples CpS every second, tracks buffs/events, persists to localStorage
+    stockLog.js      wraps buyGood/sellGood to log every trade (auto or manual) as an event
+    history.js       buff intervals and golden-cookie pop events for the CpS graph
     cookieMonster.js loads Cookie Monster on request or at start-up
   ui/
     components.js    HTML snippets: switch, hotkey chip, icon, button
@@ -221,6 +243,10 @@ If you add a file, add it to `MODULES` in `build.mjs` in the right order.
 - **A new setting:** call `CA.Settings.defineOption({ key, group, name, desc, default })` in a feature's `init()`, and read
   it with `CA.Settings.get(key)`. Options in the `general` group appear on the Settings tab, `autoclickers` ones on the Autoclickers tab.
 - **A new hotkey action:** `CA.Actions.register({ id, name, group, defaultKey, run })`.
+- **A new recorded state:** `CA.States.define({ id, name, unit, group, kind, get })` before `CA.Recorder.init()`;
+  `kind` is `gauge` (a level, like CpS), `counter` (a running total) or `flow` (an amount per frame, from `ctx.dt`).
+  Read it back with `CA.Recorder.series(id)`.
+- **A new event type:** `CA.EventLog.defineType(type, { name, icon, color, income })`, then `CA.EventLog.add({ type, title, text, cookies, data })`.
 - **A new page:** `CA.UI.Pages.register({ id, label, icon, order, html, mount, unmount, tick })` from the page's own
   module. It gets a sidebar icon and a panel slot automatically; `icon` is a name from `ui/icons.js`.
 

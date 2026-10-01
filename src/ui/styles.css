@@ -536,6 +536,14 @@
   font-size: 11px;
   padding: 3px 10px;
 }
+#CookieMgrMenu .ca-btn .ca-ico {
+  vertical-align: -2px;
+}
+#CookieMgrMenu .ca-btn.ca-armed {
+  color: #fff;
+  background: #8a2a22;
+  box-shadow: 0 0 0 1px #e5484d, 0 0 8px rgba(229, 72, 77, 0.6);
+}
 #CookieMgrMenu .ca-btn-lg {
   padding: 10px 20px;
   font-size: 15px;
