@@ -30,9 +30,9 @@ const mod = {
 
     // data backbone first: the event log and states must exist before the recorder's first tick
     CA.EventLog.init();
-    CA.Autoclickers.init();
+    CA.GameActions.init(); // actions + conditions, then the macros built from them
+    CA.Macros.init();
     CA.Stocks.init();
-    CA.StockTrader.init();
     CA.StockLog.init();
     CA.History.init();
     CA.GameStates.init();
@@ -40,6 +40,7 @@ const mod = {
     CA.GameEvents.init();
     CA.UI.Graphs.init();
     CA.UI.EventsPage.init();
+    CA.UI.MacrosPage.init();
     CA.UI.StockGraph.init();
     CA.UI.StockPerf.init();
     CA.UI.StockLog.init();
@@ -68,14 +69,20 @@ const mod = {
   },
 
   load(str) {
-    const fromSave = CA.Settings.deserialize(str);
     // Prefer our own localStorage mirror when we have one — it's updated the moment anything
     // changes, while the game's save can be up to 60s stale or skipped by a quick reload.
-    const fromLocal = CA.Settings.restoreFromLocal();
-    const data = fromLocal || fromSave;
-    if (data && CA.Settings.get('rememberStates')) {
-      if (data.clickers) CA.Autoclickers.restore(data.clickers);
-      if (typeof data.stockTrader === 'boolean') CA.StockTrader.set(data.stockTrader, { silent: true });
+    // Read it first: deserializing re-mirrors the current, not-yet-restored state over it.
+    const local = CA.Settings.localPayload();
+    const data = (local && CA.Settings.deserialize(local)) || CA.Settings.deserialize(str);
+    if (!data) return;
+    CA.Macros.load(data.macros);
+    if (!CA.Settings.get('rememberStates')) return;
+    if (Array.isArray(data.running)) CA.Macros.restore(data.running);
+    else {
+      // saved by v1.x: { clickers: { bigCookie: true, … }, stockTrader: true }
+      const ids = Object.keys(data.clickers || {}).filter((id) => data.clickers[id] === true);
+      if (data.stockTrader === true) ids.push('stockTrader');
+      CA.Macros.restore(ids);
     }
   },
 };

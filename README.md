@@ -14,17 +14,18 @@ The same words mean the same things everywhere in the add-on and this README:
 | ---------- | --------------------------------------------------------------------------------------- |
 | **Page**   | A top-level section of CookieMgr, one per icon in the sidebar (e.g. Graphs).            |
 | **Tab**    | A sub-section inside a page.                                                            |
-| **Action** | One thing CookieMgr can do in the game (click the big cookie, pop golden cookies, …).   |
-| **Macro**  | A toggleable automation made of one or more actions. (Autoclickers today.)              |
-| **Hotkey** | A key combination bound to a macro or action.                                           |
+| **Action**    | One thing CookieMgr can do in the game, once (click the big cookie, pop golden cookies, …). |
+| **Macro**     | An automation made of one or more actions: on a repeat, when a condition holds, or once. |
+| **Condition** | Something a macro can wait for (an effect is active, a value crosses a line, …).       |
+| **Hotkey**    | A key combination bound to one or more macros. hotkey → macro(s) → action(s).          |
 | **Event**  | Something that happened in the game (a golden cookie popped, a stock was sold, …).      |
 | **State**  | A value that can be measured over time (cookies in the bank, CpS, …).                   |
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 
-## Features (v1.6)
+## Features (v2.0)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
-**Autoclickers**, **Graphs**, **Events**, **Stock market** and **Settings**. Hovering an icon slides its name out to the left.
+**Macros**, **Graphs**, **Events**, **Stock market** and **Settings**. Hovering an icon slides its name out to the left.
 Clicking one opens the CookieMgr panel straight to that page (switching pages directly if it's already open on a
 different one); clicking the page that's already showing closes the panel.
 
@@ -100,32 +101,53 @@ wrath cookies, reindeer, ascensions and stock trades.
 - **Settings → History data:** see how much is recorded, **Export** it to a file, **Import** a file (replacing this
   save's history — handy for moving browsers), or **Clear** it. Import and Clear ask for a second click.
 
-### Autoclickers
+### Macros
 
-![Autoclickers tab](docs/autoclickers.png)
+![Macros page](docs/autoclickers.png)
 
-Each one has an on/off switch and a rebindable hotkey:
+Everything CookieMgr automates is a **macro**: one or more **actions** run in order, on a trigger —
 
-| Autoclicker    | Default key | What it does                                   |
-| -------------- | ----------- | ---------------------------------------------- |
-| Big cookie     | `C`         | Clicks the big cookie 20×/second               |
-| Golden cookies | `G`         | Pops golden cookies (not wrath)                |
-| Wrath cookies  | `W`         | Pops wrath cookies                             |
-| Reindeer       | `R`         | Pops reindeer                                  |
-| Fortune news   | `F`         | Clicks fortunes in the news ticker             |
-| Wrinklers      | `K`         | Pops wrinklers as soon as they attach          |
-| Toggle all     | `A`         | All on, or all off if everything is running   |
+- **Repeat** — while it's on, every so often (the autoclickers: every 0.05–0.1 s);
+- **When…** — while it's on, it watches a **condition** and runs when it happens (or on every check while it holds);
+- **Once** — no on/off: its **Run** button or hotkey runs it one time.
 
-Plus **All on / All off** buttons. Hotkeys support modifiers (e.g. `Shift + G`): click a key chip and press the new key
-(`Esc` cancels, `Backspace` clears). Binding a key that is already in use moves it.
+**Built-in macros** (can't be removed or edited — duplicate one to make your own version):
 
-The **stock market buy** autoclicker (see below) lives on its own Stock market tab and is deliberately left out of
-"All on/off" and the toggle-all hotkey — it's switched independently.
+| Macro                  | Default key | What it does                                                         |
+| ---------------------- | ----------- | -------------------------------------------------------------------- |
+| Big cookie             | `C`         | Clicks the big cookie 20×/second                                     |
+| Golden cookies         | `G`         | Pops golden cookies (not wrath)                                      |
+| Wrath cookies          | `W`         | Pops wrath cookies                                                   |
+| Reindeer               | `R`         | Pops reindeer                                                        |
+| Fortune news           | `F`         | Clicks fortunes in the news ticker                                   |
+| Wrinklers              | `K`         | Pops wrinklers as soon as they attach                                |
+| Stock market autobuyer | —           | Buys fast/slow-rising stocks, sells the rest, every second           |
+| Sell all stocks        | —           | Once: autobuyer off, then sells every stock                          |
+| All autoclickers       | `A`         | The first six all on, or all off if they're all running              |
+
+The autobuyer is the same switch as on the Stock market page and in the Bank minigame toolbar, and it isn't part
+of "All autoclickers".
+
+**Your macros** — **New macro** opens the editor: name, icon, trigger (with how often, and for "When…" the condition,
+optionally negated), and the steps — pick an action for each, set its options, reorder or remove them. Actions:
+click the big cookie, pop golden / wrath cookies, reindeer, wrinklers (optionally sparing shiny ones), click fortune
+news, trade stocks, sell all stocks, harvest the sugar lump once ripe, switch another macro on/off/toggle, run another
+macro. Conditions: an effect is active (Frenzy, Click frenzy, …), any building special, several effects at once,
+something to pop is on screen, or any recorded value (CpS, cookies in bank, prestige, magic, a stock price…) above or
+below a number. Your macros are saved with your settings inside the game save.
+
+**Running now** at the top of the page shows every running macro and, for each of its actions, how many things it
+has done and when it last did something (or that it can't run right now).
+
+**Hotkeys** — every macro can have one; one key can trigger several macros at once (binding a key that's in use shares
+it). Modifiers work (`Shift + G`): click a key chip and press the new key (`Esc` cancels, `Backspace` clears).
+
+**Favourites** — the star on each macro marks it for shortcut widgets.
 
 ### Settings
 
-Turn everything off when ascending (default on), notifications, golden cookie notifications (a quick popup the moment
-one is popped), remember autoclicker states across reloads, record history, an optional hotkey to open the panel,
+Every row has its icon. Turn macros off when ascending (default on), on/off notifications, golden cookie notifications
+(a quick popup the moment one is popped), remember which macros were running across reloads, record history, an optional hotkey to open the panel,
 reset hotkeys, checking for updates, stock market indicators, and the History data card (export / import / clear). Under **Integrations**, a **Load now** button loads
 the latest [Cookie Monster](https://github.com/CookieMonsterTeam/CookieMonster) release, and a toggle loads it
 automatically whenever CookieMgr starts (skipped if Cookie Monster is already running). Everything is stored in the normal Cookie Clicker
@@ -156,11 +178,11 @@ button that opens the Stock market page. It can be turned off in Settings.
 The **Stock market** tab in the CookieMgr panel has:
 
 - **Sell all** — its own standalone card at the top of the tab: sells every stock you currently hold and turns the
-  autoclicker off first, so it doesn't just buy it all straight back. Hovering it shows the actual number of cookies
-  selling everything right now would pay out.
-- **Buy fast/slow rise, sell the rest** — an autoclicker (own on/off switch and hotkey, not affected by "All on/off" or
-  the toggle-all hotkey) that, once a second, buys the max it can afford of fast-rising stocks, then slow-rising ones,
-  and sells anything it holds that isn't currently rising. That's the entire strategy.
+  autobuyer off first, so it doesn't just buy it all straight back. Hovering it shows the actual number of cookies
+  selling everything right now would pay out. (It's the built-in "Sell all stocks" macro, so it can have a hotkey.)
+- **Autobuyer** — the built-in "Stock market autobuyer" macro (own switch and hotkey, not part of "All autoclickers")
+  that, once a second, buys the max it can afford of fast-rising stocks, then slow-rising ones, and sells anything it
+  holds that isn't currently rising. That's the entire strategy.
 - The stock chart, defaulting to your **portfolio value** over time (a value line plus a cost-basis line, so the gap
   between them is your unrealized gain) with stat tiles for Value, Unrealized, Realized and Total gain — switch to
   "Per stock" for the individual price lines instead. Cost basis is tracked from whenever the mod is loaded, so it
@@ -173,7 +195,7 @@ The **Stock market** tab in the CookieMgr panel has:
   minigame's own stock-price units, not raw cookies) of every trade this session, led by session stat tiles (Bought,
   Sold, Spent, Earned, Net); a row of compact bar tiles (time shown as HH:MM) for the **last 5 one-second ticks**
   that had a trade (bought vs. sold, and net $, for each); and a **scrolling ticker** at the bottom showing every
-  trade as it happens — from the autoclicker above or from clicking the Bank's own buy/sell buttons yourself, both
+  trade as it happens — from the autobuyer above or from clicking the Bank's own buy/sell buttons yourself, both
   show up the same way.
 
 ## Using it
@@ -229,21 +251,23 @@ Reload the game page between loads — the mod refuses to register twice.
 src/
   core/
     util.js          helpers: notifications, sounds, CSS injection, function wrapping
-    events.js        tiny pub/sub bus ('clickers', 'settings', 'hotkeys', 'ascend', 'history')
-    actions.js       registry of hotkey-able actions
+    events.js        tiny pub/sub bus ('macros', 'settings', 'hotkeys', 'ascend', 'history', …)
+    actions.js       registry of actions (single things CookieMgr can do in the game)
+    conditions.js    registry of conditions "when" macros wait for
     settings.js      options + hotkey bindings, save/load (JSON inside the game save)
     store.js         IndexedDB storage for everything recorded, per save (never localStorage)
     states.js        registry of states: id, name, unit, kind (gauge / counter / flow), getter
     recorder.js      samples every state each second into frames; tiers, compaction, export/import
     eventLog.js      the central event log (golden cookies, trades, ascensions, …)
-    hotkeys.js       global keydown listener + "press a key" capture mode
+    hotkeys.js       hotkey bindables (macros, panel commands), keydown listener, capture mode
     ascension.js     detects ascending (wraps Game.Ascend + watchdog)
     update.js        polls GitHub for a newer build, notifies with a one-click reload
   features/
-    autoclickers.js  clicker definitions and timers — add new ones to DEFS
+    gameActions.js   the game-facing actions and conditions
+    macros.js        macros: built-ins, your own, running them, save/load
     stocks.js        trend badges/tints, per-stock price states, and portfolio cost-basis tracking
     gameStates.js    the built-in states (CpS, cookies, earnings by source, prestige, portfolio, magic)
-    stockTrader.js   the "buy fast/slow rise, sell the rest" autoclicker (own tab, no DEFS entry)
+    stockTrader.js   the "buy fast/slow rise, sell the rest" trading logic behind the autobuyer macro
     stockLog.js      wraps buyGood/sellGood to log every trade (auto or manual) as an event
     history.js       buff intervals and golden-cookie pop events for the CpS graph
     cookieMonster.js loads Cookie Monster on request or at start-up
@@ -257,6 +281,7 @@ src/
     plot.js          the plotting engine every chart uses: bucketing, scales, overlays, tooltips, chips
     graphs.js        the Graphs page: Cookies / Bank / Prestige tabs and their plot specs
     eventsPage.js    the Events page: income-outside-CpS table and the filterable event log
+    macrosPage.js    the Macros page: macro rows, "Running now" status, the macro editor
     stockGraph.js    the Stock market page charts: portfolio value / per-stock prices, rolling performance
     stockLog.js      the trade ticker + transaction history table, also on the Stock market page
     bankToolbar.js   Sell all / autobuyer / CookieMgr buttons inside the Bank minigame
@@ -274,15 +299,16 @@ If you add a file, add it to `MODULES` in `build.mjs` in the right order.
 
 ### Adding things
 
-- **A new autoclicker:** append an entry to `DEFS` in `src/features/autoclickers.js`. The panel row, hotkey, and save data
-  come for free.
 - **A new setting:** call `CA.Settings.defineOption({ key, group, icon, name, desc, default })` in a feature's `init()`, and read
-  it with `CA.Settings.get(key)`. Options in the `general` group appear on the Settings tab, `autoclickers` ones on the Autoclickers tab.
+  it with `CA.Settings.get(key)`. Options in the `general` group appear on the Settings page, `macros` ones on the Macros page too.
   `icon` is a name from `ui/icons.js`, shown at the start of the row.
 - **A new chart:** `CA.UI.Plot.create({ id, title, icon, windows, coarse, log, choices, toggles, build(v), stats, tip })`
   — `build` gets the view (`v.bucketize([stateIds])` returns bars aggregated by each state's kind) and returns
   `{ series, bars, lines, hlines, intervals, markers }`. Put `p.html()` in a page and call `mount`/`tick`/`unmount`.
-- **A new hotkey action:** `CA.Actions.register({ id, name, group, defaultKey, run })`.
+- **A new action:** `CA.Actions.register({ id, name, icon, group, unit, params, available, run(params) })` in
+  `features/gameActions.js` — it shows up in the macro editor's step picker. `run` returns how many things it did.
+- **A new condition:** `CA.Conditions.register({ id, name, params, test(params), describe(params) })`.
+- **A new built-in macro:** add it to `BUILTINS` in `features/macros.js` (`mode`, `every`, `steps`, `defaultKey`, `section`).
 - **A new recorded state:** `CA.States.define({ id, name, unit, group, kind, get })` before `CA.Recorder.init()`;
   `kind` is `gauge` (a level, like CpS), `counter` (a running total) or `flow` (an amount per frame, from `ctx.dt`).
   Read it back with `CA.Recorder.series(id)`.

@@ -1,71 +1,54 @@
-// Stock market autoclicker: buys the max it can afford of fast-rising stocks, then slow-rising
+// Stock market trading logic: buys the max it can afford of fast-rising stocks, then slow-rising
 // ones, and sells anything it holds that isn't currently rising. That's the whole strategy —
 // no price targets, no per-stock tuning.
 //
-// Kept separate from CA.Autoclickers (rather than another DEFS entry) on purpose: it lives on
-// its own Stock market tab and must NOT be swept up by "All on/off" or the toggle-all hotkey.
+// The logic lives here as two actions (features/gameActions.js: stocks.trade, stocks.sellAll);
+// switching it on and off is the built-in "Stock market autobuyer" macro (features/macros.js), so
+// the Stock market page, the Bank minigame toolbar and the Macros page all show the same switch.
+// It isn't part of "All autoclickers" and keeps running through an ascension.
 //
 // Uses the Bank minigame's own buy/sell API (M.buyGood/M.sellGood with the amount `10000`,
 // the same sentinel value the game's own "buy max"/"sell max" buttons use — verified against
 // minigameMarket.js) rather than computing an affordable amount ourselves.
 
 CA.StockTrader = (() => {
-  const TICK_MS = 1000;
   const RISING = [3, 1]; // fast rise, then slow rise — good.mode values (see features/stocks.js)
+  const MACRO = 'stockTrader';
 
-  let timer = null;
-  let enabled = false;
-
-  function trade(m) {
-    const goods = m.goodsById.filter((g) => g.active);
+  /** One trading pass. Returns how many buy/sell orders went through. */
+  function trade() {
+    const m = CA.Stocks.minigame();
+    if (!m) return 0;
+    let n = 0;
+    const goods = m.goodsById.filter((g) => g.active !== false);
     goods.forEach((g) => {
-      if (g.stock > 0 && !RISING.includes(g.mode)) m.sellGood(g.id, 10000);
+      if (g.stock > 0 && !RISING.includes(g.mode) && m.sellGood(g.id, 10000)) n++;
     });
-    RISING.forEach((mode) => goods.forEach((g) => g.mode === mode && m.buyGood(g.id, 10000)));
+    RISING.forEach((mode) =>
+      goods.forEach((g) => {
+        if (g.mode === mode && m.buyGood(g.id, 10000)) n++;
+      })
+    );
+    return n;
   }
 
-  function tick() {
-    if (Game.OnAscend || Game.AscendTimer > 0) return;
+  /** Sells every stock held. Returns how many stocks were sold. */
+  function sellEverything() {
     const m = CA.Stocks.minigame();
-    if (!m) return;
-    try {
-      trade(m);
-    } catch (e) {
-      console.error('[CookieMgr] Stock market autoclicker error', e);
-    }
-  }
-
-  function announce(on) {
-    if (!CA.Settings.get('notifications')) return;
-    CA.Util.notify('Stock market buy autoclicker', on ? '<b style="color:#8f8">ON</b>' : '<b style="color:#f88">OFF</b>', [9, 33], 2);
-  }
-
-  function set(on, { silent = false } = {}) {
-    on = !!on;
-    if (enabled === on && (!on || timer)) return;
-    clearInterval(timer);
-    timer = null;
-    enabled = on;
-    if (on) timer = setInterval(tick, TICK_MS);
-    if (!silent) announce(on);
-    CA.Events.emit('clickers', 'stockTrader');
-  }
-
-  function toggle() {
-    set(!enabled);
-  }
-  const isOn = () => enabled;
-
-  /** Sells every stock currently held, and turns the autoclicker off first so it doesn't just
-   *  buy everything straight back. */
-  function sellAll() {
-    set(false);
-    const m = CA.Stocks.minigame();
-    if (!m) return;
+    if (!m) return 0;
+    let n = 0;
     m.goodsById.forEach((g) => {
-      if (g.stock > 0) m.sellGood(g.id, 10000);
+      if (g.stock > 0 && m.sellGood(g.id, 10000)) n++;
     });
+    return n;
   }
+
+  const set = (on, opts) => CA.Macros.set(MACRO, on, opts);
+  const toggle = () => CA.Macros.toggle(MACRO);
+  const isOn = () => CA.Macros.isOn(MACRO);
+
+  /** The built-in "Sell all stocks" macro: autobuyer off first, then sell everything. */
+  const sellAll = () => CA.Macros.runOnce('sellAll');
 
   /** Cookies selling everything right now would actually pay out — the same formula the Bank
    *  minigame's own sellGood uses (cookiesPsRawHighest × price × shares, per stock), so this
@@ -88,15 +71,5 @@ CA.StockTrader = (() => {
     return cookies > 0 ? `Sells for ~${beautify(cookies)} cookies right now` : 'Nothing to sell right now';
   }
 
-  function init() {
-    CA.Actions.register({
-      id: 'clicker.stockTrader',
-      name: 'Stock market buy',
-      group: 'stocks',
-      defaultKey: '',
-      run: toggle,
-    });
-  }
-
-  return { init, set, toggle, isOn, sellAll, previewSellAllCookies, sellAllTitle };
+  return { trade, sellEverything, set, toggle, isOn, sellAll, previewSellAllCookies, sellAllTitle };
 })();

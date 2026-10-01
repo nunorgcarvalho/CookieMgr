@@ -1,9 +1,9 @@
-/*! CookieMgr v1.6.0 */
+/*! CookieMgr v2.0.0 */
 (function () {
 'use strict';
 const CA = {};
-CA.VERSION = "1.6.0";
-CA.CSS = "/* ==========================================================================\n   CookieMgr — styles\n   Colours and borders borrow from the game's own \"framed\" look so the panel\n   feels native. Everything is scoped under #CookieMgrTab / #CookieMgrMenu.\n   ========================================================================== */\n\n/* ---------- Sidebar (icon tabs sticking out of the left beam, one per page) ---------- */\n\n#CookieMgrTab {\n  position: absolute;\n  left: 30%;\n  top: calc(10% + 96px); /* fallback; tab.js pins it just under the game's cookie-count banner */\n  margin-left: 3px; /* tuck slightly under the beam */\n  transform: translateX(-100%);\n  z-index: 110;\n  display: flex;\n  flex-direction: column;\n  align-items: flex-end; /* items grow leftwards, away from the beam */\n  gap: 4px;\n}\n#CookieMgrTab .ca-tab-item {\n  box-sizing: border-box;\n  height: 32px;\n  display: flex;\n  align-items: center;\n  cursor: pointer;\n  user-select: none;\n  background: linear-gradient(to right, #3d2716, #221409);\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-right: none;\n  border-radius: 8px 0 0 8px;\n  box-shadow:\n    -3px 3px 10px rgba(0, 0, 0, 0.65),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.18);\n  transition:\n    background 0.2s,\n    box-shadow 0.2s;\n  outline: none;\n}\n#CookieMgrTab .ca-tab-item:hover,\n#CookieMgrTab .ca-tab-item:focus-visible {\n  box-shadow:\n    -3px 3px 12px rgba(0, 0, 0, 0.75),\n    0 0 12px rgba(255, 215, 110, 0.35),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.25);\n}\n#CookieMgrTab .ca-tab-item.selected {\n  background: linear-gradient(to right, #7a4f22, #43290f);\n  box-shadow:\n    -3px 3px 12px rgba(0, 0, 0, 0.75),\n    0 0 14px rgba(255, 215, 110, 0.55),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.3);\n}\n#CookieMgrTab .ca-tab-label {\n  max-width: 0;\n  overflow: hidden;\n  opacity: 0;\n  padding: 0;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-weight: bold;\n  font-size: 13px;\n  letter-spacing: 0.5px;\n  color: #f4e6c3;\n  text-shadow:\n    0 1px 2px #000,\n    0 0 6px rgba(255, 200, 120, 0.25);\n  white-space: nowrap;\n  transition:\n    max-width 0.22s ease-out,\n    opacity 0.15s,\n    padding 0.22s ease-out;\n}\n#CookieMgrTab .ca-tab-item:hover .ca-tab-label,\n#CookieMgrTab .ca-tab-item:focus-visible .ca-tab-label {\n  max-width: 180px;\n  opacity: 1;\n  padding: 0 2px 0 12px;\n}\n#CookieMgrTab .ca-tab-icon {\n  position: relative;\n  flex: none;\n  width: 30px;\n  height: 30px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  color: #f4e6c3;\n  filter: drop-shadow(0 1px 1px #000);\n}\n#CookieMgrTab .ca-tab-item.selected .ca-tab-icon,\n#CookieMgrTab .ca-tab-item:hover .ca-tab-icon {\n  color: #ffeab0;\n}\n#CookieMgrTab .ca-tab-badge {\n  display: none;\n  position: absolute;\n  top: -5px;\n  left: -5px;\n  min-width: 15px;\n  height: 15px;\n  padding: 0 3px;\n  box-sizing: border-box;\n  border-radius: 8px;\n  font:\n    bold 9px/15px Tahoma,\n    Arial,\n    sans-serif;\n  text-align: center;\n  color: #fff;\n  background: linear-gradient(#63c64a, #2f7d24);\n  box-shadow:\n    0 0 6px rgba(120, 240, 100, 0.8),\n    0 1px 1px #000;\n  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);\n}\n#CookieMgrTab .ca-tab-item.active .ca-tab-badge {\n  display: block;\n  animation: caBadgeGlow 2s infinite ease-in-out;\n}\n@keyframes caBadgeGlow {\n  0%,\n  100% {\n    box-shadow:\n      0 0 4px rgba(120, 240, 100, 0.6),\n      0 1px 1px #000;\n  }\n  50% {\n    box-shadow:\n      0 0 10px rgba(120, 240, 100, 1),\n      0 1px 1px #000;\n  }\n}\n#game.ascending #CookieMgrTab,\n#game.ascendIntro #CookieMgrTab,\n#game.reincarnating #CookieMgrTab {\n  display: none;\n}\n\n/* ---------- Icons (used everywhere, not just inside the panel) ---------- */\n\n.ca-ico {\n  display: inline-block;\n  flex: none;\n  vertical-align: middle;\n}\n.ca-ico-cookie {\n  background: url(img/perfectCookie.png) center / contain no-repeat;\n}\n\n/* ---------- Stock market toolbar inside the Bank minigame ---------- */\n\n#cm-bank-toolbar {\n  position: relative;\n  z-index: 10;\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  justify-content: center;\n  gap: 6px;\n  padding: 4px 4px 6px;\n}\n#cm-bank-toolbar .bankButton {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  font-size: 11px;\n  padding: 3px 9px;\n}\n#cm-bank-toolbar .cm-bt-open {\n  color: #f4e6c3;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n}\n\n/* ---------- Panel ---------- */\n\n#CookieMgrMenu {\n  max-width: 780px;\n  margin: 0 auto;\n  padding: 0 12px 120px;\n  color: #ddd;\n}\n#CookieMgrMenu .ca-tagline {\n  text-align: center;\n  margin: -6px 0 14px;\n  font-size: 12px;\n  font-style: italic;\n  color: #b9ab93;\n  text-shadow: 0 1px 1px #000;\n}\n\n/* Cards */\n#CookieMgrMenu .ca-card {\n  margin: 14px 4px;\n  border-radius: 6px;\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  background: rgba(0, 0, 0, 0.38);\n  box-shadow:\n    0 0 1px #000,\n    inset 0 0 1px #000,\n    0 6px 16px rgba(0, 0, 0, 0.35);\n  overflow: hidden;\n}\n#CookieMgrMenu .ca-card-head {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 10px;\n  padding: 9px 14px;\n  background: linear-gradient(to right, rgba(255, 235, 190, 0.09), rgba(255, 235, 190, 0));\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-card-title {\n  flex: 1;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-size: 20px;\n  color: #fff;\n  text-shadow:\n    0 -1px 5px rgba(255, 255, 200, 0.35),\n    0 1px 3px #000;\n}\n#CookieMgrMenu .ca-card-ico {\n  margin-right: 8px;\n  vertical-align: -1px;\n  color: #ffd98a;\n  filter: drop-shadow(0 1px 2px #000);\n}\n#CookieMgrMenu .ca-row-ico {\n  flex: 0 0 28px;\n  width: 28px;\n  height: 28px;\n  border-radius: 50%;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  color: #e8d7b0;\n  background: radial-gradient(circle at 35% 30%, rgba(255, 230, 170, 0.18), rgba(0, 0, 0, 0.25));\n  box-shadow:\n    inset 0 0 0 1px rgba(255, 220, 150, 0.25),\n    0 1px 3px rgba(0, 0, 0, 0.6);\n}\n#CookieMgrMenu .ca-row-option:has(.ca-switch.on) .ca-row-ico {\n  color: #ffeab0;\n  box-shadow:\n    inset 0 0 0 1px rgba(255, 220, 150, 0.55),\n    0 0 8px rgba(255, 210, 110, 0.35);\n}\n#CookieMgrMenu .ca-row-ico .ca-ico-cookie {\n  width: 18px !important;\n  height: 18px !important;\n}\n#CookieMgrMenu .ca-pill {\n  font-size: 11px;\n  white-space: nowrap;\n  padding: 3px 10px;\n  border-radius: 10px;\n  color: #bbb;\n  background: rgba(255, 255, 255, 0.07);\n  border: 1px solid rgba(255, 255, 255, 0.15);\n  transition: all 0.2s;\n}\n#CookieMgrMenu .ca-pill.on {\n  color: #cfc;\n  background: rgba(80, 200, 90, 0.16);\n  border-color: rgba(130, 235, 120, 0.5);\n}\n\n/* Rows */\n#CookieMgrMenu .ca-row {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 8px 12px;\n  padding: 8px 14px;\n  border-top: 1px solid rgba(255, 255, 255, 0.05);\n  transition: background 0.2s;\n}\n#CookieMgrMenu .ca-list .ca-row:first-child {\n  border-top: none;\n}\n#CookieMgrMenu .ca-row:hover {\n  background: rgba(255, 255, 255, 0.035);\n}\n#CookieMgrMenu .ca-row.on {\n  background: linear-gradient(to right, rgba(255, 210, 90, 0.12), rgba(255, 210, 90, 0) 65%);\n}\n#CookieMgrMenu .ca-row-master {\n  background: rgba(0, 0, 0, 0.22);\n  border-top: none;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-row-option {\n  padding-top: 10px;\n  padding-bottom: 10px;\n}\n#CookieMgrMenu .ca-row-text {\n  flex: 1 1 160px;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-row-option {\n  flex-wrap: nowrap;\n}\n#CookieMgrMenu .ca-row-option .ca-row-text {\n  flex-basis: 0;\n}\n#CookieMgrMenu .ca-controls {\n  flex: 0 1 auto;\n  max-width: 100%;\n  margin-left: auto;\n  display: flex;\n  flex-wrap: wrap;\n  justify-content: flex-end;\n  align-items: center;\n  gap: 8px;\n}\n#CookieMgrMenu .ca-row-name {\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 14px;\n  color: #f2ead2;\n  text-shadow: 0 1px 2px #000;\n}\n#CookieMgrMenu .ca-row-desc {\n  margin-top: 2px;\n  font-size: 11px;\n  color: #b3a590;\n  text-shadow: 0 1px 1px #000;\n}\n\n/* Icons */\n#CookieMgrMenu .ca-icon {\n  flex: 0 0 36px;\n  width: 36px;\n  height: 36px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  transition:\n    filter 0.25s,\n    transform 0.25s;\n  filter: grayscale(0.55) brightness(0.8);\n}\n#CookieMgrMenu .ca-row.on .ca-icon,\n#CookieMgrMenu .ca-row-master .ca-icon {\n  filter: drop-shadow(0 0 6px rgba(255, 220, 120, 0.75));\n}\n#CookieMgrMenu .ca-row.on .ca-icon {\n  transform: scale(1.06);\n}\n#CookieMgrMenu .ca-img {\n  width: 36px;\n  height: 36px;\n  background-size: contain;\n  background-repeat: no-repeat;\n  background-position: center;\n}\n#CookieMgrMenu .ca-sprite {\n  flex: none;\n  width: 48px;\n  height: 48px;\n  background-image: url(img/icons.png);\n  transform: scale(0.75);\n}\n\n/* Toggle switch */\n#CookieMgrMenu .ca-switch {\n  flex: none;\n  padding: 2px;\n  background: none;\n  border: none;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-switch:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-switch-track {\n  display: block;\n  position: relative;\n  width: 42px;\n  height: 22px;\n  box-sizing: border-box;\n  border-radius: 11px;\n  background: #2a211c;\n  border: 1px solid rgba(255, 255, 255, 0.22);\n  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.75);\n  transition:\n    background 0.2s,\n    border-color 0.2s,\n    box-shadow 0.2s;\n}\n#CookieMgrMenu .ca-switch-knob {\n  position: absolute;\n  top: 2px;\n  left: 2px;\n  width: 16px;\n  height: 16px;\n  border-radius: 50%;\n  background: radial-gradient(circle at 35% 30%, #fff, #c9c1b5 55%, #8a8178);\n  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);\n  transition: left 0.18s ease-out;\n}\n#CookieMgrMenu .ca-switch:hover .ca-switch-track {\n  border-color: rgba(255, 225, 150, 0.6);\n}\n#CookieMgrMenu .ca-switch.on .ca-switch-track {\n  background: linear-gradient(#66c84b, #2f7d24);\n  border-color: #a5ea93;\n  box-shadow:\n    inset 0 1px 3px rgba(0, 0, 0, 0.35),\n    0 0 9px rgba(110, 230, 90, 0.45);\n}\n#CookieMgrMenu .ca-switch.on .ca-switch-knob {\n  left: 22px;\n}\n#CookieMgrMenu .ca-switch:focus-visible .ca-switch-track {\n  outline: 2px solid #ffd76a;\n  outline-offset: 2px;\n}\n\n/* Hotkey chips */\n#CookieMgrMenu .ca-hotkey {\n  flex: none;\n  display: inline-flex;\n  align-items: center;\n}\n#CookieMgrMenu .ca-key {\n  min-width: 46px;\n  height: 26px;\n  padding: 0 10px;\n  font:\n    bold 12px Tahoma,\n    Arial,\n    sans-serif;\n  color: #f4e6c3;\n  text-shadow: 0 1px 1px #000;\n  background: linear-gradient(#4d3c2d, #2a2018);\n  border: 1px solid;\n  border-color: #9a7d5b #3b2c1f #2a1f15 #74604a;\n  border-radius: 5px;\n  box-shadow:\n    0 2px 0 #140d08,\n    inset 0 1px 0 rgba(255, 255, 255, 0.16);\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    border-color 0.15s,\n    box-shadow 0.15s;\n}\n#CookieMgrMenu .ca-key:hover {\n  color: #fff;\n  border-color: #e0c08a #5a4430 #3d2e20 #b39468;\n}\n#CookieMgrMenu .ca-key:active {\n  transform: translateY(1px);\n  box-shadow:\n    0 1px 0 #140d08,\n    inset 0 1px 0 rgba(255, 255, 255, 0.16);\n}\n#CookieMgrMenu .ca-key:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-hotkey.unset .ca-key {\n  color: #8f877a;\n  font-weight: normal;\n  font-style: italic;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px dashed rgba(255, 255, 255, 0.22);\n  box-shadow: none;\n}\n#CookieMgrMenu .ca-hotkey.capturing .ca-key {\n  color: #ffe9a6;\n  border-color: #ffd76a;\n  animation: caCapture 1.1s infinite ease-in-out;\n}\n@keyframes caCapture {\n  0%,\n  100% {\n    box-shadow:\n      0 2px 0 #140d08,\n      0 0 0 0 rgba(255, 215, 106, 0.5);\n  }\n  50% {\n    box-shadow:\n      0 2px 0 #140d08,\n      0 0 12px 2px rgba(255, 215, 106, 0.55);\n  }\n}\n#CookieMgrMenu .ca-key-clear {\n  width: 18px;\n  height: 18px;\n  margin-left: 3px;\n  padding: 0;\n  border: none;\n  border-radius: 50%;\n  background: transparent;\n  color: #b09a8a;\n  font-size: 14px;\n  line-height: 18px;\n  cursor: pointer;\n  opacity: 0;\n  transition:\n    opacity 0.15s,\n    background 0.15s;\n}\n#CookieMgrMenu .ca-row:hover .ca-key-clear {\n  opacity: 0.8;\n}\n#CookieMgrMenu .ca-key-clear:hover {\n  color: #fff;\n  background: rgba(255, 80, 80, 0.35);\n}\n#CookieMgrMenu .ca-hotkey.unset .ca-key-clear,\n#CookieMgrMenu .ca-hotkey.capturing .ca-key-clear {\n  visibility: hidden;\n}\n\n/* Buttons */\n#CookieMgrMenu .ca-btn {\n  padding: 4px 12px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-weight: bold;\n  font-size: 12px;\n  color: #ddd;\n  text-shadow: 0 1px 1px #000;\n  background: linear-gradient(#3e2f23, #1d140f);\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 4px;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    inset 0 1px 0 rgba(255, 255, 255, 0.12);\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    box-shadow 0.15s,\n    opacity 0.15s;\n}\n#CookieMgrMenu .ca-btn:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-btn:not(:disabled):hover {\n  color: #fff;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    0 0 9px rgba(255, 220, 120, 0.35),\n    inset 0 1px 0 rgba(255, 255, 255, 0.18);\n}\n#CookieMgrMenu .ca-btn:not(:disabled):active {\n  transform: translateY(1px);\n}\n#CookieMgrMenu .ca-btn-on:not(:disabled):hover {\n  color: #d6ffcc;\n}\n#CookieMgrMenu .ca-btn-off:not(:disabled):hover {\n  color: #ffd2cc;\n}\n#CookieMgrMenu .ca-btn:disabled {\n  opacity: 0.38;\n  cursor: default;\n  box-shadow: none;\n}\n#CookieMgrMenu .ca-btn-small {\n  font-size: 11px;\n  padding: 3px 10px;\n}\n#CookieMgrMenu .ca-btn .ca-ico {\n  vertical-align: -2px;\n}\n#CookieMgrMenu .ca-btn.ca-armed {\n  color: #fff;\n  background: #8a2a22;\n  box-shadow: 0 0 0 1px #e5484d, 0 0 8px rgba(229, 72, 77, 0.6);\n}\n#CookieMgrMenu .ca-btn-lg {\n  padding: 10px 20px;\n  font-size: 15px;\n  border-radius: 6px;\n}\n#CookieMgrMenu .ca-btn-danger {\n  color: #ffdcd2;\n  background: linear-gradient(#6b2420, #3a1210);\n  border-color: #ffb199 #7a2a1e #5c1b12 #d98a6e;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    0 0 10px rgba(255, 90, 60, 0.25),\n    inset 0 1px 0 rgba(255, 255, 255, 0.15);\n}\n#CookieMgrMenu .ca-btn-danger:not(:disabled):hover {\n  color: #fff;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    0 0 16px rgba(255, 90, 60, 0.5),\n    inset 0 1px 0 rgba(255, 255, 255, 0.2);\n}\n#CookieMgrMenu .ca-card-danger {\n  border-color: rgba(255, 110, 80, 0.3);\n  box-shadow:\n    0 0 1px #000,\n    inset 0 0 1px #000,\n    0 0 14px rgba(255, 70, 40, 0.12),\n    0 6px 16px rgba(0, 0, 0, 0.35);\n}\n#CookieMgrMenu .ca-row-sellall {\n  align-items: center;\n  justify-content: space-between;\n  gap: 12px;\n}\n\n/* Footer */\n#CookieMgrMenu .ca-footer {\n  margin: 18px 8px 0;\n  font-size: 11px;\n  line-height: 1.7;\n  text-align: center;\n  color: #9b907f;\n  text-shadow: 0 1px 1px #000;\n}\n#CookieMgrMenu .ca-footer b {\n  color: #c9bba3;\n}\n#CookieMgrMenu kbd {\n  display: inline-block;\n  padding: 0 5px;\n  font:\n    bold 10px/16px Tahoma,\n    Arial,\n    sans-serif;\n  color: #e8dcc2;\n  background: #2a2018;\n  border: 1px solid #5a4632;\n  border-radius: 3px;\n  box-shadow: 0 1px 0 #140d08;\n}\n#CookieMgrMenu .ca-footer-actions {\n  margin-top: 8px;\n}\n\n#CookieMgrMenu .ca-page {\n  animation: caFade 0.18s ease-out;\n}\n@keyframes caFade {\n  from {\n    opacity: 0;\n    transform: translateY(3px);\n  }\n  to {\n    opacity: 1;\n    transform: none;\n  }\n}\n#CookieMgrMenu a {\n  color: #ffd98a;\n}\n\n/* ---------- Graph ---------- */\n\n#CookieMgrMenu .ca-live {\n  font-size: 11px;\n  padding: 3px 10px 3px 20px;\n  position: relative;\n  border-radius: 10px;\n  color: #cfc;\n  background: rgba(80, 200, 90, 0.16);\n  border: 1px solid rgba(130, 235, 120, 0.5);\n}\n#CookieMgrMenu .ca-live:before {\n  content: '';\n  position: absolute;\n  left: 8px;\n  top: 50%;\n  width: 6px;\n  height: 6px;\n  margin-top: -3px;\n  border-radius: 50%;\n  background: #7be07b;\n  box-shadow: 0 0 6px #7be07b;\n  animation: caBadgeGlow 1.6s infinite ease-in-out;\n}\n#CookieMgrMenu .ca-live.paused {\n  color: #ffd9a0;\n  background: rgba(255, 170, 60, 0.14);\n  border-color: rgba(255, 190, 100, 0.5);\n}\n#CookieMgrMenu .ca-live.paused:before {\n  background: #ffb45c;\n  box-shadow: none;\n  animation: none;\n}\n\n#CookieMgrMenu .ca-stats {\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));\n  gap: 1px;\n  background: rgba(255, 255, 255, 0.06);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-stat {\n  min-width: 0; /* lets the grid cell shrink below its content so overflow/ellipsis below can work */\n  padding: 8px 12px;\n  background: rgba(0, 0, 0, 0.32);\n}\n#CookieMgrMenu .ca-stat-label {\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #a89a83;\n}\n#CookieMgrMenu .ca-stat-value {\n  margin-top: 2px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 17px;\n  color: #ffeab0;\n  text-shadow: 0 1px 3px #000;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n#CookieMgrMenu .ca-stat-sub {\n  margin-top: 1px;\n  font-size: 10px;\n  color: #93866f;\n  white-space: nowrap;\n}\n\n#CookieMgrMenu .ca-toolbar {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  justify-content: space-between;\n  gap: 6px 12px;\n  padding: 8px 12px;\n}\n#CookieMgrMenu .ca-toolbar-bottom {\n  padding-top: 6px;\n}\n#CookieMgrMenu .ca-chipgroup {\n  display: inline-flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 4px;\n}\n#CookieMgrMenu .ca-chip-label {\n  margin-right: 2px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-chip {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  padding: 3px 9px;\n  font:\n    bold 11px Tahoma,\n    Arial,\n    sans-serif;\n  color: #b9ab93;\n  text-shadow: 0 1px 1px #000;\n  background: rgba(255, 255, 255, 0.05);\n  border: 1px solid rgba(255, 255, 255, 0.14);\n  border-radius: 11px;\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    background 0.15s,\n    border-color 0.15s;\n}\n#CookieMgrMenu .ca-chip:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-chip:hover {\n  color: #fff;\n  border-color: rgba(255, 225, 150, 0.5);\n}\n#CookieMgrMenu .ca-chip.on {\n  color: #fff3cf;\n  background: rgba(255, 200, 100, 0.18);\n  border-color: rgba(255, 210, 120, 0.6);\n}\n#CookieMgrMenu .ca-sw {\n  display: inline-block;\n  width: 9px;\n  height: 9px;\n  margin-right: 1px;\n  border-radius: 50%;\n  vertical-align: -1px;\n  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);\n}\n\n#CookieMgrMenu .ca-graph-wrap {\n  position: relative;\n  margin: 0 8px;\n}\n#CookieMgrMenu canvas.ca-graph {\n  display: block;\n  width: 100%;\n  height: 300px;\n  cursor: crosshair;\n}\n#CookieMgrMenu canvas.ca-graph.ca-graph-small {\n  height: 160px;\n}\n#CookieMgrMenu .ca-tip {\n  display: none;\n  position: absolute;\n  z-index: 5;\n  max-width: 270px;\n  min-width: 150px;\n  padding: 7px 10px;\n  pointer-events: none;\n  font-size: 11px;\n  line-height: 1.35;\n  color: #e6dcc6;\n  background: rgba(14, 10, 6, 0.95);\n  border: 1px solid;\n  border-color: #b98a4e #6a4626 #55301c #a0764a;\n  border-radius: 5px;\n  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7);\n}\n#CookieMgrMenu .ca-tip-head {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  margin-bottom: 4px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 12px;\n  color: #ffeab0;\n}\n#CookieMgrMenu .ca-tip-head span {\n  margin-left: auto;\n  padding-left: 10px;\n  font:\n    normal 10px Tahoma,\n    Arial,\n    sans-serif;\n  color: #a89a83;\n}\n#CookieMgrMenu .ca-tip-row {\n  display: flex;\n  align-items: center;\n  gap: 5px;\n  padding: 1px 0;\n}\n#CookieMgrMenu .ca-tip-row b {\n  font-weight: normal;\n  color: #b9ab93;\n}\n#CookieMgrMenu .ca-tip-row span {\n  margin-left: auto;\n  padding-left: 12px;\n  text-align: right;\n  color: #f2ead2;\n}\n#CookieMgrMenu .ca-tip-row.strong b,\n#CookieMgrMenu .ca-tip-row.strong span {\n  color: #fff3cf;\n  font-weight: bold;\n}\n#CookieMgrMenu .ca-tip-sep {\n  height: 1px;\n  margin: 5px 0;\n  background: rgba(255, 255, 255, 0.14);\n}\n#CookieMgrMenu .ca-tip-note {\n  margin: 2px 0 4px;\n  font-style: italic;\n  color: #a89a83;\n}\n\n#CookieMgrMenu .ca-legend {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 4px 12px;\n  min-height: 16px;\n  padding: 2px 14px 12px;\n  font-size: 11px;\n  color: #b9ab93;\n}\n#CookieMgrMenu .ca-legend-item em {\n  font-style: normal;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-legend-empty {\n  font-style: italic;\n  color: #7f735f;\n}\n\n#CookieMgrMenu .ca-hidden {\n  display: none;\n}\n\n/* ---------- Stock transaction log + ticker ---------- */\n\n#CookieMgrMenu .cm-tx-wrap {\n  max-height: 220px;\n  overflow-y: auto;\n  margin: 0 4px 6px;\n}\n#CookieMgrMenu .cm-tx-table {\n  width: 100%;\n  border-collapse: collapse;\n  font-size: 11px;\n}\n#CookieMgrMenu .cm-tx-table th {\n  position: sticky;\n  top: 0;\n  text-align: left;\n  padding: 4px 8px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.06em;\n  color: #93866f;\n  background: #1c150d;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.1);\n}\n#CookieMgrMenu .cm-tx-table td {\n  padding: 3px 8px;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.05);\n  white-space: nowrap;\n  color: #d8cbb0;\n}\n#CookieMgrMenu .cm-tx-row:hover td {\n  background: rgba(255, 255, 255, 0.04);\n}\n#CookieMgrMenu .cm-tx-buy {\n  color: #8f8;\n  font-weight: bold;\n}\n#CookieMgrMenu .cm-tx-sell {\n  color: #f88;\n  font-weight: bold;\n}\n#CookieMgrMenu .cm-tx-empty {\n  padding: 14px 8px;\n  text-align: center;\n  font-style: italic;\n  color: #7f735f;\n  font-size: 12px;\n}\n\n#CookieMgrMenu .cm-tickbars {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 6px;\n  margin: 0 8px 8px;\n}\n#CookieMgrMenu .cm-tickbar {\n  flex: 1 1 90px;\n  min-width: 70px;\n  padding: 5px 6px;\n  background: rgba(0, 0, 0, 0.28);\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  border-radius: 4px;\n  font-size: 10px;\n}\n#CookieMgrMenu .cm-tickbar-time {\n  color: #93866f;\n  text-align: center;\n  margin-bottom: 3px;\n  white-space: nowrap;\n}\n#CookieMgrMenu .cm-tickbar-row {\n  height: 5px;\n  background: rgba(255, 255, 255, 0.06);\n  border-radius: 3px;\n  margin-bottom: 2px;\n  overflow: hidden;\n}\n#CookieMgrMenu .cm-tickbar-fill {\n  display: block;\n  height: 100%;\n  border-radius: 3px;\n}\n#CookieMgrMenu .cm-tickbar-buy {\n  background: #8f8;\n}\n#CookieMgrMenu .cm-tickbar-sell {\n  background: #f88;\n}\n#CookieMgrMenu .cm-tickbar-net {\n  text-align: center;\n  font-weight: bold;\n  margin-top: 3px;\n}\n#CookieMgrMenu .cm-ticks-empty {\n  margin: 0 8px 8px;\n  padding: 10px;\n  text-align: center;\n  font-style: italic;\n  color: #7f735f;\n  font-size: 11px;\n}\n\n#CookieMgrMenu .cm-ticker {\n  margin: 8px 8px 10px;\n  padding: 6px 0;\n  overflow: hidden;\n  white-space: nowrap;\n  background: rgba(0, 0, 0, 0.32);\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  border-radius: 4px;\n}\n#CookieMgrMenu .cm-ticker-track {\n  display: inline-block;\n  will-change: transform;\n}\n#CookieMgrMenu .cm-tick-item {\n  display: inline-block;\n  padding: 0 16px;\n  font:\n    bold 11px Tahoma,\n    Arial,\n    sans-serif;\n  color: #cbbfa6;\n}\n#CookieMgrMenu .cm-tick-buy {\n  color: #8f8;\n}\n#CookieMgrMenu .cm-tick-sell {\n  color: #f88;\n}\n#CookieMgrMenu .cm-tick-empty {\n  color: #7f735f;\n  font-style: italic;\n  font-weight: normal;\n}\n#CookieMgrMenu .cm-tick-sep {\n  color: #4a4232;\n  padding: 0 4px;\n}\n\n@keyframes cmTickerScroll {\n  from {\n    transform: translateX(0);\n  }\n  to {\n    transform: translateX(-50%);\n  }\n}\n\n/* ---------- Sub-tabs (Graphs page and others) ---------- */\n\n#CookieMgrMenu .ca-subtabs {\n  display: flex;\n  gap: 4px;\n  margin: 2px 0 10px;\n  padding: 0 4px;\n  border-bottom: 1px solid rgba(255, 220, 150, 0.25);\n}\n#CookieMgrMenu .ca-subtab {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  padding: 6px 14px 5px;\n  margin-bottom: -1px;\n  font:\n    bold 12px Tahoma,\n    Arial,\n    sans-serif;\n  color: #b9ab93;\n  text-shadow: 0 1px 1px #000;\n  background: rgba(0, 0, 0, 0.25);\n  border: 1px solid rgba(255, 220, 150, 0.18);\n  border-bottom-color: transparent;\n  border-radius: 6px 6px 0 0;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-subtab:hover {\n  color: #f0e2c0;\n}\n#CookieMgrMenu .ca-subtab.on {\n  color: #fff3cf;\n  background: linear-gradient(to bottom, rgba(255, 200, 100, 0.2), rgba(0, 0, 0, 0.3));\n  border-color: rgba(255, 220, 150, 0.45);\n  border-bottom-color: #1c150d;\n}\n#CookieMgrMenu .ca-subtab .ca-ico-cookie {\n  width: 14px !important;\n  height: 14px !important;\n}\n\n/* ---------- Tables, notes ---------- */\n\n#CookieMgrMenu .ca-card-note {\n  padding: 0 14px 6px;\n  font-size: 11px;\n  line-height: 1.4;\n  color: #a39477;\n}\n#CookieMgrMenu .ca-table-wrap {\n  padding: 4px 10px 6px;\n  overflow-x: auto;\n}\n#CookieMgrMenu .ca-table {\n  width: 100%;\n  border-collapse: collapse;\n  font-size: 11px;\n}\n#CookieMgrMenu .ca-table th {\n  text-align: right;\n  padding: 4px 8px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.06em;\n  color: #93866f;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.1);\n  white-space: nowrap;\n}\n#CookieMgrMenu .ca-table th:first-child,\n#CookieMgrMenu .ca-table td:first-child {\n  text-align: left;\n}\n#CookieMgrMenu .ca-table td {\n  text-align: right;\n  padding: 3px 8px;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.05);\n  white-space: nowrap;\n  color: #d8cbb0;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrMenu .ca-table tr.strong td {\n  color: #fff3cf;\n  font-weight: bold;\n}\n#CookieMgrMenu .ca-table tbody tr:hover td {\n  background: rgba(255, 255, 255, 0.04);\n}\n#CookieMgrMenu .ca-sw.ca-sw-dash {\n  width: 10px;\n  height: 0;\n  border-radius: 0;\n  border-top: 2px dashed;\n  box-shadow: none;\n  vertical-align: 2px;\n}\n#CookieMgrMenu .ca-chip .ca-ico {\n  vertical-align: -2px;\n}\n\n/* ---------- Events page ---------- */\n\n#CookieMgrMenu .ca-table td.pos {\n  color: #9be89b;\n}\n#CookieMgrMenu .ca-table td.neg {\n  color: #ff9a8a;\n}\n#CookieMgrMenu .ca-table tr.muted td {\n  color: #6f6555;\n}\n#CookieMgrMenu .ca-ev-dot {\n  display: inline-flex;\n  width: 16px;\n  margin-right: 5px;\n  vertical-align: -2px;\n}\n#CookieMgrMenu .ca-ev-chip em {\n  font-style: normal;\n  opacity: 0.6;\n  font-weight: normal;\n}\n#CookieMgrMenu .ca-ev-chip .ca-ico {\n  color: var(--c);\n}\n#CookieMgrMenu .ca-ev-chip:not(.on) {\n  opacity: 0.5;\n}\n#CookieMgrMenu .ca-ev-chip:not(.on) .ca-ico {\n  color: inherit;\n}\n#CookieMgrMenu .ca-search {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  flex: 1 1 160px;\n  padding: 3px 8px;\n  color: #93866f;\n  background: rgba(0, 0, 0, 0.35);\n  border: 1px solid rgba(255, 220, 150, 0.2);\n  border-radius: 12px;\n}\n#CookieMgrMenu .ca-search input {\n  flex: 1;\n  min-width: 0;\n  font: 12px Tahoma, Arial, sans-serif;\n  color: #f0e2c0;\n  background: transparent;\n  border: none;\n  outline: none;\n}\n#CookieMgrMenu .ca-ev-list {\n  max-height: 420px;\n  overflow-y: auto;\n  padding: 0 6px 8px;\n}\n#CookieMgrMenu .ca-ev-row {\n  display: flex;\n  align-items: baseline;\n  gap: 8px;\n  padding: 4px 8px;\n  font-size: 11px;\n  color: #d8cbb0;\n  border-left: 2px solid var(--c);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.04);\n}\n#CookieMgrMenu .ca-ev-row:hover {\n  background: rgba(255, 255, 255, 0.04);\n}\n#CookieMgrMenu .ca-ev-ico {\n  flex: none;\n  color: var(--c);\n  align-self: center;\n  display: inline-flex;\n}\n#CookieMgrMenu .ca-ev-ico .ca-ico-cookie {\n  width: 14px !important;\n  height: 14px !important;\n}\n#CookieMgrMenu .ca-ev-time {\n  flex: none;\n  color: #93866f;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrMenu .ca-ev-text {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n#CookieMgrMenu .ca-ev-text b {\n  color: #f0e2c0;\n}\n#CookieMgrMenu .ca-ev-text span {\n  color: #a39477;\n}\n#CookieMgrMenu .ca-ev-cookies {\n  flex: none;\n  font-weight: bold;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrMenu .ca-ev-cookies.pos {\n  color: #9be89b;\n}\n#CookieMgrMenu .ca-ev-cookies.neg {\n  color: #ff9a8a;\n}\n#CookieMgrMenu .ca-ev-more {\n  display: block;\n  margin: 8px auto 0;\n}\n#CookieMgrMenu .ca-ev-empty {\n  display: block;\n  padding: 12px;\n  text-align: center;\n}\n";
+CA.VERSION = "2.0.0";
+CA.CSS = "/* ==========================================================================\n   CookieMgr — styles\n   Colours and borders borrow from the game's own \"framed\" look so the panel\n   feels native. Everything is scoped under #CookieMgrTab / #CookieMgrMenu.\n   ========================================================================== */\n\n/* ---------- Sidebar (icon tabs sticking out of the left beam, one per page) ---------- */\n\n#CookieMgrTab {\n  position: absolute;\n  left: 30%;\n  top: calc(10% + 96px); /* fallback; tab.js pins it just under the game's cookie-count banner */\n  margin-left: 3px; /* tuck slightly under the beam */\n  transform: translateX(-100%);\n  z-index: 110;\n  display: flex;\n  flex-direction: column;\n  align-items: flex-end; /* items grow leftwards, away from the beam */\n  gap: 4px;\n}\n#CookieMgrTab .ca-tab-item {\n  box-sizing: border-box;\n  height: 32px;\n  display: flex;\n  align-items: center;\n  cursor: pointer;\n  user-select: none;\n  background: linear-gradient(to right, #3d2716, #221409);\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-right: none;\n  border-radius: 8px 0 0 8px;\n  box-shadow:\n    -3px 3px 10px rgba(0, 0, 0, 0.65),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.18);\n  transition:\n    background 0.2s,\n    box-shadow 0.2s;\n  outline: none;\n}\n#CookieMgrTab .ca-tab-item:hover,\n#CookieMgrTab .ca-tab-item:focus-visible {\n  box-shadow:\n    -3px 3px 12px rgba(0, 0, 0, 0.75),\n    0 0 12px rgba(255, 215, 110, 0.35),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.25);\n}\n#CookieMgrTab .ca-tab-item.selected {\n  background: linear-gradient(to right, #7a4f22, #43290f);\n  box-shadow:\n    -3px 3px 12px rgba(0, 0, 0, 0.75),\n    0 0 14px rgba(255, 215, 110, 0.55),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.3);\n}\n#CookieMgrTab .ca-tab-label {\n  max-width: 0;\n  overflow: hidden;\n  opacity: 0;\n  padding: 0;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-weight: bold;\n  font-size: 13px;\n  letter-spacing: 0.5px;\n  color: #f4e6c3;\n  text-shadow:\n    0 1px 2px #000,\n    0 0 6px rgba(255, 200, 120, 0.25);\n  white-space: nowrap;\n  transition:\n    max-width 0.22s ease-out,\n    opacity 0.15s,\n    padding 0.22s ease-out;\n}\n#CookieMgrTab .ca-tab-item:hover .ca-tab-label,\n#CookieMgrTab .ca-tab-item:focus-visible .ca-tab-label {\n  max-width: 180px;\n  opacity: 1;\n  padding: 0 2px 0 12px;\n}\n#CookieMgrTab .ca-tab-icon {\n  position: relative;\n  flex: none;\n  width: 30px;\n  height: 30px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  color: #f4e6c3;\n  filter: drop-shadow(0 1px 1px #000);\n}\n#CookieMgrTab .ca-tab-item.selected .ca-tab-icon,\n#CookieMgrTab .ca-tab-item:hover .ca-tab-icon {\n  color: #ffeab0;\n}\n#CookieMgrTab .ca-tab-badge {\n  display: none;\n  position: absolute;\n  top: -5px;\n  left: -5px;\n  min-width: 15px;\n  height: 15px;\n  padding: 0 3px;\n  box-sizing: border-box;\n  border-radius: 8px;\n  font:\n    bold 9px/15px Tahoma,\n    Arial,\n    sans-serif;\n  text-align: center;\n  color: #fff;\n  background: linear-gradient(#63c64a, #2f7d24);\n  box-shadow:\n    0 0 6px rgba(120, 240, 100, 0.8),\n    0 1px 1px #000;\n  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);\n}\n#CookieMgrTab .ca-tab-item.active .ca-tab-badge {\n  display: block;\n  animation: caBadgeGlow 2s infinite ease-in-out;\n}\n@keyframes caBadgeGlow {\n  0%,\n  100% {\n    box-shadow:\n      0 0 4px rgba(120, 240, 100, 0.6),\n      0 1px 1px #000;\n  }\n  50% {\n    box-shadow:\n      0 0 10px rgba(120, 240, 100, 1),\n      0 1px 1px #000;\n  }\n}\n#game.ascending #CookieMgrTab,\n#game.ascendIntro #CookieMgrTab,\n#game.reincarnating #CookieMgrTab {\n  display: none;\n}\n\n/* ---------- Icons (used everywhere, not just inside the panel) ---------- */\n\n.ca-ico {\n  display: inline-block;\n  flex: none;\n  vertical-align: middle;\n}\n.ca-ico-cookie {\n  background: url(img/perfectCookie.png) center / contain no-repeat;\n}\n\n/* ---------- Stock market toolbar inside the Bank minigame ---------- */\n\n#cm-bank-toolbar {\n  position: relative;\n  z-index: 10;\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  justify-content: center;\n  gap: 6px;\n  padding: 4px 4px 6px;\n}\n#cm-bank-toolbar .bankButton {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  font-size: 11px;\n  padding: 3px 9px;\n}\n#cm-bank-toolbar .cm-bt-open {\n  color: #f4e6c3;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n}\n\n/* ---------- Panel ---------- */\n\n#CookieMgrMenu {\n  max-width: 780px;\n  margin: 0 auto;\n  padding: 0 12px 120px;\n  color: #ddd;\n}\n#CookieMgrMenu .ca-tagline {\n  text-align: center;\n  margin: -6px 0 14px;\n  font-size: 12px;\n  font-style: italic;\n  color: #b9ab93;\n  text-shadow: 0 1px 1px #000;\n}\n\n/* Cards */\n#CookieMgrMenu .ca-card {\n  margin: 14px 4px;\n  border-radius: 6px;\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  background: rgba(0, 0, 0, 0.38);\n  box-shadow:\n    0 0 1px #000,\n    inset 0 0 1px #000,\n    0 6px 16px rgba(0, 0, 0, 0.35);\n  overflow: hidden;\n}\n#CookieMgrMenu .ca-card-head {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 10px;\n  padding: 9px 14px;\n  background: linear-gradient(to right, rgba(255, 235, 190, 0.09), rgba(255, 235, 190, 0));\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-card-title {\n  flex: 1;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-size: 20px;\n  color: #fff;\n  text-shadow:\n    0 -1px 5px rgba(255, 255, 200, 0.35),\n    0 1px 3px #000;\n}\n#CookieMgrMenu .ca-card-ico {\n  margin-right: 8px;\n  vertical-align: -1px;\n  color: #ffd98a;\n  filter: drop-shadow(0 1px 2px #000);\n}\n#CookieMgrMenu .ca-row-ico {\n  flex: 0 0 28px;\n  width: 28px;\n  height: 28px;\n  border-radius: 50%;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  color: #e8d7b0;\n  background: radial-gradient(circle at 35% 30%, rgba(255, 230, 170, 0.18), rgba(0, 0, 0, 0.25));\n  box-shadow:\n    inset 0 0 0 1px rgba(255, 220, 150, 0.25),\n    0 1px 3px rgba(0, 0, 0, 0.6);\n}\n#CookieMgrMenu .ca-row-option:has(.ca-switch.on) .ca-row-ico {\n  color: #ffeab0;\n  box-shadow:\n    inset 0 0 0 1px rgba(255, 220, 150, 0.55),\n    0 0 8px rgba(255, 210, 110, 0.35);\n}\n#CookieMgrMenu .ca-row-ico .ca-ico-cookie {\n  width: 18px !important;\n  height: 18px !important;\n}\n#CookieMgrMenu .ca-pill {\n  font-size: 11px;\n  white-space: nowrap;\n  padding: 3px 10px;\n  border-radius: 10px;\n  color: #bbb;\n  background: rgba(255, 255, 255, 0.07);\n  border: 1px solid rgba(255, 255, 255, 0.15);\n  transition: all 0.2s;\n}\n#CookieMgrMenu .ca-pill.on {\n  color: #cfc;\n  background: rgba(80, 200, 90, 0.16);\n  border-color: rgba(130, 235, 120, 0.5);\n}\n\n/* Rows */\n#CookieMgrMenu .ca-row {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 8px 12px;\n  padding: 8px 14px;\n  border-top: 1px solid rgba(255, 255, 255, 0.05);\n  transition: background 0.2s;\n}\n#CookieMgrMenu .ca-list .ca-row:first-child {\n  border-top: none;\n}\n#CookieMgrMenu .ca-row:hover {\n  background: rgba(255, 255, 255, 0.035);\n}\n#CookieMgrMenu .ca-row.on {\n  background: linear-gradient(to right, rgba(255, 210, 90, 0.12), rgba(255, 210, 90, 0) 65%);\n}\n#CookieMgrMenu .ca-row-master {\n  background: rgba(0, 0, 0, 0.22);\n  border-top: none;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-row-option {\n  padding-top: 10px;\n  padding-bottom: 10px;\n}\n#CookieMgrMenu .ca-row-text {\n  flex: 1 1 160px;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-row-option {\n  flex-wrap: nowrap;\n}\n#CookieMgrMenu .ca-row-option .ca-row-text {\n  flex-basis: 0;\n}\n#CookieMgrMenu .ca-controls {\n  flex: 0 1 auto;\n  max-width: 100%;\n  margin-left: auto;\n  display: flex;\n  flex-wrap: wrap;\n  justify-content: flex-end;\n  align-items: center;\n  gap: 8px;\n}\n#CookieMgrMenu .ca-row-name {\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 14px;\n  color: #f2ead2;\n  text-shadow: 0 1px 2px #000;\n}\n#CookieMgrMenu .ca-row-desc {\n  margin-top: 2px;\n  font-size: 11px;\n  color: #b3a590;\n  text-shadow: 0 1px 1px #000;\n}\n\n/* Icons */\n#CookieMgrMenu .ca-icon {\n  flex: 0 0 36px;\n  width: 36px;\n  height: 36px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  transition:\n    filter 0.25s,\n    transform 0.25s;\n  filter: grayscale(0.55) brightness(0.8);\n}\n#CookieMgrMenu .ca-row.on .ca-icon,\n#CookieMgrMenu .ca-row-master .ca-icon {\n  filter: drop-shadow(0 0 6px rgba(255, 220, 120, 0.75));\n}\n#CookieMgrMenu .ca-row.on .ca-icon {\n  transform: scale(1.06);\n}\n#CookieMgrMenu .ca-img {\n  width: 36px;\n  height: 36px;\n  background-size: contain;\n  background-repeat: no-repeat;\n  background-position: center;\n}\n#CookieMgrMenu .ca-sprite {\n  flex: none;\n  width: 48px;\n  height: 48px;\n  background-image: url(img/icons.png);\n  transform: scale(0.75);\n}\n\n/* Toggle switch */\n#CookieMgrMenu .ca-switch {\n  flex: none;\n  padding: 2px;\n  background: none;\n  border: none;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-switch:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-switch-track {\n  display: block;\n  position: relative;\n  width: 42px;\n  height: 22px;\n  box-sizing: border-box;\n  border-radius: 11px;\n  background: #2a211c;\n  border: 1px solid rgba(255, 255, 255, 0.22);\n  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.75);\n  transition:\n    background 0.2s,\n    border-color 0.2s,\n    box-shadow 0.2s;\n}\n#CookieMgrMenu .ca-switch-knob {\n  position: absolute;\n  top: 2px;\n  left: 2px;\n  width: 16px;\n  height: 16px;\n  border-radius: 50%;\n  background: radial-gradient(circle at 35% 30%, #fff, #c9c1b5 55%, #8a8178);\n  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);\n  transition: left 0.18s ease-out;\n}\n#CookieMgrMenu .ca-switch:hover .ca-switch-track {\n  border-color: rgba(255, 225, 150, 0.6);\n}\n#CookieMgrMenu .ca-switch.on .ca-switch-track {\n  background: linear-gradient(#66c84b, #2f7d24);\n  border-color: #a5ea93;\n  box-shadow:\n    inset 0 1px 3px rgba(0, 0, 0, 0.35),\n    0 0 9px rgba(110, 230, 90, 0.45);\n}\n#CookieMgrMenu .ca-switch.on .ca-switch-knob {\n  left: 22px;\n}\n#CookieMgrMenu .ca-switch:focus-visible .ca-switch-track {\n  outline: 2px solid #ffd76a;\n  outline-offset: 2px;\n}\n\n/* Hotkey chips */\n#CookieMgrMenu .ca-hotkey {\n  flex: none;\n  display: inline-flex;\n  align-items: center;\n}\n#CookieMgrMenu .ca-key {\n  min-width: 46px;\n  height: 26px;\n  padding: 0 10px;\n  font:\n    bold 12px Tahoma,\n    Arial,\n    sans-serif;\n  color: #f4e6c3;\n  text-shadow: 0 1px 1px #000;\n  background: linear-gradient(#4d3c2d, #2a2018);\n  border: 1px solid;\n  border-color: #9a7d5b #3b2c1f #2a1f15 #74604a;\n  border-radius: 5px;\n  box-shadow:\n    0 2px 0 #140d08,\n    inset 0 1px 0 rgba(255, 255, 255, 0.16);\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    border-color 0.15s,\n    box-shadow 0.15s;\n}\n#CookieMgrMenu .ca-key:hover {\n  color: #fff;\n  border-color: #e0c08a #5a4430 #3d2e20 #b39468;\n}\n#CookieMgrMenu .ca-key:active {\n  transform: translateY(1px);\n  box-shadow:\n    0 1px 0 #140d08,\n    inset 0 1px 0 rgba(255, 255, 255, 0.16);\n}\n#CookieMgrMenu .ca-key:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-hotkey.unset .ca-key {\n  color: #8f877a;\n  font-weight: normal;\n  font-style: italic;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px dashed rgba(255, 255, 255, 0.22);\n  box-shadow: none;\n}\n#CookieMgrMenu .ca-hotkey.capturing .ca-key {\n  color: #ffe9a6;\n  border-color: #ffd76a;\n  animation: caCapture 1.1s infinite ease-in-out;\n}\n@keyframes caCapture {\n  0%,\n  100% {\n    box-shadow:\n      0 2px 0 #140d08,\n      0 0 0 0 rgba(255, 215, 106, 0.5);\n  }\n  50% {\n    box-shadow:\n      0 2px 0 #140d08,\n      0 0 12px 2px rgba(255, 215, 106, 0.55);\n  }\n}\n#CookieMgrMenu .ca-key-clear {\n  width: 18px;\n  height: 18px;\n  margin-left: 3px;\n  padding: 0;\n  border: none;\n  border-radius: 50%;\n  background: transparent;\n  color: #b09a8a;\n  font-size: 14px;\n  line-height: 18px;\n  cursor: pointer;\n  opacity: 0;\n  transition:\n    opacity 0.15s,\n    background 0.15s;\n}\n#CookieMgrMenu .ca-row:hover .ca-key-clear {\n  opacity: 0.8;\n}\n#CookieMgrMenu .ca-key-clear:hover {\n  color: #fff;\n  background: rgba(255, 80, 80, 0.35);\n}\n#CookieMgrMenu .ca-hotkey.unset .ca-key-clear,\n#CookieMgrMenu .ca-hotkey.capturing .ca-key-clear {\n  visibility: hidden;\n}\n\n/* Buttons */\n#CookieMgrMenu .ca-btn {\n  padding: 4px 12px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-weight: bold;\n  font-size: 12px;\n  color: #ddd;\n  text-shadow: 0 1px 1px #000;\n  background: linear-gradient(#3e2f23, #1d140f);\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 4px;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    inset 0 1px 0 rgba(255, 255, 255, 0.12);\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    box-shadow 0.15s,\n    opacity 0.15s;\n}\n#CookieMgrMenu .ca-btn:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-btn:not(:disabled):hover {\n  color: #fff;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    0 0 9px rgba(255, 220, 120, 0.35),\n    inset 0 1px 0 rgba(255, 255, 255, 0.18);\n}\n#CookieMgrMenu .ca-btn:not(:disabled):active {\n  transform: translateY(1px);\n}\n#CookieMgrMenu .ca-btn-on:not(:disabled):hover {\n  color: #d6ffcc;\n}\n#CookieMgrMenu .ca-btn-off:not(:disabled):hover {\n  color: #ffd2cc;\n}\n#CookieMgrMenu .ca-btn:disabled {\n  opacity: 0.38;\n  cursor: default;\n  box-shadow: none;\n}\n#CookieMgrMenu .ca-btn-small {\n  font-size: 11px;\n  padding: 3px 10px;\n}\n#CookieMgrMenu .ca-btn .ca-ico {\n  vertical-align: -2px;\n}\n#CookieMgrMenu .ca-btn.ca-armed {\n  color: #fff;\n  background: #8a2a22;\n  box-shadow: 0 0 0 1px #e5484d, 0 0 8px rgba(229, 72, 77, 0.6);\n}\n#CookieMgrMenu .ca-btn-lg {\n  padding: 10px 20px;\n  font-size: 15px;\n  border-radius: 6px;\n}\n#CookieMgrMenu .ca-btn-danger {\n  color: #ffdcd2;\n  background: linear-gradient(#6b2420, #3a1210);\n  border-color: #ffb199 #7a2a1e #5c1b12 #d98a6e;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    0 0 10px rgba(255, 90, 60, 0.25),\n    inset 0 1px 0 rgba(255, 255, 255, 0.15);\n}\n#CookieMgrMenu .ca-btn-danger:not(:disabled):hover {\n  color: #fff;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    0 0 16px rgba(255, 90, 60, 0.5),\n    inset 0 1px 0 rgba(255, 255, 255, 0.2);\n}\n#CookieMgrMenu .ca-card-danger {\n  border-color: rgba(255, 110, 80, 0.3);\n  box-shadow:\n    0 0 1px #000,\n    inset 0 0 1px #000,\n    0 0 14px rgba(255, 70, 40, 0.12),\n    0 6px 16px rgba(0, 0, 0, 0.35);\n}\n#CookieMgrMenu .ca-row-sellall {\n  align-items: center;\n  justify-content: space-between;\n  gap: 12px;\n}\n\n/* Footer */\n#CookieMgrMenu .ca-footer {\n  margin: 18px 8px 0;\n  font-size: 11px;\n  line-height: 1.7;\n  text-align: center;\n  color: #9b907f;\n  text-shadow: 0 1px 1px #000;\n}\n#CookieMgrMenu .ca-footer b {\n  color: #c9bba3;\n}\n#CookieMgrMenu kbd {\n  display: inline-block;\n  padding: 0 5px;\n  font:\n    bold 10px/16px Tahoma,\n    Arial,\n    sans-serif;\n  color: #e8dcc2;\n  background: #2a2018;\n  border: 1px solid #5a4632;\n  border-radius: 3px;\n  box-shadow: 0 1px 0 #140d08;\n}\n#CookieMgrMenu .ca-footer-actions {\n  margin-top: 8px;\n}\n\n#CookieMgrMenu .ca-page {\n  animation: caFade 0.18s ease-out;\n}\n@keyframes caFade {\n  from {\n    opacity: 0;\n    transform: translateY(3px);\n  }\n  to {\n    opacity: 1;\n    transform: none;\n  }\n}\n#CookieMgrMenu a {\n  color: #ffd98a;\n}\n\n/* ---------- Graph ---------- */\n\n#CookieMgrMenu .ca-live {\n  font-size: 11px;\n  padding: 3px 10px 3px 20px;\n  position: relative;\n  border-radius: 10px;\n  color: #cfc;\n  background: rgba(80, 200, 90, 0.16);\n  border: 1px solid rgba(130, 235, 120, 0.5);\n}\n#CookieMgrMenu .ca-live:before {\n  content: '';\n  position: absolute;\n  left: 8px;\n  top: 50%;\n  width: 6px;\n  height: 6px;\n  margin-top: -3px;\n  border-radius: 50%;\n  background: #7be07b;\n  box-shadow: 0 0 6px #7be07b;\n  animation: caBadgeGlow 1.6s infinite ease-in-out;\n}\n#CookieMgrMenu .ca-live.paused {\n  color: #ffd9a0;\n  background: rgba(255, 170, 60, 0.14);\n  border-color: rgba(255, 190, 100, 0.5);\n}\n#CookieMgrMenu .ca-live.paused:before {\n  background: #ffb45c;\n  box-shadow: none;\n  animation: none;\n}\n\n#CookieMgrMenu .ca-stats {\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));\n  gap: 1px;\n  background: rgba(255, 255, 255, 0.06);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-stat {\n  min-width: 0; /* lets the grid cell shrink below its content so overflow/ellipsis below can work */\n  padding: 8px 12px;\n  background: rgba(0, 0, 0, 0.32);\n}\n#CookieMgrMenu .ca-stat-label {\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #a89a83;\n}\n#CookieMgrMenu .ca-stat-value {\n  margin-top: 2px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 17px;\n  color: #ffeab0;\n  text-shadow: 0 1px 3px #000;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n#CookieMgrMenu .ca-stat-sub {\n  margin-top: 1px;\n  font-size: 10px;\n  color: #93866f;\n  white-space: nowrap;\n}\n\n#CookieMgrMenu .ca-toolbar {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  justify-content: space-between;\n  gap: 6px 12px;\n  padding: 8px 12px;\n}\n#CookieMgrMenu .ca-toolbar-bottom {\n  padding-top: 6px;\n}\n#CookieMgrMenu .ca-chipgroup {\n  display: inline-flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 4px;\n}\n#CookieMgrMenu .ca-chip-label {\n  margin-right: 2px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-chip {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  padding: 3px 9px;\n  font:\n    bold 11px Tahoma,\n    Arial,\n    sans-serif;\n  color: #b9ab93;\n  text-shadow: 0 1px 1px #000;\n  background: rgba(255, 255, 255, 0.05);\n  border: 1px solid rgba(255, 255, 255, 0.14);\n  border-radius: 11px;\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    background 0.15s,\n    border-color 0.15s;\n}\n#CookieMgrMenu .ca-chip:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-chip:hover {\n  color: #fff;\n  border-color: rgba(255, 225, 150, 0.5);\n}\n#CookieMgrMenu .ca-chip.on {\n  color: #fff3cf;\n  background: rgba(255, 200, 100, 0.18);\n  border-color: rgba(255, 210, 120, 0.6);\n}\n#CookieMgrMenu .ca-sw {\n  display: inline-block;\n  width: 9px;\n  height: 9px;\n  margin-right: 1px;\n  border-radius: 50%;\n  vertical-align: -1px;\n  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);\n}\n\n#CookieMgrMenu .ca-graph-wrap {\n  position: relative;\n  margin: 0 8px;\n}\n#CookieMgrMenu canvas.ca-graph {\n  display: block;\n  width: 100%;\n  height: 300px;\n  cursor: crosshair;\n}\n#CookieMgrMenu canvas.ca-graph.ca-graph-small {\n  height: 160px;\n}\n#CookieMgrMenu .ca-tip {\n  display: none;\n  position: absolute;\n  z-index: 5;\n  max-width: 270px;\n  min-width: 150px;\n  padding: 7px 10px;\n  pointer-events: none;\n  font-size: 11px;\n  line-height: 1.35;\n  color: #e6dcc6;\n  background: rgba(14, 10, 6, 0.95);\n  border: 1px solid;\n  border-color: #b98a4e #6a4626 #55301c #a0764a;\n  border-radius: 5px;\n  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7);\n}\n#CookieMgrMenu .ca-tip-head {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  margin-bottom: 4px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 12px;\n  color: #ffeab0;\n}\n#CookieMgrMenu .ca-tip-head span {\n  margin-left: auto;\n  padding-left: 10px;\n  font:\n    normal 10px Tahoma,\n    Arial,\n    sans-serif;\n  color: #a89a83;\n}\n#CookieMgrMenu .ca-tip-row {\n  display: flex;\n  align-items: center;\n  gap: 5px;\n  padding: 1px 0;\n}\n#CookieMgrMenu .ca-tip-row b {\n  font-weight: normal;\n  color: #b9ab93;\n}\n#CookieMgrMenu .ca-tip-row span {\n  margin-left: auto;\n  padding-left: 12px;\n  text-align: right;\n  color: #f2ead2;\n}\n#CookieMgrMenu .ca-tip-row.strong b,\n#CookieMgrMenu .ca-tip-row.strong span {\n  color: #fff3cf;\n  font-weight: bold;\n}\n#CookieMgrMenu .ca-tip-sep {\n  height: 1px;\n  margin: 5px 0;\n  background: rgba(255, 255, 255, 0.14);\n}\n#CookieMgrMenu .ca-tip-note {\n  margin: 2px 0 4px;\n  font-style: italic;\n  color: #a89a83;\n}\n\n#CookieMgrMenu .ca-legend {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 4px 12px;\n  min-height: 16px;\n  padding: 2px 14px 12px;\n  font-size: 11px;\n  color: #b9ab93;\n}\n#CookieMgrMenu .ca-legend-item em {\n  font-style: normal;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-legend-empty {\n  font-style: italic;\n  color: #7f735f;\n}\n\n#CookieMgrMenu .ca-hidden {\n  display: none;\n}\n\n/* ---------- Stock transaction log + ticker ---------- */\n\n#CookieMgrMenu .cm-tx-wrap {\n  max-height: 220px;\n  overflow-y: auto;\n  margin: 0 4px 6px;\n}\n#CookieMgrMenu .cm-tx-table {\n  width: 100%;\n  border-collapse: collapse;\n  font-size: 11px;\n}\n#CookieMgrMenu .cm-tx-table th {\n  position: sticky;\n  top: 0;\n  text-align: left;\n  padding: 4px 8px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.06em;\n  color: #93866f;\n  background: #1c150d;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.1);\n}\n#CookieMgrMenu .cm-tx-table td {\n  padding: 3px 8px;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.05);\n  white-space: nowrap;\n  color: #d8cbb0;\n}\n#CookieMgrMenu .cm-tx-row:hover td {\n  background: rgba(255, 255, 255, 0.04);\n}\n#CookieMgrMenu .cm-tx-buy {\n  color: #8f8;\n  font-weight: bold;\n}\n#CookieMgrMenu .cm-tx-sell {\n  color: #f88;\n  font-weight: bold;\n}\n#CookieMgrMenu .cm-tx-empty {\n  padding: 14px 8px;\n  text-align: center;\n  font-style: italic;\n  color: #7f735f;\n  font-size: 12px;\n}\n\n#CookieMgrMenu .cm-tickbars {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 6px;\n  margin: 0 8px 8px;\n}\n#CookieMgrMenu .cm-tickbar {\n  flex: 1 1 90px;\n  min-width: 70px;\n  padding: 5px 6px;\n  background: rgba(0, 0, 0, 0.28);\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  border-radius: 4px;\n  font-size: 10px;\n}\n#CookieMgrMenu .cm-tickbar-time {\n  color: #93866f;\n  text-align: center;\n  margin-bottom: 3px;\n  white-space: nowrap;\n}\n#CookieMgrMenu .cm-tickbar-row {\n  height: 5px;\n  background: rgba(255, 255, 255, 0.06);\n  border-radius: 3px;\n  margin-bottom: 2px;\n  overflow: hidden;\n}\n#CookieMgrMenu .cm-tickbar-fill {\n  display: block;\n  height: 100%;\n  border-radius: 3px;\n}\n#CookieMgrMenu .cm-tickbar-buy {\n  background: #8f8;\n}\n#CookieMgrMenu .cm-tickbar-sell {\n  background: #f88;\n}\n#CookieMgrMenu .cm-tickbar-net {\n  text-align: center;\n  font-weight: bold;\n  margin-top: 3px;\n}\n#CookieMgrMenu .cm-ticks-empty {\n  margin: 0 8px 8px;\n  padding: 10px;\n  text-align: center;\n  font-style: italic;\n  color: #7f735f;\n  font-size: 11px;\n}\n\n#CookieMgrMenu .cm-ticker {\n  margin: 8px 8px 10px;\n  padding: 6px 0;\n  overflow: hidden;\n  white-space: nowrap;\n  background: rgba(0, 0, 0, 0.32);\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  border-radius: 4px;\n}\n#CookieMgrMenu .cm-ticker-track {\n  display: inline-block;\n  will-change: transform;\n}\n#CookieMgrMenu .cm-tick-item {\n  display: inline-block;\n  padding: 0 16px;\n  font:\n    bold 11px Tahoma,\n    Arial,\n    sans-serif;\n  color: #cbbfa6;\n}\n#CookieMgrMenu .cm-tick-buy {\n  color: #8f8;\n}\n#CookieMgrMenu .cm-tick-sell {\n  color: #f88;\n}\n#CookieMgrMenu .cm-tick-empty {\n  color: #7f735f;\n  font-style: italic;\n  font-weight: normal;\n}\n#CookieMgrMenu .cm-tick-sep {\n  color: #4a4232;\n  padding: 0 4px;\n}\n\n@keyframes cmTickerScroll {\n  from {\n    transform: translateX(0);\n  }\n  to {\n    transform: translateX(-50%);\n  }\n}\n\n/* ---------- Sub-tabs (Graphs page and others) ---------- */\n\n#CookieMgrMenu .ca-subtabs {\n  display: flex;\n  gap: 4px;\n  margin: 2px 0 10px;\n  padding: 0 4px;\n  border-bottom: 1px solid rgba(255, 220, 150, 0.25);\n}\n#CookieMgrMenu .ca-subtab {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  padding: 6px 14px 5px;\n  margin-bottom: -1px;\n  font:\n    bold 12px Tahoma,\n    Arial,\n    sans-serif;\n  color: #b9ab93;\n  text-shadow: 0 1px 1px #000;\n  background: rgba(0, 0, 0, 0.25);\n  border: 1px solid rgba(255, 220, 150, 0.18);\n  border-bottom-color: transparent;\n  border-radius: 6px 6px 0 0;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-subtab:hover {\n  color: #f0e2c0;\n}\n#CookieMgrMenu .ca-subtab.on {\n  color: #fff3cf;\n  background: linear-gradient(to bottom, rgba(255, 200, 100, 0.2), rgba(0, 0, 0, 0.3));\n  border-color: rgba(255, 220, 150, 0.45);\n  border-bottom-color: #1c150d;\n}\n#CookieMgrMenu .ca-subtab .ca-ico-cookie {\n  width: 14px !important;\n  height: 14px !important;\n}\n\n/* ---------- Tables, notes ---------- */\n\n#CookieMgrMenu .ca-card-note {\n  padding: 0 14px 6px;\n  font-size: 11px;\n  line-height: 1.4;\n  color: #a39477;\n}\n#CookieMgrMenu .ca-table-wrap {\n  padding: 4px 10px 6px;\n  overflow-x: auto;\n}\n#CookieMgrMenu .ca-table {\n  width: 100%;\n  border-collapse: collapse;\n  font-size: 11px;\n}\n#CookieMgrMenu .ca-table th {\n  text-align: right;\n  padding: 4px 8px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.06em;\n  color: #93866f;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.1);\n  white-space: nowrap;\n}\n#CookieMgrMenu .ca-table th:first-child,\n#CookieMgrMenu .ca-table td:first-child {\n  text-align: left;\n}\n#CookieMgrMenu .ca-table td {\n  text-align: right;\n  padding: 3px 8px;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.05);\n  white-space: nowrap;\n  color: #d8cbb0;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrMenu .ca-table tr.strong td {\n  color: #fff3cf;\n  font-weight: bold;\n}\n#CookieMgrMenu .ca-table tbody tr:hover td {\n  background: rgba(255, 255, 255, 0.04);\n}\n#CookieMgrMenu .ca-sw.ca-sw-dash {\n  width: 10px;\n  height: 0;\n  border-radius: 0;\n  border-top: 2px dashed;\n  box-shadow: none;\n  vertical-align: 2px;\n}\n#CookieMgrMenu .ca-chip .ca-ico {\n  vertical-align: -2px;\n}\n\n/* ---------- Events page ---------- */\n\n#CookieMgrMenu .ca-table td.pos {\n  color: #9be89b;\n}\n#CookieMgrMenu .ca-table td.neg {\n  color: #ff9a8a;\n}\n#CookieMgrMenu .ca-table tr.muted td {\n  color: #6f6555;\n}\n#CookieMgrMenu .ca-ev-dot {\n  display: inline-flex;\n  width: 16px;\n  margin-right: 5px;\n  vertical-align: -2px;\n}\n#CookieMgrMenu .ca-ev-chip em {\n  font-style: normal;\n  opacity: 0.6;\n  font-weight: normal;\n}\n#CookieMgrMenu .ca-ev-chip .ca-ico {\n  color: var(--c);\n}\n#CookieMgrMenu .ca-ev-chip:not(.on) {\n  opacity: 0.5;\n}\n#CookieMgrMenu .ca-ev-chip:not(.on) .ca-ico {\n  color: inherit;\n}\n#CookieMgrMenu .ca-search {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  flex: 1 1 160px;\n  padding: 3px 8px;\n  color: #93866f;\n  background: rgba(0, 0, 0, 0.35);\n  border: 1px solid rgba(255, 220, 150, 0.2);\n  border-radius: 12px;\n}\n#CookieMgrMenu .ca-search input {\n  flex: 1;\n  min-width: 0;\n  font: 12px Tahoma, Arial, sans-serif;\n  color: #f0e2c0;\n  background: transparent;\n  border: none;\n  outline: none;\n}\n#CookieMgrMenu .ca-ev-list {\n  max-height: 420px;\n  overflow-y: auto;\n  padding: 0 6px 8px;\n}\n#CookieMgrMenu .ca-ev-row {\n  display: flex;\n  align-items: baseline;\n  gap: 8px;\n  padding: 4px 8px;\n  font-size: 11px;\n  color: #d8cbb0;\n  border-left: 2px solid var(--c);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.04);\n}\n#CookieMgrMenu .ca-ev-row:hover {\n  background: rgba(255, 255, 255, 0.04);\n}\n#CookieMgrMenu .ca-ev-ico {\n  flex: none;\n  color: var(--c);\n  align-self: center;\n  display: inline-flex;\n}\n#CookieMgrMenu .ca-ev-ico .ca-ico-cookie {\n  width: 14px !important;\n  height: 14px !important;\n}\n#CookieMgrMenu .ca-ev-time {\n  flex: none;\n  color: #93866f;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrMenu .ca-ev-text {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n#CookieMgrMenu .ca-ev-text b {\n  color: #f0e2c0;\n}\n#CookieMgrMenu .ca-ev-text span {\n  color: #a39477;\n}\n#CookieMgrMenu .ca-ev-cookies {\n  flex: none;\n  font-weight: bold;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrMenu .ca-ev-cookies.pos {\n  color: #9be89b;\n}\n#CookieMgrMenu .ca-ev-cookies.neg {\n  color: #ff9a8a;\n}\n#CookieMgrMenu .ca-ev-more {\n  display: block;\n  margin: 8px auto 0;\n}\n#CookieMgrMenu .ca-ev-empty {\n  display: block;\n  padding: 12px;\n  text-align: center;\n}\n\n/* ---------- Macros ---------- */\n\n#CookieMgrMenu .ca-icon-ico {\n  color: #ffd98a;\n  border-radius: 50%;\n  background: radial-gradient(circle at 35% 30%, rgba(255, 230, 170, 0.22), rgba(0, 0, 0, 0.3));\n  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.3);\n}\n#CookieMgrMenu .ca-icon-ico.small {\n  flex: 0 0 20px;\n  width: 20px;\n  height: 20px;\n}\n#CookieMgrMenu .ca-status-head .ca-icon {\n  flex: 0 0 20px;\n  width: 20px;\n  height: 20px;\n}\n#CookieMgrMenu .ca-status-head .ca-img,\n#CookieMgrMenu .ca-status-head .ca-sprite {\n  transform: scale(0.42);\n  transform-origin: center;\n}\n#CookieMgrMenu .ca-badge {\n  display: inline-block;\n  margin-left: 6px;\n  padding: 1px 7px;\n  font:\n    bold 9px Tahoma,\n    Arial,\n    sans-serif;\n  letter-spacing: 0.04em;\n  text-transform: uppercase;\n  vertical-align: 2px;\n  color: #c9bba0;\n  border-radius: 8px;\n  background: rgba(255, 255, 255, 0.07);\n  border: 1px solid rgba(255, 255, 255, 0.12);\n}\n#CookieMgrMenu .ca-badge-when {\n  color: #9fd3ff;\n  border-color: rgba(120, 190, 255, 0.35);\n}\n#CookieMgrMenu .ca-badge-once {\n  color: #ffd27a;\n  border-color: rgba(255, 200, 100, 0.35);\n}\n#CookieMgrMenu .ca-steps {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 3px;\n  margin-top: 4px;\n}\n#CookieMgrMenu .ca-step {\n  display: inline-flex;\n  align-items: center;\n  gap: 4px;\n  padding: 1px 7px 1px 5px;\n  font-size: 10px;\n  color: #d8cbb0;\n  border-radius: 9px;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px solid rgba(255, 220, 150, 0.15);\n}\n#CookieMgrMenu .ca-step .ca-ico {\n  color: #ffd98a;\n}\n#CookieMgrMenu .ca-step .ca-ico-cookie {\n  width: 12px !important;\n  height: 12px !important;\n}\n#CookieMgrMenu .ca-step-arrow {\n  color: #93866f;\n  font-weight: bold;\n}\n#CookieMgrMenu .ca-macro-status {\n  margin-top: 3px;\n  font-size: 10px;\n  color: #8fd18f;\n}\n#CookieMgrMenu .ca-macro-status:empty {\n  display: none;\n}\n#CookieMgrMenu .ca-macro:not(.on) .ca-macro-status {\n  color: #93866f;\n}\n#CookieMgrMenu .ca-iconbtn {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  min-width: 24px;\n  height: 24px;\n  padding: 0 4px;\n  font-size: 10px;\n  color: #b9ab93;\n  background: rgba(0, 0, 0, 0.25);\n  border: 1px solid rgba(255, 220, 150, 0.15);\n  border-radius: 6px;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-iconbtn:hover:not(:disabled) {\n  color: #fff3cf;\n  border-color: rgba(255, 220, 150, 0.45);\n}\n#CookieMgrMenu .ca-iconbtn:disabled {\n  opacity: 0.3;\n  cursor: default;\n}\n#CookieMgrMenu .ca-iconbtn.on,\n#CookieMgrMenu .ca-fav.on {\n  color: #ffd54a;\n  border-color: rgba(255, 213, 74, 0.55);\n}\n#CookieMgrMenu .ca-btn-run .ca-ico {\n  vertical-align: -1px;\n}\n\n/* status block (\"Running now\", also a widget) */\n#CookieMgrMenu .ca-status {\n  padding: 4px 12px 10px;\n}\n.ca-status-empty {\n  padding: 6px 2px;\n  font-size: 11px;\n  color: #93866f;\n}\n.ca-status-macro {\n  padding: 5px 0 6px;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.05);\n}\n.ca-status-macro:last-child {\n  border-bottom: none;\n}\n.ca-status-head {\n  display: flex;\n  align-items: center;\n  gap: 7px;\n  font-size: 12px;\n  color: #f0e2c0;\n}\n.ca-status-head > span:not(.ca-icon) {\n  flex: 1;\n  font-size: 10px;\n  color: #93866f;\n}\n.ca-status-step {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  margin: 3px 0 0 27px;\n  font-size: 10.5px;\n  color: #c9bba0;\n}\n.ca-status-step .ca-ico {\n  color: #93866f;\n}\n.ca-status-step.hot .ca-ico {\n  color: #7fe08b;\n  filter: drop-shadow(0 0 3px rgba(127, 224, 139, 0.8));\n}\n.ca-status-step.err {\n  color: #ff9a8a;\n}\n.ca-status-step.idle {\n  opacity: 0.55;\n}\n.ca-status-name {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n.ca-status-val {\n  flex: none;\n  font-variant-numeric: tabular-nums;\n  color: #a39477;\n}\n\n/* editor */\n#CookieMgrMenu .ca-editor {\n  box-shadow:\n    0 0 0 1px rgba(255, 210, 120, 0.45),\n    0 0 18px rgba(255, 200, 100, 0.15);\n}\n#CookieMgrMenu .ca-editor-body {\n  padding: 4px 14px 12px;\n}\n#CookieMgrMenu .ca-editor-row {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 8px 12px;\n  margin: 6px 0;\n}\n#CookieMgrMenu .ca-editor-block {\n  margin: 8px 0;\n  padding: 4px 10px;\n  border-left: 2px solid rgba(120, 190, 255, 0.5);\n  background: rgba(120, 190, 255, 0.05);\n}\n#CookieMgrMenu .ca-field {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  font-size: 11px;\n  color: #b9ab93;\n}\n#CookieMgrMenu .ca-field.ca-grow {\n  flex: 1 1 200px;\n}\n#CookieMgrMenu .ca-field.ca-grow input {\n  flex: 1;\n}\n#CookieMgrMenu .ca-field em {\n  font-style: normal;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-field-label {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  min-width: 64px;\n  font:\n    bold 11px Tahoma,\n    Arial,\n    sans-serif;\n  color: #e8d7b0;\n}\n#CookieMgrMenu .ca-hint {\n  font-size: 10.5px;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-editor input[type='text'],\n#CookieMgrMenu .ca-editor input[type='number'],\n#CookieMgrMenu .ca-editor select {\n  font: 12px Tahoma, Arial, sans-serif;\n  color: #f0e2c0;\n  background: rgba(0, 0, 0, 0.45);\n  border: 1px solid rgba(255, 220, 150, 0.25);\n  border-radius: 4px;\n  padding: 3px 6px;\n}\n#CookieMgrMenu .ca-editor input[type='number'] {\n  width: 80px;\n}\n#CookieMgrMenu .ca-editor select option,\n#CookieMgrMenu .ca-editor select optgroup {\n  background: #1c150d;\n  color: #f0e2c0;\n}\n#CookieMgrMenu .ca-iconpick {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 4px;\n}\n#CookieMgrMenu .ca-editor-steps {\n  display: flex;\n  flex-direction: column;\n  align-items: flex-start;\n  gap: 6px;\n  margin: 4px 0 8px;\n}\n#CookieMgrMenu .ca-editor-step {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 6px 10px;\n  width: 100%;\n  box-sizing: border-box;\n  padding: 6px 8px;\n  border-radius: 6px;\n  background: rgba(0, 0, 0, 0.25);\n  border: 1px solid rgba(255, 220, 150, 0.12);\n}\n#CookieMgrMenu .ca-step-n {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 18px;\n  height: 18px;\n  font:\n    bold 10px Tahoma,\n    Arial,\n    sans-serif;\n  color: #1c150d;\n  background: #ffd98a;\n  border-radius: 50%;\n}\n#CookieMgrMenu .ca-step-tools {\n  margin-left: auto;\n  display: inline-flex;\n  gap: 3px;\n}\n#CookieMgrMenu .ca-editor-error {\n  margin: 6px 0;\n  padding: 5px 9px;\n  font-size: 11px;\n  color: #ffd2cc;\n  background: rgba(229, 72, 77, 0.18);\n  border: 1px solid rgba(229, 72, 77, 0.5);\n  border-radius: 5px;\n}\n#CookieMgrMenu .ca-editor-actions {\n  display: flex;\n  gap: 8px;\n  margin-top: 10px;\n}\n";
 
 // ---- src/core/util.js ------------------------------------------------
 // Small helpers shared by every module.
@@ -95,7 +95,7 @@ CA.Util = {
 // Tiny publish/subscribe bus so features and UI stay decoupled.
 //
 // Events currently emitted:
-//   'clickers'  (id)          an autoclicker was switched on/off
+//   'macros'    (id)          a macro was switched on/off, run, saved or removed
 //   'settings'  (key)         an option changed
 //   'hotkeys'   (actionId)    a hotkey binding changed (or capture started/stopped)
 //   'ascend'    ()            the player just started ascending
@@ -130,15 +130,20 @@ CA.Events = (() => {
 })();
 
 // ---- src/core/actions.js ---------------------------------------------
-// Registry of things a hotkey can trigger.
-// Each feature registers its actions; the hotkey system and the settings panel read from here.
+// Registry of **actions**: single things CookieMgr can do in the game, once — click the big
+// cookie, pop the golden cookies on screen, trade stocks, cast a spell… Macros (features/macros.js)
+// are built by chaining actions; hotkeys trigger macros. The game-facing actions themselves are
+// defined in features/gameActions.js.
 //
 //   CA.Actions.register({
-//     id: 'clicker.golden',     // unique, stable (it is stored in the save)
-//     name: 'Golden cookies',   // shown in the UI
-//     group: 'autoclickers',
-//     defaultKey: 'KeyG',       // KeyboardEvent.code combo, '' for unbound
-//     run() { ... },
+//     id: 'pop.golden',                 // unique, stable (stored in saved macros)
+//     name: 'Pop golden cookies',       // shown in the UI
+//     icon: 'cookie',                   // ui/icons.js name
+//     group: 'Shimmers',                // heading in the macro editor's action picker
+//     unit: 'popped',                   // what run()'s return value counts, for status displays
+//     params: [{ key, label, type: 'select'|'number'|'bool', options: () => [{ v, label }], default }],
+//     available: () => true,            // false = can't run right now (minigame closed, …)
+//     run(params) { return 3; },        // a number = how many things it did (0 = nothing to do)
 //   });
 
 CA.Actions = (() => {
@@ -147,26 +152,95 @@ CA.Actions = (() => {
 
   function register(action) {
     if (byId[action.id]) throw new Error(`Action "${action.id}" already registered`);
-    const a = { group: 'general', defaultKey: '', ...action };
+    const a = { group: 'General', icon: 'bolt', unit: '', params: [], available: () => true, ...action };
     list.push(a);
     byId[a.id] = a;
     return a;
   }
 
-  function get(id) {
-    return byId[id];
-  }
+  const get = (id) => byId[id];
+  const all = () => list.slice();
 
-  function all(group) {
-    return group ? list.filter((a) => a.group === group) : list.slice();
-  }
-
-  function run(id) {
+  /** Default parameter values for an action, overlaid with `params`. */
+  function paramsFor(id, params) {
     const a = byId[id];
-    if (a && a.run) a.run();
+    const out = {};
+    if (a) a.params.forEach((p) => (out[p.key] = p.default));
+    return { ...out, ...(params || {}) };
   }
 
-  return { register, get, all, run };
+  /** Runs action `id` once. Returns its count (0 if it couldn't run), throws on errors. */
+  function run(id, params) {
+    const a = byId[id];
+    if (!a || !a.available()) return 0;
+    const r = a.run(paramsFor(id, params));
+    return typeof r === 'number' ? r : r ? 1 : 0;
+  }
+
+  /** "Pop golden cookies" / "Cast Force the Hand of Fate" — the action's name with its params folded in. */
+  function describe(step) {
+    const a = byId[step.action];
+    if (!a) return `Unknown action (${step.action})`;
+    return a.describe ? a.describe(paramsFor(step.action, step.params)) : a.name;
+  }
+
+  return { register, get, all, run, paramsFor, describe };
+})();
+
+// ---- src/core/conditions.js ------------------------------------------
+// Registry of **conditions** a "when" macro can wait for: a buff being active, a golden cookie on
+// screen, any recorded state (core/states.js) crossing a value, a spell being affordable…
+//
+//   CA.Conditions.register({
+//     id: 'buff', name: 'Effect is active', icon: 'sparkle',
+//     params: [{ key: 'name', label: 'Effect', type: 'select', options: () => [...], default: 'Frenzy' }],
+//     test(params) { return !!Game.hasBuff(params.name); },
+//     describe(params) { return `${params.name} is active`; },
+//   });
+
+CA.Conditions = (() => {
+  const list = [];
+  const byId = {};
+
+  function register(cond) {
+    if (byId[cond.id]) throw new Error(`Condition "${cond.id}" already registered`);
+    const c = { icon: 'filter', params: [], ...cond };
+    list.push(c);
+    byId[c.id] = c;
+    return c;
+  }
+
+  const get = (id) => byId[id];
+  const all = () => list.slice();
+
+  function paramsFor(id, params) {
+    const c = byId[id];
+    const out = {};
+    if (c) c.params.forEach((p) => (out[p.key] = p.default));
+    return { ...out, ...(params || {}) };
+  }
+
+  /** Whether condition `when` ({ cond, params, not }) holds right now; unknown ones never do. */
+  function test(when) {
+    const c = when && byId[when.cond];
+    if (!c) return false;
+    let r = false;
+    try {
+      r = !!c.test(paramsFor(when.cond, when.params));
+    } catch (e) {
+      r = false;
+    }
+    return when.not ? !r : r;
+  }
+
+  function describe(when) {
+    const c = when && byId[when.cond];
+    if (!c) return 'Unknown condition';
+    const text = c.describe ? c.describe(paramsFor(when.cond, when.params)) : c.name;
+    return when.not ? `not: ${text}` : text;
+  }
+
+  return { register, get, all, paramsFor, test, describe };
 })();
 
 // ---- src/core/settings.js --------------------------------------------
@@ -205,41 +279,39 @@ CA.Settings = (() => {
 
   // ---- hotkeys ---------------------------------------------------------------
 
-  function getHotkey(actionId) {
-    if (actionId in hotkeyOverrides) return hotkeyOverrides[actionId];
-    const action = CA.Actions.get(actionId);
-    return action ? action.defaultKey : '';
+  // Hotkeys bind to bindables (CA.Hotkeys.register): macros and a few panel commands.
+  // Up to v1.6 the autoclickers were bound as 'clicker.<id>'; they're macros now.
+  const LEGACY_HOTKEY_IDS = { 'clicker.stockTrader': 'macro.stockTrader' };
+  const migrateHotkeyId = (id) => LEGACY_HOTKEY_IDS[id] || (id.startsWith('clicker.') ? `macro.${id.slice(8)}` : id);
+
+  function getHotkey(id) {
+    if (id in hotkeyOverrides) return hotkeyOverrides[id];
+    const b = CA.Hotkeys.get(id);
+    return b ? b.defaultKey : '';
   }
 
-  function actionForCombo(combo) {
-    if (!combo) return null;
-    const hit = CA.Actions.all().find((a) => getHotkey(a.id) === combo);
-    return hit ? hit.id : null;
+  /** Every bindable a combo triggers (a key may be shared by several macros). */
+  function targetsForCombo(combo) {
+    if (!combo) return [];
+    return CA.Hotkeys.all()
+      .filter((b) => getHotkey(b.id) === combo)
+      .map((b) => b.id);
   }
 
   /**
-   * Binds `combo` to `actionId`. Any other action already using that combo is unbound.
-   * @returns {string[]} ids of actions that lost their binding
+   * Binds `combo` to bindable `id`. Keys can be shared, so nothing else is unbound.
+   * @returns {string[]} ids of the other bindables that the same key also triggers
    */
-  function setHotkey(actionId, combo) {
-    const displaced = [];
-    if (combo) {
-      CA.Actions.all().forEach((a) => {
-        if (a.id !== actionId && getHotkey(a.id) === combo) {
-          storeOverride(a.id, '');
-          displaced.push(a.id);
-        }
-      });
-    }
-    storeOverride(actionId, combo);
-    CA.Events.emit('hotkeys', actionId);
-    return displaced;
+  function setHotkey(id, combo) {
+    storeOverride(id, combo);
+    CA.Events.emit('hotkeys', id);
+    return combo ? targetsForCombo(combo).filter((x) => x !== id) : [];
   }
 
-  function storeOverride(actionId, combo) {
-    const action = CA.Actions.get(actionId);
-    if (action && action.defaultKey === combo) delete hotkeyOverrides[actionId];
-    else hotkeyOverrides[actionId] = combo;
+  function storeOverride(id, combo) {
+    const b = CA.Hotkeys.get(id);
+    if (b && b.defaultKey === combo) delete hotkeyOverrides[id];
+    else hotkeyOverrides[id] = combo;
   }
 
   function resetHotkeys() {
@@ -251,9 +323,9 @@ CA.Settings = (() => {
 
   function serialize() {
     const data = { v: SAVE_VERSION, options: { ...options }, hotkeys: { ...hotkeyOverrides } };
-    if (options.rememberStates) {
-      if (CA.Autoclickers) data.clickers = CA.Autoclickers.snapshot();
-      if (CA.StockTrader) data.stockTrader = CA.StockTrader.isOn();
+    if (CA.Macros) {
+      data.macros = CA.Macros.serialize(); // your own macros + per-macro preferences
+      if (options.rememberStates) data.running = CA.Macros.runningIds();
     }
     return JSON.stringify(data);
   }
@@ -278,7 +350,7 @@ CA.Settings = (() => {
     if (data.hotkeys && typeof data.hotkeys === 'object') {
       hotkeyOverrides = {};
       Object.keys(data.hotkeys).forEach((id) => {
-        if (typeof data.hotkeys[id] === 'string') hotkeyOverrides[id] = data.hotkeys[id];
+        if (typeof data.hotkeys[id] === 'string') hotkeyOverrides[migrateHotkeyId(id)] = data.hotkeys[id];
       });
     }
     CA.Events.emit('settings', null);
@@ -306,8 +378,9 @@ CA.Settings = (() => {
     }
   }
 
-  /** @returns {object|null} same shape as deserialize()'s return, or null if nothing local */
-  function restoreFromLocal() {
+  /** The mirrored payload string, or null. Read it *before* deserialize()ing anything: that
+   *  emits 'settings', which re-mirrors the current (not yet restored) state over it. */
+  function localPayload() {
     let raw;
     try {
       raw = localStorage.getItem(STORE_KEY);
@@ -321,14 +394,19 @@ CA.Settings = (() => {
     } catch (e) {
       return null;
     }
-    if (!data || typeof data.payload !== 'string') return null;
-    return deserialize(data.payload);
+    return data && typeof data.payload === 'string' ? data.payload : null;
+  }
+
+  /** @returns {object|null} same shape as deserialize()'s return, or null if nothing local */
+  function restoreFromLocal() {
+    const payload = localPayload();
+    return payload ? deserialize(payload) : null;
   }
 
   function startAutoPersist() {
     CA.Events.on('settings', persistToLocal);
     CA.Events.on('hotkeys', persistToLocal);
-    CA.Events.on('clickers', persistToLocal);
+    CA.Events.on('macros', persistToLocal);
     persistTimer = setInterval(persistToLocal, PERSIST_MS);
     addEventListener('pagehide', persistToLocal);
     addEventListener('beforeunload', persistToLocal);
@@ -341,11 +419,12 @@ CA.Settings = (() => {
     set,
     getHotkey,
     setHotkey,
-    actionForCombo,
+    targetsForCombo,
     resetHotkeys,
     serialize,
     deserialize,
     restoreFromLocal,
+    localPayload,
     startAutoPersist,
   };
 })();
@@ -1074,11 +1153,36 @@ CA.EventLog = (() => {
 // ---- src/core/hotkeys.js ---------------------------------------------
 // Global keyboard shortcuts + "press a key to bind" capture mode.
 //
+// hotkey → macro(s) → action(s): a hotkey is bound to *bindables* — every macro registers one
+// (features/macros.js), plus a couple of panel commands (open/close the panel, all autoclickers).
+// One key may trigger several macros at once.
+//
 // A combo is stored as a string of optional modifiers followed by a KeyboardEvent.code,
 // e.g. 'KeyG', 'Shift+KeyG', 'Ctrl+Alt+Digit1'. Using `code` (physical key) keeps
 // bindings stable across keyboard layouts and Shift states.
 
 CA.Hotkeys = (() => {
+  // ---- bindables ---------------------------------------------------------------------
+  const targets = [];
+  const byId = {};
+
+  /** { id, name, group, defaultKey, run } — registering an existing id replaces it. */
+  function register(t) {
+    const b = { group: 'general', defaultKey: '', ...t };
+    if (!byId[b.id]) targets.push(b);
+    else targets[targets.indexOf(byId[b.id])] = b;
+    byId[b.id] = b;
+    return b;
+  }
+  function unregister(id) {
+    const b = byId[id];
+    if (!b) return;
+    targets.splice(targets.indexOf(b), 1);
+    delete byId[id];
+  }
+  const get = (id) => byId[id];
+  const all = () => targets.slice();
+
   const MODIFIER_CODES = [
     'ShiftLeft',
     'ShiftRight',
@@ -1215,10 +1319,16 @@ CA.Hotkeys = (() => {
     if (e.repeat || isTypingTarget(e)) return;
     if (typeof Game !== 'undefined' && Game.promptOn) return; // a game dialog is open
 
-    const actionId = CA.Settings.actionForCombo(fromEvent(e));
-    if (!actionId) return;
+    const ids = CA.Settings.targetsForCombo(fromEvent(e));
+    if (!ids.length) return;
     e.preventDefault();
-    CA.Actions.run(actionId);
+    ids.forEach((id) => {
+      try {
+        byId[id].run();
+      } catch (err) {
+        console.error(`[CookieMgr] hotkey ${id} failed`, err);
+      }
+    });
   }
 
   function init() {
@@ -1226,7 +1336,7 @@ CA.Hotkeys = (() => {
     window.addEventListener('keydown', onKeyDown, true);
   }
 
-  return { init, fromEvent, format, startCapture, cancelCapture, capturing };
+  return { init, register, unregister, get, all, fromEvent, format, startCapture, cancelCapture, capturing };
 })();
 
 // ---- src/core/ascension.js -------------------------------------------
@@ -1327,212 +1437,732 @@ CA.Update = (() => {
   return { init };
 })();
 
-// ---- src/features/autoclickers.js ------------------------------------
-// Autoclickers: the original v0.1 bookmarklet features, one timer each.
+// ---- src/features/gameActions.js -------------------------------------
+// The game-facing **actions** (core/actions.js) and **conditions** (core/conditions.js) macros
+// are built from. Each action does one thing once and returns how many things it did.
+// Spells live in features/grimoire.js.
 
-CA.Autoclickers = (() => {
+CA.GameActions = (() => {
   const popShimmers = (filter) => {
-    Game.shimmers.filter(filter).forEach((s) => s.pop());
+    const list = (Game.shimmers || []).filter(filter);
+    list.forEach((s) => s.pop());
+    return list.length;
   };
 
-  /**
-   * Clicker definitions. To add a new one, append an entry here — the panel,
-   * hotkeys and save data pick it up automatically.
-   *   icon: [x, y] on the game's img/icons.png (used in notifications)
-   *   img:  optional nicer picture for the panel
-   */
-  const DEFS = [
+  // Effect names as the game keys them in Game.buffs (the common golden-cookie ones).
+  const BUFFS = [
+    'Frenzy',
+    'Click frenzy',
+    'Elder frenzy',
+    'Dragonflight',
+    'Dragon Harvest',
+    'Cookie storm',
+    'Clot',
+    'Cursed finger',
+    'Everything must go',
+    'Sugar blessing',
+    'Devastation',
+    'Sugar frenzy',
+  ];
+  const buffOptions = () => {
+    const names = new Set(BUFFS);
+    Object.keys(Game.buffs || {}).forEach((n) => names.add(n));
+    return [...names].map((n) => ({ v: n, label: n }));
+  };
+  const isBuildingSpecial = (b) => b && b.type && b.type.name === 'building buff';
+
+  const OPS = [
+    { v: '>=', label: '≥' },
+    { v: '<=', label: '≤' },
+    { v: '>', label: '>' },
+    { v: '<', label: '<' },
+  ];
+  const compare = (a, op, b) => (op === '>=' ? a >= b : op === '<=' ? a <= b : op === '>' ? a > b : a < b);
+
+  function registerActions() {
+    const A = CA.Actions.register;
+    A({
+      id: 'click.bigCookie',
+      name: 'Click the big cookie',
+      icon: 'cookie',
+      group: 'Clicking',
+      unit: 'clicks',
+      run: () => {
+        Game.ClickCookie();
+        return 1;
+      },
+    });
+    A({
+      id: 'pop.golden',
+      name: 'Pop golden cookies',
+      icon: 'cookie',
+      group: 'Shimmers',
+      unit: 'popped',
+      run: () => popShimmers((s) => s.type === 'golden' && !s.wrath),
+    });
+    A({
+      id: 'pop.wrath',
+      name: 'Pop wrath cookies',
+      icon: 'cookie',
+      group: 'Shimmers',
+      unit: 'popped',
+      run: () => popShimmers((s) => s.type === 'golden' && s.wrath),
+    });
+    A({
+      id: 'pop.reindeer',
+      name: 'Pop reindeer',
+      icon: 'star',
+      group: 'Shimmers',
+      unit: 'popped',
+      run: () => popShimmers((s) => s.type === 'reindeer'),
+    });
+    A({
+      id: 'click.fortune',
+      name: 'Click fortune news',
+      icon: 'tag',
+      group: 'Clicking',
+      unit: 'fortunes',
+      run: () => {
+        if (!(Game.TickerEffect && Game.TickerEffect.type === 'fortune' && Game.tickerL)) return 0;
+        Game.tickerL.click();
+        return 1;
+      },
+    });
+    A({
+      id: 'pop.wrinklers',
+      name: 'Pop wrinklers',
+      icon: 'wrinkler',
+      group: 'Shimmers',
+      unit: 'popped',
+      params: [
+        {
+          key: 'shiny',
+          label: 'Shiny wrinklers',
+          type: 'select',
+          default: 'pop',
+          options: () => [
+            { v: 'pop', label: 'Pop them too' },
+            { v: 'keep', label: 'Leave them alone' },
+          ],
+        },
+      ],
+      describe: (p) => (p.shiny === 'keep' ? 'Pop wrinklers (not shiny ones)' : 'Pop wrinklers'),
+      run: (p) => {
+        let n = 0;
+        (Game.wrinklers || []).forEach((w) => {
+          if (w.phase > 0 && w.hp > 0 && !(p.shiny === 'keep' && w.type === 1)) {
+            w.hp = 0; // the game pops it on its next frame, paying out as usual
+            n++;
+          }
+        });
+        return n;
+      },
+    });
+    A({
+      id: 'stocks.trade',
+      name: 'Trade stocks: buy rising, sell the rest',
+      icon: 'stocks',
+      group: 'Stock market',
+      unit: 'trades',
+      available: () => !!CA.Stocks.minigame(),
+      run: () => CA.StockTrader.trade(),
+    });
+    A({
+      id: 'stocks.sellAll',
+      name: 'Sell all stocks',
+      icon: 'dollar',
+      group: 'Stock market',
+      unit: 'sold',
+      available: () => !!CA.Stocks.minigame(),
+      run: () => CA.StockTrader.sellEverything(),
+    });
+    A({
+      id: 'lump.harvest',
+      name: 'Harvest the sugar lump once ripe',
+      icon: 'lump',
+      group: 'Other',
+      unit: 'harvested',
+      available: () => typeof Game.canLumps === 'function' && Game.canLumps(),
+      run: () => {
+        // only when ripe: harvesting a mature-but-unripe lump can give nothing
+        if (!Game.lumpT || Date.now() - Game.lumpT < Game.lumpRipeAge) return 0;
+        Game.clickLump();
+        return 1;
+      },
+    });
+    const macroOptions = (pred) => () => CA.Macros.list().filter(pred).map((m) => ({ v: m.id, label: m.name }));
+    A({
+      id: 'macro.set',
+      name: 'Switch a macro on or off',
+      icon: 'bolt',
+      group: 'Macros',
+      params: [
+        { key: 'macro', label: 'Macro', type: 'select', default: '', options: macroOptions((m) => m.mode !== 'once') },
+        {
+          key: 'to',
+          label: 'Switch',
+          type: 'select',
+          default: 'on',
+          options: () => [
+            { v: 'on', label: 'On' },
+            { v: 'off', label: 'Off' },
+            { v: 'toggle', label: 'Toggle' },
+          ],
+        },
+      ],
+      describe: (p) => {
+        const m = CA.Macros.get(p.macro);
+        return `Switch ${m ? `“${m.name}”` : 'a macro'} ${p.to === 'toggle' ? 'on/off' : p.to}`;
+      },
+      run: (p) => {
+        const m = CA.Macros.get(p.macro);
+        if (!m) return 0;
+        const on = p.to === 'toggle' ? !CA.Macros.isOn(m.id) : p.to === 'on';
+        if (CA.Macros.isOn(m.id) === on) return 0;
+        CA.Macros.set(m.id, on);
+        return 1;
+      },
+    });
+    A({
+      id: 'macro.run',
+      name: 'Run another macro once',
+      icon: 'play',
+      group: 'Macros',
+      params: [{ key: 'macro', label: 'Macro', type: 'select', default: '', options: macroOptions(() => true) }],
+      describe: (p) => {
+        const m = CA.Macros.get(p.macro);
+        return `Run ${m ? `“${m.name}”` : 'a macro'}`;
+      },
+      run: (p) => (CA.Macros.get(p.macro) ? CA.Macros.runOnce(p.macro) : 0),
+    });
+  }
+
+  function registerConditions() {
+    const C = CA.Conditions.register;
+    C({
+      id: 'buff',
+      name: 'An effect is active',
+      icon: 'sparkle',
+      params: [{ key: 'name', label: 'Effect', type: 'select', default: 'Frenzy', options: buffOptions }],
+      describe: (p) => `${p.name} is active`,
+      test: (p) => {
+        const b = Game.buffs && Game.buffs[p.name];
+        return !!(b && b.time > 0);
+      },
+    });
+    C({
+      id: 'buildingSpecial',
+      name: 'A building special is active',
+      icon: 'sparkle',
+      describe: () => 'a building special is active',
+      test: () => Object.values(Game.buffs || {}).some((b) => isBuildingSpecial(b) && b.time > 0),
+    });
+    C({
+      id: 'buffCount',
+      name: 'Several effects at once',
+      icon: 'sparkle',
+      params: [{ key: 'n', label: 'At least', type: 'number', default: 2, min: 1 }],
+      describe: (p) => `${p.n}+ effects are active`,
+      test: (p) => Object.values(Game.buffs || {}).filter((b) => b && b.time > 0).length >= p.n,
+    });
+    C({
+      id: 'shimmer',
+      name: 'Something to pop is on screen',
+      icon: 'cookie',
+      params: [
+        {
+          key: 'type',
+          label: 'What',
+          type: 'select',
+          default: 'golden',
+          options: () => [
+            { v: 'golden', label: 'Golden cookie' },
+            { v: 'wrath', label: 'Wrath cookie' },
+            { v: 'reindeer', label: 'Reindeer' },
+          ],
+        },
+      ],
+      describe: (p) => `a ${p.type === 'golden' ? 'golden cookie' : p.type === 'wrath' ? 'wrath cookie' : 'reindeer'} is on screen`,
+      test: (p) =>
+        (Game.shimmers || []).some((s) =>
+          p.type === 'reindeer' ? s.type === 'reindeer' : s.type === 'golden' && !!s.wrath === (p.type === 'wrath')
+        ),
+    });
+    C({
+      id: 'state',
+      name: 'A value crosses a threshold',
+      icon: 'graphs',
+      params: [
+        {
+          key: 'state',
+          label: 'Value',
+          type: 'select',
+          default: 'cps',
+          options: () =>
+            CA.States.list()
+              .filter((d) => d.kind !== 'flow')
+              .map((d) => ({ v: d.id, label: d.name })),
+        },
+        { key: 'op', label: 'Is', type: 'select', default: '>=', options: () => OPS },
+        { key: 'value', label: 'Than', type: 'number', default: 0 },
+      ],
+      describe: (p) => {
+        const d = CA.States.get(p.state);
+        const op = (OPS.find((o) => o.v === p.op) || OPS[0]).label;
+        return `${d ? d.name : p.state} ${op} ${CA.UI.Plot.fmt.beautify(p.value)}`;
+      },
+      test: (p) => {
+        const v = CA.States.value(p.state);
+        return Number.isFinite(v) && compare(v, p.op, Number(p.value));
+      },
+    });
+  }
+
+  function init() {
+    registerActions();
+    registerConditions();
+  }
+
+  return { init, BUFFS };
+})();
+
+// ---- src/features/macros.js ------------------------------------------
+// **Macros**: automations built by chaining actions (core/actions.js). hotkey → macro(s) → action(s).
+//
+// A macro has a trigger mode:
+//   repeat   while it's on, runs its steps every `every` ms              (the autoclickers)
+//   when     while it's on, checks a condition (core/conditions.js) every `every` ms and runs its
+//            steps when it becomes true ("rise") or on every check while it holds ("while")
+//   once     no on/off — a button or hotkey runs its steps one time       (Sell all stocks)
+//
+// Built-in macros (the original autoclickers, the stock autobuyer, Sell all…) can't be removed or
+// edited, only duplicated. Your own macros are saved in the game save with the rest of the
+// settings. Every macro is also a hotkey bindable ('macro.<id>'): repeat/when macros toggle,
+// once macros run.
+
+CA.Macros = (() => {
+  const MIN_EVERY = 20;
+  const MAX_DEPTH = 4; // macros running macros running macros…
+
+  const sprite = (x, y, img) => ({ sprite: [x, y], img });
+
+  const BUILTINS = [
     {
       id: 'bigCookie',
       name: 'Big cookie',
       desc: 'Clicks the big cookie 20 times a second.',
-      interval: 50,
+      icon: sprite(11, 0, 'img/perfectCookie.png'),
+      mode: 'repeat',
+      every: 50,
+      steps: [{ action: 'click.bigCookie' }],
       defaultKey: 'KeyC',
-      icon: [11, 0],
-      img: 'img/perfectCookie.png',
-      tick() {
-        Game.ClickCookie();
-      },
+      inAll: true,
+      section: 'autoclickers',
     },
     {
       id: 'golden',
       name: 'Golden cookies',
       desc: 'Pops golden cookies the moment they appear.',
-      interval: 100,
+      icon: sprite(10, 14, 'img/goldCookie.png'),
+      mode: 'repeat',
+      every: 100,
+      steps: [{ action: 'pop.golden' }],
       defaultKey: 'KeyG',
-      icon: [10, 14],
-      img: 'img/goldCookie.png',
-      tick() {
-        popShimmers((s) => s.type === 'golden' && !s.wrath);
-      },
+      inAll: true,
+      section: 'autoclickers',
     },
     {
       id: 'wrath',
       name: 'Wrath cookies',
       desc: 'Pops red wrath cookies too (they can be good or bad).',
-      interval: 100,
+      icon: sprite(15, 5, 'img/wrathCookie.png'),
+      mode: 'repeat',
+      every: 100,
+      steps: [{ action: 'pop.wrath' }],
       defaultKey: 'KeyW',
-      icon: [15, 5],
-      img: 'img/wrathCookie.png',
-      tick() {
-        popShimmers((s) => s.type === 'golden' && s.wrath);
-      },
+      inAll: true,
+      section: 'autoclickers',
     },
     {
       id: 'reindeer',
       name: 'Reindeer',
       desc: 'Pops reindeer during the Christmas season.',
-      interval: 100,
+      icon: sprite(12, 9, 'img/frostedReindeer.png'),
+      mode: 'repeat',
+      every: 100,
+      steps: [{ action: 'pop.reindeer' }],
       defaultKey: 'KeyR',
-      icon: [12, 9],
-      img: 'img/frostedReindeer.png',
-      tick() {
-        popShimmers((s) => s.type === 'reindeer');
-      },
+      inAll: true,
+      section: 'autoclickers',
     },
     {
       id: 'fortune',
       name: 'Fortune news',
       desc: 'Clicks fortunes as they scroll through the news ticker.',
-      interval: 100,
+      icon: sprite(29, 8),
+      mode: 'repeat',
+      every: 100,
+      steps: [{ action: 'click.fortune' }],
       defaultKey: 'KeyF',
-      icon: [29, 8],
-      tick() {
-        if (Game.TickerEffect && Game.TickerEffect.type === 'fortune' && Game.tickerL) Game.tickerL.click();
-      },
+      inAll: true,
+      section: 'autoclickers',
     },
     {
       id: 'wrinklers',
       name: 'Wrinklers',
       desc: 'Pops wrinklers as soon as they latch onto the cookie.',
-      interval: 100,
+      icon: sprite(19, 8),
+      mode: 'repeat',
+      every: 100,
+      steps: [{ action: 'pop.wrinklers' }],
       defaultKey: 'KeyK',
-      icon: [19, 8],
-      tick() {
-        Game.wrinklers.forEach((w) => {
-          if (w.phase > 0) w.hp = 0;
-        });
-      },
+      inAll: true,
+      section: 'autoclickers',
+    },
+    {
+      id: 'stockTrader',
+      name: 'Stock market autobuyer',
+      desc: 'Once a second: buys the max it can afford of fast-rising stocks, then slow-rising ones, and sells anything it holds that isn’t rising.',
+      icon: sprite(9, 33),
+      mode: 'repeat',
+      every: 1000,
+      steps: [{ action: 'stocks.trade' }],
+      defaultKey: '',
+      keepOnAscend: true,
+      section: 'stocks',
+    },
+    {
+      id: 'sellAll',
+      name: 'Sell all stocks',
+      desc: 'Turns the autobuyer off (so it doesn’t buy it all straight back), then sells every stock you hold.',
+      icon: { ico: 'dollar' },
+      mode: 'once',
+      steps: [{ action: 'macro.set', params: { macro: 'stockTrader', to: 'off' } }, { action: 'stocks.sellAll' }],
+      defaultKey: '',
+      section: 'stocks',
     },
   ];
 
+  const macros = []; // builtins first, then yours, in order
   const byId = {};
-  const enabled = {};
-  const timers = {};
+  const running = {}; // id -> { timer, since, condWas, lastFire }
+  const status = {}; // id -> { runs, lastRun, steps: [{ total, runs, last, lastAt, error }] }
+  let prefs = {}; // id -> { fav }
+  let depth = 0;
 
-  DEFS.forEach((d) => {
-    byId[d.id] = d;
-    enabled[d.id] = false;
-  });
+  // ---- definitions --------------------------------------------------------------------
 
-  function runTick(def) {
-    if (Game.OnAscend || Game.AscendTimer > 0) return;
+  function clean(def) {
+    const mode = ['repeat', 'when', 'once'].includes(def.mode) ? def.mode : 'repeat';
+    const m = {
+      id: String(def.id),
+      name: String(def.name || 'Macro').slice(0, 60),
+      desc: String(def.desc || '').slice(0, 300),
+      icon: def.icon && typeof def.icon === 'object' ? def.icon : { ico: 'bolt' },
+      mode,
+      every: Math.max(MIN_EVERY, Math.round(Number(def.every) || (mode === 'when' ? 250 : 1000))),
+      steps: (Array.isArray(def.steps) ? def.steps : [])
+        .filter((s) => s && typeof s.action === 'string')
+        .map((s) => ({ action: s.action, params: s.params && typeof s.params === 'object' ? { ...s.params } : {} })),
+      inAll: !!def.inAll,
+      builtin: !!def.builtin,
+    };
+    if (mode === 'when') {
+      const w = def.when || {};
+      m.when = { cond: String(w.cond || 'buff'), params: w.params && typeof w.params === 'object' ? { ...w.params } : {}, not: !!w.not, edge: w.edge === 'while' ? 'while' : 'rise' };
+    }
+    ['defaultKey', 'keepOnAscend', 'section'].forEach((k) => def[k] !== undefined && (m[k] = def[k]));
+    return m;
+  }
+
+  function add(def) {
+    const m = clean(def);
+    if (byId[m.id]) {
+      macros[macros.indexOf(byId[m.id])] = m;
+    } else macros.push(m);
+    byId[m.id] = m;
+    status[m.id] = status[m.id] || freshStatus(m);
+    if (status[m.id].steps.length !== m.steps.length) status[m.id] = freshStatus(m);
+    CA.Hotkeys.register({
+      id: `macro.${m.id}`,
+      name: m.name,
+      group: 'macros',
+      defaultKey: m.defaultKey || '',
+      run: () => trigger(m.id),
+    });
+    return m;
+  }
+
+  const freshStatus = (m) => ({ runs: 0, lastRun: 0, steps: m.steps.map(() => ({ total: 0, runs: 0, last: 0, lastAt: 0, error: '' })) });
+
+  const newId = () => `m${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`;
+
+  /** Creates or updates one of your macros; returns it. Built-ins can't be changed. */
+  function save(def) {
+    if (def.id && byId[def.id] && byId[def.id].builtin) throw new Error('Built-in macros can’t be edited — duplicate it instead.');
+    const wasOn = def.id && isOn(def.id);
+    if (wasOn) stop(def.id);
+    const m = add({ ...def, id: def.id || newId(), builtin: false });
+    if (wasOn && m.mode !== 'once') start(m.id);
+    changed(m.id);
+    return m;
+  }
+
+  function remove(id) {
+    const m = byId[id];
+    if (!m || m.builtin) return false;
+    stop(id);
+    macros.splice(macros.indexOf(m), 1);
+    delete byId[id];
+    delete status[id];
+    delete prefs[id];
+    CA.Hotkeys.unregister(`macro.${id}`);
+    changed(id);
+    return true;
+  }
+
+  function duplicate(id) {
+    const m = byId[id];
+    if (!m) return null;
+    const copy = JSON.parse(JSON.stringify(m));
+    delete copy.defaultKey;
+    delete copy.section;
+    delete copy.keepOnAscend;
+    return save({ ...copy, id: null, builtin: false, name: `${m.name} (copy)`.slice(0, 60) });
+  }
+
+  // ---- running ----------------------------------------------------------------------------
+
+  const ascending = () => Game.OnAscend || Game.AscendTimer > 0;
+
+  function runSteps(m) {
+    if (ascending() || depth >= MAX_DEPTH) return 0;
+    const st = status[m.id];
+    let done = 0;
+    depth++;
     try {
-      def.tick();
-    } catch (e) {
-      console.error(`[CookieMgr] ${def.name} autoclicker error`, e);
+      m.steps.forEach((step, i) => {
+        const s = st.steps[i];
+        try {
+          const n = CA.Actions.run(step.action, step.params);
+          s.runs++;
+          s.last = n;
+          if (n > 0) {
+            s.total += n;
+            s.lastAt = Date.now();
+          }
+          s.error = '';
+          done += n;
+        } catch (e) {
+          s.error = String((e && e.message) || e);
+          console.error(`[CookieMgr] macro "${m.name}" step ${i + 1} failed`, e);
+        }
+      });
+    } finally {
+      depth--;
+    }
+    st.runs++;
+    st.lastRun = Date.now();
+    return done;
+  }
+
+  function tick(m) {
+    const r = running[m.id];
+    if (!r) return;
+    if (m.mode === 'repeat') {
+      runSteps(m);
+      return;
+    }
+    // when
+    const now = CA.Conditions.test(m.when);
+    const fire = now && (m.when.edge === 'while' || !r.condWas);
+    r.condWas = now;
+    if (fire) {
+      r.lastFire = Date.now();
+      runSteps(m);
     }
   }
 
-  function announce(title, on, icon) {
+  function start(id) {
+    const m = byId[id];
+    if (!m || m.mode === 'once' || running[id]) return;
+    running[id] = { since: Date.now(), condWas: false, lastFire: 0, timer: setInterval(() => tick(m), m.every) };
+  }
+
+  function stop(id) {
+    const r = running[id];
+    if (!r) return;
+    clearInterval(r.timer);
+    delete running[id];
+  }
+
+  function announce(m, on) {
     if (!CA.Settings.get('notifications')) return;
-    CA.Util.notify(title, on ? '<b style="color:#8f8">ON</b>' : '<b style="color:#f88">OFF</b>', icon, 2);
+    const icon = m.icon && m.icon.sprite ? m.icon.sprite : CA.ICON;
+    CA.Util.notify(m.name, on ? '<b style="color:#8f8">ON</b>' : '<b style="color:#f88">OFF</b>', icon, 2);
   }
 
-  /** Turns one autoclicker on or off. */
+  function changed(id) {
+    CA.Events.emit('macros', id);
+  }
+
+  /** Turns a repeat/when macro on or off. */
   function set(id, on, { silent = false } = {}) {
-    const def = byId[id];
-    if (!def) return;
+    const m = byId[id];
+    if (!m || m.mode === 'once') return;
     on = !!on;
-    if (enabled[id] === on && (!on || timers[id])) return;
-
-    clearInterval(timers[id]);
-    timers[id] = null;
-    enabled[id] = on;
-    if (on) timers[id] = setInterval(() => runTick(def), def.interval);
-
-    if (!silent) announce(`${def.name} autoclicker`, on, def.icon);
-    CA.Events.emit('clickers', id);
+    if (isOn(id) === on) return;
+    if (on) start(id);
+    else stop(id);
+    if (!silent) announce(m, on);
+    changed(id);
   }
 
-  function toggle(id) {
-    set(id, !enabled[id]);
+  const toggle = (id) => set(id, !isOn(id));
+
+  /** Runs a macro's steps one time right now (any mode). Returns how many things it did. */
+  function runOnce(id) {
+    const m = byId[id];
+    if (!m) return 0;
+    const n = runSteps(m);
+    changed(id);
+    return n;
   }
 
+  /** What a hotkey or shortcut button does: once macros run, the others switch on/off. */
+  function trigger(id) {
+    const m = byId[id];
+    if (!m) return;
+    if (m.mode === 'once') runOnce(id);
+    else toggle(id);
+  }
+
+  // ---- "All autoclickers" -------------------------------------------------------------------
+
+  const inAll = () => macros.filter((m) => m.inAll && m.mode !== 'once');
+  const allOn = () => inAll().every((m) => isOn(m.id));
   function setAll(on, { silent = false } = {}) {
-    DEFS.forEach((d) => set(d.id, on, { silent: true }));
-    if (!silent) announce('All autoclickers', on, CA.ICON);
+    inAll().forEach((m) => set(m.id, on, { silent: true }));
+    if (!silent && CA.Settings.get('notifications')) CA.Util.notify('All autoclickers', on ? '<b style="color:#8f8">ON</b>' : '<b style="color:#f88">OFF</b>', CA.ICON, 2);
+  }
+  /** Same as v0.1: if anything is off, turn everything on; otherwise turn all off. */
+  const toggleAll = () => setAll(!allOn());
+
+  // ---- queries --------------------------------------------------------------------------------
+
+  const isOn = (id) => !!running[id];
+  const list = () => macros.slice();
+  const get = (id) => byId[id] || null;
+  const activeCount = () => Object.keys(running).length;
+  const runningIds = () => Object.keys(running);
+  const statusOf = (id) => status[id] || null;
+  const since = (id) => (running[id] ? running[id].since : 0);
+  const isFav = (id) => !!(prefs[id] && prefs[id].fav);
+  function setFav(id, on) {
+    if (!byId[id]) return;
+    prefs[id] = { ...(prefs[id] || {}), fav: !!on };
+    changed(id);
   }
 
-  /** Same behaviour as v0.1: if anything is off, turn everything on; otherwise turn all off. */
-  function toggleAll() {
-    setAll(!allOn());
+  /** Human summary of when a macro runs: "every 0.1s", "when Click frenzy is active", "on demand". */
+  function triggerText(m) {
+    const secs = (ms) => (ms < 1000 ? `${ms / 1000}s` : `${Math.round(ms / 100) / 10}s`);
+    if (m.mode === 'once') return 'on demand';
+    if (m.mode === 'repeat') return `every ${secs(m.every)}`;
+    return `${m.when.edge === 'while' ? 'while' : 'when'} ${CA.Conditions.describe(m.when)}`;
   }
 
-  const isOn = (id) => !!enabled[id];
-  const allOn = () => DEFS.every((d) => enabled[d.id]);
-  const activeCount = () => DEFS.filter((d) => enabled[d.id]).length;
-  const list = () => DEFS.slice();
-  const snapshot = () => ({ ...enabled });
+  // ---- save / load ---------------------------------------------------------------------------
 
-  function restore(states) {
-    if (!states || typeof states !== 'object') return;
-    DEFS.forEach((d) => {
-      if (typeof states[d.id] === 'boolean') set(d.id, states[d.id], { silent: true });
+  function serialize() {
+    return {
+      custom: macros.filter((m) => !m.builtin).map(({ builtin, ...rest }) => rest),
+      prefs: { ...prefs },
+    };
+  }
+
+  /** Loads your macros and preferences from a save (replacing the ones defined now). */
+  function load(data) {
+    if (!data || typeof data !== 'object') return;
+    macros.filter((m) => !m.builtin).forEach((m) => remove(m.id));
+    (Array.isArray(data.custom) ? data.custom : []).forEach((d) => {
+      if (d && d.id && !(byId[d.id] && byId[d.id].builtin)) add({ ...d, builtin: false });
     });
+    prefs = data.prefs && typeof data.prefs === 'object' ? { ...data.prefs } : {};
+    changed(null);
+  }
+
+  /** Turns on the macros that were running when the game was saved (rememberStates). */
+  function restore(ids) {
+    (ids || []).forEach((id) => set(id, true, { silent: true }));
   }
 
   function init() {
-    DEFS.forEach((d) =>
-      CA.Actions.register({
-        id: `clicker.${d.id}`,
-        name: d.name,
-        group: 'autoclickers',
-        defaultKey: d.defaultKey,
-        run: () => toggle(d.id),
-      })
-    );
-    CA.Actions.register({
-      id: 'clickers.toggleAll',
-      name: 'Toggle all autoclickers',
-      group: 'general',
-      defaultKey: 'KeyA',
-      run: toggleAll,
-    });
+    BUILTINS.forEach((d) => add({ ...d, builtin: true }));
+    CA.Hotkeys.register({ id: 'clickers.toggleAll', name: 'All autoclickers', group: 'macros', defaultKey: 'KeyA', run: toggleAll });
 
     CA.Settings.defineOption({
       key: 'disableOnAscend',
       icon: 'ascend',
-      group: 'autoclickers',
+      group: 'macros',
       name: 'Turn off when ascending',
-      desc: 'Switches every autoclicker off as soon as you ascend.',
+      desc: 'Switches every running macro off as soon as you ascend (the stock autobuyer keeps going).',
       default: true,
     });
     CA.Settings.defineOption({
       key: 'rememberStates',
       icon: 'save',
-      group: 'autoclickers',
+      group: 'macros',
       name: 'Remember on/off states',
-      desc: 'Restores which autoclickers were running when you reload the game.',
+      desc: 'Restores which macros were running when you reload the game.',
       default: false,
     });
     CA.Settings.defineOption({
       key: 'notifications',
       icon: 'bell',
-      group: 'autoclickers',
-      name: 'Toggle notifications',
-      desc: 'Shows a small ON/OFF popup whenever an autoclicker is switched.',
+      group: 'macros',
+      name: 'On/off notifications',
+      desc: 'Shows a small ON/OFF popup whenever a macro is switched.',
       default: true,
     });
 
     CA.Events.on('ascend', () => {
-      if (!CA.Settings.get('disableOnAscend') || activeCount() === 0) return;
-      setAll(false, { silent: true });
-      CA.Util.notify('CookieMgr', 'All autoclickers were turned off for your ascension.', [20, 7], 4);
+      if (!CA.Settings.get('disableOnAscend')) return;
+      const stopping = runningIds().filter((id) => !byId[id].keepOnAscend);
+      if (!stopping.length) return;
+      stopping.forEach((id) => set(id, false, { silent: true }));
+      CA.Util.notify('CookieMgr', 'Your macros were turned off for your ascension.', [20, 7], 4);
     });
   }
 
-  return { init, set, toggle, setAll, toggleAll, isOn, allOn, activeCount, list, snapshot, restore, get: (id) => byId[id] };
+  return {
+    init,
+    list,
+    get,
+    save,
+    remove,
+    duplicate,
+    set,
+    toggle,
+    trigger,
+    runOnce,
+    isOn,
+    since,
+    setAll,
+    toggleAll,
+    allOn,
+    inAll,
+    activeCount,
+    runningIds,
+    status: statusOf,
+    isFav,
+    setFav,
+    triggerText,
+    serialize,
+    load,
+    restore,
+    MIN_EVERY,
+  };
 })();
 
 // ---- src/features/stocks.js ------------------------------------------
@@ -1941,74 +2571,57 @@ CA.GameStates = (() => {
 })();
 
 // ---- src/features/stockTrader.js -------------------------------------
-// Stock market autoclicker: buys the max it can afford of fast-rising stocks, then slow-rising
+// Stock market trading logic: buys the max it can afford of fast-rising stocks, then slow-rising
 // ones, and sells anything it holds that isn't currently rising. That's the whole strategy —
 // no price targets, no per-stock tuning.
 //
-// Kept separate from CA.Autoclickers (rather than another DEFS entry) on purpose: it lives on
-// its own Stock market tab and must NOT be swept up by "All on/off" or the toggle-all hotkey.
+// The logic lives here as two actions (features/gameActions.js: stocks.trade, stocks.sellAll);
+// switching it on and off is the built-in "Stock market autobuyer" macro (features/macros.js), so
+// the Stock market page, the Bank minigame toolbar and the Macros page all show the same switch.
+// It isn't part of "All autoclickers" and keeps running through an ascension.
 //
 // Uses the Bank minigame's own buy/sell API (M.buyGood/M.sellGood with the amount `10000`,
 // the same sentinel value the game's own "buy max"/"sell max" buttons use — verified against
 // minigameMarket.js) rather than computing an affordable amount ourselves.
 
 CA.StockTrader = (() => {
-  const TICK_MS = 1000;
   const RISING = [3, 1]; // fast rise, then slow rise — good.mode values (see features/stocks.js)
+  const MACRO = 'stockTrader';
 
-  let timer = null;
-  let enabled = false;
-
-  function trade(m) {
-    const goods = m.goodsById.filter((g) => g.active);
+  /** One trading pass. Returns how many buy/sell orders went through. */
+  function trade() {
+    const m = CA.Stocks.minigame();
+    if (!m) return 0;
+    let n = 0;
+    const goods = m.goodsById.filter((g) => g.active !== false);
     goods.forEach((g) => {
-      if (g.stock > 0 && !RISING.includes(g.mode)) m.sellGood(g.id, 10000);
+      if (g.stock > 0 && !RISING.includes(g.mode) && m.sellGood(g.id, 10000)) n++;
     });
-    RISING.forEach((mode) => goods.forEach((g) => g.mode === mode && m.buyGood(g.id, 10000)));
+    RISING.forEach((mode) =>
+      goods.forEach((g) => {
+        if (g.mode === mode && m.buyGood(g.id, 10000)) n++;
+      })
+    );
+    return n;
   }
 
-  function tick() {
-    if (Game.OnAscend || Game.AscendTimer > 0) return;
+  /** Sells every stock held. Returns how many stocks were sold. */
+  function sellEverything() {
     const m = CA.Stocks.minigame();
-    if (!m) return;
-    try {
-      trade(m);
-    } catch (e) {
-      console.error('[CookieMgr] Stock market autoclicker error', e);
-    }
-  }
-
-  function announce(on) {
-    if (!CA.Settings.get('notifications')) return;
-    CA.Util.notify('Stock market buy autoclicker', on ? '<b style="color:#8f8">ON</b>' : '<b style="color:#f88">OFF</b>', [9, 33], 2);
-  }
-
-  function set(on, { silent = false } = {}) {
-    on = !!on;
-    if (enabled === on && (!on || timer)) return;
-    clearInterval(timer);
-    timer = null;
-    enabled = on;
-    if (on) timer = setInterval(tick, TICK_MS);
-    if (!silent) announce(on);
-    CA.Events.emit('clickers', 'stockTrader');
-  }
-
-  function toggle() {
-    set(!enabled);
-  }
-  const isOn = () => enabled;
-
-  /** Sells every stock currently held, and turns the autoclicker off first so it doesn't just
-   *  buy everything straight back. */
-  function sellAll() {
-    set(false);
-    const m = CA.Stocks.minigame();
-    if (!m) return;
+    if (!m) return 0;
+    let n = 0;
     m.goodsById.forEach((g) => {
-      if (g.stock > 0) m.sellGood(g.id, 10000);
+      if (g.stock > 0 && m.sellGood(g.id, 10000)) n++;
     });
+    return n;
   }
+
+  const set = (on, opts) => CA.Macros.set(MACRO, on, opts);
+  const toggle = () => CA.Macros.toggle(MACRO);
+  const isOn = () => CA.Macros.isOn(MACRO);
+
+  /** The built-in "Sell all stocks" macro: autobuyer off first, then sell everything. */
+  const sellAll = () => CA.Macros.runOnce('sellAll');
 
   /** Cookies selling everything right now would actually pay out — the same formula the Bank
    *  minigame's own sellGood uses (cookiesPsRawHighest × price × shares, per stock), so this
@@ -2031,17 +2644,7 @@ CA.StockTrader = (() => {
     return cookies > 0 ? `Sells for ~${beautify(cookies)} cookies right now` : 'Nothing to sell right now';
   }
 
-  function init() {
-    CA.Actions.register({
-      id: 'clicker.stockTrader',
-      name: 'Stock market buy',
-      group: 'stocks',
-      defaultKey: '',
-      run: toggle,
-    });
-  }
-
-  return { init, set, toggle, isOn, sellAll, previewSellAllCookies, sellAllTitle };
+  return { trade, sellEverything, set, toggle, isOn, sellAll, previewSellAllCookies, sellAllTitle };
 })();
 
 // ---- src/features/stockLog.js ----------------------------------------
@@ -3054,9 +3657,9 @@ CA.UI.Tab = (() => {
     update();
   }
 
-  /** Small count bubble on a page's icon (e.g. running autoclickers); 0 hides it. */
+  /** Small count bubble on a page's icon (e.g. running macros); 0 hides it. */
   const badges = {
-    clickers: () => CA.Autoclickers.activeCount(),
+    clickers: () => CA.Macros.activeCount(),
   };
 
   function update() {
@@ -3078,7 +3681,7 @@ CA.UI.Tab = (() => {
     place();
     addEventListener('resize', place);
     setInterval(place, PLACE_MS);
-    CA.Events.on('clickers', update);
+    CA.Events.on('macros', update);
     CA.Events.on('settings', update);
   }
 
@@ -5639,13 +6242,491 @@ CA.UI.BankToolbar = (() => {
       desc: 'Sell all, the autobuyer switch and a CookieMgr shortcut, right under the stock market header.',
       default: true,
     });
-    CA.Events.on('clickers', sync);
+    CA.Events.on('macros', sync);
     CA.Events.on('settings', sync);
     setInterval(sync, 1000); // the minigame redraws/opens on its own schedule
     sync();
   }
 
   return { init };
+})();
+
+// ---- src/ui/macrosPage.js --------------------------------------------
+// The Macros page (formerly Autoclickers): every macro (features/macros.js) as a row with its
+// trigger, steps, hotkey, favourite star and switch; a live "Running now" status of every active
+// macro's actions; and an editor for building your own macros out of actions.
+//
+// The status block (status()) and macro rows (row()) are also used elsewhere: rows on the
+// Stock market page, the status block as a widget (ui/widgets.js).
+
+CA.UI = CA.UI || {};
+
+CA.UI.MacrosPage = (() => {
+  const C = () => CA.UI.C;
+  const I = (name, size) => CA.UI.Icons.html(name, size);
+  const esc = (s) => CA.Util.escapeHtml(s);
+  const M = () => CA.Macros;
+  const STATUS_MS = 500;
+
+  const SECTIONS = [
+    { id: 'autoclickers', title: 'Autoclickers', icon: 'cookie' },
+    { id: 'stocks', title: 'Stock market', icon: 'stocks' },
+    { id: 'grimoire', title: 'Wizard tower', icon: 'wizard' },
+  ];
+  const ICONS = ['bolt', 'cookie', 'star', 'sparkle', 'play', 'clock', 'stocks', 'dollar', 'wizard', 'wrinkler', 'lump', 'trophy', 'graphs', 'tag', 'marker', 'ascend'];
+  const MODES = [
+    { v: 'repeat', label: 'Repeat', icon: 'refresh', hint: 'While it’s on, runs its steps every so often.' },
+    { v: 'when', label: 'When…', icon: 'filter', hint: 'While it’s on, watches for a condition and runs its steps when it happens.' },
+    { v: 'once', label: 'Once', icon: 'play', hint: 'No on/off: its button or hotkey runs the steps one time.' },
+  ];
+
+  let root = null;
+  let draft = null; // macro being edited (a copy), or null
+  let draftError = '';
+  let timer = null;
+
+  // ---- pieces shared with other pages ----------------------------------------------------
+
+  /** The picture for a macro: a game sprite/image, or one of our icons. */
+  function icon(m, small) {
+    const ic = m.icon || {};
+    if (ic.ico) return `<span class="ca-icon ca-icon-ico${small ? ' small' : ''}">${I(ic.ico, small ? 16 : 24)}</span>`;
+    return C().icon({ img: ic.img, icon: ic.sprite });
+  }
+
+  function ago(t) {
+    if (!t) return 'never';
+    const s = Math.round((Date.now() - t) / 1000);
+    if (s < 2) return 'just now';
+    return `${CA.UI.Plot.fmt.span(s)} ago`;
+  }
+
+  function stepChip(step) {
+    const a = CA.Actions.get(step.action);
+    return `<span class="ca-step">${I(a ? a.icon : 'close', 12)}${esc(CA.Actions.describe(step))}</span>`;
+  }
+
+  /** One macro as a row: picture, name + trigger, steps, status, and its controls. */
+  function row(m) {
+    const once = m.mode === 'once';
+    const fav = M().isFav(m.id);
+    let h =
+      `<div class="ca-row ca-macro" data-macro-row="${esc(m.id)}">` +
+      icon(m) +
+      '<div class="ca-row-text">' +
+      `<div class="ca-row-name">${esc(m.name)} <span class="ca-badge ca-badge-${m.mode}">${esc(M().triggerText(m))}</span></div>` +
+      (m.desc ? `<div class="ca-row-desc">${esc(m.desc)}</div>` : '') +
+      `<div class="ca-steps">${m.steps.map(stepChip).join('<span class="ca-step-arrow">›</span>')}</div>` +
+      '<div class="ca-macro-status" data-macro-status></div>' +
+      '</div>' +
+      '<div class="ca-controls">' +
+      `<button type="button" class="ca-iconbtn ca-fav${fav ? ' on' : ''}" data-ca="macro-fav" data-id="${esc(m.id)}" title="${fav ? 'Remove from favourites' : 'Add to favourites (shortcut widgets)'}">${I(fav ? 'star' : 'starOutline', 15)}</button>`;
+    if (m.builtin) h += `<button type="button" class="ca-iconbtn" data-ca="macro-dup" data-id="${esc(m.id)}" title="Duplicate into your own editable macro">${I('plus', 14)}</button>`;
+    else {
+      h += `<button type="button" class="ca-iconbtn" data-ca="macro-edit" data-id="${esc(m.id)}" title="Edit">${I('edit', 14)}</button>`;
+      h += `<button type="button" class="ca-iconbtn" data-ca="macro-dup" data-id="${esc(m.id)}" title="Duplicate">${I('plus', 14)}</button>`;
+    }
+    h += C().hotkey(`macro.${m.id}`);
+    h += once
+      ? C().button(`${I('play', 12)} Run`, `data-ca="macro-run" data-id="${esc(m.id)}"`, 'ca-btn-small ca-btn-run')
+      : C().toggle(false, `data-ca="macro-toggle" data-id="${esc(m.id)}"`, m.name);
+    h += '</div></div>';
+    return h;
+  }
+
+  /** Live status of every running macro and its actions — the "Running now" block / widget. */
+  function status() {
+    const ids = M().runningIds();
+    if (!ids.length) return '<div class="ca-status-empty">Nothing running. Switch a macro on below, or press its hotkey.</div>';
+    const { span, beautify } = CA.UI.Plot.fmt;
+    return ids
+      .map((id) => {
+        const m = M().get(id);
+        if (!m) return '';
+        const st = M().status(id);
+        const up = span((Date.now() - M().since(id)) / 1000);
+        let h =
+          `<div class="ca-status-macro" data-status-macro="${esc(id)}">` +
+          `<div class="ca-status-head">${icon(m, true)}<b>${esc(m.name)}</b><span>${esc(M().triggerText(m))} · on for ${up}</span>` +
+          `<button type="button" class="ca-iconbtn" data-ca="macro-toggle" data-id="${esc(id)}" title="Switch off">${I('close', 12)}</button></div>`;
+        m.steps.forEach((step, i) => {
+          const s = st.steps[i] || {};
+          const a = CA.Actions.get(step.action) || {};
+          const avail = a.available ? a.available() : true;
+          h +=
+            `<div class="ca-status-step${s.error ? ' err' : !avail ? ' idle' : s.lastAt && Date.now() - s.lastAt < 3000 ? ' hot' : ''}">` +
+            `${I(a.icon || 'close', 12)}<span class="ca-status-name">${esc(CA.Actions.describe(step))}</span>` +
+            `<span class="ca-status-val">${s.error ? esc(s.error) : !avail ? 'not available' : `${beautify(s.total || 0, 0)}${a.unit ? ' ' + esc(a.unit) : ''} · ${ago(s.lastAt)}`}</span></div>`;
+        });
+        return h + '</div>';
+      })
+      .join('');
+  }
+
+  // ---- the editor ----------------------------------------------------------------------------
+
+  function blankDraft() {
+    return { id: null, name: '', desc: '', icon: { ico: 'bolt' }, mode: 'repeat', every: 1000, steps: [{ action: 'pop.golden', params: {} }], inAll: false, when: { cond: 'buff', params: {}, not: false, edge: 'rise' } };
+  }
+
+  function field(p, value, path) {
+    const opts = typeof p.options === 'function' ? p.options() : p.options || [];
+    const v = value === undefined ? p.default : value;
+    let input;
+    if (p.type === 'select') {
+      const has = opts.some((o) => String(o.v) === String(v));
+      input =
+        `<select data-edit="${path}" data-type="${typeof p.default === 'number' ? 'number' : 'string'}">` +
+        (has || v === '' || v == null ? '' : `<option value="${esc(v)}" selected>${esc(v)}</option>`) +
+        (v === '' ? '<option value="" selected disabled>Choose…</option>' : '') +
+        opts.map((o) => `<option value="${esc(o.v)}"${String(o.v) === String(v) ? ' selected' : ''}>${esc(o.label)}</option>`).join('') +
+        '</select>';
+    } else if (p.type === 'bool') {
+      input = `<input type="checkbox" data-edit="${path}" data-type="bool"${v ? ' checked' : ''}>`;
+    } else {
+      input = `<input type="number" step="any" data-edit="${path}" data-type="number" value="${esc(v)}"${p.min != null ? ` min="${p.min}"` : ''}>`;
+    }
+    return `<label class="ca-field"><span>${esc(p.label)}</span>${input}</label>`;
+  }
+
+  function actionSelect(step, i) {
+    const groups = {};
+    CA.Actions.all().forEach((a) => (groups[a.group] = groups[a.group] || []).push(a));
+    return (
+      `<select data-edit="steps.${i}.action" data-structural>` +
+      Object.keys(groups)
+        .map((g) => `<optgroup label="${esc(g)}">${groups[g].map((a) => `<option value="${a.id}"${a.id === step.action ? ' selected' : ''}>${esc(a.name)}</option>`).join('')}</optgroup>`)
+        .join('') +
+      '</select>'
+    );
+  }
+
+  function editorHtml() {
+    const d = draft;
+    const mode = MODES.find((x) => x.v === d.mode);
+    let h =
+      '<div class="ca-card ca-editor" data-macro-editor>' +
+      C().cardHead(d.id ? 'Edit macro' : 'New macro', 'edit') +
+      '<div class="ca-editor-body">' +
+      '<div class="ca-editor-row">' +
+      `<label class="ca-field ca-grow"><span>Name</span><input type="text" maxlength="60" data-edit="name" value="${esc(d.name)}" placeholder="e.g. Pop everything"></label>` +
+      `<label class="ca-field ca-grow"><span>Description</span><input type="text" maxlength="300" data-edit="desc" value="${esc(d.desc)}" placeholder="optional"></label>` +
+      '</div>' +
+      `<div class="ca-editor-row"><span class="ca-field-label">Icon</span><div class="ca-iconpick">${ICONS.map(
+        (n) => `<button type="button" class="ca-iconbtn${(d.icon || {}).ico === n ? ' on' : ''}" data-edit-act="icon" data-val="${n}" title="${n}">${I(n, 16)}</button>`
+      ).join('')}</div></div>` +
+      `<div class="ca-editor-row"><span class="ca-field-label">Trigger</span><div class="ca-chipgroup">${MODES.map(
+        (x) => `<button type="button" class="ca-chip${x.v === d.mode ? ' on' : ''}" data-edit-act="mode" data-val="${x.v}" title="${esc(x.hint)}">${I(x.icon, 12)} ${x.label}</button>`
+      ).join('')}</div><span class="ca-hint">${esc(mode.hint)}</span></div>`;
+    if (d.mode !== 'once') {
+      h +=
+        '<div class="ca-editor-row">' +
+        `<label class="ca-field"><span>${d.mode === 'when' ? 'Check every' : 'Every'}</span><input type="number" step="any" min="${M().MIN_EVERY / 1000}" data-edit="everySec" data-type="number" value="${d.every / 1000}"><em>seconds</em></label>` +
+        `<label class="ca-field ca-check"><input type="checkbox" data-edit="inAll" data-type="bool"${d.inAll ? ' checked' : ''}><span>Part of “All autoclickers”</span></label>` +
+        '</div>';
+    }
+    if (d.mode === 'when') {
+      const w = d.when;
+      const cond = CA.Conditions.get(w.cond) || CA.Conditions.all()[0];
+      h +=
+        '<div class="ca-editor-block">' +
+        `<div class="ca-editor-row"><span class="ca-field-label">${I('filter', 13)} When</span>` +
+        `<select data-edit="when.cond" data-structural>${CA.Conditions.all()
+          .map((c) => `<option value="${c.id}"${c.id === w.cond ? ' selected' : ''}>${esc(c.name)}</option>`)
+          .join('')}</select>` +
+        cond.params.map((p) => field(p, w.params[p.key], `when.params.${p.key}`)).join('') +
+        '</div><div class="ca-editor-row">' +
+        `<label class="ca-field ca-check"><input type="checkbox" data-edit="when.not" data-type="bool"${w.not ? ' checked' : ''}><span>…is <b>not</b> the case</span></label>` +
+        `<label class="ca-field"><span>Run</span><select data-edit="when.edge"><option value="rise"${w.edge !== 'while' ? ' selected' : ''}>once each time it happens</option><option value="while"${w.edge === 'while' ? ' selected' : ''}>on every check while it holds</option></select></label>` +
+        '</div></div>';
+    }
+    h += `<div class="ca-editor-row"><span class="ca-field-label">${I('bolt', 13)} Steps</span><span class="ca-hint">Run in order, every time the macro fires.</span></div><div class="ca-editor-steps">`;
+    d.steps.forEach((s, i) => {
+      const a = CA.Actions.get(s.action);
+      h +=
+        `<div class="ca-editor-step"><span class="ca-step-n">${i + 1}</span>` +
+        actionSelect(s, i) +
+        (a ? a.params.map((p) => field(p, s.params[p.key], `steps.${i}.params.${p.key}`)).join('') : '') +
+        '<span class="ca-step-tools">' +
+        `<button type="button" class="ca-iconbtn" data-edit-act="up" data-val="${i}" title="Move up"${i === 0 ? ' disabled' : ''}>▲</button>` +
+        `<button type="button" class="ca-iconbtn" data-edit-act="down" data-val="${i}" title="Move down"${i === d.steps.length - 1 ? ' disabled' : ''}>▼</button>` +
+        `<button type="button" class="ca-iconbtn" data-edit-act="del" data-val="${i}" title="Remove step">${I('close', 12)}</button>` +
+        '</span></div>';
+    });
+    h +=
+      `<button type="button" class="ca-btn ca-btn-small" data-edit-act="add">${I('plus', 12)} Add step</button></div>` +
+      (draftError ? `<div class="ca-editor-error">${esc(draftError)}</div>` : '') +
+      '<div class="ca-editor-actions">' +
+      C().button(`${I('save', 13)} Save`, 'data-edit-act="save"', 'ca-btn-on') +
+      C().button('Cancel', 'data-edit-act="cancel"') +
+      (d.id ? C().button(`${I('trash', 13)} Delete`, 'data-edit-act="delete" data-arm-label="Delete this macro?"', 'ca-btn-off') : '') +
+      '</div></div></div>';
+    return h;
+  }
+
+  function setPath(obj, path, value) {
+    const parts = path.split('.');
+    let o = obj;
+    for (let i = 0; i < parts.length - 1; i++) {
+      const k = /^\d+$/.test(parts[i]) ? Number(parts[i]) : parts[i];
+      o = o[k] = o[k] || {};
+    }
+    o[parts[parts.length - 1]] = value;
+  }
+
+  function onEditInput(e) {
+    const el = e.target;
+    if (!el.dataset || !el.dataset.edit || !draft) return;
+    const type = el.dataset.type;
+    let v = type === 'bool' ? el.checked : type === 'number' ? Number(el.value) : el.value;
+    if (type === 'number' && !Number.isFinite(v)) return;
+    if (el.dataset.edit === 'everySec') {
+      draft.every = Math.round(v * 1000);
+      return;
+    }
+    setPath(draft, el.dataset.edit, v);
+    if ('structural' in el.dataset) {
+      // a different action/condition: start from its own defaults
+      const m = el.dataset.edit.match(/^steps\.(\d+)\.action$/);
+      if (m) draft.steps[Number(m[1])].params = {};
+      if (el.dataset.edit === 'when.cond') draft.when.params = {};
+      renderEditor();
+    }
+  }
+
+  function validate(d) {
+    if (!d.name.trim()) return 'Give it a name.';
+    if (!d.steps.length) return 'Add at least one step.';
+    if (d.mode !== 'once' && !(d.every >= M().MIN_EVERY)) return `Run it at most every ${M().MIN_EVERY / 1000}s.`;
+    const self = d.steps.find((s) => (s.action === 'macro.run' || s.action === 'macro.set') && d.id && s.params.macro === d.id);
+    if (self) return 'A macro can’t switch or run itself.';
+    const missing = d.steps.find((s) => (s.action === 'macro.run' || s.action === 'macro.set') && !s.params.macro);
+    if (missing) return 'Pick which macro the step should switch or run.';
+    return '';
+  }
+
+  function onEditAct(t) {
+    const act = t.dataset.editAct;
+    const i = Number(t.dataset.val);
+    const d = draft;
+    if (act === 'icon') d.icon = { ico: t.dataset.val };
+    else if (act === 'mode') {
+      d.mode = t.dataset.val;
+      if (d.mode === 'when' && (!d.when || !d.when.cond)) d.when = { cond: 'buff', params: {}, not: false, edge: 'rise' };
+      if (d.mode === 'when' && d.every >= 1000) d.every = 250;
+    } else if (act === 'add') d.steps.push({ action: 'pop.golden', params: {} });
+    else if (act === 'del') d.steps.splice(i, 1);
+    else if (act === 'up' && i > 0) [d.steps[i - 1], d.steps[i]] = [d.steps[i], d.steps[i - 1]];
+    else if (act === 'down' && i < d.steps.length - 1) [d.steps[i + 1], d.steps[i]] = [d.steps[i], d.steps[i + 1]];
+    else if (act === 'cancel') {
+      draft = null;
+      draftError = '';
+      return rerender();
+    } else if (act === 'delete') {
+      if (!CA.UI.Menu.armed(t)) return;
+      M().remove(d.id);
+      draft = null;
+      return rerender();
+    } else if (act === 'save') {
+      // fill in each param's default so the saved macro is explicit
+      d.steps.forEach((s) => (s.params = CA.Actions.paramsFor(s.action, s.params)));
+      if (d.mode === 'when') d.when.params = CA.Conditions.paramsFor(d.when.cond, d.when.params);
+      draftError = validate(d);
+      if (draftError) return renderEditor();
+      try {
+        const saved = M().save(d);
+        CA.Util.notify('Macro saved', esc(saved.name), CA.ICON, 2);
+        draft = null;
+        return rerender();
+      } catch (e) {
+        draftError = e.message;
+      }
+    }
+    renderEditor();
+  }
+
+  function renderEditor() {
+    const el = root && root.querySelector('[data-macro-editor]');
+    if (el) el.outerHTML = editorHtml();
+  }
+
+  function edit(id) {
+    const m = id ? M().get(id) : null;
+    draft = m ? JSON.parse(JSON.stringify(m)) : blankDraft();
+    if (!draft.when) draft.when = { cond: 'buff', params: {}, not: false, edge: 'rise' };
+    draftError = '';
+    rerender();
+    const el = root && root.querySelector('[data-macro-editor]');
+    if (el && el.scrollIntoView) el.scrollIntoView({ block: 'nearest' });
+  }
+
+  // ---- page ------------------------------------------------------------------------------
+
+  function sectionCard(sec, macros, extraHead, extraTop) {
+    return (
+      '<div class="ca-card">' +
+      C().cardHead(sec.title, sec.icon, extraHead || '') +
+      (extraTop || '') +
+      `<div class="ca-list">${macros.map(row).join('')}</div>` +
+      '</div>'
+    );
+  }
+
+  function html() {
+    const all = M().list();
+    let h =
+      '<div class="ca-card ca-card-status">' +
+      C().cardHead('Running now', 'play', '<div class="ca-card-meta"><span class="ca-pill" data-ca-count></span></div>') +
+      `<div class="ca-status" data-macro-statusblock>${status()}</div>` +
+      '</div>';
+    if (draft) h += editorHtml();
+    SECTIONS.forEach((sec) => {
+      const list = all.filter((m) => m.builtin && m.section === sec.id);
+      if (!list.length) return;
+      const master =
+        sec.id === 'autoclickers'
+          ? '<div class="ca-row ca-row-master">' +
+            C().icon({ icon: CA.ICON }) +
+            '<div class="ca-row-text"><div class="ca-row-name">All autoclickers</div>' +
+            '<div class="ca-row-desc">The hotkey turns everything on &mdash; or off, if everything is already running.</div></div>' +
+            '<div class="ca-controls">' +
+            C().button('All on', 'data-ca="all-on"', 'ca-btn-on') +
+            C().button('All off', 'data-ca="all-off"', 'ca-btn-off') +
+            C().hotkey('clickers.toggleAll') +
+            '</div></div>'
+          : '';
+      h += sectionCard(sec, list, '', master);
+    });
+    const mine = all.filter((m) => !m.builtin);
+    h +=
+      '<div class="ca-card">' +
+      C().cardHead('Your macros', 'edit', `<div class="ca-card-meta">${C().button(`${I('plus', 12)} New macro`, 'data-ca="macro-new"', 'ca-btn-small')}</div>`) +
+      (mine.length
+        ? `<div class="ca-list">${mine.map(row).join('')}</div>`
+        : '<div class="ca-card-note">Chain actions into your own macros: pop everything at once, sell stocks when a value crosses a line, switch other macros on when an effect starts… Built-in macros can be duplicated as a starting point.</div>') +
+      '</div>';
+    h += `<div class="ca-card">${C().cardHead('Options', 'settings')}<div class="ca-list">${CA.Settings.optionsIn('macros').map(CA.UI.Menu.optionRow).join('')}</div></div>`;
+    return h;
+  }
+
+  /** Brings every macro row and status block inside `el` up to date. */
+  function sync(el) {
+    if (!el) return;
+    el.querySelectorAll('[data-macro-row]').forEach((r) => {
+      const id = r.dataset.macroRow;
+      const m = M().get(id);
+      if (!m) return;
+      const on = M().isOn(id);
+      r.classList.toggle('on', on);
+      const sw = r.querySelector('.ca-switch');
+      if (sw) {
+        sw.classList.toggle('on', on);
+        sw.setAttribute('aria-checked', String(on));
+      }
+      const st = r.querySelector('[data-macro-status]');
+      if (st) {
+        const s = M().status(id);
+        const n = s ? s.steps.reduce((x, y) => x + (y.total || 0), 0) : 0;
+        st.textContent = on ? `Running · ${CA.UI.Plot.fmt.span((Date.now() - M().since(id)) / 1000)}${n ? ` · ${n.toLocaleString()} done` : ''}` : s && s.lastRun ? `Last ran ${ago(s.lastRun)}` : '';
+      }
+    });
+    const block = el.querySelector('[data-macro-statusblock]');
+    if (block) block.innerHTML = status();
+    const count = el.querySelector('[data-ca-count]');
+    if (count) {
+      const n = M().activeCount();
+      count.textContent = n ? `${n} running` : 'all off';
+      count.classList.toggle('on', n > 0);
+    }
+    const allOn = el.querySelector('[data-ca="all-on"]');
+    if (allOn) allOn.disabled = M().allOn();
+    const allOff = el.querySelector('[data-ca="all-off"]');
+    if (allOff) allOff.disabled = !M().inAll().some((m) => M().isOn(m.id));
+  }
+
+  function rerender() {
+    if (CA.UI.Menu.isOpen()) CA.UI.Menu.render();
+  }
+
+  /** Clicks on macro controls anywhere in the panel (menu.js forwards data-ca="macro-…"). */
+  function handle(kind, t) {
+    const id = t.dataset.id;
+    switch (kind) {
+      case 'macro-toggle':
+        CA.Util.sound(M().isOn(id) ? 'snd/clickOff2.mp3' : 'snd/clickOn2.mp3');
+        M().toggle(id);
+        return true;
+      case 'macro-run':
+        CA.Util.sound('snd/clickOn2.mp3');
+        M().runOnce(id);
+        return true;
+      case 'macro-fav':
+        CA.Util.sound('snd/tick.mp3');
+        M().setFav(id, !M().isFav(id));
+        rerender();
+        return true;
+      case 'macro-dup': {
+        CA.Util.sound('snd/tick.mp3');
+        const copy = M().duplicate(id);
+        if (CA.Settings.get('tab') !== 'clickers') CA.UI.Menu.openPage('clickers');
+        if (copy) edit(copy.id);
+        return true;
+      }
+      case 'macro-edit':
+        CA.Util.sound('snd/tick.mp3');
+        edit(id);
+        return true;
+      case 'macro-new':
+        CA.Util.sound('snd/tick.mp3');
+        edit(null);
+        return true;
+      case 'all-on':
+        CA.Util.sound('snd/clickOn2.mp3');
+        M().setAll(true);
+        return true;
+      case 'all-off':
+        CA.Util.sound('snd/clickOff2.mp3');
+        M().setAll(false);
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  function onRootClick(e) {
+    const t = e.target.closest('[data-edit-act]');
+    if (!t || !draft) return;
+    e.stopPropagation();
+    CA.Util.sound('snd/tick.mp3');
+    onEditAct(t);
+  }
+
+  function mount(el) {
+    unmount();
+    root = el;
+    root.addEventListener('click', onRootClick);
+    root.addEventListener('change', onEditInput);
+    root.addEventListener('input', onEditInput);
+    sync(root);
+    timer = setInterval(() => root && root.isConnected && sync(root), STATUS_MS);
+  }
+
+  function unmount() {
+    clearInterval(timer);
+    timer = null;
+    if (root) {
+      root.removeEventListener('click', onRootClick);
+      root.removeEventListener('change', onEditInput);
+      root.removeEventListener('input', onEditInput);
+    }
+    root = null;
+  }
+
+  function init() {
+    CA.UI.Pages.register({ id: 'clickers', label: 'Macros', icon: 'bolt', order: 10, html, mount, unmount, tick: () => sync(root) });
+  }
+
+  return { init, row, status, sync, handle, icon, edit, draft: () => draft };
 })();
 
 // ---- src/ui/menu.js --------------------------------------------------
@@ -5670,34 +6751,6 @@ CA.UI.Menu = (() => {
 
   // ---- rendering ---------------------------------------------------------------
 
-  function clickerRow(def) {
-    return (
-      `<div class="ca-row" data-clicker="${def.id}">` +
-      C.icon(def) +
-      `<div class="ca-row-text"><div class="ca-row-name">${C.esc(def.name)}</div><div class="ca-row-desc">${C.esc(def.desc)}</div></div>` +
-      '<div class="ca-controls">' +
-      C.hotkey(`clicker.${def.id}`) +
-      C.toggle(false, `data-ca="clicker" data-id="${def.id}"`, def.name) +
-      '</div>' +
-      '</div>'
-    );
-  }
-
-  function stockTraderRow() {
-    return (
-      '<div class="ca-row" data-stock-trader>' +
-      C.icon({ icon: [9, 33] }) +
-      '<div class="ca-row-text"><div class="ca-row-name">Buy fast/slow rise, sell the rest</div>' +
-      '<div class="ca-row-desc">Buys the max it can afford of fast-rising stocks, then slow-rising ones. Sells anything it holds ' +
-      "that isn't currently rising. That's the whole strategy.</div></div>" +
-      '<div class="ca-controls">' +
-      C.hotkey('clicker.stockTrader') +
-      C.toggle(false, 'data-ca="stockTrader"', 'Stock market buy') +
-      '</div>' +
-      '</div>'
-    );
-  }
-
   /** Its own card, apart from the autoclicker row, so it isn't lost among other controls —
    *  selling everything is a bigger deal than flipping a toggle. The button's title (what the
    *  hover shows) is filled in with a live cookie estimate on mouseenter; see wireSellAll(). */
@@ -5706,8 +6759,8 @@ CA.UI.Menu = (() => {
       '<div class="ca-card ca-card-danger">' +
       '<div class="ca-row ca-row-sellall">' +
       '<div class="ca-row-text"><div class="ca-row-name">Sell everything</div>' +
-      '<div class="ca-row-desc">Sells every stock you hold right now and turns the autoclicker off first, ' +
-      'so it doesn\'t just buy it all straight back.</div></div>' +
+      '<div class="ca-row-desc">Sells every stock you hold right now and turns the autobuyer off first, ' +
+      'so it doesn\'t just buy it all straight back. Also a macro, so it can have a hotkey.</div></div>' +
       C.button('Sell all', 'data-ca="sell-all-stocks" data-ca-sellall', 'ca-btn-danger ca-btn-lg') +
       '</div>' +
       '</div>'
@@ -5738,32 +6791,12 @@ CA.UI.Menu = (() => {
     return first ? first.id : 'clickers';
   };
 
-  function clickersPage() {
-    return (
-      '<div class="ca-card">' +
-      C.cardHead('Autoclickers', 'cookie', '<div class="ca-card-meta"><span class="ca-pill" data-ca-count></span></div>') +
-      '<div class="ca-row ca-row-master">' +
-      C.icon({ icon: CA.ICON }) +
-      '<div class="ca-row-text"><div class="ca-row-name">All autoclickers</div>' +
-      '<div class="ca-row-desc">The hotkey turns everything on &mdash; or off, if everything is already running.</div></div>' +
-      '<div class="ca-controls">' +
-      C.button('All on', 'data-ca="all-on"', 'ca-btn-on') +
-      C.button('All off', 'data-ca="all-off"', 'ca-btn-off') +
-      C.hotkey('clickers.toggleAll') +
-      '</div>' +
-      '</div>' +
-      `<div class="ca-list">${CA.Autoclickers.list().map(clickerRow).join('')}</div>` +
-      '</div>' +
-      optionsCard('Options', 'settings', 'autoclickers')
-    );
-  }
-
   function stocksPage() {
     return (
       sellAllCard() +
       '<div class="ca-card">' +
-      C.cardHead('Autobuyer', 'bolt') +
-      `<div class="ca-list">${stockTraderRow()}</div>` +
+      C.cardHead('Autobuyer', 'bolt', '<div class="ca-card-meta"><button type="button" class="ca-btn ca-btn-small" data-ca="open-macros">All macros</button></div>') +
+      `<div class="ca-list">${CA.UI.MacrosPage.row(CA.Macros.get('stockTrader'))}</div>` +
       '</div>' +
       optionsCard('Options', 'settings', 'stocks') +
       CA.UI.StockGraph.html() +
@@ -5799,7 +6832,7 @@ CA.UI.Menu = (() => {
       '</div>' +
       '</div>' +
       historyCard() +
-      optionsCard('Autoclickers', 'cookie', 'autoclickers') +
+      optionsCard('Macros', 'bolt', 'macros') +
       optionsCard('Graphs', 'graphs', 'graph') +
       optionsCard('Events', 'events', 'events') +
       optionsCard('Stock market', 'stocks', 'stocks') +
@@ -5921,7 +6954,6 @@ CA.UI.Menu = (() => {
   }
 
   // Built-in pages. Other modules register their own pages the same way (CA.UI.Pages).
-  CA.UI.Pages.register({ id: 'clickers', label: 'Autoclickers', icon: 'cookie', order: 10, html: () => clickersPage() });
   CA.UI.Pages.register({
     id: 'graphs',
     label: 'Graphs',
@@ -6009,30 +7041,8 @@ CA.UI.Menu = (() => {
     const root = document.getElementById('CookieMgrMenu');
     if (!root) return;
 
-    CA.Autoclickers.list().forEach((def) => {
-      const on = CA.Autoclickers.isOn(def.id);
-      const row = root.querySelector(`[data-clicker="${def.id}"]`);
-      if (!row) return;
-      row.classList.toggle('on', on);
-      setSwitch(row.querySelector('.ca-switch'), on);
-    });
-
-    const stRow = root.querySelector('[data-stock-trader]');
-    if (stRow) {
-      const on = CA.StockTrader.isOn();
-      stRow.classList.toggle('on', on);
-      setSwitch(stRow.querySelector('.ca-switch'), on);
-    }
-
-    const total = CA.Autoclickers.list().length;
-    const active = CA.Autoclickers.activeCount();
-    const pill = root.querySelector('[data-ca-count]');
-    if (pill) {
-      pill.textContent = `${active} / ${total} running`;
-      pill.classList.toggle('on', active > 0);
-      root.querySelector('[data-ca="all-on"]').disabled = active === total;
-      root.querySelector('[data-ca="all-off"]').disabled = active === 0;
-    }
+    // macro rows, wherever they are (Macros page, Stock market page, …)
+    CA.UI.MacrosPage.sync(root);
 
     // chips / pills bound to a setting
     root.querySelectorAll('[data-pressed-key]').forEach((el) => {
@@ -6085,27 +7095,13 @@ CA.UI.Menu = (() => {
       case 'close':
         Game.ShowMenu();
         break;
-      case 'clicker': {
-        const id = t.dataset.id;
-        CA.Util.sound(CA.Autoclickers.isOn(id) ? 'snd/clickOff2.mp3' : 'snd/clickOn2.mp3');
-        CA.Autoclickers.toggle(id);
-        break;
-      }
-      case 'stockTrader':
-        CA.Util.sound(CA.StockTrader.isOn() ? 'snd/clickOff2.mp3' : 'snd/clickOn2.mp3');
-        CA.StockTrader.toggle();
-        break;
       case 'sell-all-stocks':
         CA.Util.sound('snd/clickOff2.mp3');
         CA.StockTrader.sellAll();
         break;
-      case 'all-on':
-        CA.Util.sound('snd/clickOn2.mp3');
-        CA.Autoclickers.setAll(true);
-        break;
-      case 'all-off':
-        CA.Util.sound('snd/clickOff2.mp3');
-        CA.Autoclickers.setAll(false);
+      case 'open-macros':
+        CA.Util.sound('snd/tick.mp3');
+        openPage('clickers');
         break;
       case 'option': {
         const key = t.dataset.key;
@@ -6149,21 +7145,22 @@ CA.UI.Menu = (() => {
         CA.CookieMonster.load();
         break;
       default:
+        CA.UI.MacrosPage.handle(kind, t); // macro-toggle, macro-run, macro-fav, all-on, …
     }
   }
 
-  function onBound(combo, displaced) {
+  function onBound(combo, shared) {
     CA.Util.sound('snd/tick.mp3');
-    if (combo && displaced.length) {
-      const names = displaced.map((id) => (CA.Actions.get(id) || { name: id }).name).join(', ');
-      CA.Util.notify('Hotkey moved', `<b>${CA.Hotkeys.format(combo)}</b> was removed from: ${C.esc(names)}`, CA.ICON, 3);
+    if (combo && shared.length) {
+      const names = shared.map((id) => (CA.Hotkeys.get(id) || { name: id }).name).join(', ');
+      CA.Util.notify('Shared hotkey', `<b>${CA.Hotkeys.format(combo)}</b> also triggers: ${C.esc(names)}`, CA.ICON, 3);
     }
   }
 
   // ---- wiring ----------------------------------------------------------------------
 
   function init() {
-    CA.Actions.register({ id: 'panel.toggle', name: 'Open / close panel', group: 'general', defaultKey: '', run: toggle });
+    CA.Hotkeys.register({ id: 'panel.toggle', name: 'Open / close panel', group: 'general', defaultKey: '', run: toggle });
     CA.Settings.defineOption({ key: 'tab', group: 'ui', name: 'Panel tab', desc: '', default: 'clickers' });
 
     // Game.resPath points at wherever the game serves its images from (CDN on the web, local on Steam).
@@ -6200,7 +7197,7 @@ CA.UI.Menu = (() => {
       sync();
       if (mounted) mounted.tick();
     };
-    CA.Events.on('clickers', refresh);
+    CA.Events.on('macros', refresh);
     CA.Events.on('settings', refresh);
     CA.Events.on('hotkeys', refresh);
     CA.Events.on('history', () => {
@@ -6212,7 +7209,7 @@ CA.UI.Menu = (() => {
     });
   }
 
-  return { init, open, close, toggle, isOpen, openPage, render, sync };
+  return { init, open, close, toggle, isOpen, openPage, render, sync, optionRow, armed, currentTab };
 })();
 
 // ---- src/main.js -----------------------------------------------------
@@ -6248,9 +7245,9 @@ const mod = {
 
     // data backbone first: the event log and states must exist before the recorder's first tick
     CA.EventLog.init();
-    CA.Autoclickers.init();
+    CA.GameActions.init(); // actions + conditions, then the macros built from them
+    CA.Macros.init();
     CA.Stocks.init();
-    CA.StockTrader.init();
     CA.StockLog.init();
     CA.History.init();
     CA.GameStates.init();
@@ -6258,6 +7255,7 @@ const mod = {
     CA.GameEvents.init();
     CA.UI.Graphs.init();
     CA.UI.EventsPage.init();
+    CA.UI.MacrosPage.init();
     CA.UI.StockGraph.init();
     CA.UI.StockPerf.init();
     CA.UI.StockLog.init();
@@ -6286,14 +7284,20 @@ const mod = {
   },
 
   load(str) {
-    const fromSave = CA.Settings.deserialize(str);
     // Prefer our own localStorage mirror when we have one — it's updated the moment anything
     // changes, while the game's save can be up to 60s stale or skipped by a quick reload.
-    const fromLocal = CA.Settings.restoreFromLocal();
-    const data = fromLocal || fromSave;
-    if (data && CA.Settings.get('rememberStates')) {
-      if (data.clickers) CA.Autoclickers.restore(data.clickers);
-      if (typeof data.stockTrader === 'boolean') CA.StockTrader.set(data.stockTrader, { silent: true });
+    // Read it first: deserializing re-mirrors the current, not-yet-restored state over it.
+    const local = CA.Settings.localPayload();
+    const data = (local && CA.Settings.deserialize(local)) || CA.Settings.deserialize(str);
+    if (!data) return;
+    CA.Macros.load(data.macros);
+    if (!CA.Settings.get('rememberStates')) return;
+    if (Array.isArray(data.running)) CA.Macros.restore(data.running);
+    else {
+      // saved by v1.x: { clickers: { bigCookie: true, … }, stockTrader: true }
+      const ids = Object.keys(data.clickers || {}).filter((id) => data.clickers[id] === true);
+      if (data.stockTrader === true) ids.push('stockTrader');
+      CA.Macros.restore(ids);
     }
   },
 };

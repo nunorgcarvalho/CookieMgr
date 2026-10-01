@@ -1,7 +1,7 @@
 // Tiny publish/subscribe bus so features and UI stay decoupled.
 //
 // Events currently emitted:
-//   'clickers'  (id)          an autoclicker was switched on/off
+//   'macros'    (id)          a macro was switched on/off, run, saved or removed
 //   'settings'  (key)         an option changed
 //   'hotkeys'   (actionId)    a hotkey binding changed (or capture started/stopped)
 //   'ascend'    ()            the player just started ascending

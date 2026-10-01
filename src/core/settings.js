@@ -33,41 +33,39 @@ CA.Settings = (() => {
 
   // ---- hotkeys ---------------------------------------------------------------
 
-  function getHotkey(actionId) {
-    if (actionId in hotkeyOverrides) return hotkeyOverrides[actionId];
-    const action = CA.Actions.get(actionId);
-    return action ? action.defaultKey : '';
+  // Hotkeys bind to bindables (CA.Hotkeys.register): macros and a few panel commands.
+  // Up to v1.6 the autoclickers were bound as 'clicker.<id>'; they're macros now.
+  const LEGACY_HOTKEY_IDS = { 'clicker.stockTrader': 'macro.stockTrader' };
+  const migrateHotkeyId = (id) => LEGACY_HOTKEY_IDS[id] || (id.startsWith('clicker.') ? `macro.${id.slice(8)}` : id);
+
+  function getHotkey(id) {
+    if (id in hotkeyOverrides) return hotkeyOverrides[id];
+    const b = CA.Hotkeys.get(id);
+    return b ? b.defaultKey : '';
   }
 
-  function actionForCombo(combo) {
-    if (!combo) return null;
-    const hit = CA.Actions.all().find((a) => getHotkey(a.id) === combo);
-    return hit ? hit.id : null;
+  /** Every bindable a combo triggers (a key may be shared by several macros). */
+  function targetsForCombo(combo) {
+    if (!combo) return [];
+    return CA.Hotkeys.all()
+      .filter((b) => getHotkey(b.id) === combo)
+      .map((b) => b.id);
   }
 
   /**
-   * Binds `combo` to `actionId`. Any other action already using that combo is unbound.
-   * @returns {string[]} ids of actions that lost their binding
+   * Binds `combo` to bindable `id`. Keys can be shared, so nothing else is unbound.
+   * @returns {string[]} ids of the other bindables that the same key also triggers
    */
-  function setHotkey(actionId, combo) {
-    const displaced = [];
-    if (combo) {
-      CA.Actions.all().forEach((a) => {
-        if (a.id !== actionId && getHotkey(a.id) === combo) {
-          storeOverride(a.id, '');
-          displaced.push(a.id);
-        }
-      });
-    }
-    storeOverride(actionId, combo);
-    CA.Events.emit('hotkeys', actionId);
-    return displaced;
+  function setHotkey(id, combo) {
+    storeOverride(id, combo);
+    CA.Events.emit('hotkeys', id);
+    return combo ? targetsForCombo(combo).filter((x) => x !== id) : [];
   }
 
-  function storeOverride(actionId, combo) {
-    const action = CA.Actions.get(actionId);
-    if (action && action.defaultKey === combo) delete hotkeyOverrides[actionId];
-    else hotkeyOverrides[actionId] = combo;
+  function storeOverride(id, combo) {
+    const b = CA.Hotkeys.get(id);
+    if (b && b.defaultKey === combo) delete hotkeyOverrides[id];
+    else hotkeyOverrides[id] = combo;
   }
 
   function resetHotkeys() {
@@ -79,9 +77,9 @@ CA.Settings = (() => {
 
   function serialize() {
     const data = { v: SAVE_VERSION, options: { ...options }, hotkeys: { ...hotkeyOverrides } };
-    if (options.rememberStates) {
-      if (CA.Autoclickers) data.clickers = CA.Autoclickers.snapshot();
-      if (CA.StockTrader) data.stockTrader = CA.StockTrader.isOn();
+    if (CA.Macros) {
+      data.macros = CA.Macros.serialize(); // your own macros + per-macro preferences
+      if (options.rememberStates) data.running = CA.Macros.runningIds();
     }
     return JSON.stringify(data);
   }
@@ -106,7 +104,7 @@ CA.Settings = (() => {
     if (data.hotkeys && typeof data.hotkeys === 'object') {
       hotkeyOverrides = {};
       Object.keys(data.hotkeys).forEach((id) => {
-        if (typeof data.hotkeys[id] === 'string') hotkeyOverrides[id] = data.hotkeys[id];
+        if (typeof data.hotkeys[id] === 'string') hotkeyOverrides[migrateHotkeyId(id)] = data.hotkeys[id];
       });
     }
     CA.Events.emit('settings', null);
@@ -134,8 +132,9 @@ CA.Settings = (() => {
     }
   }
 
-  /** @returns {object|null} same shape as deserialize()'s return, or null if nothing local */
-  function restoreFromLocal() {
+  /** The mirrored payload string, or null. Read it *before* deserialize()ing anything: that
+   *  emits 'settings', which re-mirrors the current (not yet restored) state over it. */
+  function localPayload() {
     let raw;
     try {
       raw = localStorage.getItem(STORE_KEY);
@@ -149,14 +148,19 @@ CA.Settings = (() => {
     } catch (e) {
       return null;
     }
-    if (!data || typeof data.payload !== 'string') return null;
-    return deserialize(data.payload);
+    return data && typeof data.payload === 'string' ? data.payload : null;
+  }
+
+  /** @returns {object|null} same shape as deserialize()'s return, or null if nothing local */
+  function restoreFromLocal() {
+    const payload = localPayload();
+    return payload ? deserialize(payload) : null;
   }
 
   function startAutoPersist() {
     CA.Events.on('settings', persistToLocal);
     CA.Events.on('hotkeys', persistToLocal);
-    CA.Events.on('clickers', persistToLocal);
+    CA.Events.on('macros', persistToLocal);
     persistTimer = setInterval(persistToLocal, PERSIST_MS);
     addEventListener('pagehide', persistToLocal);
     addEventListener('beforeunload', persistToLocal);
@@ -169,11 +173,12 @@ CA.Settings = (() => {
     set,
     getHotkey,
     setHotkey,
-    actionForCombo,
+    targetsForCombo,
     resetHotkeys,
     serialize,
     deserialize,
     restoreFromLocal,
+    localPayload,
     startAutoPersist,
   };
 })();

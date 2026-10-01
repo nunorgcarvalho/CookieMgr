@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+## 2.0.0 — 2026-10-01
+
+**Macros.** Everything CookieMgr automates is now a macro: hotkey → macro(s) → action(s).
+
+- **Actions** (`core/actions.js`, `features/gameActions.js`): single game operations — click the big cookie, pop
+  golden/wrath cookies, reindeer, wrinklers (optionally sparing shiny ones), click fortunes, trade stocks, sell all
+  stocks, harvest a ripe sugar lump, switch/run another macro. Each reports how many things it did.
+- **Conditions** (`core/conditions.js`): an effect is active, a building special, several effects at once, something
+  to pop on screen, or any recorded state above/below a value; can be negated.
+- **Macros** (`features/macros.js`): repeat every N seconds, *when* a condition happens (once per occurrence or on
+  every check while it holds), or *once* on demand. The six autoclickers, the stock autobuyer and Sell all stocks are
+  **built-in macros** — can't be removed or edited, can be duplicated.
+- **Macros page** (was Autoclickers): **Running now** status of every active macro's actions (counts, last activity,
+  errors, "not available"), built-in sections, **Your macros** with a full **editor** (name, icon, trigger, condition,
+  steps with options, reorder), favourite stars, duplicate/edit/delete (delete needs a second click).
+- **Hotkeys bind to macros**, and one key can trigger several macros (binding a used key now shares it instead of
+  moving it). Your v1 hotkeys and running states carry over.
+- The stock **autobuyer** is the same macro on the Macros page, the Stock market page and the Bank toolbar.
+- Your macros and favourites are saved with your settings in the game save.
+- **Fix:** with "Remember on/off states", a quick refresh could come back with everything off — the local settings
+  mirror was overwritten before it was read.
+
 ## 1.6.0 — 2026-10-01
 
 - **Events page** (new sidebar icon):

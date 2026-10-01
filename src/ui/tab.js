@@ -57,9 +57,9 @@ CA.UI.Tab = (() => {
     update();
   }
 
-  /** Small count bubble on a page's icon (e.g. running autoclickers); 0 hides it. */
+  /** Small count bubble on a page's icon (e.g. running macros); 0 hides it. */
   const badges = {
-    clickers: () => CA.Autoclickers.activeCount(),
+    clickers: () => CA.Macros.activeCount(),
   };
 
   function update() {
@@ -81,7 +81,7 @@ CA.UI.Tab = (() => {
     place();
     addEventListener('resize', place);
     setInterval(place, PLACE_MS);
-    CA.Events.on('clickers', update);
+    CA.Events.on('macros', update);
     CA.Events.on('settings', update);
   }
 

@@ -19,34 +19,6 @@ CA.UI.Menu = (() => {
 
   // ---- rendering ---------------------------------------------------------------
 
-  function clickerRow(def) {
-    return (
-      `<div class="ca-row" data-clicker="${def.id}">` +
-      C.icon(def) +
-      `<div class="ca-row-text"><div class="ca-row-name">${C.esc(def.name)}</div><div class="ca-row-desc">${C.esc(def.desc)}</div></div>` +
-      '<div class="ca-controls">' +
-      C.hotkey(`clicker.${def.id}`) +
-      C.toggle(false, `data-ca="clicker" data-id="${def.id}"`, def.name) +
-      '</div>' +
-      '</div>'
-    );
-  }
-
-  function stockTraderRow() {
-    return (
-      '<div class="ca-row" data-stock-trader>' +
-      C.icon({ icon: [9, 33] }) +
-      '<div class="ca-row-text"><div class="ca-row-name">Buy fast/slow rise, sell the rest</div>' +
-      '<div class="ca-row-desc">Buys the max it can afford of fast-rising stocks, then slow-rising ones. Sells anything it holds ' +
-      "that isn't currently rising. That's the whole strategy.</div></div>" +
-      '<div class="ca-controls">' +
-      C.hotkey('clicker.stockTrader') +
-      C.toggle(false, 'data-ca="stockTrader"', 'Stock market buy') +
-      '</div>' +
-      '</div>'
-    );
-  }
-
   /** Its own card, apart from the autoclicker row, so it isn't lost among other controls —
    *  selling everything is a bigger deal than flipping a toggle. The button's title (what the
    *  hover shows) is filled in with a live cookie estimate on mouseenter; see wireSellAll(). */
@@ -55,8 +27,8 @@ CA.UI.Menu = (() => {
       '<div class="ca-card ca-card-danger">' +
       '<div class="ca-row ca-row-sellall">' +
       '<div class="ca-row-text"><div class="ca-row-name">Sell everything</div>' +
-      '<div class="ca-row-desc">Sells every stock you hold right now and turns the autoclicker off first, ' +
-      'so it doesn\'t just buy it all straight back.</div></div>' +
+      '<div class="ca-row-desc">Sells every stock you hold right now and turns the autobuyer off first, ' +
+      'so it doesn\'t just buy it all straight back. Also a macro, so it can have a hotkey.</div></div>' +
       C.button('Sell all', 'data-ca="sell-all-stocks" data-ca-sellall', 'ca-btn-danger ca-btn-lg') +
       '</div>' +
       '</div>'
@@ -87,32 +59,12 @@ CA.UI.Menu = (() => {
     return first ? first.id : 'clickers';
   };
 
-  function clickersPage() {
-    return (
-      '<div class="ca-card">' +
-      C.cardHead('Autoclickers', 'cookie', '<div class="ca-card-meta"><span class="ca-pill" data-ca-count></span></div>') +
-      '<div class="ca-row ca-row-master">' +
-      C.icon({ icon: CA.ICON }) +
-      '<div class="ca-row-text"><div class="ca-row-name">All autoclickers</div>' +
-      '<div class="ca-row-desc">The hotkey turns everything on &mdash; or off, if everything is already running.</div></div>' +
-      '<div class="ca-controls">' +
-      C.button('All on', 'data-ca="all-on"', 'ca-btn-on') +
-      C.button('All off', 'data-ca="all-off"', 'ca-btn-off') +
-      C.hotkey('clickers.toggleAll') +
-      '</div>' +
-      '</div>' +
-      `<div class="ca-list">${CA.Autoclickers.list().map(clickerRow).join('')}</div>` +
-      '</div>' +
-      optionsCard('Options', 'settings', 'autoclickers')
-    );
-  }
-
   function stocksPage() {
     return (
       sellAllCard() +
       '<div class="ca-card">' +
-      C.cardHead('Autobuyer', 'bolt') +
-      `<div class="ca-list">${stockTraderRow()}</div>` +
+      C.cardHead('Autobuyer', 'bolt', '<div class="ca-card-meta"><button type="button" class="ca-btn ca-btn-small" data-ca="open-macros">All macros</button></div>') +
+      `<div class="ca-list">${CA.UI.MacrosPage.row(CA.Macros.get('stockTrader'))}</div>` +
       '</div>' +
       optionsCard('Options', 'settings', 'stocks') +
       CA.UI.StockGraph.html() +
@@ -148,7 +100,7 @@ CA.UI.Menu = (() => {
       '</div>' +
       '</div>' +
       historyCard() +
-      optionsCard('Autoclickers', 'cookie', 'autoclickers') +
+      optionsCard('Macros', 'bolt', 'macros') +
       optionsCard('Graphs', 'graphs', 'graph') +
       optionsCard('Events', 'events', 'events') +
       optionsCard('Stock market', 'stocks', 'stocks') +
@@ -270,7 +222,6 @@ CA.UI.Menu = (() => {
   }
 
   // Built-in pages. Other modules register their own pages the same way (CA.UI.Pages).
-  CA.UI.Pages.register({ id: 'clickers', label: 'Autoclickers', icon: 'cookie', order: 10, html: () => clickersPage() });
   CA.UI.Pages.register({
     id: 'graphs',
     label: 'Graphs',
@@ -358,30 +309,8 @@ CA.UI.Menu = (() => {
     const root = document.getElementById('CookieMgrMenu');
     if (!root) return;
 
-    CA.Autoclickers.list().forEach((def) => {
-      const on = CA.Autoclickers.isOn(def.id);
-      const row = root.querySelector(`[data-clicker="${def.id}"]`);
-      if (!row) return;
-      row.classList.toggle('on', on);
-      setSwitch(row.querySelector('.ca-switch'), on);
-    });
-
-    const stRow = root.querySelector('[data-stock-trader]');
-    if (stRow) {
-      const on = CA.StockTrader.isOn();
-      stRow.classList.toggle('on', on);
-      setSwitch(stRow.querySelector('.ca-switch'), on);
-    }
-
-    const total = CA.Autoclickers.list().length;
-    const active = CA.Autoclickers.activeCount();
-    const pill = root.querySelector('[data-ca-count]');
-    if (pill) {
-      pill.textContent = `${active} / ${total} running`;
-      pill.classList.toggle('on', active > 0);
-      root.querySelector('[data-ca="all-on"]').disabled = active === total;
-      root.querySelector('[data-ca="all-off"]').disabled = active === 0;
-    }
+    // macro rows, wherever they are (Macros page, Stock market page, …)
+    CA.UI.MacrosPage.sync(root);
 
     // chips / pills bound to a setting
     root.querySelectorAll('[data-pressed-key]').forEach((el) => {
@@ -434,27 +363,13 @@ CA.UI.Menu = (() => {
       case 'close':
         Game.ShowMenu();
         break;
-      case 'clicker': {
-        const id = t.dataset.id;
-        CA.Util.sound(CA.Autoclickers.isOn(id) ? 'snd/clickOff2.mp3' : 'snd/clickOn2.mp3');
-        CA.Autoclickers.toggle(id);
-        break;
-      }
-      case 'stockTrader':
-        CA.Util.sound(CA.StockTrader.isOn() ? 'snd/clickOff2.mp3' : 'snd/clickOn2.mp3');
-        CA.StockTrader.toggle();
-        break;
       case 'sell-all-stocks':
         CA.Util.sound('snd/clickOff2.mp3');
         CA.StockTrader.sellAll();
         break;
-      case 'all-on':
-        CA.Util.sound('snd/clickOn2.mp3');
-        CA.Autoclickers.setAll(true);
-        break;
-      case 'all-off':
-        CA.Util.sound('snd/clickOff2.mp3');
-        CA.Autoclickers.setAll(false);
+      case 'open-macros':
+        CA.Util.sound('snd/tick.mp3');
+        openPage('clickers');
         break;
       case 'option': {
         const key = t.dataset.key;
@@ -498,21 +413,22 @@ CA.UI.Menu = (() => {
         CA.CookieMonster.load();
         break;
       default:
+        CA.UI.MacrosPage.handle(kind, t); // macro-toggle, macro-run, macro-fav, all-on, …
     }
   }
 
-  function onBound(combo, displaced) {
+  function onBound(combo, shared) {
     CA.Util.sound('snd/tick.mp3');
-    if (combo && displaced.length) {
-      const names = displaced.map((id) => (CA.Actions.get(id) || { name: id }).name).join(', ');
-      CA.Util.notify('Hotkey moved', `<b>${CA.Hotkeys.format(combo)}</b> was removed from: ${C.esc(names)}`, CA.ICON, 3);
+    if (combo && shared.length) {
+      const names = shared.map((id) => (CA.Hotkeys.get(id) || { name: id }).name).join(', ');
+      CA.Util.notify('Shared hotkey', `<b>${CA.Hotkeys.format(combo)}</b> also triggers: ${C.esc(names)}`, CA.ICON, 3);
     }
   }
 
   // ---- wiring ----------------------------------------------------------------------
 
   function init() {
-    CA.Actions.register({ id: 'panel.toggle', name: 'Open / close panel', group: 'general', defaultKey: '', run: toggle });
+    CA.Hotkeys.register({ id: 'panel.toggle', name: 'Open / close panel', group: 'general', defaultKey: '', run: toggle });
     CA.Settings.defineOption({ key: 'tab', group: 'ui', name: 'Panel tab', desc: '', default: 'clickers' });
 
     // Game.resPath points at wherever the game serves its images from (CDN on the web, local on Steam).
@@ -549,7 +465,7 @@ CA.UI.Menu = (() => {
       sync();
       if (mounted) mounted.tick();
     };
-    CA.Events.on('clickers', refresh);
+    CA.Events.on('macros', refresh);
     CA.Events.on('settings', refresh);
     CA.Events.on('hotkeys', refresh);
     CA.Events.on('history', () => {
@@ -561,5 +477,5 @@ CA.UI.Menu = (() => {
     });
   }
 
-  return { init, open, close, toggle, isOpen, openPage, render, sync };
+  return { init, open, close, toggle, isOpen, openPage, render, sync, optionRow, armed, currentTab };
 })();

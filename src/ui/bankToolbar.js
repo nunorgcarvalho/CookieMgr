@@ -84,7 +84,7 @@ CA.UI.BankToolbar = (() => {
       desc: 'Sell all, the autobuyer switch and a CookieMgr shortcut, right under the stock market header.',
       default: true,
     });
-    CA.Events.on('clickers', sync);
+    CA.Events.on('macros', sync);
     CA.Events.on('settings', sync);
     setInterval(sync, 1000); // the minigame redraws/opens on its own schedule
     sync();

@@ -1,10 +1,35 @@
 // Global keyboard shortcuts + "press a key to bind" capture mode.
 //
+// hotkey → macro(s) → action(s): a hotkey is bound to *bindables* — every macro registers one
+// (features/macros.js), plus a couple of panel commands (open/close the panel, all autoclickers).
+// One key may trigger several macros at once.
+//
 // A combo is stored as a string of optional modifiers followed by a KeyboardEvent.code,
 // e.g. 'KeyG', 'Shift+KeyG', 'Ctrl+Alt+Digit1'. Using `code` (physical key) keeps
 // bindings stable across keyboard layouts and Shift states.
 
 CA.Hotkeys = (() => {
+  // ---- bindables ---------------------------------------------------------------------
+  const targets = [];
+  const byId = {};
+
+  /** { id, name, group, defaultKey, run } — registering an existing id replaces it. */
+  function register(t) {
+    const b = { group: 'general', defaultKey: '', ...t };
+    if (!byId[b.id]) targets.push(b);
+    else targets[targets.indexOf(byId[b.id])] = b;
+    byId[b.id] = b;
+    return b;
+  }
+  function unregister(id) {
+    const b = byId[id];
+    if (!b) return;
+    targets.splice(targets.indexOf(b), 1);
+    delete byId[id];
+  }
+  const get = (id) => byId[id];
+  const all = () => targets.slice();
+
   const MODIFIER_CODES = [
     'ShiftLeft',
     'ShiftRight',
@@ -141,10 +166,16 @@ CA.Hotkeys = (() => {
     if (e.repeat || isTypingTarget(e)) return;
     if (typeof Game !== 'undefined' && Game.promptOn) return; // a game dialog is open
 
-    const actionId = CA.Settings.actionForCombo(fromEvent(e));
-    if (!actionId) return;
+    const ids = CA.Settings.targetsForCombo(fromEvent(e));
+    if (!ids.length) return;
     e.preventDefault();
-    CA.Actions.run(actionId);
+    ids.forEach((id) => {
+      try {
+        byId[id].run();
+      } catch (err) {
+        console.error(`[CookieMgr] hotkey ${id} failed`, err);
+      }
+    });
   }
 
   function init() {
@@ -152,5 +183,5 @@ CA.Hotkeys = (() => {
     window.addEventListener('keydown', onKeyDown, true);
   }
 
-  return { init, fromEvent, format, startCapture, cancelCapture, capturing };
+  return { init, register, unregister, get, all, fromEvent, format, startCapture, cancelCapture, capturing };
 })();

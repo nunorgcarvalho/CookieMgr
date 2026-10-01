@@ -1,12 +1,17 @@
-// Registry of things a hotkey can trigger.
-// Each feature registers its actions; the hotkey system and the settings panel read from here.
+// Registry of **actions**: single things CookieMgr can do in the game, once — click the big
+// cookie, pop the golden cookies on screen, trade stocks, cast a spell… Macros (features/macros.js)
+// are built by chaining actions; hotkeys trigger macros. The game-facing actions themselves are
+// defined in features/gameActions.js.
 //
 //   CA.Actions.register({
-//     id: 'clicker.golden',     // unique, stable (it is stored in the save)
-//     name: 'Golden cookies',   // shown in the UI
-//     group: 'autoclickers',
-//     defaultKey: 'KeyG',       // KeyboardEvent.code combo, '' for unbound
-//     run() { ... },
+//     id: 'pop.golden',                 // unique, stable (stored in saved macros)
+//     name: 'Pop golden cookies',       // shown in the UI
+//     icon: 'cookie',                   // ui/icons.js name
+//     group: 'Shimmers',                // heading in the macro editor's action picker
+//     unit: 'popped',                   // what run()'s return value counts, for status displays
+//     params: [{ key, label, type: 'select'|'number'|'bool', options: () => [{ v, label }], default }],
+//     available: () => true,            // false = can't run right now (minigame closed, …)
+//     run(params) { return 3; },        // a number = how many things it did (0 = nothing to do)
 //   });
 
 CA.Actions = (() => {
@@ -15,24 +20,37 @@ CA.Actions = (() => {
 
   function register(action) {
     if (byId[action.id]) throw new Error(`Action "${action.id}" already registered`);
-    const a = { group: 'general', defaultKey: '', ...action };
+    const a = { group: 'General', icon: 'bolt', unit: '', params: [], available: () => true, ...action };
     list.push(a);
     byId[a.id] = a;
     return a;
   }
 
-  function get(id) {
-    return byId[id];
-  }
+  const get = (id) => byId[id];
+  const all = () => list.slice();
 
-  function all(group) {
-    return group ? list.filter((a) => a.group === group) : list.slice();
-  }
-
-  function run(id) {
+  /** Default parameter values for an action, overlaid with `params`. */
+  function paramsFor(id, params) {
     const a = byId[id];
-    if (a && a.run) a.run();
+    const out = {};
+    if (a) a.params.forEach((p) => (out[p.key] = p.default));
+    return { ...out, ...(params || {}) };
   }
 
-  return { register, get, all, run };
+  /** Runs action `id` once. Returns its count (0 if it couldn't run), throws on errors. */
+  function run(id, params) {
+    const a = byId[id];
+    if (!a || !a.available()) return 0;
+    const r = a.run(paramsFor(id, params));
+    return typeof r === 'number' ? r : r ? 1 : 0;
+  }
+
+  /** "Pop golden cookies" / "Cast Force the Hand of Fate" — the action's name with its params folded in. */
+  function describe(step) {
+    const a = byId[step.action];
+    if (!a) return `Unknown action (${step.action})`;
+    return a.describe ? a.describe(paramsFor(step.action, step.params)) : a.name;
+  }
+
+  return { register, get, all, run, paramsFor, describe };
 })();
