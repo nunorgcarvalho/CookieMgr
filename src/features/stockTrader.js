@@ -56,6 +56,17 @@ CA.StockTrader = (() => {
   }
   const isOn = () => enabled;
 
+  /** Sells every stock currently held, and turns the autoclicker off first so it doesn't just
+   *  buy everything straight back. */
+  function sellAll() {
+    set(false);
+    const m = CA.Stocks.minigame();
+    if (!m) return;
+    m.goodsById.forEach((g) => {
+      if (g.stock > 0) m.sellGood(g.id, 10000);
+    });
+  }
+
   function init() {
     CA.Actions.register({
       id: 'clicker.stockTrader',
@@ -66,5 +77,5 @@ CA.StockTrader = (() => {
     });
   }
 
-  return { init, set, toggle, isOn };
+  return { init, set, toggle, isOn, sellAll };
 })();

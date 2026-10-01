@@ -4,7 +4,7 @@
    feels native. Everything is scoped under #CookieMgrTab / #CookieMgrMenu.
    ========================================================================== */
 
-/* ---------- Side tab (sticks out of the left beam) ---------- */
+/* ---------- Side tabs (stick out of the left beam, one per page) ---------- */
 
 #CookieMgrTab {
   position: absolute;
@@ -13,20 +13,27 @@
   margin-left: 3px; /* tuck slightly under the beam */
   transform: translateX(-100%);
   z-index: 110;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+#CookieMgrTab .ca-tab-flap {
   box-sizing: border-box;
-  width: 30px;
-  padding: 10px 0 12px;
+  width: 26px;
+  padding: 8px 0 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 4px;
   cursor: pointer;
   user-select: none;
   background: linear-gradient(to right, #3d2716, #221409);
   border: 1px solid;
   border-color: #ece2b6 #875526 #733726 #dfbc9a;
   border-right: none;
-  border-radius: 10px 0 0 10px;
+  border-radius: 8px 0 0 8px;
   box-shadow:
     -3px 3px 10px rgba(0, 0, 0, 0.65),
     inset 1px 1px 0 rgba(255, 255, 255, 0.18);
@@ -36,31 +43,20 @@
     box-shadow 0.2s;
   outline: none;
 }
-#CookieMgrTab:hover,
-#CookieMgrTab:focus-visible {
-  width: 34px;
+#CookieMgrTab .ca-tab-flap:hover,
+#CookieMgrTab .ca-tab-flap:focus-visible {
+  width: 30px;
   box-shadow:
     -3px 3px 12px rgba(0, 0, 0, 0.75),
     0 0 12px rgba(255, 215, 110, 0.35),
     inset 1px 1px 0 rgba(255, 255, 255, 0.25);
 }
-#CookieMgrTab.selected {
+#CookieMgrTab .ca-tab-flap.selected {
   background: linear-gradient(to right, #7a4f22, #43290f);
   box-shadow:
     -3px 3px 12px rgba(0, 0, 0, 0.75),
     0 0 14px rgba(255, 215, 110, 0.55),
     inset 1px 1px 0 rgba(255, 255, 255, 0.3);
-}
-#CookieMgrTab .ca-tab-cookie {
-  width: 20px;
-  height: 20px;
-  background: url(img/perfectCookie.png) center / contain no-repeat;
-  filter: drop-shadow(0 1px 1px #000);
-  transition: transform 0.35s ease-out;
-}
-#CookieMgrTab:hover .ca-tab-cookie,
-#CookieMgrTab.selected .ca-tab-cookie {
-  transform: rotate(-30deg) scale(1.12);
 }
 #CookieMgrTab .ca-tab-label {
   writing-mode: vertical-rl;
@@ -68,7 +64,7 @@
   font-family: 'Merriweather', Georgia, serif;
   font-variant: small-caps;
   font-weight: bold;
-  font-size: 13px;
+  font-size: 12px;
   letter-spacing: 1px;
   color: #f4e6c3;
   text-shadow:
@@ -95,7 +91,7 @@
     0 1px 1px #000;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);
 }
-#CookieMgrTab.active .ca-tab-badge {
+#CookieMgrTab .ca-tab-flap.active .ca-tab-badge {
   display: block;
   animation: caBadgeGlow 2s infinite ease-in-out;
 }

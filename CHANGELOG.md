@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 1.2.0 — 2026-09-30
+
+- **Sell all:** a button on the Stock market tab that sells every stock you hold and turns the
+  "buy fast/slow rise" autoclicker off first, so it doesn't just buy everything straight back.
+- **Side tabs, one per page:** the single "CookieMgr" flap on the left beam is now a stack of
+  flaps, one per page (Autoclickers / CPS / Stock market / Settings). Clicking one jumps straight
+  to that page, opening the panel if it's closed; clicking the page that's already open closes
+  the panel, same as before.
+
 ## 1.1.1 — 2026-09-30
 
 - **Fixed settings/autoclicker-state persistence:** "Remember on/off states" (and the states

@@ -40,6 +40,7 @@ CA.UI.Menu = (() => {
       '<div class="ca-row-desc">Buys the max it can afford of fast-rising stocks, then slow-rising ones. Sells anything it holds ' +
       "that isn't currently rising. That's the whole strategy.</div></div>" +
       '<div class="ca-controls">' +
+      C.button('Sell all', 'data-ca="sell-all-stocks"', 'ca-btn-off') +
       C.hotkey('clicker.stockTrader') +
       C.toggle(false, 'data-ca="stockTrader"', 'Stock market buy') +
       '</div>' +
@@ -301,6 +302,10 @@ CA.UI.Menu = (() => {
         CA.Util.sound(CA.StockTrader.isOn() ? 'snd/clickOff2.mp3' : 'snd/clickOn2.mp3');
         CA.StockTrader.toggle();
         break;
+      case 'sell-all-stocks':
+        CA.Util.sound('snd/clickOff2.mp3');
+        CA.StockTrader.sellAll();
+        break;
       case 'all-on':
         CA.Util.sound('snd/clickOn2.mp3');
         CA.Autoclickers.setAll(true);
@@ -423,5 +428,5 @@ CA.UI.Menu = (() => {
     CA.Events.on('hotkeys', refresh);
   }
 
-  return { init, open, close, toggle, isOpen, render, sync };
+  return { init, open, close, toggle, isOpen, render, sync, TABS };
 })();

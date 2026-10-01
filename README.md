@@ -6,10 +6,12 @@ A [Cookie Clicker](https://orteil.dashnet.org/cookieclicker/) add-on for automat
 It loads like [Cookie Monster](https://github.com/CookieMonsterTeam/CookieMonster): a one-line bookmarklet pulls the
 latest build from GitHub Pages, so pushing to this repo updates everyone's add-on.
 
-## Features (v1.1)
+## Features (v1.2)
 
-The **CookieMgr** tab sits on the left beam between the cookie panel and the middle panel. It opens the CookieMgr panel
-in the game's menu area, with four tabs along the top: **Autoclickers**, **CPS**, **Stock market** and **Settings**.
+Four little tabs stick out of the left beam between the cookie panel and the middle panel, one per page —
+**Autoclickers**, **CPS**, **Stock market** and **Settings**. Clicking one opens the CookieMgr panel straight to that
+page; clicking the page that's already open closes the panel. The panel also keeps the same four tabs along its own
+top edge, so you can flip between pages without going back to the beam.
 
 ![CPS tab](docs/graph.png)
 
@@ -90,7 +92,8 @@ The **Stock market** tab in the CookieMgr panel has:
 
 - **Buy fast/slow rise, sell the rest** — an autoclicker (own on/off switch and hotkey, not affected by "All on/off" or
   the toggle-all hotkey) that, once a second, buys the max it can afford of fast-rising stocks, then slow-rising ones,
-  and sells anything it holds that isn't currently rising. That's the entire strategy.
+  and sells anything it holds that isn't currently rising. That's the entire strategy. A **Sell all** button next to
+  it sells every stock you hold and turns the autoclicker off first, so it doesn't just buy it all straight back.
 - The stock chart, defaulting to your **portfolio value** over time (a value line plus a cost-basis line, so the gap
   between them is your unrealized gain) with stat tiles for Value, Unrealized, Realized and Total gain — switch to
   "Per stock" for the individual price lines instead. Cost basis is tracked from whenever the mod is loaded, so it
