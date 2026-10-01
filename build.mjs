@@ -53,9 +53,12 @@ const MODULES = [
 ];
 const STYLES = ['ui/styles.css'];
 
+// Line endings normalized so a Windows checkout (core.autocrlf) builds the same bytes as CI.
+const readSrc = (file) => fs.readFileSync(path.join(SRC, file), 'utf8').replace(/\r\n/g, '\n');
+
 function render() {
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-  const css = STYLES.map((f) => fs.readFileSync(path.join(SRC, f), 'utf8')).join('\n');
+  const css = STYLES.map(readSrc).join('\n');
 
   const parts = [];
   parts.push(`/*! CookieMgr v${pkg.version} */`);
@@ -65,7 +68,7 @@ function render() {
   parts.push(`CA.VERSION = ${JSON.stringify(pkg.version)};`);
   parts.push(`CA.CSS = ${JSON.stringify(css)};`);
   for (const file of MODULES) {
-    const code = fs.readFileSync(path.join(SRC, file), 'utf8').trimEnd();
+    const code = readSrc(file).trimEnd();
     parts.push(`\n// ---- src/${file} ${'-'.repeat(Math.max(4, 60 - file.length))}\n${code}`);
   }
   parts.push('})();\n');
@@ -93,8 +96,9 @@ function safeBuild() {
 const args = new Set(process.argv.slice(2));
 
 if (args.has('--check')) {
-  const current = fs.existsSync(OUT) ? fs.readFileSync(OUT, 'utf8') : '';
-  const currentVersion = fs.existsSync(VERSION_OUT) ? fs.readFileSync(VERSION_OUT, 'utf8') : '';
+  const read = (f) => (fs.existsSync(f) ? fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n') : '');
+  const current = read(OUT);
+  const currentVersion = read(VERSION_OUT);
   const { code, version } = render();
   if (current === code && currentVersion === version + '\n') {
     console.log('[check] dist/CookieMgr.js is up to date');
