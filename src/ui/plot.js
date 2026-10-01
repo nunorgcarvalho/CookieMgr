@@ -1,0 +1,1010 @@
+// The plotting engine every CookieMgr chart is built on: a plot is a *technique* applied to
+// recorded *states* (core/states.js, core/recorder.js). A plot spec says which states it reads
+// and how to turn the recorder's frames into bars / lines / overlays; this module does the rest:
+// the card + toolbar chips (persisted per plot), bucketing, scales, axes, effect bands, event
+// markers, the hover tooltip, drag-to-scroll and the live/paused view.
+//
+//   const p = CA.UI.Plot.create({ id, title, icon, windows, build(v) { return { series, bars, lines } } });
+//   page html: p.html()   mount: p.mount(pageRoot)   tick: p.tick()   unmount: p.unmount()
+//
+// The x axis is either wall-clock time (frame.t) or **active play time** (frame.a, see
+// core/recorder.js) — the global "Active time" toggle (setting graphActiveTime). In active-time
+// mode stretches where the game wasn't running simply don't exist on the axis; a thin dashed
+// line marks where one was cut out, and axis labels still show the wall-clock time there.
+
+CA.UI = CA.UI || {};
+
+CA.UI.Plot = (() => {
+  const FONT = '10px Tahoma, Arial, sans-serif';
+  const PAD = { r: 8, t: 10, b: 22 };
+  const MIN_PAD_L = 30;
+  const PAD_L_MARGIN = 10;
+  const BAR_PX = 5; // target on-screen width (bar + gap) of one bar in Auto coarseness
+  const MAX_AUTO_BARS = 240;
+  const MAX_BARS = 900;
+  const BAR_GAP_FRAC = 0.18;
+  const LANE_H = 8;
+  const LANE_GAP = 2;
+  const MAX_LANES = 6;
+  const GAP_MS = 5000; // matches the recorder's MAX_GAP_MS
+  const SEC = 1000;
+  const NICE_MS = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 10800, 21600, 43200, 86400, 172800].map((s) => s * SEC);
+  const WINDOW_LABELS = { 60: '1m', 300: '5m', 900: '15m', 3600: '1h', 10800: '3h', 43200: '12h', 86400: '1d', 604800: '7d', 0: 'All' };
+  const COARSE = [0, 1, 5, 15, 60, 300, 900, 3600];
+  const COARSE_LABELS = { 0: 'Auto', 1: '1s', 5: '5s', 15: '15s', 60: '1m', 300: '5m', 900: '15m', 3600: '1h' };
+
+  const S = () => CA.Settings;
+  const esc = (s) => CA.Util.escapeHtml(s);
+
+  // ---- formatting ------------------------------------------------------------------------
+
+  const SUFFIX = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
+  function short(v) {
+    if (!isFinite(v)) return '0';
+    const sign = v < 0 ? '-' : '';
+    v = Math.abs(v);
+    if (v < 1000) return sign + (v < 10 ? v.toFixed(v < 1 && v > 0 ? 2 : 1).replace(/\.0+$/, '') : Math.round(v));
+    let i = 0;
+    while (v >= 1000 && i < SUFFIX.length - 1) {
+      v /= 1000;
+      i++;
+    }
+    return sign + (v < 10 ? v.toFixed(2) : v < 100 ? v.toFixed(1) : Math.round(v)).toString().replace(/\.0+$/, '') + SUFFIX[i];
+  }
+  /** The game's own number formatter when available (full illion names, the player's Numbers preference). */
+  function beautify(v, floats) {
+    if (!isFinite(v)) return '0';
+    if (typeof Beautify !== 'function') return short(v);
+    return (v < 0 ? '-' : '') + Beautify(Math.abs(v), floats == null ? 1 : floats);
+  }
+  const signed = (v) => (v < 0 ? '−' : '+') + beautify(Math.abs(v));
+  const two = (n) => (n < 10 ? '0' + n : '' + n);
+  function clock(t, withSeconds) {
+    const d = new Date(t);
+    return `${two(d.getHours())}:${two(d.getMinutes())}` + (withSeconds ? `:${two(d.getSeconds())}` : '');
+  }
+  function dayClock(t) {
+    const d = new Date(t);
+    return `${d.toLocaleDateString(undefined, { weekday: 'short' })} ${clock(t)}`;
+  }
+  function span(sec) {
+    sec = Math.max(0, Math.round(sec));
+    if (sec < 60) return `${sec}s`;
+    if (sec < 3600) return `${Math.floor(sec / 60)}m ${two(sec % 60)}s`;
+    if (sec < 172800) return `${Math.floor(sec / 3600)}h ${two(Math.floor((sec % 3600) / 60))}m`;
+    return `${Math.floor(sec / 86400)}d ${Math.floor((sec % 86400) / 3600)}h`;
+  }
+  const windowLabel = (s) => WINDOW_LABELS[s] || span(s);
+  const swatch = (c, dash) => `<i class="ca-sw${dash ? ' ca-sw-dash' : ''}" style="${dash ? `border-color:${c}` : `background:${c}`}"></i>`;
+  function row(color, name, value, strong, dash) {
+    return `<div class="ca-tip-row${strong ? ' strong' : ''}">${swatch(color, dash)}<b>${esc(name)}</b><span>${esc(value)}</span></div>`;
+  }
+  const tile = (label, value, sub, title) =>
+    `<div class="ca-stat"${title ? ` title="${esc(title)}"` : ''}><div class="ca-stat-label">${label}</div><div class="ca-stat-value">${value}</div><div class="ca-stat-sub">${sub || '&nbsp;'}</div></div>`;
+
+  // ---- the x axis -------------------------------------------------------------------------
+
+  const activeMode = () => !!S().get('graphActiveTime');
+
+  /** Which clock the x axis runs on, with conversions both ways. */
+  function axis() {
+    const frames = CA.Recorder.frames();
+    if (activeMode()) {
+      return {
+        key: 'a',
+        now: CA.Recorder.activeNow(),
+        min: frames.length ? frames[0].a - (frames[0].dt || 1) * SEC : undefined,
+        tAt: CA.Recorder.timeAt,
+        xAt: CA.Recorder.activeAt,
+      };
+    }
+    return {
+      key: 't',
+      now: Date.now(),
+      min: frames.length ? frames[0].t - (frames[0].dt || 1) * SEC : undefined,
+      tAt: (x) => x,
+      xAt: (t) => t,
+    };
+  }
+
+  const niceUp = (ms) => NICE_MS.find((n) => n >= ms) || NICE_MS[NICE_MS.length - 1];
+
+  // ---- bucketing --------------------------------------------------------------------------
+
+  /**
+   * Aggregates frames into bars on an absolute grid of `bucket` ms along axis `key` (so bars
+   * never reshuffle as the view scrolls). Each field is combined by its state's kind: flows
+   * summed, gauges dt-weighted mean, counters last value (and `first` kept, for deltas). Older
+   * history is coarser than a small bucket — such a frame becomes its own, wider bar rather
+   * than leaving stripes of empty buckets.
+   * Bars: { x0, x1, secs (active seconds covered), t0, t1 (wall), v: { field: value }, first: {} }.
+   */
+  function bucketize(frames, key, x0, x1, bucket, fields) {
+    const aggs = fields.map((f) => {
+      const d = CA.States.get(f);
+      return d ? d.agg : 'mean';
+    });
+    const bars = [];
+    let cur = null;
+    const open = (bx0, bx1, idx) => ({ idx, x0: bx0, x1: bx1, secs: 0, n: 0, t0: Infinity, t1: -Infinity, acc: fields.map(() => ({ s: 0, w: 0, c: 0, last: undefined, first: undefined })) });
+    const add = (bar, f) => {
+      const dt = f.dt || 0;
+      bar.secs += dt;
+      bar.n++;
+      bar.t0 = Math.min(bar.t0, f.t - (dt || 1) * SEC);
+      bar.t1 = Math.max(bar.t1, f.t);
+      fields.forEach((k, i) => {
+        const v = f[k];
+        if (!Number.isFinite(v)) return;
+        const a = bar.acc[i];
+        a.s += v;
+        a.w += v * dt;
+        a.c += dt;
+        if (a.first === undefined) a.first = v;
+        a.last = v;
+      });
+    };
+    const flush = () => {
+      if (!cur) return;
+      const prev = bars[bars.length - 1];
+      if (prev && cur.x0 < prev.x1) cur.x0 = prev.x1;
+      cur.v = {};
+      cur.first = {};
+      fields.forEach((k, i) => {
+        const a = cur.acc[i];
+        if (a.last === undefined) return;
+        cur.first[k] = a.first;
+        if (aggs[i] === 'sum') cur.v[k] = a.s;
+        else if (aggs[i] === 'last') cur.v[k] = a.last;
+        else cur.v[k] = a.c > 0 ? a.w / a.c : a.last;
+      });
+      delete cur.acc;
+      if (cur.x1 > cur.x0) bars.push(cur);
+      cur = null;
+    };
+    frames.forEach((f) => {
+      const x = f[key];
+      const w = (f.dt || 1) * SEC;
+      if (!(x > x0) || x - w >= x1) return;
+      if (w >= bucket * 0.99) {
+        flush();
+        cur = open(x - w, x, null);
+        add(cur, f);
+        flush();
+        return;
+      }
+      const idx = Math.floor((x - w / 2) / bucket);
+      if (!cur || cur.idx !== idx) {
+        flush();
+        cur = open(idx * bucket, (idx + 1) * bucket, idx);
+      }
+      add(cur, f);
+    });
+    flush();
+    return bars;
+  }
+
+  /** Points for a line through bar values (at each bar's centre); `fn(bar)` → number|undefined. */
+  function linePoints(bars, fn) {
+    const pts = [];
+    bars.forEach((b) => {
+      const v = fn(b);
+      if (Number.isFinite(v)) pts.push({ x: (b.x0 + b.x1) / 2, v, x0: b.x0, x1: b.x1, bar: b });
+    });
+    return pts;
+  }
+
+  /** Rolling mean over the previous k points (k <= 1 leaves them alone). */
+  function smooth(pts, k) {
+    if (k <= 1) return pts;
+    let sum = 0;
+    return pts.map((p, i) => {
+      sum += p.v;
+      if (i >= k) sum -= pts[i - k].v;
+      return { ...p, v: sum / Math.min(i + 1, k) };
+    });
+  }
+
+  /** Spots in [x0, x1] where active-time mode cut out a stretch of inactive time. */
+  function gapsIn(frames, key, x0, x1) {
+    const out = [];
+    for (let i = 1; i < frames.length; i++) {
+      const f = frames[i];
+      const p = frames[i - 1];
+      const wall = f.t - p.t;
+      const act = f.a - p.a;
+      if (wall - act > GAP_MS && f[key] > x0 && p[key] < x1) out.push({ x: p[key], away: wall - act, from: p.t, to: f.t });
+    }
+    return out;
+  }
+
+  // ---- one plot -----------------------------------------------------------------------------
+
+  const all = new Map(); // id -> instance
+
+  /**
+   * spec: {
+   *   id, title, icon, height (px, default 220), note (HTML under the title),
+   *   windows: [seconds…] (0 = all history), window: default seconds,
+   *   coarse: true to offer a bar-width chooser (default Auto),
+   *   toggles: [{ key, label, title, default }]          boolean chips, read with v.opt(key)
+   *   choices: [{ key, label, options: [{ v, label }], default }]   one-of chips, v.opt(key)
+   *   log: true|false to offer a log-scale chip (and its default); omit for linear only
+   *   build(v) → { series: [{ key, name, color, type: 'bar'|'line'|'area', dash, width }],
+   *                bars: [{ x0, x1, parts: { key: value }, … }], lines: { key: [{ x, v }] },
+   *                hlines: [{ v, label, color }], intervals: [{ x0, x1, color, label, tip() }],
+   *                markers: [{ x, color, line, tip() }], empty: 'text', zero: true }
+   *   stats(v, data) → HTML (tiles above the chart), footer(v, data) → HTML (below the legend)
+   *   tip(bar, v, data) → extra tooltip HTML for a hovered bar
+   *   fmt(value) → string for axis/tooltip values (default: beautify), unit: suffix for the tooltip
+   * }
+   */
+  function create(spec) {
+    const id = spec.id;
+    const key = (k) => `plot.${id}.${k}`;
+    const height = spec.height || 220;
+    const fmt = spec.fmt || ((v) => beautify(v, 0));
+    const tipFmt = spec.tipFmt || ((v) => beautify(v) + (spec.unit || ''));
+
+    // persisted per-plot choices (kept out of the generic Settings list)
+    const def = (k, d) => S().defineOption({ key: key(k), group: 'plot', name: k, desc: '', default: d });
+    def('win', spec.window != null ? spec.window : (spec.windows || [300])[0]);
+    if (spec.coarse) def('coarse', 0);
+    if (spec.log != null) def('log', !!spec.log);
+    // a toggle with `setting` binds an existing global option instead of a per-plot one
+    (spec.toggles || []).forEach((t) => !t.setting && def(t.key, !!t.default));
+    (spec.choices || []).forEach((c) => def(c.key, c.default));
+
+    const view = CA.UI.Chart.createView();
+    let root = null;
+    let canvas = null;
+    let ctx = null;
+    let tipEl = null;
+    let observer = null;
+    let panCtl = null;
+    let hover = null;
+    let padL = 54;
+    let layout = null;
+    let lastData = null;
+
+    const opt = (k) => S().get(key(k));
+    function windowMs(ax) {
+      const s = opt('win');
+      if (s > 0) return s * SEC;
+      const min = ax.min;
+      return min == null ? 60 * SEC : Math.max(60 * SEC, ax.now - min);
+    }
+
+    // ---- html ----
+
+    function chip(label, attrs, title) {
+      return `<button type="button" class="ca-chip" ${attrs}${title ? ` title="${esc(title)}"` : ''}>${label}</button>`;
+    }
+    const setChip = (k, val, label, title) =>
+      chip(label, `data-plot-set="${key(k)}" data-val="${esc(String(val))}" data-pressed-key="${key(k)}" data-pressed-val="${esc(String(val))}"`, title);
+    const boolChip = (fullKey, label, title) => chip(label, `data-plot-toggle="${fullKey}" data-pressed-key="${fullKey}"`, title);
+
+    function html() {
+      const wins = spec.windows || [300];
+      let h =
+        `<div class="ca-card ca-graph-card" data-plot="${id}">` +
+        CA.UI.C.cardHead(spec.title, spec.icon, '<div class="ca-card-meta"><span class="ca-live" data-plot-live></span></div>') +
+        (spec.note ? `<div class="ca-card-note">${spec.note}</div>` : '') +
+        (spec.stats ? '<div class="ca-stats" data-plot-stats></div>' : '') +
+        '<div class="ca-toolbar">' +
+        `<div class="ca-chipgroup" title="How much history to show">${wins.map((s) => setChip('win', s, windowLabel(s))).join('')}</div>` +
+        (spec.choices || [])
+          .map(
+            (c) =>
+              `<div class="ca-chipgroup">${c.label ? `<span class="ca-chip-label">${esc(c.label)}</span>` : ''}` +
+              c.options.map((o) => setChip(c.key, o.v, o.label, o.title)).join('') +
+              '</div>'
+          )
+          .join('') +
+        '</div>' +
+        `<div class="ca-graph-wrap"><canvas class="ca-graph" style="height:${height}px" data-plot-canvas></canvas><div class="ca-tip" data-plot-tip></div></div>` +
+        '<div class="ca-toolbar ca-toolbar-bottom">';
+      if (spec.coarse) {
+        h +=
+          '<div class="ca-chipgroup" title="Width of each bar">' +
+          '<span class="ca-chip-label">Bars</span>' +
+          COARSE.map((s) => setChip('coarse', s, COARSE_LABELS[s])).join('') +
+          '</div>';
+      }
+      h += '<div class="ca-chipgroup">';
+      if (spec.log != null) h += boolChip(key('log'), 'Log scale', 'Logarithmic vertical axis — handy when values grow by orders of magnitude');
+      (spec.toggles || []).forEach((t) => (h += boolChip(t.setting || key(t.key), t.label, t.title)));
+      h += boolChip('graphActiveTime', `${CA.UI.Icons.html('clock', 12)} Active time`, 'Leave out time the game wasn’t running (closed, asleep, background tab) — the window then covers that much actual play');
+      h += '</div>';
+      h += `<div class="ca-chipgroup">${chip('', 'data-plot-pause', 'Drag the chart (or scroll it sideways) to look further back')}</div>`;
+      h += '</div>';
+      h += '<div class="ca-legend" data-plot-legend></div>';
+      if (spec.footer) h += '<div data-plot-footer></div>';
+      h += '</div>';
+      return h;
+    }
+
+    // ---- data ----
+
+    function viewFor(plotW) {
+      const ax = axis();
+      const W = windowMs(ax);
+      const x1 = view.getEnd(ax.now);
+      const x0 = x1 - W;
+      const auto = niceUp(W / Math.max(12, Math.min(MAX_AUTO_BARS, Math.round(plotW / BAR_PX))));
+      const want = spec.coarse ? opt('coarse') * SEC : 0;
+      const bucket = want ? Math.max(want, niceUp(W / MAX_BARS)) : auto;
+      const frames = CA.Recorder.frames();
+      const lo = Math.max(0, CA.Recorder.lowerBound(x0, ax.key) - 1);
+      const hi = Math.min(frames.length, CA.Recorder.lowerBound(x1, ax.key) + 1);
+      const v = {
+        key: ax.key,
+        active: ax.key === 'a',
+        x0,
+        x1,
+        W,
+        now: ax.now,
+        live: view.isLive(),
+        bucket,
+        frames: frames.slice(lo, hi),
+        tAt: ax.tAt,
+        xAt: ax.xAt,
+        opt,
+        bucketize: (fields, b) => bucketize(v.frames, ax.key, x0, x1, b || bucket, fields),
+        /** Same, but starting at `from` (< x0) — for plots that look back before the window. */
+        bucketizeFrom: (fields, from) => {
+          const lo2 = Math.max(0, CA.Recorder.lowerBound(from, ax.key) - 1);
+          return bucketize(frames.slice(lo2, hi), ax.key, from, x1, bucket, fields);
+        },
+      };
+      return v;
+    }
+
+    // ---- drawing ----
+
+    function draw() {
+      if (!canvas || !canvas.isConnected) return;
+      const { w, h } = CA.UI.Chart.fitCanvas(canvas, ctx);
+      if (w < 50 || h < 50) return;
+      ctx.clearRect(0, 0, w, h);
+
+      const v = viewFor(Math.max(50, w - padL - PAD.r));
+      const data = spec.build(v) || {};
+      lastData = { v, data };
+      const series = data.series || [];
+      const byKey = {};
+      series.forEach((s) => (byKey[s.key] = s));
+      const bars = data.bars || [];
+      const lines = data.lines || {};
+      const barSeries = series.filter((s) => s.type === 'bar');
+      const log = spec.log != null && opt('log');
+
+      // effect lanes (bottom of the plot)
+      const ivs = (data.intervals || []).filter((iv) => iv.x1 > v.x0 && iv.x0 < v.x1);
+      const lanes = assignLanes(ivs);
+      const laneCount = Math.min(MAX_LANES, lanes.count);
+      const lanesH = laneCount ? laneCount * (LANE_H + LANE_GAP) + 2 : 0;
+
+      // y range
+      let maxV = -Infinity;
+      let minV = Infinity;
+      let minPos = Infinity;
+      const see = (val) => {
+        if (!Number.isFinite(val)) return;
+        if (val > maxV) maxV = val;
+        if (val < minV) minV = val;
+        if (val > 0 && val < minPos) minPos = val;
+      };
+      bars.forEach((b) => {
+        let pos = 0;
+        let neg = 0;
+        barSeries.forEach((s) => {
+          const val = b.parts[s.key];
+          if (!Number.isFinite(val)) return;
+          if (val >= 0) pos += val;
+          else neg += val;
+          if (val > 0) see(val);
+        });
+        see(pos);
+        see(neg);
+      });
+      Object.keys(lines).forEach((k) => (byKey[k] && byKey[k].noScale ? null : lines[k].forEach((p) => see(p.v))));
+      (data.hlines || []).forEach((l) => see(l.v));
+      if (data.zero !== false) see(0);
+
+      let yMin;
+      let yMax;
+      let ticks = [];
+      if (log) {
+        if (!isFinite(minPos)) minPos = 1;
+        if (!(maxV > 0)) maxV = 10;
+        yMin = Math.pow(10, Math.floor(Math.log10(minPos)));
+        yMax = Math.pow(10, Math.ceil(Math.log10(maxV * 1.02)));
+        if (yMax / yMin < 10) yMax = yMin * 10;
+        for (let t = yMin; t <= yMax * 1.0001; t *= 10) ticks.push(t);
+        while (ticks.length > 7) ticks = ticks.filter((_, i) => i % 2 === 0);
+      } else if (!isFinite(maxV)) {
+        yMin = 0;
+        yMax = 10;
+        ticks = [0, 5, 10];
+      } else if (minV >= 0 && data.zero !== false) {
+        const top = maxV > 0 ? maxV * 1.08 : 10;
+        const step = CA.UI.Chart.niceStep(top / 4);
+        yMin = 0;
+        yMax = Math.ceil(top / step) * step;
+        for (let t = 0; t <= yMax * 1.0001; t += step) ticks.push(t);
+      } else {
+        ({ yMin, yMax, ticks } = CA.UI.Chart.niceLinearScale(minV, maxV));
+      }
+
+      padL = CA.UI.Chart.dynamicPadLeft(ctx, FONT, ticks.map(fmt), MIN_PAD_L, PAD_L_MARGIN);
+      const plot = { x: padL, y: PAD.t, w: w - padL - PAD.r, h: h - PAD.t - PAD.b };
+      const chartH = plot.h - lanesH - (laneCount ? 4 : 0);
+      const lanesTop = plot.y + plot.h - lanesH;
+      const xOf = (x) => plot.x + ((x - v.x0) / v.W) * plot.w;
+      const yOf = (val) => {
+        let f;
+        if (log) f = (Math.log10(Math.max(val, yMin)) - Math.log10(yMin)) / (Math.log10(yMax) - Math.log10(yMin));
+        else f = (val - yMin) / (yMax - yMin || 1);
+        return plot.y + chartH - Math.max(0, Math.min(1, f)) * chartH;
+      };
+
+      // background
+      const bg = ctx.createLinearGradient(0, plot.y, 0, plot.y + plot.h);
+      bg.addColorStop(0, 'rgba(255,255,255,0.045)');
+      bg.addColorStop(1, 'rgba(255,255,255,0.01)');
+      ctx.fillStyle = bg;
+      ctx.fillRect(plot.x, plot.y, plot.w, plot.h);
+
+      // effect shading
+      const hoverIv = layout && layout.hoverIv;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(plot.x, plot.y, plot.w, plot.h);
+      ctx.clip();
+      ivs.forEach((iv) => {
+        const a = Math.max(plot.x, xOf(iv.x0));
+        const b = Math.min(plot.x + plot.w, xOf(iv.x1));
+        if (b <= a) return;
+        ctx.globalAlpha = iv === hoverIv ? 0.3 : 0.13;
+        ctx.fillStyle = iv.color;
+        ctx.fillRect(a, plot.y, b - a, plot.h);
+      });
+      ctx.globalAlpha = 1;
+      ctx.restore();
+
+      // y grid + labels
+      ctx.font = FONT;
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = 'right';
+      ctx.lineWidth = 1;
+      ticks.forEach((t) => {
+        const y = Math.round(yOf(t)) + 0.5;
+        ctx.strokeStyle = t === 0 && yMin < 0 ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.09)';
+        ctx.beginPath();
+        ctx.moveTo(plot.x, y);
+        ctx.lineTo(plot.x + plot.w, y);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(230,220,200,0.75)';
+        ctx.fillText(fmt(t), plot.x - 6, y);
+      });
+
+      drawXAxis(plot, v, xOf);
+
+      // bars
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(plot.x, plot.y - 4, plot.w, chartH + 8);
+      ctx.clip();
+      const y0 = yOf(log ? yMin : Math.max(yMin, Math.min(yMax, 0)));
+      const hoverBar = layout && layout.hoverBar;
+      bars.forEach((b) => {
+        const xL = xOf(b.x0);
+        const xR = xOf(b.x1);
+        const full = xR - xL;
+        const gap = full > 3 ? full * BAR_GAP_FRAC : 0;
+        const bx = xL + gap / 2;
+        const bw = Math.max(1, full - gap);
+        let pos = 0;
+        let neg = 0;
+        barSeries.forEach((s) => {
+          const val = b.parts[s.key];
+          if (!Number.isFinite(val) || val === 0) return;
+          let ya;
+          let yb;
+          if (val > 0) {
+            ya = pos === 0 ? y0 : yOf(pos);
+            pos += val;
+            yb = yOf(pos);
+          } else {
+            ya = neg === 0 ? y0 : yOf(neg);
+            neg += val;
+            yb = yOf(neg);
+          }
+          ctx.fillStyle = s.color;
+          ctx.globalAlpha = hoverBar && hoverBar !== b ? 0.8 : 1;
+          ctx.fillRect(bx, Math.min(ya, yb), bw, Math.abs(yb - ya));
+        });
+      });
+      ctx.globalAlpha = 1;
+
+      // lines / areas
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      series
+        .filter((s) => s.type === 'line' || s.type === 'area')
+        .forEach((s) => {
+          const pts = lines[s.key] || [];
+          segments(pts, v.bucket).forEach((seg) => {
+            if (!seg.length) return;
+            ctx.beginPath();
+            seg.forEach((p, i) => (i ? ctx.lineTo(xOf(p.x), yOf(p.v)) : ctx.moveTo(xOf(p.x), yOf(p.v))));
+            if (seg.length === 1) ctx.lineTo(xOf(seg[0].x) + 0.01, yOf(seg[0].v));
+            if (s.type === 'area') {
+              ctx.save();
+              ctx.lineTo(xOf(seg[seg.length - 1].x), y0);
+              ctx.lineTo(xOf(seg[0].x), y0);
+              ctx.closePath();
+              ctx.globalAlpha = 0.18;
+              ctx.fillStyle = s.color;
+              ctx.fill();
+              ctx.restore();
+              ctx.beginPath();
+              seg.forEach((p, i) => (i ? ctx.lineTo(xOf(p.x), yOf(p.v)) : ctx.moveTo(xOf(p.x), yOf(p.v))));
+            }
+            ctx.strokeStyle = s.color;
+            ctx.lineWidth = s.width || 1.6;
+            ctx.setLineDash(s.dash ? [4, 3] : []);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          });
+        });
+      ctx.restore();
+
+      // horizontal reference lines (averages)
+      (data.hlines || []).forEach((l) => {
+        if (!Number.isFinite(l.v)) return;
+        const y = Math.round(yOf(l.v)) + 0.5;
+        ctx.save();
+        ctx.strokeStyle = l.color || 'rgba(255,255,255,0.55)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([2, 3]);
+        ctx.beginPath();
+        ctx.moveTo(plot.x, y);
+        ctx.lineTo(plot.x + plot.w, y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        if (l.label) {
+          ctx.font = 'bold 9px Tahoma, Arial, sans-serif';
+          ctx.textAlign = 'left';
+          const above = y - plot.y >= 12;
+          ctx.textBaseline = above ? 'bottom' : 'top';
+          ctx.fillStyle = 'rgba(255,255,255,0.8)';
+          ctx.fillText(l.label, plot.x + 4, y + (above ? -2 : 2));
+        }
+        ctx.restore();
+      });
+
+      // effect lanes
+      const laneRects = [];
+      ivs.forEach((iv) => {
+        const lane = lanes.lanes.get(iv);
+        if (lane >= MAX_LANES) return;
+        const a = Math.max(plot.x, xOf(iv.x0));
+        const b = Math.min(plot.x + plot.w, xOf(iv.x1));
+        if (b <= a) return;
+        const y = lanesTop + 2 + lane * (LANE_H + LANE_GAP);
+        ctx.fillStyle = iv.color;
+        ctx.globalAlpha = iv === hoverIv ? 1 : 0.85;
+        roundRect(a, y, Math.max(2, b - a), LANE_H, 3);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        if (b - a > 46 && iv.label) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(a, y, b - a, LANE_H);
+          ctx.clip();
+          ctx.font = 'bold 8px Tahoma, Arial, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = 'rgba(0,0,0,0.75)';
+          ctx.fillText(iv.label, a + 4, y + LANE_H / 2 + 0.5);
+          ctx.restore();
+        }
+        laneRects.push({ iv, x0: a, x1: b, y, y1: y + LANE_H });
+      });
+
+      // cut-out inactive stretches (active-time mode)
+      const gapRects = [];
+      if (v.active) {
+        gapsIn(v.frames, 'a', v.x0, v.x1).forEach((g) => {
+          const x = Math.round(xOf(g.x)) + 0.5;
+          if (x < plot.x || x > plot.x + plot.w) return;
+          ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+          ctx.setLineDash([1, 3]);
+          ctx.beginPath();
+          ctx.moveTo(x, plot.y);
+          ctx.lineTo(x, plot.y + chartH);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          gapRects.push({ x, g });
+        });
+      }
+
+      // event markers
+      const evRects = [];
+      (data.markers || []).forEach((m) => {
+        if (m.x < v.x0 || m.x > v.x1) return;
+        const x = xOf(m.x);
+        if (m.line) {
+          ctx.strokeStyle = m.color;
+          ctx.globalAlpha = 0.7;
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath();
+          ctx.moveTo(Math.round(x) + 0.5, plot.y);
+          ctx.lineTo(Math.round(x) + 0.5, plot.y + plot.h);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.globalAlpha = 1;
+        }
+        const y = plot.y + 7;
+        ctx.fillStyle = m.color;
+        ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x, y - 5);
+        ctx.lineTo(x + 4.5, y);
+        ctx.lineTo(x, y + 5);
+        ctx.lineTo(x - 4.5, y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        evRects.push({ m, x, y });
+      });
+
+      layout = { plot, xOf, yOf, v, data, bars, laneRects, evRects, gapRects, hoverIv: null, hoverBar: null, chartH, byKey };
+
+      const dragging = panCtl && panCtl.isDragging();
+      if (!dragging && hover && hover.x >= plot.x && hover.x <= plot.x + plot.w && hover.y >= 0 && hover.y <= h) drawHover(w, h);
+      else if (tipEl) tipEl.style.display = 'none';
+
+      if (!bars.length && !Object.keys(lines).some((k) => lines[k].length)) {
+        ctx.fillStyle = 'rgba(230,220,200,0.6)';
+        ctx.font = '12px Tahoma, Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const msg = !S().get('trackHistory') ? 'History recording is off (Settings)' : data.empty || 'Collecting data…';
+        ctx.fillText(msg, plot.x + plot.w / 2, plot.y + plot.h / 2);
+      }
+    }
+
+    function drawXAxis(plot, v, xOf) {
+      const steps = NICE_MS.filter((s) => s >= 5 * SEC);
+      const stepMs = steps.find((s) => v.W / s <= Math.max(3, Math.floor(plot.w / 78))) || steps[steps.length - 1];
+      const long = stepMs >= 6 * 3600 * SEC;
+      ctx.font = FONT;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      // wall-clock axis: align ticks to the local clock; active axis: evenly spaced, labelled
+      // with the wall-clock time at that point
+      const tz = v.active ? 0 : new Date(v.x0).getTimezoneOffset() * 60000;
+      for (let x = Math.ceil((v.x0 - tz) / stepMs) * stepMs + tz; x <= v.x1; x += stepMs) {
+        const px = Math.round(xOf(x)) + 0.5;
+        ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+        ctx.beginPath();
+        ctx.moveTo(px, plot.y);
+        ctx.lineTo(px, plot.y + plot.h);
+        ctx.stroke();
+        if (px > plot.x + 16 && px < plot.x + plot.w - 16) {
+          const t = v.tAt(x);
+          ctx.fillStyle = 'rgba(230,220,200,0.7)';
+          ctx.fillText(long ? dayClock(t) : clock(t, stepMs < 60 * SEC), px, plot.y + plot.h + 7);
+        }
+      }
+    }
+
+    function segments(pts, bucket) {
+      const out = [];
+      let cur = [];
+      const maxGap = Math.max(GAP_MS, bucket * 1.6);
+      pts.forEach((p, i) => {
+        if (i && (p.x0 != null && pts[i - 1].x1 != null ? p.x0 - pts[i - 1].x1 > maxGap : p.x - pts[i - 1].x > maxGap * 2)) {
+          out.push(cur);
+          cur = [];
+        }
+        cur.push(p);
+      });
+      if (cur.length) out.push(cur);
+      return out;
+    }
+
+    function assignLanes(ivs) {
+      const sorted = ivs.slice().sort((a, b) => a.x0 - b.x0);
+      const ends = [];
+      const lanes = new Map();
+      sorted.forEach((iv) => {
+        let lane = ends.findIndex((e) => e <= iv.x0);
+        if (lane === -1) lane = ends.length;
+        ends[lane] = iv.x1;
+        lanes.set(iv, lane);
+      });
+      return { lanes, count: ends.length };
+    }
+
+    function roundRect(x, y, w, h, r) {
+      r = Math.min(r, w / 2, h / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    // ---- hover ----
+
+    function nearest(pts, x) {
+      let lo = 0;
+      let hi = pts.length;
+      while (lo < hi) {
+        const mid = (lo + hi) >> 1;
+        if (pts[mid].x < x) lo = mid + 1;
+        else hi = mid;
+      }
+      if (lo > 0 && (lo >= pts.length || x - pts[lo - 1].x < pts[lo].x - x)) lo--;
+      return pts[lo];
+    }
+
+    function drawHover(w, h) {
+      const L = layout;
+      const { plot, v, data } = L;
+      const x = v.x0 + ((hover.x - plot.x) / plot.w) * v.W;
+      const hitEv = L.evRects.find((r) => Math.abs(r.x - hover.x) < 7 && Math.abs(r.y - hover.y) < 9);
+      const hitLane = L.laneRects.find((r) => hover.x >= r.x0 && hover.x <= r.x1 && hover.y >= r.y - 1 && hover.y <= r.y1 + 1);
+      const hitGap = L.gapRects.find((r) => Math.abs(r.x - hover.x) < 3);
+      const bar = L.bars.find((b) => x >= b.x0 && x < b.x1) || null;
+      L.hoverIv = hitLane ? hitLane.iv : null;
+      L.hoverBar = !hitEv && !hitLane ? bar : null;
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(Math.round(hover.x) + 0.5, plot.y);
+      ctx.lineTo(Math.round(hover.x) + 0.5, plot.y + plot.h);
+      ctx.stroke();
+
+      let html;
+      if (hitEv) html = hitEv.m.tip ? hitEv.m.tip() : '';
+      else if (hitLane) html = hitLane.iv.tip ? hitLane.iv.tip() : esc(hitLane.iv.label || '');
+      else if (hitGap) {
+        const g = hitGap.g;
+        html =
+          `<div class="ca-tip-head">Not running<span>${clock(g.from)} – ${clock(g.to)}</span></div>` +
+          `<div class="ca-tip-note">${span(g.away / SEC)} without the game running, left out of this axis.</div>`;
+      } else html = barTip(x, bar);
+
+      // hover dots on lines
+      (data.series || [])
+        .filter((s) => s.type === 'line' || s.type === 'area')
+        .forEach((s) => {
+          const pts = (data.lines || {})[s.key] || [];
+          const p = pts.length ? nearest(pts, x) : null;
+          if (!p || Math.abs(L.xOf(p.x) - hover.x) > 24) return;
+          ctx.fillStyle = s.color;
+          ctx.strokeStyle = '#000';
+          ctx.beginPath();
+          ctx.arc(L.xOf(p.x), L.yOf(p.v), 3.2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        });
+
+      tipEl.innerHTML = html;
+      tipEl.style.display = html ? 'block' : 'none';
+      if (!html) return;
+      const tw = tipEl.offsetWidth;
+      const th = tipEl.offsetHeight;
+      let left = hover.x + 16;
+      if (left + tw > w - 4) left = hover.x - tw - 16;
+      let top = hover.y + 12;
+      if (top + th > h) top = Math.max(2, h - th - 2);
+      tipEl.style.left = Math.max(2, left) + 'px';
+      tipEl.style.top = top + 'px';
+    }
+
+    function barTip(x, bar) {
+      const { v, data } = layout;
+      const t = bar ? v.tAt(bar.x1) : v.tAt(x);
+      const width = bar ? (bar.x1 - bar.x0) / SEC : 0;
+      const when = bar && width >= 2 ? `${clock(v.tAt(bar.x0), width < 120)} – ${clock(t, width < 120)}` : clock(t, true);
+      const ago = (Date.now() - t) / SEC;
+      let h = `<div class="ca-tip-head">${when}<span>${ago > 1.5 ? span(ago) + ' ago' : 'now'}</span></div>`;
+      let any = false;
+      const barSeries = (data.series || []).filter((s) => s.type === 'bar');
+      let total = 0;
+      let parts = 0;
+      if (bar) {
+        barSeries.forEach((s) => {
+          const val = bar.parts[s.key];
+          if (!Number.isFinite(val) || (val === 0 && s.hideZero !== false)) return;
+          h += row(s.color, s.name, tipFmt(val));
+          total += val;
+          parts++;
+          any = true;
+        });
+        if (parts > 1 && spec.total !== false) h += row('transparent', spec.totalLabel || 'Total', tipFmt(total), true);
+      }
+      (data.series || [])
+        .filter((s) => s.type === 'line' || s.type === 'area')
+        .forEach((s) => {
+          const pts = (data.lines || {})[s.key] || [];
+          const p = pts.length ? nearest(pts, x) : null;
+          if (!p || Math.abs(p.x - x) > Math.max(v.bucket * 1.5, 3 * SEC)) return;
+          h += row(s.color, s.name, (s.fmt || tipFmt)(p.v), false, s.dash);
+          any = true;
+        });
+      if (spec.tip) {
+        const extra = spec.tip(bar, v, data, x);
+        if (extra) {
+          h += extra;
+          any = true;
+        }
+      }
+      if (!any) h += '<div class="ca-tip-note">No data here.</div>';
+      return h;
+    }
+
+    // ---- info ----
+
+    function refreshInfo() {
+      if (!root) return;
+      const live = root.querySelector('[data-plot-live]');
+      if (live) {
+        live.textContent = view.isLive() ? 'Live' : 'Paused';
+        live.classList.toggle('paused', !view.isLive());
+      }
+      const pause = root.querySelector('[data-plot-pause]');
+      if (pause) pause.textContent = view.isLive() ? 'Pause' : 'Jump to live';
+      if (!lastData) return;
+      const { v, data } = lastData;
+      const stats = root.querySelector('[data-plot-stats]');
+      if (stats && spec.stats) stats.innerHTML = spec.stats(v, data);
+      const footer = root.querySelector('[data-plot-footer]');
+      if (footer && spec.footer) footer.innerHTML = spec.footer(v, data);
+      const legend = root.querySelector('[data-plot-legend]');
+      if (legend) {
+        const items = (data.legend || data.series || []).filter((s) => !s.noLegend);
+        legend.innerHTML =
+          items.map((s) => `<span class="ca-legend-item">${swatch(s.color, s.dash)}${esc(s.name)}</span>`).join('') +
+          (data.legendExtra || '');
+      }
+    }
+
+    function tick() {
+      if (!root) return;
+      if (!root.isConnected) {
+        unmount();
+        return;
+      }
+      draw();
+      refreshInfo();
+    }
+
+    function onClick(e) {
+      const set = e.target.closest('[data-plot-set]');
+      const tog = e.target.closest('[data-plot-toggle]');
+      const pause = e.target.closest('[data-plot-pause]');
+      if (!set && !tog && !pause) return;
+      e.stopPropagation();
+      if (e.target.blur) e.target.blur();
+      CA.Util.sound('snd/tick.mp3');
+      if (set) {
+        const k = set.dataset.plotSet;
+        const cur = S().get(k);
+        const raw = set.dataset.val;
+        S().set(k, typeof cur === 'number' ? Number(raw) : raw);
+        if (k === key('win')) view.resume();
+      } else if (tog) {
+        S().set(tog.dataset.plotToggle, !S().get(tog.dataset.plotToggle));
+      } else {
+        setPaused(view.isLive());
+      }
+      tick();
+    }
+
+    function mount(pageRoot) {
+      unmount();
+      root = pageRoot.querySelector(`[data-plot="${id}"]`);
+      if (!root) return;
+      canvas = root.querySelector('[data-plot-canvas]');
+      tipEl = root.querySelector('[data-plot-tip]');
+      ctx = canvas.getContext('2d');
+      root.addEventListener('click', onClick);
+      canvas.addEventListener('mousemove', (e) => {
+        const r = canvas.getBoundingClientRect();
+        hover = { x: e.clientX - r.left, y: e.clientY - r.top };
+        const before = layout && (layout.hoverIv || layout.hoverBar);
+        draw();
+        if (layout && (layout.hoverIv || layout.hoverBar) !== before) draw();
+      });
+      canvas.addEventListener('mouseleave', () => {
+        hover = null;
+        if (layout) layout.hoverIv = layout.hoverBar = null;
+        draw();
+      });
+      if (window.ResizeObserver) {
+        observer = new ResizeObserver(() => draw());
+        observer.observe(canvas);
+      }
+      panCtl = view.attachPan(
+        canvas,
+        () => {
+          const ax = axis();
+          return { windowMs: windowMs(ax), plotWidthPx: (layout && layout.plot.w) || canvas.clientWidth, liveNow: ax.now, minT: ax.min };
+        },
+        draw
+      );
+      tick();
+    }
+
+    function unmount() {
+      if (observer) observer.disconnect();
+      observer = null;
+      if (panCtl) panCtl.detach();
+      panCtl = null;
+      if (root) root.removeEventListener('click', onClick);
+      root = canvas = ctx = tipEl = null;
+      hover = null;
+      layout = null;
+    }
+
+    function setPaused(p) {
+      if (p === !view.isLive()) return;
+      if (p) view.freeze(axis().now);
+      else view.resume();
+    }
+
+    const inst = {
+      id,
+      spec,
+      html,
+      mount,
+      unmount,
+      tick,
+      draw,
+      setPaused,
+      isPaused: () => !view.isLive(),
+      resume: () => view.resume(),
+      last: () => lastData,
+    };
+    all.set(id, inst);
+    return inst;
+  }
+
+  // Switching between wall-clock and active time invalidates every frozen view position.
+  function init() {
+    S().defineOption({
+      key: 'graphActiveTime',
+      group: 'graph',
+      icon: 'clock',
+      name: 'Active time only',
+      desc: 'Graphs leave out time the game wasn’t running (closed, asleep, background tab) — a 1h window then covers an hour of actual play.',
+      default: false,
+    });
+    CA.Events.on('settings', (k) => {
+      if (k === 'graphActiveTime' || k === null) all.forEach((p) => p.resume());
+    });
+  }
+
+  return {
+    init,
+    create,
+    get: (id) => all.get(id),
+    bucketize,
+    linePoints,
+    smooth,
+    axis,
+    fmt: { beautify, signed, short, clock, span, tile, row, swatch, windowLabel },
+    SEC,
+  };
+})();

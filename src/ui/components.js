@@ -36,5 +36,11 @@ CA.UI.C = (() => {
     return `<button type="button" class="ca-btn ${extraClass}" ${attrs}>${label}</button>`;
   }
 
-  return { icon, toggle, hotkey, button, esc };
+  /** Card header: optional leading icon (from ui/icons.js), title, optional right-hand `meta` HTML. */
+  function cardHead(title, iconName, meta = '') {
+    const ico = iconName ? CA.UI.Icons.html(iconName, 15, 'ca-card-ico') : '';
+    return `<div class="ca-card-head"><div class="ca-card-title">${ico}${title}</div>${meta}</div>`;
+  }
+
+  return { icon, toggle, hotkey, button, cardHead, esc };
 })();

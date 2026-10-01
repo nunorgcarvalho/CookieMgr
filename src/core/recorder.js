@@ -288,6 +288,30 @@ CA.Recorder = (() => {
     return lo;
   }
 
+  /** Wall-clock time at active-play time `a`. Within a frame both clocks run together. */
+  function timeAt(a) {
+    if (!all.length) return Date.now() - (active - a);
+    const i = lowerBound(a, 'a');
+    if (i >= all.length) {
+      const l = all[all.length - 1];
+      return l.t + (a - l.a);
+    }
+    return all[i].t - (all[i].a - a);
+  }
+
+  /** Active-play time at wall-clock time `t`; a moment while the game wasn't running maps to
+   *  where play resumed. */
+  function activeAt(t) {
+    if (!all.length) return active;
+    const i = lowerBound(t);
+    if (i >= all.length) {
+      const l = all[all.length - 1];
+      return l.a + Math.max(0, Math.min(t - l.t, MAX_GAP_MS));
+    }
+    const f = all[i];
+    return f.a - Math.min(f.t - t, (f.dt || 1) * 1000);
+  }
+
   function summary() {
     const perTier = tiers.map((list, k) => ({
       label: TIERS[k].label,
@@ -361,6 +385,7 @@ CA.Recorder = (() => {
   function init() {
     CA.Settings.defineOption({
       key: 'trackHistory',
+      icon: 'record',
       group: 'general',
       name: 'Record history',
       desc: 'Records CpS, cookies, prestige and more over time for the graphs — every second for the last 3 hours of play, coarser further back. Kept in this browser (not in your game save); export it from Settings.',
@@ -379,6 +404,8 @@ CA.Recorder = (() => {
     series,
     revision: () => rev,
     lowerBound,
+    timeAt,
+    activeAt,
     summary,
     clear,
     flush,

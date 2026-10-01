@@ -21,7 +21,7 @@ The same words mean the same things everywhere in the add-on and this README:
 | **State**  | A value that can be measured over time (cookies in the bank, CpS, …).                   |
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 
-## Features (v1.4)
+## Features (v1.5)
 
 A column of small icons sticks out of the left beam between the cookie panel and the middle panel, one per page:
 **Autoclickers**, **Graphs**, **Stock market** and **Settings**. Hovering an icon slides its name out to the left.
@@ -32,24 +32,38 @@ different one); clicking the page that's already showing closes the panel.
 
 ### Graphs
 
-A live cookies-per-second chart, redrawn every second.
+The Graphs page has three tabs — **Cookies**, **Bank** and **Prestige** — of charts drawn from the recorded history
+(see below), so they survive refreshes and browser restarts. Every chart works the same way:
 
-- **Window:** 1 min, 5 min, 15 min, 1 h or 3 h (default 5 min). **Smoothing:** raw, 5 s or 15 s (default 5 s). Linear or
-  log scale (default log). Your choices are remembered across reloads.
-- **Stacked bars:** each bar is Production (what the game shows as CpS) with Clicking stacked on top, so the bar's full
-  height is your combined income. Clicking is measured from your actual click income, so it is only counted when you
-  really clicked (or an autoclicker did). A dashed **Unbuffed CpS** line (production with every temporary effect
-  removed) is always drawn over the bars, along with a dashed **average** line for whatever period is shown.
-- **Scrollable:** drag the chart (or scroll it sideways) to look further back in time — this and the Stock market
-  chart share the same underlying framework. A "Jump to live" control (also reachable via Pause) snaps back to now.
-- **Effect shading:** every active golden-cookie effect (Frenzy, Click frenzy, Elder frenzy, Dragonflight, Clot, and so on)
-  is a coloured band behind the chart. Overlapping effects stack in separate lanes. Hover a band for its description,
-  multipliers, duration and remaining time; effects that do not change CpS are shown too.
-- **Event markers:** golden cookie, wrath cookie and reindeer pops (with what they did) and ascensions. A golden/wrath
-  pop that already shows as a shaded band doesn't also get a marker — only pops without a visible effect do.
-- **Crosshair tooltip** with the values at that moment and the effects active then, plus Now / Average / Peak / Clicking tiles.
-- Pause and per-series toggles. Everything shown is read from the recorded history (see below), so it survives
-  refreshes and browser restarts.
+- **Window:** 1m, 5m, 15m, 1h, 3h, 12h, 1d, 7d or All. Older history is coarser (see Recorded history), and bars simply
+  get wider where it is.
+- **Active time:** leaves out time the game wasn't running (tab closed, computer asleep, background throttling) — a 1h
+  window then covers an hour of actual play. A faint dotted line marks each cut-out stretch (hover it for how long);
+  axis labels still show the wall-clock time. One toggle for all charts, also in Settings.
+- **Bars** (where it makes sense): Auto, or a fixed width from 1 s to 1 h — how coarse the derivative is.
+- **Scrollable:** drag (or scroll sideways) to look back; **Pause** / **Jump to live**. Every choice is remembered.
+- **Effect shading** behind the chart for every golden-cookie effect (Frenzy, Click frenzy, Elder frenzy, Dragonflight,
+  Clot, …), stacked in lanes when they overlap, and **event markers** for golden/wrath cookies, reindeer, stock trades
+  and ascensions. Hover anything for details.
+
+**Cookies tab**
+
+- **Cookies per second** — stacked bars of Production (the game's CpS) with Clicking on top, a dashed Unbuffed CpS
+  line, and an average line. Below it, an **averages table**: production (raw CpS), clicking, production + clicking,
+  the with ÷ without clicking ratio, unbuffed CpS and what was actually baked — now and averaged over the last 1, 5,
+  15 minutes, 1 and 3 hours of active play.
+- **Actual CpS** — what really got baked each second (the derivative of cookies baked), stacked by source:
+  production, clicking, golden cookies & reindeer, other. A dashed line shows the CpS the game displays, for
+  comparison; tiles show how far apart they are.
+- **Cookies baked** — a running total, stacked by the same sources, from the start of this session (since CookieMgr
+  loaded) or from the left edge of the chart.
+
+**Bank tab** — cookies in the bank over time; **bank change per second**, with income above the line (by source,
+plus stock sales and other income) and spending and wrinkler withering below it, and a net line; and the same as a
+running total.
+
+**Prestige tab** — prestige level if you ascended now against your current level, with how many cookies the next
+level needs and when you'll reach it at your recent actual CpS; and **prestige gained per hour**.
 
 ### Recorded history
 
@@ -134,8 +148,11 @@ The **Stock market** tab in the CookieMgr panel has:
 - The stock chart, defaulting to your **portfolio value** over time (a value line plus a cost-basis line, so the gap
   between them is your unrealized gain) with stat tiles for Value, Unrealized, Realized and Total gain — switch to
   "Per stock" for the individual price lines instead. Cost basis is tracked from whenever the mod is loaded, so it
-  only knows about trades made since then. Drag the chart (or scroll it sideways) to look further back; "Jump to
-  live" (also reachable via Pause) snaps back to now.
+  only knows about trades made since then. Same controls as the Graphs page (window, active time, drag, pause).
+- **Portfolio performance** — the portfolio's return as a percentage of the cookies invested, over a rolling window
+  (1m, 5m, 15m or 1h): green bars above zero while your holdings gain, red below while they lose. Standardized by the
+  money at stake, so it reads the same for a tiny and a huge portfolio. Tiles: now, best, worst, and the share of time
+  spent gaining.
 - A **transaction history** table (time, buy/sell, stock, shares, price, total — amounts shown in $, the Bank
   minigame's own stock-price units, not raw cookies) of every trade this session, led by session stat tiles (Bought,
   Sold, Spent, Earned, Net); a row of compact bar tiles (time shown as HH:MM) for the **last 5 one-second ticks**
@@ -218,10 +235,11 @@ src/
     components.js    HTML snippets: switch, hotkey chip, icon, button
     icons.js         the inline-SVG icon set used everywhere
     pages.js         page registry — the sidebar and the panel both read it
-    chart.js         shared chart core: canvas sizing, axis padding, time bucketing, scroll/live view
+    chart.js         shared chart core: canvas sizing, axis padding, nice scales, scroll/live view
     tab.js           the sidebar of page icons on the left beam
-    graph.js         the CpS chart (canvas), toolbar, tooltips
-    stockGraph.js    the Stock market page chart: portfolio value/gains or per-stock prices
+    plot.js          the plotting engine every chart uses: bucketing, scales, overlays, tooltips, chips
+    graphs.js        the Graphs page: Cookies / Bank / Prestige tabs and their plot specs
+    stockGraph.js    the Stock market page charts: portfolio value / per-stock prices, rolling performance
     stockLog.js      the trade ticker + transaction history table, also on the Stock market page
     bankToolbar.js   Sell all / autobuyer / CookieMgr buttons inside the Bank minigame
     menu.js          the panel; registers the built-in pages (hooks Game.ShowMenu / Game.UpdateMenu)
@@ -240,8 +258,12 @@ If you add a file, add it to `MODULES` in `build.mjs` in the right order.
 
 - **A new autoclicker:** append an entry to `DEFS` in `src/features/autoclickers.js`. The panel row, hotkey, and save data
   come for free.
-- **A new setting:** call `CA.Settings.defineOption({ key, group, name, desc, default })` in a feature's `init()`, and read
+- **A new setting:** call `CA.Settings.defineOption({ key, group, icon, name, desc, default })` in a feature's `init()`, and read
   it with `CA.Settings.get(key)`. Options in the `general` group appear on the Settings tab, `autoclickers` ones on the Autoclickers tab.
+  `icon` is a name from `ui/icons.js`, shown at the start of the row.
+- **A new chart:** `CA.UI.Plot.create({ id, title, icon, windows, coarse, log, choices, toggles, build(v), stats, tip })`
+  — `build` gets the view (`v.bucketize([stateIds])` returns bars aggregated by each state's kind) and returns
+  `{ series, bars, lines, hlines, intervals, markers }`. Put `p.html()` in a page and call `mount`/`tick`/`unmount`.
 - **A new hotkey action:** `CA.Actions.register({ id, name, group, defaultKey, run })`.
 - **A new recorded state:** `CA.States.define({ id, name, unit, group, kind, get })` before `CA.Recorder.init()`;
   `kind` is `gauge` (a level, like CpS), `counter` (a running total) or `flow` (an amount per frame, from `ctx.dt`).

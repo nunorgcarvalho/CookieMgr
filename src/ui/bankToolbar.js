@@ -78,6 +78,7 @@ CA.UI.BankToolbar = (() => {
   function init() {
     CA.Settings.defineOption({
       key: 'bankToolbar',
+      icon: 'toolbar',
       group: 'stocks',
       name: 'Toolbar in the Bank minigame',
       desc: 'Sell all, the autobuyer switch and a CookieMgr shortcut, right under the stock market header.',

@@ -6,7 +6,23 @@
 CA.UI = CA.UI || {};
 
 CA.UI.Tab = (() => {
+  const BANNER_GAP = 14; // px below the game's cookie-count banner
+  const PLACE_MS = 2000;
   let wrap = null;
+
+  /** Pins the sidebar just under the game's darkened cookie-count banner (#cookies). The banner
+   *  sits at 10% of the screen height and grows with its text, so a fixed offset overlaps it on
+   *  taller windows; measured instead, on resize and every couple of seconds. */
+  function place() {
+    if (!wrap) return;
+    const banner = document.getElementById('cookies');
+    const host = wrap.offsetParent || wrap.parentNode;
+    if (!banner || !host || !host.getBoundingClientRect) return;
+    const b = banner.getBoundingClientRect();
+    if (!b.height) return; // hidden (ascending) or not laid out
+    const top = `${Math.round(b.bottom - host.getBoundingClientRect().top + BANNER_GAP)}px`;
+    if (wrap.style.top !== top) wrap.style.top = top;
+  }
 
   function go(id) {
     if (CA.UI.Menu.isOpen() && CA.Settings.get('tab') === id) CA.UI.Menu.close();
@@ -62,9 +78,12 @@ CA.UI.Tab = (() => {
 
   function init() {
     create();
+    place();
+    addEventListener('resize', place);
+    setInterval(place, PLACE_MS);
     CA.Events.on('clickers', update);
     CA.Events.on('settings', update);
   }
 
-  return { init, update };
+  return { init, update, place };
 })();

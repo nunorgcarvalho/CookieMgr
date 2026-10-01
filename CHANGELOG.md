@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+## 1.5.0 — 2026-10-01
+
+- **Graphs page with tabs:** **Cookies**, **Bank** and **Prestige**.
+  - Cookies: the CpS chart, now with an **averages table** under it (production / raw CpS, clicking, production +
+    clicking, the with ÷ without clicking ratio, unbuffed, actually baked — now and over 1m/5m/15m/1h/3h of active
+    play); **Actual CpS** (what really got baked per second, stacked by source — production, clicking, golden
+    cookies & reindeer, other — against the CpS the game shows); **Cookies baked** as a running total by source, from
+    the start of the session or the window.
+  - Bank: cookies in the bank; bank change per second (income above the line by source, spending and wrinkler
+    withering below, net line); and its running total.
+  - Prestige: level if you ascended now vs. current level, cookies to the next level and an ETA at your recent actual
+    CpS; prestige gained per hour.
+- **Active time toggle** on every chart (and in Settings): leaves out time the game wasn't running, keeping the
+  chosen window's length in actual play; dotted lines mark the cut-out stretches.
+- **Bar width chooser** (Auto, 1s … 1h) for the derivative charts; windows up to 7 days and All.
+- **One plotting engine** (`ui/plot.js`) under every chart — bucketing by state kind, scales, effect lanes, event
+  markers, tooltips, drag-to-scroll, per-chart remembered settings. The CpS and stock charts were rebuilt on it.
+- **Stock market page: Portfolio performance** — rolling return as a % of the cookies invested, green above zero /
+  red below, with now / best / worst / time-gaining tiles.
+- **Settings:** an icon on every row and card.
+- **Sidebar** now sits just below the game's cookie-count banner (measured, so it never overlaps it on tall windows).
+
 ## 1.4.0 — 2026-10-01
 
 - **Recorded history moved out of localStorage, into IndexedDB, per save.** The game's own save lives in

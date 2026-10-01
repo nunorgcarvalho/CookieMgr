@@ -32,6 +32,7 @@ CA.CookieMonster = (() => {
   function init() {
     CA.Settings.defineOption({
       key: 'cmAutoLoad',
+      icon: 'plug',
       group: 'integrations',
       name: 'Load Cookie Monster on start-up',
       desc: 'Whenever CookieMgr starts, also load the latest Cookie Monster release — unless it is already running.',

@@ -275,6 +275,7 @@ CA.History = (() => {
   function init() {
     CA.Settings.defineOption({
       key: 'goldenNotify',
+      icon: 'sparkle',
       group: 'general',
       name: 'Golden cookie notifications',
       desc: 'A quick notification the moment a golden or wrath cookie (or reindeer) is popped.',

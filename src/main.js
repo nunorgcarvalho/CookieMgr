@@ -37,8 +37,9 @@ const mod = {
     CA.History.init();
     CA.GameStates.init();
     CA.Recorder.init();
-    CA.UI.Graph.init();
+    CA.UI.Graphs.init();
     CA.UI.StockGraph.init();
+    CA.UI.StockPerf.init();
     CA.UI.StockLog.init();
     CA.UI.BankToolbar.init();
     CA.Hotkeys.init();

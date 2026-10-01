@@ -172,6 +172,7 @@ CA.Autoclickers = (() => {
 
     CA.Settings.defineOption({
       key: 'disableOnAscend',
+      icon: 'ascend',
       group: 'autoclickers',
       name: 'Turn off when ascending',
       desc: 'Switches every autoclicker off as soon as you ascend.',
@@ -179,6 +180,7 @@ CA.Autoclickers = (() => {
     });
     CA.Settings.defineOption({
       key: 'rememberStates',
+      icon: 'save',
       group: 'autoclickers',
       name: 'Remember on/off states',
       desc: 'Restores which autoclickers were running when you reload the game.',
@@ -186,6 +188,7 @@ CA.Autoclickers = (() => {
     });
     CA.Settings.defineOption({
       key: 'notifications',
+      icon: 'bell',
       group: 'autoclickers',
       name: 'Toggle notifications',
       desc: 'Shows a small ON/OFF popup whenever an autoclicker is switched.',

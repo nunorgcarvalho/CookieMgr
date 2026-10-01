@@ -63,9 +63,13 @@ CA.UI.Menu = (() => {
     );
   }
 
+  /** The small round icon at the start of every settings row. */
+  const rowIcon = (name) => `<span class="ca-row-ico">${CA.UI.Icons.html(name || 'settings', 16)}</span>`;
+
   function optionRow(def) {
     return (
       `<div class="ca-row ca-row-option" data-option="${def.key}">` +
+      rowIcon(def.icon) +
       `<div class="ca-row-text"><div class="ca-row-name">${C.esc(def.name)}</div><div class="ca-row-desc">${C.esc(def.desc)}</div></div>` +
       C.toggle(false, `data-ca="option" data-key="${def.key}"`, def.name) +
       '</div>'
@@ -86,10 +90,7 @@ CA.UI.Menu = (() => {
   function clickersPage() {
     return (
       '<div class="ca-card">' +
-      '<div class="ca-card-head">' +
-      '<div class="ca-card-title">Autoclickers</div>' +
-      '<div class="ca-card-meta"><span class="ca-pill" data-ca-count></span></div>' +
-      '</div>' +
+      C.cardHead('Autoclickers', 'cookie', '<div class="ca-card-meta"><span class="ca-pill" data-ca-count></span></div>') +
       '<div class="ca-row ca-row-master">' +
       C.icon({ icon: CA.ICON }) +
       '<div class="ca-row-text"><div class="ca-row-name">All autoclickers</div>' +
@@ -102,10 +103,7 @@ CA.UI.Menu = (() => {
       '</div>' +
       `<div class="ca-list">${CA.Autoclickers.list().map(clickerRow).join('')}</div>` +
       '</div>' +
-      '<div class="ca-card">' +
-      '<div class="ca-card-head"><div class="ca-card-title">Options</div></div>' +
-      `<div class="ca-list">${CA.Settings.optionsIn('autoclickers').map(optionRow).join('')}</div>` +
-      '</div>'
+      optionsCard('Options', 'settings', 'autoclickers')
     );
   }
 
@@ -113,30 +111,36 @@ CA.UI.Menu = (() => {
     return (
       sellAllCard() +
       '<div class="ca-card">' +
-      '<div class="ca-card-head"><div class="ca-card-title">Stock market</div></div>' +
+      C.cardHead('Autobuyer', 'bolt') +
       `<div class="ca-list">${stockTraderRow()}</div>` +
       '</div>' +
-      '<div class="ca-card">' +
-      '<div class="ca-card-head"><div class="ca-card-title">Options</div></div>' +
-      `<div class="ca-list">${CA.Settings.optionsIn('stocks').map(optionRow).join('')}</div>` +
-      '</div>' +
+      optionsCard('Options', 'settings', 'stocks') +
       CA.UI.StockGraph.html() +
+      CA.UI.StockPerf.html() +
       CA.UI.StockLog.html()
     );
+  }
+
+  const cardHead = C.cardHead;
+
+  function optionsCard(title, icon, group) {
+    return `<div class="ca-card">${cardHead(title, icon)}<div class="ca-list">${CA.Settings.optionsIn(group).map(optionRow).join('')}</div></div>`;
   }
 
   function settingsPage() {
     return (
       '<div class="ca-card">' +
-      '<div class="ca-card-head"><div class="ca-card-title">General</div></div>' +
+      cardHead('General', 'settings') +
       '<div class="ca-list">' +
       CA.Settings.optionsIn('general').map(optionRow).join('') +
       '<div class="ca-row ca-row-option">' +
+      rowIcon('panel') +
       '<div class="ca-row-text"><div class="ca-row-name">Open / close this panel</div>' +
       '<div class="ca-row-desc">Optional hotkey for the CookieMgr panel.</div></div>' +
       C.hotkey('panel.toggle') +
       '</div>' +
       '<div class="ca-row ca-row-option">' +
+      rowIcon('keyboard') +
       '<div class="ca-row-text"><div class="ca-row-name">Hotkeys</div>' +
       '<div class="ca-row-desc">Click a key chip, then press the new key. <kbd>Esc</kbd> cancels, <kbd>Backspace</kbd> removes it; modifiers work too.</div></div>' +
       C.button('Reset to defaults', 'data-ca="reset-hotkeys"', 'ca-btn-small') +
@@ -144,18 +148,9 @@ CA.UI.Menu = (() => {
       '</div>' +
       '</div>' +
       historyCard() +
-      '<div class="ca-card">' +
-      '<div class="ca-card-head"><div class="ca-card-title">Autoclickers</div></div>' +
-      `<div class="ca-list">${CA.Settings.optionsIn('autoclickers').map(optionRow).join('')}</div>` +
-      '</div>' +
-      '<div class="ca-card">' +
-      '<div class="ca-card-head"><div class="ca-card-title">Graphs</div></div>' +
-      `<div class="ca-list">${CA.Settings.optionsIn('graph').map(optionRow).join('')}</div>` +
-      '</div>' +
-      '<div class="ca-card">' +
-      '<div class="ca-card-head"><div class="ca-card-title">Stock market</div></div>' +
-      `<div class="ca-list">${CA.Settings.optionsIn('stocks').map(optionRow).join('')}</div>` +
-      '</div>' +
+      optionsCard('Autoclickers', 'cookie', 'autoclickers') +
+      optionsCard('Graphs', 'graphs', 'graph') +
+      optionsCard('Stock market', 'stocks', 'stocks') +
       integrationsCard() +
       '<div class="ca-footer">' +
       `<div>CookieMgr v${CA.VERSION} &middot; <a href="https://github.com/nunorgcarvalho/CookieMgr" target="_blank" rel="noopener">GitHub</a></div>` +
@@ -171,13 +166,15 @@ CA.UI.Menu = (() => {
   function historyCard() {
     return (
       '<div class="ca-card">' +
-      `<div class="ca-card-head"><div class="ca-card-title">History data</div></div>` +
+      cardHead('History data', 'timeline') +
       '<div class="ca-list">' +
       '<div class="ca-row ca-row-option">' +
+      rowIcon('clock') +
       '<div class="ca-row-text"><div class="ca-row-name">Recorded for this save</div>' +
       '<div class="ca-row-desc" data-ca-history-info></div></div>' +
       '</div>' +
       '<div class="ca-row ca-row-option">' +
+      rowIcon('save') +
       '<div class="ca-row-text"><div class="ca-row-name">Back up or move</div>' +
       '<div class="ca-row-desc">Export saves everything recorded for this save to a file. Importing a file <b>replaces</b> what this save has recorded.</div></div>' +
       '<div class="ca-controls">' +
@@ -257,9 +254,10 @@ CA.UI.Menu = (() => {
     const loaded = CA.CookieMonster.isLoaded();
     return (
       '<div class="ca-card">' +
-      '<div class="ca-card-head"><div class="ca-card-title">Integrations</div></div>' +
+      cardHead('Integrations', 'plug') +
       '<div class="ca-list">' +
       '<div class="ca-row ca-row-option">' +
+      rowIcon('puzzle') +
       '<div class="ca-row-text"><div class="ca-row-name">Cookie Monster</div>' +
       `<div class="ca-row-desc" data-ca-cm-status>${loaded ? 'Running.' : 'Not loaded.'} Loads the latest release straight from Cookie Monster's own site.</div></div>` +
       C.button(loaded ? 'Loaded' : 'Load now', 'data-ca="cm-load" data-ca-cm-load' + (loaded ? ' disabled' : ''), 'ca-btn-small') +
@@ -277,10 +275,10 @@ CA.UI.Menu = (() => {
     label: 'Graphs',
     icon: 'graphs',
     order: 20,
-    html: () => CA.UI.Graph.html(),
-    mount: (root) => CA.UI.Graph.mount(root),
-    unmount: () => CA.UI.Graph.unmount(),
-    tick: () => CA.UI.Graph.tick(),
+    html: () => CA.UI.Graphs.html(),
+    mount: (root) => CA.UI.Graphs.mount(root),
+    unmount: () => CA.UI.Graphs.unmount(),
+    tick: () => CA.UI.Graphs.tick(),
   });
   CA.UI.Pages.register({
     id: 'stocks',
@@ -290,15 +288,18 @@ CA.UI.Menu = (() => {
     html: () => stocksPage(),
     mount: (root) => {
       CA.UI.StockGraph.mount(root);
+      CA.UI.StockPerf.mount(root);
       CA.UI.StockLog.mount(root);
       wireSellAll(root);
     },
     unmount: () => {
       CA.UI.StockGraph.unmount();
+      CA.UI.StockPerf.unmount();
       CA.UI.StockLog.unmount();
     },
     tick: () => {
       CA.UI.StockGraph.tick();
+      CA.UI.StockPerf.tick();
       CA.UI.StockLog.tick();
     },
   });
@@ -461,26 +462,6 @@ CA.UI.Menu = (() => {
         CA.Settings.set(key, next);
         break;
       }
-      case 'gwin':
-        CA.Util.sound('snd/tick.mp3');
-        CA.Settings.set('graphWindow', Number(t.dataset.val));
-        break;
-      case 'gsmooth':
-        CA.Util.sound('snd/tick.mp3');
-        CA.Settings.set('graphSmooth', Number(t.dataset.val));
-        break;
-      case 'sgmode':
-        CA.Util.sound('snd/tick.mp3');
-        CA.Settings.set('stockGraphMode', t.dataset.val);
-        break;
-      case 'sgpause':
-        CA.Util.sound('snd/tick.mp3');
-        CA.UI.StockGraph.setPaused(!CA.UI.StockGraph.isPaused());
-        break;
-      case 'gpause':
-        CA.Util.sound('snd/tick.mp3');
-        CA.UI.Graph.setPaused(!CA.UI.Graph.isPaused());
-        break;
       case 'gclear':
         CA.Util.sound('snd/tick.mp3');
         if (armed(t)) CA.History.clear().then(sync);

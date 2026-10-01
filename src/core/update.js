@@ -48,6 +48,7 @@ CA.Update = (() => {
   function init() {
     CA.Settings.defineOption({
       key: 'updateCheck',
+      icon: 'refresh',
       group: 'general',
       name: 'Check for updates',
       desc: 'Periodically checks GitHub for a newer CookieMgr build and lets you know — never updates automatically.',

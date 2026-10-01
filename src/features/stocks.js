@@ -237,6 +237,7 @@ CA.Stocks = (() => {
   function init() {
     CA.Settings.defineOption({
       key: 'stockIndicators',
+      icon: 'tag',
       group: 'stocks',
       name: 'Stock market trend indicators',
       desc: 'Shows each stock’s trend (stable, rising, falling, chaotic) on its box in the Bank minigame.',
@@ -244,6 +245,7 @@ CA.Stocks = (() => {
     });
     CA.Settings.defineOption({
       key: 'stockTint',
+      icon: 'drop',
       group: 'stocks',
       name: 'Tint stock boxes',
       desc: 'Colours each stock box by its trend; boxes glow brighter while you hold that stock.',
@@ -251,17 +253,11 @@ CA.Stocks = (() => {
     });
     CA.Settings.defineOption({
       key: 'stockGraphSync',
+      icon: 'link',
       group: 'stocks',
       name: 'Sync graph to owned stocks',
       desc: 'The per-stock price view only plots stocks you currently hold; turn off to show all of them.',
       default: true,
-    });
-    CA.Settings.defineOption({
-      key: 'stockGraphMode',
-      group: 'graph-select',
-      name: 'Stock graph view',
-      desc: '',
-      default: 'portfolio', // 'portfolio' | 'perStock'
     });
     CA.Util.injectCss('CookieMgrStocksStyles', CSS);
     load();
