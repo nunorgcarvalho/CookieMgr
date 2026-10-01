@@ -4,7 +4,7 @@
    feels native. Everything is scoped under #CookieMgrTab / #CookieMgrMenu.
    ========================================================================== */
 
-/* ---------- Side tabs (stick out of the left beam, one per page) ---------- */
+/* ---------- Sidebar (icon tabs sticking out of the left beam, one per page) ---------- */
 
 #CookieMgrTab {
   position: absolute;
@@ -15,18 +15,14 @@
   z-index: 110;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-end; /* items grow leftwards, away from the beam */
   gap: 4px;
 }
-#CookieMgrTab .ca-tab-flap {
+#CookieMgrTab .ca-tab-item {
   box-sizing: border-box;
-  width: 26px;
-  padding: 8px 0 10px;
+  height: 32px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 4px;
   cursor: pointer;
   user-select: none;
   background: linear-gradient(to right, #3d2716, #221409);
@@ -38,20 +34,18 @@
     -3px 3px 10px rgba(0, 0, 0, 0.65),
     inset 1px 1px 0 rgba(255, 255, 255, 0.18);
   transition:
-    width 0.15s ease-out,
     background 0.2s,
     box-shadow 0.2s;
   outline: none;
 }
-#CookieMgrTab .ca-tab-flap:hover,
-#CookieMgrTab .ca-tab-flap:focus-visible {
-  width: 30px;
+#CookieMgrTab .ca-tab-item:hover,
+#CookieMgrTab .ca-tab-item:focus-visible {
   box-shadow:
     -3px 3px 12px rgba(0, 0, 0, 0.75),
     0 0 12px rgba(255, 215, 110, 0.35),
     inset 1px 1px 0 rgba(255, 255, 255, 0.25);
 }
-#CookieMgrTab .ca-tab-flap.selected {
+#CookieMgrTab .ca-tab-item.selected {
   background: linear-gradient(to right, #7a4f22, #43290f);
   box-shadow:
     -3px 3px 12px rgba(0, 0, 0, 0.75),
@@ -59,60 +53,58 @@
     inset 1px 1px 0 rgba(255, 255, 255, 0.3);
 }
 #CookieMgrTab .ca-tab-label {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  padding: 0;
   font-family: 'Merriweather', Georgia, serif;
   font-variant: small-caps;
   font-weight: bold;
-  font-size: 12px;
-  letter-spacing: 1px;
+  font-size: 13px;
+  letter-spacing: 0.5px;
   color: #f4e6c3;
   text-shadow:
     0 1px 2px #000,
     0 0 6px rgba(255, 200, 120, 0.25);
   white-space: nowrap;
+  transition:
+    max-width 0.22s ease-out,
+    opacity 0.15s,
+    padding 0.22s ease-out;
+}
+#CookieMgrTab .ca-tab-item:hover .ca-tab-label,
+#CookieMgrTab .ca-tab-item:focus-visible .ca-tab-label {
+  max-width: 180px;
+  opacity: 1;
+  padding: 0 2px 0 12px;
 }
 #CookieMgrTab .ca-tab-icon {
+  position: relative;
   flex: none;
+  width: 30px;
+  height: 30px;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
-}
-#CookieMgrTab .ca-tab-icon-cookie {
-  width: 16px;
-  height: 16px;
-  background: url(img/perfectCookie.png) center / contain no-repeat;
+  color: #f4e6c3;
   filter: drop-shadow(0 1px 1px #000);
 }
-#CookieMgrTab .ca-tab-icon-cps {
-  width: 14px;
-  height: 14px;
-  gap: 2px;
-}
-#CookieMgrTab .ca-tab-icon-cps i {
-  display: block;
-  width: 3px;
-  background: #ffd98a;
-  border-radius: 1px;
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
-}
-#CookieMgrTab .ca-tab-icon-glyph {
-  font-family: Tahoma, Arial, sans-serif;
-  font-weight: bold;
-  font-size: 13px;
-  line-height: 1;
-  color: #f4e6c3;
-  text-shadow: 0 1px 2px #000;
+#CookieMgrTab .ca-tab-item.selected .ca-tab-icon,
+#CookieMgrTab .ca-tab-item:hover .ca-tab-icon {
+  color: #ffeab0;
 }
 #CookieMgrTab .ca-tab-badge {
   display: none;
-  min-width: 16px;
-  height: 16px;
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  min-width: 15px;
+  height: 15px;
   padding: 0 3px;
   box-sizing: border-box;
   border-radius: 8px;
   font:
-    bold 10px/16px Tahoma,
+    bold 9px/15px Tahoma,
     Arial,
     sans-serif;
   text-align: center;
@@ -123,7 +115,7 @@
     0 1px 1px #000;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);
 }
-#CookieMgrTab .ca-tab-flap.active .ca-tab-badge {
+#CookieMgrTab .ca-tab-item.active .ca-tab-badge {
   display: block;
   animation: caBadgeGlow 2s infinite ease-in-out;
 }
@@ -144,6 +136,41 @@
 #game.ascendIntro #CookieMgrTab,
 #game.reincarnating #CookieMgrTab {
   display: none;
+}
+
+/* ---------- Icons (used everywhere, not just inside the panel) ---------- */
+
+.ca-ico {
+  display: inline-block;
+  flex: none;
+  vertical-align: middle;
+}
+.ca-ico-cookie {
+  background: url(img/perfectCookie.png) center / contain no-repeat;
+}
+
+/* ---------- Stock market toolbar inside the Bank minigame ---------- */
+
+#cm-bank-toolbar {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 4px 4px 6px;
+}
+#cm-bank-toolbar .bankButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  padding: 3px 9px;
+}
+#cm-bank-toolbar .cm-bt-open {
+  color: #f4e6c3;
+  border-color: #ece2b6 #875526 #733726 #dfbc9a;
 }
 
 /* ---------- Panel ---------- */

@@ -1,5 +1,5 @@
-// Shared pieces for every canvas time-series chart (CA.UI.Graph, CA.UI.StockGraph, and to a
-// smaller extent CA.UI.BankGraph): DPI-aware canvas sizing, a left margin sized to whatever the
+// Shared pieces for every canvas time-series chart (CA.UI.Graph, CA.UI.StockGraph):
+// DPI-aware canvas sizing, a left margin sized to whatever the
 // axis labels actually render as, absolute-grid time bucketing, and a scrollable "view" that
 // tracks whether a chart is following the live edge or has been dragged/paused into the past.
 //

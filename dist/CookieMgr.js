@@ -1,9 +1,9 @@
-/*! CookieMgr v1.2.2 */
+/*! CookieMgr v1.3.0 */
 (function () {
 'use strict';
 const CA = {};
-CA.VERSION = "1.2.2";
-CA.CSS = "/* ==========================================================================\n   CookieMgr — styles\n   Colours and borders borrow from the game's own \"framed\" look so the panel\n   feels native. Everything is scoped under #CookieMgrTab / #CookieMgrMenu.\n   ========================================================================== */\n\n/* ---------- Side tabs (stick out of the left beam, one per page) ---------- */\n\n#CookieMgrTab {\n  position: absolute;\n  left: 30%;\n  top: 128px;\n  margin-left: 3px; /* tuck slightly under the beam */\n  transform: translateX(-100%);\n  z-index: 110;\n  display: flex;\n  flex-direction: column;\n  align-items: flex-end;\n  gap: 4px;\n}\n#CookieMgrTab .ca-tab-flap {\n  box-sizing: border-box;\n  width: 26px;\n  padding: 8px 0 10px;\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  justify-content: center;\n  gap: 4px;\n  cursor: pointer;\n  user-select: none;\n  background: linear-gradient(to right, #3d2716, #221409);\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-right: none;\n  border-radius: 8px 0 0 8px;\n  box-shadow:\n    -3px 3px 10px rgba(0, 0, 0, 0.65),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.18);\n  transition:\n    width 0.15s ease-out,\n    background 0.2s,\n    box-shadow 0.2s;\n  outline: none;\n}\n#CookieMgrTab .ca-tab-flap:hover,\n#CookieMgrTab .ca-tab-flap:focus-visible {\n  width: 30px;\n  box-shadow:\n    -3px 3px 12px rgba(0, 0, 0, 0.75),\n    0 0 12px rgba(255, 215, 110, 0.35),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.25);\n}\n#CookieMgrTab .ca-tab-flap.selected {\n  background: linear-gradient(to right, #7a4f22, #43290f);\n  box-shadow:\n    -3px 3px 12px rgba(0, 0, 0, 0.75),\n    0 0 14px rgba(255, 215, 110, 0.55),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.3);\n}\n#CookieMgrTab .ca-tab-label {\n  writing-mode: vertical-rl;\n  transform: rotate(180deg);\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-weight: bold;\n  font-size: 12px;\n  letter-spacing: 1px;\n  color: #f4e6c3;\n  text-shadow:\n    0 1px 2px #000,\n    0 0 6px rgba(255, 200, 120, 0.25);\n  white-space: nowrap;\n}\n#CookieMgrTab .ca-tab-icon {\n  flex: none;\n  display: flex;\n  align-items: flex-end;\n  justify-content: center;\n}\n#CookieMgrTab .ca-tab-icon-cookie {\n  width: 16px;\n  height: 16px;\n  background: url(img/perfectCookie.png) center / contain no-repeat;\n  filter: drop-shadow(0 1px 1px #000);\n}\n#CookieMgrTab .ca-tab-icon-cps {\n  width: 14px;\n  height: 14px;\n  gap: 2px;\n}\n#CookieMgrTab .ca-tab-icon-cps i {\n  display: block;\n  width: 3px;\n  background: #ffd98a;\n  border-radius: 1px;\n  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);\n}\n#CookieMgrTab .ca-tab-icon-glyph {\n  font-family: Tahoma, Arial, sans-serif;\n  font-weight: bold;\n  font-size: 13px;\n  line-height: 1;\n  color: #f4e6c3;\n  text-shadow: 0 1px 2px #000;\n}\n#CookieMgrTab .ca-tab-badge {\n  display: none;\n  min-width: 16px;\n  height: 16px;\n  padding: 0 3px;\n  box-sizing: border-box;\n  border-radius: 8px;\n  font:\n    bold 10px/16px Tahoma,\n    Arial,\n    sans-serif;\n  text-align: center;\n  color: #fff;\n  background: linear-gradient(#63c64a, #2f7d24);\n  box-shadow:\n    0 0 6px rgba(120, 240, 100, 0.8),\n    0 1px 1px #000;\n  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);\n}\n#CookieMgrTab .ca-tab-flap.active .ca-tab-badge {\n  display: block;\n  animation: caBadgeGlow 2s infinite ease-in-out;\n}\n@keyframes caBadgeGlow {\n  0%,\n  100% {\n    box-shadow:\n      0 0 4px rgba(120, 240, 100, 0.6),\n      0 1px 1px #000;\n  }\n  50% {\n    box-shadow:\n      0 0 10px rgba(120, 240, 100, 1),\n      0 1px 1px #000;\n  }\n}\n#game.ascending #CookieMgrTab,\n#game.ascendIntro #CookieMgrTab,\n#game.reincarnating #CookieMgrTab {\n  display: none;\n}\n\n/* ---------- Panel ---------- */\n\n#CookieMgrMenu {\n  max-width: 780px;\n  margin: 0 auto;\n  padding: 0 12px 120px;\n  color: #ddd;\n}\n#CookieMgrMenu .ca-tagline {\n  text-align: center;\n  margin: -6px 0 14px;\n  font-size: 12px;\n  font-style: italic;\n  color: #b9ab93;\n  text-shadow: 0 1px 1px #000;\n}\n\n/* Cards */\n#CookieMgrMenu .ca-card {\n  margin: 14px 4px;\n  border-radius: 6px;\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  background: rgba(0, 0, 0, 0.38);\n  box-shadow:\n    0 0 1px #000,\n    inset 0 0 1px #000,\n    0 6px 16px rgba(0, 0, 0, 0.35);\n  overflow: hidden;\n}\n#CookieMgrMenu .ca-card-head {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 10px;\n  padding: 9px 14px;\n  background: linear-gradient(to right, rgba(255, 235, 190, 0.09), rgba(255, 235, 190, 0));\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-card-title {\n  flex: 1;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-size: 20px;\n  color: #fff;\n  text-shadow:\n    0 -1px 5px rgba(255, 255, 200, 0.35),\n    0 1px 3px #000;\n}\n#CookieMgrMenu .ca-pill {\n  font-size: 11px;\n  white-space: nowrap;\n  padding: 3px 10px;\n  border-radius: 10px;\n  color: #bbb;\n  background: rgba(255, 255, 255, 0.07);\n  border: 1px solid rgba(255, 255, 255, 0.15);\n  transition: all 0.2s;\n}\n#CookieMgrMenu .ca-pill.on {\n  color: #cfc;\n  background: rgba(80, 200, 90, 0.16);\n  border-color: rgba(130, 235, 120, 0.5);\n}\n\n/* Rows */\n#CookieMgrMenu .ca-row {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 8px 12px;\n  padding: 8px 14px;\n  border-top: 1px solid rgba(255, 255, 255, 0.05);\n  transition: background 0.2s;\n}\n#CookieMgrMenu .ca-list .ca-row:first-child {\n  border-top: none;\n}\n#CookieMgrMenu .ca-row:hover {\n  background: rgba(255, 255, 255, 0.035);\n}\n#CookieMgrMenu .ca-row.on {\n  background: linear-gradient(to right, rgba(255, 210, 90, 0.12), rgba(255, 210, 90, 0) 65%);\n}\n#CookieMgrMenu .ca-row-master {\n  background: rgba(0, 0, 0, 0.22);\n  border-top: none;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-row-option {\n  padding-top: 10px;\n  padding-bottom: 10px;\n}\n#CookieMgrMenu .ca-row-text {\n  flex: 1 1 160px;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-row-option {\n  flex-wrap: nowrap;\n}\n#CookieMgrMenu .ca-row-option .ca-row-text {\n  flex-basis: 0;\n}\n#CookieMgrMenu .ca-controls {\n  flex: 0 1 auto;\n  max-width: 100%;\n  margin-left: auto;\n  display: flex;\n  flex-wrap: wrap;\n  justify-content: flex-end;\n  align-items: center;\n  gap: 8px;\n}\n#CookieMgrMenu .ca-row-name {\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 14px;\n  color: #f2ead2;\n  text-shadow: 0 1px 2px #000;\n}\n#CookieMgrMenu .ca-row-desc {\n  margin-top: 2px;\n  font-size: 11px;\n  color: #b3a590;\n  text-shadow: 0 1px 1px #000;\n}\n\n/* Icons */\n#CookieMgrMenu .ca-icon {\n  flex: 0 0 36px;\n  width: 36px;\n  height: 36px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  transition:\n    filter 0.25s,\n    transform 0.25s;\n  filter: grayscale(0.55) brightness(0.8);\n}\n#CookieMgrMenu .ca-row.on .ca-icon,\n#CookieMgrMenu .ca-row-master .ca-icon {\n  filter: drop-shadow(0 0 6px rgba(255, 220, 120, 0.75));\n}\n#CookieMgrMenu .ca-row.on .ca-icon {\n  transform: scale(1.06);\n}\n#CookieMgrMenu .ca-img {\n  width: 36px;\n  height: 36px;\n  background-size: contain;\n  background-repeat: no-repeat;\n  background-position: center;\n}\n#CookieMgrMenu .ca-sprite {\n  flex: none;\n  width: 48px;\n  height: 48px;\n  background-image: url(img/icons.png);\n  transform: scale(0.75);\n}\n\n/* Toggle switch */\n#CookieMgrMenu .ca-switch {\n  flex: none;\n  padding: 2px;\n  background: none;\n  border: none;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-switch:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-switch-track {\n  display: block;\n  position: relative;\n  width: 42px;\n  height: 22px;\n  box-sizing: border-box;\n  border-radius: 11px;\n  background: #2a211c;\n  border: 1px solid rgba(255, 255, 255, 0.22);\n  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.75);\n  transition:\n    background 0.2s,\n    border-color 0.2s,\n    box-shadow 0.2s;\n}\n#CookieMgrMenu .ca-switch-knob {\n  position: absolute;\n  top: 2px;\n  left: 2px;\n  width: 16px;\n  height: 16px;\n  border-radius: 50%;\n  background: radial-gradient(circle at 35% 30%, #fff, #c9c1b5 55%, #8a8178);\n  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);\n  transition: left 0.18s ease-out;\n}\n#CookieMgrMenu .ca-switch:hover .ca-switch-track {\n  border-color: rgba(255, 225, 150, 0.6);\n}\n#CookieMgrMenu .ca-switch.on .ca-switch-track {\n  background: linear-gradient(#66c84b, #2f7d24);\n  border-color: #a5ea93;\n  box-shadow:\n    inset 0 1px 3px rgba(0, 0, 0, 0.35),\n    0 0 9px rgba(110, 230, 90, 0.45);\n}\n#CookieMgrMenu .ca-switch.on .ca-switch-knob {\n  left: 22px;\n}\n#CookieMgrMenu .ca-switch:focus-visible .ca-switch-track {\n  outline: 2px solid #ffd76a;\n  outline-offset: 2px;\n}\n\n/* Hotkey chips */\n#CookieMgrMenu .ca-hotkey {\n  flex: none;\n  display: inline-flex;\n  align-items: center;\n}\n#CookieMgrMenu .ca-key {\n  min-width: 46px;\n  height: 26px;\n  padding: 0 10px;\n  font:\n    bold 12px Tahoma,\n    Arial,\n    sans-serif;\n  color: #f4e6c3;\n  text-shadow: 0 1px 1px #000;\n  background: linear-gradient(#4d3c2d, #2a2018);\n  border: 1px solid;\n  border-color: #9a7d5b #3b2c1f #2a1f15 #74604a;\n  border-radius: 5px;\n  box-shadow:\n    0 2px 0 #140d08,\n    inset 0 1px 0 rgba(255, 255, 255, 0.16);\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    border-color 0.15s,\n    box-shadow 0.15s;\n}\n#CookieMgrMenu .ca-key:hover {\n  color: #fff;\n  border-color: #e0c08a #5a4430 #3d2e20 #b39468;\n}\n#CookieMgrMenu .ca-key:active {\n  transform: translateY(1px);\n  box-shadow:\n    0 1px 0 #140d08,\n    inset 0 1px 0 rgba(255, 255, 255, 0.16);\n}\n#CookieMgrMenu .ca-key:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-hotkey.unset .ca-key {\n  color: #8f877a;\n  font-weight: normal;\n  font-style: italic;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px dashed rgba(255, 255, 255, 0.22);\n  box-shadow: none;\n}\n#CookieMgrMenu .ca-hotkey.capturing .ca-key {\n  color: #ffe9a6;\n  border-color: #ffd76a;\n  animation: caCapture 1.1s infinite ease-in-out;\n}\n@keyframes caCapture {\n  0%,\n  100% {\n    box-shadow:\n      0 2px 0 #140d08,\n      0 0 0 0 rgba(255, 215, 106, 0.5);\n  }\n  50% {\n    box-shadow:\n      0 2px 0 #140d08,\n      0 0 12px 2px rgba(255, 215, 106, 0.55);\n  }\n}\n#CookieMgrMenu .ca-key-clear {\n  width: 18px;\n  height: 18px;\n  margin-left: 3px;\n  padding: 0;\n  border: none;\n  border-radius: 50%;\n  background: transparent;\n  color: #b09a8a;\n  font-size: 14px;\n  line-height: 18px;\n  cursor: pointer;\n  opacity: 0;\n  transition:\n    opacity 0.15s,\n    background 0.15s;\n}\n#CookieMgrMenu .ca-row:hover .ca-key-clear {\n  opacity: 0.8;\n}\n#CookieMgrMenu .ca-key-clear:hover {\n  color: #fff;\n  background: rgba(255, 80, 80, 0.35);\n}\n#CookieMgrMenu .ca-hotkey.unset .ca-key-clear,\n#CookieMgrMenu .ca-hotkey.capturing .ca-key-clear {\n  visibility: hidden;\n}\n\n/* Buttons */\n#CookieMgrMenu .ca-btn {\n  padding: 4px 12px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-weight: bold;\n  font-size: 12px;\n  color: #ddd;\n  text-shadow: 0 1px 1px #000;\n  background: linear-gradient(#3e2f23, #1d140f);\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 4px;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    inset 0 1px 0 rgba(255, 255, 255, 0.12);\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    box-shadow 0.15s,\n    opacity 0.15s;\n}\n#CookieMgrMenu .ca-btn:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-btn:not(:disabled):hover {\n  color: #fff;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    0 0 9px rgba(255, 220, 120, 0.35),\n    inset 0 1px 0 rgba(255, 255, 255, 0.18);\n}\n#CookieMgrMenu .ca-btn:not(:disabled):active {\n  transform: translateY(1px);\n}\n#CookieMgrMenu .ca-btn-on:not(:disabled):hover {\n  color: #d6ffcc;\n}\n#CookieMgrMenu .ca-btn-off:not(:disabled):hover {\n  color: #ffd2cc;\n}\n#CookieMgrMenu .ca-btn:disabled {\n  opacity: 0.38;\n  cursor: default;\n  box-shadow: none;\n}\n#CookieMgrMenu .ca-btn-small {\n  font-size: 11px;\n  padding: 3px 10px;\n}\n#CookieMgrMenu .ca-btn-lg {\n  padding: 10px 20px;\n  font-size: 15px;\n  border-radius: 6px;\n}\n#CookieMgrMenu .ca-btn-danger {\n  color: #ffdcd2;\n  background: linear-gradient(#6b2420, #3a1210);\n  border-color: #ffb199 #7a2a1e #5c1b12 #d98a6e;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    0 0 10px rgba(255, 90, 60, 0.25),\n    inset 0 1px 0 rgba(255, 255, 255, 0.15);\n}\n#CookieMgrMenu .ca-btn-danger:not(:disabled):hover {\n  color: #fff;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    0 0 16px rgba(255, 90, 60, 0.5),\n    inset 0 1px 0 rgba(255, 255, 255, 0.2);\n}\n#CookieMgrMenu .ca-card-danger {\n  border-color: rgba(255, 110, 80, 0.3);\n  box-shadow:\n    0 0 1px #000,\n    inset 0 0 1px #000,\n    0 0 14px rgba(255, 70, 40, 0.12),\n    0 6px 16px rgba(0, 0, 0, 0.35);\n}\n#CookieMgrMenu .ca-row-sellall {\n  align-items: center;\n  justify-content: space-between;\n  gap: 12px;\n}\n\n/* Footer */\n#CookieMgrMenu .ca-footer {\n  margin: 18px 8px 0;\n  font-size: 11px;\n  line-height: 1.7;\n  text-align: center;\n  color: #9b907f;\n  text-shadow: 0 1px 1px #000;\n}\n#CookieMgrMenu .ca-footer b {\n  color: #c9bba3;\n}\n#CookieMgrMenu kbd {\n  display: inline-block;\n  padding: 0 5px;\n  font:\n    bold 10px/16px Tahoma,\n    Arial,\n    sans-serif;\n  color: #e8dcc2;\n  background: #2a2018;\n  border: 1px solid #5a4632;\n  border-radius: 3px;\n  box-shadow: 0 1px 0 #140d08;\n}\n#CookieMgrMenu .ca-footer-actions {\n  margin-top: 8px;\n}\n\n#CookieMgrMenu .ca-page {\n  animation: caFade 0.18s ease-out;\n}\n@keyframes caFade {\n  from {\n    opacity: 0;\n    transform: translateY(3px);\n  }\n  to {\n    opacity: 1;\n    transform: none;\n  }\n}\n#CookieMgrMenu a {\n  color: #ffd98a;\n}\n\n/* ---------- Graph ---------- */\n\n#CookieMgrMenu .ca-live {\n  font-size: 11px;\n  padding: 3px 10px 3px 20px;\n  position: relative;\n  border-radius: 10px;\n  color: #cfc;\n  background: rgba(80, 200, 90, 0.16);\n  border: 1px solid rgba(130, 235, 120, 0.5);\n}\n#CookieMgrMenu .ca-live:before {\n  content: '';\n  position: absolute;\n  left: 8px;\n  top: 50%;\n  width: 6px;\n  height: 6px;\n  margin-top: -3px;\n  border-radius: 50%;\n  background: #7be07b;\n  box-shadow: 0 0 6px #7be07b;\n  animation: caBadgeGlow 1.6s infinite ease-in-out;\n}\n#CookieMgrMenu .ca-live.paused {\n  color: #ffd9a0;\n  background: rgba(255, 170, 60, 0.14);\n  border-color: rgba(255, 190, 100, 0.5);\n}\n#CookieMgrMenu .ca-live.paused:before {\n  background: #ffb45c;\n  box-shadow: none;\n  animation: none;\n}\n\n#CookieMgrMenu .ca-stats {\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));\n  gap: 1px;\n  background: rgba(255, 255, 255, 0.06);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-stat {\n  min-width: 0; /* lets the grid cell shrink below its content so overflow/ellipsis below can work */\n  padding: 8px 12px;\n  background: rgba(0, 0, 0, 0.32);\n}\n#CookieMgrMenu .ca-stat-label {\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #a89a83;\n}\n#CookieMgrMenu .ca-stat-value {\n  margin-top: 2px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 17px;\n  color: #ffeab0;\n  text-shadow: 0 1px 3px #000;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n#CookieMgrMenu .ca-stat-sub {\n  margin-top: 1px;\n  font-size: 10px;\n  color: #93866f;\n  white-space: nowrap;\n}\n\n#CookieMgrMenu .ca-toolbar {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  justify-content: space-between;\n  gap: 6px 12px;\n  padding: 8px 12px;\n}\n#CookieMgrMenu .ca-toolbar-bottom {\n  padding-top: 6px;\n}\n#CookieMgrMenu .ca-chipgroup {\n  display: inline-flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 4px;\n}\n#CookieMgrMenu .ca-chip-label {\n  margin-right: 2px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-chip {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  padding: 3px 9px;\n  font:\n    bold 11px Tahoma,\n    Arial,\n    sans-serif;\n  color: #b9ab93;\n  text-shadow: 0 1px 1px #000;\n  background: rgba(255, 255, 255, 0.05);\n  border: 1px solid rgba(255, 255, 255, 0.14);\n  border-radius: 11px;\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    background 0.15s,\n    border-color 0.15s;\n}\n#CookieMgrMenu .ca-chip:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-chip:hover {\n  color: #fff;\n  border-color: rgba(255, 225, 150, 0.5);\n}\n#CookieMgrMenu .ca-chip.on {\n  color: #fff3cf;\n  background: rgba(255, 200, 100, 0.18);\n  border-color: rgba(255, 210, 120, 0.6);\n}\n#CookieMgrMenu .ca-sw {\n  display: inline-block;\n  width: 9px;\n  height: 9px;\n  margin-right: 1px;\n  border-radius: 50%;\n  vertical-align: -1px;\n  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);\n}\n\n#CookieMgrMenu .ca-graph-wrap {\n  position: relative;\n  margin: 0 8px;\n}\n#CookieMgrMenu canvas.ca-graph {\n  display: block;\n  width: 100%;\n  height: 300px;\n  cursor: crosshair;\n}\n#CookieMgrMenu canvas.ca-graph.ca-graph-small {\n  height: 160px;\n}\n#CookieMgrMenu .ca-tip {\n  display: none;\n  position: absolute;\n  z-index: 5;\n  max-width: 270px;\n  min-width: 150px;\n  padding: 7px 10px;\n  pointer-events: none;\n  font-size: 11px;\n  line-height: 1.35;\n  color: #e6dcc6;\n  background: rgba(14, 10, 6, 0.95);\n  border: 1px solid;\n  border-color: #b98a4e #6a4626 #55301c #a0764a;\n  border-radius: 5px;\n  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7);\n}\n#CookieMgrMenu .ca-tip-head {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  margin-bottom: 4px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 12px;\n  color: #ffeab0;\n}\n#CookieMgrMenu .ca-tip-head span {\n  margin-left: auto;\n  padding-left: 10px;\n  font:\n    normal 10px Tahoma,\n    Arial,\n    sans-serif;\n  color: #a89a83;\n}\n#CookieMgrMenu .ca-tip-row {\n  display: flex;\n  align-items: center;\n  gap: 5px;\n  padding: 1px 0;\n}\n#CookieMgrMenu .ca-tip-row b {\n  font-weight: normal;\n  color: #b9ab93;\n}\n#CookieMgrMenu .ca-tip-row span {\n  margin-left: auto;\n  padding-left: 12px;\n  text-align: right;\n  color: #f2ead2;\n}\n#CookieMgrMenu .ca-tip-row.strong b,\n#CookieMgrMenu .ca-tip-row.strong span {\n  color: #fff3cf;\n  font-weight: bold;\n}\n#CookieMgrMenu .ca-tip-sep {\n  height: 1px;\n  margin: 5px 0;\n  background: rgba(255, 255, 255, 0.14);\n}\n#CookieMgrMenu .ca-tip-note {\n  margin: 2px 0 4px;\n  font-style: italic;\n  color: #a89a83;\n}\n\n#CookieMgrMenu .ca-legend {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 4px 12px;\n  min-height: 16px;\n  padding: 2px 14px 12px;\n  font-size: 11px;\n  color: #b9ab93;\n}\n#CookieMgrMenu .ca-legend-item em {\n  font-style: normal;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-legend-empty {\n  font-style: italic;\n  color: #7f735f;\n}\n\n#CookieMgrMenu .ca-hidden {\n  display: none;\n}\n\n/* ---------- Stock transaction log + ticker ---------- */\n\n#CookieMgrMenu .cm-tx-wrap {\n  max-height: 220px;\n  overflow-y: auto;\n  margin: 0 4px 6px;\n}\n#CookieMgrMenu .cm-tx-table {\n  width: 100%;\n  border-collapse: collapse;\n  font-size: 11px;\n}\n#CookieMgrMenu .cm-tx-table th {\n  position: sticky;\n  top: 0;\n  text-align: left;\n  padding: 4px 8px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.06em;\n  color: #93866f;\n  background: #1c150d;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.1);\n}\n#CookieMgrMenu .cm-tx-table td {\n  padding: 3px 8px;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.05);\n  white-space: nowrap;\n  color: #d8cbb0;\n}\n#CookieMgrMenu .cm-tx-row:hover td {\n  background: rgba(255, 255, 255, 0.04);\n}\n#CookieMgrMenu .cm-tx-buy {\n  color: #8f8;\n  font-weight: bold;\n}\n#CookieMgrMenu .cm-tx-sell {\n  color: #f88;\n  font-weight: bold;\n}\n#CookieMgrMenu .cm-tx-empty {\n  padding: 14px 8px;\n  text-align: center;\n  font-style: italic;\n  color: #7f735f;\n  font-size: 12px;\n}\n\n#CookieMgrMenu .cm-tickbars {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 6px;\n  margin: 0 8px 8px;\n}\n#CookieMgrMenu .cm-tickbar {\n  flex: 1 1 90px;\n  min-width: 70px;\n  padding: 5px 6px;\n  background: rgba(0, 0, 0, 0.28);\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  border-radius: 4px;\n  font-size: 10px;\n}\n#CookieMgrMenu .cm-tickbar-time {\n  color: #93866f;\n  text-align: center;\n  margin-bottom: 3px;\n  white-space: nowrap;\n}\n#CookieMgrMenu .cm-tickbar-row {\n  height: 5px;\n  background: rgba(255, 255, 255, 0.06);\n  border-radius: 3px;\n  margin-bottom: 2px;\n  overflow: hidden;\n}\n#CookieMgrMenu .cm-tickbar-fill {\n  display: block;\n  height: 100%;\n  border-radius: 3px;\n}\n#CookieMgrMenu .cm-tickbar-buy {\n  background: #8f8;\n}\n#CookieMgrMenu .cm-tickbar-sell {\n  background: #f88;\n}\n#CookieMgrMenu .cm-tickbar-net {\n  text-align: center;\n  font-weight: bold;\n  margin-top: 3px;\n}\n#CookieMgrMenu .cm-ticks-empty {\n  margin: 0 8px 8px;\n  padding: 10px;\n  text-align: center;\n  font-style: italic;\n  color: #7f735f;\n  font-size: 11px;\n}\n\n#CookieMgrMenu .cm-ticker {\n  margin: 8px 8px 10px;\n  padding: 6px 0;\n  overflow: hidden;\n  white-space: nowrap;\n  background: rgba(0, 0, 0, 0.32);\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  border-radius: 4px;\n}\n#CookieMgrMenu .cm-ticker-track {\n  display: inline-block;\n  will-change: transform;\n}\n#CookieMgrMenu .cm-tick-item {\n  display: inline-block;\n  padding: 0 16px;\n  font:\n    bold 11px Tahoma,\n    Arial,\n    sans-serif;\n  color: #cbbfa6;\n}\n#CookieMgrMenu .cm-tick-buy {\n  color: #8f8;\n}\n#CookieMgrMenu .cm-tick-sell {\n  color: #f88;\n}\n#CookieMgrMenu .cm-tick-empty {\n  color: #7f735f;\n  font-style: italic;\n  font-weight: normal;\n}\n#CookieMgrMenu .cm-tick-sep {\n  color: #4a4232;\n  padding: 0 4px;\n}\n\n@keyframes cmTickerScroll {\n  from {\n    transform: translateX(0);\n  }\n  to {\n    transform: translateX(-50%);\n  }\n}\n";
+CA.VERSION = "1.3.0";
+CA.CSS = "/* ==========================================================================\n   CookieMgr — styles\n   Colours and borders borrow from the game's own \"framed\" look so the panel\n   feels native. Everything is scoped under #CookieMgrTab / #CookieMgrMenu.\n   ========================================================================== */\n\n/* ---------- Sidebar (icon tabs sticking out of the left beam, one per page) ---------- */\n\n#CookieMgrTab {\n  position: absolute;\n  left: 30%;\n  top: 128px;\n  margin-left: 3px; /* tuck slightly under the beam */\n  transform: translateX(-100%);\n  z-index: 110;\n  display: flex;\n  flex-direction: column;\n  align-items: flex-end; /* items grow leftwards, away from the beam */\n  gap: 4px;\n}\n#CookieMgrTab .ca-tab-item {\n  box-sizing: border-box;\n  height: 32px;\n  display: flex;\n  align-items: center;\n  cursor: pointer;\n  user-select: none;\n  background: linear-gradient(to right, #3d2716, #221409);\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-right: none;\n  border-radius: 8px 0 0 8px;\n  box-shadow:\n    -3px 3px 10px rgba(0, 0, 0, 0.65),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.18);\n  transition:\n    background 0.2s,\n    box-shadow 0.2s;\n  outline: none;\n}\n#CookieMgrTab .ca-tab-item:hover,\n#CookieMgrTab .ca-tab-item:focus-visible {\n  box-shadow:\n    -3px 3px 12px rgba(0, 0, 0, 0.75),\n    0 0 12px rgba(255, 215, 110, 0.35),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.25);\n}\n#CookieMgrTab .ca-tab-item.selected {\n  background: linear-gradient(to right, #7a4f22, #43290f);\n  box-shadow:\n    -3px 3px 12px rgba(0, 0, 0, 0.75),\n    0 0 14px rgba(255, 215, 110, 0.55),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.3);\n}\n#CookieMgrTab .ca-tab-label {\n  max-width: 0;\n  overflow: hidden;\n  opacity: 0;\n  padding: 0;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-weight: bold;\n  font-size: 13px;\n  letter-spacing: 0.5px;\n  color: #f4e6c3;\n  text-shadow:\n    0 1px 2px #000,\n    0 0 6px rgba(255, 200, 120, 0.25);\n  white-space: nowrap;\n  transition:\n    max-width 0.22s ease-out,\n    opacity 0.15s,\n    padding 0.22s ease-out;\n}\n#CookieMgrTab .ca-tab-item:hover .ca-tab-label,\n#CookieMgrTab .ca-tab-item:focus-visible .ca-tab-label {\n  max-width: 180px;\n  opacity: 1;\n  padding: 0 2px 0 12px;\n}\n#CookieMgrTab .ca-tab-icon {\n  position: relative;\n  flex: none;\n  width: 30px;\n  height: 30px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  color: #f4e6c3;\n  filter: drop-shadow(0 1px 1px #000);\n}\n#CookieMgrTab .ca-tab-item.selected .ca-tab-icon,\n#CookieMgrTab .ca-tab-item:hover .ca-tab-icon {\n  color: #ffeab0;\n}\n#CookieMgrTab .ca-tab-badge {\n  display: none;\n  position: absolute;\n  top: -5px;\n  left: -5px;\n  min-width: 15px;\n  height: 15px;\n  padding: 0 3px;\n  box-sizing: border-box;\n  border-radius: 8px;\n  font:\n    bold 9px/15px Tahoma,\n    Arial,\n    sans-serif;\n  text-align: center;\n  color: #fff;\n  background: linear-gradient(#63c64a, #2f7d24);\n  box-shadow:\n    0 0 6px rgba(120, 240, 100, 0.8),\n    0 1px 1px #000;\n  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);\n}\n#CookieMgrTab .ca-tab-item.active .ca-tab-badge {\n  display: block;\n  animation: caBadgeGlow 2s infinite ease-in-out;\n}\n@keyframes caBadgeGlow {\n  0%,\n  100% {\n    box-shadow:\n      0 0 4px rgba(120, 240, 100, 0.6),\n      0 1px 1px #000;\n  }\n  50% {\n    box-shadow:\n      0 0 10px rgba(120, 240, 100, 1),\n      0 1px 1px #000;\n  }\n}\n#game.ascending #CookieMgrTab,\n#game.ascendIntro #CookieMgrTab,\n#game.reincarnating #CookieMgrTab {\n  display: none;\n}\n\n/* ---------- Icons (used everywhere, not just inside the panel) ---------- */\n\n.ca-ico {\n  display: inline-block;\n  flex: none;\n  vertical-align: middle;\n}\n.ca-ico-cookie {\n  background: url(img/perfectCookie.png) center / contain no-repeat;\n}\n\n/* ---------- Stock market toolbar inside the Bank minigame ---------- */\n\n#cm-bank-toolbar {\n  position: relative;\n  z-index: 10;\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  justify-content: center;\n  gap: 6px;\n  padding: 4px 4px 6px;\n}\n#cm-bank-toolbar .bankButton {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  font-size: 11px;\n  padding: 3px 9px;\n}\n#cm-bank-toolbar .cm-bt-open {\n  color: #f4e6c3;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n}\n\n/* ---------- Panel ---------- */\n\n#CookieMgrMenu {\n  max-width: 780px;\n  margin: 0 auto;\n  padding: 0 12px 120px;\n  color: #ddd;\n}\n#CookieMgrMenu .ca-tagline {\n  text-align: center;\n  margin: -6px 0 14px;\n  font-size: 12px;\n  font-style: italic;\n  color: #b9ab93;\n  text-shadow: 0 1px 1px #000;\n}\n\n/* Cards */\n#CookieMgrMenu .ca-card {\n  margin: 14px 4px;\n  border-radius: 6px;\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  background: rgba(0, 0, 0, 0.38);\n  box-shadow:\n    0 0 1px #000,\n    inset 0 0 1px #000,\n    0 6px 16px rgba(0, 0, 0, 0.35);\n  overflow: hidden;\n}\n#CookieMgrMenu .ca-card-head {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 10px;\n  padding: 9px 14px;\n  background: linear-gradient(to right, rgba(255, 235, 190, 0.09), rgba(255, 235, 190, 0));\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-card-title {\n  flex: 1;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-size: 20px;\n  color: #fff;\n  text-shadow:\n    0 -1px 5px rgba(255, 255, 200, 0.35),\n    0 1px 3px #000;\n}\n#CookieMgrMenu .ca-pill {\n  font-size: 11px;\n  white-space: nowrap;\n  padding: 3px 10px;\n  border-radius: 10px;\n  color: #bbb;\n  background: rgba(255, 255, 255, 0.07);\n  border: 1px solid rgba(255, 255, 255, 0.15);\n  transition: all 0.2s;\n}\n#CookieMgrMenu .ca-pill.on {\n  color: #cfc;\n  background: rgba(80, 200, 90, 0.16);\n  border-color: rgba(130, 235, 120, 0.5);\n}\n\n/* Rows */\n#CookieMgrMenu .ca-row {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 8px 12px;\n  padding: 8px 14px;\n  border-top: 1px solid rgba(255, 255, 255, 0.05);\n  transition: background 0.2s;\n}\n#CookieMgrMenu .ca-list .ca-row:first-child {\n  border-top: none;\n}\n#CookieMgrMenu .ca-row:hover {\n  background: rgba(255, 255, 255, 0.035);\n}\n#CookieMgrMenu .ca-row.on {\n  background: linear-gradient(to right, rgba(255, 210, 90, 0.12), rgba(255, 210, 90, 0) 65%);\n}\n#CookieMgrMenu .ca-row-master {\n  background: rgba(0, 0, 0, 0.22);\n  border-top: none;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-row-option {\n  padding-top: 10px;\n  padding-bottom: 10px;\n}\n#CookieMgrMenu .ca-row-text {\n  flex: 1 1 160px;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-row-option {\n  flex-wrap: nowrap;\n}\n#CookieMgrMenu .ca-row-option .ca-row-text {\n  flex-basis: 0;\n}\n#CookieMgrMenu .ca-controls {\n  flex: 0 1 auto;\n  max-width: 100%;\n  margin-left: auto;\n  display: flex;\n  flex-wrap: wrap;\n  justify-content: flex-end;\n  align-items: center;\n  gap: 8px;\n}\n#CookieMgrMenu .ca-row-name {\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 14px;\n  color: #f2ead2;\n  text-shadow: 0 1px 2px #000;\n}\n#CookieMgrMenu .ca-row-desc {\n  margin-top: 2px;\n  font-size: 11px;\n  color: #b3a590;\n  text-shadow: 0 1px 1px #000;\n}\n\n/* Icons */\n#CookieMgrMenu .ca-icon {\n  flex: 0 0 36px;\n  width: 36px;\n  height: 36px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  transition:\n    filter 0.25s,\n    transform 0.25s;\n  filter: grayscale(0.55) brightness(0.8);\n}\n#CookieMgrMenu .ca-row.on .ca-icon,\n#CookieMgrMenu .ca-row-master .ca-icon {\n  filter: drop-shadow(0 0 6px rgba(255, 220, 120, 0.75));\n}\n#CookieMgrMenu .ca-row.on .ca-icon {\n  transform: scale(1.06);\n}\n#CookieMgrMenu .ca-img {\n  width: 36px;\n  height: 36px;\n  background-size: contain;\n  background-repeat: no-repeat;\n  background-position: center;\n}\n#CookieMgrMenu .ca-sprite {\n  flex: none;\n  width: 48px;\n  height: 48px;\n  background-image: url(img/icons.png);\n  transform: scale(0.75);\n}\n\n/* Toggle switch */\n#CookieMgrMenu .ca-switch {\n  flex: none;\n  padding: 2px;\n  background: none;\n  border: none;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-switch:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-switch-track {\n  display: block;\n  position: relative;\n  width: 42px;\n  height: 22px;\n  box-sizing: border-box;\n  border-radius: 11px;\n  background: #2a211c;\n  border: 1px solid rgba(255, 255, 255, 0.22);\n  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.75);\n  transition:\n    background 0.2s,\n    border-color 0.2s,\n    box-shadow 0.2s;\n}\n#CookieMgrMenu .ca-switch-knob {\n  position: absolute;\n  top: 2px;\n  left: 2px;\n  width: 16px;\n  height: 16px;\n  border-radius: 50%;\n  background: radial-gradient(circle at 35% 30%, #fff, #c9c1b5 55%, #8a8178);\n  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);\n  transition: left 0.18s ease-out;\n}\n#CookieMgrMenu .ca-switch:hover .ca-switch-track {\n  border-color: rgba(255, 225, 150, 0.6);\n}\n#CookieMgrMenu .ca-switch.on .ca-switch-track {\n  background: linear-gradient(#66c84b, #2f7d24);\n  border-color: #a5ea93;\n  box-shadow:\n    inset 0 1px 3px rgba(0, 0, 0, 0.35),\n    0 0 9px rgba(110, 230, 90, 0.45);\n}\n#CookieMgrMenu .ca-switch.on .ca-switch-knob {\n  left: 22px;\n}\n#CookieMgrMenu .ca-switch:focus-visible .ca-switch-track {\n  outline: 2px solid #ffd76a;\n  outline-offset: 2px;\n}\n\n/* Hotkey chips */\n#CookieMgrMenu .ca-hotkey {\n  flex: none;\n  display: inline-flex;\n  align-items: center;\n}\n#CookieMgrMenu .ca-key {\n  min-width: 46px;\n  height: 26px;\n  padding: 0 10px;\n  font:\n    bold 12px Tahoma,\n    Arial,\n    sans-serif;\n  color: #f4e6c3;\n  text-shadow: 0 1px 1px #000;\n  background: linear-gradient(#4d3c2d, #2a2018);\n  border: 1px solid;\n  border-color: #9a7d5b #3b2c1f #2a1f15 #74604a;\n  border-radius: 5px;\n  box-shadow:\n    0 2px 0 #140d08,\n    inset 0 1px 0 rgba(255, 255, 255, 0.16);\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    border-color 0.15s,\n    box-shadow 0.15s;\n}\n#CookieMgrMenu .ca-key:hover {\n  color: #fff;\n  border-color: #e0c08a #5a4430 #3d2e20 #b39468;\n}\n#CookieMgrMenu .ca-key:active {\n  transform: translateY(1px);\n  box-shadow:\n    0 1px 0 #140d08,\n    inset 0 1px 0 rgba(255, 255, 255, 0.16);\n}\n#CookieMgrMenu .ca-key:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-hotkey.unset .ca-key {\n  color: #8f877a;\n  font-weight: normal;\n  font-style: italic;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px dashed rgba(255, 255, 255, 0.22);\n  box-shadow: none;\n}\n#CookieMgrMenu .ca-hotkey.capturing .ca-key {\n  color: #ffe9a6;\n  border-color: #ffd76a;\n  animation: caCapture 1.1s infinite ease-in-out;\n}\n@keyframes caCapture {\n  0%,\n  100% {\n    box-shadow:\n      0 2px 0 #140d08,\n      0 0 0 0 rgba(255, 215, 106, 0.5);\n  }\n  50% {\n    box-shadow:\n      0 2px 0 #140d08,\n      0 0 12px 2px rgba(255, 215, 106, 0.55);\n  }\n}\n#CookieMgrMenu .ca-key-clear {\n  width: 18px;\n  height: 18px;\n  margin-left: 3px;\n  padding: 0;\n  border: none;\n  border-radius: 50%;\n  background: transparent;\n  color: #b09a8a;\n  font-size: 14px;\n  line-height: 18px;\n  cursor: pointer;\n  opacity: 0;\n  transition:\n    opacity 0.15s,\n    background 0.15s;\n}\n#CookieMgrMenu .ca-row:hover .ca-key-clear {\n  opacity: 0.8;\n}\n#CookieMgrMenu .ca-key-clear:hover {\n  color: #fff;\n  background: rgba(255, 80, 80, 0.35);\n}\n#CookieMgrMenu .ca-hotkey.unset .ca-key-clear,\n#CookieMgrMenu .ca-hotkey.capturing .ca-key-clear {\n  visibility: hidden;\n}\n\n/* Buttons */\n#CookieMgrMenu .ca-btn {\n  padding: 4px 12px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-weight: bold;\n  font-size: 12px;\n  color: #ddd;\n  text-shadow: 0 1px 1px #000;\n  background: linear-gradient(#3e2f23, #1d140f);\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 4px;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    inset 0 1px 0 rgba(255, 255, 255, 0.12);\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    box-shadow 0.15s,\n    opacity 0.15s;\n}\n#CookieMgrMenu .ca-btn:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-btn:not(:disabled):hover {\n  color: #fff;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    0 0 9px rgba(255, 220, 120, 0.35),\n    inset 0 1px 0 rgba(255, 255, 255, 0.18);\n}\n#CookieMgrMenu .ca-btn:not(:disabled):active {\n  transform: translateY(1px);\n}\n#CookieMgrMenu .ca-btn-on:not(:disabled):hover {\n  color: #d6ffcc;\n}\n#CookieMgrMenu .ca-btn-off:not(:disabled):hover {\n  color: #ffd2cc;\n}\n#CookieMgrMenu .ca-btn:disabled {\n  opacity: 0.38;\n  cursor: default;\n  box-shadow: none;\n}\n#CookieMgrMenu .ca-btn-small {\n  font-size: 11px;\n  padding: 3px 10px;\n}\n#CookieMgrMenu .ca-btn-lg {\n  padding: 10px 20px;\n  font-size: 15px;\n  border-radius: 6px;\n}\n#CookieMgrMenu .ca-btn-danger {\n  color: #ffdcd2;\n  background: linear-gradient(#6b2420, #3a1210);\n  border-color: #ffb199 #7a2a1e #5c1b12 #d98a6e;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    0 0 10px rgba(255, 90, 60, 0.25),\n    inset 0 1px 0 rgba(255, 255, 255, 0.15);\n}\n#CookieMgrMenu .ca-btn-danger:not(:disabled):hover {\n  color: #fff;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    0 0 16px rgba(255, 90, 60, 0.5),\n    inset 0 1px 0 rgba(255, 255, 255, 0.2);\n}\n#CookieMgrMenu .ca-card-danger {\n  border-color: rgba(255, 110, 80, 0.3);\n  box-shadow:\n    0 0 1px #000,\n    inset 0 0 1px #000,\n    0 0 14px rgba(255, 70, 40, 0.12),\n    0 6px 16px rgba(0, 0, 0, 0.35);\n}\n#CookieMgrMenu .ca-row-sellall {\n  align-items: center;\n  justify-content: space-between;\n  gap: 12px;\n}\n\n/* Footer */\n#CookieMgrMenu .ca-footer {\n  margin: 18px 8px 0;\n  font-size: 11px;\n  line-height: 1.7;\n  text-align: center;\n  color: #9b907f;\n  text-shadow: 0 1px 1px #000;\n}\n#CookieMgrMenu .ca-footer b {\n  color: #c9bba3;\n}\n#CookieMgrMenu kbd {\n  display: inline-block;\n  padding: 0 5px;\n  font:\n    bold 10px/16px Tahoma,\n    Arial,\n    sans-serif;\n  color: #e8dcc2;\n  background: #2a2018;\n  border: 1px solid #5a4632;\n  border-radius: 3px;\n  box-shadow: 0 1px 0 #140d08;\n}\n#CookieMgrMenu .ca-footer-actions {\n  margin-top: 8px;\n}\n\n#CookieMgrMenu .ca-page {\n  animation: caFade 0.18s ease-out;\n}\n@keyframes caFade {\n  from {\n    opacity: 0;\n    transform: translateY(3px);\n  }\n  to {\n    opacity: 1;\n    transform: none;\n  }\n}\n#CookieMgrMenu a {\n  color: #ffd98a;\n}\n\n/* ---------- Graph ---------- */\n\n#CookieMgrMenu .ca-live {\n  font-size: 11px;\n  padding: 3px 10px 3px 20px;\n  position: relative;\n  border-radius: 10px;\n  color: #cfc;\n  background: rgba(80, 200, 90, 0.16);\n  border: 1px solid rgba(130, 235, 120, 0.5);\n}\n#CookieMgrMenu .ca-live:before {\n  content: '';\n  position: absolute;\n  left: 8px;\n  top: 50%;\n  width: 6px;\n  height: 6px;\n  margin-top: -3px;\n  border-radius: 50%;\n  background: #7be07b;\n  box-shadow: 0 0 6px #7be07b;\n  animation: caBadgeGlow 1.6s infinite ease-in-out;\n}\n#CookieMgrMenu .ca-live.paused {\n  color: #ffd9a0;\n  background: rgba(255, 170, 60, 0.14);\n  border-color: rgba(255, 190, 100, 0.5);\n}\n#CookieMgrMenu .ca-live.paused:before {\n  background: #ffb45c;\n  box-shadow: none;\n  animation: none;\n}\n\n#CookieMgrMenu .ca-stats {\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));\n  gap: 1px;\n  background: rgba(255, 255, 255, 0.06);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-stat {\n  min-width: 0; /* lets the grid cell shrink below its content so overflow/ellipsis below can work */\n  padding: 8px 12px;\n  background: rgba(0, 0, 0, 0.32);\n}\n#CookieMgrMenu .ca-stat-label {\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #a89a83;\n}\n#CookieMgrMenu .ca-stat-value {\n  margin-top: 2px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 17px;\n  color: #ffeab0;\n  text-shadow: 0 1px 3px #000;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n#CookieMgrMenu .ca-stat-sub {\n  margin-top: 1px;\n  font-size: 10px;\n  color: #93866f;\n  white-space: nowrap;\n}\n\n#CookieMgrMenu .ca-toolbar {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  justify-content: space-between;\n  gap: 6px 12px;\n  padding: 8px 12px;\n}\n#CookieMgrMenu .ca-toolbar-bottom {\n  padding-top: 6px;\n}\n#CookieMgrMenu .ca-chipgroup {\n  display: inline-flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 4px;\n}\n#CookieMgrMenu .ca-chip-label {\n  margin-right: 2px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-chip {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  padding: 3px 9px;\n  font:\n    bold 11px Tahoma,\n    Arial,\n    sans-serif;\n  color: #b9ab93;\n  text-shadow: 0 1px 1px #000;\n  background: rgba(255, 255, 255, 0.05);\n  border: 1px solid rgba(255, 255, 255, 0.14);\n  border-radius: 11px;\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    background 0.15s,\n    border-color 0.15s;\n}\n#CookieMgrMenu .ca-chip:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-chip:hover {\n  color: #fff;\n  border-color: rgba(255, 225, 150, 0.5);\n}\n#CookieMgrMenu .ca-chip.on {\n  color: #fff3cf;\n  background: rgba(255, 200, 100, 0.18);\n  border-color: rgba(255, 210, 120, 0.6);\n}\n#CookieMgrMenu .ca-sw {\n  display: inline-block;\n  width: 9px;\n  height: 9px;\n  margin-right: 1px;\n  border-radius: 50%;\n  vertical-align: -1px;\n  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);\n}\n\n#CookieMgrMenu .ca-graph-wrap {\n  position: relative;\n  margin: 0 8px;\n}\n#CookieMgrMenu canvas.ca-graph {\n  display: block;\n  width: 100%;\n  height: 300px;\n  cursor: crosshair;\n}\n#CookieMgrMenu canvas.ca-graph.ca-graph-small {\n  height: 160px;\n}\n#CookieMgrMenu .ca-tip {\n  display: none;\n  position: absolute;\n  z-index: 5;\n  max-width: 270px;\n  min-width: 150px;\n  padding: 7px 10px;\n  pointer-events: none;\n  font-size: 11px;\n  line-height: 1.35;\n  color: #e6dcc6;\n  background: rgba(14, 10, 6, 0.95);\n  border: 1px solid;\n  border-color: #b98a4e #6a4626 #55301c #a0764a;\n  border-radius: 5px;\n  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7);\n}\n#CookieMgrMenu .ca-tip-head {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  margin-bottom: 4px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 12px;\n  color: #ffeab0;\n}\n#CookieMgrMenu .ca-tip-head span {\n  margin-left: auto;\n  padding-left: 10px;\n  font:\n    normal 10px Tahoma,\n    Arial,\n    sans-serif;\n  color: #a89a83;\n}\n#CookieMgrMenu .ca-tip-row {\n  display: flex;\n  align-items: center;\n  gap: 5px;\n  padding: 1px 0;\n}\n#CookieMgrMenu .ca-tip-row b {\n  font-weight: normal;\n  color: #b9ab93;\n}\n#CookieMgrMenu .ca-tip-row span {\n  margin-left: auto;\n  padding-left: 12px;\n  text-align: right;\n  color: #f2ead2;\n}\n#CookieMgrMenu .ca-tip-row.strong b,\n#CookieMgrMenu .ca-tip-row.strong span {\n  color: #fff3cf;\n  font-weight: bold;\n}\n#CookieMgrMenu .ca-tip-sep {\n  height: 1px;\n  margin: 5px 0;\n  background: rgba(255, 255, 255, 0.14);\n}\n#CookieMgrMenu .ca-tip-note {\n  margin: 2px 0 4px;\n  font-style: italic;\n  color: #a89a83;\n}\n\n#CookieMgrMenu .ca-legend {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 4px 12px;\n  min-height: 16px;\n  padding: 2px 14px 12px;\n  font-size: 11px;\n  color: #b9ab93;\n}\n#CookieMgrMenu .ca-legend-item em {\n  font-style: normal;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-legend-empty {\n  font-style: italic;\n  color: #7f735f;\n}\n\n#CookieMgrMenu .ca-hidden {\n  display: none;\n}\n\n/* ---------- Stock transaction log + ticker ---------- */\n\n#CookieMgrMenu .cm-tx-wrap {\n  max-height: 220px;\n  overflow-y: auto;\n  margin: 0 4px 6px;\n}\n#CookieMgrMenu .cm-tx-table {\n  width: 100%;\n  border-collapse: collapse;\n  font-size: 11px;\n}\n#CookieMgrMenu .cm-tx-table th {\n  position: sticky;\n  top: 0;\n  text-align: left;\n  padding: 4px 8px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.06em;\n  color: #93866f;\n  background: #1c150d;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.1);\n}\n#CookieMgrMenu .cm-tx-table td {\n  padding: 3px 8px;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.05);\n  white-space: nowrap;\n  color: #d8cbb0;\n}\n#CookieMgrMenu .cm-tx-row:hover td {\n  background: rgba(255, 255, 255, 0.04);\n}\n#CookieMgrMenu .cm-tx-buy {\n  color: #8f8;\n  font-weight: bold;\n}\n#CookieMgrMenu .cm-tx-sell {\n  color: #f88;\n  font-weight: bold;\n}\n#CookieMgrMenu .cm-tx-empty {\n  padding: 14px 8px;\n  text-align: center;\n  font-style: italic;\n  color: #7f735f;\n  font-size: 12px;\n}\n\n#CookieMgrMenu .cm-tickbars {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 6px;\n  margin: 0 8px 8px;\n}\n#CookieMgrMenu .cm-tickbar {\n  flex: 1 1 90px;\n  min-width: 70px;\n  padding: 5px 6px;\n  background: rgba(0, 0, 0, 0.28);\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  border-radius: 4px;\n  font-size: 10px;\n}\n#CookieMgrMenu .cm-tickbar-time {\n  color: #93866f;\n  text-align: center;\n  margin-bottom: 3px;\n  white-space: nowrap;\n}\n#CookieMgrMenu .cm-tickbar-row {\n  height: 5px;\n  background: rgba(255, 255, 255, 0.06);\n  border-radius: 3px;\n  margin-bottom: 2px;\n  overflow: hidden;\n}\n#CookieMgrMenu .cm-tickbar-fill {\n  display: block;\n  height: 100%;\n  border-radius: 3px;\n}\n#CookieMgrMenu .cm-tickbar-buy {\n  background: #8f8;\n}\n#CookieMgrMenu .cm-tickbar-sell {\n  background: #f88;\n}\n#CookieMgrMenu .cm-tickbar-net {\n  text-align: center;\n  font-weight: bold;\n  margin-top: 3px;\n}\n#CookieMgrMenu .cm-ticks-empty {\n  margin: 0 8px 8px;\n  padding: 10px;\n  text-align: center;\n  font-style: italic;\n  color: #7f735f;\n  font-size: 11px;\n}\n\n#CookieMgrMenu .cm-ticker {\n  margin: 8px 8px 10px;\n  padding: 6px 0;\n  overflow: hidden;\n  white-space: nowrap;\n  background: rgba(0, 0, 0, 0.32);\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  border-radius: 4px;\n}\n#CookieMgrMenu .cm-ticker-track {\n  display: inline-block;\n  will-change: transform;\n}\n#CookieMgrMenu .cm-tick-item {\n  display: inline-block;\n  padding: 0 16px;\n  font:\n    bold 11px Tahoma,\n    Arial,\n    sans-serif;\n  color: #cbbfa6;\n}\n#CookieMgrMenu .cm-tick-buy {\n  color: #8f8;\n}\n#CookieMgrMenu .cm-tick-sell {\n  color: #f88;\n}\n#CookieMgrMenu .cm-tick-empty {\n  color: #7f735f;\n  font-style: italic;\n  font-weight: normal;\n}\n#CookieMgrMenu .cm-tick-sep {\n  color: #4a4232;\n  padding: 0 4px;\n}\n\n@keyframes cmTickerScroll {\n  from {\n    transform: translateX(0);\n  }\n  to {\n    transform: translateX(-50%);\n  }\n}\n";
 
 // ---- src/core/util.js ------------------------------------------------
 // Small helpers shared by every module.
@@ -1115,20 +1115,6 @@ CA.Stocks = (() => {
       desc: '',
       default: 'portfolio', // 'portfolio' | 'perStock'
     });
-    CA.Settings.defineOption({
-      key: 'bankGraphEnabled',
-      group: 'stocks',
-      name: 'Graph in the Bank minigame',
-      desc: 'Shows a small graph underneath the stock market itself, not just on the Graphs tab.',
-      default: true,
-    });
-    CA.Settings.defineOption({
-      key: 'bankGraphMode',
-      group: 'graph-select',
-      name: 'Bank graph view',
-      desc: '',
-      default: 'portfolio', // 'portfolio' | 'perStock' — independent of the Graphs-tab stockGraphMode
-    });
     CA.Util.injectCss('CookieMgrStocksStyles', CSS);
     restore();
     CA.Events.on('settings', refresh);
@@ -1229,6 +1215,13 @@ CA.StockTrader = (() => {
     return total;
   }
 
+  /** Hover text for any "Sell all" button: the live cookie payout, or that there's nothing held. */
+  function sellAllTitle() {
+    const cookies = previewSellAllCookies();
+    const beautify = (v) => (typeof Beautify === 'function' ? Beautify(v) : Math.round(v).toString());
+    return cookies > 0 ? `Sells for ~${beautify(cookies)} cookies right now` : 'Nothing to sell right now';
+  }
+
   function init() {
     CA.Actions.register({
       id: 'clicker.stockTrader',
@@ -1239,7 +1232,7 @@ CA.StockTrader = (() => {
     });
   }
 
-  return { init, set, toggle, isOn, sellAll, previewSellAllCookies };
+  return { init, set, toggle, isOn, sellAll, previewSellAllCookies, sellAllTitle };
 })();
 
 // ---- src/features/stockLog.js ----------------------------------------
@@ -1714,6 +1707,57 @@ CA.History = (() => {
   return { init, samples, intervals, events, colorFor, lowerBound, stats, intervalsIn, clear, addEvent, sampleNow: sample };
 })();
 
+// ---- src/features/cookieMonster.js -----------------------------------
+// Loads Cookie Monster (https://github.com/CookieMonsterTeam/CookieMonster) on request, or
+// automatically when CookieMgr starts. Its dist URL always serves the latest release, and it
+// registers itself with the game as mod "CookieMonster" (verified against its built bundle),
+// which is how we tell whether it's already running.
+
+CA.CookieMonster = (() => {
+  const URL = 'https://cookiemonsterteam.github.io/CookieMonster/dist/CookieMonster.js';
+  let loading = false;
+
+  const isLoaded = () =>
+    typeof Game !== 'undefined' && !!((Game.mods && Game.mods.CookieMonster) || window.CookieMonsterData);
+
+  /** Loads Cookie Monster unless it's already running (or already on its way). */
+  function load() {
+    if (isLoaded() || loading) return false;
+    loading = true;
+    Game.LoadMod(
+      URL,
+      () => {
+        loading = false;
+        CA.Events.emit('integrations', 'cookieMonster');
+      },
+      () => {
+        loading = false;
+        CA.Util.notify('CookieMgr', "Couldn't load Cookie Monster — check your connection.", CA.ICON, 4);
+      }
+    );
+    CA.Events.emit('integrations', 'cookieMonster');
+    return true;
+  }
+
+  function init() {
+    CA.Settings.defineOption({
+      key: 'cmAutoLoad',
+      group: 'integrations',
+      name: 'Load Cookie Monster on start-up',
+      desc: 'Whenever CookieMgr starts, also load the latest Cookie Monster release — unless it is already running.',
+      default: false,
+    });
+    // The game calls our load() (restoring saved settings) right after init(), synchronously,
+    // so wait a moment before reading the setting — and give a separately-bookmarked Cookie
+    // Monster a chance to register first so we don't load it twice.
+    setTimeout(() => {
+      if (CA.Settings.get('cmAutoLoad')) load();
+    }, 1500);
+  }
+
+  return { init, load, isLoaded, isLoading: () => loading };
+})();
+
 // ---- src/ui/components.js --------------------------------------------
 // HTML snippets for the CookieMgr panel. Everything is plain strings; interactivity
 // is handled by one delegated click listener in menu.js via data-ca="…" attributes.
@@ -1756,9 +1800,91 @@ CA.UI.C = (() => {
   return { icon, toggle, hotkey, button, esc };
 })();
 
+// ---- src/ui/icons.js -------------------------------------------------
+// One small icon set for everything CookieMgr draws: sidebar, page headers, buttons, widgets.
+// Inline SVG (24×24 viewBox, fill="currentColor") so icons inherit text colour and need no
+// extra assets — except the cookie, which reuses the game's own perfectCookie.png.
+
+CA.UI = CA.UI || {};
+
+CA.UI.Icons = (() => {
+  const gear =
+    '<circle cx="12" cy="12" r="6.3" fill="none" stroke="currentColor" stroke-width="3"/>' +
+    [0, 45, 90, 135, 180, 225, 270, 315]
+      .map((a) => `<rect x="10.4" y="1.6" width="3.2" height="5" rx="1" transform="rotate(${a} 12 12)"/>`)
+      .join('');
+
+  const stroke = (d) => `<path d="${d}" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>`;
+
+  const PATHS = {
+    bolt: '<path d="M13 2 4 14h7l-1 8 10-13h-7z"/>',
+    graphs: '<rect x="3" y="12" width="4" height="9" rx="1"/><rect x="10" y="7" width="4" height="14" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/>',
+    stocks: stroke('M3 17l6-6 4 4 8-9') + stroke('M15 6h6v6'),
+    events:
+      '<circle cx="5" cy="6" r="2"/><circle cx="5" cy="12" r="2"/><circle cx="5" cy="18" r="2"/>' +
+      '<rect x="9" y="5" width="12" height="2" rx="1"/><rect x="9" y="11" width="12" height="2" rx="1"/><rect x="9" y="17" width="12" height="2" rx="1"/>',
+    wizard: stroke('M4 20 14 10') + '<path d="M17 2l1.2 3.3 3.5.2-2.7 2.2.9 3.3-2.9-1.9-2.9 1.9.9-3.3-2.7-2.2 3.5-.2z"/>',
+    settings: gear,
+    star: '<path d="M12 2.5l2.9 6.2 6.8.7-5.1 4.6 1.5 6.7L12 17.3l-6.1 3.4 1.5-6.7L2.3 9.4l6.8-.7z"/>',
+    starOutline:
+      '<path d="M12 2.5l2.9 6.2 6.8.7-5.1 4.6 1.5 6.7L12 17.3l-6.1 3.4 1.5-6.7L2.3 9.4l6.8-.7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>',
+    play: '<path d="M7 4v16l13-8z"/>',
+    pause: '<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>',
+    plus: '<path d="M11 4h2v7h7v2h-7v7h-2v-7H4v-2h7z"/>',
+    trash: '<path d="M9 3h6l1 2h4v2H4V5h4zM6 9h12l-1 12H7z"/>',
+    edit: '<path d="M4 17.5V20h2.5L17 9.5 14.5 7zM19.7 6.8a1 1 0 0 0 0-1.4l-1.1-1.1a1 1 0 0 0-1.4 0l-1.3 1.3 2.5 2.5z"/>',
+    open: '<path d="M14 3h7v7h-2V6.4l-8.3 8.3-1.4-1.4L17.6 5H14zM5 5h6v2H7v10h10v-4h2v6H5z"/>',
+    widget: '<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>',
+    dollar: '<text x="12" y="19" text-anchor="middle" font-size="20" font-weight="bold" font-family="Tahoma,Arial,sans-serif">$</text>',
+    close: stroke('M6 6l12 12M18 6 6 18'),
+    grip: '<circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/>',
+    download: '<path d="M11 3h2v9.2l3.3-3.3 1.4 1.4L12 16l-5.7-5.7 1.4-1.4 3.3 3.3zM4 18h16v2H4z"/>',
+    upload: '<path d="M11 16h2V6.8l3.3 3.3 1.4-1.4L12 3 6.3 8.7l1.4 1.4L11 6.8zM4 18h16v2H4z"/>',
+    puzzle: '<path d="M10 3a2 2 0 0 1 4 0v2h4a1 1 0 0 1 1 1v4h-2a2 2 0 0 0 0 4h2v4a1 1 0 0 1-1 1h-4v-2a2 2 0 0 0-4 0v2H6a1 1 0 0 1-1-1v-4h2a2 2 0 0 0 0-4H5V6a1 1 0 0 1 1-1h4z"/>',
+  };
+
+  /** HTML for icon `name` at `size` px. Unknown names render as nothing. */
+  function html(name, size = 16, extraClass = '') {
+    const cls = `ca-ico${extraClass ? ' ' + extraClass : ''}`;
+    if (name === 'cookie') return `<span class="${cls} ca-ico-cookie" style="width:${size}px;height:${size}px"></span>`;
+    const p = PATHS[name];
+    if (!p) return '';
+    return `<svg class="${cls}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${p}</svg>`;
+  }
+
+  const has = (name) => name === 'cookie' || name in PATHS;
+
+  return { html, has };
+})();
+
+// ---- src/ui/pages.js -------------------------------------------------
+// Registry of CookieMgr pages (one sidebar entry each). A page is
+//   { id, label, icon, order, html(), mount(root), unmount(), tick() }
+// html() returns the page markup; mount/unmount/tick are optional lifecycle hooks for pages
+// with live parts (charts, logs). The panel (ui/menu.js) and the sidebar (ui/tab.js) both read
+// this list, so adding a page is just one register() call from the page's own module.
+
+CA.UI = CA.UI || {};
+
+CA.UI.Pages = (() => {
+  const pages = [];
+  const noop = () => {};
+
+  function register(page) {
+    if (pages.some((p) => p.id === page.id)) throw new Error(`Page "${page.id}" already registered`);
+    pages.push({ order: 100, icon: '', mount: noop, unmount: noop, tick: noop, ...page });
+    pages.sort((a, b) => a.order - b.order);
+  }
+
+  const list = () => pages.slice();
+  const get = (id) => pages.find((p) => p.id === id) || null;
+
+  return { register, list, get };
+})();
+
 // ---- src/ui/chart.js -------------------------------------------------
-// Shared pieces for every canvas time-series chart (CA.UI.Graph, CA.UI.StockGraph, and to a
-// smaller extent CA.UI.BankGraph): DPI-aware canvas sizing, a left margin sized to whatever the
+// Shared pieces for every canvas time-series chart (CA.UI.Graph, CA.UI.StockGraph):
+// DPI-aware canvas sizing, a left margin sized to whatever the
 // axis labels actually render as, absolute-grid time bucketing, and a scrollable "view" that
 // tracks whether a chart is following the live edge or has been dragged/paused into the past.
 //
@@ -1941,43 +2067,26 @@ CA.UI.Chart = (() => {
 })();
 
 // ---- src/ui/tab.js ---------------------------------------------------
-// The stack of little tabs that stick out of the left beam (between the cookie panel and the
-// middle panel) — one per CookieMgr page, instead of one tab that opens a panel you then have to
-// flip between pages inside. Clicking a tab jumps straight to that page, opening the panel if
-// it's closed; clicking the page that's already showing closes the panel.
+// The sidebar: a column of small icon tabs sticking out of the left beam (between the cookie
+// panel and the middle panel), one per registered page (CA.UI.Pages). Hovering a tab slides its
+// name out to the left. Clicking jumps straight to that page, opening the panel if it's closed;
+// clicking the page that's already showing closes the panel.
 
 CA.UI = CA.UI || {};
 
 CA.UI.Tab = (() => {
   let wrap = null;
 
-  // Small, reliable icons — a proven image asset for the cookie, plain CSS/Unicode glyphs for
-  // the rest, rather than guessing at coordinates on the game's own icon sprite sheet.
-  const ICONS = {
-    clickers: '<span class="ca-tab-icon ca-tab-icon-cookie"></span>',
-    graphs:
-      '<span class="ca-tab-icon ca-tab-icon-cps"><i style="height:40%"></i><i style="height:65%"></i><i style="height:95%"></i></span>',
-    stocks: '<span class="ca-tab-icon ca-tab-icon-glyph">$</span>',
-    settings: '<span class="ca-tab-icon ca-tab-icon-glyph">⚙</span>',
-  };
-
   function go(id) {
-    const wasOpen = CA.UI.Menu.isOpen();
-    if (wasOpen && CA.Settings.get('tab') === id) {
-      CA.UI.Menu.close();
-      return;
-    }
-    CA.Settings.set('tab', id);
-    if (wasOpen) CA.UI.Menu.render(); // already open on a different page — switch it directly
-    else CA.UI.Menu.open(); // Game.ShowMenu triggers Game.UpdateMenu -> our render() for us
+    if (CA.UI.Menu.isOpen() && CA.Settings.get('tab') === id) CA.UI.Menu.close();
+    else CA.UI.Menu.openPage(id);
   }
 
-  function flapHtml(t) {
+  function itemHtml(p) {
     return (
-      `<div class="ca-tab-flap" data-tab-flap="${t.id}" role="button" tabindex="0" title="${t.label}">` +
-      (ICONS[t.id] || '') +
-      `<span class="ca-tab-label">${t.label}</span>` +
-      (t.id === 'clickers' ? '<span class="ca-tab-badge" aria-label="active autoclickers"></span>' : '') +
+      `<div class="ca-tab-item" data-tab-item="${p.id}" role="button" tabindex="0" aria-label="${CA.Util.escapeHtml(p.label)}">` +
+      `<span class="ca-tab-label">${CA.Util.escapeHtml(p.label)}</span>` +
+      `<span class="ca-tab-icon">${CA.UI.Icons.html(p.icon, 18)}<span class="ca-tab-badge"></span></span>` +
       '</div>'
     );
   }
@@ -1985,37 +2094,39 @@ CA.UI.Tab = (() => {
   function create() {
     wrap = document.createElement('div');
     wrap.id = 'CookieMgrTab';
-    wrap.innerHTML = CA.UI.Menu.TABS.map(flapHtml).join('');
+    wrap.innerHTML = CA.UI.Pages.list().map(itemHtml).join('');
     wrap.addEventListener('click', (e) => {
-      const flap = e.target.closest('[data-tab-flap]');
-      if (flap) go(flap.dataset.tabFlap);
+      const item = e.target.closest('[data-tab-item]');
+      if (item) go(item.dataset.tabItem);
     });
     wrap.addEventListener('keydown', (e) => {
       if (e.key !== 'Enter' && e.key !== ' ') return;
-      const flap = e.target.closest('[data-tab-flap]');
-      if (flap) {
-        e.preventDefault();
-        go(flap.dataset.tabFlap);
-      }
+      const item = e.target.closest('[data-tab-item]');
+      if (!item) return;
+      e.preventDefault();
+      go(item.dataset.tabItem);
     });
     (document.getElementById('game') || document.body).appendChild(wrap);
     update();
   }
 
+  /** Small count bubble on a page's icon (e.g. running autoclickers); 0 hides it. */
+  const badges = {
+    clickers: () => CA.Autoclickers.activeCount(),
+  };
+
   function update() {
     if (!wrap) return;
     const open = CA.UI.Menu.isOpen();
     const current = CA.Settings.get('tab');
-    wrap.querySelectorAll('[data-tab-flap]').forEach((flap) => {
-      const id = flap.dataset.tabFlap;
-      flap.classList.toggle('selected', open && current === id);
-    });
-    const n = CA.Autoclickers.activeCount();
-    const badge = wrap.querySelector('[data-tab-flap="clickers"] .ca-tab-badge');
-    if (badge) {
+    wrap.querySelectorAll('[data-tab-item]').forEach((item) => {
+      const id = item.dataset.tabItem;
+      item.classList.toggle('selected', open && current === id);
+      const n = badges[id] ? badges[id]() : 0;
+      const badge = item.querySelector('.ca-tab-badge');
       badge.textContent = n ? String(n) : '';
-      badge.closest('[data-tab-flap]').classList.toggle('active', n > 0);
-    }
+      item.classList.toggle('active', n > 0);
+    });
   }
 
   function init() {
@@ -3510,225 +3621,96 @@ CA.UI.StockLog = (() => {
   return { init, html, mount, unmount, tick };
 })();
 
-// ---- src/ui/bankGraph.js ---------------------------------------------
-// A small graph inserted directly under the stock list in the Bank minigame itself, so you
-// don't have to open the CookieMgr panel to see how you're doing. A little toggle switches it
-// between individual stock prices and your total portfolio value — same two views as the
-// Graphs-tab stock chart, just a separate "Bank graph view" setting so this one can be left on
-// whichever you check while actually trading.
+// ---- src/ui/bankToolbar.js -------------------------------------------
+// A small toolbar inside the Bank minigame itself, right under its own header: Sell all, the
+// stock autobuyer switch, and a shortcut to the CookieMgr Stock market page. It reuses the
+// game's own .bankButton styling so it reads as part of the minigame, not an overlay.
 //
-// NOTE: this reaches into the Bank minigame's own DOM (there is no mod API for adding a panel
-// there), by inserting itself right after whichever element holds the `bankGood-*` boxes. If a
-// future game update changes that markup, this quietly stops appearing rather than breaking
-// anything else — check that it still shows up after a game update.
+// NOTE: this reaches into the Bank minigame's DOM (there's no mod API for adding to it), by
+// inserting itself right after #bankHeader. If a future game update changes that markup, it
+// quietly stops appearing rather than breaking anything else.
 
 CA.UI = CA.UI || {};
 
-CA.UI.BankGraph = (() => {
-  const TICK_MS = 1000;
-  const WRAP_ID = 'cm-bank-graph';
-  const WINDOW_MS = 5 * 60 * 1000; // fixed 5 min window — this is a glanceable mini chart, not the full Graphs tab
-  const PAD = { r: 8, t: 6, b: 16 };
-  const MIN_PAD_L = 28;
-  const PAD_L_MARGIN = 8;
-  const FONT = '10px Tahoma, Arial, sans-serif';
-  const COLORS = ['#f5c451', '#7fe08b', '#9db4cc', '#ff8a65', '#c77dff', '#4fd6e0', '#e5484d', '#a6e35a'];
+CA.UI.BankToolbar = (() => {
+  const ID = 'cm-bank-toolbar';
+  const I = (name) => CA.UI.Icons.html(name, 12);
 
-  const CSS = `
-#${WRAP_ID} { margin: 6px 0 2px; padding: 6px 8px 4px; background: rgba(0,0,0,.28); border: 1px solid rgba(255,255,255,.12); border-radius: 4px; }
-#${WRAP_ID} .cm-bg-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; font: 10px Tahoma, Arial, sans-serif; color: #cbbfa6; }
-#${WRAP_ID} .cm-bg-readout { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#${WRAP_ID} .cm-bg-toggle { display: flex; gap: 3px; flex: none; }
-#${WRAP_ID} .cm-bg-toggle button { font: bold 9px Tahoma, Arial, sans-serif; padding: 2px 7px; color: #b9ab93; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.14); border-radius: 9px; cursor: pointer; }
-#${WRAP_ID} .cm-bg-toggle button.on { color: #fff3cf; background: rgba(255,200,100,.18); border-color: rgba(255,210,120,.6); }
-#${WRAP_ID} canvas { display: block; width: 100%; height: 70px; }
-`;
+  function header() {
+    return CA.Stocks.minigame() ? document.getElementById('bankHeader') : null;
+  }
 
-  let timer = null;
-
-  const S = () => CA.Settings;
-  const beautify = (v, floats) => (typeof Beautify === 'function' ? Beautify(v, floats == null ? 1 : floats) : Math.round(v).toString());
-  const signed = (v) => (v < 0 ? '-' : '+') + beautify(Math.abs(v));
-
-  function lowerBound(arr, time) {
-    let lo = 0;
-    let hi = arr.length;
-    while (lo < hi) {
-      const mid = (lo + hi) >> 1;
-      if (arr[mid].t < time) lo = mid + 1;
-      else hi = mid;
+  function onClick(e) {
+    const b = e.target.closest('[data-cm-bt]');
+    if (!b) return;
+    switch (b.dataset.cmBt) {
+      case 'sell':
+        CA.Util.sound('snd/clickOff2.mp3');
+        CA.StockTrader.sellAll();
+        b.title = CA.StockTrader.sellAllTitle();
+        break;
+      case 'auto':
+        CA.Util.sound(CA.StockTrader.isOn() ? 'snd/clickOff2.mp3' : 'snd/clickOn2.mp3');
+        CA.StockTrader.toggle();
+        break;
+      case 'open':
+        CA.UI.Menu.openPage('stocks');
+        break;
+      default:
     }
-    return lo;
+    sync();
   }
 
-  function visibleStocks() {
-    const all = CA.Stocks.list();
-    // Same "Sync to owned stocks" setting as the Graphs-tab per-stock view, so buying a stock
-    // makes it show up here too without any extra toggling.
-    return S().get('stockGraphSync') ? all.filter((g) => g.owned) : all;
-  }
-
-  // ---- finding a home in the Bank minigame's own DOM ------------------------------
-
-  function goodsContainer() {
-    const m = CA.Stocks.minigame();
-    if (!m || !m.goodsById || !m.goodsById.length) return null;
-    const first = document.getElementById(`bankGood-${m.goodsById[0].id}`);
-    return first ? first.parentElement : null;
-  }
-
-  function ensureMounted() {
-    const goods = goodsContainer();
-    if (!goods || !S().get('bankGraphEnabled')) {
-      remove();
+  function ensure() {
+    const head = header();
+    let bar = document.getElementById(ID);
+    if (!head || !CA.Settings.get('bankToolbar')) {
+      if (bar) bar.remove();
       return null;
     }
-    let wrap = document.getElementById(WRAP_ID);
-    if (wrap && wrap.previousElementSibling !== goods) {
-      wrap.remove();
-      wrap = null;
+    if (bar && bar.previousElementSibling !== head) {
+      bar.remove();
+      bar = null;
     }
-    if (!wrap) {
-      wrap = document.createElement('div');
-      wrap.id = WRAP_ID;
-      wrap.innerHTML =
-        '<div class="cm-bg-head"><span class="cm-bg-readout" data-cm-bg-readout></span>' +
-        '<span class="cm-bg-toggle">' +
-        '<button type="button" data-cm-bg-mode="portfolio">Portfolio</button>' +
-        '<button type="button" data-cm-bg-mode="perStock">Per stock</button>' +
-        '</span></div>' +
-        '<canvas></canvas>';
-      wrap.addEventListener('click', (e) => {
-        const b = e.target.closest('[data-cm-bg-mode]');
-        if (b) S().set('bankGraphMode', b.dataset.cmBgMode);
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = ID;
+      bar.innerHTML =
+        `<div class="bankButton bankButtonSell" data-cm-bt="sell">${I('dollar')}Sell all stocks</div>` +
+        '<div class="bankButton bankButtonBuy" data-cm-bt="auto"></div>' +
+        `<div class="bankButton cm-bt-open" data-cm-bt="open" title="Open the CookieMgr Stock market page">${I('open')}CookieMgr</div>`;
+      bar.addEventListener('click', onClick);
+      const sell = bar.querySelector('[data-cm-bt="sell"]');
+      sell.addEventListener('mouseenter', () => {
+        sell.title = CA.StockTrader.sellAllTitle();
       });
-      goods.insertAdjacentElement('afterend', wrap);
+      head.insertAdjacentElement('afterend', bar);
     }
-    return wrap;
+    return bar;
   }
 
-  function remove() {
-    const wrap = document.getElementById(WRAP_ID);
-    if (wrap) wrap.remove();
-  }
-
-  // ---- drawing ---------------------------------------------------------------------
-
-  function portfolioLines() {
-    const t1 = Date.now();
-    const t0 = t1 - WINDOW_MS;
-    const hist = CA.Stocks.portfolioHistory();
-    const lo = Math.max(0, lowerBound(hist, t0) - 1);
-    const list = hist.slice(lo).filter((p) => p.t <= t1);
-    return [{ pts: list.map((p) => ({ t: p.t, v: p.value })), color: COLORS[0] }];
-  }
-
-  function perStockLines() {
-    const t1 = Date.now();
-    const t0 = t1 - WINDOW_MS;
-    return visibleStocks().map((g, i) => {
-      const hist = CA.Stocks.history(g.id);
-      const lo = Math.max(0, lowerBound(hist, t0) - 1);
-      return { g, pts: hist.slice(lo).filter((p) => p.t <= t1).map((p) => ({ t: p.t, v: p.v })), color: COLORS[i % COLORS.length] };
-    });
-  }
-
-  function draw(wrap) {
-    const canvas = wrap.querySelector('canvas');
-    const ctx = canvas.getContext('2d');
-    const { w, h } = CA.UI.Chart.fitCanvas(canvas, ctx);
-    ctx.clearRect(0, 0, w, h);
-    if (w < 30 || h < 20) return;
-
-    const mode = S().get('bankGraphMode') === 'perStock' ? 'perStock' : 'portfolio';
-    wrap.querySelectorAll('[data-cm-bg-mode]').forEach((b) => b.classList.toggle('on', b.dataset.cmBgMode === mode));
-
-    const lines = mode === 'perStock' ? perStockLines() : portfolioLines();
-    const t1 = Date.now();
-    const t0 = t1 - WINDOW_MS;
-
-    let minV = Infinity;
-    let maxV = -Infinity;
-    lines.forEach((l) =>
-      l.pts.forEach((p) => {
-        if (p.v < minV) minV = p.v;
-        if (p.v > maxV) maxV = p.v;
-      })
-    );
-    if (!isFinite(minV)) {
-      minV = 0;
-      maxV = 10;
-    }
-    if (minV === maxV) {
-      minV -= 1;
-      maxV += 1;
-    }
-    const padV = (maxV - minV) * 0.1 || 1;
-    const yMin = minV - padV;
-    const yMax = maxV + padV;
-
-    const padL = CA.UI.Chart.dynamicPadLeft(ctx, FONT, [beautify(yMin, 0), beautify(yMax, 0)], MIN_PAD_L, PAD_L_MARGIN);
-    const plot = { x: padL, y: PAD.t, w: w - padL - PAD.r, h: h - PAD.t - PAD.b };
-    const xOf = (t) => plot.x + ((t - t0) / WINDOW_MS) * plot.w;
-    const yOf = (v) => plot.y + plot.h - ((v - yMin) / (yMax - yMin || 1)) * plot.h;
-
-    ctx.font = FONT;
-    ctx.textBaseline = 'middle';
-    ctx.textAlign = 'right';
-    [yMin, yMax].forEach((v) => {
-      const y = Math.round(yOf(v)) + 0.5;
-      ctx.strokeStyle = 'rgba(255,255,255,0.09)';
-      ctx.beginPath();
-      ctx.moveTo(plot.x, y);
-      ctx.lineTo(plot.x + plot.w, y);
-      ctx.stroke();
-      ctx.fillStyle = 'rgba(230,220,200,0.75)';
-      ctx.fillText(beautify(v, 0), plot.x - 5, y);
-    });
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(plot.x, plot.y - 3, plot.w, plot.h + 6);
-    ctx.clip();
-    ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
-    ctx.lineWidth = 1.6;
-    lines.forEach((l) => {
-      if (l.pts.length < 2) return;
-      ctx.strokeStyle = l.color;
-      ctx.beginPath();
-      l.pts.forEach((p, i) => (i ? ctx.lineTo(xOf(p.t), yOf(p.v)) : ctx.moveTo(xOf(p.t), yOf(p.v))));
-      ctx.stroke();
-    });
-    ctx.restore();
-
-    const readout = wrap.querySelector('[data-cm-bg-readout]');
-    if (readout) {
-      if (mode === 'perStock') {
-        readout.textContent = lines.length
-          ? lines.map((l) => `${l.g.name} ${beautify(l.pts.length ? l.pts[l.pts.length - 1].v : 0)}`).join('  ·  ')
-          : S().get('stockGraphSync')
-            ? "You don't own any stocks right now."
-            : 'Open the Bank minigame to start tracking prices.';
-      } else {
-        const p = CA.Stocks.portfolioNow();
-        readout.textContent = lines[0].pts.length
-          ? `${beautify(p.value)}  ·  unrealized ${signed(p.unrealized)}  ·  total gain ${signed(p.gain)}`
-          : 'Buy a stock to start tracking.';
-      }
-    }
-  }
-
-  function tick() {
-    const wrap = ensureMounted();
-    if (wrap) draw(wrap);
+  function sync() {
+    const bar = ensure();
+    if (!bar) return;
+    const on = CA.StockTrader.isOn();
+    const auto = bar.querySelector('[data-cm-bt="auto"]');
+    auto.innerHTML = `${I('bolt')}Autobuyer: ${on ? 'on' : 'off'}`;
+    auto.classList.toggle('bankButtonOff', !on);
+    auto.title = 'Buys fast/slow-rising stocks and sells the rest, every second (same switch as on the CookieMgr page)';
   }
 
   function init() {
-    CA.Util.injectCss('CookieMgrBankGraphStyles', CSS);
-    CA.Events.on('settings', tick);
-    timer = setInterval(tick, TICK_MS);
-    tick();
+    CA.Settings.defineOption({
+      key: 'bankToolbar',
+      group: 'stocks',
+      name: 'Toolbar in the Bank minigame',
+      desc: 'Sell all, the autobuyer switch and a CookieMgr shortcut, right under the stock market header.',
+      default: true,
+    });
+    CA.Events.on('clickers', sync);
+    CA.Events.on('settings', sync);
+    setInterval(sync, 1000); // the minigame redraws/opens on its own schedule
+    sync();
   }
 
   return { init };
@@ -3809,17 +3791,15 @@ CA.UI.Menu = (() => {
     );
   }
 
-  // ---- tabs ----------------------------------------------------------------------
+  // ---- pages ---------------------------------------------------------------------
+  // The current page id is kept in the 'tab' setting (the name predates the page registry;
+  // keeping it means existing saves still reopen on the page you last had open).
 
-  const TABS = [
-    { id: 'clickers', label: 'Autoclickers' },
-    { id: 'graphs', label: 'CPS' },
-    { id: 'stocks', label: 'Stock market' },
-    { id: 'settings', label: 'Settings' },
-  ];
   const currentTab = () => {
     const t = CA.Settings.get('tab');
-    return TABS.some((x) => x.id === t) ? t : 'clickers';
+    if (CA.UI.Pages.get(t)) return t;
+    const first = CA.UI.Pages.list()[0];
+    return first ? first.id : 'clickers';
   };
 
   function clickersPage() {
@@ -3892,13 +3872,14 @@ CA.UI.Menu = (() => {
       `<div class="ca-list">${CA.Settings.optionsIn('autoclickers').map(optionRow).join('')}</div>` +
       '</div>' +
       '<div class="ca-card">' +
-      '<div class="ca-card-head"><div class="ca-card-title">CPS</div></div>' +
+      '<div class="ca-card-head"><div class="ca-card-title">Graphs</div></div>' +
       `<div class="ca-list">${CA.Settings.optionsIn('graph').map(optionRow).join('')}</div>` +
       '</div>' +
       '<div class="ca-card">' +
       '<div class="ca-card-head"><div class="ca-card-title">Stock market</div></div>' +
       `<div class="ca-list">${CA.Settings.optionsIn('stocks').map(optionRow).join('')}</div>` +
       '</div>' +
+      integrationsCard() +
       '<div class="ca-footer">' +
       `<div>CookieMgr v${CA.VERSION} &middot; <a href="https://github.com/nunorgcarvalho/CookieMgr" target="_blank" rel="noopener">GitHub</a></div>` +
       '<div>Settings are stored inside your Cookie Clicker save.</div>' +
@@ -3906,20 +3887,70 @@ CA.UI.Menu = (() => {
     );
   }
 
-  function pageHtml(tab) {
-    if (tab === 'clickers') return clickersPage();
-    if (tab === 'graphs') return CA.UI.Graph.html();
-    if (tab === 'stocks') return stocksPage();
-    return settingsPage();
+  function integrationsCard() {
+    const loaded = CA.CookieMonster.isLoaded();
+    return (
+      '<div class="ca-card">' +
+      '<div class="ca-card-head"><div class="ca-card-title">Integrations</div></div>' +
+      '<div class="ca-list">' +
+      '<div class="ca-row ca-row-option">' +
+      '<div class="ca-row-text"><div class="ca-row-name">Cookie Monster</div>' +
+      `<div class="ca-row-desc" data-ca-cm-status>${loaded ? 'Running.' : 'Not loaded.'} Loads the latest release straight from Cookie Monster's own site.</div></div>` +
+      C.button(loaded ? 'Loaded' : 'Load now', 'data-ca="cm-load" data-ca-cm-load' + (loaded ? ' disabled' : ''), 'ca-btn-small') +
+      '</div>' +
+      CA.Settings.optionsIn('integrations').map(optionRow).join('') +
+      '</div>' +
+      '</div>'
+    );
+  }
+
+  // Built-in pages. Other modules register their own pages the same way (CA.UI.Pages).
+  CA.UI.Pages.register({ id: 'clickers', label: 'Autoclickers', icon: 'cookie', order: 10, html: () => clickersPage() });
+  CA.UI.Pages.register({
+    id: 'graphs',
+    label: 'Graphs',
+    icon: 'graphs',
+    order: 20,
+    html: () => CA.UI.Graph.html(),
+    mount: (root) => CA.UI.Graph.mount(root),
+    unmount: () => CA.UI.Graph.unmount(),
+    tick: () => CA.UI.Graph.tick(),
+  });
+  CA.UI.Pages.register({
+    id: 'stocks',
+    label: 'Stock market',
+    icon: 'stocks',
+    order: 40,
+    html: () => stocksPage(),
+    mount: (root) => {
+      CA.UI.StockGraph.mount(root);
+      CA.UI.StockLog.mount(root);
+      wireSellAll(root);
+    },
+    unmount: () => {
+      CA.UI.StockGraph.unmount();
+      CA.UI.StockLog.unmount();
+    },
+    tick: () => {
+      CA.UI.StockGraph.tick();
+      CA.UI.StockLog.tick();
+    },
+  });
+  CA.UI.Pages.register({ id: 'settings', label: 'Settings', icon: 'settings', order: 90, html: () => settingsPage() });
+
+  let mounted = null; // the page whose mount() ran for the current render
+
+  function unmountPage() {
+    if (mounted) mounted.unmount();
+    mounted = null;
   }
 
   function html() {
-    const tab = currentTab();
+    const page = CA.UI.Pages.get(currentTab());
     return (
       '<div class="close menuClose" data-ca="close">x</div>' +
       '<div id="CookieMgrMenu">' +
-      '<div class="section">CookieMgr</div>' +
-      `<div class="ca-page" data-page="${tab}">${pageHtml(tab)}</div>` +
+      `<div class="ca-page" data-page="${page.id}">${page.html()}</div>` +
       '</div>'
     );
   }
@@ -3927,29 +3958,30 @@ CA.UI.Menu = (() => {
   function render() {
     const menu = document.getElementById('menu');
     if (!menu) return;
-    CA.UI.Graph.unmount();
-    CA.UI.StockGraph.unmount();
-    CA.UI.StockLog.unmount();
+    unmountPage();
     menu.innerHTML = html();
-    const tab = currentTab();
-    if (tab === 'graphs') CA.UI.Graph.mount(menu.querySelector('.ca-page'));
-    if (tab === 'stocks') {
-      CA.UI.StockGraph.mount(menu.querySelector('.ca-page'));
-      CA.UI.StockLog.mount(menu.querySelector('.ca-page'));
-      wireSellAll(menu);
-    }
+    const page = CA.UI.Pages.get(currentTab());
+    page.mount(menu.querySelector('.ca-page'));
+    mounted = page;
     sync();
+  }
+
+  /** Opens the panel on page `id` (or switches to it if the panel is already open). */
+  function openPage(id) {
+    if (!CA.UI.Pages.get(id)) return;
+    const wasOpen = isOpen();
+    CA.Settings.set('tab', id);
+    if (wasOpen) render();
+    else open(); // Game.ShowMenu -> Game.UpdateMenu -> render()
   }
 
   /** Fills in the Sell All button's hover title with a live cookie estimate right as the
    *  pointer enters it, rather than trying to keep a `title` attribute fresh ahead of time. */
-  function wireSellAll(menu) {
-    const btn = menu.querySelector('[data-ca-sellall]');
+  function wireSellAll(root) {
+    const btn = root.querySelector('[data-ca-sellall]');
     if (!btn) return;
     btn.addEventListener('mouseenter', () => {
-      const cookies = CA.StockTrader.previewSellAllCookies();
-      const beautify = (v) => (typeof Beautify === 'function' ? Beautify(v) : Math.round(v).toString());
-      btn.title = cookies > 0 ? `Sells for ~${beautify(cookies)} cookies right now` : 'Nothing to sell right now';
+      btn.title = CA.StockTrader.sellAllTitle();
     });
   }
 
@@ -4109,6 +4141,10 @@ CA.UI.Menu = (() => {
         CA.Settings.resetHotkeys();
         CA.Util.notify('CookieMgr', 'Hotkeys reset to defaults.', CA.ICON, 2);
         break;
+      case 'cm-load':
+        CA.Util.sound('snd/tick.mp3');
+        CA.CookieMonster.load();
+        break;
       default:
     }
   }
@@ -4144,9 +4180,7 @@ CA.UI.Menu = (() => {
       const result = original.apply(self, args);
       if (!isOpen()) {
         CA.Hotkeys.cancelCapture();
-        CA.UI.Graph.unmount();
-        CA.UI.StockGraph.unmount();
-        CA.UI.StockLog.unmount();
+        unmountPage();
       }
       CA.UI.Tab.update();
       return result;
@@ -4158,19 +4192,17 @@ CA.UI.Menu = (() => {
     const refresh = () => {
       if (!isOpen()) return;
       sync();
-      const tab = currentTab();
-      if (tab === 'graphs') CA.UI.Graph.tick();
-      if (tab === 'stocks') {
-        CA.UI.StockGraph.tick();
-        CA.UI.StockLog.tick();
-      }
+      if (mounted) mounted.tick();
     };
     CA.Events.on('clickers', refresh);
     CA.Events.on('settings', refresh);
     CA.Events.on('hotkeys', refresh);
+    CA.Events.on('integrations', () => {
+      if (isOpen() && currentTab() === 'settings') render();
+    });
   }
 
-  return { init, open, close, toggle, isOpen, render, sync, TABS };
+  return { init, open, close, toggle, isOpen, openPage, render, sync };
 })();
 
 // ---- src/main.js -----------------------------------------------------
@@ -4212,12 +4244,13 @@ const mod = {
     CA.UI.Graph.init();
     CA.UI.StockGraph.init();
     CA.UI.StockLog.init();
-    CA.UI.BankGraph.init();
+    CA.UI.BankToolbar.init();
     CA.Hotkeys.init();
     CA.Ascension.init();
     CA.UI.Menu.init();
     CA.UI.Tab.init();
     CA.Update.init();
+    CA.CookieMonster.init();
     migrateOldSaveData();
     CA.Settings.startAutoPersist();
 

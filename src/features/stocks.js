@@ -302,20 +302,6 @@ CA.Stocks = (() => {
       desc: '',
       default: 'portfolio', // 'portfolio' | 'perStock'
     });
-    CA.Settings.defineOption({
-      key: 'bankGraphEnabled',
-      group: 'stocks',
-      name: 'Graph in the Bank minigame',
-      desc: 'Shows a small graph underneath the stock market itself, not just on the Graphs tab.',
-      default: true,
-    });
-    CA.Settings.defineOption({
-      key: 'bankGraphMode',
-      group: 'graph-select',
-      name: 'Bank graph view',
-      desc: '',
-      default: 'portfolio', // 'portfolio' | 'perStock' — independent of the Graphs-tab stockGraphMode
-    });
     CA.Util.injectCss('CookieMgrStocksStyles', CSS);
     restore();
     CA.Events.on('settings', refresh);

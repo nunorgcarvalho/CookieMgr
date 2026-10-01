@@ -81,6 +81,13 @@ CA.StockTrader = (() => {
     return total;
   }
 
+  /** Hover text for any "Sell all" button: the live cookie payout, or that there's nothing held. */
+  function sellAllTitle() {
+    const cookies = previewSellAllCookies();
+    const beautify = (v) => (typeof Beautify === 'function' ? Beautify(v) : Math.round(v).toString());
+    return cookies > 0 ? `Sells for ~${beautify(cookies)} cookies right now` : 'Nothing to sell right now';
+  }
+
   function init() {
     CA.Actions.register({
       id: 'clicker.stockTrader',
@@ -91,5 +98,5 @@ CA.StockTrader = (() => {
     });
   }
 
-  return { init, set, toggle, isOn, sellAll, previewSellAllCookies };
+  return { init, set, toggle, isOn, sellAll, previewSellAllCookies, sellAllTitle };
 })();

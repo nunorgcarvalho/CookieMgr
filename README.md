@@ -6,16 +6,30 @@ A [Cookie Clicker](https://orteil.dashnet.org/cookieclicker/) add-on for automat
 It loads like [Cookie Monster](https://github.com/CookieMonsterTeam/CookieMonster): a one-line bookmarklet pulls the
 latest build from GitHub Pages, so pushing to this repo updates everyone's add-on.
 
-## Features (v1.2)
+## Terminology
 
-Four little tabs stick out of the left beam between the cookie panel and the middle panel, one per page — each with
-its own icon (cookie / bar-chart / "$" / gear) above the name: **Autoclickers**, **CPS**, **Stock market** and
-**Settings**. Clicking one opens the CookieMgr panel straight to that page, switching pages directly if it's already
-open on a different one; clicking the page that's already showing closes the panel.
+The same words mean the same things everywhere in the add-on and this README:
 
-![CPS tab](docs/graph.png)
+| Term       | Meaning                                                                                 |
+| ---------- | --------------------------------------------------------------------------------------- |
+| **Page**   | A top-level section of CookieMgr, one per icon in the sidebar (e.g. Graphs).            |
+| **Tab**    | A sub-section inside a page.                                                            |
+| **Action** | One thing CookieMgr can do in the game (click the big cookie, pop golden cookies, …).   |
+| **Macro**  | A toggleable automation made of one or more actions. (Autoclickers today.)              |
+| **Hotkey** | A key combination bound to a macro or action.                                           |
+| **Event**  | Something that happened in the game (a golden cookie popped, a stock was sold, …).      |
+| **State**  | A value that can be measured over time (cookies in the bank, CpS, …).                   |
 
-### CPS
+## Features (v1.3)
+
+A column of small icons sticks out of the left beam between the cookie panel and the middle panel, one per page:
+**Autoclickers**, **Graphs**, **Stock market** and **Settings**. Hovering an icon slides its name out to the left.
+Clicking one opens the CookieMgr panel straight to that page (switching pages directly if it's already open on a
+different one); clicking the page that's already showing closes the panel.
+
+![Graphs page](docs/graph.png)
+
+### Graphs
 
 A live cookies-per-second chart, redrawn every second.
 
@@ -65,7 +79,9 @@ The **stock market buy** autoclicker (see below) lives on its own Stock market t
 
 Turn everything off when ascending (default on), notifications, golden cookie notifications (a quick popup the moment
 one is popped), remember autoclicker states across reloads, record history, an optional hotkey to open the panel,
-reset hotkeys, checking for updates, and stock market indicators. Everything is stored in the normal Cookie Clicker
+reset hotkeys, checking for updates, and stock market indicators. Under **Integrations**, a **Load now** button loads
+the latest [Cookie Monster](https://github.com/CookieMonsterTeam/CookieMonster) release, and a toggle loads it
+automatically whenever CookieMgr starts (skipped if Cookie Monster is already running). Everything is stored in the normal Cookie Clicker
 save through the official mod API (`Game.registerMod`), so it survives exports and imports. Settings are also
 mirrored to localStorage the instant anything changes, since Cookie Clicker itself only autosaves once a minute and
 won't force a save on a quick refresh — without the mirror, a change made right before reloading could be lost.
@@ -86,9 +102,9 @@ In the Bank minigame, every stock box shows its trend (stable / slow or fast ris
 coloured symbol strip and tint, brighter while you hold the stock — no more hovering each box for the tooltip. Both the
 badge and the tint can be switched off separately in Settings.
 
-A small chart also sits right under the stock list in the Bank minigame itself, toggled between portfolio value and
-per-stock prices — the same "Sync to owned stocks" setting as below applies here too, so buying a stock adds it to
-both views automatically. Turn the Bank graph off in Settings if you'd rather not have it there.
+A small toolbar sits right under the Bank minigame's own header, styled like the game's buttons: **Sell all stocks**
+(hover for the cookie payout), the **Autobuyer** switch (the same one as on the CookieMgr page), and a **CookieMgr**
+button that opens the Stock market page. It can be turned off in Settings.
 
 The **Stock market** tab in the CookieMgr panel has:
 
@@ -175,16 +191,19 @@ src/
     stockTrader.js   the "buy fast/slow rise, sell the rest" autoclicker (own tab, no DEFS entry)
     stockLog.js      wraps buyGood/sellGood to record every trade (auto or manual) for the log/ticker
     history.js       samples CpS every second, tracks buffs/events, persists to localStorage
+    cookieMonster.js loads Cookie Monster on request or at start-up
   ui/
     components.js    HTML snippets: switch, hotkey chip, icon, button
+    icons.js         the inline-SVG icon set used everywhere
+    pages.js         page registry — the sidebar and the panel both read it
     chart.js         shared chart core: canvas sizing, axis padding, time bucketing, scroll/live view
-    tab.js           the side tab on the left beam
+    tab.js           the sidebar of page icons on the left beam
     graph.js         the CpS chart (canvas), toolbar, tooltips
-    stockGraph.js    the Stock-market-tab chart: portfolio value/gains or per-stock prices
-    stockLog.js      the trade ticker + transaction history table, also on the Stock market tab
-    bankGraph.js     small portfolio/per-stock chart embedded in the Bank minigame itself
-    menu.js          the panel and its tabs (hooks Game.ShowMenu / Game.UpdateMenu)
-    styles.css       all styling, scoped to #CookieMgrTab / #CookieMgrMenu
+    stockGraph.js    the Stock market page chart: portfolio value/gains or per-stock prices
+    stockLog.js      the trade ticker + transaction history table, also on the Stock market page
+    bankToolbar.js   Sell all / autobuyer / CookieMgr buttons inside the Bank minigame
+    menu.js          the panel; registers the built-in pages (hooks Game.ShowMenu / Game.UpdateMenu)
+    styles.css       all styling, scoped to #CookieMgrTab / #CookieMgrMenu / #cm-bank-toolbar
   main.js            waits for the game, registers the mod (init/save/load)
 build.mjs            concatenates src/ in order into one IIFE in dist/
 legacy/              the original v0.1 bookmarklet, for reference
@@ -202,6 +221,8 @@ If you add a file, add it to `MODULES` in `build.mjs` in the right order.
 - **A new setting:** call `CA.Settings.defineOption({ key, group, name, desc, default })` in a feature's `init()`, and read
   it with `CA.Settings.get(key)`. Options in the `general` group appear on the Settings tab, `autoclickers` ones on the Autoclickers tab.
 - **A new hotkey action:** `CA.Actions.register({ id, name, group, defaultKey, run })`.
+- **A new page:** `CA.UI.Pages.register({ id, label, icon, order, html, mount, unmount, tick })` from the page's own
+  module. It gets a sidebar icon and a panel slot automatically; `icon` is a name from `ui/icons.js`.
 
 CI (`.github/workflows/ci.yml`) fails a push if `dist/CookieMgr.js` does not match `src/`, so remember to build before committing.
 

@@ -1,40 +1,23 @@
-// The stack of little tabs that stick out of the left beam (between the cookie panel and the
-// middle panel) — one per CookieMgr page, instead of one tab that opens a panel you then have to
-// flip between pages inside. Clicking a tab jumps straight to that page, opening the panel if
-// it's closed; clicking the page that's already showing closes the panel.
+// The sidebar: a column of small icon tabs sticking out of the left beam (between the cookie
+// panel and the middle panel), one per registered page (CA.UI.Pages). Hovering a tab slides its
+// name out to the left. Clicking jumps straight to that page, opening the panel if it's closed;
+// clicking the page that's already showing closes the panel.
 
 CA.UI = CA.UI || {};
 
 CA.UI.Tab = (() => {
   let wrap = null;
 
-  // Small, reliable icons — a proven image asset for the cookie, plain CSS/Unicode glyphs for
-  // the rest, rather than guessing at coordinates on the game's own icon sprite sheet.
-  const ICONS = {
-    clickers: '<span class="ca-tab-icon ca-tab-icon-cookie"></span>',
-    graphs:
-      '<span class="ca-tab-icon ca-tab-icon-cps"><i style="height:40%"></i><i style="height:65%"></i><i style="height:95%"></i></span>',
-    stocks: '<span class="ca-tab-icon ca-tab-icon-glyph">$</span>',
-    settings: '<span class="ca-tab-icon ca-tab-icon-glyph">⚙</span>',
-  };
-
   function go(id) {
-    const wasOpen = CA.UI.Menu.isOpen();
-    if (wasOpen && CA.Settings.get('tab') === id) {
-      CA.UI.Menu.close();
-      return;
-    }
-    CA.Settings.set('tab', id);
-    if (wasOpen) CA.UI.Menu.render(); // already open on a different page — switch it directly
-    else CA.UI.Menu.open(); // Game.ShowMenu triggers Game.UpdateMenu -> our render() for us
+    if (CA.UI.Menu.isOpen() && CA.Settings.get('tab') === id) CA.UI.Menu.close();
+    else CA.UI.Menu.openPage(id);
   }
 
-  function flapHtml(t) {
+  function itemHtml(p) {
     return (
-      `<div class="ca-tab-flap" data-tab-flap="${t.id}" role="button" tabindex="0" title="${t.label}">` +
-      (ICONS[t.id] || '') +
-      `<span class="ca-tab-label">${t.label}</span>` +
-      (t.id === 'clickers' ? '<span class="ca-tab-badge" aria-label="active autoclickers"></span>' : '') +
+      `<div class="ca-tab-item" data-tab-item="${p.id}" role="button" tabindex="0" aria-label="${CA.Util.escapeHtml(p.label)}">` +
+      `<span class="ca-tab-label">${CA.Util.escapeHtml(p.label)}</span>` +
+      `<span class="ca-tab-icon">${CA.UI.Icons.html(p.icon, 18)}<span class="ca-tab-badge"></span></span>` +
       '</div>'
     );
   }
@@ -42,37 +25,39 @@ CA.UI.Tab = (() => {
   function create() {
     wrap = document.createElement('div');
     wrap.id = 'CookieMgrTab';
-    wrap.innerHTML = CA.UI.Menu.TABS.map(flapHtml).join('');
+    wrap.innerHTML = CA.UI.Pages.list().map(itemHtml).join('');
     wrap.addEventListener('click', (e) => {
-      const flap = e.target.closest('[data-tab-flap]');
-      if (flap) go(flap.dataset.tabFlap);
+      const item = e.target.closest('[data-tab-item]');
+      if (item) go(item.dataset.tabItem);
     });
     wrap.addEventListener('keydown', (e) => {
       if (e.key !== 'Enter' && e.key !== ' ') return;
-      const flap = e.target.closest('[data-tab-flap]');
-      if (flap) {
-        e.preventDefault();
-        go(flap.dataset.tabFlap);
-      }
+      const item = e.target.closest('[data-tab-item]');
+      if (!item) return;
+      e.preventDefault();
+      go(item.dataset.tabItem);
     });
     (document.getElementById('game') || document.body).appendChild(wrap);
     update();
   }
 
+  /** Small count bubble on a page's icon (e.g. running autoclickers); 0 hides it. */
+  const badges = {
+    clickers: () => CA.Autoclickers.activeCount(),
+  };
+
   function update() {
     if (!wrap) return;
     const open = CA.UI.Menu.isOpen();
     const current = CA.Settings.get('tab');
-    wrap.querySelectorAll('[data-tab-flap]').forEach((flap) => {
-      const id = flap.dataset.tabFlap;
-      flap.classList.toggle('selected', open && current === id);
-    });
-    const n = CA.Autoclickers.activeCount();
-    const badge = wrap.querySelector('[data-tab-flap="clickers"] .ca-tab-badge');
-    if (badge) {
+    wrap.querySelectorAll('[data-tab-item]').forEach((item) => {
+      const id = item.dataset.tabItem;
+      item.classList.toggle('selected', open && current === id);
+      const n = badges[id] ? badges[id]() : 0;
+      const badge = item.querySelector('.ca-tab-badge');
       badge.textContent = n ? String(n) : '';
-      badge.closest('[data-tab-flap]').classList.toggle('active', n > 0);
-    }
+      item.classList.toggle('active', n > 0);
+    });
   }
 
   function init() {

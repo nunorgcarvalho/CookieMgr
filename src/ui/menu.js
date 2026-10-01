@@ -72,17 +72,15 @@ CA.UI.Menu = (() => {
     );
   }
 
-  // ---- tabs ----------------------------------------------------------------------
+  // ---- pages ---------------------------------------------------------------------
+  // The current page id is kept in the 'tab' setting (the name predates the page registry;
+  // keeping it means existing saves still reopen on the page you last had open).
 
-  const TABS = [
-    { id: 'clickers', label: 'Autoclickers' },
-    { id: 'graphs', label: 'CPS' },
-    { id: 'stocks', label: 'Stock market' },
-    { id: 'settings', label: 'Settings' },
-  ];
   const currentTab = () => {
     const t = CA.Settings.get('tab');
-    return TABS.some((x) => x.id === t) ? t : 'clickers';
+    if (CA.UI.Pages.get(t)) return t;
+    const first = CA.UI.Pages.list()[0];
+    return first ? first.id : 'clickers';
   };
 
   function clickersPage() {
@@ -155,13 +153,14 @@ CA.UI.Menu = (() => {
       `<div class="ca-list">${CA.Settings.optionsIn('autoclickers').map(optionRow).join('')}</div>` +
       '</div>' +
       '<div class="ca-card">' +
-      '<div class="ca-card-head"><div class="ca-card-title">CPS</div></div>' +
+      '<div class="ca-card-head"><div class="ca-card-title">Graphs</div></div>' +
       `<div class="ca-list">${CA.Settings.optionsIn('graph').map(optionRow).join('')}</div>` +
       '</div>' +
       '<div class="ca-card">' +
       '<div class="ca-card-head"><div class="ca-card-title">Stock market</div></div>' +
       `<div class="ca-list">${CA.Settings.optionsIn('stocks').map(optionRow).join('')}</div>` +
       '</div>' +
+      integrationsCard() +
       '<div class="ca-footer">' +
       `<div>CookieMgr v${CA.VERSION} &middot; <a href="https://github.com/nunorgcarvalho/CookieMgr" target="_blank" rel="noopener">GitHub</a></div>` +
       '<div>Settings are stored inside your Cookie Clicker save.</div>' +
@@ -169,20 +168,70 @@ CA.UI.Menu = (() => {
     );
   }
 
-  function pageHtml(tab) {
-    if (tab === 'clickers') return clickersPage();
-    if (tab === 'graphs') return CA.UI.Graph.html();
-    if (tab === 'stocks') return stocksPage();
-    return settingsPage();
+  function integrationsCard() {
+    const loaded = CA.CookieMonster.isLoaded();
+    return (
+      '<div class="ca-card">' +
+      '<div class="ca-card-head"><div class="ca-card-title">Integrations</div></div>' +
+      '<div class="ca-list">' +
+      '<div class="ca-row ca-row-option">' +
+      '<div class="ca-row-text"><div class="ca-row-name">Cookie Monster</div>' +
+      `<div class="ca-row-desc" data-ca-cm-status>${loaded ? 'Running.' : 'Not loaded.'} Loads the latest release straight from Cookie Monster's own site.</div></div>` +
+      C.button(loaded ? 'Loaded' : 'Load now', 'data-ca="cm-load" data-ca-cm-load' + (loaded ? ' disabled' : ''), 'ca-btn-small') +
+      '</div>' +
+      CA.Settings.optionsIn('integrations').map(optionRow).join('') +
+      '</div>' +
+      '</div>'
+    );
+  }
+
+  // Built-in pages. Other modules register their own pages the same way (CA.UI.Pages).
+  CA.UI.Pages.register({ id: 'clickers', label: 'Autoclickers', icon: 'cookie', order: 10, html: () => clickersPage() });
+  CA.UI.Pages.register({
+    id: 'graphs',
+    label: 'Graphs',
+    icon: 'graphs',
+    order: 20,
+    html: () => CA.UI.Graph.html(),
+    mount: (root) => CA.UI.Graph.mount(root),
+    unmount: () => CA.UI.Graph.unmount(),
+    tick: () => CA.UI.Graph.tick(),
+  });
+  CA.UI.Pages.register({
+    id: 'stocks',
+    label: 'Stock market',
+    icon: 'stocks',
+    order: 40,
+    html: () => stocksPage(),
+    mount: (root) => {
+      CA.UI.StockGraph.mount(root);
+      CA.UI.StockLog.mount(root);
+      wireSellAll(root);
+    },
+    unmount: () => {
+      CA.UI.StockGraph.unmount();
+      CA.UI.StockLog.unmount();
+    },
+    tick: () => {
+      CA.UI.StockGraph.tick();
+      CA.UI.StockLog.tick();
+    },
+  });
+  CA.UI.Pages.register({ id: 'settings', label: 'Settings', icon: 'settings', order: 90, html: () => settingsPage() });
+
+  let mounted = null; // the page whose mount() ran for the current render
+
+  function unmountPage() {
+    if (mounted) mounted.unmount();
+    mounted = null;
   }
 
   function html() {
-    const tab = currentTab();
+    const page = CA.UI.Pages.get(currentTab());
     return (
       '<div class="close menuClose" data-ca="close">x</div>' +
       '<div id="CookieMgrMenu">' +
-      '<div class="section">CookieMgr</div>' +
-      `<div class="ca-page" data-page="${tab}">${pageHtml(tab)}</div>` +
+      `<div class="ca-page" data-page="${page.id}">${page.html()}</div>` +
       '</div>'
     );
   }
@@ -190,29 +239,30 @@ CA.UI.Menu = (() => {
   function render() {
     const menu = document.getElementById('menu');
     if (!menu) return;
-    CA.UI.Graph.unmount();
-    CA.UI.StockGraph.unmount();
-    CA.UI.StockLog.unmount();
+    unmountPage();
     menu.innerHTML = html();
-    const tab = currentTab();
-    if (tab === 'graphs') CA.UI.Graph.mount(menu.querySelector('.ca-page'));
-    if (tab === 'stocks') {
-      CA.UI.StockGraph.mount(menu.querySelector('.ca-page'));
-      CA.UI.StockLog.mount(menu.querySelector('.ca-page'));
-      wireSellAll(menu);
-    }
+    const page = CA.UI.Pages.get(currentTab());
+    page.mount(menu.querySelector('.ca-page'));
+    mounted = page;
     sync();
+  }
+
+  /** Opens the panel on page `id` (or switches to it if the panel is already open). */
+  function openPage(id) {
+    if (!CA.UI.Pages.get(id)) return;
+    const wasOpen = isOpen();
+    CA.Settings.set('tab', id);
+    if (wasOpen) render();
+    else open(); // Game.ShowMenu -> Game.UpdateMenu -> render()
   }
 
   /** Fills in the Sell All button's hover title with a live cookie estimate right as the
    *  pointer enters it, rather than trying to keep a `title` attribute fresh ahead of time. */
-  function wireSellAll(menu) {
-    const btn = menu.querySelector('[data-ca-sellall]');
+  function wireSellAll(root) {
+    const btn = root.querySelector('[data-ca-sellall]');
     if (!btn) return;
     btn.addEventListener('mouseenter', () => {
-      const cookies = CA.StockTrader.previewSellAllCookies();
-      const beautify = (v) => (typeof Beautify === 'function' ? Beautify(v) : Math.round(v).toString());
-      btn.title = cookies > 0 ? `Sells for ~${beautify(cookies)} cookies right now` : 'Nothing to sell right now';
+      btn.title = CA.StockTrader.sellAllTitle();
     });
   }
 
@@ -372,6 +422,10 @@ CA.UI.Menu = (() => {
         CA.Settings.resetHotkeys();
         CA.Util.notify('CookieMgr', 'Hotkeys reset to defaults.', CA.ICON, 2);
         break;
+      case 'cm-load':
+        CA.Util.sound('snd/tick.mp3');
+        CA.CookieMonster.load();
+        break;
       default:
     }
   }
@@ -407,9 +461,7 @@ CA.UI.Menu = (() => {
       const result = original.apply(self, args);
       if (!isOpen()) {
         CA.Hotkeys.cancelCapture();
-        CA.UI.Graph.unmount();
-        CA.UI.StockGraph.unmount();
-        CA.UI.StockLog.unmount();
+        unmountPage();
       }
       CA.UI.Tab.update();
       return result;
@@ -421,17 +473,15 @@ CA.UI.Menu = (() => {
     const refresh = () => {
       if (!isOpen()) return;
       sync();
-      const tab = currentTab();
-      if (tab === 'graphs') CA.UI.Graph.tick();
-      if (tab === 'stocks') {
-        CA.UI.StockGraph.tick();
-        CA.UI.StockLog.tick();
-      }
+      if (mounted) mounted.tick();
     };
     CA.Events.on('clickers', refresh);
     CA.Events.on('settings', refresh);
     CA.Events.on('hotkeys', refresh);
+    CA.Events.on('integrations', () => {
+      if (isOpen() && currentTab() === 'settings') render();
+    });
   }
 
-  return { init, open, close, toggle, isOpen, render, sync, TABS };
+  return { init, open, close, toggle, isOpen, openPage, render, sync };
 })();

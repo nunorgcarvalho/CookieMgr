@@ -36,12 +36,13 @@ const mod = {
     CA.UI.Graph.init();
     CA.UI.StockGraph.init();
     CA.UI.StockLog.init();
-    CA.UI.BankGraph.init();
+    CA.UI.BankToolbar.init();
     CA.Hotkeys.init();
     CA.Ascension.init();
     CA.UI.Menu.init();
     CA.UI.Tab.init();
     CA.Update.init();
+    CA.CookieMonster.init();
     migrateOldSaveData();
     CA.Settings.startAutoPersist();
 

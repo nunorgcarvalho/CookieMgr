@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+## 1.3.0 — 2026-10-01
+
+- **Sidebar of icons:** the beam tabs are now small icons; hovering one slides its page name out to the left.
+- **Page registry:** pages register themselves (`CA.UI.Pages`) with an id, label, icon and lifecycle hooks; the
+  sidebar and the panel both read the registry, so new pages (Events, Wizard Tower, …) slot in with one call.
+  Shared inline-SVG icon set (`ui/icons.js`).
+- **No more "CookieMgr" title** at the top of every page — more room for the page itself.
+- **CPS → Graphs:** the page is renamed ahead of it growing more graph types.
+- **Bank minigame:** the embedded portfolio/per-stock graph is gone. In its place, a small toolbar right under the
+  Bank's own header with **Sell all stocks** (hover shows the cookie payout), the **Autobuyer** switch, and a
+  **CookieMgr** button that opens the Stock market page — styled with the game's own bank buttons. Can be turned off.
+- **Cookie Monster integration:** Settings → Integrations has a **Load now** button for the latest Cookie Monster
+  release and a **Load Cookie Monster on start-up** toggle (skipped if it's already running).
+- README: a terminology table (page, tab, action, macro, hotkey, event, state) used consistently from here on.
+
 ## 1.2.2 — 2026-09-30
 
 - **Critical fix: the game's own save could silently stop landing.** CpS/effect history and —
