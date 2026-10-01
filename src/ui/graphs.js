@@ -15,7 +15,7 @@ CA.UI.Graphs = (() => {
   const S = () => CA.Settings;
   const esc = (s) => CA.Util.escapeHtml(s);
   const SEC = 1000;
-  const SESSION_START = Date.now(); // "this session" = since CookieMgr was loaded in this tab
+  const SESSION_START = CA.UI.Plot.SESSION_START;
 
   const WINDOWS = [60, 300, 900, 3600, 10800, 43200, 86400, 604800, 0];
   const LONG_WINDOWS = [900, 3600, 10800, 43200, 86400, 604800, 0];

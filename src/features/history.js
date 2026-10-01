@@ -85,6 +85,18 @@ CA.History = (() => {
     };
     open[b.name] = iv;
     intervals.push(iv);
+    // Log effects that just started (not ones already running when we first looked, e.g. after a reload).
+    if (elapsed <= TICK_MS * 2) {
+      const bits = [];
+      if (Math.abs(iv.multCps - 1) > 0.001) bits.push(`×${Math.round(iv.multCps * 100) / 100} CpS`);
+      if (Math.abs(iv.multClick - 1) > 0.001) bits.push(`×${Math.round(iv.multClick * 100) / 100} clicks`);
+      CA.EventLog.add({
+        type: 'effect',
+        title: `${iv.label} started`,
+        text: [bits.join(', '), iv.duration ? `${Math.round(iv.duration)}s` : ''].filter(Boolean).join(' · '),
+        data: { name: iv.name, duration: iv.duration, multCps: iv.multCps, multClick: iv.multClick },
+      });
+    }
     if (intervals.length > MAX_INTERVALS + 200) intervals.splice(0, intervals.length - MAX_INTERVALS);
     dirty = true;
     return iv;

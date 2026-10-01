@@ -150,6 +150,7 @@ CA.UI.Menu = (() => {
       historyCard() +
       optionsCard('Autoclickers', 'cookie', 'autoclickers') +
       optionsCard('Graphs', 'graphs', 'graph') +
+      optionsCard('Events', 'events', 'events') +
       optionsCard('Stock market', 'stocks', 'stocks') +
       integrationsCard() +
       '<div class="ca-footer">' +

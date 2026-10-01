@@ -28,6 +28,7 @@ CA.UI.Plot = (() => {
   const MAX_LANES = 6;
   const GAP_MS = 5000; // matches the recorder's MAX_GAP_MS
   const SEC = 1000;
+  const SESSION_START = Date.now();
   const NICE_MS = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 10800, 21600, 43200, 86400, 172800].map((s) => s * SEC);
   const WINDOW_LABELS = { 60: '1m', 300: '5m', 900: '15m', 3600: '1h', 10800: '3h', 43200: '12h', 86400: '1d', 604800: '7d', 0: 'All' };
   const COARSE = [0, 1, 5, 15, 60, 300, 900, 3600];
@@ -1006,5 +1007,6 @@ CA.UI.Plot = (() => {
     axis,
     fmt: { beautify, signed, short, clock, span, tile, row, swatch, windowLabel },
     SEC,
+    SESSION_START, // "this session" = since CookieMgr was loaded in this tab
   };
 })();

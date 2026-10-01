@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 1.6.0 — 2026-10-01
+
+- **Events page** (new sidebar icon):
+  - **Income outside CpS** — live table of cookies from golden & wrath cookies, reindeer, wrinklers, sugar lumps,
+    stock trades (net), golden-effect boosts and everything else: count, cookies, average, share of baked, last
+    seen; for this session / 15m / 1h / 1d / all.
+  - **Event log** — newest first, per-type filter chips with counts, Income only, search, CSV download, paging.
+- **More events logged:** wrinkler pops (payout computed like the game: ×1.1 and its bonuses, shiny ×3), sugar lump
+  harvests, achievements, and golden-cookie effects starting.
+- Settings: an **Events** card (log empty wrinklers).
+- Graph event markers now come in the event type's own colour.
+
 ## 1.5.0 — 2026-10-01
 
 - **Graphs page with tabs:** **Cookies**, **Bank** and **Prestige**.

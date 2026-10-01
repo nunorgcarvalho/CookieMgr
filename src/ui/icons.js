@@ -56,7 +56,11 @@ CA.UI.Icons = (() => {
     clock: '<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.2"/>' + stroke('M12 7v5l3 3'),
     filter: '<path d="M3 4h18l-7 8.5V20l-4-2v-5.5z"/>',
     sparkle: '<path d="M12 2l2.2 6.8L21 11l-6.8 2.2L12 20l-2.2-6.8L3 11l6.8-2.2z"/>',
-    timeline: stroke('M3 12h4M10 12h4M17 12h4') + '<circle cx="8.5" cy="12" r="1.5"/><circle cx="15.5" cy="12" r="1.5"/>',
+    trophy: '<path d="M7 3h10v2h3v3a4 4 0 0 1-4 4h-.4A5 5 0 0 1 13 14.9V18h3v3H8v-3h3v-3.1A5 5 0 0 1 8.4 12H8a4 4 0 0 1-4-4V5h3zm0 4H6v1a2 2 0 0 0 1 1.7zm10 0v2.7A2 2 0 0 0 18 8V7z"/>',
+    wrinkler: '<path d="M12 3c-4 0-7 3-7 7 0 3 1.6 5.4 4 6.6V21h2v-3.6h2V21h2v-4.4c2.4-1.2 4-3.6 4-6.6 0-4-3-7-7-7zm-3 6a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm6 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z" fill-rule="evenodd"/>',
+    lump: '<path d="M12 2l7 4.5v9L12 22l-7-6.5v-9z" opacity=".9"/><path d="M12 2v20M5 6.5l14 9M19 6.5l-14 9" fill="none" stroke="rgba(0,0,0,.35)" stroke-width="1.2"/>',
+    search: '<circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2.4"/>' + stroke('M15 15l5.5 5.5'),
+    timeline:stroke('M3 12h4M10 12h4M17 12h4') + '<circle cx="8.5" cy="12" r="1.5"/><circle cx="15.5" cy="12" r="1.5"/>',
   };
 
   /** HTML for icon `name` at `size` px. Unknown names render as nothing. */

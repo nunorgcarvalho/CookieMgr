@@ -21,10 +21,10 @@ The same words mean the same things everywhere in the add-on and this README:
 | **State**  | A value that can be measured over time (cookies in the bank, CpS, …).                   |
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 
-## Features (v1.5)
+## Features (v1.6)
 
-A column of small icons sticks out of the left beam between the cookie panel and the middle panel, one per page:
-**Autoclickers**, **Graphs**, **Stock market** and **Settings**. Hovering an icon slides its name out to the left.
+A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
+**Autoclickers**, **Graphs**, **Events**, **Stock market** and **Settings**. Hovering an icon slides its name out to the left.
 Clicking one opens the CookieMgr panel straight to that page (switching pages directly if it's already open on a
 different one); clicking the page that's already showing closes the panel.
 
@@ -64,6 +64,22 @@ running total.
 
 **Prestige tab** — prestige level if you ascended now against your current level, with how many cookies the next
 level needs and when you'll reach it at your recent actual CpS; and **prestige gained per hour**.
+
+### Events
+
+Everything that happens lands in one **event log**: golden and wrath cookies (with what they did), reindeer,
+wrinklers popped (with what they gave back — shiny ones too), sugar lumps harvested, achievements unlocked,
+golden-cookie effects starting, stock trades and ascensions. The Events page shows it:
+
+- **Income outside CpS** — a live table of every source of cookies other than production and clicking, for this
+  session, the last 15m / 1h / 1d, or everything: golden cookies, wrath cookies, reindeer, wrinklers, sugar lumps,
+  stock trades (net), golden-effect boosts (the extra production from Frenzy & co.) and anything else — with counts,
+  cookies, average per event, share of all cookies baked, and when it last happened.
+- **Event log** — newest first, with a chip per event type to show or hide it (with counts), an **Income only**
+  filter, a search box, and a **CSV** download of whatever is shown.
+
+Wrinkler payouts are worked out the way the game does it (what the wrinkler ate × 1.1, with Sacrilegious corruption,
+Dragon Guts, shiny ×3, Wrinklerspawn and Scorn), since the game pays them out with nothing for an add-on to hook.
 
 ### Recorded history
 
@@ -231,6 +247,7 @@ src/
     stockLog.js      wraps buyGood/sellGood to log every trade (auto or manual) as an event
     history.js       buff intervals and golden-cookie pop events for the CpS graph
     cookieMonster.js loads Cookie Monster on request or at start-up
+    gameEvents.js    logs wrinkler pops, sugar lumps and achievements as events
   ui/
     components.js    HTML snippets: switch, hotkey chip, icon, button
     icons.js         the inline-SVG icon set used everywhere
@@ -239,6 +256,7 @@ src/
     tab.js           the sidebar of page icons on the left beam
     plot.js          the plotting engine every chart uses: bucketing, scales, overlays, tooltips, chips
     graphs.js        the Graphs page: Cookies / Bank / Prestige tabs and their plot specs
+    eventsPage.js    the Events page: income-outside-CpS table and the filterable event log
     stockGraph.js    the Stock market page charts: portfolio value / per-stock prices, rolling performance
     stockLog.js      the trade ticker + transaction history table, also on the Stock market page
     bankToolbar.js   Sell all / autobuyer / CookieMgr buttons inside the Bank minigame

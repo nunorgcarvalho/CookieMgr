@@ -1142,3 +1142,121 @@
 #CookieMgrMenu .ca-chip .ca-ico {
   vertical-align: -2px;
 }
+
+/* ---------- Events page ---------- */
+
+#CookieMgrMenu .ca-table td.pos {
+  color: #9be89b;
+}
+#CookieMgrMenu .ca-table td.neg {
+  color: #ff9a8a;
+}
+#CookieMgrMenu .ca-table tr.muted td {
+  color: #6f6555;
+}
+#CookieMgrMenu .ca-ev-dot {
+  display: inline-flex;
+  width: 16px;
+  margin-right: 5px;
+  vertical-align: -2px;
+}
+#CookieMgrMenu .ca-ev-chip em {
+  font-style: normal;
+  opacity: 0.6;
+  font-weight: normal;
+}
+#CookieMgrMenu .ca-ev-chip .ca-ico {
+  color: var(--c);
+}
+#CookieMgrMenu .ca-ev-chip:not(.on) {
+  opacity: 0.5;
+}
+#CookieMgrMenu .ca-ev-chip:not(.on) .ca-ico {
+  color: inherit;
+}
+#CookieMgrMenu .ca-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 160px;
+  padding: 3px 8px;
+  color: #93866f;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 220, 150, 0.2);
+  border-radius: 12px;
+}
+#CookieMgrMenu .ca-search input {
+  flex: 1;
+  min-width: 0;
+  font: 12px Tahoma, Arial, sans-serif;
+  color: #f0e2c0;
+  background: transparent;
+  border: none;
+  outline: none;
+}
+#CookieMgrMenu .ca-ev-list {
+  max-height: 420px;
+  overflow-y: auto;
+  padding: 0 6px 8px;
+}
+#CookieMgrMenu .ca-ev-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: #d8cbb0;
+  border-left: 2px solid var(--c);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+#CookieMgrMenu .ca-ev-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+#CookieMgrMenu .ca-ev-ico {
+  flex: none;
+  color: var(--c);
+  align-self: center;
+  display: inline-flex;
+}
+#CookieMgrMenu .ca-ev-ico .ca-ico-cookie {
+  width: 14px !important;
+  height: 14px !important;
+}
+#CookieMgrMenu .ca-ev-time {
+  flex: none;
+  color: #93866f;
+  font-variant-numeric: tabular-nums;
+}
+#CookieMgrMenu .ca-ev-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#CookieMgrMenu .ca-ev-text b {
+  color: #f0e2c0;
+}
+#CookieMgrMenu .ca-ev-text span {
+  color: #a39477;
+}
+#CookieMgrMenu .ca-ev-cookies {
+  flex: none;
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+}
+#CookieMgrMenu .ca-ev-cookies.pos {
+  color: #9be89b;
+}
+#CookieMgrMenu .ca-ev-cookies.neg {
+  color: #ff9a8a;
+}
+#CookieMgrMenu .ca-ev-more {
+  display: block;
+  margin: 8px auto 0;
+}
+#CookieMgrMenu .ca-ev-empty {
+  display: block;
+  padding: 12px;
+  text-align: center;
+}
