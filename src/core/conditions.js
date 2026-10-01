@@ -30,25 +30,36 @@ CA.Conditions = (() => {
     return { ...out, ...(params || {}) };
   }
 
-  /** Whether condition `when` ({ cond, params, not }) holds right now; unknown ones never do. */
-  function test(when) {
-    const c = when && byId[when.cond];
+  /** A macro's `when` is either one condition { cond, params, not } or { all: [those…] } —
+   *  every one of which must hold. */
+  const parts = (when) => (!when ? [] : Array.isArray(when.all) ? when.all : [when]);
+
+  function testOne(one) {
+    const c = one && byId[one.cond];
     if (!c) return false;
     let r = false;
     try {
-      r = !!c.test(paramsFor(when.cond, when.params));
+      r = !!c.test(paramsFor(one.cond, one.params));
     } catch (e) {
       r = false;
     }
-    return when.not ? !r : r;
+    return one.not ? !r : r;
   }
 
-  function describe(when) {
-    const c = when && byId[when.cond];
-    if (!c) return 'Unknown condition';
-    const text = c.describe ? c.describe(paramsFor(when.cond, when.params)) : c.name;
-    return when.not ? `not: ${text}` : text;
+  /** Whether `when` holds right now; unknown conditions never do, nor does an empty list. */
+  function test(when) {
+    const list = parts(when);
+    return list.length > 0 && list.every(testOne);
   }
 
-  return { register, get, all, paramsFor, test, describe };
+  function describeOne(one) {
+    const c = one && byId[one.cond];
+    if (!c) return 'unknown condition';
+    const text = c.describe ? c.describe(paramsFor(one.cond, one.params)) : c.name;
+    return one.not ? `not ${text}` : text;
+  }
+
+  const describe = (when) => parts(when).map(describeOne).join(' and ') || 'never';
+
+  return { register, get, all, paramsFor, test, describe, parts };
 })();

@@ -104,6 +104,7 @@ CA.UI.Menu = (() => {
       optionsCard('Graphs', 'graphs', 'graph') +
       optionsCard('Events', 'events', 'events') +
       optionsCard('Stock market', 'stocks', 'stocks') +
+      optionsCard('Wizard tower', 'wizard', 'grimoire') +
       integrationsCard() +
       '<div class="ca-footer">' +
       `<div>CookieMgr v${CA.VERSION} &middot; <a href="https://github.com/nunorgcarvalho/CookieMgr" target="_blank" rel="noopener">GitHub</a></div>` +

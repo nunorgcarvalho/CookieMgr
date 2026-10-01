@@ -118,6 +118,17 @@ CA.GameStates = (() => {
         return m && Number.isFinite(m.magic) ? m.magic : undefined;
       },
     });
+    S({
+      id: 'magicMax',
+      name: 'Maximum magic',
+      group: 'magic',
+      kind: 'gauge',
+      get: () => {
+        const tower = Game.Objects && Game.Objects['Wizard tower'];
+        const m = tower && tower.minigame;
+        return m && Number.isFinite(m.magicM) ? m.magicM : undefined;
+      },
+    });
   }
 
   return { init, attribute };

@@ -112,8 +112,10 @@ CA.UI.MacrosPage = (() => {
   // ---- the editor ----------------------------------------------------------------------------
 
   function blankDraft() {
-    return { id: null, name: '', desc: '', icon: { ico: 'bolt' }, mode: 'repeat', every: 1000, steps: [{ action: 'pop.golden', params: {} }], inAll: false, when: { cond: 'buff', params: {}, not: false, edge: 'rise' } };
+    return { id: null, name: '', desc: '', icon: { ico: 'bolt' }, mode: 'repeat', every: 1000, steps: [{ action: 'pop.golden', params: {} }], inAll: false, when: blankWhen() };
   }
+  const blankCond = () => ({ cond: 'buff', params: {}, not: false });
+  const blankWhen = () => ({ all: [blankCond()], edge: 'rise' });
 
   function field(p, value, path) {
     const opts = typeof p.options === 'function' ? p.options() : p.options || [];
@@ -173,16 +175,22 @@ CA.UI.MacrosPage = (() => {
     }
     if (d.mode === 'when') {
       const w = d.when;
-      const cond = CA.Conditions.get(w.cond) || CA.Conditions.all()[0];
+      h += '<div class="ca-editor-block">';
+      w.all.forEach((one, j) => {
+        const cond = CA.Conditions.get(one.cond) || CA.Conditions.all()[0];
+        h +=
+          `<div class="ca-editor-row ca-cond"><span class="ca-field-label">${j ? 'and' : `${I('filter', 13)} When`}</span>` +
+          `<select data-edit="when.all.${j}.cond" data-structural>${CA.Conditions.all()
+            .map((c) => `<option value="${c.id}"${c.id === one.cond ? ' selected' : ''}>${esc(c.name)}</option>`)
+            .join('')}</select>` +
+          cond.params.map((p) => field(p, one.params[p.key], `when.all.${j}.params.${p.key}`)).join('') +
+          `<label class="ca-field ca-check"><input type="checkbox" data-edit="when.all.${j}.not" data-type="bool"${one.not ? ' checked' : ''}><span>not</span></label>` +
+          (w.all.length > 1 ? `<button type="button" class="ca-iconbtn" data-edit-act="cond-del" data-val="${j}" title="Remove this condition">${I('close', 12)}</button>` : '') +
+          '</div>';
+      });
       h +=
-        '<div class="ca-editor-block">' +
-        `<div class="ca-editor-row"><span class="ca-field-label">${I('filter', 13)} When</span>` +
-        `<select data-edit="when.cond" data-structural>${CA.Conditions.all()
-          .map((c) => `<option value="${c.id}"${c.id === w.cond ? ' selected' : ''}>${esc(c.name)}</option>`)
-          .join('')}</select>` +
-        cond.params.map((p) => field(p, w.params[p.key], `when.params.${p.key}`)).join('') +
-        '</div><div class="ca-editor-row">' +
-        `<label class="ca-field ca-check"><input type="checkbox" data-edit="when.not" data-type="bool"${w.not ? ' checked' : ''}><span>…is <b>not</b> the case</span></label>` +
+        '<div class="ca-editor-row">' +
+        `<button type="button" class="ca-btn ca-btn-small" data-edit-act="cond-add">${I('plus', 12)} And…</button>` +
         `<label class="ca-field"><span>Run</span><select data-edit="when.edge"><option value="rise"${w.edge !== 'while' ? ' selected' : ''}>once each time it happens</option><option value="while"${w.edge === 'while' ? ' selected' : ''}>on every check while it holds</option></select></label>` +
         '</div></div>';
     }
@@ -235,7 +243,8 @@ CA.UI.MacrosPage = (() => {
       // a different action/condition: start from its own defaults
       const m = el.dataset.edit.match(/^steps\.(\d+)\.action$/);
       if (m) draft.steps[Number(m[1])].params = {};
-      if (el.dataset.edit === 'when.cond') draft.when.params = {};
+      const c = el.dataset.edit.match(/^when\.all\.(\d+)\.cond$/);
+      if (c) draft.when.all[Number(c[1])].params = {};
       renderEditor();
     }
   }
@@ -258,9 +267,11 @@ CA.UI.MacrosPage = (() => {
     if (act === 'icon') d.icon = { ico: t.dataset.val };
     else if (act === 'mode') {
       d.mode = t.dataset.val;
-      if (d.mode === 'when' && (!d.when || !d.when.cond)) d.when = { cond: 'buff', params: {}, not: false, edge: 'rise' };
+      if (d.mode === 'when' && !(d.when && d.when.all && d.when.all.length)) d.when = blankWhen();
       if (d.mode === 'when' && d.every >= 1000) d.every = 250;
-    } else if (act === 'add') d.steps.push({ action: 'pop.golden', params: {} });
+    } else if (act === 'cond-add') d.when.all.push(blankCond());
+    else if (act === 'cond-del') d.when.all.splice(i, 1);
+    else if (act === 'add') d.steps.push({ action: 'pop.golden', params: {} });
     else if (act === 'del') d.steps.splice(i, 1);
     else if (act === 'up' && i > 0) [d.steps[i - 1], d.steps[i]] = [d.steps[i], d.steps[i - 1]];
     else if (act === 'down' && i < d.steps.length - 1) [d.steps[i + 1], d.steps[i]] = [d.steps[i], d.steps[i + 1]];
@@ -276,7 +287,7 @@ CA.UI.MacrosPage = (() => {
     } else if (act === 'save') {
       // fill in each param's default so the saved macro is explicit
       d.steps.forEach((s) => (s.params = CA.Actions.paramsFor(s.action, s.params)));
-      if (d.mode === 'when') d.when.params = CA.Conditions.paramsFor(d.when.cond, d.when.params);
+      if (d.mode === 'when') d.when.all.forEach((c) => (c.params = CA.Conditions.paramsFor(c.cond, c.params)));
       draftError = validate(d);
       if (draftError) return renderEditor();
       try {
@@ -296,10 +307,12 @@ CA.UI.MacrosPage = (() => {
     if (el) el.outerHTML = editorHtml();
   }
 
-  function edit(id) {
+  /** Opens the editor on macro `id`, or a new macro (optionally starting from `preset` fields). */
+  function edit(id, preset) {
     const m = id ? M().get(id) : null;
-    draft = m ? JSON.parse(JSON.stringify(m)) : blankDraft();
-    if (!draft.when) draft.when = { cond: 'buff', params: {}, not: false, edge: 'rise' };
+    draft = m ? JSON.parse(JSON.stringify(m)) : { ...blankDraft(), ...(preset || {}) };
+    if (!draft.when || !Array.isArray(draft.when.all)) draft.when = blankWhen();
+    if (CA.Settings.get('tab') !== 'clickers' && CA.UI.Menu.isOpen()) CA.Settings.set('tab', 'clickers');
     draftError = '';
     rerender();
     const el = root && root.querySelector('[data-macro-editor]');

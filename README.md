@@ -23,10 +23,10 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 | **Widget** | A small box on the game's left panel (shortcuts, Running now, quick stats, latest events). |
 
-## Features (v2.1)
+## Features (v2.2)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
-**Macros**, **Graphs**, **Events**, **Stock market**, **Widgets** and **Settings**. Hovering an icon slides its name out to the left.
+**Macros**, **Graphs**, **Events**, **Stock market**, **Wizard tower**, **Widgets** and **Settings**. Hovering an icon slides its name out to the left.
 Clicking one opens the CookieMgr panel straight to that page (switching pages directly if it's already open on a
 different one); clicking the page that's already showing closes the panel.
 
@@ -125,6 +125,8 @@ Everything CookieMgr automates is a **macro**: one or more **actions** run in or
 | Stock market autobuyer | —           | Buys fast/slow-rising stocks, sells the rest, every second           |
 | Sell all stocks        | —           | Once: autobuyer off, then sells every stock                          |
 | All autoclickers       | `A`         | The first six all on, or all off if they're all running              |
+| Cast … (one per spell) | —           | Once: casts that Grimoire spell                                      |
+| FtHoF on Click frenzy  | —           | When a Click frenzy runs and there's magic: Force the Hand of Fate   |
 
 The autobuyer is the same switch as on the Stock market page and in the Bank minigame toolbar, and it isn't part
 of "All autoclickers".
@@ -132,10 +134,11 @@ of "All autoclickers".
 **Your macros** — **New macro** opens the editor: name, icon, trigger (with how often, and for "When…" the condition,
 optionally negated), and the steps — pick an action for each, set its options, reorder or remove them. Actions:
 click the big cookie, pop golden / wrath cookies, reindeer, wrinklers (optionally sparing shiny ones), click fortune
-news, trade stocks, sell all stocks, harvest the sugar lump once ripe, switch another macro on/off/toggle, run another
-macro. Conditions: an effect is active (Frenzy, Click frenzy, …), any building special, several effects at once,
-something to pop is on screen, or any recorded value (CpS, cookies in bank, prestige, magic, a stock price…) above or
-below a number. Your macros are saved with your settings inside the game save.
+news, trade stocks, sell all stocks, harvest the sugar lump once ripe, cast a spell, switch another macro
+on/off/toggle, run another macro. Conditions: an effect is active (Frenzy, Click frenzy, …), any building special,
+several effects at once, something to pop is on screen, enough magic for a spell, magic at a % of the maximum, or any
+recorded value (CpS, cookies in bank, prestige, a stock price…) above or below a number — each can be negated, and
+**And…** adds more conditions that must all hold. Your macros are saved with your settings inside the game save.
 
 **Running now** at the top of the page shows every running macro and, for each of its actions, how many things it
 has done and when it last did something (or that it can't run right now).
@@ -144,6 +147,26 @@ has done and when it last did something (or that it can't run right now).
 it). Modifiers work (`Shift + G`): click a key chip and press the new key (`Esc` cancels, `Backspace` clears).
 
 **Favourites** — the star on each macro puts it on the **Shortcuts** widget.
+
+### Wizard tower
+
+The **Wizard tower** page is the Grimoire, CookieMgr-style:
+
+- **Grimoire** — the magic meter (now / max, refill per second, time until full) and spells cast.
+- **Spells** — every spell with its live cost and backfire chance, a **Cast** button (or how long until you can
+  afford it, from the game's own refill formula) and a ★ to put it on the Shortcuts widget. Each spell is a built-in
+  "Cast …" macro, so it can have a hotkey too.
+- **Auto-cast** — the built-in, non-removable **Force the Hand of Fate on Click frenzy**: while it's on, as soon as a
+  Click frenzy is running *and* there's enough magic, it casts Force the Hand of Fate (so a frenzy that starts when
+  you're short of magic still gets its cast once the magic is there). Pair it with the Golden cookies macro to pop the
+  cookie it summons. Your own repeat/when macros that cast spells are listed here too.
+- **Spell combos** — **New combo** starts a "once" macro that casts several spells in order (Force the Hand of Fate,
+  then Stretch Time, by default); combos get a Run button, a hotkey and a ★ like any macro.
+- **Magic** — a chart of magic over time with every cast marked (red if it backfired).
+
+Every cast — from CookieMgr or from the Grimoire's own buttons — goes into the event log, with whether it backfired.
+Inside the Grimoire itself, a small toolbar under its info line has the auto-cast switch and a **CookieMgr** button
+that opens this page (can be turned off in Settings).
 
 ### Widgets
 
@@ -286,6 +309,7 @@ src/
     history.js       buff intervals and golden-cookie pop events for the CpS graph
     cookieMonster.js loads Cookie Monster on request or at start-up
     gameEvents.js    logs wrinkler pops, sugar lumps and achievements as events
+    grimoire.js      spells as actions/macros, magic conditions, spell events, the auto-cast macro
   ui/
     components.js    HTML snippets: switch, hotkey chip, icon, button
     icons.js         the inline-SVG icon set used everywhere
@@ -297,6 +321,7 @@ src/
     eventsPage.js    the Events page: income-outside-CpS table and the filterable event log
     macrosPage.js    the Macros page: macro rows, "Running now" status, the macro editor
     widgets.js       widgets on the left panel (types, dragging, saving) and the Widgets page
+    wizardPage.js    the Wizard tower page and the toolbar inside the Grimoire
     stockGraph.js    the Stock market page charts: portfolio value / per-stock prices, rolling performance
     stockLog.js      the trade ticker + transaction history table, also on the Stock market page
     bankToolbar.js   Sell all / autobuyer / CookieMgr buttons inside the Bank minigame

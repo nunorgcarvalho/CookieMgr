@@ -139,10 +139,19 @@ CA.Macros = (() => {
       builtin: !!def.builtin,
     };
     if (mode === 'when') {
+      // { all: [{ cond, params, not }, …], edge } — v2.0 saved a single condition at the top level
       const w = def.when || {};
-      m.when = { cond: String(w.cond || 'buff'), params: w.params && typeof w.params === 'object' ? { ...w.params } : {}, not: !!w.not, edge: w.edge === 'while' ? 'while' : 'rise' };
+      const list = (Array.isArray(w.all) ? w.all : [w]).filter((c) => c && c.cond);
+      m.when = {
+        all: (list.length ? list : [{ cond: 'buff' }]).map((c) => ({
+          cond: String(c.cond),
+          params: c.params && typeof c.params === 'object' ? { ...c.params } : {},
+          not: !!c.not,
+        })),
+        edge: w.edge === 'while' ? 'while' : 'rise',
+      };
     }
-    ['defaultKey', 'keepOnAscend', 'section'].forEach((k) => def[k] !== undefined && (m[k] = def[k]));
+    ['defaultKey', 'keepOnAscend', 'section', 'spell'].forEach((k) => def[k] !== undefined && (m[k] = def[k]));
     return m;
   }
 
@@ -167,6 +176,9 @@ CA.Macros = (() => {
   const freshStatus = (m) => ({ runs: 0, lastRun: 0, steps: m.steps.map(() => ({ total: 0, runs: 0, last: 0, lastAt: 0, error: '' })) });
 
   const newId = () => `m${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`;
+
+  /** For features that bring their own built-in macros (e.g. features/grimoire.js). Call during init. */
+  const addBuiltin = (def) => add({ ...def, builtin: true });
 
   /** Creates or updates one of your macros; returns it. Built-ins can't be changed. */
   function save(def) {
@@ -410,6 +422,7 @@ CA.Macros = (() => {
     init,
     list,
     get,
+    addBuiltin,
     save,
     remove,
     duplicate,

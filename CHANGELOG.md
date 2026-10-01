@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## 2.2.0 — 2026-10-01
+
+- **Wizard tower page** (new sidebar icon): the magic meter with refill rate and time to full; every spell with live
+  cost, backfire chance, a **Cast** button (or when it'll be affordable, from the game's own refill formula) and a ★
+  for the Shortcuts widget; **Auto-cast**; **Spell combos**; and a **Magic** chart with every cast marked.
+- **Spells are macros:** a built-in "Cast …" macro per spell (button, hotkey, shortcut widget), and a new
+  **Cast a spell** action for your own macros. **New combo** starts a macro that casts several spells in order.
+- **Force the Hand of Fate on Click frenzy** — built-in, non-removable: while on, casts FtHoF as soon as a Click
+  frenzy is running and there's enough magic (so it still casts if the magic arrives mid-frenzy).
+- **Conditions can be combined:** **And…** in the macro editor adds conditions that must all hold. New conditions:
+  enough magic for a spell, magic at a % of the maximum. v2.0 single-condition macros upgrade automatically.
+- **Spell events** in the event log — every cast, from CookieMgr or the Grimoire's own buttons, and whether it
+  backfired.
+- **Grimoire toolbar** inside the minigame: the auto-cast switch and a button to the Wizard tower page (optional).
+- New recorded state: maximum magic.
+
 ## 2.1.0 — 2026-10-01
 
 - **Widgets** on the game's left panel, around the big cookie: add them on the new **Widgets** page, drag them by

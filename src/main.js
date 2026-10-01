@@ -32,6 +32,7 @@ const mod = {
     CA.EventLog.init();
     CA.GameActions.init(); // actions + conditions, then the macros built from them
     CA.Macros.init();
+    CA.Grimoire.init();
     CA.Stocks.init();
     CA.StockLog.init();
     CA.History.init();
@@ -42,6 +43,7 @@ const mod = {
     CA.UI.EventsPage.init();
     CA.UI.MacrosPage.init();
     CA.UI.Widgets.init();
+    CA.UI.WizardPage.init();
     CA.UI.StockGraph.init();
     CA.UI.StockPerf.init();
     CA.UI.StockLog.init();

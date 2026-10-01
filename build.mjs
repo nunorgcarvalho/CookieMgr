@@ -35,6 +35,7 @@ const MODULES = [
   'core/update.js',
   'features/gameActions.js',
   'features/macros.js',
+  'features/grimoire.js',
   'features/stocks.js',
   'features/gameStates.js',
   'features/stockTrader.js',
@@ -55,6 +56,7 @@ const MODULES = [
   'ui/bankToolbar.js',
   'ui/macrosPage.js',
   'ui/widgets.js',
+  'ui/wizardPage.js',
   'ui/menu.js',
   'main.js',
 ];
