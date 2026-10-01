@@ -70,17 +70,6 @@ CA.UI.Menu = (() => {
     return TABS.some((x) => x.id === t) ? t : 'clickers';
   };
 
-  function tabBar() {
-    return (
-      '<div class="ca-tabs" role="tablist">' +
-      TABS.map(
-        (t) =>
-          `<button type="button" role="tab" class="ca-tabbtn" data-ca="tab" data-tab="${t.id}" data-tab-btn="${t.id}">${t.label}</button>`
-      ).join('') +
-      '</div>'
-    );
-  }
-
   function clickersPage() {
     return (
       '<div class="ca-card">' +
@@ -177,7 +166,6 @@ CA.UI.Menu = (() => {
       '<div class="close menuClose" data-ca="close">x</div>' +
       '<div id="CookieMgrMenu">' +
       '<div class="section">CookieMgr</div>' +
-      tabBar() +
       `<div class="ca-page" data-page="${tab}">${pageHtml(tab)}</div>` +
       '</div>'
     );
@@ -228,13 +216,6 @@ CA.UI.Menu = (() => {
       root.querySelector('[data-ca="all-on"]').disabled = active === total;
       root.querySelector('[data-ca="all-off"]').disabled = active === 0;
     }
-
-    const tab = currentTab();
-    root.querySelectorAll('[data-tab-btn]').forEach((b) => {
-      const on = b.dataset.tabBtn === tab;
-      b.classList.toggle('on', on);
-      b.setAttribute('aria-selected', String(on));
-    });
 
     // chips / pills bound to a setting
     root.querySelectorAll('[data-pressed-key]').forEach((el) => {
@@ -321,11 +302,6 @@ CA.UI.Menu = (() => {
         CA.Settings.set(key, next);
         break;
       }
-      case 'tab':
-        CA.Util.sound('snd/tick.mp3');
-        CA.Settings.set('tab', t.dataset.tab);
-        render();
-        break;
       case 'gwin':
         CA.Util.sound('snd/tick.mp3');
         CA.Settings.set('graphWindow', Number(t.dataset.val));

@@ -8,10 +8,10 @@ latest build from GitHub Pages, so pushing to this repo updates everyone's add-o
 
 ## Features (v1.2)
 
-Four little tabs stick out of the left beam between the cookie panel and the middle panel, one per page —
-**Autoclickers**, **CPS**, **Stock market** and **Settings**. Clicking one opens the CookieMgr panel straight to that
-page; clicking the page that's already open closes the panel. The panel also keeps the same four tabs along its own
-top edge, so you can flip between pages without going back to the beam.
+Four little tabs stick out of the left beam between the cookie panel and the middle panel, one per page — each with
+its own icon (cookie / bar-chart / "$" / gear) above the name: **Autoclickers**, **CPS**, **Stock market** and
+**Settings**. Clicking one opens the CookieMgr panel straight to that page, switching pages directly if it's already
+open on a different one; clicking the page that's already showing closes the panel.
 
 ![CPS tab](docs/graph.png)
 

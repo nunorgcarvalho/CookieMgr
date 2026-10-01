@@ -8,6 +8,16 @@ CA.UI = CA.UI || {};
 CA.UI.Tab = (() => {
   let wrap = null;
 
+  // Small, reliable icons — a proven image asset for the cookie, plain CSS/Unicode glyphs for
+  // the rest, rather than guessing at coordinates on the game's own icon sprite sheet.
+  const ICONS = {
+    clickers: '<span class="ca-tab-icon ca-tab-icon-cookie"></span>',
+    graphs:
+      '<span class="ca-tab-icon ca-tab-icon-cps"><i style="height:40%"></i><i style="height:65%"></i><i style="height:95%"></i></span>',
+    stocks: '<span class="ca-tab-icon ca-tab-icon-glyph">$</span>',
+    settings: '<span class="ca-tab-icon ca-tab-icon-glyph">⚙</span>',
+  };
+
   function go(id) {
     const wasOpen = CA.UI.Menu.isOpen();
     if (wasOpen && CA.Settings.get('tab') === id) {
@@ -22,6 +32,7 @@ CA.UI.Tab = (() => {
   function flapHtml(t) {
     return (
       `<div class="ca-tab-flap" data-tab-flap="${t.id}" role="button" tabindex="0" title="${t.label}">` +
+      (ICONS[t.id] || '') +
       `<span class="ca-tab-label">${t.label}</span>` +
       (t.id === 'clickers' ? '<span class="ca-tab-badge" aria-label="active autoclickers"></span>' : '') +
       '</div>'

@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 1.2.1 — 2026-09-30
+
+- **Removed the now-duplicate tab bar inside the panel:** the beam flaps added in 1.2.0 already
+  switch pages, so the matching row of tab buttons at the top of the panel was redundant — gone,
+  freeing that space for the actual page content.
+- **Icons on the beam flaps:** a cookie for Autoclickers, a little bar-chart for CPS, "$" for
+  Stock market, and a gear for Settings.
+
 ## 1.2.0 — 2026-09-30
 
 - **Sell all:** a button on the Stock market tab that sells every stock you hold and turns the
