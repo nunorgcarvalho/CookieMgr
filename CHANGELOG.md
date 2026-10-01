@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+## 1.1.1 — 2026-09-30
+
+- **Fixed settings/autoclicker-state persistence:** "Remember on/off states" (and the states
+  themselves, including the stock-trader autoclicker) could silently fail to survive a page
+  refresh — not a CookieMgr-specific bug, but a gap in Cookie Clicker's own save timing (it only
+  autosaves once every 60 real seconds and doesn't force a save on refresh/close, so a change
+  made shortly before reloading could be lost for any mod). Settings are now also mirrored to
+  localStorage the instant anything changes (same approach already used for history/stock data)
+  and preferred over a possibly-stale game save on load.
+- **Stock market amounts now shown in $ (the Bank minigame's own stock-price units)** instead of
+  raw cookies, which scale with your CpS and could overflow the summary tiles. Applies to the
+  transaction table's Price/Total columns, the ticker, and the Bought/Sold/Spent/Earned/Net
+  summary tiles.
+- **Cleaner stock graph axis numbers:** the stock chart's y-axis now uses the same "nice round
+  number" tick logic as the CpS graph (shared via `CA.UI.Chart.niceLinearScale`), instead of raw
+  fractions of the data's min/max.
+- **Tick bars show HH:MM**, not HH:MM:SS (the detailed transaction table still shows seconds).
+- Investigated a reported "Frenzy keeps stacking into absurd durations" concern: confirmed via
+  the actual Cookie Clicker source that Frenzy-type buffs are defined with `add:true`, meaning
+  the game itself adds a new Frenzy's duration on top of one already running — this is vanilla
+  behavior (and a well-known late-game "perma-frenzy" strategy), not something CookieMgr causes;
+  our code never grants buffs or double-invokes the game's own golden-cookie pop logic.
+
 ## 1.1.0 — 2026-09-30
 
 - **Stock market tab:** the stock chart moved off the Graphs tab onto its own new **Stock market** tab, alongside a new

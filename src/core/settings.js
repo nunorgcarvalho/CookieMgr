@@ -114,5 +114,66 @@ CA.Settings = (() => {
     return data;
   }
 
-  return { defineOption, optionsIn, get, set, getHotkey, setHotkey, actionForCombo, resetHotkeys, serialize, deserialize };
+  // ---- local mirror (survives a quick refresh) ----------------------------------
+  // Cookie Clicker only autosaves once every 60 real seconds (see Game.T%(fps*60) in its own
+  // source) and does not force a save on tab close/refresh — so toggling a setting and
+  // reloading soon after can lose it, through no fault of this mod (any mod's save data has
+  // the same gap). We mirror our own serialized state to localStorage on every change (plus a
+  // periodic safety net and on page hide), and prefer it over whatever came from the game's own
+  // save on load, since ours is never more than moments out of date.
+
+  const STORE_KEY = 'CookieMgr.settings.v1';
+  const PERSIST_MS = 30000;
+  let persistTimer = null;
+
+  function persistToLocal() {
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify({ v: 1, savedAt: Date.now(), payload: serialize() }));
+    } catch (e) {
+      /* storage full/blocked (private mode, quota, ...) — this is a convenience mirror, never fatal */
+    }
+  }
+
+  /** @returns {object|null} same shape as deserialize()'s return, or null if nothing local */
+  function restoreFromLocal() {
+    let raw;
+    try {
+      raw = localStorage.getItem(STORE_KEY);
+    } catch (e) {
+      return null;
+    }
+    if (!raw) return null;
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch (e) {
+      return null;
+    }
+    if (!data || typeof data.payload !== 'string') return null;
+    return deserialize(data.payload);
+  }
+
+  function startAutoPersist() {
+    CA.Events.on('settings', persistToLocal);
+    CA.Events.on('hotkeys', persistToLocal);
+    CA.Events.on('clickers', persistToLocal);
+    persistTimer = setInterval(persistToLocal, PERSIST_MS);
+    addEventListener('pagehide', persistToLocal);
+    addEventListener('beforeunload', persistToLocal);
+  }
+
+  return {
+    defineOption,
+    optionsIn,
+    get,
+    set,
+    getHotkey,
+    setHotkey,
+    actionForCombo,
+    resetHotkeys,
+    serialize,
+    deserialize,
+    restoreFromLocal,
+    startAutoPersist,
+  };
 })();

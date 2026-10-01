@@ -62,7 +62,9 @@ The **stock market buy** autoclicker (see below) lives on its own Stock market t
 Turn everything off when ascending (default on), notifications, golden cookie notifications (a quick popup the moment
 one is popped), remember autoclicker states across reloads, record history, an optional hotkey to open the panel,
 reset hotkeys, checking for updates, and stock market indicators. Everything is stored in the normal Cookie Clicker
-save through the official mod API (`Game.registerMod`), so it survives exports and imports.
+save through the official mod API (`Game.registerMod`), so it survives exports and imports. Settings are also
+mirrored to localStorage the instant anything changes, since Cookie Clicker itself only autosaves once a minute and
+won't force a save on a quick refresh — without the mirror, a change made right before reloading could be lost.
 
 Every golden/wrath cookie and reindeer pop is also recorded with which buff(s) it granted (name, duration,
 multipliers) as structured data, not just a text summary — for future use.
@@ -94,11 +96,12 @@ The **Stock market** tab in the CookieMgr panel has:
   "Per stock" for the individual price lines instead. Cost basis is tracked from whenever the mod is loaded, so it
   only knows about trades made since then. Drag the chart (or scroll it sideways) to look further back; "Jump to
   live" (also reachable via Pause) snaps back to now.
-- A **transaction history** table (time, buy/sell, stock, shares, price, total) of every trade this session, led by
-  session stat tiles (Bought, Sold, Spent, Earned, Net); a row of compact bar tiles for the **last 5 one-second
-  ticks** that had a trade (bought vs. sold, and net cookies, for each); and a **scrolling ticker** at the bottom
-  showing every trade as it happens — from the autoclicker above or from clicking the Bank's own buy/sell buttons
-  yourself, both show up the same way.
+- A **transaction history** table (time, buy/sell, stock, shares, price, total — amounts shown in $, the Bank
+  minigame's own stock-price units, not raw cookies) of every trade this session, led by session stat tiles (Bought,
+  Sold, Spent, Earned, Net); a row of compact bar tiles (time shown as HH:MM) for the **last 5 one-second ticks**
+  that had a trade (bought vs. sold, and net $, for each); and a **scrolling ticker** at the bottom showing every
+  trade as it happens — from the autoclicker above or from clicking the Bank's own buy/sell buttons yourself, both
+  show up the same way.
 
 ## Using it
 

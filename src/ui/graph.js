@@ -81,12 +81,6 @@ CA.UI.Graph = (() => {
     return `${Math.floor(sec / 3600)}h ${two(Math.floor((sec % 3600) / 60))}m`;
   }
 
-  function niceStep(raw) {
-    const p = Math.pow(10, Math.floor(Math.log10(raw)));
-    const f = raw / p;
-    return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p;
-  }
-
   // ---- data preparation ----------------------------------------------------------
 
   const windowMs = () => Math.max(10, S().get('graphWindow')) * 1000;
@@ -232,7 +226,7 @@ CA.UI.Graph = (() => {
       while (ticks.length > 7) ticks = ticks.filter((_, i) => i % 2 === 0);
     } else {
       yMax = maxV > 0 ? maxV * 1.08 : 10;
-      const step = niceStep(yMax / 4);
+      const step = CA.UI.Chart.niceStep(yMax / 4);
       yMax = Math.ceil(yMax / step) * step;
       for (let v = 0; v <= yMax * 1.0001; v += step) ticks.push(v);
     }

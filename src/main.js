@@ -43,6 +43,7 @@ const mod = {
     CA.UI.Tab.init();
     CA.Update.init();
     migrateOldSaveData();
+    CA.Settings.startAutoPersist();
 
     CA.Util.notify(
       `CookieMgr v${CA.VERSION} loaded`,
@@ -59,7 +60,11 @@ const mod = {
   },
 
   load(str) {
-    const data = CA.Settings.deserialize(str);
+    const fromSave = CA.Settings.deserialize(str);
+    // Prefer our own localStorage mirror when we have one — it's updated the moment anything
+    // changes, while the game's save can be up to 60s stale or skipped by a quick reload.
+    const fromLocal = CA.Settings.restoreFromLocal();
+    const data = fromLocal || fromSave;
     if (data && CA.Settings.get('rememberStates')) {
       if (data.clickers) CA.Autoclickers.restore(data.clickers);
       if (typeof data.stockTrader === 'boolean') CA.StockTrader.set(data.stockTrader, { silent: true });

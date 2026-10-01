@@ -31,6 +31,40 @@ CA.UI.Chart = (() => {
     return Math.max(minPad, Math.round(w) + margin);
   }
 
+  /** Rounds `raw` up to a "nice" step: 1, 2, or 5 × a power of ten. */
+  function niceStep(raw) {
+    if (!(raw > 0) || !isFinite(raw)) return 1;
+    const p = Math.pow(10, Math.floor(Math.log10(raw)));
+    const f = raw / p;
+    return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p;
+  }
+
+  /**
+   * A linear y-scale with "nice" round ticks (1/2/5×10^n steps, e.g. 0, 50, 100, 150) instead of
+   * raw evenly-spaced fractions of the data range (e.g. 3.2, 54.7, 106.2, 157.7) — clean-looking
+   * axis numbers rather than ones that happen to fall wherever the data's min/max do. Pads the
+   * range a little first so points aren't flush against the plot edges, and handles negative
+   * values (unlike a chart that always floors at zero).
+   */
+  function niceLinearScale(minV, maxV, targetTicks) {
+    targetTicks = targetTicks || 4;
+    if (!isFinite(minV) || !isFinite(maxV)) {
+      minV = 0;
+      maxV = 10;
+    }
+    if (minV === maxV) {
+      minV -= 1;
+      maxV += 1;
+    }
+    const pad = (maxV - minV) * 0.08;
+    const step = niceStep((maxV - minV + pad * 2) / targetTicks);
+    const yMin = Math.floor((minV - pad) / step) * step;
+    const yMax = Math.ceil((maxV + pad) / step) * step;
+    const ticks = [];
+    for (let v = yMin; v <= yMax + step * 0.0001; v += step) ticks.push(v);
+    return { yMin, yMax, ticks };
+  }
+
   /**
    * Buckets `list` (indexed 0..list.length-1) into fixed-width, absolute-grid time slices.
    * `valueFns` is `{ seriesKey: (i) => number, ... }` — one or more parallel series computed
@@ -144,5 +178,5 @@ CA.UI.Chart = (() => {
     return { isLive, getEnd, freeze, resume, panByPixels, attachPan };
   }
 
-  return { fitCanvas, dynamicPadLeft, alignedBuckets, createView };
+  return { fitCanvas, dynamicPadLeft, niceStep, niceLinearScale, alignedBuckets, createView };
 })();

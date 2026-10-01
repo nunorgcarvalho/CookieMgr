@@ -60,7 +60,9 @@ CA.UI.StockGraph = (() => {
   // ---- drawing -------------------------------------------------------------------
 
   /** Builds { x, w, yMin, yMax, yOf, ticks } for a set of values, sizing the left padding
-   *  to whatever those tick labels actually render as (so they never clip). */
+   *  to whatever those tick labels actually render as (so they never clip). Ticks are "nice"
+   *  round numbers (CA.UI.Chart.niceLinearScale) rather than raw evenly-spaced fractions of
+   *  whatever the data's min/max happen to be. */
   function scaleFor(w, plotY, plotH, values) {
     let minV = Infinity;
     let maxV = -Infinity;
@@ -68,19 +70,7 @@ CA.UI.StockGraph = (() => {
       if (v < minV) minV = v;
       if (v > maxV) maxV = v;
     });
-    if (!isFinite(minV)) {
-      minV = 0;
-      maxV = 10;
-    }
-    if (minV === maxV) {
-      minV -= 1;
-      maxV += 1;
-    }
-    const padV = (maxV - minV) * 0.08 || 1;
-    const yMin = minV - padV;
-    const yMax = maxV + padV;
-    const ticks = [];
-    for (let i = 0; i <= 4; i++) ticks.push(yMin + ((yMax - yMin) * i) / 4);
+    const { yMin, yMax, ticks } = CA.UI.Chart.niceLinearScale(minV, maxV);
 
     padL = CA.UI.Chart.dynamicPadLeft(
       ctx,

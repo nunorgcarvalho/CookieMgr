@@ -613,6 +613,7 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 #CookieMgrMenu .ca-stat {
+  min-width: 0; /* lets the grid cell shrink below its content so overflow/ellipsis below can work */
   padding: 8px 12px;
   background: rgba(0, 0, 0, 0.32);
 }
@@ -630,6 +631,8 @@
   color: #ffeab0;
   text-shadow: 0 1px 3px #000;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 #CookieMgrMenu .ca-stat-sub {
   margin-top: 1px;

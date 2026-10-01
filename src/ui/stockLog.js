@@ -21,7 +21,14 @@ CA.UI.StockLog = (() => {
   let lastCount = -1;
 
   const beautify = (v, floats) => (typeof Beautify === 'function' ? Beautify(v, floats == null ? 1 : floats) : Math.round(v).toString());
-  const signed = (v) => (v < 0 ? '-' : '+') + beautify(Math.abs(v));
+  // Trades are priced in the Bank minigame's own "$" units (good.val, same as its own "for $X
+  // each" tooltip) — not raw cookies, which would scale with CpS and quickly overflow a tile.
+  const dollars = (v, floats) => '$' + beautify(v, floats);
+  const signedDollars = (v) => (v < 0 ? '-$' : '+$') + beautify(Math.abs(v));
+  /** The $ value of one trade — shares × price, not the actual cookies spent/earned (which
+   *  scale with your CpS via the game's own buy/sell overhead formula and aren't comparable
+   *  trade-to-trade the way a nominal $ value is). */
+  const tradeValue = (r) => r.shares * r.price;
   const esc = (s) => CA.Util.escapeHtml(s);
 
   function two(n) {
@@ -30,6 +37,10 @@ CA.UI.StockLog = (() => {
   function clock(t) {
     const d = new Date(t);
     return `${two(d.getHours())}:${two(d.getMinutes())}:${two(d.getSeconds())}`;
+  }
+  function clockShort(t) {
+    const d = new Date(t);
+    return `${two(d.getHours())}:${two(d.getMinutes())}`;
   }
 
   function statTile(label, value, sub) {
@@ -48,11 +59,11 @@ CA.UI.StockLog = (() => {
     CA.StockLog.list().forEach((r) => {
       if (r.kind === 'buy') {
         bought += r.shares;
-        spent += r.cookies;
+        spent += tradeValue(r);
         buys++;
       } else {
         sold += r.shares;
-        earned += r.cookies;
+        earned += tradeValue(r);
         sells++;
       }
     });
@@ -64,9 +75,9 @@ CA.UI.StockLog = (() => {
     return (
       statTile('Bought', beautify(s.bought), s.buys + (s.buys === 1 ? ' buy' : ' buys')) +
       statTile('Sold', beautify(s.sold), s.sells + (s.sells === 1 ? ' sell' : ' sells')) +
-      statTile('Spent', beautify(s.spent)) +
-      statTile('Earned', beautify(s.earned)) +
-      statTile('Net', signed(s.net), 'earned − spent')
+      statTile('Spent', dollars(s.spent)) +
+      statTile('Earned', dollars(s.earned)) +
+      statTile('Net', signedDollars(s.net), 'earned − spent')
     );
   }
 
@@ -83,10 +94,10 @@ CA.UI.StockLog = (() => {
       }
       if (r.kind === 'buy') {
         b.bought += r.shares;
-        b.spent += r.cookies;
+        b.spent += tradeValue(r);
       } else {
         b.sold += r.shares;
-        b.earned += r.cookies;
+        b.earned += tradeValue(r);
       }
     });
     return [...map.values()]
@@ -101,10 +112,10 @@ CA.UI.StockLog = (() => {
     const net = b.earned - b.spent;
     return (
       `<div class="cm-tickbar" title="${esc(clock(t))} — bought ${beautify(b.bought)}, sold ${beautify(b.sold)}">` +
-      `<div class="cm-tickbar-time">${clock(t)}</div>` +
+      `<div class="cm-tickbar-time">${clockShort(t)}</div>` +
       `<div class="cm-tickbar-row"><span class="cm-tickbar-fill cm-tickbar-buy" style="width:${buyPct}%"></span></div>` +
       `<div class="cm-tickbar-row"><span class="cm-tickbar-fill cm-tickbar-sell" style="width:${sellPct}%"></span></div>` +
-      `<div class="cm-tickbar-net ${net >= 0 ? 'cm-tx-buy' : 'cm-tx-sell'}">${signed(net)}</div>` +
+      `<div class="cm-tickbar-net ${net >= 0 ? 'cm-tx-buy' : 'cm-tx-sell'}">${signedDollars(net)}</div>` +
       '</div>'
     );
   }
@@ -121,7 +132,7 @@ CA.UI.StockLog = (() => {
   function tickerItemHtml(e) {
     const arrow = e.kind === 'buy' ? '▲' : '▼';
     const verb = e.kind === 'buy' ? 'Bought' : 'Sold';
-    return `<span class="cm-tick-item cm-tick-${e.kind}">${arrow} ${verb} ${beautify(e.shares)} ${esc(e.name)} @ ${beautify(e.price, 2)}</span>`;
+    return `<span class="cm-tick-item cm-tick-${e.kind}">${arrow} ${verb} ${beautify(e.shares)} ${esc(e.name)} @ ${dollars(e.price, 2)}</span>`;
   }
 
   function logRowHtml(e) {
@@ -131,8 +142,8 @@ CA.UI.StockLog = (() => {
       `<td class="cm-tx-${e.kind}">${e.kind === 'buy' ? 'Buy' : 'Sell'}</td>` +
       `<td>${esc(e.name)}</td>` +
       `<td>${beautify(e.shares)}</td>` +
-      `<td>${beautify(e.price, 2)}</td>` +
-      `<td>${beautify(e.cookies)}</td>` +
+      `<td>${dollars(e.price, 2)}</td>` +
+      `<td>${dollars(tradeValue(e))}</td>` +
       '</tr>'
     );
   }
