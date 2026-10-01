@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+## 1.2.2 — 2026-09-30
+
+- **Critical fix: the game's own save could silently stop landing.** CpS/effect history and —
+  far more severely — every stock's price history (Cookie Clicker has 11 stock types) were being
+  mirrored to localStorage in full, up to 4 hours of 1-second samples each. For a long session
+  that could reach several megabytes, on top of the actual Cookie Clicker save (which also lives
+  in localStorage). Browsers cap localStorage at roughly 5-10MB per origin, and the game's own
+  save-write function swallows a quota-exceeded error silently (no console error, no warning) —
+  so once a mod's own data crowded out the quota, the *game's* save would quietly stop updating,
+  and a refresh would revert you to whenever it last actually succeeded. Fixed by only persisting
+  the last 10 minutes (plenty for the "quick refresh" case this was built for) instead of the
+  full in-memory buffer — verified with a test simulating the exact worst case (4 hours, 11
+  stocks): the persisted data drops from an estimated several megabytes to about 250KB combined.
+- **Sell all** is now its own prominent card at the top of the Stock market tab instead of a
+  small button sharing a row with the autoclicker controls, and hovering it shows the actual
+  number of cookies selling everything right now would pay out (computed with the Bank
+  minigame's own cookiesPsRawHighest × price × shares formula, not an approximation).
+
 ## 1.2.1 — 2026-09-30
 
 - **Removed the now-duplicate tab bar inside the panel:** the beam flaps added in 1.2.0 already

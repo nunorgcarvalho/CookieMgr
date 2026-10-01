@@ -509,6 +509,40 @@
   font-size: 11px;
   padding: 3px 10px;
 }
+#CookieMgrMenu .ca-btn-lg {
+  padding: 10px 20px;
+  font-size: 15px;
+  border-radius: 6px;
+}
+#CookieMgrMenu .ca-btn-danger {
+  color: #ffdcd2;
+  background: linear-gradient(#6b2420, #3a1210);
+  border-color: #ffb199 #7a2a1e #5c1b12 #d98a6e;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.6),
+    0 0 10px rgba(255, 90, 60, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+#CookieMgrMenu .ca-btn-danger:not(:disabled):hover {
+  color: #fff;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.6),
+    0 0 16px rgba(255, 90, 60, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+#CookieMgrMenu .ca-card-danger {
+  border-color: rgba(255, 110, 80, 0.3);
+  box-shadow:
+    0 0 1px #000,
+    inset 0 0 1px #000,
+    0 0 14px rgba(255, 70, 40, 0.12),
+    0 6px 16px rgba(0, 0, 0, 0.35);
+}
+#CookieMgrMenu .ca-row-sellall {
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
 
 /* Footer */
 #CookieMgrMenu .ca-footer {

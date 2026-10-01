@@ -67,6 +67,20 @@ CA.StockTrader = (() => {
     });
   }
 
+  /** Cookies selling everything right now would actually pay out — the same formula the Bank
+   *  minigame's own sellGood uses (cookiesPsRawHighest × price × shares, per stock), so this
+   *  matches exactly rather than approximating. For a hover preview, not an action. */
+  function previewSellAllCookies() {
+    const m = CA.Stocks.minigame();
+    if (!m) return 0;
+    const cpsHighest = (typeof Game !== 'undefined' && Game.cookiesPsRawHighest) || 0;
+    let total = 0;
+    m.goodsById.forEach((g) => {
+      if (g.stock > 0) total += cpsHighest * g.val * g.stock;
+    });
+    return total;
+  }
+
   function init() {
     CA.Actions.register({
       id: 'clicker.stockTrader',
@@ -77,5 +91,5 @@ CA.StockTrader = (() => {
     });
   }
 
-  return { init, set, toggle, isOn, sellAll };
+  return { init, set, toggle, isOn, sellAll, previewSellAllCookies };
 })();

@@ -40,9 +40,24 @@ CA.UI.Menu = (() => {
       '<div class="ca-row-desc">Buys the max it can afford of fast-rising stocks, then slow-rising ones. Sells anything it holds ' +
       "that isn't currently rising. That's the whole strategy.</div></div>" +
       '<div class="ca-controls">' +
-      C.button('Sell all', 'data-ca="sell-all-stocks"', 'ca-btn-off') +
       C.hotkey('clicker.stockTrader') +
       C.toggle(false, 'data-ca="stockTrader"', 'Stock market buy') +
+      '</div>' +
+      '</div>'
+    );
+  }
+
+  /** Its own card, apart from the autoclicker row, so it isn't lost among other controls —
+   *  selling everything is a bigger deal than flipping a toggle. The button's title (what the
+   *  hover shows) is filled in with a live cookie estimate on mouseenter; see wireSellAll(). */
+  function sellAllCard() {
+    return (
+      '<div class="ca-card ca-card-danger">' +
+      '<div class="ca-row ca-row-sellall">' +
+      '<div class="ca-row-text"><div class="ca-row-name">Sell everything</div>' +
+      '<div class="ca-row-desc">Sells every stock you hold right now and turns the autoclicker off first, ' +
+      'so it doesn\'t just buy it all straight back.</div></div>' +
+      C.button('Sell all', 'data-ca="sell-all-stocks" data-ca-sellall', 'ca-btn-danger ca-btn-lg') +
       '</div>' +
       '</div>'
     );
@@ -98,6 +113,7 @@ CA.UI.Menu = (() => {
 
   function stocksPage() {
     return (
+      sellAllCard() +
       '<div class="ca-card">' +
       '<div class="ca-card-head"><div class="ca-card-title">Stock market</div></div>' +
       `<div class="ca-list">${stockTraderRow()}</div>` +
@@ -183,8 +199,21 @@ CA.UI.Menu = (() => {
     if (tab === 'stocks') {
       CA.UI.StockGraph.mount(menu.querySelector('.ca-page'));
       CA.UI.StockLog.mount(menu.querySelector('.ca-page'));
+      wireSellAll(menu);
     }
     sync();
+  }
+
+  /** Fills in the Sell All button's hover title with a live cookie estimate right as the
+   *  pointer enters it, rather than trying to keep a `title` attribute fresh ahead of time. */
+  function wireSellAll(menu) {
+    const btn = menu.querySelector('[data-ca-sellall]');
+    if (!btn) return;
+    btn.addEventListener('mouseenter', () => {
+      const cookies = CA.StockTrader.previewSellAllCookies();
+      const beautify = (v) => (typeof Beautify === 'function' ? Beautify(v) : Math.round(v).toString());
+      btn.title = cookies > 0 ? `Sells for ~${beautify(cookies)} cookies right now` : 'Nothing to sell right now';
+    });
   }
 
   /** Updates the dynamic bits of an already rendered panel (no re-render, keeps scroll). */

@@ -154,14 +154,41 @@ CA.Stocks = (() => {
   }
 
   // ---- persistence (survives a page refresh, same approach as CA.History) ----------
+  //
+  // IMPORTANT: only the last PERSIST_WINDOW_MS of priceHistory/portfolioHistory is persisted,
+  // not the full in-memory buffer (which can hold up to MAX_SAMPLES — 4 hours — per stock, and
+  // Cookie Clicker has 11 stock types). Writing all of that to localStorage every 20s can run
+  // into multiple megabytes, which risks pushing the browser's per-origin localStorage quota
+  // (typically 5-10MB) over the edge. The real Cookie Clicker save also lives in localStorage,
+  // and the game's own save write silently swallows a quota-exceeded error (see
+  // features/history.js's persist() for the full explanation) — so a mod bloating localStorage
+  // doesn't throw or warn anywhere, it just makes the *game's* own save quietly stop landing.
+  // `holdings` (cost basis / realized gain) is a tiny running total, not a time series, so it's
+  // always persisted in full regardless.
 
   const STORE_KEY = 'CookieMgr.stocks.v1';
   const PERSIST_MS = 20000;
+  const PERSIST_WINDOW_MS = 10 * 60 * 1000;
   let persistTimer = null;
 
   function persist() {
     try {
-      localStorage.setItem(STORE_KEY, JSON.stringify({ v: 1, savedAt: Date.now(), priceHistory, portfolioHistory, holdings }));
+      const cutoff = Date.now() - PERSIST_WINDOW_MS;
+      const trimmedPriceHistory = {};
+      Object.keys(priceHistory).forEach((id) => {
+        const arr = priceHistory[id].filter((p) => p.t > cutoff);
+        if (arr.length) trimmedPriceHistory[id] = arr;
+      });
+      localStorage.setItem(
+        STORE_KEY,
+        JSON.stringify({
+          v: 1,
+          savedAt: Date.now(),
+          priceHistory: trimmedPriceHistory,
+          portfolioHistory: portfolioHistory.filter((p) => p.t > cutoff),
+          holdings,
+        })
+      );
     } catch (e) {
       /* storage full/blocked (private mode, quota, ...) — this is a convenience cache, never fatal */
     }
@@ -299,6 +326,7 @@ CA.Stocks = (() => {
     addEventListener('beforeunload', persist);
     refresh();
     sample();
+    persist(); // shrink an oversized blob from an older version right away, not after PERSIST_MS
   }
 
   return { init, refresh, MODES, list, history, portfolioNow, portfolioHistory: () => portfolioHistory, minigame };

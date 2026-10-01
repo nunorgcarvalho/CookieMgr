@@ -282,22 +282,35 @@ CA.History = (() => {
   }
 
   // ---- persistence (survives a page refresh) ---------------------------------------
+  //
+  // IMPORTANT: only a short recent window is persisted, not the whole in-memory buffer. The
+  // in-memory `samples`/`intervals`/`events` arrays can hold up to 4 hours (MAX_SAMPLES) for the
+  // live graph, but writing that much to localStorage every 20s — megabytes of it, once
+  // CA.Stocks' own per-stock price history is added on top — can push the browser's per-origin
+  // localStorage quota (typically 5-10MB) past its limit. The real Cookie Clicker save also
+  // lives in localStorage, and the game's own write wraps setItem in a try/catch that silently
+  // swallows a quota error (see localStorageSet in the game's own source) — so a mod bloating
+  // localStorage doesn't throw or warn, it just makes the *game's* save quietly stop landing.
+  // A refresh then reverts you to whenever the last successful save was, with no error shown.
+  // 10 minutes is far more than a "quick refresh" needs and keeps this persisted slice small.
 
   const STORE_KEY = 'CookieMgr.history.v1';
   const PERSIST_MS = 20000;
+  const PERSIST_WINDOW_MS = 10 * 60 * 1000;
   let persistTimer = null;
 
   function persist() {
     if (!CA.Settings.get('trackHistory')) return;
     try {
+      const cutoff = Date.now() - PERSIST_WINDOW_MS;
       localStorage.setItem(
         STORE_KEY,
         JSON.stringify({
           v: 1,
           savedAt: Date.now(),
-          samples,
-          intervals: intervals.map(({ ref, ...rest }) => rest), // ref points at a live game buff object — not serializable
-          events,
+          samples: samples.filter((s) => s.t > cutoff),
+          intervals: intervals.filter((iv) => (iv.end || Date.now()) > cutoff).map(({ ref, ...rest }) => rest), // ref points at a live game buff object — not serializable
+          events: events.filter((ev) => ev.t > cutoff),
         })
       );
     } catch (e) {
@@ -377,6 +390,7 @@ CA.History = (() => {
     addEventListener('pagehide', persist);
     addEventListener('beforeunload', persist);
     sample();
+    persist(); // shrink an oversized blob from an older version right away, not after PERSIST_MS
   }
 
   return { init, samples, intervals, events, colorFor, lowerBound, stats, intervalsIn, clear, addEvent, sampleNow: sample };

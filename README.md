@@ -33,9 +33,11 @@ A live cookies-per-second chart, redrawn every second.
 - **Event markers:** golden cookie, wrath cookie and reindeer pops (with what they did) and ascensions. A golden/wrath
   pop that already shows as a shaded band doesn't also get a marker — only pops without a visible effect do.
 - **Crosshair tooltip** with the values at that moment and the effects active then, plus Now / Average / Peak / Clicking tiles.
-- Pause, clear, and per-series toggles. History (rolling 4 hours) survives a page refresh (mirrored to localStorage
-  every 20s, separate from your Cookie Clicker save) and can be turned off in Settings. Stock price and portfolio
-  history do the same, including cost basis and realized profit — a refresh won't reset your unrealized gain to zero.
+- Pause, clear, and per-series toggles. History (rolling 4 hours in memory) survives a page refresh and can be turned
+  off in Settings. Stock price and portfolio history do the same, including cost basis and realized profit — a
+  refresh won't reset your unrealized gain to zero. Only the last 10 minutes is actually mirrored to localStorage
+  (plenty for surviving a quick refresh) — writing the full 4-hour buffer, times 11 stock types, risked pushing the
+  browser's localStorage quota over the edge and silently breaking the *game's own* save.
 
 ### Autoclickers
 
@@ -90,10 +92,12 @@ both views automatically. Turn the Bank graph off in Settings if you'd rather no
 
 The **Stock market** tab in the CookieMgr panel has:
 
+- **Sell all** — its own standalone card at the top of the tab: sells every stock you currently hold and turns the
+  autoclicker off first, so it doesn't just buy it all straight back. Hovering it shows the actual number of cookies
+  selling everything right now would pay out.
 - **Buy fast/slow rise, sell the rest** — an autoclicker (own on/off switch and hotkey, not affected by "All on/off" or
   the toggle-all hotkey) that, once a second, buys the max it can afford of fast-rising stocks, then slow-rising ones,
-  and sells anything it holds that isn't currently rising. That's the entire strategy. A **Sell all** button next to
-  it sells every stock you hold and turns the autoclicker off first, so it doesn't just buy it all straight back.
+  and sells anything it holds that isn't currently rising. That's the entire strategy.
 - The stock chart, defaulting to your **portfolio value** over time (a value line plus a cost-basis line, so the gap
   between them is your unrealized gain) with stat tiles for Value, Unrealized, Realized and Total gain — switch to
   "Per stock" for the individual price lines instead. Cost basis is tracked from whenever the mod is loaded, so it
