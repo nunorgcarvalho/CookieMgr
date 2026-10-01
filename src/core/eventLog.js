@@ -56,9 +56,11 @@ CA.EventLog = (() => {
   function load() {
     const s = CA.Store.saveId();
     saveId = s;
-    const addedMeanwhile = events.filter((e) => e.s === s);
     return CA.Store.allFor('events', s).then((stored) => {
       if (s !== saveId) return;
+      // whatever was logged for this save while the read was in flight (not a snapshot from
+      // before it — events keep arriving during the read)
+      const addedMeanwhile = events.filter((e) => e.s === s);
       stored.sort((x, y) => x.t - y.t);
       if (stored.length > MAX_STORED) {
         const drop = stored.splice(0, stored.length - MAX_STORED);

@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 2.1.0 — 2026-10-01
+
+- **Widgets** on the game's left panel, around the big cookie: add them on the new **Widgets** page, drag them by
+  the title bar, fold (▾) or remove (×) them. Styled like the game's own framed boxes.
+  - **Shortcuts** — buttons for your ★ favourite macros (switch on/off, or run), lit while running.
+  - **Running now** — the macro status block, also poppable straight from the Macros page.
+  - **Quick stats** — CpS, actual CpS (1 min), bank, prestige this run, time to the next level.
+  - **Latest events** — the newest event-log entries.
+- Show/hide all widgets and lock them in place (Widgets page). Positions scale with the window; saved with settings.
+- Clicks on widgets never reach the big cookie.
+- **Fix:** events logged while the event log was still loading from storage could vanish from the on-screen log
+  until the next reload.
+
 ## 2.0.0 — 2026-10-01
 
 **Macros.** Everything CookieMgr automates is now a macro: hotkey → macro(s) → action(s).

@@ -21,11 +21,12 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Event**  | Something that happened in the game (a golden cookie popped, a stock was sold, …).      |
 | **State**  | A value that can be measured over time (cookies in the bank, CpS, …).                   |
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
+| **Widget** | A small box on the game's left panel (shortcuts, Running now, quick stats, latest events). |
 
-## Features (v2.0)
+## Features (v2.1)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
-**Macros**, **Graphs**, **Events**, **Stock market** and **Settings**. Hovering an icon slides its name out to the left.
+**Macros**, **Graphs**, **Events**, **Stock market**, **Widgets** and **Settings**. Hovering an icon slides its name out to the left.
 Clicking one opens the CookieMgr panel straight to that page (switching pages directly if it's already open on a
 different one); clicking the page that's already showing closes the panel.
 
@@ -142,7 +143,20 @@ has done and when it last did something (or that it can't run right now).
 **Hotkeys** — every macro can have one; one key can trigger several macros at once (binding a key that's in use shares
 it). Modifiers work (`Shift + G`): click a key chip and press the new key (`Esc` cancels, `Backspace` clears).
 
-**Favourites** — the star on each macro marks it for shortcut widgets.
+**Favourites** — the star on each macro puts it on the **Shortcuts** widget.
+
+### Widgets
+
+Small framed boxes on the game's left panel, around the big cookie — add them on the **Widgets** page, drag them
+by their title bar, fold them up (▾) or remove them (×):
+
+- **Shortcuts** — a button per ★ favourite macro: click to switch it on/off (lit up while running) or to run it.
+- **Running now** — the same live status as on the Macros page (also one click from its card there).
+- **Quick stats** — CpS, actual CpS over the last minute, cookies in the bank, prestige this run, time to the next level.
+- **Latest events** — the six newest entries in the event log.
+
+Options: show/hide them all, and lock them so they can't be dragged by accident. Positions are kept relative to the
+panel, so they stay put when the window is resized, and they're saved with your settings.
 
 ### Settings
 
@@ -282,6 +296,7 @@ src/
     graphs.js        the Graphs page: Cookies / Bank / Prestige tabs and their plot specs
     eventsPage.js    the Events page: income-outside-CpS table and the filterable event log
     macrosPage.js    the Macros page: macro rows, "Running now" status, the macro editor
+    widgets.js       widgets on the left panel (types, dragging, saving) and the Widgets page
     stockGraph.js    the Stock market page charts: portfolio value / per-stock prices, rolling performance
     stockLog.js      the trade ticker + transaction history table, also on the Stock market page
     bankToolbar.js   Sell all / autobuyer / CookieMgr buttons inside the Bank minigame
@@ -313,6 +328,8 @@ If you add a file, add it to `MODULES` in `build.mjs` in the right order.
   `kind` is `gauge` (a level, like CpS), `counter` (a running total) or `flow` (an amount per frame, from `ctx.dt`).
   Read it back with `CA.Recorder.series(id)`.
 - **A new event type:** `CA.EventLog.defineType(type, { name, icon, color, income })`, then `CA.EventLog.add({ type, title, text, cookies, data })`.
+- **A new widget:** `CA.UI.Widgets.defineType({ id, name, icon, desc, width, single, html(instance) })` — it appears on the
+  Widgets page; `html` is re-rendered twice a second.
 - **A new page:** `CA.UI.Pages.register({ id, label, icon, order, html, mount, unmount, tick })` from the page's own
   module. It gets a sidebar icon and a panel slot automatically; `icon` is a name from `ui/icons.js`.
 

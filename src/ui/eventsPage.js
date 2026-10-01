@@ -307,5 +307,5 @@ CA.UI.EventsPage = (() => {
     });
   }
 
-  return { init, incomeRows, filtered };
+  return { init, incomeRows, filtered, rowHtml };
 })();

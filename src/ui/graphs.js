@@ -672,5 +672,5 @@ CA.UI.Graphs = (() => {
     });
   }
 
-  return { init, html, mount, unmount, tick, TABS, SOURCES, plots };
+  return { init, html, mount, unmount, tick, recent, TABS, SOURCES, plots };
 })();

@@ -322,7 +322,13 @@ CA.UI.MacrosPage = (() => {
     const all = M().list();
     let h =
       '<div class="ca-card ca-card-status">' +
-      C().cardHead('Running now', 'play', '<div class="ca-card-meta"><span class="ca-pill" data-ca-count></span></div>') +
+      C().cardHead(
+        'Running now',
+        'play',
+        '<div class="ca-card-meta"><span class="ca-pill" data-ca-count></span>' +
+          `<button type="button" class="ca-iconbtn" data-ca="widget-add" data-type="status" title="Pop this out as a widget on the left panel">${I('widget', 13)}</button>` +
+          `<button type="button" class="ca-iconbtn" data-ca="widget-add" data-type="shortcuts" title="Put your ★ favourite macros on the left panel as shortcut buttons">${I('star', 13)}</button></div>`
+      ) +
       `<div class="ca-status" data-macro-statusblock>${status()}</div>` +
       '</div>';
     if (draft) h += editorHtml();
@@ -426,6 +432,16 @@ CA.UI.MacrosPage = (() => {
         CA.Util.sound('snd/tick.mp3');
         edit(null);
         return true;
+      case 'widget-add': {
+        CA.Util.sound('snd/tick.mp3');
+        const type = t.dataset.type;
+        const had = CA.UI.Widgets.has(type);
+        CA.UI.Widgets.add(type);
+        if (!CA.Settings.get('widgetsShown')) CA.Settings.set('widgetsShown', true);
+        const name = (CA.UI.Widgets.types().find((x) => x.id === type) || {}).name || 'Widget';
+        CA.Util.notify(name, had && type !== 'shortcuts' ? 'Already on the left panel.' : 'Added to the left panel — drag it by its title bar.', CA.ICON, 2);
+        return true;
+      }
       case 'all-on':
         CA.Util.sound('snd/clickOn2.mp3');
         M().setAll(true);

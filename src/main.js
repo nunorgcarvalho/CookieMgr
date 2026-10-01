@@ -41,6 +41,7 @@ const mod = {
     CA.UI.Graphs.init();
     CA.UI.EventsPage.init();
     CA.UI.MacrosPage.init();
+    CA.UI.Widgets.init();
     CA.UI.StockGraph.init();
     CA.UI.StockPerf.init();
     CA.UI.StockLog.init();
@@ -76,6 +77,7 @@ const mod = {
     const data = (local && CA.Settings.deserialize(local)) || CA.Settings.deserialize(str);
     if (!data) return;
     CA.Macros.load(data.macros);
+    CA.UI.Widgets.load(data.widgets);
     if (!CA.Settings.get('rememberStates')) return;
     if (Array.isArray(data.running)) CA.Macros.restore(data.running);
     else {

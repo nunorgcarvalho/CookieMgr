@@ -1570,3 +1570,274 @@
   gap: 8px;
   margin-top: 10px;
 }
+
+/* ---------- Widgets (left panel) ---------- */
+
+#CookieMgrWidgets {
+  position: absolute;
+  inset: 0;
+  z-index: 150;
+  pointer-events: none;
+  font-family: Tahoma, Arial, sans-serif;
+}
+#CookieMgrWidgets.ca-hidden,
+#game.ascending #CookieMgrWidgets,
+#game.ascendIntro #CookieMgrWidgets,
+#game.reincarnating #CookieMgrWidgets {
+  display: none;
+}
+#CookieMgrWidgets .ca-w {
+  position: absolute;
+  pointer-events: auto;
+  box-sizing: border-box;
+  max-width: calc(100% - 4px);
+  color: #e8d7b0;
+  background:
+    linear-gradient(to bottom, rgba(70, 45, 22, 0.92), rgba(28, 18, 9, 0.92)),
+    #1c120a;
+  border: 1px solid;
+  border-color: #ece2b6 #875526 #733726 #dfbc9a;
+  border-radius: 6px;
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  user-select: none;
+}
+#CookieMgrWidgets .ca-w.dragging {
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.85),
+    0 0 14px rgba(255, 215, 110, 0.35);
+  opacity: 0.95;
+}
+#CookieMgrWidgets .ca-w-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 4px 3px 8px;
+  cursor: grab;
+  border-bottom: 1px solid rgba(255, 220, 150, 0.18);
+  color: #ffd98a;
+}
+#CookieMgrWidgets.locked .ca-w-head {
+  cursor: default;
+}
+#CookieMgrWidgets .ca-w.collapsed .ca-w-head {
+  border-bottom: none;
+}
+#CookieMgrWidgets .ca-w-title {
+  flex: 1;
+  font-family: 'Merriweather', Georgia, serif;
+  font-variant: small-caps;
+  font-size: 13px;
+  color: #fff;
+  text-shadow: 0 1px 2px #000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#CookieMgrWidgets .ca-w-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  font-size: 10px;
+  color: #b9ab93;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 220, 150, 0.15);
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+#CookieMgrWidgets .ca-w:hover .ca-w-btn {
+  opacity: 1;
+}
+#CookieMgrWidgets .ca-w-btn:hover {
+  color: #fff3cf;
+}
+#CookieMgrWidgets .ca-w-body {
+  padding: 6px 8px 8px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+#CookieMgrWidgets .ca-w.collapsed .ca-w-body {
+  display: none;
+}
+#CookieMgrWidgets .ca-w-empty {
+  font-size: 11px;
+  color: #93866f;
+  line-height: 1.4;
+}
+/* shortcut buttons */
+#CookieMgrWidgets .ca-w-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 5px;
+}
+#CookieMgrWidgets .ca-w-sc {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 5px 3px 4px;
+  font:
+    bold 10px Tahoma,
+    Arial,
+    sans-serif;
+  color: #b9ab93;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 220, 150, 0.18);
+  border-radius: 6px;
+  cursor: pointer;
+  text-shadow: 0 1px 1px #000;
+}
+#CookieMgrWidgets .ca-w-sc span:last-child {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#CookieMgrWidgets .ca-w-sc:hover {
+  color: #fff3cf;
+  border-color: rgba(255, 220, 150, 0.45);
+}
+#CookieMgrWidgets .ca-w-sc.on {
+  color: #d6ffcc;
+  background: rgba(80, 200, 90, 0.18);
+  border-color: rgba(130, 235, 120, 0.65);
+  box-shadow: 0 0 8px rgba(130, 235, 120, 0.35);
+}
+#CookieMgrWidgets .ca-w-sc.once:active {
+  transform: translateY(1px);
+}
+#CookieMgrWidgets .ca-icon {
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+#CookieMgrWidgets .ca-img {
+  width: 22px;
+  height: 22px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+#CookieMgrWidgets .ca-sprite {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  background-image: url(img/icons.png);
+  transform: scale(0.45);
+}
+#CookieMgrWidgets .ca-icon-ico {
+  color: #ffd98a;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, rgba(255, 230, 170, 0.22), rgba(0, 0, 0, 0.3));
+}
+/* status block inside a widget */
+#CookieMgrWidgets .ca-status-head .ca-icon,
+#CookieMgrWidgets .ca-status-head .ca-icon-ico {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+}
+#CookieMgrWidgets .ca-status-head .ca-sprite {
+  transform: scale(0.38);
+}
+#CookieMgrWidgets .ca-status-step {
+  margin-left: 24px;
+}
+#CookieMgrWidgets .ca-iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  color: #b9ab93;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 220, 150, 0.15);
+  border-radius: 4px;
+  cursor: pointer;
+}
+/* quick stats */
+#CookieMgrWidgets .ca-w-stat {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 2px 0;
+  font-size: 11px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+#CookieMgrWidgets .ca-w-stat:last-child {
+  border-bottom: none;
+}
+#CookieMgrWidgets .ca-w-stat span {
+  color: #a39477;
+}
+#CookieMgrWidgets .ca-w-stat b {
+  color: #fff3cf;
+  font-variant-numeric: tabular-nums;
+}
+#CookieMgrWidgets .ca-w-stat em {
+  font-style: normal;
+  font-weight: normal;
+  color: #93866f;
+}
+/* latest events */
+#CookieMgrWidgets .ca-ev-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 2px 4px;
+  font-size: 10.5px;
+  color: #d8cbb0;
+  border-left: 2px solid var(--c);
+}
+#CookieMgrWidgets .ca-ev-ico {
+  flex: none;
+  align-self: center;
+  display: inline-flex;
+  color: var(--c);
+}
+#CookieMgrWidgets .ca-ev-ico .ca-ico-cookie {
+  width: 12px !important;
+  height: 12px !important;
+}
+#CookieMgrWidgets .ca-ev-time {
+  flex: none;
+  color: #93866f;
+  font-variant-numeric: tabular-nums;
+}
+#CookieMgrWidgets .ca-ev-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#CookieMgrWidgets .ca-ev-text span {
+  display: none;
+}
+#CookieMgrWidgets .ca-ev-cookies {
+  flex: none;
+  font-weight: bold;
+}
+#CookieMgrWidgets .ca-ev-cookies.pos {
+  color: #9be89b;
+}
+#CookieMgrWidgets .ca-ev-cookies.neg {
+  color: #ff9a8a;
+}
+#CookieMgrMenu .ca-status-head .ca-icon {
+  filter: none;
+}
+#CookieMgrMenu .ca-card-meta .ca-iconbtn {
+  margin-left: 4px;
+}

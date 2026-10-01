@@ -81,6 +81,7 @@ CA.Settings = (() => {
       data.macros = CA.Macros.serialize(); // your own macros + per-macro preferences
       if (options.rememberStates) data.running = CA.Macros.runningIds();
     }
+    if (CA.UI && CA.UI.Widgets) data.widgets = CA.UI.Widgets.serialize();
     return JSON.stringify(data);
   }
 
@@ -161,6 +162,7 @@ CA.Settings = (() => {
     CA.Events.on('settings', persistToLocal);
     CA.Events.on('hotkeys', persistToLocal);
     CA.Events.on('macros', persistToLocal);
+    CA.Events.on('widgets', persistToLocal);
     persistTimer = setInterval(persistToLocal, PERSIST_MS);
     addEventListener('pagehide', persistToLocal);
     addEventListener('beforeunload', persistToLocal);
