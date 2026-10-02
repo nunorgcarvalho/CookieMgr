@@ -297,6 +297,13 @@ CA.UI.Plot = (() => {
     return CA.UI.Chart.niceLinearScale(lo, hi, 4).ticks.filter((v) => v >= lo && v <= hi);
   }
 
+  /** The share of a bar's width the game was actually running for (1 when unknown). */
+  function activeShare(b) {
+    const raw = b.raw || b.bar || b;
+    const width = ((b.x1 || 0) - (b.x0 || 0)) / SEC;
+    return Number.isFinite(raw.secs) && width > 0 ? Math.min(1, raw.secs / width) : 1;
+  }
+
   /** Spots in [x0, x1] where active-time mode cut out a stretch of inactive time. */
   function gapsIn(frames, key, x0, x1) {
     const out = [];
@@ -500,10 +507,15 @@ CA.UI.Plot = (() => {
           else neg += val;
           if (val > 0) see(val, false); // a thin slice on top mustn't drag a log axis down
         });
-        see(pos);
+        // a bar that mostly covers time the game wasn't running mustn't set a log axis's floor —
+        // it just gets trimmed at the bottom
+        see(pos, activeShare(b) >= 0.5);
         see(neg);
       });
-      Object.keys(lines).forEach((k) => (byKey[k] && byKey[k].noScale ? null : lines[k].forEach((p) => see(p.v))));
+      // only lines actually drawn count — a hidden one (e.g. Net with Losses off) mustn't hold the axis
+      series
+        .filter((s) => (s.type === 'line' || s.type === 'area') && !s.noScale && lines[s.key])
+        .forEach((s) => lines[s.key].forEach((p) => see(p.v, !p.bar || activeShare(p) >= 0.5)));
       (data.hlines || []).forEach((l) => see(l.v));
       if (data.zero !== false) see(0);
 
@@ -537,6 +549,7 @@ CA.UI.Plot = (() => {
         ({ yMin, yMax, ticks } = CA.UI.Chart.niceLinearScale(minV, maxV));
       }
 
+      lastData.scale = { yMin, yMax, log, ticks }; // the axis this draw chose (debugging, tests)
       padL = CA.UI.Chart.dynamicPadLeft(ctx, FONT, ticks.map(fmt), MIN_PAD_L, PAD_L_MARGIN);
       const plot = { x: padL, y: PAD.t, w: w - padL - PAD.r, h: h - PAD.t - PAD.b };
       const chartH = plot.h - lanesH - (laneCount ? 4 : 0);
@@ -1075,6 +1088,7 @@ CA.UI.Plot = (() => {
       draw,
       setPaused,
       isPaused: () => !view.isLive(),
+      isMounted: () => !!root,
       resume: () => view.resume(),
       last: () => lastData,
     };
@@ -1094,6 +1108,7 @@ CA.UI.Plot = (() => {
     });
     CA.Events.on('settings', (k) => {
       if (k === 'graphActiveTime' || k === null) all.forEach((p) => p.resume());
+      all.forEach((p) => p.isMounted() && p.tick());
     });
   }
 

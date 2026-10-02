@@ -176,9 +176,9 @@
 /* ---------- Panel ---------- */
 
 #CookieMgrMenu {
-  max-width: 780px;
+  max-width: none; /* use the whole middle section */
   margin: 0 auto;
-  padding: 0 12px 120px;
+  padding: 0 16px 120px;
   color: #ddd;
 }
 #CookieMgrMenu .ca-tagline {
@@ -1095,7 +1095,7 @@
 }
 #CookieMgrMenu .ca-table-wrap {
   padding: 4px 10px 6px;
-  overflow-x: auto;
+  overflow: hidden;
 }
 #CookieMgrMenu .ca-table {
   width: 100%;
@@ -2323,9 +2323,6 @@
 #CookieMgrMenu .ca-stages tr.mult td {
   color: #ffd98a;
 }
-#CookieMgrMenu .ca-stages tbody tr:nth-child(4) td {
-  border-top: 1px solid rgba(255, 217, 138, 0.25);
-}
 
 /* prestige target */
 #CookieMgrMenu .ca-target {
@@ -2375,4 +2372,24 @@
     sans-serif;
   color: #fff;
   text-shadow: 0 0 3px #000;
+}
+
+/* tables that update live: fixed column widths, so changing numbers never resize them */
+#CookieMgrMenu .ca-table.ca-stages {
+  table-layout: fixed;
+}
+#CookieMgrMenu .ca-table.ca-stages th:first-child,
+#CookieMgrMenu .ca-table.ca-stages td:first-child {
+  width: 28%;
+}
+#CookieMgrMenu .ca-table.ca-stages td,
+#CookieMgrMenu .ca-table.ca-stages th {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#CookieMgrMenu .ca-table.ca-stages td:first-child {
+  white-space: normal;
+}
+#CookieMgrMenu .ca-stages tr.sep td {
+  border-top: 1px solid rgba(255, 217, 138, 0.25);
 }

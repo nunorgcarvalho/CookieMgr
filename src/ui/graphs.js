@@ -145,8 +145,8 @@ CA.UI.Graphs = (() => {
     const from = CA.Recorder.activeNow() - seconds * SEC;
     // each value averaged over the seconds it was actually measured (the first frame after a
     // gap has no clicking / baked figures — it mustn't count as a second of zero)
-    const sum = { cps: 0, click: 0, clickRaw: 0, base: 0 };
-    const secs = { cps: 0, click: 0, clickRaw: 0, base: 0 };
+    const sum = { cps: 0, click: 0, clickRaw: 0, base: 0, clickRate: 0 };
+    const secs = { cps: 0, click: 0, clickRaw: 0, base: 0, clickRate: 0 };
     let earned = 0;
     let earnedSecs = 0;
     let total = 0;
@@ -168,7 +168,7 @@ CA.UI.Graphs = (() => {
     }
     if (!total) return null;
     const per = (k) => (secs[k] ? sum[k] / secs[k] : 0);
-    return { cps: per('cps'), click: per('click'), clickRaw: per('clickRaw'), base: per('base'), actual: earnedSecs ? earned / earnedSecs : 0, secs: total };
+    return { cps: per('cps'), click: per('click'), clickRaw: per('clickRaw'), base: per('base'), clickRate: secs.clickRate ? per('clickRate') : NaN, actual: earnedSecs ? earned / earnedSecs : 0, secs: total };
   }
 
   // ---- Cookies tab --------------------------------------------------------------------------
@@ -247,48 +247,30 @@ CA.UI.Graphs = (() => {
       .join('');
   }
 
-  /** The averages table under the CpS plot: rows of measures, columns of time spans. */
-  /**
-   * The CpS table, as three stages that build on each other:
-   *   1 raw production         unbuffed CpS — no golden-cookie effects
-   *   2 + raw clicking         plus clicking with click effects (Click frenzy, …) divided back out
-   *   3 actual                 everything that really got baked: buffed production, buffed
-   *                            clicking, golden cookie payouts, wrinklers…
-   * and the multipliers between them: what clicking adds, what effects & golden cookies add, total.
-   */
-  function averagesTable() {
-    const { beautify } = F();
-    const COLS = [
-      { s: 0, label: 'Now' },
-      { s: 60, label: '1 min' },
-      { s: 300, label: '5 min' },
-      { s: 900, label: '15 min' },
-      { s: 3600, label: '1 h' },
-      { s: 10800, label: '3 h' },
-    ];
-    // "Now" = the last 3 seconds: one frame alone is too jumpy (and may be a just-resumed one)
-    const vals = COLS.map((c) => recent(c.s || 3));
-    const stage1 = (r) => r.base;
-    const stage2 = (r) => r.base + r.clickRaw;
-    const stage3 = (r) => r.actual;
-    const times = (a, b) => (b > 0 && Number.isFinite(a) ? `×${(a / b).toFixed(a / b >= 10 ? 1 : 2)}` : '—');
-    const ROWS = [
-      { n: 1, label: 'Raw production', desc: 'CpS with every temporary effect removed', fn: (r) => beautify(stage1(r)) + '/s', color: C_BASE },
-      { n: 2, label: '+ raw clicking', desc: 'plus clicking, with click effects (Click frenzy…) taken out', fn: (r) => beautify(stage2(r)) + '/s', color: C_CLICK },
-      { n: 3, label: 'Actual', desc: 'everything really baked: effects, golden cookies, wrinklers…', fn: (r) => beautify(stage3(r)) + '/s', color: SOURCES[2].color, strong: true },
-      { label: 'Clicking adds', desc: '2 ÷ 1', fn: (r) => times(stage2(r), stage1(r)), mult: true },
-      { label: 'Effects & golden add', desc: '3 ÷ 2', fn: (r) => times(stage3(r), stage2(r)), mult: true },
-      { label: 'Total', desc: '3 ÷ 1', fn: (r) => times(stage3(r), stage1(r)), mult: true, strong: true },
-    ];
+  const TABLE_COLS = [
+    { s: 0, label: 'Now' },
+    { s: 60, label: '1 min' },
+    { s: 300, label: '5 min' },
+    { s: 900, label: '15 min' },
+    { s: 3600, label: '1 h' },
+    { s: 10800, label: '3 h' },
+  ];
+
+  /** A table of measures × time spans; rows: { n?, x?, label, desc, color, fn(r), strong, mult, sign }. */
+  function spansTable(rows, vals) {
     let h = '<div class="ca-table-wrap"><table class="ca-table ca-stages"><thead><tr><th>Average over the last…</th>';
-    COLS.forEach((c) => (h += `<th>${c.label}</th>`));
+    TABLE_COLS.forEach((c) => (h += `<th>${c.label}</th>`));
     h += '</tr></thead><tbody>';
-    ROWS.forEach((r) => {
-      const cls = [r.strong ? 'strong' : '', r.mult ? 'mult' : ''].filter(Boolean).join(' ');
-      h +=
-        `<tr${cls ? ` class="${cls}"` : ''}><td>` +
-        (r.n ? `<span class="ca-stage-n" style="background:${r.color}">${r.n}</span>` : '<span class="ca-stage-n ca-stage-x">×</span>') +
-        `${esc(r.label)}<span class="ca-row-sub">${esc(r.desc)}</span></td>`;
+    rows.forEach((r) => {
+      const cls = [r.strong ? 'strong' : '', r.mult ? 'mult' : '', r.sep ? 'sep' : ''].filter(Boolean).join(' ');
+      const badge = r.n
+        ? `<span class="ca-stage-n" style="background:${r.color}">${r.n}</span>`
+        : r.mult
+          ? '<span class="ca-stage-n ca-stage-x">×</span>'
+          : r.sign
+            ? `<span class="ca-stage-n ca-stage-x">${r.sign}</span>`
+            : `<span class="ca-stage-n" style="background:${r.color || 'transparent'}"></span>`;
+      h += `<tr${cls ? ` class="${cls}"` : ''}><td>${badge}${esc(r.label)}${r.desc ? `<span class="ca-row-sub">${esc(r.desc)}</span>` : ''}</td>`;
       vals.forEach((val) => (h += `<td>${val ? esc(r.fn(val)) : '—'}</td>`));
       h += '</tr>';
     });
@@ -297,19 +279,99 @@ CA.UI.Graphs = (() => {
     return h;
   }
 
+  /**
+   * The CpS table, as three stages that build on each other:
+   *   1 raw production         unbuffed CpS — no golden-cookie effects
+   *   2 + raw clicking         plus your clicks per second × what a click is worth with no effects
+   *                            (so neither Click frenzy nor a Frenzy's boost to clicks counts)
+   *   3 actual                 everything that really got baked: buffed production, buffed
+   *                            clicking, golden cookie payouts, wrinklers…
+   * and the multipliers between them: what clicking adds, what effects & golden cookies add, total.
+   */
+  function averagesTable() {
+    const { beautify } = F();
+    // "Now" = the last 3 seconds: one frame alone is too jumpy (and may be a just-resumed one)
+    const vals = TABLE_COLS.map((c) => recent(c.s || 3));
+    const stage1 = (r) => r.base;
+    const stage2 = (r) => r.base + r.clickRaw;
+    const stage3 = (r) => r.actual;
+    const times = (a, b) => (b > 0 && Number.isFinite(a) ? `×${(a / b).toFixed(a / b >= 10 ? 1 : 2)}` : '—');
+    return spansTable(
+      [
+        { n: 1, label: 'Raw production', desc: 'CpS with every temporary effect removed', fn: (r) => beautify(stage1(r)) + '/s', color: C_BASE },
+        { n: 2, label: '+ raw clicking', desc: 'your clicks per second × a click’s worth with no effects', fn: (r) => beautify(stage2(r)) + '/s', color: C_CLICK },
+        { n: 3, label: 'Actual', desc: 'everything really baked: effects, golden cookies, wrinklers…', fn: (r) => beautify(stage3(r)) + '/s', color: SOURCES[2].color, strong: true },
+        { label: 'Clicking adds', desc: '2 ÷ 1', fn: (r) => times(stage2(r), stage1(r)), mult: true, sep: true },
+        { label: 'Effects & golden add', desc: '3 ÷ 2', fn: (r) => times(stage3(r), stage2(r)), mult: true },
+        { label: 'Total', desc: '3 ÷ 1', fn: (r) => times(stage3(r), stage1(r)), mult: true, strong: true },
+        { label: 'Clicks per second', desc: 'on the big cookie, you or a macro', fn: (r) => (Number.isFinite(r.clickRate) ? r.clickRate.toFixed(r.clickRate < 10 ? 1 : 0) : '—'), sep: true, color: C_CLICK },
+      ],
+      vals
+    );
+  }
+
+  /** Per-second averages of flows over the newest `seconds` of active play, over the seconds
+   *  they were actually measured. */
+  function recentFlows(seconds, keys) {
+    const frames = CA.Recorder.frames();
+    const from = CA.Recorder.activeNow() - seconds * SEC;
+    const sum = {};
+    keys.forEach((k) => (sum[k] = 0));
+    let secs = 0;
+    for (let i = frames.length - 1; i >= 0 && frames[i].a > from; i--) {
+      const f = frames[i];
+      if (!Number.isFinite(f.earned)) continue; // first frame after a gap: unknown
+      secs += f.dt || 0;
+      keys.forEach((k) => (sum[k] += f[k] || 0));
+    }
+    if (!secs) return null;
+    const out = {};
+    keys.forEach((k) => (out[k] = sum[k] / secs));
+    return out;
+  }
+
+  /** The table under Actual CpS: each source, the total, and — with Losses on — what left the bank. */
+  function actualTable() {
+    const { beautify, signed } = F();
+    const { gains, losses } = actualSides();
+    const keys = SOURCES.map((x) => x.key).concat(['earned', 'spent', 'withered']);
+    const vals = TABLE_COLS.map((c) => recentFlows(c.s || 3, keys));
+    const rows = [];
+    if (gains) {
+      SOURCES.forEach((x) => rows.push({ label: x.name, fn: (r) => beautify(r[x.key]) + '/s', color: x.color }));
+      rows.push({ label: 'Actual', desc: 'all of the above', fn: (r) => beautify(r.earned) + '/s', strong: true, sign: '=' });
+    }
+    if (losses) {
+      BANK_OUT.forEach((x, i) => rows.push({ label: x.name, fn: (r) => '−' + beautify(r[x.key]) + '/s', color: x.color, sep: i === 0 && gains }));
+      if (gains) rows.push({ label: 'Net', desc: 'actual − spent − withered', fn: (r) => signed(r.earned - r.spent - r.withered) + '/s', strong: true, sign: '=' });
+    }
+    if (!rows.length) return '<div class="ca-card-note">Pick Gains, Losses or both above.</div>';
+    return spansTable(rows, vals);
+  }
+
+  function actualSides() {
+    return { gains: S().get('actualGains') !== false, losses: !!S().get('actualLosses') };
+  }
+
   const actualPlot = () =>
     P().create({
       id: 'actual',
       title: 'Actual CpS',
       icon: 'bolt',
-      note: 'What really got baked each second, split by where it came from — golden cookie payouts, Frenzy and everything else included. The dashed line is what the game shows as CpS (plus clicking).',
+      note: 'What really got baked each second, split by where it came from — golden cookie payouts, Frenzy and everything else included. The dashed line is what the game shows as CpS (plus clicking). Turn on Losses to see spending and wrinklers below the line, like the Bank tab.',
       windows: WINDOWS,
       window: 900,
       smooth: 15,
       log: false,
       unit: '/s',
+      totalLabel: 'Net',
+      toggles: [
+        { setting: 'actualGains', label: '▲ Gains', title: 'Cookies baked, by source' },
+        { setting: 'actualLosses', label: '▼ Losses', title: 'Cookies spent and withered by wrinklers' },
+      ],
       build(v) {
-        const bars = v.bucketize(SOURCES.map((s) => s.key).concat(['earned', 'cps', 'click']));
+        const { gains, losses } = actualSides();
+        const bars = v.bucketize(SOURCES.map((x) => x.key).concat(['earned', 'cps', 'click', 'spent', 'withered']));
         const ivs = effects(v);
         let sum = 0;
         let secs = 0;
@@ -319,19 +381,28 @@ CA.UI.Graphs = (() => {
           secs += coverOf(b, 'earned');
         });
         const avg = secs ? sum / secs : NaN;
+        const bar = (x) => ({ key: x.key, name: x.name, color: x.color, type: 'bar' });
+        const series = (gains ? SOURCES.map(bar) : [])
+          .concat(losses ? BANK_OUT.map(bar) : [])
+          .concat(gains ? [{ key: 'shown', name: 'Shown CpS + clicking', color: C_SHOWN, type: 'line', dash: true, width: 1.2 }] : [])
+          .concat(gains && losses ? [{ key: 'net', name: 'Net (actual − losses)', color: '#ffd98a', type: 'line', width: 1.4 }] : []);
+        const out = bars.map((b) => {
+          const parts = {};
+          if (gains) SOURCES.forEach((x) => (parts[x.key] = rate(b, x.key)));
+          if (losses) BANK_OUT.forEach((x) => (parts[x.key] = -rate(b, x.key)));
+          return { x0: b.x0, x1: b.x1, parts, raw: b };
+        });
         return {
-          series: SOURCES.map((s) => ({ key: s.key, name: s.name, color: s.color, type: 'bar' })).concat([
-            { key: 'shown', name: 'Shown CpS + clicking', color: C_SHOWN, type: 'line', dash: true, width: 1.2 },
-          ]),
-          bars: bars.map((b) => {
-            const parts = {};
-            SOURCES.forEach((s) => (parts[s.key] = rate(b, s.key)));
-            return { x0: b.x0, x1: b.x1, parts, raw: b };
-          }),
-          lines: { shown: P().linePoints(bars, (b) => (Number.isFinite(b.v.cps) ? b.v.cps + (b.v.click || 0) : undefined)) },
-          hlines: Number.isFinite(avg) ? [{ v: avg, label: `avg ${F().beautify(avg)}/s`, color: 'rgba(255,200,120,0.7)' }] : [],
+          series,
+          bars: out,
+          lines: {
+            shown: P().linePoints(bars, (b) => (Number.isFinite(b.v.cps) ? b.v.cps + (b.v.click || 0) : undefined)),
+            net: bars.map((b) => ({ x: (b.x0 + b.x1) / 2, x0: b.x0, x1: b.x1, bar: b, v: rate(b, 'earned') - rate(b, 'spent') - rate(b, 'withered') })),
+          },
+          hlines: gains && Number.isFinite(avg) ? [{ v: avg, label: `avg ${F().beautify(avg)}/s`, color: 'rgba(255,200,120,0.7)' }] : [],
           intervals: ivs,
           markers: markers(v, ['golden', 'wrath', 'reindeer', 'ascend'], ivs),
+          empty: gains || losses ? 'Collecting data…' : 'Pick Gains, Losses or both below.',
           sum,
           secs,
           bars0: bars,
@@ -340,14 +411,18 @@ CA.UI.Graphs = (() => {
       stats(v, data) {
         const { tile, beautify } = F();
         const tot = {};
-        SOURCES.forEach((s) => (tot[s.key] = 0));
+        SOURCES.forEach((x) => (tot[x.key] = 0));
         let shown = 0;
+        let shownSecs = 0;
         data.bars0.forEach((b) => {
-          SOURCES.forEach((s) => (tot[s.key] += b.v[s.key] || 0));
-          shown += ((b.v.cps || 0) + (b.v.click || 0)) * b.secs;
+          SOURCES.forEach((x) => (tot[x.key] += b.v[x.key] || 0));
+          if (Number.isFinite(b.v.cps)) {
+            shown += (b.v.cps + (b.v.click || 0)) * coverOf(b, 'cps');
+            shownSecs += coverOf(b, 'cps');
+          }
         });
         const actual = data.secs ? data.sum / data.secs : 0;
-        const shownAvg = data.secs ? shown / data.secs : 0;
+        const shownAvg = shownSecs ? shown / shownSecs : 0;
         const share = (k) => (data.sum > 0 ? Math.round((tot[k] / data.sum) * 100) + '%' : '—');
         return (
           tile('Actual', beautify(actual) + '/s', 'average, this window') +
@@ -356,6 +431,7 @@ CA.UI.Graphs = (() => {
           tile('Golden share', share('earnGolden'), 'of cookies baked')
         );
       },
+      footer: () => actualTable(),
     });
 
   const bakedPlot = () =>
@@ -589,13 +665,13 @@ CA.UI.Graphs = (() => {
         const total = Math.floor(Game.HowMuchPrestige((Game.cookiesReset || 0) + (Game.cookiesEarned || 0)));
         const next = total + 1;
         const need = typeof Game.HowManyCookiesReset === 'function' ? Game.HowManyCookiesReset(next) - ((Game.cookiesReset || 0) + (Game.cookiesEarned || 0)) : NaN;
-        const r = recent(900);
+        const r = etaRate();
         const eta = r && r.actual > 0 && need > 0 ? need / r.actual : NaN;
         return (
           tile('Level', beautify(cur, 0)) +
           tile('If you ascended now', beautify(total, 0), `+${beautify(total - cur, 0)} this run`) +
           tile('Next level', Number.isFinite(need) ? beautify(Math.max(0, need)) : '—', 'cookies to go') +
-          tile('Next level in', Number.isFinite(eta) ? span(eta) : '—', 'at the last 15 min’s actual CpS')
+          tile('Next level in', Number.isFinite(eta) ? span(eta) : '—', r ? r.label : '')
         );
       },
     });
@@ -639,6 +715,15 @@ CA.UI.Graphs = (() => {
         );
       },
     });
+
+  /** The CpS prestige ETAs use: your actual CpS over the Prestige chart's window (its chips),
+   *  in active play — the whole recorded history when the window is All. */
+  function etaRate() {
+    const w = Number(S().get('plot.prestige.win')) || 0;
+    const r = recent(w > 0 ? w : 1e10);
+    if (!r) return null;
+    return { actual: r.actual, label: w > 0 ? `at the actual CpS of the last ${F().windowLabel(w)}` : 'at the actual CpS of all recorded play' };
+  }
 
   // ---- prestige target --------------------------------------------------------------------
   // A target prestige level, entered as a number from 1–999 and a magnitude (thousand, million…),
@@ -685,7 +770,7 @@ CA.UI.Graphs = (() => {
     const start = Game.prestige || 0;
     if (target <= start) return `<div class="ca-card-note">You’re already at prestige ${beautify(start, 0)} — past this target.</div>`;
     const need = typeof Game.HowManyCookiesReset === 'function' ? Math.max(0, Game.HowManyCookiesReset(target) - baked) : NaN;
-    const r = recent(900);
+    const r = etaRate();
     const eta = need > 0 && r && r.actual > 0 ? need / r.actual : need === 0 ? 0 : NaN;
     const pct = Math.max(0, Math.min(100, ((now - start) / (target - start)) * 100));
     const reached = now >= target;
@@ -695,7 +780,7 @@ CA.UI.Graphs = (() => {
       tile('Target', beautify(target, 0), `+${beautify(target - start, 0)} on this ascension`) +
       tile('Levels to go', reached ? '0' : beautify(target - now, 0), `at ${beautify(now, 0)} if you ascended now`) +
       tile('Cookies to go', Number.isFinite(need) ? beautify(need) : '—', 'baked, all time') +
-      tile('Reached in', reached ? 'now' : Number.isFinite(eta) ? span(eta) : '—', 'at the last 15 min’s actual CpS') +
+      tile('Reached in', reached ? 'now' : Number.isFinite(eta) ? span(eta) : '—', r ? r.label : '') +
       '</div>'
     );
   }
@@ -779,6 +864,8 @@ CA.UI.Graphs = (() => {
     S().defineOption({ key: 'graphTab', group: 'ui', name: 'Graphs tab', desc: '', default: 'cookies' });
     S().defineOption({ key: 'prestigeTargetNum', group: 'ui', name: 'Prestige target (number)', desc: '', default: 0 });
     S().defineOption({ key: 'prestigeTargetUnit', group: 'ui', name: 'Prestige target (magnitude)', desc: '', default: 0 });
+    S().defineOption({ key: 'actualGains', group: 'plot', name: 'Actual CpS: gains', desc: '', default: true });
+    S().defineOption({ key: 'actualLosses', group: 'plot', name: 'Actual CpS: losses', desc: '', default: false });
     S().defineOption({ key: 'bankGains', group: 'plot', name: 'Bank charts: gains', desc: '', default: true });
     S().defineOption({ key: 'bankLosses', group: 'plot', name: 'Bank charts: losses', desc: '', default: true });
     S().defineOption({

@@ -58,6 +58,24 @@ CA.GameStates = (() => {
     return ctx._earn;
   }
 
+  /** What one click would be worth with no temporary effects (see clickRaw). */
+  function rawPerClick() {
+    if (typeof Game.mouseCps !== 'function') return undefined;
+    const cps = Game.cookiesPs;
+    const buffs = Game.buffs;
+    try {
+      Game.cookiesPs = Game.unbuffedCps || cps;
+      Game.buffs = {};
+      const v = Game.mouseCps();
+      return Number.isFinite(v) ? v : undefined;
+    } catch (e) {
+      return undefined;
+    } finally {
+      Game.cookiesPs = cps;
+      Game.buffs = buffs;
+    }
+  }
+
   function bankFlows(ctx) {
     if (ctx._bank) return ctx._bank;
     if (!ctx.prev) return (ctx._bank = UNKNOWN_BANK);
@@ -79,27 +97,30 @@ CA.GameStates = (() => {
     S({ id: 'baked', name: 'Cookies baked (this ascension)', group: 'cookies', kind: 'counter', get: () => Game.cookiesEarned });
     S({ id: 'bakedAllTime', name: 'Cookies baked (all time)', group: 'cookies', kind: 'counter', get: () => (Game.cookiesEarned || 0) + (Game.cookiesReset || 0) });
     S({ id: 'handmade', name: 'Cookies from clicking (total)', group: 'cookies', kind: 'counter', get: () => Game.handmadeCookies });
+    S({ id: 'clicks', name: 'Big cookie clicks (total)', group: 'cookies', kind: 'counter', get: () => Game.cookieClicks });
 
     // CpS — field names match what the CpS graph has always read (s.cps, s.base, s.click)
     S({ id: 'cps', name: 'CpS', unit: '/s', group: 'cps', kind: 'gauge', get: () => (Game.cookiesPs || 0) * shown() });
     S({ id: 'base', name: 'Unbuffed CpS', unit: '/s', group: 'cps', kind: 'gauge', get: () => (Game.unbuffedCps || Game.cookiesPs || 0) * shown() });
     S({ id: 'click', name: 'Clicking', unit: '/s', group: 'cps', kind: 'gauge', get: (ctx) => (ctx.prev && ctx.dt ? Math.max(0, delta(ctx, 'handmade')) / ctx.dt : undefined) });
-    // Clicking with click effects (Click frenzy, Dragonflight, Cursed finger…) divided back out —
-    // each active buff's multClick, the same factors the game multiplies a click by.
+    // Raw clicking = clicks per second × what one click would give with no temporary effects.
+    // A click's value depends on effects twice over: buffs' multClick (Click frenzy…) and, through
+    // the mouse upgrades' "+1% of CpS", on the *buffed* CpS (Frenzy…). So rather than dividing,
+    // ask the game's own Game.mouseCps() with CpS set to unbuffed CpS and no buffs active —
+    // swapped in and restored within this one synchronous call.
+    S({ id: 'clickRate', name: 'Clicks per second', unit: '/s', group: 'cps', kind: 'gauge', get: (ctx) => (ctx.prev && ctx.dt ? Math.max(0, delta(ctx, 'clicks')) / ctx.dt : undefined) });
+    S({ id: 'perClick', name: 'Cookies per click', group: 'cps', kind: 'gauge', get: () => Game.computedMouseCps });
+    S({ id: 'perClickRaw', name: 'Cookies per click, no effects', group: 'cps', kind: 'gauge', get: rawPerClick });
     S({
       id: 'clickRaw',
-      name: 'Clicking without click effects',
+      name: 'Clicking without effects',
       unit: '/s',
       group: 'cps',
       kind: 'gauge',
       get: (ctx) => {
-        if (!ctx.frame || !Number.isFinite(ctx.frame.click)) return undefined;
-        const click = ctx.frame.click;
-        let mult = 1;
-        Object.values(Game.buffs || {}).forEach((b) => {
-          if (b && b.time > 0 && typeof b.multClick === 'number' && b.multClick > 0) mult *= b.multClick;
-        });
-        return click / mult;
+        const f = ctx.frame || {};
+        if (Number.isFinite(f.clickRate) && Number.isFinite(f.perClickRaw)) return f.clickRate * f.perClickRaw;
+        return undefined;
       },
     });
 

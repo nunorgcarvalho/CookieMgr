@@ -23,7 +23,7 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 | **Widget** | Something on the game's left panel: a macro's button, the Running now bar, quick stats, events. |
 
-## Features (v2.4)
+## Features (v2.5)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
 **Macros**, **Graphs**, **Events**, **Stock market**, **Wizard tower**, **Widgets** and **Settings**. Hovering an icon slides its name out to the left.
@@ -46,7 +46,9 @@ The Graphs page has three tabs — **Cookies**, **Bank** and **Prestige** — of
   stretch of time around it (weighted by time, so a smoothed rate is exactly the cookies over that stretch ÷ its
   length). Bars stay as narrow as the screen allows instead of getting wider. Running totals aren't smoothed.
 - **Log scale** (where offered) fits the axis to the data — from just under the smallest bar to just over the
-  largest, with round ticks — so the variation fills the chart instead of hugging the top.
+  largest, with round ticks — so the variation fills the chart instead of hugging the top. Bars covering mostly time
+  the game wasn't running don't count; they're simply trimmed at the bottom.
+- **Axes always fit what's shown:** hiding something (gains, losses, a line) rescales the chart right away.
 - **Scrollable:** drag (or scroll sideways) to look back; **Pause** / **Jump to live**. Every choice is remembered.
 - **Effect shading** behind the chart for every golden-cookie effect (Frenzy, Click frenzy, Elder frenzy, Dragonflight,
   Clot, …), stacked in lanes when they overlap, and **event markers** for golden/wrath cookies, reindeer, stock trades
@@ -57,12 +59,16 @@ The Graphs page has three tabs — **Cookies**, **Bank** and **Prestige** — of
 - **Cookies per second** — stacked bars of Production (the game's CpS) with Clicking on top, a dashed Unbuffed CpS
   line, and an average line. Below it, a table of **three stages**, each building on the last — **1 raw production**
   (CpS with every temporary effect removed), **2 + raw clicking** (clicking with click effects like Click frenzy
-  divided back out), **3 actual** (everything really baked: effects, golden cookies, wrinklers…) — and the
+  divided back out — measured as your clicks per second × what one click is worth with no effects at all, using the
+  game's own click formula with unbuffed CpS), **3 actual** (everything really baked: effects, golden cookies,
+  wrinklers…) — and the
   multipliers between them: what clicking adds (2 ÷ 1), what effects & golden cookies add (3 ÷ 2), and the total
   (3 ÷ 1). Now and averaged over the last 1, 5, 15 minutes, 1 and 3 hours of active play.
 - **Actual CpS** — what really got baked each second (the derivative of cookies baked), stacked by source:
   production, clicking, golden cookies & reindeer, other. A dashed line shows the CpS the game displays, for
-  comparison; tiles show how far apart they are.
+  comparison; tiles show how far apart they are. **▲ Gains / ▼ Losses** chips, like the Bank tab: with Losses on,
+  spending and wrinkler withering show below the line with a net line. Below it, a table of each source (and losses
+  and net) averaged now and over the last 1 min – 3 h.
 - **Cookies baked** — a running total, stacked by the same sources, from the start of this session (since CookieMgr
   loaded) or from the left edge of the chart.
 
@@ -72,7 +78,8 @@ running total. **▲ Gains** / **▼ Losses** chips show either side alone (the 
 purchase dwarfs everything else) or both.
 
 **Prestige tab** — a **prestige target**: type a number (1–999) and pick a magnitude (thousand, million, …) to see
-levels and cookies to go, when you'll get there at your recent actual CpS, and a progress bar for this run (the
+levels and cookies to go, when you'll get there at your actual CpS over the Prestige chart's window (its 15m … All
+chips), and a progress bar for this run (the
 target is also drawn on the chart when it's in reach). Then prestige level if you ascended now against your current
 level, with how many cookies the next level needs; and **prestige gained per hour**.
 

@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## 2.5.0 — 2026-10-01
+
+- **Raw clicking, properly:** clicks per second × what one click is worth with no effects. A click's value depends
+  on effects twice (click buffs, and the mouse upgrades' share of the *buffed* CpS), so it's computed with the game's
+  own click formula using unbuffed CpS and no buffs. New recorded states: clicks, clicks per second, cookies per
+  click, cookies per click with no effects. The CpS table adds a clicks-per-second row.
+- **Actual CpS gets the Bank framework:** ▲ Gains / ▼ Losses chips (losses off by default) — spending and wrinkler
+  withering below the line with a net line — and a table under it: each source, actual, losses and net, now and over
+  1 min – 3 h.
+- **Fix: hidden lines still sized the y-axis** (e.g. the net line with Losses off), so hiding data didn't rescale.
+  Only drawn series count now, and any setting change redraws every chart on screen.
+- **Log axes ignore inactive time:** bars covering mostly time the game wasn't running don't set the floor; they're
+  trimmed at the bottom.
+- **Prestige ETAs follow the Prestige chart's window** (15m … All) instead of a fixed 15 minutes.
+- **The panel uses the full width** of the middle section, and live tables have fixed column widths (no more
+  jumping or scrollbar).
+
 ## 2.4.0 — 2026-10-01
 
 - **Fix: settings (and running macros, widgets…) lost on refresh/upgrade.** The game only calls a mod's `load()` when
