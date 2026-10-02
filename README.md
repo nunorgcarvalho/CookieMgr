@@ -23,10 +23,10 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 | **Widget** | Something on the game's left panel: a macro's button, the Running now bar, quick stats, events. |
 
-## Features (v2.5)
+## Features (v2.6)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
-**Macros**, **Graphs**, **Events**, **Stock market**, **Wizard tower**, **Widgets** and **Settings**. Hovering an icon slides its name out to the left.
+**Events**, **Graphs**, **Stock market**, **Wizard tower**, **Macros**, **Widgets** and **Settings**. Hovering an icon slides its name out to the left.
 Clicking one opens the CookieMgr panel straight to that page (switching pages directly if it's already open on a
 different one); clicking the page that's already showing closes the panel.
 
@@ -34,7 +34,7 @@ different one); clicking the page that's already showing closes the panel.
 
 ### Graphs
 
-The Graphs page has three tabs — **Cookies**, **Bank** and **Prestige** — of charts drawn from the recorded history
+The Graphs page has two tabs — **Cookies** and **Prestige** — of charts drawn from the recorded history
 (see below), so they survive refreshes and browser restarts. Every chart works the same way:
 
 - **Window:** 1m, 5m, 15m, 1h, 3h, 12h, 1d, 7d or All. Older history is coarser (see Recorded history), and bars simply
@@ -45,13 +45,14 @@ The Graphs page has three tabs — **Cookies**, **Bank** and **Prestige** — of
 - **Smooth:** Off, 5s, 15s, 1m, 5m, 15m or 1h — a centered moving average: each point becomes the average of the
   stretch of time around it (weighted by time, so a smoothed rate is exactly the cookies over that stretch ÷ its
   length). Bars stay as narrow as the screen allows instead of getting wider. Running totals aren't smoothed.
-- **Log scale** (where offered) fits the axis to the data — from just under the smallest bar to just over the
+- **Log scale** (where offered) fits the axis to the data; when there are losses below zero it becomes a signed log
+  scale (logarithmic both ways from zero) — from just under the smallest bar to just over the
   largest, with round ticks — so the variation fills the chart instead of hugging the top. Bars covering mostly time
   the game wasn't running don't count; they're simply trimmed at the bottom.
 - **Axes always fit what's shown:** hiding something (gains, losses, a line) rescales the chart right away.
 - **Scrollable:** drag (or scroll sideways) to look back; **Pause** / **Jump to live**. Every choice is remembered.
 - **Effect shading** behind the chart for every golden-cookie effect (Frenzy, Click frenzy, Elder frenzy, Dragonflight,
-  Clot, …), stacked in lanes when they overlap, and **event markers** for golden/wrath cookies, reindeer, stock trades
+  Clot, …), stacked in lanes (each with the effect's own icon) when they overlap, and **event markers** for golden/wrath cookies, reindeer, stock trades
   and ascensions. Hover anything for details.
 
 **Cookies tab**
@@ -64,18 +65,17 @@ The Graphs page has three tabs — **Cookies**, **Bank** and **Prestige** — of
   wrinklers…) — and the
   multipliers between them: what clicking adds (2 ÷ 1), what effects & golden cookies add (3 ÷ 2), and the total
   (3 ÷ 1). Now and averaged over the last 1, 5, 15 minutes, 1 and 3 hours of active play.
-- **Actual CpS** — what really got baked each second (the derivative of cookies baked), stacked by source:
-  production, clicking, golden cookies & reindeer, other. A dashed line shows the CpS the game displays, for
-  comparison; tiles show how far apart they are. **▲ Gains / ▼ Losses** chips, like the Bank tab: with Losses on,
-  spending and wrinkler withering show below the line with a net line. Below it, a table of each source (and losses
-  and net) averaged now and over the last 1 min – 3 h.
-- **Cookies baked** — a running total, stacked by the same sources, from the start of this session (since CookieMgr
-  loaded) or from the left edge of the chart.
-
-**Bank tab** — cookies in the bank over time; **bank change per second**, with income above the line (by source,
-plus stock sales and other income) and spending and wrinkler withering below it, and a net line; and the same as a
-running total. **▲ Gains** / **▼ Losses** chips show either side alone (the axis rescales to it — handy when one big
-purchase dwarfs everything else) or both.
+- **Actual CpS** — everything that moved the bank each second, in seven categories you pick with chips:
+  **building CpS**, **clicking**, **drops** (Lucky!, chains, storms, reindeer… and wrath losses), **stocks** (bought /
+  sold), **buildings** (bought / sold), **upgrades**, and **other** (wrinklers, sugar lumps, spells, Santa, the dragon…
+  — whatever's left, so the categories always add up to exactly what the bank did). **▲ Gains / ▼ Losses** choose
+  money in (above the line) and out (below it). **✦ CpS-boosted** shows, for building CpS and clicking, the extra that
+  CpS effects (Frenzy, Click frenzy…) add on top of their unboosted part, in a lighter shade. Window, smoothing, log
+  scale (signed when there are losses), effect lanes with icons, and a dashed line for the CpS the game shows. Below
+  it, a table of each category now and averaged over the last 1 min – 3 h, with totals in, out and net.
+- **Cookie bank** — the same, added up from the start of this session or the window: how the bank got where it is.
+  It shares every setting with Actual CpS (chips on either chart change both). With all categories, gains and
+  losses on, the added-up chart traces the real bank exactly (dashed line).
 
 **Prestige tab** — a **prestige target**: type a number (1–999) and pick a magnitude (thousand, million, …) to see
 levels and cookies to go, when you'll get there at your actual CpS over the Prestige chart's window (its 15m … All
@@ -201,8 +201,11 @@ always grab them again). Drag them anywhere; hover for ×.
 - **Quick stats** — CpS, actual CpS over the last minute, cookies in the bank, prestige this run, time to the next level.
 - **Latest events** — the six newest entries in the event log.
 
-Quick stats and Latest events are framed boxes, dragged by their title bar and folded with ▾. Options: show/hide them all, and lock them so they can't be dragged by accident. Positions are kept relative to the
-panel, so they stay put when the window is resized, and they're saved with your settings.
+Quick stats and Latest events are framed boxes, dragged by their title bar and folded with ▾. **Resize** any widget
+from its bottom-right corner: buttons and the status bar scale up or down keeping their shape, framed boxes take any
+width and height. Options: show/hide them all, and lock them so they can't be moved or resized by accident.
+Positions are kept relative to the panel with CSS alone, so widgets follow the window (and Cookie Monster's layout
+changes) smoothly instead of jumping when the page loads; positions and sizes are saved with your settings.
 
 ### Settings
 

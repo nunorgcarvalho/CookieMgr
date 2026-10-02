@@ -114,6 +114,45 @@ CA.GameEvents = (() => {
     });
   }
 
+  // ---- buildings and upgrades --------------------------------------------------------------
+  // Each building has its own buy()/sell() methods (main.js defines them per instance, not on a
+  // prototype); upgrades share Game.Upgrade.prototype.buy. Wrapped once each, measuring the bank
+  // before and after, so bulk buys, sales and refunds land as one event with the exact amount.
+
+  function measured(type, fn, describe) {
+    return function () {
+      const before = Game.cookies;
+      const amountBefore = this.amount;
+      const result = fn.apply(this, arguments);
+      try {
+        const cookies = Game.cookies - before;
+        if (Math.abs(cookies) >= 1) CA.EventLog.add({ type, ...describe(this, cookies, amountBefore), cookies });
+      } catch (e) {
+        /* never break a purchase over a log entry */
+      }
+      return result;
+    };
+  }
+
+  function watchPurchases() {
+    Object.values(Game.Objects || {}).forEach((b) => {
+      if (!b || b.__cmWatched || typeof b.buy !== 'function') return;
+      b.__cmWatched = true;
+      const name = (o, n) => (n === 1 ? o.dname || o.name : o.plural || o.dname || o.name);
+      const desc = (o, cookies, before) => {
+        const n = Math.abs((o.amount || 0) - (before || 0));
+        return { title: `${cookies < 0 ? 'Bought' : 'Sold'} ${n} ${name(o, n)}`, data: { building: o.name, n } };
+      };
+      b.buy = measured('building', b.buy, desc);
+      if (typeof b.sell === 'function') b.sell = measured('building', b.sell, desc);
+    });
+    const U = Game.Upgrade && Game.Upgrade.prototype;
+    if (U && typeof U.buy === 'function' && !U.buy.__cmWatched) {
+      U.buy = measured('upgrade', U.buy, (u) => ({ title: `Bought ${u.dname || u.name}`, data: { upgrade: u.name } }));
+      U.buy.__cmWatched = true;
+    }
+  }
+
   function init() {
     CA.Settings.defineOption({
       key: 'logEmptyWrinklers',
@@ -127,8 +166,12 @@ CA.GameEvents = (() => {
     CA.EventLog.defineType('lump', { name: 'Sugar lump', icon: 'lump', color: '#f2b84b', income: true });
     CA.EventLog.defineType('achievement', { name: 'Achievement', icon: 'trophy', color: '#9be15d' });
     CA.EventLog.defineType('effect', { name: 'Effect', icon: 'sparkle', color: '#42a5f5' });
+    CA.EventLog.defineType('building', { name: 'Building', icon: 'building', color: '#ff7a59' });
+    CA.EventLog.defineType('upgrade', { name: 'Upgrade', icon: 'upgrade', color: '#c77dff' });
     watchLumps();
     watchAchievements();
+    watchPurchases();
+    setInterval(watchPurchases, 5000); // buildings added later (new building types, mods)
     setInterval(pollWrinklers, POLL_MS);
   }
 

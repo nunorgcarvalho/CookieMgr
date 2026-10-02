@@ -2393,3 +2393,55 @@
 #CookieMgrMenu .ca-stages tr.sep td {
   border-top: 1px solid rgba(255, 217, 138, 0.25);
 }
+
+/* ---------- v2.6: resizable widgets ---------- */
+
+#CookieMgrWidgets .ca-w {
+  transform-origin: 0 0; /* scaling and the percentage translate both anchor at the top-left */
+}
+#CookieMgrWidgets .ca-w-resize {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  z-index: 3;
+  width: 12px;
+  height: 12px;
+  cursor: nwse-resize;
+  opacity: 0;
+  transition: opacity 0.15s;
+  background:
+    linear-gradient(135deg, transparent 45%, rgba(255, 220, 150, 0.9) 45%, rgba(255, 220, 150, 0.9) 55%, transparent 55%),
+    linear-gradient(135deg, transparent 70%, rgba(255, 220, 150, 0.9) 70%, rgba(255, 220, 150, 0.9) 80%, transparent 80%);
+}
+#CookieMgrWidgets .ca-w:hover .ca-w-resize,
+#CookieMgrWidgets .ca-w.resizing .ca-w-resize {
+  opacity: 1;
+}
+#CookieMgrWidgets.locked .ca-w-resize {
+  display: none;
+}
+#CookieMgrWidgets .ca-w.resizing {
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(255, 220, 150, 0.6);
+}
+#CookieMgrWidgets .ca-w.ca-w-bare.resizing {
+  box-shadow: none;
+  outline: 1px dashed rgba(255, 220, 150, 0.6);
+  outline-offset: 3px;
+}
+/* framed boxes given a height: the body fills it and scrolls */
+#CookieMgrWidgets .ca-w.sized {
+  display: flex;
+  flex-direction: column;
+}
+#CookieMgrWidgets .ca-w.sized > .ca-w-body {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+}
+
+/* category chips on the Actual CpS / Cookie bank charts */
+#CookieMgrMenu .ca-togglegroup .ca-chip:not(.on) .ca-sw {
+  opacity: 0.35;
+}

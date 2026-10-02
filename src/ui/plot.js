@@ -22,7 +22,7 @@ CA.UI.Plot = (() => {
   const BAR_PX = 5; // target on-screen width (bar + gap) of one bar
   const MAX_AUTO_BARS = 240;
   const BAR_GAP_FRAC = 0.18;
-  const LANE_H = 8;
+  const LANE_H = 12;
   const LANE_GAP = 2;
   const MAX_LANES = 6;
   const GAP_MS = 5000; // matches the recorder's MAX_GAP_MS
@@ -297,6 +297,16 @@ CA.UI.Plot = (() => {
     return CA.UI.Chart.niceLinearScale(lo, hi, 4).ticks.filter((v) => v >= lo && v <= hi);
   }
 
+  /** The game's icon sheet, loaded once for drawing effect icons (null until it has loaded). */
+  let sheet = null;
+  function iconSheet() {
+    if (!sheet && typeof Image !== 'undefined') {
+      sheet = new Image();
+      sheet.src = CA.Util.res('img/icons.png');
+    }
+    return sheet && sheet.complete && sheet.naturalWidth ? sheet : null;
+  }
+
   /** The share of a bar's width the game was actually running for (1 when unknown). */
   function activeShare(b) {
     const raw = b.raw || b.bar || b;
@@ -342,13 +352,14 @@ CA.UI.Plot = (() => {
    */
   function create(spec) {
     const id = spec.id;
-    const key = (k) => `plot.${id}.${k}`;
+    // settingsOf: use another chart's window / smoothing / log choices (charts that belong together)
+    const key = (k) => `plot.${spec.settingsOf || id}.${k}`;
     const height = spec.height || 220;
     const fmt = spec.fmt || ((v) => beautify(v, 0));
     const tipFmt = spec.tipFmt || ((v) => beautify(v) + (spec.unit || ''));
 
     // persisted per-plot choices (kept out of the generic Settings list)
-    const def = (k, d) => S().defineOption({ key: key(k), group: 'plot', name: k, desc: '', default: d });
+    const def = (k, d) => S().optionsIn('plot').some((o) => o.key === key(k)) || S().defineOption({ key: key(k), group: 'plot', name: k, desc: '', default: d });
     def('win', spec.window != null ? spec.window : (spec.windows || [300])[0]);
     if (spec.smooth !== false) def('smooth', spec.smooth || 0);
     if (spec.log != null) def('log', !!spec.log);
@@ -394,6 +405,22 @@ CA.UI.Plot = (() => {
         (spec.stats ? '<div class="ca-stats" data-plot-stats></div>' : '') +
         '<div class="ca-toolbar">' +
         `<div class="ca-chipgroup" title="How much history to show">${wins.map((s) => setChip('win', s, windowLabel(s))).join('')}</div>` +
+        (spec.toggleGroups || [])
+          .map(
+            (g) =>
+              `<div class="ca-chipgroup ca-togglegroup">${g.label ? `<span class="ca-chip-label">${esc(g.label)}</span>` : ''}` +
+              g.toggles
+                .map((t) =>
+                  chip(
+                    (t.color ? `<i class="ca-sw" style="background:${t.color}"></i>` : '') + t.label,
+                    `data-plot-toggle="${t.setting}" data-pressed-key="${t.setting}"`,
+                    t.title
+                  )
+                )
+                .join('') +
+              '</div>'
+          )
+          .join('') +
         (spec.choices || [])
           .map(
             (c) =>
@@ -522,7 +549,24 @@ CA.UI.Plot = (() => {
       let yMin;
       let yMax;
       let ticks = [];
-      if (log) {
+      // Signed log ("symlog") when a log chart has negative values: sign(v)·log10(1 + |v| / C),
+      // linear-ish near zero and logarithmic beyond C, so gains and losses both read on one axis.
+      let symC = 0;
+      if (log && minV < 0) {
+        symC = isFinite(minPos) ? minPos / 10 : 1;
+        const sym = (v) => Math.sign(v) * Math.log10(1 + Math.abs(v) / symC);
+        const lo = Math.min(minV, 0) * 1.08;
+        const hi = Math.max(maxV, 0) * 1.08;
+        yMin = lo;
+        yMax = hi;
+        const side = (max) => (max > symC * 2 ? logTicks(symC * 2, max) : []);
+        ticks = side(-lo)
+          .map((t) => -t)
+          .reverse()
+          .concat([0], side(hi));
+        while (ticks.length > 9) ticks = ticks.filter((t, i) => t === 0 || i % 2 === 0);
+        lastData.sym = sym;
+      } else if (log) {
         // Fit the axis to the data instead of whole powers of ten, so the variation fills the
         // chart: just under the smallest bar total / line value, just over the largest.
         if (!isFinite(minPos)) minPos = 1;
@@ -549,7 +593,8 @@ CA.UI.Plot = (() => {
         ({ yMin, yMax, ticks } = CA.UI.Chart.niceLinearScale(minV, maxV));
       }
 
-      lastData.scale = { yMin, yMax, log, ticks }; // the axis this draw chose (debugging, tests)
+      lastData.scale = { yMin, yMax, log, symlog: symC > 0, ticks }; // the axis this draw chose (debugging, tests)
+      const sym = symC > 0 ? (val) => Math.sign(val) * Math.log10(1 + Math.abs(val) / symC) : null;
       padL = CA.UI.Chart.dynamicPadLeft(ctx, FONT, ticks.map(fmt), MIN_PAD_L, PAD_L_MARGIN);
       const plot = { x: padL, y: PAD.t, w: w - padL - PAD.r, h: h - PAD.t - PAD.b };
       const chartH = plot.h - lanesH - (laneCount ? 4 : 0);
@@ -557,7 +602,8 @@ CA.UI.Plot = (() => {
       const xOf = (x) => plot.x + ((x - v.x0) / v.W) * plot.w;
       const yOf = (val) => {
         let f;
-        if (log) f = (Math.log10(Math.max(val, yMin)) - Math.log10(yMin)) / (Math.log10(yMax) - Math.log10(yMin));
+        if (sym) f = (sym(val) - sym(yMin)) / (sym(yMax) - sym(yMin) || 1);
+        else if (log) f = (Math.log10(Math.max(val, yMin)) - Math.log10(yMin)) / (Math.log10(yMax) - Math.log10(yMin));
         else f = (val - yMin) / (yMax - yMin || 1);
         return plot.y + chartH - Math.max(0, Math.min(1, f)) * chartH;
       };
@@ -609,7 +655,7 @@ CA.UI.Plot = (() => {
       ctx.beginPath();
       ctx.rect(plot.x, plot.y - 4, plot.w, chartH + 8);
       ctx.clip();
-      const y0 = yOf(log ? yMin : Math.max(yMin, Math.min(yMax, 0)));
+      const y0 = yOf(log && !sym ? yMin : Math.max(yMin, Math.min(yMax, 0)));
       const hoverBar = layout && layout.hoverBar;
       bars.forEach((b) => {
         const xL = xOf(b.x0);
@@ -712,16 +758,23 @@ CA.UI.Plot = (() => {
         roundRect(a, y, Math.max(2, b - a), LANE_H, 3);
         ctx.fill();
         ctx.globalAlpha = 1;
+        // the effect's own icon (from the game's icon sheet) at the start of its lane
+        let textX = a + 4;
+        const img = iconSheet();
+        if (iv.icon && img && b - a >= LANE_H) {
+          ctx.drawImage(img, iv.icon[0] * 48, iv.icon[1] * 48, 48, 48, a + 1, y, LANE_H, LANE_H);
+          textX = a + LANE_H + 3;
+        }
         if (b - a > 46 && iv.label) {
           ctx.save();
           ctx.beginPath();
           ctx.rect(a, y, b - a, LANE_H);
           ctx.clip();
-          ctx.font = 'bold 8px Tahoma, Arial, sans-serif';
+          ctx.font = 'bold 9px Tahoma, Arial, sans-serif';
           ctx.textAlign = 'left';
           ctx.textBaseline = 'middle';
           ctx.fillStyle = 'rgba(0,0,0,0.75)';
-          ctx.fillText(iv.label, a + 4, y + LANE_H / 2 + 0.5);
+          ctx.fillText(iv.label, textX, y + LANE_H / 2 + 0.5);
           ctx.restore();
         }
         laneRects.push({ iv, x0: a, x1: b, y, y1: y + LANE_H });

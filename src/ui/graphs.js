@@ -26,19 +26,26 @@ CA.UI.Graphs = (() => {
     { key: 'earnGolden', name: 'Golden cookies & reindeer', color: '#ff9f43' },
     { key: 'earnOther', name: 'Other', color: '#b39ddb' },
   ];
-  const BANK_IN = SOURCES.concat([{ key: 'bankOtherIn', name: 'Other income (stock sales, …)', color: '#4fd6e0' }]);
-  const BANK_OUT = [
-    { key: 'spent', name: 'Spent', color: '#e5484d' },
-    { key: 'withered', name: 'Withered by wrinklers', color: '#8d6e63' },
+
+  // The ledger categories (features/gameStates.js): every change to the bank, in and out. Building
+  // CpS and clicking also have a "boost" part — the extra from CpS effects (Frenzy, Click frenzy…).
+  const CATS = [
+    { id: 'build', name: 'Building CpS', icon: 'building', color: '#f5c451', boostColor: '#fff0b0', in: 'lBuild', boost: 'lBuildBoost' },
+    { id: 'click', name: 'Clicking', icon: 'cookie', color: '#7fe08b', boostColor: '#d2ffd8', in: 'lClick', boost: 'lClickBoost' },
+    { id: 'drops', name: 'Drops', icon: 'sparkle', color: '#ff9f43', outColor: '#b8651b', in: 'lDropsIn', out: 'lDropsOut' },
+    { id: 'stocks', name: 'Stocks', icon: 'stocks', color: '#4fd6e0', outColor: '#2a8a93', in: 'lStocksIn', out: 'lStocksOut' },
+    { id: 'buildings', name: 'Buildings', icon: 'building', color: '#ff7a59', outColor: '#b8442a', in: 'lBldIn', out: 'lBldOut' },
+    { id: 'upgrades', name: 'Upgrades', icon: 'upgrade', color: '#c77dff', outColor: '#8a46c4', out: 'lUpgOut' },
+    { id: 'other', name: 'Other', icon: 'puzzle', color: '#9db4cc', outColor: '#5f7590', in: 'lOtherIn', out: 'lOtherOut' },
   ];
+  const LEDGER_FIELDS = [].concat(...CATS.map((c) => [c.in, c.boost, c.out].filter(Boolean)));
   const C_CPS = '#f5c451';
   const C_CLICK = '#7fe08b';
   const C_BASE = '#9db4cc';
   const C_SHOWN = '#ffffff';
 
   const TABS = [
-    { id: 'cookies', label: 'Cookies', icon: 'cookie', plots: ['cps', 'actual', 'baked'] },
-    { id: 'bank', label: 'Bank', icon: 'dollar', plots: ['bank', 'bankflow', 'bankcum'] },
+    { id: 'cookies', label: 'Cookies', icon: 'cookie', plots: ['cps', 'actual', 'ledgerCum'] },
     { id: 'prestige', label: 'Prestige', icon: 'ascend', plots: ['prestige', 'prestigeRate'], top: () => targetCardHtml() },
   ];
 
@@ -72,6 +79,7 @@ CA.UI.Graphs = (() => {
       x1: v.xAt(iv.end || now),
       color: CA.History.colorFor(iv.name),
       label: iv.label,
+      icon: iv.icon,
       tip: () => intervalTip(iv),
       iv,
     }));
@@ -108,23 +116,6 @@ CA.UI.Graphs = (() => {
   /** A flow as a per-second rate over the seconds it was actually measured. */
   const coverOf = (b, k) => (b.cover && b.cover[k] > 0 ? b.cover[k] : b.secs);
   const rate = (b, k) => (Number.isFinite(b.v[k]) && coverOf(b, k) > 0 ? b.v[k] / coverOf(b, k) : 0);
-
-  /** Running totals of flows across bars, from `startX` (bars before it are dropped). */
-  function cumulative(bars, keys, startX, sign = {}) {
-    const run = {};
-    keys.forEach((k) => (run[k] = 0));
-    const out = [];
-    bars.forEach((b) => {
-      if (b.x1 <= startX) return;
-      const parts = {};
-      keys.forEach((k) => {
-        run[k] += (b.v[k] || 0) * (sign[k] || 1);
-        parts[k] = run[k];
-      });
-      out.push({ x0: b.x0, x1: b.x1, secs: b.secs, parts, raw: b });
-    });
-    return out;
-  }
 
   function cumulativeStart(v) {
     return v.opt('from') === 'session' ? Math.max(v.x0, v.xAt(SESSION_START)) : v.x0;
@@ -311,8 +302,8 @@ CA.UI.Graphs = (() => {
   }
 
   /** Per-second averages of flows over the newest `seconds` of active play, over the seconds
-   *  they were actually measured. */
-  function recentFlows(seconds, keys) {
+   *  they were actually measured (frames where `gate` is known). */
+  function recentFlows(seconds, keys, gate) {
     const frames = CA.Recorder.frames();
     const from = CA.Recorder.activeNow() - seconds * SEC;
     const sum = {};
@@ -320,7 +311,7 @@ CA.UI.Graphs = (() => {
     let secs = 0;
     for (let i = frames.length - 1; i >= 0 && frames[i].a > from; i--) {
       const f = frames[i];
-      if (!Number.isFinite(f.earned)) continue; // first frame after a gap: unknown
+      if (!Number.isFinite(f[gate])) continue; // first frame after a gap, or recorded before this existed
       secs += f.dt || 0;
       keys.forEach((k) => (sum[k] += f[k] || 0));
     }
@@ -330,27 +321,70 @@ CA.UI.Graphs = (() => {
     return out;
   }
 
-  /** The table under Actual CpS: each source, the total, and — with Losses on — what left the bank. */
-  function actualTable() {
-    const { beautify, signed } = F();
-    const { gains, losses } = actualSides();
-    const keys = SOURCES.map((x) => x.key).concat(['earned', 'spent', 'withered']);
-    const vals = TABLE_COLS.map((c) => recentFlows(c.s || 3, keys));
-    const rows = [];
-    if (gains) {
-      SOURCES.forEach((x) => rows.push({ label: x.name, fn: (r) => beautify(r[x.key]) + '/s', color: x.color }));
-      rows.push({ label: 'Actual', desc: 'all of the above', fn: (r) => beautify(r.earned) + '/s', strong: true, sign: '=' });
-    }
-    if (losses) {
-      BANK_OUT.forEach((x, i) => rows.push({ label: x.name, fn: (r) => '−' + beautify(r[x.key]) + '/s', color: x.color, sep: i === 0 && gains }));
-      if (gains) rows.push({ label: 'Net', desc: 'actual − spent − withered', fn: (r) => signed(r.earned - r.spent - r.withered) + '/s', strong: true, sign: '=' });
-    }
-    if (!rows.length) return '<div class="ca-card-note">Pick Gains, Losses or both above.</div>';
-    return spansTable(rows, vals);
+  // ---- the ledger: Actual CpS and the cookie bank ------------------------------------------
+  // One chart of everything that moves the bank, by category — pick which categories, gains
+  // and/or losses, and whether the CpS-boosted extra is shown on top of building CpS and
+  // clicking — and below it the same, accumulated: the bank. Both share every setting.
+
+  function ledgerView() {
+    return {
+      cats: CATS.filter((c) => S().get(`cat.${c.id}`) !== false),
+      gains: S().get('actualGains') !== false,
+      losses: !!S().get('actualLosses'),
+      boosted: S().get('cpsBoosted') !== false,
+    };
   }
 
-  function actualSides() {
-    return { gains: S().get('actualGains') !== false, losses: !!S().get('actualLosses') };
+  /** The bar series for what's selected: { key, field, sign, name, color } (key = part key). */
+  function ledgerParts() {
+    const { cats, gains, losses, boosted } = ledgerView();
+    const out = [];
+    cats.forEach((c) => {
+      if (gains && c.in) out.push({ key: c.id, field: c.in, sign: 1, name: c.boost ? `${c.name}${boosted ? ' (unboosted)' : ''}` : c.name, color: c.color });
+      if (gains && boosted && c.boost) out.push({ key: `${c.id}Boost`, field: c.boost, sign: 1, name: `${c.name}: CpS boost`, color: c.boostColor, boost: true });
+      if (losses && c.out) out.push({ key: `${c.id}Out`, field: c.out, sign: -1, name: `${c.name} (out)`, color: c.outColor || c.color });
+    });
+    return out;
+  }
+
+  const LEDGER_TOGGLES = () => [
+    {
+      label: 'Include',
+      toggles: CATS.map((c) => ({ setting: `cat.${c.id}`, label: c.name, color: c.color, title: `Include ${c.name.toLowerCase()}` })),
+    },
+    {
+      label: '',
+      toggles: [
+        { setting: 'actualGains', label: '▲ Gains', title: 'Cookies coming into the bank' },
+        { setting: 'actualLosses', label: '▼ Losses', title: 'Cookies leaving the bank' },
+        { setting: 'cpsBoosted', label: '✦ CpS-boosted', title: 'Show the extra that CpS effects (Frenzy, Click frenzy…) add to building CpS and clicking, on top of the unboosted part' },
+      ],
+    },
+  ];
+  const ledgerEmpty = () => (ledgerParts().length ? 'Collecting data…' : 'Pick some categories, and Gains and/or Losses.');
+
+  function ledgerTable() {
+    const { beautify, signed } = F();
+    const { cats, gains, losses, boosted } = ledgerView();
+    const fields = LEDGER_FIELDS;
+    const vals = TABLE_COLS.map((c) => recentFlows(c.s || 3, fields, 'lBuild'));
+    const rows = [];
+    let first = true;
+    cats.forEach((c) => {
+      const parts = [];
+      if (gains && c.in) parts.push({ label: c.boost && boosted ? `${c.name}, unboosted` : c.name, fn: (r) => beautify(r[c.in]) + '/s', color: c.color });
+      if (gains && boosted && c.boost) parts.push({ label: `${c.name}, CpS boost`, fn: (r) => '+' + beautify(r[c.boost]) + '/s', color: c.boostColor });
+      if (losses && c.out) parts.push({ label: `${c.name}, out`, fn: (r) => '−' + beautify(r[c.out]) + '/s', color: c.outColor || c.color });
+      parts.forEach((x, i) => rows.push({ ...x, sep: i === 0 && !first }));
+      if (parts.length) first = false;
+    });
+    if (!rows.length) return '<div class="ca-card-note">Pick some categories, and Gains and/or Losses.</div>';
+    const shown = ledgerParts();
+    const total = (r, sign) => shown.filter((x) => x.sign === sign).reduce((n, x) => n + (r[x.field] || 0), 0);
+    if (gains) rows.push({ label: 'In', desc: 'everything above coming in', fn: (r) => beautify(total(r, 1)) + '/s', strong: true, sign: '=', sep: true });
+    if (losses) rows.push({ label: 'Out', desc: 'everything above going out', fn: (r) => '−' + beautify(total(r, -1)) + '/s', strong: true, sign: '=', sep: !gains });
+    if (gains && losses) rows.push({ label: 'Net', fn: (r) => signed(total(r, 1) - total(r, -1)) + '/s', strong: true, sign: '=' });
+    return spansTable(rows, vals);
   }
 
   const actualPlot = () =>
@@ -358,273 +392,144 @@ CA.UI.Graphs = (() => {
       id: 'actual',
       title: 'Actual CpS',
       icon: 'bolt',
-      note: 'What really got baked each second, split by where it came from — golden cookie payouts, Frenzy and everything else included. The dashed line is what the game shows as CpS (plus clicking). Turn on Losses to see spending and wrinklers below the line, like the Bank tab.',
+      note: 'Everything that moved the bank each second, by category. Building CpS and clicking can show the extra that CpS effects add (✦ CpS-boosted) on top of their unboosted part. Losses show below the line.',
       windows: WINDOWS,
       window: 900,
       smooth: 15,
       log: false,
       unit: '/s',
       totalLabel: 'Net',
-      toggles: [
-        { setting: 'actualGains', label: '▲ Gains', title: 'Cookies baked, by source' },
-        { setting: 'actualLosses', label: '▼ Losses', title: 'Cookies spent and withered by wrinklers' },
-      ],
+      tipFmt: (val) => (val < 0 ? '−' : '') + F().beautify(Math.abs(val)) + '/s',
+      toggleGroups: LEDGER_TOGGLES(),
       build(v) {
-        const { gains, losses } = actualSides();
-        const bars = v.bucketize(SOURCES.map((x) => x.key).concat(['earned', 'cps', 'click', 'spent', 'withered']));
+        const parts = ledgerParts();
+        const { gains, losses, cats } = ledgerView();
+        const raw = v.bucketize(LEDGER_FIELDS.concat(['cps', 'click']));
         const ivs = effects(v);
+        const bars = raw.map((b) => {
+          const o = {};
+          parts.forEach((x) => (o[x.key] = x.sign * rate(b, x.field)));
+          return { x0: b.x0, x1: b.x1, parts: o, raw: b };
+        });
         let sum = 0;
         let secs = 0;
-        bars.forEach((b) => {
-          if (!Number.isFinite(b.v.earned)) return;
-          sum += b.v.earned;
-          secs += coverOf(b, 'earned');
+        raw.forEach((b) => {
+          if (!Number.isFinite(b.v.lBuild)) return;
+          parts.forEach((x) => (sum += x.sign * (b.v[x.field] || 0)));
+          secs += coverOf(b, 'lBuild');
         });
         const avg = secs ? sum / secs : NaN;
-        const bar = (x) => ({ key: x.key, name: x.name, color: x.color, type: 'bar' });
-        const series = (gains ? SOURCES.map(bar) : [])
-          .concat(losses ? BANK_OUT.map(bar) : [])
-          .concat(gains ? [{ key: 'shown', name: 'Shown CpS + clicking', color: C_SHOWN, type: 'line', dash: true, width: 1.2 }] : [])
-          .concat(gains && losses ? [{ key: 'net', name: 'Net (actual − losses)', color: '#ffd98a', type: 'line', width: 1.4 }] : []);
-        const out = bars.map((b) => {
-          const parts = {};
-          if (gains) SOURCES.forEach((x) => (parts[x.key] = rate(b, x.key)));
-          if (losses) BANK_OUT.forEach((x) => (parts[x.key] = -rate(b, x.key)));
-          return { x0: b.x0, x1: b.x1, parts, raw: b };
-        });
+        const showShown = gains && cats.some((c) => c.id === 'build' || c.id === 'click');
         return {
-          series,
-          bars: out,
+          series: parts
+            .map((x) => ({ key: x.key, name: x.name, color: x.color, type: 'bar' }))
+            .concat(showShown ? [{ key: 'shown', name: 'CpS the game shows (+ clicking)', color: C_SHOWN, type: 'line', dash: true, width: 1.2 }] : [])
+            .concat(gains && losses ? [{ key: 'net', name: 'Net', color: '#ffd98a', type: 'line', width: 1.4 }] : []),
+          bars,
           lines: {
-            shown: P().linePoints(bars, (b) => (Number.isFinite(b.v.cps) ? b.v.cps + (b.v.click || 0) : undefined)),
-            net: bars.map((b) => ({ x: (b.x0 + b.x1) / 2, x0: b.x0, x1: b.x1, bar: b, v: rate(b, 'earned') - rate(b, 'spent') - rate(b, 'withered') })),
+            shown: P().linePoints(raw, (b) => (Number.isFinite(b.v.cps) ? b.v.cps + (b.v.click || 0) : undefined)),
+            net: bars.map((b) => ({ x: (b.x0 + b.x1) / 2, x0: b.x0, x1: b.x1, bar: b.raw, v: Object.values(b.parts).reduce((n, y) => n + (y || 0), 0) })),
           },
-          hlines: gains && Number.isFinite(avg) ? [{ v: avg, label: `avg ${F().beautify(avg)}/s`, color: 'rgba(255,200,120,0.7)' }] : [],
+          hlines: Number.isFinite(avg) && parts.length ? [{ v: avg, label: `avg ${F().signed(avg)}/s`, color: 'rgba(255,200,120,0.7)' }] : [],
           intervals: ivs,
           markers: markers(v, ['golden', 'wrath', 'reindeer', 'ascend'], ivs),
-          empty: gains || losses ? 'Collecting data…' : 'Pick Gains, Losses or both below.',
-          sum,
-          secs,
-          bars0: bars,
+          empty: ledgerEmpty(),
+          raw,
+          parts,
         };
       },
       stats(v, data) {
-        const { tile, beautify } = F();
-        const tot = {};
-        SOURCES.forEach((x) => (tot[x.key] = 0));
-        let shown = 0;
-        let shownSecs = 0;
-        data.bars0.forEach((b) => {
-          SOURCES.forEach((x) => (tot[x.key] += b.v[x.key] || 0));
-          if (Number.isFinite(b.v.cps)) {
-            shown += (b.v.cps + (b.v.click || 0)) * coverOf(b, 'cps');
-            shownSecs += coverOf(b, 'cps');
-          }
+        const { tile, beautify, signed } = F();
+        let inn = 0;
+        let out = 0;
+        let boost = 0;
+        let secs = 0;
+        data.raw.forEach((b) => {
+          if (!Number.isFinite(b.v.lBuild)) return;
+          secs += coverOf(b, 'lBuild');
+          data.parts.forEach((x) => {
+            const val = b.v[x.field] || 0;
+            if (x.sign > 0) inn += val;
+            else out += val;
+            if (x.boost) boost += val;
+          });
         });
-        const actual = data.secs ? data.sum / data.secs : 0;
-        const shownAvg = shownSecs ? shown / shownSecs : 0;
-        const share = (k) => (data.sum > 0 ? Math.round((tot[k] / data.sum) * 100) + '%' : '—');
+        const per = (n) => (secs ? n / secs : 0);
         return (
-          tile('Actual', beautify(actual) + '/s', 'average, this window') +
-          tile('Shown', beautify(shownAvg) + '/s', 'CpS + clicking') +
-          tile('Actual ÷ shown', shownAvg > 0 ? `×${(actual / shownAvg).toFixed(2)}` : '—', 'extra from everything else') +
-          tile('Golden share', share('earnGolden'), 'of cookies baked')
+          tile('In', beautify(per(inn)) + '/s', 'average, this window') +
+          tile('Out', beautify(per(out)) + '/s', 'average, this window') +
+          tile('Net', signed(per(inn - out)) + '/s') +
+          tile('CpS boost', inn > 0 ? Math.round((boost / inn) * 100) + '%' : '—', 'of what came in')
         );
       },
-      footer: () => actualTable(),
+      footer: () => ledgerTable(),
     });
 
-  const bakedPlot = () =>
+  const ledgerCumPlot = () =>
     P().create({
-      id: 'baked',
-      title: 'Cookies baked',
-      icon: 'cookie',
-      note: 'Running total of cookies baked, split by source.',
+      id: 'ledgerCum',
+      settingsOf: 'actual', // same window, log scale and choices as Actual CpS
+      title: 'Cookie bank',
+      icon: 'dollar',
+      note: 'The same categories, added up from the start: how the bank got to where it is. With everything included it traces the real bank (dashed).',
       windows: WINDOWS,
-      window: 3600,
+      window: 900,
       smooth: false,
       log: false,
       choices: [FROM],
+      totalLabel: 'Net',
+      tipFmt: (val) => F().signed(val),
+      toggleGroups: LEDGER_TOGGLES(),
       build(v) {
-        const keys = SOURCES.map((s) => s.key);
+        const parts = ledgerParts();
+        const { gains, losses } = ledgerView();
         const start = cumulativeStart(v);
-        const bars = cumulative(v.bucketize(keys), keys, start);
+        const raw = v.bucketize(LEDGER_FIELDS.concat(['cookies']));
+        const run = {};
+        parts.forEach((x) => (run[x.key] = 0));
+        // the bank where the chart starts: the last frame at or before the start (else the first one)
+        const before = v.frames.filter((f) => f[v.key] <= start && Number.isFinite(f.cookies)).pop();
+        let bank0 = before ? before.cookies : null;
+        const bars = [];
+        const actual = [];
+        raw.forEach((b) => {
+          if (b.x1 <= start) return;
+          const o = {};
+          parts.forEach((x) => {
+            run[x.key] += x.sign * (b.v[x.field] || 0);
+            o[x.key] = run[x.key];
+          });
+          bars.push({ x0: b.x0, x1: b.x1, parts: o, raw: b });
+          if (bank0 === null && Number.isFinite(b.first.cookies)) bank0 = b.first.cookies;
+          if (bank0 !== null && Number.isFinite(b.v.cookies)) actual.push({ x: b.x1, x0: b.x0, x1: b.x1, bar: b, v: b.v.cookies - bank0 });
+        });
         return {
-          series: SOURCES.map((s) => ({ key: s.key, name: s.name, color: s.color, type: 'bar' })),
+          series: parts
+            .map((x) => ({ key: x.key, name: x.name, color: x.color, type: 'bar' }))
+            .concat(gains && losses ? [{ key: 'net', name: 'Net (selected)', color: '#ffd98a', type: 'line', width: 1.4 }] : [])
+            .concat([{ key: 'bank', name: 'Bank, actual change', color: C_SHOWN, type: 'line', dash: true, width: 1.2 }]),
           bars,
+          lines: {
+            net: bars.map((b) => ({ x: b.x1, x0: b.x0, x1: b.x1, v: Object.values(b.parts).reduce((n, y) => n + (y || 0), 0) })),
+            bank: actual,
+          },
           markers: markers(v, ['ascend'], []),
-          empty: v.opt('from') === 'session' && start >= v.x1 ? 'Nothing baked yet this session.' : 'Collecting data…',
-          totals: bars.length ? bars[bars.length - 1].parts : null,
-          start,
-        };
-      },
-      stats(v, data) {
-        const { tile, beautify, span } = F();
-        const t = data.totals || {};
-        const total = SOURCES.reduce((n, s) => n + (t[s.key] || 0), 0);
-        const pct = (k) => (total > 0 ? Math.round(((t[k] || 0) / total) * 100) + '%' : '—');
-        const secs = data.bars.reduce((n, b) => n + b.secs, 0);
-        return (
-          tile('Baked', beautify(total), secs ? `in ${span(secs)} of play` : '') +
-          tile('Production', pct('earnProduction')) +
-          tile('Clicking', pct('earnClick')) +
-          tile('Golden & other', total > 0 ? Math.round((((t.earnGolden || 0) + (t.earnOther || 0)) / total) * 100) + '%' : '—')
-        );
-      },
-    });
-
-  // ---- Bank tab ---------------------------------------------------------------------------
-
-  const bankPlot = () =>
-    P().create({
-      id: 'bank',
-      title: 'Cookies in bank',
-      icon: 'dollar',
-      windows: WINDOWS,
-      window: 3600,
-      log: false,
-      build(v) {
-        const bars = v.bucketize(['cookies']);
-        const ivs = effects(v);
-        return {
-          series: [{ key: 'cookies', name: 'Cookies in bank', color: C_CPS, type: 'area', width: 1.8 }],
-          lines: { cookies: P().linePoints(bars, (b) => b.v.cookies) },
-          intervals: ivs,
-          markers: markers(v, ['golden', 'wrath', 'reindeer', 'ascend', 'trade'], ivs),
+          empty: ledgerEmpty(),
+          bank0,
           bars0: bars,
         };
       },
       stats(v, data) {
         const { tile, beautify, signed } = F();
-        const pts = data.lines.cookies;
-        if (!pts.length) return tile('Now', '—');
-        let lo = Infinity;
-        let hi = -Infinity;
-        pts.forEach((p) => {
-          lo = Math.min(lo, p.v);
-          hi = Math.max(hi, p.v);
-        });
+        const last = data.bars0[data.bars0.length - 1];
+        const sel = last ? Object.values(last.parts).reduce((n, y) => n + (y || 0), 0) : 0;
         return (
-          tile('Now', beautify(pts[pts.length - 1].v)) +
-          tile('Change', signed(pts[pts.length - 1].v - pts[0].v), 'this window') +
-          tile('Lowest', beautify(lo)) +
-          tile('Highest', beautify(hi))
+          tile('Bank at start', data.bank0 === null ? '—' : beautify(data.bank0)) +
+          tile('Bank now', beautify(Game.cookies || 0)) +
+          tile('Change', data.bank0 === null ? '—' : signed((Game.cookies || 0) - data.bank0), 'actual') +
+          tile('Selected categories', signed(sel), 'added up')
         );
       },
-    });
-
-  const bankKeys = BANK_IN.concat(BANK_OUT).map((s) => s.key);
-  const OUT_SIGN = { spent: -1, withered: -1 };
-  const netOf = (parts) => bankKeys.reduce((n, k) => n + (parts[k] || 0), 0);
-
-  // Gains / Losses chips (shared by both bank-change charts): hide one side so the other gets
-  // the whole height — one big purchase can otherwise flatten everything else. The net line
-  // only makes sense with both.
-  const BANK_TOGGLES = [
-    { setting: 'bankGains', label: '▲ Gains', title: 'Show cookies coming into the bank' },
-    { setting: 'bankLosses', label: '▼ Losses', title: 'Show cookies leaving the bank (spending, wrinklers)' },
-  ];
-  function bankSides() {
-    return { gains: S().get('bankGains') !== false, losses: S().get('bankLosses') !== false };
-  }
-  function bankSeries() {
-    const { gains, losses } = bankSides();
-    const bar = (s) => ({ key: s.key, name: s.name, color: s.color, type: 'bar' });
-    return (gains ? BANK_IN.map(bar) : [])
-      .concat(losses ? BANK_OUT.map(bar) : [])
-      .concat(gains && losses ? [{ key: 'net', name: 'Net change', color: C_SHOWN, type: 'line', width: 1.4 }] : []);
-  }
-  /** Keeps only the parts of the sides being shown, so the y axis fits just those. */
-  function bankParts(parts) {
-    const { gains, losses } = bankSides();
-    const out = {};
-    if (gains) BANK_IN.forEach((s) => (out[s.key] = parts[s.key]));
-    if (losses) BANK_OUT.forEach((s) => (out[s.key] = parts[s.key]));
-    return out;
-  }
-  const bankEmpty = () => (bankSides().gains || bankSides().losses ? 'Collecting data…' : 'Pick Gains, Losses or both below.');
-
-  const bankFlowPlot = () =>
-    P().create({
-      id: 'bankflow',
-      title: 'Bank change per second',
-      icon: 'bolt',
-      note: 'Everything that moved the bank: cookies coming in above the line (by source), going out below it.',
-      windows: WINDOWS,
-      window: 900,
-      smooth: 15,
-      toggles: BANK_TOGGLES,
-      unit: '/s',
-      totalLabel: 'Net',
-      tipFmt: (val) => F().signed(val) + '/s',
-      fmt: (val) => F().beautify(val, 0),
-      build(v) {
-        const raw = v.bucketize(bankKeys);
-        const bars = raw.map((b) => {
-          const parts = {};
-          bankKeys.forEach((k) => (parts[k] = rate(b, k) * (OUT_SIGN[k] || 1)));
-          return { x0: b.x0, x1: b.x1, parts, raw: b };
-        });
-        const totals = {};
-        let secs = 0;
-        raw.forEach((b) => {
-          secs += coverOf(b, 'spent');
-          bankKeys.forEach((k) => (totals[k] = (totals[k] || 0) + (b.v[k] || 0) * (OUT_SIGN[k] || 1)));
-        });
-        return {
-          series: bankSeries(),
-          bars: bars.map((b) => ({ ...b, parts: bankParts(b.parts) })),
-          lines: { net: bars.map((b) => ({ x: (b.x0 + b.x1) / 2, x0: b.x0, x1: b.x1, bar: b.raw, v: netOf(b.parts) })) },
-          markers: markers(v, ['ascend', 'trade'], []),
-          empty: bankEmpty(),
-          totals,
-          secs,
-        };
-      },
-      stats: (v, data) => bankStats(data, true),
-    });
-
-  function bankStats(data, perSecond) {
-    const { tile, beautify, signed } = F();
-    const t = data.totals || {};
-    const d = perSecond ? data.secs || 0 : 1;
-    if (!d) return tile('Net', '—');
-    const income = BANK_IN.reduce((n, s) => n + (t[s.key] || 0), 0);
-    const out = BANK_OUT.reduce((n, s) => n + (t[s.key] || 0), 0);
-    const u = perSecond ? '/s' : '';
-    return (
-      tile('Net', signed((income + out) / d) + u, perSecond ? 'average, this window' : '') +
-      tile('In', beautify(income / d) + u) +
-      tile('Spent', beautify(-(t.spent || 0) / d) + u) +
-      tile('Withered', beautify(-(t.withered || 0) / d) + u, 'by wrinklers')
-    );
-  }
-
-  const bankCumPlot = () =>
-    P().create({
-      id: 'bankcum',
-      title: 'Bank change, running total',
-      icon: 'timeline',
-      windows: WINDOWS,
-      window: 3600,
-      smooth: false,
-      choices: [FROM],
-      toggles: BANK_TOGGLES,
-      totalLabel: 'Net',
-      tipFmt: (val) => F().signed(val),
-      build(v) {
-        const start = cumulativeStart(v);
-        const bars = cumulative(v.bucketize(bankKeys), bankKeys, start, OUT_SIGN);
-        return {
-          series: bankSeries(),
-          bars: bars.map((b) => ({ ...b, parts: bankParts(b.parts) })),
-          lines: { net: bars.map((b) => ({ x: b.x1, x0: b.x0, x1: b.x1, v: netOf(b.parts) })) },
-          markers: markers(v, ['ascend'], []),
-          empty: bankEmpty(),
-          totals: bars.length ? bars[bars.length - 1].parts : {},
-        };
-      },
-      stats: (v, data) => bankStats(data, false),
     });
 
   // ---- Prestige tab ---------------------------------------------------------------------------
@@ -866,8 +771,8 @@ CA.UI.Graphs = (() => {
     S().defineOption({ key: 'prestigeTargetUnit', group: 'ui', name: 'Prestige target (magnitude)', desc: '', default: 0 });
     S().defineOption({ key: 'actualGains', group: 'plot', name: 'Actual CpS: gains', desc: '', default: true });
     S().defineOption({ key: 'actualLosses', group: 'plot', name: 'Actual CpS: losses', desc: '', default: false });
-    S().defineOption({ key: 'bankGains', group: 'plot', name: 'Bank charts: gains', desc: '', default: true });
-    S().defineOption({ key: 'bankLosses', group: 'plot', name: 'Bank charts: losses', desc: '', default: true });
+    S().defineOption({ key: 'cpsBoosted', group: 'plot', name: 'Actual CpS: CpS-boosted', desc: '', default: true });
+    CATS.forEach((c) => S().defineOption({ key: `cat.${c.id}`, group: 'plot', name: `Actual CpS: ${c.name}`, desc: '', default: true }));
     S().defineOption({
       key: 'graphEffects',
       group: 'graph',
@@ -887,10 +792,7 @@ CA.UI.Graphs = (() => {
     P().init();
     plots.cps = cpsPlot();
     plots.actual = actualPlot();
-    plots.baked = bakedPlot();
-    plots.bank = bankPlot();
-    plots.bankflow = bankFlowPlot();
-    plots.bankcum = bankCumPlot();
+    plots.ledgerCum = ledgerCumPlot();
     plots.prestige = prestigePlot();
     plots.prestigeRate = prestigeRatePlot();
     CA.Events.on('history', (why) => {
@@ -898,5 +800,5 @@ CA.UI.Graphs = (() => {
     });
   }
 
-  return { init, html, mount, unmount, tick, recent, TABS, SOURCES, plots };
+  return { init, html, mount, unmount, tick, recent, TABS, SOURCES, CATS, plots };
 })();

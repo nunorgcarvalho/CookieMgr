@@ -537,7 +537,7 @@ CA.UI.MacrosPage = (() => {
   }
 
   function init() {
-    CA.UI.Pages.register({ id: 'clickers', label: 'Macros', icon: 'bolt', order: 10, html, mount, unmount, tick: () => sync(root) });
+    CA.UI.Pages.register({ id: 'clickers', label: 'Macros', icon: 'bolt', order: 70, html, mount, unmount, tick: () => sync(root) });
   }
 
   return { init, row, status, sync, handle, icon, edit, draft: () => draft };

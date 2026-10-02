@@ -5,6 +5,7 @@
 //   cookies    cookies (bank), baked (this ascension), bakedAllTime, handmade
 //   earnings   per-frame flows splitting "baked" by source — see attribute() below
 //   bank       per-frame flows for what else moves the bank: spending, wrinkler withering, other
+//   ledger     every change to the bank in seven categories, in and out separately — see ledger()
 //   prestige   prestige, prestigeTotal (level if you ascended now), prestigeGain, heavenlyChips
 //   stocks     portfolioValue/Cost/Realized (+ one price:<id> per stock, see features/stocks.js)
 //   magic      grimoire magic, when the Wizard tower minigame is open
@@ -76,6 +77,61 @@ CA.GameStates = (() => {
     }
   }
 
+  /**
+   * The ledger: this frame's change to the bank split into the categories the Actual CpS chart
+   * shows, money in and money out kept apart (outs are positive amounts):
+   *   building CpS   production; split into unboosted (unbuffed CpS) and the extra from CpS
+   *                  effects (Frenzy & co.)
+   *   clicking       split into unboosted (clicks × a click's no-effects worth) and the extra
+   *   drops          golden / wrath cookies and reindeer: Lucky!, chains, storms… and Ruin's losses
+   *   stocks         buying (out) and selling (in) stocks
+   *   buildings      buying (out) and selling (in) buildings
+   *   upgrades       buying upgrades (out)
+   *   other          whatever is left: wrinklers, sugar lumps, spells, Santa, the dragon…
+   * "Other" is the bank change minus everything else, so the categories always add up to exactly
+   * what the bank did — integrating the chart gives back the bank.
+   */
+  const UNKNOWN_LEDGER = {};
+  const LEDGER_KEYS = ['build', 'buildBoost', 'click', 'clickBoost', 'dropsIn', 'dropsOut', 'stocksIn', 'stocksOut', 'bldIn', 'bldOut', 'upgOut', 'otherIn', 'otherOut'];
+  LEDGER_KEYS.forEach((k) => (UNKNOWN_LEDGER[k] = undefined));
+  const DROP_TYPES = new Set(['golden', 'wrath', 'reindeer']);
+
+  function ledger(ctx) {
+    if (ctx._ledger) return ctx._ledger;
+    if (!ctx.prev) return (ctx._ledger = UNKNOWN_LEDGER);
+    const baked = delta(ctx, 'baked');
+    const bank = delta(ctx, 'cookies');
+    if (baked < 0) return (ctx._ledger = UNKNOWN_LEDGER); // ascended mid-frame
+    const sums = { dropsIn: 0, dropsOut: 0, stocksIn: 0, stocksOut: 0, bldIn: 0, bldOut: 0, upgOut: 0 };
+    (ctx.events || []).forEach((e) => {
+      const c = e.cookies || 0;
+      if (DROP_TYPES.has(e.type)) c >= 0 ? (sums.dropsIn += c) : (sums.dropsOut -= c);
+      else if (e.type === 'trade') c >= 0 ? (sums.stocksIn += c) : (sums.stocksOut -= c);
+      else if (e.type === 'building') c >= 0 ? (sums.bldIn += c) : (sums.bldOut -= c);
+      else if (e.type === 'upgrade' && c < 0) sums.upgOut -= c;
+    });
+    // clicking: what handmadeCookies says, the unboosted part from clicks × raw per-click worth
+    const click = Math.max(0, delta(ctx, 'handmade'));
+    const rawRate = ctx.frame && Number.isFinite(ctx.frame.clickRaw) ? ctx.frame.clickRaw : click / ctx.dt;
+    const clickBase = Math.min(click, rawRate * ctx.dt);
+    // building CpS: the rest of what was baked, up to what CpS would bake in this time
+    const left = Math.max(0, baked - click - sums.dropsIn - sums.bldIn);
+    const production = Math.min(left, (Game.cookiesPs || 0) * ctx.dt);
+    const base = Math.min(production, (Game.unbuffedCps || Game.cookiesPs || 0) * ctx.dt);
+    const known = production + click + sums.dropsIn - sums.dropsOut + sums.stocksIn - sums.stocksOut + sums.bldIn - sums.bldOut - sums.upgOut;
+    const other = bank - known;
+    ctx._ledger = {
+      build: base,
+      buildBoost: production - base,
+      click: clickBase,
+      clickBoost: click - clickBase,
+      ...sums,
+      otherIn: Math.max(0, other),
+      otherOut: Math.max(0, -other),
+    };
+    return ctx._ledger;
+  }
+
   function bankFlows(ctx) {
     if (ctx._bank) return ctx._bank;
     if (!ctx.prev) return (ctx._bank = UNKNOWN_BANK);
@@ -90,6 +146,9 @@ CA.GameStates = (() => {
     };
     return ctx._bank;
   }
+
+  /** 'buildBoost' → 'lBuildBoost' */
+  const ledgerId = (k) => 'l' + k[0].toUpperCase() + k.slice(1);
 
   function init() {
     // cookies — defined first: states below compute deltas of these within the same frame
@@ -136,6 +195,26 @@ CA.GameStates = (() => {
     S({ id: 'withered', name: 'Withered by wrinklers', group: 'bank', kind: 'flow', get: (ctx) => bankFlows(ctx).withered });
     S({ id: 'bankOtherIn', name: 'Other income (stock sales, …)', group: 'bank', kind: 'flow', get: (ctx) => bankFlows(ctx).otherIn });
 
+    // ledger — every change to the bank by category (state ids: 'l' + key, e.g. lBuildBoost)
+    const LEDGER_NAMES = {
+      build: 'Building CpS (unboosted)',
+      buildBoost: 'Building CpS: extra from CpS effects',
+      click: 'Clicking (unboosted)',
+      clickBoost: 'Clicking: extra from effects',
+      dropsIn: 'Drops (golden cookies, reindeer…)',
+      dropsOut: 'Drops lost (wrath)',
+      stocksIn: 'Stocks sold',
+      stocksOut: 'Stocks bought',
+      bldIn: 'Buildings sold',
+      bldOut: 'Buildings bought',
+      upgOut: 'Upgrades bought',
+      otherIn: 'Other in',
+      otherOut: 'Other out',
+    };
+    LEDGER_KEYS.forEach((k) =>
+      S({ id: ledgerId(k), name: LEDGER_NAMES[k], group: 'ledger', kind: 'flow', get: (ctx) => ledger(ctx)[k] })
+    );
+
     // prestige
     const totalLevel = () => Math.floor(Game.HowMuchPrestige((Game.cookiesReset || 0) + (Game.cookiesEarned || 0)));
     S({ id: 'prestige', name: 'Prestige level', group: 'prestige', kind: 'counter', get: () => Game.prestige });
@@ -177,5 +256,5 @@ CA.GameStates = (() => {
     });
   }
 
-  return { init, attribute };
+  return { init, attribute, LEDGER_KEYS, ledgerId };
 })();

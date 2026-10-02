@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+## 2.6.0 — 2026-10-02
+
+- **The ledger:** every change to the bank is now recorded in seven categories, money in and out separately:
+  building CpS, clicking, drops (Lucky!, chains, storms, reindeer… and wrath losses), stocks, buildings (purchases and
+  sales), upgrades, and other (the remainder — wrinklers, lumps, spells…). Building CpS and clicking are also split
+  into their unboosted part and the extra from CpS effects. "Other" is the bank change minus everything else, so the
+  categories add up to exactly what the bank did, every second.
+- **Building and upgrade purchases/sales are logged** as events, with exact amounts (bulk buys are one event).
+- **One mega Actual CpS chart:** pick categories with chips, ▲ Gains / ▼ Losses, ✦ CpS-boosted (the effect extra on
+  top of the unboosted part, in a lighter shade), window, smoothing, log scale, effect lanes now with each effect's
+  icon. Its table lists each category now and over 1 min – 3 h, with totals in, out and net.
+- **Cookie bank chart** below it: the same categories added up; shares every setting with Actual CpS, and with
+  everything included it matches the real bank exactly.
+- **Signed log scale** on charts with negative values.
+- These replace the old Actual CpS, Cookies baked and the Bank tab's three charts.
+- **Widgets resize** from their bottom-right corner: buttons and the status bar scale (keeping their shape), framed
+  boxes take any width and height. Sizes are saved.
+- **Fix: widgets jumping around after a refresh** — positions were measured in JavaScript at load and re-placed as the
+  panel settled (Cookie Monster resizes it). They're now positioned with CSS percentages and simply follow the panel.
+- **Sidebar order:** Events at the top; Macros just above Widgets.
+
 ## 2.5.0 — 2026-10-01
 
 - **Raw clicking, properly:** clicks per second × what one click is worth with no effects. A click's value depends

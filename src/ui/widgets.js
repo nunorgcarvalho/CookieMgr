@@ -9,8 +9,14 @@
 //   events   the latest events from the event log (a framed box)
 //
 // Two looks: framed boxes (dragged by their title bar) and bare widgets — buttons and bars with
-// no frame, dragged from anywhere (a press that doesn't move is a click). Positions are fractions
-// of the panel, so widgets stay put when the window resizes; the list is saved with your settings.
+// no frame, dragged from anywhere (a press that doesn't move is a click). Every widget resizes from
+// its bottom-right corner: buttons and the status bar scale (keeping their shape), framed boxes
+// take any width and height.
+//
+// Positions are fractions of the panel, applied with CSS percentages (left: x·100% plus a
+// translate of −x·100% of the widget's own size), so a widget follows the panel's layout by
+// itself — nothing is measured or re-placed in JavaScript, so nothing jumps when the game (or
+// Cookie Monster) resizes the panel while loading. The list is saved with your settings.
 // The layer sits above the game's big-cookie click target but below its popups and golden cookies.
 //
 //   CA.UI.Widgets.defineType({ id, name, icon, desc, bare, width, single, hidden, html(inst) })
@@ -22,6 +28,10 @@ CA.UI.Widgets = (() => {
   const DRAG_PX = 4; // a press that moves less than this is a click, not a drag
   const BUTTON_PX = 44; // macro button size incl. spacing, for laying out new ones
   const HOT_MS = 1500;
+  const SCALE_MIN = 0.6;
+  const SCALE_MAX = 3;
+  const MIN_W = 140;
+  const MIN_H = 60;
   const S = () => CA.Settings;
   const I = (n, s) => CA.UI.Icons.html(n, s);
   const esc = (s) => CA.Util.escapeHtml(s);
@@ -117,10 +127,10 @@ CA.UI.Widgets = (() => {
   }
 
   function registerBuiltins() {
-    defineType({ id: 'macro', name: 'Macro button', icon: 'star', bare: true, hidden: true, html: macroHtml, update: macroUpdate });
-    defineType({ id: 'status', name: 'Running now', icon: 'play', desc: 'A status bar: an icon for each running macro, pulsing while it works. Hover an icon for what its actions have done.', bare: true, single: true, html: statusHtml, update: statusUpdate });
-    defineType({ id: 'stats', name: 'Quick stats', icon: 'graphs', desc: 'CpS, actual CpS over the last minute, cookies in the bank, prestige this run and the time to the next level.', width: 190, single: true, html: statsHtml });
-    defineType({ id: 'events', name: 'Latest events', icon: 'events', desc: 'The six newest entries in the event log.', width: 260, single: true, html: eventsHtml });
+    defineType({ id: 'macro', name: 'Macro button', icon: 'star', bare: true, hidden: true, resize: 'scale', html: macroHtml, update: macroUpdate });
+    defineType({ id: 'status', name: 'Running now', icon: 'play', desc: 'A status bar: an icon for each running macro, pulsing while it works. Hover an icon for what its actions have done.', bare: true, single: true, resize: 'scale', html: statusHtml, update: statusUpdate });
+    defineType({ id: 'stats', name: 'Quick stats', icon: 'graphs', desc: 'CpS, actual CpS over the last minute, cookies in the bank, prestige this run and the time to the next level.', width: 190, single: true, resize: 'free', html: statsHtml });
+    defineType({ id: 'events', name: 'Latest events', icon: 'events', desc: 'The six newest entries in the event log.', width: 260, single: true, resize: 'free', html: eventsHtml });
   }
 
   // ---- instances ------------------------------------------------------------------------------
@@ -228,6 +238,8 @@ CA.UI.Widgets = (() => {
     return layer;
   }
 
+  const RESIZE = '<span class="ca-w-resize" data-w-resize aria-label="Resize"></span>';
+
   function frameHtml(w) {
     const t = typeById[w.type];
     if (t.bare) {
@@ -235,17 +247,19 @@ CA.UI.Widgets = (() => {
         `<div class="ca-w ca-w-bare ca-w-${w.type}" data-widget="${w.id}" data-w-drag>` +
         `<div class="ca-w-body" data-w-body>${safeHtml(t, w)}</div>` +
         `<button type="button" class="ca-w-x" data-w-remove aria-label="${w.type === 'macro' ? 'Remove (un-favourites the macro)' : 'Remove widget'}">${I('close', 8)}</button>` +
+        RESIZE +
         '</div>'
       );
     }
     return (
-      `<div class="ca-w${w.collapsed ? ' collapsed' : ''}" data-widget="${w.id}" style="width:${t.width}px">` +
+      `<div class="ca-w${w.collapsed ? ' collapsed' : ''}${w.h ? ' sized' : ''}" data-widget="${w.id}" style="width:${w.w || t.width}px${w.h && !w.collapsed ? `;height:${w.h}px` : ''}">` +
       '<div class="ca-w-head" data-w-drag>' +
       `${I(t.icon, 12)}<span class="ca-w-title">${esc(t.name)}</span>` +
       `<button type="button" class="ca-w-btn" data-w-collapse aria-label="${w.collapsed ? 'Expand' : 'Collapse'}">${w.collapsed ? '▸' : '▾'}</button>` +
       `<button type="button" class="ca-w-btn" data-w-remove aria-label="Remove widget">${I('close', 10)}</button>` +
       '</div>' +
       `<div class="ca-w-body" data-w-body>${w.collapsed ? '' : safeHtml(t, w)}</div>` +
+      (w.collapsed ? '' : RESIZE) +
       '</div>'
     );
   }
@@ -258,16 +272,38 @@ CA.UI.Widgets = (() => {
     }
   }
 
+  const clamp01 = (v) => Math.max(0, Math.min(1, v));
+  const scaleOf = (w) => (typeById[w.type] && typeById[w.type].resize === 'scale' ? w.scale || 1 : 1);
+
+  /** Positions a widget purely with CSS (see the top of this file): it follows the panel by itself. */
   function place(el, w) {
+    const sc = scaleOf(w);
+    const x = clamp01(w.x);
+    const y = clamp01(w.y);
+    el.style.left = `${x * 100}%`;
+    el.style.top = `${y * 100}%`;
+    el.style.transform = `translate(${-x * sc * 100}%, ${-y * sc * 100}%)${sc !== 1 ? ` scale(${sc})` : ''}`;
+    el.classList.toggle('pop-below', y < 0.25);
+    el.classList.toggle('pop-left', x > 0.5);
+  }
+
+  /** Where a widget actually is right now, in px (for dragging and resizing). */
+  function geom(w, el) {
     const host = layer.parentNode;
     const W = host.clientWidth || 0;
     const H = host.clientHeight || 0;
-    const x = Math.max(0, Math.min(1, w.x)) * Math.max(0, W - (el.offsetWidth || 0));
-    const y = Math.max(0, Math.min(1, w.y)) * Math.max(0, H - (el.offsetHeight || 0));
-    el.style.left = `${Math.round(x)}px`;
-    el.style.top = `${Math.round(y)}px`;
-    el.classList.toggle('pop-below', y < 220);
-    el.classList.toggle('pop-left', x > W / 2);
+    const sc = scaleOf(w);
+    const vw = (el.offsetWidth || 0) * sc;
+    const vh = (el.offsetHeight || 0) * sc;
+    return { W, H, sc, vw, vh, left: clamp01(w.x) * Math.max(0, W - vw), top: clamp01(w.y) * Math.max(0, H - vh) };
+  }
+
+  /** Sets the fractions so the widget's top-left lands at (left, top) px. */
+  function moveTo(w, el, left, top) {
+    const g = geom(w, el);
+    w.x = g.W > g.vw ? clamp01(left / (g.W - g.vw)) : 0;
+    w.y = g.H > g.vh ? clamp01(top / (g.H - g.vh)) : 0;
+    place(el, w);
   }
 
   function render() {
@@ -338,43 +374,67 @@ CA.UI.Widgets = (() => {
   function onMouseDown(e) {
     // keep presses on widgets from reaching the big cookie / the game's panel handlers
     e.stopPropagation();
-    const handle = e.target.closest('[data-w-drag]');
-    if (!handle || e.target.closest('[data-w-remove],[data-w-collapse]') || S().get('widgetsLocked') || e.button !== 0) return;
+    if (S().get('widgetsLocked') || e.button !== 0) return;
+    const grip = e.target.closest('[data-w-resize]');
+    const handle = grip || e.target.closest('[data-w-drag]');
+    if (!handle || e.target.closest('[data-w-remove],[data-w-collapse]')) return;
     const el = handle.closest('[data-widget]');
     const w = widgets.find((x) => x.id === el.dataset.widget);
     if (!w) return;
     // framed widgets: buttons in the title bar aren't drag handles; bare ones drag from anywhere
-    if (!typeById[w.type].bare && e.target.closest('button')) return;
+    if (!grip && !typeById[w.type].bare && e.target.closest('button')) return;
     e.preventDefault();
-    press = { w, el, sx: e.clientX, sy: e.clientY, dx: e.clientX - el.offsetLeft, dy: e.clientY - el.offsetTop, moved: false };
+    const g = geom(w, el);
+    press = {
+      mode: grip ? 'resize' : 'move',
+      w,
+      el,
+      sx: e.clientX,
+      sy: e.clientY,
+      left: g.left,
+      top: g.top,
+      sc: g.sc,
+      baseW: el.offsetWidth || 1,
+      baseH: el.offsetHeight || 1,
+      moved: false,
+    };
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
   }
 
   function onMouseMove(e) {
     if (!press) return;
+    const dx = e.clientX - press.sx;
+    const dy = e.clientY - press.sy;
     if (!press.moved) {
-      if (Math.abs(e.clientX - press.sx) < DRAG_PX && Math.abs(e.clientY - press.sy) < DRAG_PX) return;
+      if (Math.abs(dx) < DRAG_PX && Math.abs(dy) < DRAG_PX) return;
       press.moved = true;
-      press.el.classList.add('dragging');
+      press.el.classList.add(press.mode === 'resize' ? 'resizing' : 'dragging');
     }
-    const host = layer.parentNode;
-    const maxX = Math.max(0, host.clientWidth - press.el.offsetWidth);
-    const maxY = Math.max(0, host.clientHeight - press.el.offsetHeight);
-    const x = Math.max(0, Math.min(maxX, e.clientX - press.dx));
-    const y = Math.max(0, Math.min(maxY, e.clientY - press.dy));
-    press.el.style.left = `${x}px`;
-    press.el.style.top = `${y}px`;
-    press.el.classList.toggle('pop-below', y < 220);
-    press.el.classList.toggle('pop-left', x > host.clientWidth / 2);
-    press.w.x = maxX ? x / maxX : 0;
-    press.w.y = maxY ? y / maxY : 0;
+    const { w, el } = press;
+    if (press.mode === 'move') {
+      moveTo(w, el, press.left + dx, press.top + dy);
+      return;
+    }
+    // resize from the bottom-right corner, keeping the top-left where it is
+    if (typeById[w.type].resize === 'scale') {
+      const grow = Math.max(dx / press.baseW, dy / press.baseH); // keeps the shape
+      w.scale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, press.sc + grow));
+    } else {
+      const g = geom(w, el);
+      w.w = Math.round(Math.max(MIN_W, Math.min(g.W - press.left, press.baseW + dx)));
+      w.h = Math.round(Math.max(MIN_H, Math.min(g.H - press.top, press.baseH + dy)));
+      el.style.width = `${w.w}px`;
+      el.style.height = `${w.h}px`;
+      el.classList.add('sized');
+    }
+    moveTo(w, el, press.left, press.top);
   }
 
   function onMouseUp() {
     if (!press) return;
     const moved = press.moved;
-    press.el.classList.remove('dragging');
+    press.el.classList.remove('dragging', 'resizing');
     press = null;
     window.removeEventListener('mousemove', onMouseMove);
     window.removeEventListener('mouseup', onMouseUp);
@@ -429,7 +489,17 @@ CA.UI.Widgets = (() => {
   const round = (v) => Math.round(v * 1000) / 1000;
 
   function serialize() {
-    return widgets.map(({ id, type, x, y, collapsed, macro }) => ({ id, type, x: round(x), y: round(y), collapsed, ...(macro ? { macro } : {}) }));
+    return widgets.map(({ id, type, x, y, collapsed, macro, scale, w, h }) => ({
+      id,
+      type,
+      x: round(x),
+      y: round(y),
+      collapsed,
+      ...(macro ? { macro } : {}),
+      ...(scale && scale !== 1 ? { scale: round(scale) } : {}),
+      ...(w ? { w } : {}),
+      ...(h ? { h } : {}),
+    }));
   }
 
   function load(data) {
@@ -440,7 +510,17 @@ CA.UI.Widgets = (() => {
     anchor = old ? { x: old.x, y: old.y } : null;
     widgets = data
       .filter((w) => ok(w) && typeById[w.type])
-      .map((w) => ({ id: String(w.id || newId()), type: w.type, x: w.x, y: w.y, collapsed: !!w.collapsed, ...(w.macro ? { macro: String(w.macro) } : {}) }));
+      .map((w) => ({
+        id: String(w.id || newId()),
+        type: w.type,
+        x: w.x,
+        y: w.y,
+        collapsed: !!w.collapsed,
+        ...(w.macro ? { macro: String(w.macro) } : {}),
+        ...(Number.isFinite(w.scale) ? { scale: Math.max(SCALE_MIN, Math.min(SCALE_MAX, w.scale)) } : {}),
+        ...(Number.isFinite(w.w) ? { w: Math.max(MIN_W, w.w) } : {}),
+        ...(Number.isFinite(w.h) ? { h: Math.max(MIN_H, w.h) } : {}),
+      }));
     render();
     reconcile();
   }
@@ -533,7 +613,6 @@ CA.UI.Widgets = (() => {
       reconcile();
       tick();
     });
-    addEventListener('resize', render);
     setInterval(tick, TICK_MS);
     render();
   }
