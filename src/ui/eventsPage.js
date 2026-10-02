@@ -45,9 +45,11 @@ CA.UI.EventsPage = (() => {
     const from = spanStart();
     const by = {};
     const add = (key, e, cookies) => {
-      const r = by[key] || (by[key] = { count: 0, cookies: 0, last: 0 });
+      const r = by[key] || (by[key] = { count: 0, cookies: 0, last: 0, in: 0, out: 0 });
       r.count++;
       r.cookies += cookies;
+      if (cookies >= 0) r.in += cookies;
+      else r.out -= cookies;
       r.last = Math.max(r.last, e.t);
     };
     let instant = 0;
@@ -74,10 +76,11 @@ CA.UI.EventsPage = (() => {
     const t = CA.EventLog.types();
     const rows = ['golden', 'wrath', 'reindeer', 'wrinkler', 'lump', 'trade'].map((k) => ({
       key: k,
-      label: k === 'trade' ? 'Stock trades (net)' : (t[k] || {}).name || k,
+      label: k === 'trade' ? 'Stock trades (−bought / +sold)' : (t[k] || {}).name || k,
+      split: k === 'trade', // one row, both directions
       icon: (t[k] || {}).icon,
       color: (t[k] || {}).color,
-      ...(by[k] || { count: 0, cookies: 0, last: 0 }),
+      ...(by[k] || { count: 0, cookies: 0, last: 0, in: 0, out: 0 }),
     }));
     rows.push({ key: 'boost', label: 'Golden effect boosts', icon: 'sparkle', color: '#ff9f43', count: null, cookies: Math.max(0, golden - instant), last: 0, title: 'Extra production from Frenzy, Dragon Harvest and other CpS effects, on top of unbuffed CpS' });
     rows.push({ key: 'other', label: 'Everything else', icon: 'puzzle', color: '#b39ddb', count: null, cookies: Math.max(0, other - wrinkLump), last: 0, title: 'Baked cookies not explained by production, clicking or the sources above' });
@@ -95,7 +98,9 @@ CA.UI.EventsPage = (() => {
         `<tr${muted ? ' class="muted"' : ''}><td${r.title ? ` title="${esc(r.title)}"` : ''}>` +
         `<span class="ca-ev-dot" style="color:${r.color}">${CA.UI.Icons.html(r.icon, 13)}</span>${esc(r.label)}</td>` +
         `<td>${r.count == null ? '' : r.count.toLocaleString()}</td>` +
-        `<td class="${r.cookies < 0 ? 'neg' : r.cookies > 0 ? 'pos' : ''}">${r.cookies ? signed(r.cookies) : '—'}</td>` +
+        (r.split
+          ? `<td>${r.count ? `<span class="neg">−${beautify(r.out)}</span> / <span class="pos">+${beautify(r.in)}</span>` : '—'}</td>`
+          : `<td class="${r.cookies < 0 ? 'neg' : r.cookies > 0 ? 'pos' : ''}">${r.cookies ? signed(r.cookies) : '—'}</td>`) +
         `<td>${r.count ? beautify(r.cookies / r.count) : ''}</td>` +
         `<td>${baked > 0 && r.cookies ? ((r.cookies / baked) * 100).toFixed(r.cookies / baked < 0.1 ? 2 : 1) + '%' : ''}</td>` +
         `<td>${r.last ? clock(r.last, true) : ''}</td></tr>`;
@@ -138,16 +143,27 @@ CA.UI.EventsPage = (() => {
       .join('');
   }
 
+  /** What an event did, for its right-hand column: cookies gained/lost, or — for a golden cookie
+   *  that granted an effect instead of a drop (Frenzy, Clot…) — the CpS it added or took away. */
+  function effectOf(e) {
+    const { signed, beautify } = F();
+    const c = e.cookies || 0;
+    if (Math.abs(c) >= 1) return { cls: c < 0 ? 'neg' : 'pos', text: signed(c) };
+    const g = e.data && e.data.cpsGain;
+    if (Number.isFinite(g) && Math.abs(g) >= 1) return { cls: g < 0 ? 'neg' : 'pos', text: `${g < 0 ? '−' : '+'}${beautify(Math.abs(g))}/s CpS` };
+    return { cls: '', text: '' };
+  }
+
   function rowHtml(e) {
     const t = typeInfo(e.type);
-    const { signed, clock } = F();
-    const c = e.cookies || 0;
+    const { clock } = F();
+    const eff = effectOf(e);
     return (
       `<div class="ca-ev-row" style="--c:${t.color}">` +
       `<span class="ca-ev-ico">${CA.UI.Icons.html(t.icon, 14)}</span>` +
-      `<span class="ca-ev-time" title="${esc(new Date(e.t).toLocaleString())}">${clock(e.t, true)}</span>` +
+      `<span class="ca-ev-time">${clock(e.t, true)}</span>` +
       `<span class="ca-ev-text"><b>${esc(e.title)}</b>${e.text ? ` <span>${esc(e.text)}</span>` : ''}</span>` +
-      `<span class="ca-ev-cookies ${c < 0 ? 'neg' : c > 0 ? 'pos' : ''}">${Math.abs(c) >= 1 ? signed(c) : ''}</span>` +
+      `<span class="ca-ev-cookies ${eff.cls}">${eff.text}</span>` +
       '</div>'
     );
   }

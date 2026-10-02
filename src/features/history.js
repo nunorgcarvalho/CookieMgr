@@ -157,6 +157,8 @@ CA.History = (() => {
       st.popFunc = function (me) {
         if (!CA.Settings.get('trackHistory')) return original.apply(this, arguments);
         const before = Game.cookies;
+        const cpsBefore = Game.cookiesPs || 0;
+        const unbuffed = Game.unbuffedCps || cpsBefore;
         const buffsBefore = Object.keys(Game.buffs || {});
         const texts = [];
         const popup = Game.Popup;
@@ -194,7 +196,15 @@ CA.History = (() => {
                 multClick: typeof b.multClick === 'number' ? b.multClick : 1,
               };
             });
-          addEvent({ type, title, text, cookies, data: { effects } });
+          // Drops pay out minutes of CpS (Lucky!, chains, storms…), so under a CpS effect part of the
+          // payout is that effect's doing: payout × (1 − unbuffed ÷ buffed CpS). Not when Lucky! (or
+          // a chain) hit their cap of a share of the bank instead — then CpS didn't matter.
+          const bankCapped = cookies >= 0.149 * before;
+          const boost = cookies > 0 && cpsBefore > unbuffed && !bankCapped ? cookies * (1 - unbuffed / cpsBefore) : 0;
+          // effect-only pops (Frenzy…): the CpS they add, for event lists
+          const mult = effects.reduce((m, ef) => m * ef.multCps, 1);
+          const cpsGain = mult !== 1 ? cpsBefore * (mult - 1) : 0;
+          addEvent({ type, title, text, cookies, data: { effects, boost, cpsGain } });
           if (CA.Settings.get('goldenNotify')) {
             const beautify = (v) => (typeof Beautify === 'function' ? Beautify(v) : Math.round(v).toString());
             const desc = text || (Math.abs(cookies) >= 1 ? `${cookies >= 0 ? '+' : '−'}${beautify(Math.abs(cookies))} cookies` : '');

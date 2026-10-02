@@ -178,6 +178,7 @@ CA.UI.WizardPage = (() => {
       title: 'Magic',
       icon: 'wizard',
       height: 160,
+      log: false,
       windows: [300, 900, 3600, 10800, 43200, 86400, 0],
       window: 900,
       fmt: (v) => CA.UI.Plot.fmt.beautify(v, 0),

@@ -314,6 +314,18 @@ CA.UI.Plot = (() => {
     return Number.isFinite(raw.secs) && width > 0 ? Math.min(1, raw.secs / width) : 1;
   }
 
+  /** "% of total": each bar's parts become shares of the bar's total size (losses count by their
+   *  size too, and stay below the line); lines and averages don't mean anything then, so they go. */
+  function toProportions(data) {
+    (data.bars || []).forEach((b) => {
+      const total = Object.values(b.parts).reduce((n, v) => n + (Number.isFinite(v) ? Math.abs(v) : 0), 0);
+      Object.keys(b.parts).forEach((k) => (b.parts[k] = total > 0 && Number.isFinite(b.parts[k]) ? b.parts[k] / total : 0));
+    });
+    data.series = (data.series || []).filter((x) => x.type === 'bar');
+    data.hlines = [];
+    data.zero = true;
+  }
+
   /** Spots in [x0, x1] where active-time mode cut out a stretch of inactive time. */
   function gapsIn(frames, key, x0, x1) {
     const out = [];
@@ -355,13 +367,18 @@ CA.UI.Plot = (() => {
     // settingsOf: use another chart's window / smoothing / log choices (charts that belong together)
     const key = (k) => `plot.${spec.settingsOf || id}.${k}`;
     const height = spec.height || 220;
-    const fmt = spec.fmt || ((v) => beautify(v, 0));
-    const tipFmt = spec.tipFmt || ((v) => beautify(v) + (spec.unit || ''));
+    const baseFmt = spec.fmt || ((v) => beautify(v, 0));
+    const baseTipFmt = spec.tipFmt || ((v) => beautify(v) + (spec.unit || ''));
+    const pct = (v) => `${Math.round(v * 1000) / 10}%`;
+    // switched to percentages while "% of total" is on (set at the start of each draw)
+    let fmt = baseFmt;
+    let tipFmt = baseTipFmt;
 
     // persisted per-plot choices (kept out of the generic Settings list)
     const def = (k, d) => S().optionsIn('plot').some((o) => o.key === key(k)) || S().defineOption({ key: key(k), group: 'plot', name: k, desc: '', default: d });
     def('win', spec.window != null ? spec.window : (spec.windows || [300])[0]);
     if (spec.smooth !== false) def('smooth', spec.smooth || 0);
+    if (spec.stacked) def('prop', false);
     if (spec.log != null) def('log', !!spec.log);
     // a toggle with `setting` binds an existing global option instead of a per-plot one
     (spec.toggles || []).forEach((t) => !t.setting && def(t.key, !!t.default));
@@ -441,6 +458,7 @@ CA.UI.Plot = (() => {
       }
       h += '<div class="ca-chipgroup">';
       if (spec.log != null) h += boolChip(key('log'), 'Log scale', 'Logarithmic vertical axis — handy when values grow by orders of magnitude');
+      if (spec.stacked) h += boolChip(key('prop'), '% of total', 'Show each bar as shares of its total instead of amounts');
       (spec.toggles || []).forEach((t) => (h += boolChip(t.setting || key(t.key), t.label, t.title)));
       h += boolChip('graphActiveTime', `${CA.UI.Icons.html('clock', 12)} Active time`, 'Leave out time the game wasn’t running (closed, asleep, background tab) — the window then covers that much actual play');
       h += '</div>';
@@ -499,6 +517,10 @@ CA.UI.Plot = (() => {
       const v = viewFor(Math.max(50, w - padL - PAD.r));
       const data = spec.build(v) || {};
       if (v.smoothMs > 0) smoothData(data, v.smoothMs);
+      const prop = !!(spec.stacked && opt('prop'));
+      fmt = prop ? pct : baseFmt;
+      tipFmt = prop ? pct : baseTipFmt;
+      if (prop) toProportions(data);
       lastData = { v, data };
       const series = data.series || [];
       const byKey = {};
@@ -506,7 +528,7 @@ CA.UI.Plot = (() => {
       const bars = data.bars || [];
       const lines = data.lines || {};
       const barSeries = series.filter((s) => s.type === 'bar');
-      const log = spec.log != null && opt('log');
+      const log = spec.log != null && opt('log') && !prop;
 
       // effect lanes (bottom of the plot)
       const ivs = (data.intervals || []).filter((iv) => iv.x1 > v.x0 && iv.x0 < v.x1);

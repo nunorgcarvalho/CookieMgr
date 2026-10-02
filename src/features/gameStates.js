@@ -83,16 +83,21 @@ CA.GameStates = (() => {
    *   building CpS   production; split into unboosted (unbuffed CpS) and the extra from CpS
    *                  effects (Frenzy & co.)
    *   clicking       split into unboosted (clicks × a click's no-effects worth) and the extra
-   *   drops          golden / wrath cookies and reindeer: Lucky!, chains, storms… and Ruin's losses
+   *   drops          golden / wrath cookies and reindeer: Lucky!, chains, storms… and Ruin's losses;
+   *                  split into unboosted and the extra a CpS effect added (see features/history.js)
    *   stocks         buying (out) and selling (in) stocks
    *   buildings      buying (out) and selling (in) buildings
    *   upgrades       buying upgrades (out)
    *   other          whatever is left: wrinklers, sugar lumps, spells, Santa, the dragon…
    * "Other" is the bank change minus everything else, so the categories always add up to exactly
    * what the bank did — integrating the chart gives back the bank.
+   *
+   * Stock equity sits outside the bank: what your stocks would sell for right now, in cookies. Its
+   * change (equityUp / equityDown) mirrors the stocks cash flow at each trade — buying moves cookies
+   * from the bank into equity, minus the broker's cut — and in between moves with the prices.
    */
   const UNKNOWN_LEDGER = {};
-  const LEDGER_KEYS = ['build', 'buildBoost', 'click', 'clickBoost', 'dropsIn', 'dropsOut', 'stocksIn', 'stocksOut', 'bldIn', 'bldOut', 'upgOut', 'otherIn', 'otherOut'];
+  const LEDGER_KEYS = ['build', 'buildBoost', 'click', 'clickBoost', 'dropsIn', 'dropsBoost', 'dropsOut', 'stocksIn', 'stocksOut', 'bldIn', 'bldOut', 'upgOut', 'otherIn', 'otherOut', 'equityUp', 'equityDown'];
   LEDGER_KEYS.forEach((k) => (UNKNOWN_LEDGER[k] = undefined));
   const DROP_TYPES = new Set(['golden', 'wrath', 'reindeer']);
 
@@ -102,10 +107,17 @@ CA.GameStates = (() => {
     const baked = delta(ctx, 'baked');
     const bank = delta(ctx, 'cookies');
     if (baked < 0) return (ctx._ledger = UNKNOWN_LEDGER); // ascended mid-frame
-    const sums = { dropsIn: 0, dropsOut: 0, stocksIn: 0, stocksOut: 0, bldIn: 0, bldOut: 0, upgOut: 0 };
+    const sums = { dropsIn: 0, dropsBoost: 0, dropsOut: 0, stocksIn: 0, stocksOut: 0, bldIn: 0, bldOut: 0, upgOut: 0 };
     (ctx.events || []).forEach((e) => {
       const c = e.cookies || 0;
-      if (DROP_TYPES.has(e.type)) c >= 0 ? (sums.dropsIn += c) : (sums.dropsOut -= c);
+      if (DROP_TYPES.has(e.type)) {
+        if (c < 0) sums.dropsOut -= c;
+        else {
+          const boost = Math.min(c, Math.max(0, (e.data && e.data.boost) || 0));
+          sums.dropsIn += c - boost;
+          sums.dropsBoost += boost;
+        }
+      }
       else if (e.type === 'trade') c >= 0 ? (sums.stocksIn += c) : (sums.stocksOut -= c);
       else if (e.type === 'building') c >= 0 ? (sums.bldIn += c) : (sums.bldOut -= c);
       else if (e.type === 'upgrade' && c < 0) sums.upgOut -= c;
@@ -115,10 +127,10 @@ CA.GameStates = (() => {
     const rawRate = ctx.frame && Number.isFinite(ctx.frame.clickRaw) ? ctx.frame.clickRaw : click / ctx.dt;
     const clickBase = Math.min(click, rawRate * ctx.dt);
     // building CpS: the rest of what was baked, up to what CpS would bake in this time
-    const left = Math.max(0, baked - click - sums.dropsIn - sums.bldIn);
+    const left = Math.max(0, baked - click - sums.dropsIn - sums.dropsBoost - sums.bldIn);
     const production = Math.min(left, (Game.cookiesPs || 0) * ctx.dt);
     const base = Math.min(production, (Game.unbuffedCps || Game.cookiesPs || 0) * ctx.dt);
-    const known = production + click + sums.dropsIn - sums.dropsOut + sums.stocksIn - sums.stocksOut + sums.bldIn - sums.bldOut - sums.upgOut;
+    const known = production + click + sums.dropsIn + sums.dropsBoost - sums.dropsOut + sums.stocksIn - sums.stocksOut + sums.bldIn - sums.bldOut - sums.upgOut;
     const other = bank - known;
     ctx._ledger = {
       build: base,
@@ -128,6 +140,8 @@ CA.GameStates = (() => {
       ...sums,
       otherIn: Math.max(0, other),
       otherOut: Math.max(0, -other),
+      equityUp: Math.max(0, delta(ctx, 'stockEquity')),
+      equityDown: Math.max(0, -delta(ctx, 'stockEquity')),
     };
     return ctx._ledger;
   }
@@ -202,6 +216,7 @@ CA.GameStates = (() => {
       click: 'Clicking (unboosted)',
       clickBoost: 'Clicking: extra from effects',
       dropsIn: 'Drops (golden cookies, reindeer…)',
+      dropsBoost: 'Drops: extra from CpS effects',
       dropsOut: 'Drops lost (wrath)',
       stocksIn: 'Stocks sold',
       stocksOut: 'Stocks bought',
@@ -210,6 +225,8 @@ CA.GameStates = (() => {
       upgOut: 'Upgrades bought',
       otherIn: 'Other in',
       otherOut: 'Other out',
+      equityUp: 'Stock equity up',
+      equityDown: 'Stock equity down',
     };
     LEDGER_KEYS.forEach((k) =>
       S({ id: ledgerId(k), name: LEDGER_NAMES[k], group: 'ledger', kind: 'flow', get: (ctx) => ledger(ctx)[k] })
@@ -229,6 +246,13 @@ CA.GameStates = (() => {
     };
     S({ id: 'portfolioValue', name: 'Portfolio value', unit: '$', group: 'stocks', kind: 'gauge', get: p('value') });
     S({ id: 'portfolioCost', name: 'Portfolio cost basis', unit: '$', group: 'stocks', kind: 'gauge', get: p('cost') });
+    S({
+      id: 'stockEquity',
+      name: 'Stock equity (cookies if sold now)',
+      group: 'stocks',
+      kind: 'gauge',
+      get: () => (CA.Stocks.minigame() ? CA.StockTrader.previewSellAllCookies() : undefined),
+    });
     S({ id: 'portfolioRealized', name: 'Realized stock profit', unit: '$', group: 'stocks', kind: 'counter', get: p('realized') });
 
     // magic

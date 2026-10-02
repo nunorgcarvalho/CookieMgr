@@ -27,6 +27,7 @@ CA.UI.StockGraph = (() => {
       title: 'Stock market',
       icon: 'stocks',
       height: 180,
+      log: false,
       windows: WINDOWS,
       window: 900,
       choices: [
@@ -85,7 +86,8 @@ CA.UI.StockGraph = (() => {
         const { tile, beautify, signed } = F();
         if (!p) return tile('Value', '—', 'open the Bank minigame');
         return (
-          tile('Value', beautify(p.value)) +
+          tile('Value', beautify(p.value), 'in $ (stock prices)') +
+          tile('Equity', beautify(CA.StockTrader.previewSellAllCookies()), 'cookies if you sold everything now') +
           tile('Unrealized', signed(p.unrealized), 'if you sold everything now') +
           tile('Realized', signed(p.realized), 'from past sales') +
           tile('Total gain', signed(p.gain), 'realized + unrealized')

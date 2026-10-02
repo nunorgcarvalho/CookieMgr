@@ -106,18 +106,31 @@ CA.UI.Widgets = (() => {
     const frames = CA.Recorder.frames();
     const f = frames[frames.length - 1];
     const r = CA.UI.Graphs.recent(60);
-    const total = (Game.cookiesReset || 0) + (Game.cookiesEarned || 0);
-    const lvl = Math.floor(Game.HowMuchPrestige(total));
-    const need = typeof Game.HowManyCookiesReset === 'function' ? Game.HowManyCookiesReset(lvl + 1) - total : NaN;
-    const eta = r && r.actual > 0 && need > 0 ? need / r.actual : NaN;
+    const allTime = (Game.cookiesReset || 0) + (Game.cookiesEarned || 0);
+    const max = Math.floor(Game.HowMuchPrestige(allTime));
     const row = (label, value) => `<div class="ca-w-stat"><span>${label}</span><b>${value}</b></div>`;
+    const count = (owned, total) => (Number.isFinite(owned) ? `${beautify(owned, 0)}${total ? ` <em>/ ${beautify(total, 0)}</em>` : ''}` : '—');
     return (
       row('CpS + clicking', f ? `${beautify((f.cps || 0) + (f.click || 0))}/s` : '—') +
-      row('Actual, last min', r ? `${beautify(r.actual)}/s` : '—') +
-      row('Bank', beautify(Game.cookies || 0)) +
-      row('Prestige', `${beautify(lvl - (Game.prestige || 0), 0)} <em>this run</em>`) +
-      row('Next level in', Number.isFinite(eta) ? span(eta) : '—')
+      row('Actual CpS', r ? `${beautify(r.actual)}/s <em>last min</em>` : '—') +
+      row('Run started', Game.startDate ? `${span((Date.now() - Game.startDate) / 1000)} <em>ago</em>` : '—') +
+      row('Upgrades', count(Game.UpgradesOwned, upgradesTotal())) +
+      row('Prestige level', `${beautify(Game.prestige || 0, 0)} <em>(max ${beautify(max, 0)})</em>`) +
+      row('Achievements', count(Game.AchievementsOwned, achievementsTotal())) +
+      row('All time baked', beautify(allTime))
     );
+  }
+
+  // totals counted with the game's own rules (the same ones behind UpgradesOwned / AchievementsOwned)
+  let upTotal = 0;
+  let achTotal = 0;
+  function upgradesTotal() {
+    if (!upTotal && Game.UpgradesById && Game.CountsAsUpgradeOwned) upTotal = Game.UpgradesById.filter((u) => u && Game.CountsAsUpgradeOwned(u.pool)).length;
+    return upTotal;
+  }
+  function achievementsTotal() {
+    if (!achTotal && Game.AchievementsById && Game.CountsAsAchievementOwned) achTotal = Game.AchievementsById.filter((a) => a && Game.CountsAsAchievementOwned(a.pool)).length;
+    return achTotal;
   }
 
   function eventsHtml() {
@@ -129,7 +142,7 @@ CA.UI.Widgets = (() => {
   function registerBuiltins() {
     defineType({ id: 'macro', name: 'Macro button', icon: 'star', bare: true, hidden: true, resize: 'scale', html: macroHtml, update: macroUpdate });
     defineType({ id: 'status', name: 'Running now', icon: 'play', desc: 'A status bar: an icon for each running macro, pulsing while it works. Hover an icon for what its actions have done.', bare: true, single: true, resize: 'scale', html: statusHtml, update: statusUpdate });
-    defineType({ id: 'stats', name: 'Quick stats', icon: 'graphs', desc: 'CpS, actual CpS over the last minute, cookies in the bank, prestige this run and the time to the next level.', width: 190, single: true, resize: 'free', html: statsHtml });
+    defineType({ id: 'stats', name: 'Quick stats', icon: 'graphs', desc: 'CpS + clicking, actual CpS, when this run started, upgrades, prestige level (and the most you could reach now), achievements and all-time cookies baked.', width: 190, single: true, resize: 'free', html: statsHtml });
     defineType({ id: 'events', name: 'Latest events', icon: 'events', desc: 'The six newest entries in the event log.', width: 260, single: true, resize: 'free', html: eventsHtml });
   }
 

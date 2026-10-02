@@ -2445,3 +2445,19 @@
 #CookieMgrMenu .ca-togglegroup .ca-chip:not(.on) .ca-sw {
   opacity: 0.35;
 }
+/* simple total rows (In, Out, Net, multipliers…): no subtitle, shorter */
+#CookieMgrMenu .ca-stages tr.thin td {
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+#CookieMgrMenu .ca-stages tr.thin .ca-stage-n {
+  width: 13px;
+  height: 13px;
+  font-size: 9px;
+}
+#CookieMgrMenu .ca-table td span.pos {
+  color: #9be89b;
+}
+#CookieMgrMenu .ca-table td span.neg {
+  color: #ff9a8a;
+}

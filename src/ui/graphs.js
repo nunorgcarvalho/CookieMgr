@@ -32,11 +32,14 @@ CA.UI.Graphs = (() => {
   const CATS = [
     { id: 'build', name: 'Building CpS', icon: 'building', color: '#f5c451', boostColor: '#fff0b0', in: 'lBuild', boost: 'lBuildBoost' },
     { id: 'click', name: 'Clicking', icon: 'cookie', color: '#7fe08b', boostColor: '#d2ffd8', in: 'lClick', boost: 'lClickBoost' },
-    { id: 'drops', name: 'Drops', icon: 'sparkle', color: '#ff9f43', outColor: '#b8651b', in: 'lDropsIn', out: 'lDropsOut' },
-    { id: 'stocks', name: 'Stocks', icon: 'stocks', color: '#4fd6e0', outColor: '#2a8a93', in: 'lStocksIn', out: 'lStocksOut' },
-    { id: 'buildings', name: 'Buildings', icon: 'building', color: '#ff7a59', outColor: '#b8442a', in: 'lBldIn', out: 'lBldOut' },
-    { id: 'upgrades', name: 'Upgrades', icon: 'upgrade', color: '#c77dff', outColor: '#8a46c4', out: 'lUpgOut' },
-    { id: 'other', name: 'Other', icon: 'puzzle', color: '#9db4cc', outColor: '#5f7590', in: 'lOtherIn', out: 'lOtherOut' },
+    { id: 'drops', name: 'Drops', icon: 'sparkle', color: '#ff9f43', boostColor: '#ffd9ae', outColor: '#b8651b', in: 'lDropsIn', boost: 'lDropsBoost', out: 'lDropsOut', words: ['lost'] },
+    { id: 'stocks', name: 'Stock trades', icon: 'stocks', color: '#4fd6e0', outColor: '#2a8a93', in: 'lStocksIn', out: 'lStocksOut', words: ['bought', 'sold'] },
+    { id: 'buildings', name: 'Buildings', icon: 'building', color: '#ff7a59', outColor: '#b8442a', in: 'lBldIn', out: 'lBldOut', words: ['bought', 'sold'] },
+    { id: 'upgrades', name: 'Upgrades', icon: 'upgrade', color: '#c77dff', outColor: '#8a46c4', out: 'lUpgOut', words: ['bought'] },
+    { id: 'other', name: 'Other', icon: 'puzzle', color: '#9db4cc', outColor: '#5f7590', in: 'lOtherIn', out: 'lOtherOut', words: ['out', 'in'] },
+    // outside the bank — what your stocks would sell for now; off by default so the Cookie bank
+    // chart stays the bank (turn it on and it becomes bank + stocks)
+    { id: 'equity', name: 'Stock equity', icon: 'stocks', color: '#a6e35a', outColor: '#5e8a2a', in: 'lEquityUp', out: 'lEquityDown', words: ['down', 'up'], offByDefault: true },
   ];
   const LEDGER_FIELDS = [].concat(...CATS.map((c) => [c.in, c.boost, c.out].filter(Boolean)));
   const C_CPS = '#f5c451';
@@ -171,7 +174,7 @@ CA.UI.Graphs = (() => {
       icon: 'graphs',
       windows: WINDOWS,
       window: 300,
-      log: true,
+      stacked: true,
       unit: '/s',
       smooth: 5,
       build(v) {
@@ -253,7 +256,7 @@ CA.UI.Graphs = (() => {
     TABLE_COLS.forEach((c) => (h += `<th>${c.label}</th>`));
     h += '</tr></thead><tbody>';
     rows.forEach((r) => {
-      const cls = [r.strong ? 'strong' : '', r.mult ? 'mult' : '', r.sep ? 'sep' : ''].filter(Boolean).join(' ');
+      const cls = [r.strong ? 'strong' : '', r.mult ? 'mult' : '', r.sep ? 'sep' : '', r.desc ? '' : 'thin'].filter(Boolean).join(' ');
       const badge = r.n
         ? `<span class="ca-stage-n" style="background:${r.color}">${r.n}</span>`
         : r.mult
@@ -292,10 +295,10 @@ CA.UI.Graphs = (() => {
         { n: 1, label: 'Raw production', desc: 'CpS with every temporary effect removed', fn: (r) => beautify(stage1(r)) + '/s', color: C_BASE },
         { n: 2, label: '+ raw clicking', desc: 'your clicks per second × a click’s worth with no effects', fn: (r) => beautify(stage2(r)) + '/s', color: C_CLICK },
         { n: 3, label: 'Actual', desc: 'everything really baked: effects, golden cookies, wrinklers…', fn: (r) => beautify(stage3(r)) + '/s', color: SOURCES[2].color, strong: true },
-        { label: 'Clicking adds', desc: '2 ÷ 1', fn: (r) => times(stage2(r), stage1(r)), mult: true, sep: true },
-        { label: 'Effects & golden add', desc: '3 ÷ 2', fn: (r) => times(stage3(r), stage2(r)), mult: true },
-        { label: 'Total', desc: '3 ÷ 1', fn: (r) => times(stage3(r), stage1(r)), mult: true, strong: true },
-        { label: 'Clicks per second', desc: 'on the big cookie, you or a macro', fn: (r) => (Number.isFinite(r.clickRate) ? r.clickRate.toFixed(r.clickRate < 10 ? 1 : 0) : '—'), sep: true, color: C_CLICK },
+        { label: 'Clicking adds (2 ÷ 1)', fn: (r) => times(stage2(r), stage1(r)), mult: true, sep: true },
+        { label: 'Effects & golden add (3 ÷ 2)', fn: (r) => times(stage3(r), stage2(r)), mult: true },
+        { label: 'Total (3 ÷ 1)', fn: (r) => times(stage3(r), stage1(r)), mult: true, strong: true },
+        { label: 'Clicks per second', fn: (r) => (Number.isFinite(r.clickRate) ? r.clickRate.toFixed(r.clickRate < 10 ? 1 : 0) : '—'), sep: true, color: C_CLICK },
       ],
       vals
     );
@@ -363,26 +366,49 @@ CA.UI.Graphs = (() => {
   ];
   const ledgerEmpty = () => (ledgerParts().length ? 'Collecting data…' : 'Pick some categories, and Gains and/or Losses.');
 
+  /**
+   * One row per category, its figures side by side: "(raw/boosted)" for categories a CpS effect
+   * can boost — unboosted, then with the boost — "(−bought / +sold)"-style for ones that go both
+   * ways, and just "(raw)" otherwise. Then thin In / Out / Net rows.
+   */
   function ledgerTable() {
     const { beautify, signed } = F();
     const { cats, gains, losses, boosted } = ledgerView();
-    const fields = LEDGER_FIELDS;
-    const vals = TABLE_COLS.map((c) => recentFlows(c.s || 3, fields, 'lBuild'));
+    const vals = TABLE_COLS.map((c) => recentFlows(c.s || 3, LEDGER_FIELDS, 'lBuild'));
     const rows = [];
-    let first = true;
     cats.forEach((c) => {
-      const parts = [];
-      if (gains && c.in) parts.push({ label: c.boost && boosted ? `${c.name}, unboosted` : c.name, fn: (r) => beautify(r[c.in]) + '/s', color: c.color });
-      if (gains && boosted && c.boost) parts.push({ label: `${c.name}, CpS boost`, fn: (r) => '+' + beautify(r[c.boost]) + '/s', color: c.boostColor });
-      if (losses && c.out) parts.push({ label: `${c.name}, out`, fn: (r) => '−' + beautify(r[c.out]) + '/s', color: c.outColor || c.color });
-      parts.forEach((x, i) => rows.push({ ...x, sep: i === 0 && !first }));
-      if (parts.length) first = false;
+      const labels = [];
+      const cells = [];
+      const words = c.words || [];
+      if (losses && c.out) {
+        labels.push(`−${words[0] || 'out'}`);
+        cells.push((r) => '−' + beautify(r[c.out]));
+      }
+      if (gains && c.in) {
+        if (c.boost) {
+          labels.push('raw');
+          cells.push((r) => beautify(r[c.in]));
+          if (boosted) {
+            labels.push('boosted');
+            cells.push((r) => beautify(r[c.in] + r[c.boost]));
+          }
+        } else {
+          labels.push(words[1] ? `+${words[1]}` : 'raw');
+          cells.push((r) => (c.out && losses ? '+' : '') + beautify(r[c.in]));
+        }
+      }
+      if (!cells.length) return;
+      rows.push({
+        label: `${c.name} (${labels.join(' / ')})`,
+        fn: (r) => cells.map((f) => f(r)).join(' / ') + '/s',
+        color: c.color,
+      });
     });
     if (!rows.length) return '<div class="ca-card-note">Pick some categories, and Gains and/or Losses.</div>';
     const shown = ledgerParts();
     const total = (r, sign) => shown.filter((x) => x.sign === sign).reduce((n, x) => n + (r[x.field] || 0), 0);
-    if (gains) rows.push({ label: 'In', desc: 'everything above coming in', fn: (r) => beautify(total(r, 1)) + '/s', strong: true, sign: '=', sep: true });
-    if (losses) rows.push({ label: 'Out', desc: 'everything above going out', fn: (r) => '−' + beautify(total(r, -1)) + '/s', strong: true, sign: '=', sep: !gains });
+    if (gains) rows.push({ label: 'In', fn: (r) => beautify(total(r, 1)) + '/s', strong: true, sign: '=', sep: true });
+    if (losses) rows.push({ label: 'Out', fn: (r) => '−' + beautify(total(r, -1)) + '/s', strong: true, sign: '=', sep: !gains });
     if (gains && losses) rows.push({ label: 'Net', fn: (r) => signed(total(r, 1) - total(r, -1)) + '/s', strong: true, sign: '=' });
     return spansTable(rows, vals);
   }
@@ -396,7 +422,7 @@ CA.UI.Graphs = (() => {
       windows: WINDOWS,
       window: 900,
       smooth: 15,
-      log: false,
+      stacked: true,
       unit: '/s',
       totalLabel: 'Net',
       tipFmt: (val) => (val < 0 ? '−' : '') + F().beautify(Math.abs(val)) + '/s',
@@ -475,7 +501,7 @@ CA.UI.Graphs = (() => {
       windows: WINDOWS,
       window: 900,
       smooth: false,
-      log: false,
+      stacked: true,
       choices: [FROM],
       totalLabel: 'Net',
       tipFmt: (val) => F().signed(val),
@@ -541,6 +567,7 @@ CA.UI.Graphs = (() => {
       icon: 'ascend',
       windows: LONG_WINDOWS,
       window: 10800,
+      log: false,
       fmt: (val) => F().beautify(val, 0),
       tipFmt: (val) => F().beautify(Math.floor(val), 0),
       build(v) {
@@ -772,7 +799,7 @@ CA.UI.Graphs = (() => {
     S().defineOption({ key: 'actualGains', group: 'plot', name: 'Actual CpS: gains', desc: '', default: true });
     S().defineOption({ key: 'actualLosses', group: 'plot', name: 'Actual CpS: losses', desc: '', default: false });
     S().defineOption({ key: 'cpsBoosted', group: 'plot', name: 'Actual CpS: CpS-boosted', desc: '', default: true });
-    CATS.forEach((c) => S().defineOption({ key: `cat.${c.id}`, group: 'plot', name: `Actual CpS: ${c.name}`, desc: '', default: true }));
+    CATS.forEach((c) => S().defineOption({ key: `cat.${c.id}`, group: 'plot', name: `Actual CpS: ${c.name}`, desc: '', default: !c.offByDefault }));
     S().defineOption({
       key: 'graphEffects',
       group: 'graph',

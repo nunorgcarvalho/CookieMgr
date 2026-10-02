@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## 2.7.0 — 2026-10-02
+
+- **Drops split into unboosted / CpS boost:** a drop's payout scales with CpS, so under a CpS effect part of it is the
+  effect's doing (payout × (1 − unbuffed ÷ buffed CpS)); none when Lucky! hit its cap of 15% of the bank.
+- **Stock equity:** what your stocks would sell for now, in cookies — a new recorded state, a new category (off by
+  default; up / down), and an Equity tile on the Stock market chart. At a purchase it rises by what the bank paid
+  minus the broker's cut; at a sale it falls by exactly what the bank received; in between it follows prices.
+  "Stocks" is now "Stock trades".
+- **Tables: one row per category,** figures side by side — "(raw / boosted)", "(−bought / +sold)", "(raw)"…; simple
+  rows (In, Out, Net, the CpS multipliers, clicks per second) are shorter, without subtitles.
+- **% of total** toggle on stacked bar charts (CpS, Actual CpS, Cookie bank).
+- **Log scale only on line charts** — added to Prestige, stock prices and Magic; removed from the stacked bar charts.
+- **Quick stats widget:** CpS + clicking, actual CpS, run started, upgrades, prestige level (and max), achievements,
+  all-time baked.
+- **Event log:** golden cookies that granted an effect (Frenzy, Clot…) show the CpS they added or took away. Stock
+  trades in the income table are one row: −bought / +sold.
+
 ## 2.6.0 — 2026-10-02
 
 - **The ledger:** every change to the bank is now recorded in seven categories, money in and out separately:

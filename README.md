@@ -23,7 +23,7 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 | **Widget** | Something on the game's left panel: a macro's button, the Running now bar, quick stats, events. |
 
-## Features (v2.6)
+## Features (v2.7)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
 **Events**, **Graphs**, **Stock market**, **Wizard tower**, **Macros**, **Widgets** and **Settings**. Hovering an icon slides its name out to the left.
@@ -45,10 +45,10 @@ The Graphs page has two tabs — **Cookies** and **Prestige** — of charts draw
 - **Smooth:** Off, 5s, 15s, 1m, 5m, 15m or 1h — a centered moving average: each point becomes the average of the
   stretch of time around it (weighted by time, so a smoothed rate is exactly the cookies over that stretch ÷ its
   length). Bars stay as narrow as the screen allows instead of getting wider. Running totals aren't smoothed.
-- **Log scale** (where offered) fits the axis to the data; when there are losses below zero it becomes a signed log
-  scale (logarithmic both ways from zero) — from just under the smallest bar to just over the
-  largest, with round ticks — so the variation fills the chart instead of hugging the top. Bars covering mostly time
-  the game wasn't running don't count; they're simply trimmed at the bottom.
+- **Log scale** on line charts (prestige, stock prices, magic) fits the axis to the data — from just under the
+  smallest value to just over the largest, with round ticks. Points covering mostly time the game wasn't running don't
+  count; they're trimmed at the bottom.
+- **% of total** on stacked bar charts: each bar becomes the shares of its total instead of amounts.
 - **Axes always fit what's shown:** hiding something (gains, losses, a line) rescales the chart right away.
 - **Scrollable:** drag (or scroll sideways) to look back; **Pause** / **Jump to live**. Every choice is remembered.
 - **Effect shading** behind the chart for every golden-cookie effect (Frenzy, Click frenzy, Elder frenzy, Dragonflight,
@@ -65,14 +65,20 @@ The Graphs page has two tabs — **Cookies** and **Prestige** — of charts draw
   wrinklers…) — and the
   multipliers between them: what clicking adds (2 ÷ 1), what effects & golden cookies add (3 ÷ 2), and the total
   (3 ÷ 1). Now and averaged over the last 1, 5, 15 minutes, 1 and 3 hours of active play.
-- **Actual CpS** — everything that moved the bank each second, in seven categories you pick with chips:
-  **building CpS**, **clicking**, **drops** (Lucky!, chains, storms, reindeer… and wrath losses), **stocks** (bought /
-  sold), **buildings** (bought / sold), **upgrades**, and **other** (wrinklers, sugar lumps, spells, Santa, the dragon…
-  — whatever's left, so the categories always add up to exactly what the bank did). **▲ Gains / ▼ Losses** choose
-  money in (above the line) and out (below it). **✦ CpS-boosted** shows, for building CpS and clicking, the extra that
-  CpS effects (Frenzy, Click frenzy…) add on top of their unboosted part, in a lighter shade. Window, smoothing, log
-  scale (signed when there are losses), effect lanes with icons, and a dashed line for the CpS the game shows. Below
-  it, a table of each category now and averaged over the last 1 min – 3 h, with totals in, out and net.
+- **Actual CpS** — everything that moved the bank each second, in categories you pick with chips: **building CpS**,
+  **clicking**, **drops** (Lucky!, chains, storms, reindeer… and wrath losses), **stock trades** (bought / sold),
+  **buildings** (bought / sold), **upgrades**, **other** (wrinklers, sugar lumps, spells, Santa, the dragon… —
+  whatever's left, so these always add up to exactly what the bank did), and **stock equity** (off by default; see
+  below). **▲ Gains / ▼ Losses** choose money in (above the line) and out (below it). **✦ CpS-boosted** shows, for
+  building CpS, clicking and drops, the extra that CpS effects (Frenzy, Click frenzy…) add on top of their unboosted
+  part, in a lighter shade — for drops, the share of the payout a CpS effect caused (none when Lucky! hit its
+  bank-based cap). Window, smoothing, % of total, effect lanes with icons, and a dashed line for the CpS the game
+  shows. Below it, a table with one row per category, figures side by side — "(raw / boosted)", "(−bought / +sold)",
+  "(raw)"… — now and averaged over the last 1 min – 3 h, then In / Out / Net.
+- **Stock equity** — what your stocks would sell for right now, in cookies (the same figure as the Sell all preview).
+  As a category it shows equity going up and down: at a purchase it rises by about what the bank paid (minus the
+  broker's cut), at a sale it falls by exactly what the bank received, and in between it moves with the prices. It
+  sits outside the bank, so with it on the Cookie bank chart becomes bank + stocks.
 - **Cookie bank** — the same, added up from the start of this session or the window: how the bank got where it is.
   It shares every setting with Actual CpS (chips on either chart change both). With all categories, gains and
   losses on, the added-up chart traces the real bank exactly (dashed line).
@@ -93,7 +99,7 @@ golden-cookie effects starting, stock trades and ascensions. The Events page sho
   session, the last 15m / 1h / 1d, or everything: golden cookies, wrath cookies, reindeer, wrinklers, sugar lumps,
   stock trades (net), golden-effect boosts (the extra production from Frenzy & co.) and anything else — with counts,
   cookies, average per event, share of all cookies baked, and when it last happened.
-- **Event log** — newest first, with a chip per event type to show or hide it (with counts), an **Income only**
+- **Event log** — newest first (a golden cookie that granted an effect instead of cookies shows the CpS it added), with a chip per event type to show or hide it (with counts), an **Income only**
   filter, a search box, and a **CSV** download of whatever is shown.
 
 Wrinkler payouts are worked out the way the game does it (what the wrinkler ate × 1.1, with Sacrilegious corruption,
@@ -198,7 +204,8 @@ always grab them again). Drag them anywhere; hover for ×.
 - **Running now** — a slim status bar: an icon per running macro, pulsing while its actions are doing something. Hover
   an icon for a popup of what each action has done; click to open the Macros page. (Add it on the Widgets page or from the
   Running now card.)
-- **Quick stats** — CpS, actual CpS over the last minute, cookies in the bank, prestige this run, time to the next level.
+- **Quick stats** — CpS + clicking, actual CpS (last minute), when this run started, upgrades, prestige level (and the
+  most you'd reach by ascending now), achievements, and all-time cookies baked.
 - **Latest events** — the six newest entries in the event log.
 
 Quick stats and Latest events are framed boxes, dragged by their title bar and folded with ▾. **Resize** any widget
@@ -249,7 +256,8 @@ The **Stock market** tab in the CookieMgr panel has:
   that, once a second, buys the max it can afford of fast-rising stocks, then slow-rising ones, and sells anything it
   holds that isn't currently rising. That's the entire strategy.
 - The stock chart, defaulting to your **portfolio value** over time (a value line plus a cost-basis line, so the gap
-  between them is your unrealized gain) with stat tiles for Value, Unrealized, Realized and Total gain — switch to
+  between them is your unrealized gain) with stat tiles for Value, Equity (cookies if sold now), Unrealized, Realized
+  and Total gain — switch to
   "Per stock" for the individual price lines instead. Cost basis is tracked from whenever the mod is loaded, so it
   only knows about trades made since then. Same controls as the Graphs page (window, active time, drag, pause).
 - **Portfolio performance** — the portfolio's return as a percentage of the cookies invested, over a rolling window
