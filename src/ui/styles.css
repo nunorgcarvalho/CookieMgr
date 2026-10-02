@@ -1576,7 +1576,9 @@
 #CookieMgrWidgets {
   position: absolute;
   inset: 0;
-  z-index: 150;
+  /* above the game's big-cookie click target (#bigCookie, 10000) so widgets dragged over the
+     cookie can still be grabbed; below its popups (20000+), golden cookies, notes and tooltips */
+  z-index: 15000;
   pointer-events: none;
   font-family: Tahoma, Arial, sans-serif;
 }
@@ -1670,47 +1672,195 @@
   color: #93866f;
   line-height: 1.4;
 }
-/* shortcut buttons */
-#CookieMgrWidgets .ca-w-shortcuts {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
-  gap: 5px;
+/* bare widgets: no frame, dragged from anywhere */
+#CookieMgrWidgets .ca-w.ca-w-bare {
+  background: none;
+  border: none;
+  box-shadow: none;
+  cursor: grab;
 }
-#CookieMgrWidgets .ca-w-sc {
-  display: flex;
-  flex-direction: column;
+#CookieMgrWidgets.locked .ca-w.ca-w-bare {
+  cursor: default;
+}
+#CookieMgrWidgets .ca-w-bare > .ca-w-body {
+  padding: 0;
+  max-height: none;
+  overflow: visible;
+}
+#CookieMgrWidgets .ca-w-x {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  z-index: 2;
+  display: inline-flex;
   align-items: center;
-  gap: 3px;
-  padding: 5px 3px 4px;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  padding: 0;
+  color: #f0e2c0;
+  background: #3a2414;
+  border: 1px solid #875526;
+  border-radius: 50%;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+#CookieMgrWidgets .ca-w-bare:hover .ca-w-x {
+  opacity: 1;
+}
+#CookieMgrWidgets .ca-w-bare.dragging .ca-w-x {
+  opacity: 0;
+}
+
+/* a macro's own button */
+#CookieMgrWidgets .ca-wb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border-radius: 50%;
+  cursor: inherit;
+  background: radial-gradient(circle at 35% 30%, rgba(110, 72, 36, 0.95), rgba(28, 18, 9, 0.95));
+  border: 1px solid;
+  border-color: #ece2b6 #875526 #733726 #dfbc9a;
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition:
+    box-shadow 0.2s,
+    transform 0.1s,
+    filter 0.2s;
+}
+#CookieMgrWidgets .ca-wb:not(.on):not(.once) {
+  filter: grayscale(0.6) brightness(0.8);
+}
+#CookieMgrWidgets .ca-wb:hover {
+  filter: none;
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.8),
+    0 0 10px rgba(255, 215, 110, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+#CookieMgrWidgets .ca-wb.on {
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.7),
+    0 0 0 2px rgba(130, 235, 120, 0.85),
+    0 0 12px rgba(130, 235, 120, 0.6);
+}
+#CookieMgrWidgets .ca-wb:active {
+  transform: scale(0.94);
+}
+#CookieMgrWidgets .ca-wb .ca-icon,
+#CookieMgrWidgets .ca-wb .ca-icon-ico {
+  flex: 0 0 26px;
+  width: 26px;
+  height: 26px;
+  background: none;
+  box-shadow: none;
+}
+#CookieMgrWidgets .ca-wb .ca-img {
+  width: 26px;
+  height: 26px;
+}
+#CookieMgrWidgets .ca-wb .ca-sprite {
+  transform: scale(0.54);
+}
+#CookieMgrWidgets .ca-wb .ca-icon-ico .ca-ico {
+  width: 20px;
+  height: 20px;
+}
+#CookieMgrWidgets .ca-wb-label {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-top: 4px;
+  padding: 2px 7px;
   font:
     bold 10px Tahoma,
     Arial,
     sans-serif;
-  color: #b9ab93;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 220, 150, 0.18);
-  border-radius: 6px;
-  cursor: pointer;
-  text-shadow: 0 1px 1px #000;
-}
-#CookieMgrWidgets .ca-w-sc span:last-child {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-#CookieMgrWidgets .ca-w-sc:hover {
   color: #fff3cf;
-  border-color: rgba(255, 220, 150, 0.45);
+  white-space: nowrap;
+  text-shadow: 0 1px 1px #000;
+  background: rgba(20, 12, 6, 0.92);
+  border: 1px solid rgba(255, 220, 150, 0.35);
+  border-radius: 8px;
+  transform: translateX(-50%) translateY(-3px);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.15s,
+    transform 0.15s;
 }
-#CookieMgrWidgets .ca-w-sc.on {
-  color: #d6ffcc;
-  background: rgba(80, 200, 90, 0.18);
-  border-color: rgba(130, 235, 120, 0.65);
-  box-shadow: 0 0 8px rgba(130, 235, 120, 0.35);
+#CookieMgrWidgets .ca-w-macro:hover .ca-wb-label {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
-#CookieMgrWidgets .ca-w-sc.once:active {
-  transform: translateY(1px);
+#CookieMgrWidgets .ca-w-macro.dragging .ca-wb-label {
+  opacity: 0;
+}
+
+/* "Running now" as a status bar */
+#CookieMgrWidgets .ca-w-status > .ca-w-body {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 30px;
+  padding: 3px 8px 3px 6px;
+  background: linear-gradient(to bottom, rgba(70, 45, 22, 0.9), rgba(28, 18, 9, 0.9));
+  border: 1px solid;
+  border-color: #ece2b6 #875526 #733726 #dfbc9a;
+  border-radius: 16px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.7);
+}
+#CookieMgrWidgets .ca-wbar-lead {
+  display: inline-flex;
+  color: #93866f;
+  margin-right: 2px;
+}
+#CookieMgrWidgets .ca-wbar-idle {
+  font-size: 10px;
+  font-style: italic;
+  color: #93866f;
+}
+#CookieMgrWidgets .ca-wbar-item {
+  display: inline-flex;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(130, 235, 120, 0.5);
+}
+#CookieMgrWidgets .ca-wbar-item .ca-icon,
+#CookieMgrWidgets .ca-wbar-item .ca-icon-ico {
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+}
+#CookieMgrWidgets .ca-wbar-item .ca-img {
+  width: 22px;
+  height: 22px;
+}
+#CookieMgrWidgets .ca-wbar-item .ca-sprite {
+  transform: scale(0.45);
+}
+#CookieMgrWidgets .ca-wbar-item.hot {
+  animation: caWbarPulse 1s ease-in-out infinite;
+}
+#CookieMgrWidgets .ca-wbar-item.err {
+  box-shadow: 0 0 0 2px rgba(229, 72, 77, 0.85);
+}
+@keyframes caWbarPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px rgba(130, 235, 120, 0.5);
+  }
+  50% {
+    box-shadow:
+      0 0 0 2px rgba(130, 235, 120, 0.95),
+      0 0 10px rgba(130, 235, 120, 0.7);
+  }
 }
 #CookieMgrWidgets .ca-icon {
   flex: 0 0 22px;

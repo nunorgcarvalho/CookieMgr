@@ -126,7 +126,7 @@ CA.UI.StockPerf = (() => {
       note: 'Return on the cookies you have invested, over a rolling window: above zero your holdings are gaining, below they are losing. A percentage of the money at stake, so it reads the same at any portfolio size.',
       windows: [900, 3600, 10800, 43200, 86400, 604800, 0],
       window: 3600,
-      coarse: true,
+      smooth: false, // already a rolling average
       zero: true,
       fmt: (val) => `${Math.round(val * 10) / 10}%`,
       tipFmt: (val) => `${val >= 0 ? '+' : '−'}${Math.abs(val).toFixed(2)}%`,

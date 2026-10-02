@@ -66,7 +66,7 @@ CA.UI.MacrosPage = (() => {
       '<div class="ca-macro-status" data-macro-status></div>' +
       '</div>' +
       '<div class="ca-controls">' +
-      `<button type="button" class="ca-iconbtn ca-fav${fav ? ' on' : ''}" data-ca="macro-fav" data-id="${esc(m.id)}" title="${fav ? 'Remove from favourites' : 'Add to favourites (shortcut widgets)'}">${I(fav ? 'star' : 'starOutline', 15)}</button>`;
+      `<button type="button" class="ca-iconbtn ca-fav${fav ? ' on' : ''}" data-ca="macro-fav" data-id="${esc(m.id)}" title="${fav ? 'Un-favourite (removes its button from the left panel)' : 'Favourite: gives it its own button on the left panel'}">${I(fav ? 'star' : 'starOutline', 15)}</button>`;
     if (m.builtin) h += `<button type="button" class="ca-iconbtn" data-ca="macro-dup" data-id="${esc(m.id)}" title="Duplicate into your own editable macro">${I('plus', 14)}</button>`;
     else {
       h += `<button type="button" class="ca-iconbtn" data-ca="macro-edit" data-id="${esc(m.id)}" title="Edit">${I('edit', 14)}</button>`;
@@ -339,8 +339,7 @@ CA.UI.MacrosPage = (() => {
         'Running now',
         'play',
         '<div class="ca-card-meta"><span class="ca-pill" data-ca-count></span>' +
-          `<button type="button" class="ca-iconbtn" data-ca="widget-add" data-type="status" title="Pop this out as a widget on the left panel">${I('widget', 13)}</button>` +
-          `<button type="button" class="ca-iconbtn" data-ca="widget-add" data-type="shortcuts" title="Put your ★ favourite macros on the left panel as shortcut buttons">${I('star', 13)}</button></div>`
+          `<button type="button" class="ca-iconbtn" data-ca="widget-add" data-type="status" title="Pop this out as a status bar on the left panel">${I('widget', 13)}</button></div>`
       ) +
       `<div class="ca-status" data-macro-statusblock>${status()}</div>` +
       '</div>';
@@ -425,11 +424,17 @@ CA.UI.MacrosPage = (() => {
         CA.Util.sound('snd/clickOn2.mp3');
         M().runOnce(id);
         return true;
-      case 'macro-fav':
+      case 'macro-fav': {
         CA.Util.sound('snd/tick.mp3');
-        M().setFav(id, !M().isFav(id));
+        const fav = !M().isFav(id);
+        M().setFav(id, fav); // → its own button widget appears / goes (ui/widgets.js)
+        if (fav) {
+          if (!CA.Settings.get('widgetsShown')) CA.Settings.set('widgetsShown', true);
+          CA.Util.notify(M().get(id).name, 'Added as a button on the left panel — drag it wherever you like.', CA.ICON, 2);
+        }
         rerender();
         return true;
+      }
       case 'macro-dup': {
         CA.Util.sound('snd/tick.mp3');
         const copy = M().duplicate(id);
@@ -452,7 +457,7 @@ CA.UI.MacrosPage = (() => {
         CA.UI.Widgets.add(type);
         if (!CA.Settings.get('widgetsShown')) CA.Settings.set('widgetsShown', true);
         const name = (CA.UI.Widgets.types().find((x) => x.id === type) || {}).name || 'Widget';
-        CA.Util.notify(name, had && type !== 'shortcuts' ? 'Already on the left panel.' : 'Added to the left panel — drag it by its title bar.', CA.ICON, 2);
+        CA.Util.notify(name, had ? 'Already on the left panel.' : 'Added to the left panel — drag it wherever you like.', CA.ICON, 2);
         return true;
       }
       case 'all-on':

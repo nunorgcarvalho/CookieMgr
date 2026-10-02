@@ -21,9 +21,9 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Event**  | Something that happened in the game (a golden cookie popped, a stock was sold, …).      |
 | **State**  | A value that can be measured over time (cookies in the bank, CpS, …).                   |
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
-| **Widget** | A small box on the game's left panel (shortcuts, Running now, quick stats, latest events). |
+| **Widget** | Something on the game's left panel: a macro's button, the Running now bar, quick stats, events. |
 
-## Features (v2.2)
+## Features (v2.3)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
 **Macros**, **Graphs**, **Events**, **Stock market**, **Wizard tower**, **Widgets** and **Settings**. Hovering an icon slides its name out to the left.
@@ -42,7 +42,9 @@ The Graphs page has three tabs — **Cookies**, **Bank** and **Prestige** — of
 - **Active time:** leaves out time the game wasn't running (tab closed, computer asleep, background throttling) — a 1h
   window then covers an hour of actual play. A faint dotted line marks each cut-out stretch (hover it for how long);
   axis labels still show the wall-clock time. One toggle for all charts, also in Settings.
-- **Bars** (where it makes sense): Auto, or a fixed width from 1 s to 1 h — how coarse the derivative is.
+- **Smooth:** Off, 5s, 15s, 1m, 5m, 15m or 1h — a centered moving average: each point becomes the average of the
+  stretch of time around it (weighted by time, so a smoothed rate is exactly the cookies over that stretch ÷ its
+  length). Bars stay as narrow as the screen allows instead of getting wider. Running totals aren't smoothed.
 - **Scrollable:** drag (or scroll sideways) to look back; **Pause** / **Jump to live**. Every choice is remembered.
 - **Effect shading** behind the chart for every golden-cookie effect (Frenzy, Click frenzy, Elder frenzy, Dragonflight,
   Clot, …), stacked in lanes when they overlap, and **event markers** for golden/wrath cookies, reindeer, stock trades
@@ -62,7 +64,8 @@ The Graphs page has three tabs — **Cookies**, **Bank** and **Prestige** — of
 
 **Bank tab** — cookies in the bank over time; **bank change per second**, with income above the line (by source,
 plus stock sales and other income) and spending and wrinkler withering below it, and a net line; and the same as a
-running total.
+running total. **▲ Gains** / **▼ Losses** chips show either side alone (the axis rescales to it — handy when one big
+purchase dwarfs everything else) or both.
 
 **Prestige tab** — prestige level if you ascended now against your current level, with how many cookies the next
 level needs and when you'll reach it at your recent actual CpS; and **prestige gained per hour**.
@@ -146,7 +149,7 @@ has done and when it last did something (or that it can't run right now).
 **Hotkeys** — every macro can have one; one key can trigger several macros at once (binding a key that's in use shares
 it). Modifiers work (`Shift + G`): click a key chip and press the new key (`Esc` cancels, `Backspace` clears).
 
-**Favourites** — the star on each macro puts it on the **Shortcuts** widget.
+**Favourites** — the ★ on a macro gives it its own button on the left panel (see Widgets).
 
 ### Wizard tower
 
@@ -154,7 +157,7 @@ The **Wizard tower** page is the Grimoire, CookieMgr-style:
 
 - **Grimoire** — the magic meter (now / max, refill per second, time until full) and spells cast.
 - **Spells** — every spell with its live cost and backfire chance, a **Cast** button (or how long until you can
-  afford it, from the game's own refill formula) and a ★ to put it on the Shortcuts widget. Each spell is a built-in
+  afford it, from the game's own refill formula) and a ★ for its own button on the left panel. Each spell is a built-in
   "Cast …" macro, so it can have a hotkey too.
 - **Auto-cast** — the built-in, non-removable **Force the Hand of Fate on Click frenzy**: while it's on, as soon as a
   Click frenzy is running *and* there's enough magic, it casts Force the Hand of Fate (so a frenzy that starts when
@@ -170,15 +173,18 @@ that opens this page (can be turned off in Settings).
 
 ### Widgets
 
-Small framed boxes on the game's left panel, around the big cookie — add them on the **Widgets** page, drag them
-by their title bar, fold them up (▾) or remove them (×):
+Things on the game's left panel, around the big cookie (and over it — they sit above its click area, so you can
+always grab them again). Drag them anywhere; hover for ×.
 
-- **Shortcuts** — a button per ★ favourite macro: click to switch it on/off (lit up while running) or to run it.
-- **Running now** — the same live status as on the Macros page (also one click from its card there).
+- **Macro buttons** — ★ a macro (or a spell) and it gets its own round icon button: click to switch it on/off (it
+  glows while running) or to run it; hover for its name. Un-star it, or ×, to take it away. Each moves on its own.
+- **Running now** — a slim status bar: an icon per running macro, pulsing while its actions are doing something. Hover
+  an icon for what each action has done; click to open the Macros page. (Add it on the Widgets page or from the
+  Running now card.)
 - **Quick stats** — CpS, actual CpS over the last minute, cookies in the bank, prestige this run, time to the next level.
 - **Latest events** — the six newest entries in the event log.
 
-Options: show/hide them all, and lock them so they can't be dragged by accident. Positions are kept relative to the
+Quick stats and Latest events are framed boxes, dragged by their title bar and folded with ▾. Options: show/hide them all, and lock them so they can't be dragged by accident. Positions are kept relative to the
 panel, so they stay put when the window is resized, and they're saved with your settings.
 
 ### Settings

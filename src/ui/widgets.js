@@ -1,33 +1,41 @@
-// **Widgets**: small framed boxes on the game's left panel (around the big cookie) that you add,
-// drag around and remove. Each widget is an instance of a widget type:
+// **Widgets**: small things on the game's left panel (around the big cookie) that you drag around.
 //
-//   shortcuts   buttons for your favourite macros (the ★ on the Macros page)
-//   status      "Running now": every active macro and what its actions are doing
-//   stats       CpS, actual CpS, bank and next prestige level at a glance
-//   events      the latest events from the event log
+//   macro    one per ★ favourite macro: a single icon button — click to switch it on/off or run
+//            it; hovering shows its name. Favouriting a macro adds it, un-favouriting (or its ×)
+//            removes it.
+//   status   "Running now" as a status bar: an icon per running macro, pulsing while its actions
+//            are doing something; hover one for the details, click to open the Macros page
+//   stats    CpS, actual CpS, bank and next prestige level at a glance (a framed box)
+//   events   the latest events from the event log (a framed box)
 //
-// Positions are stored as fractions of the panel, so widgets stay put when the window resizes.
-// The widget list is saved with your settings (game save + local mirror). The Widgets page adds
-// them; a "Lock" option stops them being dragged by accident.
+// Two looks: framed boxes (dragged by their title bar) and bare widgets — buttons and bars with
+// no frame, dragged from anywhere (a press that doesn't move is a click). Positions are fractions
+// of the panel, so widgets stay put when the window resizes; the list is saved with your settings.
+// The layer sits above the game's big-cookie click target but below its popups and golden cookies.
 //
-//   CA.UI.Widgets.defineType({ id, name, icon, desc, width, single, html(inst), onClick?(t, inst) })
+//   CA.UI.Widgets.defineType({ id, name, icon, desc, bare, width, single, hidden, html(inst) })
 
 CA.UI = CA.UI || {};
 
 CA.UI.Widgets = (() => {
   const TICK_MS = 500;
+  const DRAG_PX = 4; // a press that moves less than this is a click, not a drag
+  const BUTTON_PX = 44; // macro button size incl. spacing, for laying out new ones
+  const HOT_MS = 1500;
   const S = () => CA.Settings;
   const I = (n, s) => CA.UI.Icons.html(n, s);
   const esc = (s) => CA.Util.escapeHtml(s);
 
   const types = [];
   const typeById = {};
-  let widgets = []; // { id, type, x, y, collapsed }
+  let widgets = []; // { id, type, x, y, collapsed, macro? }
   let layer = null;
-  let drag = null;
+  let press = null; // { w, el, sx, sy, dx, dy, moved }
+  let swallowClick = false;
+  let anchor = null; // where a v2.1 Shortcuts widget was, for laying out its buttons
 
   function defineType(t) {
-    const d = { width: 220, single: false, icon: 'widget', ...t };
+    const d = { width: 220, single: false, bare: false, hidden: false, icon: 'widget', ...t };
     types.push(d);
     typeById[d.id] = d;
     return d;
@@ -35,24 +43,50 @@ CA.UI.Widgets = (() => {
 
   // ---- built-in widget types ----------------------------------------------------------------
 
-  function shortcutsHtml() {
-    const favs = CA.Macros.list().filter((m) => CA.Macros.isFav(m.id));
-    if (!favs.length) return '<div class="ca-w-empty">Star macros on the Macros page (★) to put their buttons here.</div>';
+  function macroTitle(m) {
+    const on = CA.Macros.isOn(m.id);
+    const key = CA.Settings.getHotkey(`macro.${m.id}`);
+    const what = m.mode === 'once' ? 'click to run' : on ? 'on — click to switch off' : 'off — click to switch on';
+    return `${m.name} (${what})${key ? ` · ${CA.Hotkeys.format(key)}` : ''}`;
+  }
+
+  function macroHtml(inst) {
+    const m = CA.Macros.get(inst.macro);
+    if (!m) return '';
+    const on = CA.Macros.isOn(m.id);
     return (
-      '<div class="ca-w-shortcuts">' +
-      favs
-        .map((m) => {
-          const on = CA.Macros.isOn(m.id);
-          const key = CA.Settings.getHotkey(`macro.${m.id}`);
-          const title = `${m.name} — ${m.mode === 'once' ? 'click to run' : on ? 'on, click to switch off' : 'off, click to switch on'}${key ? ` (${CA.Hotkeys.format(key)})` : ''}`;
-          return (
-            `<button type="button" class="ca-w-sc${on ? ' on' : ''}${m.mode === 'once' ? ' once' : ''}" data-w-trigger="${esc(m.id)}" title="${esc(title)}">` +
-            `${CA.UI.MacrosPage.icon(m, true)}<span>${esc(m.name)}</span></button>`
-          );
-        })
-        .join('') +
-      '</div>'
+      `<button type="button" class="ca-wb${on ? ' on' : ''}${m.mode === 'once' ? ' once' : ''}" data-w-trigger="${esc(m.id)}" title="${esc(macroTitle(m))}">` +
+      `${CA.UI.MacrosPage.icon(m, true)}</button>` +
+      `<span class="ca-wb-label">${esc(m.name)}</span>`
     );
+  }
+
+  function statusTitle(m) {
+    const st = CA.Macros.status(m.id);
+    const { beautify, span } = CA.UI.Plot.fmt;
+    const lines = [`${m.name} — ${CA.Macros.triggerText(m)} · on for ${span((Date.now() - CA.Macros.since(m.id)) / 1000)}`];
+    m.steps.forEach((step, i) => {
+      const s = (st && st.steps[i]) || {};
+      const a = CA.Actions.get(step.action) || {};
+      const last = s.lastAt ? `${span((Date.now() - s.lastAt) / 1000)} ago` : 'nothing yet';
+      lines.push(`• ${CA.Actions.describe(step)}: ${s.error ? s.error : `${beautify(s.total || 0, 0)}${a.unit ? ' ' + a.unit : ''}, ${last}`}`);
+    });
+    return lines.join('\n');
+  }
+
+  function statusHtml() {
+    const ids = CA.Macros.runningIds();
+    let h = `<span class="ca-wbar-lead" title="Running now">${I('play', 11)}</span>`;
+    if (!ids.length) return `${h}<span class="ca-wbar-idle" title="No macros running">idle</span>`;
+    ids.forEach((id) => {
+      const m = CA.Macros.get(id);
+      if (!m) return;
+      const st = CA.Macros.status(id);
+      const hot = st && st.steps.some((s) => s.lastAt && Date.now() - s.lastAt < HOT_MS);
+      const err = st && st.steps.some((s) => s.error);
+      h += `<span class="ca-wbar-item${hot ? ' hot' : ''}${err ? ' err' : ''}" data-w-open="clickers" title="${esc(statusTitle(m))}">${CA.UI.MacrosPage.icon(m, true)}</span>`;
+    });
+    return h;
   }
 
   function statsHtml() {
@@ -81,8 +115,8 @@ CA.UI.Widgets = (() => {
   }
 
   function registerBuiltins() {
-    defineType({ id: 'shortcuts', name: 'Shortcuts', icon: 'star', desc: 'Buttons for your favourite macros: switch them on and off, or run them, without opening the panel.', width: 200, html: shortcutsHtml });
-    defineType({ id: 'status', name: 'Running now', icon: 'play', desc: 'Every running macro and what each of its actions has done — the same as on the Macros page.', width: 260, single: true, html: () => CA.UI.MacrosPage.status() });
+    defineType({ id: 'macro', name: 'Macro button', icon: 'star', bare: true, hidden: true, html: macroHtml });
+    defineType({ id: 'status', name: 'Running now', icon: 'play', desc: 'A status bar: an icon for each running macro, pulsing while it works. Hover an icon for what its actions have done.', bare: true, single: true, html: statusHtml });
     defineType({ id: 'stats', name: 'Quick stats', icon: 'graphs', desc: 'CpS, actual CpS over the last minute, cookies in the bank, prestige this run and the time to the next level.', width: 190, single: true, html: statsHtml });
     defineType({ id: 'events', name: 'Latest events', icon: 'events', desc: 'The six newest entries in the event log.', width: 260, single: true, html: eventsHtml });
   }
@@ -91,24 +125,61 @@ CA.UI.Widgets = (() => {
 
   const newId = () => `w${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`;
 
-  function add(type, pos) {
+  function add(type, pos, extra) {
     const t = typeById[type];
     if (!t) return null;
     if (t.single) {
       const existing = widgets.find((w) => w.type === type);
       if (existing) return existing;
     }
-    const n = widgets.length;
-    const w = { id: newId(), type, x: pos ? pos.x : 0.04, y: pos ? pos.y : Math.min(0.85, 0.52 + n * 0.06), collapsed: false };
+    const n = widgets.filter((w) => !typeById[w.type].bare).length;
+    const w = { id: newId(), type, x: pos ? pos.x : 0.04, y: pos ? pos.y : Math.min(0.85, 0.52 + n * 0.06), collapsed: false, ...(extra || {}) };
     widgets.push(w);
     changed();
     return w;
   }
 
+  /** The next free spot for a macro button: a row along the bottom of the panel (or where an old
+   *  Shortcuts widget was), wrapping upwards. */
+  function nextButtonPos() {
+    const host = layer && layer.parentNode;
+    const W = (host && host.clientWidth) || 400;
+    const H = (host && host.clientHeight) || 800;
+    const n = widgets.filter((w) => w.type === 'macro').length;
+    const perRow = Math.max(1, Math.floor((W - 16) / BUTTON_PX));
+    const ox = anchor ? anchor.x * (W - BUTTON_PX) : 8;
+    const oy = anchor ? anchor.y * (H - BUTTON_PX) : H - BUTTON_PX - 70;
+    const px = Math.min(W - BUTTON_PX, ox + (n % perRow) * BUTTON_PX);
+    const py = Math.max(0, oy - Math.floor(n / perRow) * BUTTON_PX);
+    return { x: W > BUTTON_PX ? px / (W - BUTTON_PX) : 0, y: H > BUTTON_PX ? py / (H - BUTTON_PX) : 0 };
+  }
+
+  /** Keeps macro buttons in step with ★ favourites: one button per favourite, none for the rest. */
+  function reconcile() {
+    let dirty = false;
+    widgets = widgets.filter((w) => {
+      if (w.type !== 'macro') return true;
+      const keep = CA.Macros.get(w.macro) && CA.Macros.isFav(w.macro);
+      if (!keep) dirty = true;
+      return keep;
+    });
+    CA.Macros.list().forEach((m) => {
+      if (!CA.Macros.isFav(m.id) || widgets.some((w) => w.type === 'macro' && w.macro === m.id)) return;
+      widgets.push({ id: newId(), type: 'macro', macro: m.id, ...nextButtonPos(), collapsed: false });
+      dirty = true;
+    });
+    anchor = null;
+    if (dirty) changed();
+  }
+
   function remove(id) {
-    const i = widgets.findIndex((w) => w.id === id);
-    if (i < 0) return;
-    widgets.splice(i, 1);
+    const w = widgets.find((x) => x.id === id);
+    if (!w) return;
+    if (w.type === 'macro') {
+      CA.Macros.setFav(w.macro, false); // → reconcile() takes the button away
+      return;
+    }
+    widgets.splice(widgets.indexOf(w), 1);
     changed();
   }
 
@@ -136,6 +207,14 @@ CA.UI.Widgets = (() => {
 
   function frameHtml(w) {
     const t = typeById[w.type];
+    if (t.bare) {
+      return (
+        `<div class="ca-w ca-w-bare ca-w-${w.type}" data-widget="${w.id}" data-w-drag>` +
+        `<div class="ca-w-body" data-w-body>${safeHtml(t, w)}</div>` +
+        `<button type="button" class="ca-w-x" data-w-remove title="${w.type === 'macro' ? 'Remove (un-favourites the macro)' : 'Remove widget'}">${I('close', 8)}</button>` +
+        '</div>'
+      );
+    }
     return (
       `<div class="ca-w${w.collapsed ? ' collapsed' : ''}" data-widget="${w.id}" style="width:${t.width}px">` +
       '<div class="ca-w-head" data-w-drag>' +
@@ -160,18 +239,15 @@ CA.UI.Widgets = (() => {
     const host = layer.parentNode;
     const W = host.clientWidth || 0;
     const H = host.clientHeight || 0;
-    const ew = el.offsetWidth || 0;
-    const eh = el.offsetHeight || 0;
-    const x = Math.max(0, Math.min(1, w.x)) * Math.max(0, W - ew);
-    const y = Math.max(0, Math.min(1, w.y)) * Math.max(0, H - eh);
+    const x = Math.max(0, Math.min(1, w.x)) * Math.max(0, W - (el.offsetWidth || 0));
+    const y = Math.max(0, Math.min(1, w.y)) * Math.max(0, H - (el.offsetHeight || 0));
     el.style.left = `${Math.round(x)}px`;
     el.style.top = `${Math.round(y)}px`;
   }
 
   function render() {
     if (!ensureLayer()) return;
-    const visible = S().get('widgetsShown');
-    layer.classList.toggle('ca-hidden', !visible);
+    layer.classList.toggle('ca-hidden', !S().get('widgetsShown'));
     layer.classList.toggle('locked', !!S().get('widgetsLocked'));
     layer.innerHTML = widgets.filter((w) => typeById[w.type]).map(frameHtml).join('');
     widgets.forEach((w) => {
@@ -183,7 +259,7 @@ CA.UI.Widgets = (() => {
   /** Refreshes each widget's content in place (positions untouched). */
   function tick() {
     if (!layer || !layer.isConnected) return render();
-    if (!S().get('widgetsShown') || drag) return;
+    if (!S().get('widgetsShown') || (press && press.moved)) return;
     widgets.forEach((w) => {
       if (w.collapsed) return;
       const body = layer.querySelector(`[data-widget="${w.id}"] [data-w-body]`);
@@ -197,44 +273,59 @@ CA.UI.Widgets = (() => {
   // ---- interaction ----------------------------------------------------------------------------
 
   function onMouseDown(e) {
-    // keep clicks on widgets from reaching the big cookie / the game's panel handlers
+    // keep presses on widgets from reaching the big cookie / the game's panel handlers
     e.stopPropagation();
-    const head = e.target.closest('[data-w-drag]');
-    if (!head || e.target.closest('button') || S().get('widgetsLocked') || e.button !== 0) return;
-    const el = head.closest('[data-widget]');
+    const handle = e.target.closest('[data-w-drag]');
+    if (!handle || e.target.closest('[data-w-remove],[data-w-collapse]') || S().get('widgetsLocked') || e.button !== 0) return;
+    const el = handle.closest('[data-widget]');
     const w = widgets.find((x) => x.id === el.dataset.widget);
     if (!w) return;
+    // framed widgets: buttons in the title bar aren't drag handles; bare ones drag from anywhere
+    if (!typeById[w.type].bare && e.target.closest('button')) return;
     e.preventDefault();
-    drag = { w, el, dx: e.clientX - el.offsetLeft, dy: e.clientY - el.offsetTop };
-    el.classList.add('dragging');
+    press = { w, el, sx: e.clientX, sy: e.clientY, dx: e.clientX - el.offsetLeft, dy: e.clientY - el.offsetTop, moved: false };
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
   }
 
   function onMouseMove(e) {
-    if (!drag) return;
+    if (!press) return;
+    if (!press.moved) {
+      if (Math.abs(e.clientX - press.sx) < DRAG_PX && Math.abs(e.clientY - press.sy) < DRAG_PX) return;
+      press.moved = true;
+      press.el.classList.add('dragging');
+    }
     const host = layer.parentNode;
-    const maxX = Math.max(0, host.clientWidth - drag.el.offsetWidth);
-    const maxY = Math.max(0, host.clientHeight - drag.el.offsetHeight);
-    const x = Math.max(0, Math.min(maxX, e.clientX - drag.dx));
-    const y = Math.max(0, Math.min(maxY, e.clientY - drag.dy));
-    drag.el.style.left = `${x}px`;
-    drag.el.style.top = `${y}px`;
-    drag.w.x = maxX ? x / maxX : 0;
-    drag.w.y = maxY ? y / maxY : 0;
+    const maxX = Math.max(0, host.clientWidth - press.el.offsetWidth);
+    const maxY = Math.max(0, host.clientHeight - press.el.offsetHeight);
+    const x = Math.max(0, Math.min(maxX, e.clientX - press.dx));
+    const y = Math.max(0, Math.min(maxY, e.clientY - press.dy));
+    press.el.style.left = `${x}px`;
+    press.el.style.top = `${y}px`;
+    press.w.x = maxX ? x / maxX : 0;
+    press.w.y = maxY ? y / maxY : 0;
   }
 
   function onMouseUp() {
-    if (!drag) return;
-    drag.el.classList.remove('dragging');
-    drag = null;
+    if (!press) return;
+    const moved = press.moved;
+    press.el.classList.remove('dragging');
+    press = null;
     window.removeEventListener('mousemove', onMouseMove);
     window.removeEventListener('mouseup', onMouseUp);
-    CA.Events.emit('widgets');
+    if (moved) {
+      swallowClick = true; // the click that follows a drag isn't a click
+      setTimeout(() => (swallowClick = false), 0);
+      CA.Events.emit('widgets');
+    }
   }
 
   function onClick(e) {
     e.stopPropagation();
+    if (swallowClick) {
+      swallowClick = false;
+      return;
+    }
     const el = e.target.closest('[data-widget]');
     const w = el && widgets.find((x) => x.id === el.dataset.widget);
     if (!w) return;
@@ -258,50 +349,73 @@ CA.UI.Widgets = (() => {
       tick();
       return;
     }
+    const open = e.target.closest('[data-w-open]');
+    if (open) {
+      CA.Util.sound('snd/tick.mp3');
+      CA.UI.Menu.openPage(open.dataset.wOpen);
+      return;
+    }
     const ca = e.target.closest('[data-ca]');
     if (ca && CA.UI.MacrosPage.handle(ca.dataset.ca, ca)) tick();
   }
 
   // ---- save / load ------------------------------------------------------------------------
 
+  const round = (v) => Math.round(v * 1000) / 1000;
+
   function serialize() {
-    return widgets.map(({ id, type, x, y, collapsed }) => ({ id, type, x: Math.round(x * 1000) / 1000, y: Math.round(y * 1000) / 1000, collapsed }));
+    return widgets.map(({ id, type, x, y, collapsed, macro }) => ({ id, type, x: round(x), y: round(y), collapsed, ...(macro ? { macro } : {}) }));
   }
 
   function load(data) {
     if (!Array.isArray(data)) return;
+    const ok = (w) => w && Number.isFinite(w.x) && Number.isFinite(w.y);
+    // v2.1 had one Shortcuts widget for all favourites; its buttons now start where it was
+    const old = data.find((w) => ok(w) && w.type === 'shortcuts');
+    anchor = old ? { x: old.x, y: old.y } : null;
     widgets = data
-      .filter((w) => w && typeById[w.type] && Number.isFinite(w.x) && Number.isFinite(w.y))
-      .map((w) => ({ id: String(w.id || newId()), type: w.type, x: w.x, y: w.y, collapsed: !!w.collapsed }));
+      .filter((w) => ok(w) && typeById[w.type])
+      .map((w) => ({ id: String(w.id || newId()), type: w.type, x: w.x, y: w.y, collapsed: !!w.collapsed, ...(w.macro ? { macro: String(w.macro) } : {}) }));
     render();
+    reconcile();
   }
 
   // ---- the Widgets page ------------------------------------------------------------------
 
   function pageHtml() {
     const C = CA.UI.C;
+    const favs = CA.Macros.list().filter((m) => CA.Macros.isFav(m.id));
     let h =
       '<div class="ca-card">' +
       C.cardHead('Add a widget', 'plus') +
-      '<div class="ca-card-note">Widgets sit on the left panel, around the big cookie. Drag one by its title bar; ▾ folds it up, × removes it.</div>' +
-      '<div class="ca-list">';
-    types.forEach((t) => {
-      const placed = widgets.filter((w) => w.type === t.id).length;
-      h +=
-        '<div class="ca-row">' +
-        `<span class="ca-row-ico">${I(t.icon, 16)}</span>` +
-        `<div class="ca-row-text"><div class="ca-row-name">${esc(t.name)}${placed ? ` <span class="ca-badge">${placed} placed</span>` : ''}</div><div class="ca-row-desc">${esc(t.desc)}</div></div>` +
-        '<div class="ca-controls">' +
-        (t.single && placed
-          ? C.button('Remove', `data-w-page-remove="${t.id}"`, 'ca-btn-small ca-btn-off')
-          : C.button(`${I('plus', 12)} Add`, `data-w-page-add="${t.id}"`, 'ca-btn-small ca-btn-on')) +
-        '</div></div>';
-    });
+      '<div class="ca-card-note">Widgets sit on the left panel, around the big cookie. Drag them anywhere — framed ones by their title bar, buttons and bars from anywhere. Hover for ×.</div>' +
+      '<div class="ca-list">' +
+      '<div class="ca-row">' +
+      `<span class="ca-row-ico">${I('star', 16)}</span>` +
+      `<div class="ca-row-text"><div class="ca-row-name">Macro buttons${favs.length ? ` <span class="ca-badge">${favs.length} placed</span>` : ''}</div>` +
+      '<div class="ca-row-desc">★ a macro (or a spell on the Wizard tower page) and it gets its own button here: click to switch it on/off or run it, hover for its name. Un-star it to take it away.</div></div>' +
+      `<div class="ca-controls">${C.button(`${I('open', 12)} Macros`, 'data-ca="open-macros"', 'ca-btn-small')}</div>` +
+      '</div>';
+    types
+      .filter((t) => !t.hidden)
+      .forEach((t) => {
+        const placed = widgets.filter((w) => w.type === t.id).length;
+        h +=
+          '<div class="ca-row">' +
+          `<span class="ca-row-ico">${I(t.icon, 16)}</span>` +
+          `<div class="ca-row-text"><div class="ca-row-name">${esc(t.name)}${placed ? ` <span class="ca-badge">${placed} placed</span>` : ''}</div><div class="ca-row-desc">${esc(t.desc)}</div></div>` +
+          '<div class="ca-controls">' +
+          (t.single && placed
+            ? C.button('Remove', `data-w-page-remove="${t.id}"`, 'ca-btn-small ca-btn-off')
+            : C.button(`${I('plus', 12)} Add`, `data-w-page-add="${t.id}"`, 'ca-btn-small ca-btn-on')) +
+          '</div></div>';
+      });
     h += '</div></div>';
-    h += `<div class="ca-card">${C.cardHead('Options', 'settings')}<div class="ca-list">${S().optionsIn('widgets').map(CA.UI.Menu.optionRow).join('')}` +
+    h +=
+      `<div class="ca-card">${C.cardHead('Options', 'settings')}<div class="ca-list">${S().optionsIn('widgets').map(CA.UI.Menu.optionRow).join('')}` +
       '<div class="ca-row ca-row-option">' +
       `<span class="ca-row-ico">${I('trash', 16)}</span>` +
-      '<div class="ca-row-text"><div class="ca-row-name">Remove all widgets</div><div class="ca-row-desc">Clears the left panel.</div></div>' +
+      '<div class="ca-row-text"><div class="ca-row-name">Remove all widgets</div><div class="ca-row-desc">Clears the left panel (and un-stars your macros).</div></div>' +
       C.button('Remove all', 'data-w-page-clear data-arm-label="Remove them all?"', 'ca-btn-small ca-btn-off') +
       '</div></div></div>';
     return h;
@@ -321,7 +435,8 @@ CA.UI.Widgets = (() => {
     } else if (rem) widgets.filter((w) => w.type === rem.dataset.wPageRemove).forEach((w) => remove(w.id));
     else if (clr) {
       if (!CA.UI.Menu.armed(clr)) return;
-      widgets = [];
+      widgets = widgets.filter((w) => w.type === 'macro');
+      widgets.forEach((w) => CA.Macros.setFav(w.macro, false));
       changed();
     }
     CA.UI.Menu.render();
@@ -330,7 +445,7 @@ CA.UI.Widgets = (() => {
   function init() {
     registerBuiltins();
     S().defineOption({ key: 'widgetsShown', group: 'widgets', icon: 'widget', name: 'Show widgets', desc: 'Show your widgets on the left panel (they stay saved while hidden).', default: true });
-    S().defineOption({ key: 'widgetsLocked', group: 'widgets', icon: 'grip', name: 'Lock widgets', desc: 'Stop widgets from being dragged around by accident.', default: false });
+    S().defineOption({ key: 'widgetsLocked', group: 'widgets', icon: 'grip', name: 'Lock widgets', desc: 'Stop widgets from being dragged around by accident (buttons still work).', default: false });
     CA.UI.Pages.register({
       id: 'widgets',
       label: 'Widgets',
@@ -349,11 +464,14 @@ CA.UI.Widgets = (() => {
     CA.Events.on('settings', (k) => {
       if (k === 'widgetsShown' || k === 'widgetsLocked' || k === null) render();
     });
-    CA.Events.on('macros', tick);
+    CA.Events.on('macros', () => {
+      reconcile();
+      tick();
+    });
     addEventListener('resize', render);
     setInterval(tick, TICK_MS);
     render();
   }
 
-  return { init, defineType, types: () => types.slice(), add, remove, list, has, serialize, load, render, tick };
+  return { init, defineType, types: () => types.slice(), add, remove, list, has, serialize, load, render, tick, reconcile };
 })();

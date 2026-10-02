@@ -167,22 +167,10 @@ CA.UI.Graphs = (() => {
       window: 300,
       log: true,
       unit: '/s',
-      choices: [
-        {
-          key: 'smooth',
-          label: 'Smooth',
-          default: 5,
-          options: [
-            { v: 0, label: 'Raw' },
-            { v: 5, label: '5s' },
-            { v: 15, label: '15s' },
-          ],
-        },
-      ],
+      smooth: 5,
       build(v) {
         const bars = v.bucketize(['cps', 'click', 'base']);
         const ivs = effects(v);
-        const k = Math.max(1, Math.round((v.opt('smooth') * SEC) / v.bucket));
         let w = 0;
         let sum = 0;
         bars.forEach((b) => {
@@ -199,7 +187,7 @@ CA.UI.Graphs = (() => {
             { key: 'base', name: 'Unbuffed CpS', color: C_BASE, type: 'line', dash: true, width: 1.4 },
           ],
           bars: bars.map((b) => ({ x0: b.x0, x1: b.x1, parts: { cps: b.v.cps || 0, click: b.v.click || 0 }, raw: b })),
-          lines: { base: P().smooth(P().linePoints(bars, (b) => b.v.base), k) },
+          lines: { base: P().linePoints(bars, (b) => b.v.base) },
           hlines: Number.isFinite(avg) ? [{ v: avg, label: `avg ${F().beautify(avg)}/s` }] : [],
           intervals: ivs,
           markers: markers(v, ['golden', 'wrath', 'reindeer', 'ascend'], ivs),
@@ -290,7 +278,7 @@ CA.UI.Graphs = (() => {
       note: 'What really got baked each second, split by where it came from — golden cookie payouts, Frenzy and everything else included. The dashed line is what the game shows as CpS (plus clicking).',
       windows: WINDOWS,
       window: 900,
-      coarse: true,
+      smooth: 15,
       log: false,
       unit: '/s',
       build(v) {
@@ -350,6 +338,7 @@ CA.UI.Graphs = (() => {
       note: 'Running total of cookies baked, split by source.',
       windows: WINDOWS,
       window: 3600,
+      smooth: false,
       log: false,
       choices: [FROM],
       build(v) {
@@ -421,13 +410,35 @@ CA.UI.Graphs = (() => {
     });
 
   const bankKeys = BANK_IN.concat(BANK_OUT).map((s) => s.key);
-  const bankSeries = () =>
-    BANK_IN.map((s) => ({ key: s.key, name: s.name, color: s.color, type: 'bar' })).concat(
-      BANK_OUT.map((s) => ({ key: s.key, name: s.name, color: s.color, type: 'bar' })),
-      [{ key: 'net', name: 'Net change', color: C_SHOWN, type: 'line', width: 1.4 }]
-    );
   const OUT_SIGN = { spent: -1, withered: -1 };
   const netOf = (parts) => bankKeys.reduce((n, k) => n + (parts[k] || 0), 0);
+
+  // Gains / Losses chips (shared by both bank-change charts): hide one side so the other gets
+  // the whole height — one big purchase can otherwise flatten everything else. The net line
+  // only makes sense with both.
+  const BANK_TOGGLES = [
+    { setting: 'bankGains', label: '▲ Gains', title: 'Show cookies coming into the bank' },
+    { setting: 'bankLosses', label: '▼ Losses', title: 'Show cookies leaving the bank (spending, wrinklers)' },
+  ];
+  function bankSides() {
+    return { gains: S().get('bankGains') !== false, losses: S().get('bankLosses') !== false };
+  }
+  function bankSeries() {
+    const { gains, losses } = bankSides();
+    const bar = (s) => ({ key: s.key, name: s.name, color: s.color, type: 'bar' });
+    return (gains ? BANK_IN.map(bar) : [])
+      .concat(losses ? BANK_OUT.map(bar) : [])
+      .concat(gains && losses ? [{ key: 'net', name: 'Net change', color: C_SHOWN, type: 'line', width: 1.4 }] : []);
+  }
+  /** Keeps only the parts of the sides being shown, so the y axis fits just those. */
+  function bankParts(parts) {
+    const { gains, losses } = bankSides();
+    const out = {};
+    if (gains) BANK_IN.forEach((s) => (out[s.key] = parts[s.key]));
+    if (losses) BANK_OUT.forEach((s) => (out[s.key] = parts[s.key]));
+    return out;
+  }
+  const bankEmpty = () => (bankSides().gains || bankSides().losses ? 'Collecting data…' : 'Pick Gains, Losses or both below.');
 
   const bankFlowPlot = () =>
     P().create({
@@ -437,7 +448,8 @@ CA.UI.Graphs = (() => {
       note: 'Everything that moved the bank: cookies coming in above the line (by source), going out below it.',
       windows: WINDOWS,
       window: 900,
-      coarse: true,
+      smooth: 15,
+      toggles: BANK_TOGGLES,
       unit: '/s',
       totalLabel: 'Net',
       tipFmt: (val) => F().signed(val) + '/s',
@@ -457,9 +469,10 @@ CA.UI.Graphs = (() => {
         });
         return {
           series: bankSeries(),
-          bars,
-          lines: { net: bars.map((b) => ({ x: (b.x0 + b.x1) / 2, x0: b.x0, x1: b.x1, v: netOf(b.parts) })) },
+          bars: bars.map((b) => ({ ...b, parts: bankParts(b.parts) })),
+          lines: { net: bars.map((b) => ({ x: (b.x0 + b.x1) / 2, x0: b.x0, x1: b.x1, bar: b.raw, v: netOf(b.parts) })) },
           markers: markers(v, ['ascend', 'trade'], []),
+          empty: bankEmpty(),
           totals,
           secs,
         };
@@ -490,7 +503,9 @@ CA.UI.Graphs = (() => {
       icon: 'timeline',
       windows: WINDOWS,
       window: 3600,
+      smooth: false,
       choices: [FROM],
+      toggles: BANK_TOGGLES,
       totalLabel: 'Net',
       tipFmt: (val) => F().signed(val),
       build(v) {
@@ -498,9 +513,10 @@ CA.UI.Graphs = (() => {
         const bars = cumulative(v.bucketize(bankKeys), bankKeys, start, OUT_SIGN);
         return {
           series: bankSeries(),
-          bars,
+          bars: bars.map((b) => ({ ...b, parts: bankParts(b.parts) })),
           lines: { net: bars.map((b) => ({ x: b.x1, x0: b.x0, x1: b.x1, v: netOf(b.parts) })) },
           markers: markers(v, ['ascend'], []),
+          empty: bankEmpty(),
           totals: bars.length ? bars[bars.length - 1].parts : {},
         };
       },
@@ -557,7 +573,7 @@ CA.UI.Graphs = (() => {
       icon: 'sparkle',
       windows: LONG_WINDOWS,
       window: 10800,
-      coarse: true,
+      smooth: 900,
       unit: '/h',
       tipFmt: (val) => F().beautify(val, 1) + ' levels/h',
       build(v) {
@@ -642,6 +658,8 @@ CA.UI.Graphs = (() => {
 
   function init() {
     S().defineOption({ key: 'graphTab', group: 'ui', name: 'Graphs tab', desc: '', default: 'cookies' });
+    S().defineOption({ key: 'bankGains', group: 'plot', name: 'Bank charts: gains', desc: '', default: true });
+    S().defineOption({ key: 'bankLosses', group: 'plot', name: 'Bank charts: losses', desc: '', default: true });
     S().defineOption({
       key: 'graphEffects',
       group: 'graph',

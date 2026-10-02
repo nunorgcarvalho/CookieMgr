@@ -2,7 +2,7 @@
 //
 //   Grimoire       magic meter (now / max, refill per second, time to full), spells cast
 //   Spells         every spell: cost, backfire chance, Cast button (or how long until it's
-//                  affordable), ★ to put it on the Shortcuts widget — each is a built-in macro
+//                  affordable), ★ for its own button on the left panel — each is a built-in macro
 //   Auto-cast      the hardcoded "Force the Hand of Fate on Click frenzy" macro, and any of your
 //                  own repeat/when macros that cast spells
 //   Spell combos   your "once" macros that cast spells — New combo starts one in the editor
@@ -47,7 +47,7 @@ CA.UI.WizardPage = (() => {
   function spellsCard() {
     return (
       '<div class="ca-card">' +
-      C().cardHead('Spells', 'sparkle', '<div class="ca-card-meta"><span class="ca-hint">★ puts a spell on the Shortcuts widget · hotkeys on the Macros page</span></div>') +
+      C().cardHead('Spells', 'sparkle', '<div class="ca-card-meta"><span class="ca-hint">★ gives a spell its own button on the left panel · hotkeys on the Macros page</span></div>') +
       '<div class="ca-spells">' +
       G()
         .SPELLS.map(
@@ -58,7 +58,7 @@ CA.UI.WizardPage = (() => {
             '<div class="ca-spell-meta" data-wiz-meta></div>' +
             '<div class="ca-spell-actions">' +
             C().button(`${I('wizard', 12)} Cast`, `data-ca="macro-run" data-id="${s.id}" data-wiz-cast-btn`, 'ca-btn-small ca-btn-run') +
-            `<button type="button" class="ca-iconbtn ca-fav" data-ca="macro-fav" data-id="${s.id}" data-wiz-fav title="Favourite (Shortcuts widget)">${I('starOutline', 14)}</button>` +
+            `<button type="button" class="ca-iconbtn ca-fav" data-ca="macro-fav" data-id="${s.id}" data-wiz-fav title="Favourite: its own button on the left panel">${I('starOutline', 14)}</button>` +
             '</div></div>'
         )
         .join('') +
@@ -88,7 +88,7 @@ CA.UI.WizardPage = (() => {
       C().cardHead('Spell combos', 'sparkle', `<div class="ca-card-meta">${C().button(`${I('plus', 12)} New combo`, 'data-wiz-newcombo', 'ca-btn-small')}</div>`) +
       (combos.length
         ? `<div class="ca-list">${combos.map(CA.UI.MacrosPage.row).join('')}</div>`
-        : '<div class="ca-card-note">A combo casts several spells in one go — one button, one hotkey, or a shortcut widget. It casts each spell in order, skipping any you can’t afford yet.</div>') +
+        : '<div class="ca-card-note">A combo casts several spells in one go — one button, one hotkey, or its own button on the left panel. It casts each spell in order, skipping any you can’t afford yet.</div>') +
       '</div>';
     h += plot.html();
     h += `<div class="ca-card">${C().cardHead('Options', 'settings')}<div class="ca-list">${CA.Settings.optionsIn('grimoire').map(CA.UI.Menu.optionRow).join('')}</div></div>`;

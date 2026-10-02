@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## 2.3.0 — 2026-10-01
+
+- **Fix: widgets dragged over the big cookie couldn't be grabbed again** — the game's invisible cookie click
+  target sits at z-index 10000, above the widget layer. Widgets now sit just above it (still below the game's
+  popups, golden cookies, notes and tooltips).
+- **Each ★ favourite is its own widget:** a round icon button you can move on its own — click to switch it on/off
+  (glows while running) or run it, hover for its name. Starring adds it, un-starring (or ×) removes it. A v2.1
+  Shortcuts widget turns into individual buttons where it was.
+- **Running now widget is a status bar:** just an icon per running macro, pulsing while it works; hover for the
+  details, click to open the Macros page. (The Macros page keeps the detailed view.)
+- Frameless widgets drag from anywhere — a press that doesn't move is a click.
+- **Charts smooth with a centered moving average** instead of widening bars: every chart's **Smooth** chooser (Off,
+  5s … 1h) averages each point over the time around it, weighted by time; bars stay narrow. Defaults: CpS 5s, Actual
+  CpS and bank change 15s, prestige per hour 15m. Running totals and the (already rolling) stock performance aren't
+  smoothed.
+- **Bank charts: ▲ Gains / ▼ Losses** chips to show either side alone (the axis rescales) or both.
+
 ## 2.2.0 — 2026-10-01
 
 - **Wizard tower page** (new sidebar icon): the magic meter with refill rate and time to full; every spell with live

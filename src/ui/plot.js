@@ -19,9 +19,8 @@ CA.UI.Plot = (() => {
   const PAD = { r: 8, t: 10, b: 22 };
   const MIN_PAD_L = 30;
   const PAD_L_MARGIN = 10;
-  const BAR_PX = 5; // target on-screen width (bar + gap) of one bar in Auto coarseness
+  const BAR_PX = 5; // target on-screen width (bar + gap) of one bar
   const MAX_AUTO_BARS = 240;
-  const MAX_BARS = 900;
   const BAR_GAP_FRAC = 0.18;
   const LANE_H = 8;
   const LANE_GAP = 2;
@@ -31,8 +30,8 @@ CA.UI.Plot = (() => {
   const SESSION_START = Date.now();
   const NICE_MS = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 10800, 21600, 43200, 86400, 172800].map((s) => s * SEC);
   const WINDOW_LABELS = { 60: '1m', 300: '5m', 900: '15m', 3600: '1h', 10800: '3h', 43200: '12h', 86400: '1d', 604800: '7d', 0: 'All' };
-  const COARSE = [0, 1, 5, 15, 60, 300, 900, 3600];
-  const COARSE_LABELS = { 0: 'Auto', 1: '1s', 5: '5s', 15: '15s', 60: '1m', 300: '5m', 900: '15m', 3600: '1h' };
+  const SMOOTH = [0, 5, 15, 60, 300, 900, 3600];
+  const SMOOTH_LABELS = { 0: 'Off', 5: '5s', 15: '15s', 60: '1m', 300: '5m', 900: '15m', 3600: '1h' };
 
   const S = () => CA.Settings;
   const esc = (s) => CA.Util.escapeHtml(s);
@@ -206,6 +205,76 @@ CA.UI.Plot = (() => {
     });
   }
 
+  /**
+   * Centered moving average: each value becomes the weighted mean of every value whose centre
+   * lies within ±half of its own centre. Weights are the active seconds each bar covers, so a
+   * smoothed rate is exactly (cookies over the window) ÷ (seconds over the window). Values that
+   * aren't numbers are left alone and don't count.
+   */
+  function movingAverage(centers, weights, values, half) {
+    const n = centers.length;
+    const out = new Array(n);
+    let lo = 0;
+    let hi = 0;
+    let sw = 0;
+    let swv = 0;
+    for (let i = 0; i < n; i++) {
+      while (hi < n && centers[hi] <= centers[i] + half) {
+        if (Number.isFinite(values[hi])) {
+          sw += weights[hi];
+          swv += weights[hi] * values[hi];
+        }
+        hi++;
+      }
+      while (centers[lo] < centers[i] - half) {
+        if (Number.isFinite(values[lo])) {
+          sw -= weights[lo];
+          swv -= weights[lo] * values[lo];
+        }
+        lo++;
+      }
+      out[i] = Number.isFinite(values[i]) && sw > 1e-12 ? swv / sw : values[i];
+    }
+    return out;
+  }
+
+  const weightOf = (b) => {
+    const secs = b.raw && Number.isFinite(b.raw.secs) ? b.raw.secs : b.bar && Number.isFinite(b.bar.secs) ? b.bar.secs : b.secs;
+    return secs > 0 ? secs : Math.max(1e-3, ((b.x1 || 0) - (b.x0 || 0)) / SEC) || 1;
+  };
+
+  /** Applies a centered moving average of `ms` to every bar series and line in `data`. */
+  function smoothData(data, ms) {
+    const half = ms / 2;
+    const series = data.series || [];
+    const bars = data.bars || [];
+    if (bars.length) {
+      const centers = bars.map((b) => (b.x0 + b.x1) / 2);
+      const weights = bars.map(weightOf);
+      series
+        .filter((s) => s.type === 'bar' && s.smooth !== false)
+        .forEach((s) => {
+          const out = movingAverage(centers, weights, bars.map((b) => b.parts[s.key]), half);
+          bars.forEach((b, i) => {
+            if (Number.isFinite(out[i])) b.parts[s.key] = out[i];
+          });
+        });
+    }
+    const lines = data.lines || {};
+    series
+      .filter((s) => (s.type === 'line' || s.type === 'area') && s.smooth !== false && lines[s.key])
+      .forEach((s) => {
+        const pts = lines[s.key];
+        const out = movingAverage(
+          pts.map((p) => p.x),
+          pts.map(weightOf),
+          pts.map((p) => p.v),
+          half
+        );
+        lines[s.key] = pts.map((p, i) => ({ ...p, v: out[i] }));
+      });
+  }
+
   /** Spots in [x0, x1] where active-time mode cut out a stretch of inactive time. */
   function gapsIn(frames, key, x0, x1) {
     const out = [];
@@ -227,7 +296,9 @@ CA.UI.Plot = (() => {
    * spec: {
    *   id, title, icon, height (px, default 220), note (HTML under the title),
    *   windows: [seconds…] (0 = all history), window: default seconds,
-   *   coarse: true to offer a bar-width chooser (default Auto),
+   *   smooth: default centered moving average in seconds (0 = off) — every plot gets a Smooth
+   *           chooser; false for plots where averaging makes no sense (running totals, …).
+   *           A series with smooth: false is left alone.
    *   toggles: [{ key, label, title, default }]          boolean chips, read with v.opt(key)
    *   choices: [{ key, label, options: [{ v, label }], default }]   one-of chips, v.opt(key)
    *   log: true|false to offer a log-scale chip (and its default); omit for linear only
@@ -250,7 +321,7 @@ CA.UI.Plot = (() => {
     // persisted per-plot choices (kept out of the generic Settings list)
     const def = (k, d) => S().defineOption({ key: key(k), group: 'plot', name: k, desc: '', default: d });
     def('win', spec.window != null ? spec.window : (spec.windows || [300])[0]);
-    if (spec.coarse) def('coarse', 0);
+    if (spec.smooth !== false) def('smooth', spec.smooth || 0);
     if (spec.log != null) def('log', !!spec.log);
     // a toggle with `setting` binds an existing global option instead of a per-plot one
     (spec.toggles || []).forEach((t) => !t.setting && def(t.key, !!t.default));
@@ -305,11 +376,11 @@ CA.UI.Plot = (() => {
         '</div>' +
         `<div class="ca-graph-wrap"><canvas class="ca-graph" style="height:${height}px" data-plot-canvas></canvas><div class="ca-tip" data-plot-tip></div></div>` +
         '<div class="ca-toolbar ca-toolbar-bottom">';
-      if (spec.coarse) {
+      if (spec.smooth !== false) {
         h +=
-          '<div class="ca-chipgroup" title="Width of each bar">' +
-          '<span class="ca-chip-label">Bars</span>' +
-          COARSE.map((s) => setChip('coarse', s, COARSE_LABELS[s])).join('') +
+          '<div class="ca-chipgroup" title="Centered moving average: each point becomes the average of the stretch of time around it">' +
+          '<span class="ca-chip-label">Smooth</span>' +
+          SMOOTH.map((s) => setChip('smooth', s, SMOOTH_LABELS[s])).join('') +
           '</div>';
       }
       h += '<div class="ca-chipgroup">';
@@ -332,9 +403,8 @@ CA.UI.Plot = (() => {
       const W = windowMs(ax);
       const x1 = view.getEnd(ax.now);
       const x0 = x1 - W;
-      const auto = niceUp(W / Math.max(12, Math.min(MAX_AUTO_BARS, Math.round(plotW / BAR_PX))));
-      const want = spec.coarse ? opt('coarse') * SEC : 0;
-      const bucket = want ? Math.max(want, niceUp(W / MAX_BARS)) : auto;
+      // bars only as wide as the screen needs; coarseness comes from smoothing, not wider bars
+      const bucket = niceUp(W / Math.max(12, Math.min(MAX_AUTO_BARS, Math.round(plotW / BAR_PX))));
       const frames = CA.Recorder.frames();
       const lo = Math.max(0, CA.Recorder.lowerBound(x0, ax.key) - 1);
       const hi = Math.min(frames.length, CA.Recorder.lowerBound(x1, ax.key) + 1);
@@ -347,6 +417,7 @@ CA.UI.Plot = (() => {
         now: ax.now,
         live: view.isLive(),
         bucket,
+        smoothMs: spec.smooth !== false ? (opt('smooth') || 0) * SEC : 0,
         frames: frames.slice(lo, hi),
         tAt: ax.tAt,
         xAt: ax.xAt,
@@ -371,6 +442,7 @@ CA.UI.Plot = (() => {
 
       const v = viewFor(Math.max(50, w - padL - PAD.r));
       const data = spec.build(v) || {};
+      if (v.smoothMs > 0) smoothData(data, v.smoothMs);
       lastData = { v, data };
       const series = data.series || [];
       const byKey = {};
@@ -852,6 +924,7 @@ CA.UI.Plot = (() => {
         }
       }
       if (!any) h += '<div class="ca-tip-note">No data here.</div>';
+      else if (v.smoothMs > 0) h += `<div class="ca-tip-note">Averaged over the ${windowLabel(v.smoothMs / SEC)} around this point</div>`;
       return h;
     }
 
@@ -1002,6 +1075,7 @@ CA.UI.Plot = (() => {
     create,
     get: (id) => all.get(id),
     bucketize,
+    movingAverage,
     linePoints,
     smooth,
     axis,
