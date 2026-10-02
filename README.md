@@ -23,7 +23,7 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 | **Widget** | Something on the game's left panel: a macro's button, the Running now bar, quick stats, events. |
 
-## Features (v2.3)
+## Features (v2.4)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
 **Macros**, **Graphs**, **Events**, **Stock market**, **Wizard tower**, **Widgets** and **Settings**. Hovering an icon slides its name out to the left.
@@ -45,6 +45,8 @@ The Graphs page has three tabs — **Cookies**, **Bank** and **Prestige** — of
 - **Smooth:** Off, 5s, 15s, 1m, 5m, 15m or 1h — a centered moving average: each point becomes the average of the
   stretch of time around it (weighted by time, so a smoothed rate is exactly the cookies over that stretch ÷ its
   length). Bars stay as narrow as the screen allows instead of getting wider. Running totals aren't smoothed.
+- **Log scale** (where offered) fits the axis to the data — from just under the smallest bar to just over the
+  largest, with round ticks — so the variation fills the chart instead of hugging the top.
 - **Scrollable:** drag (or scroll sideways) to look back; **Pause** / **Jump to live**. Every choice is remembered.
 - **Effect shading** behind the chart for every golden-cookie effect (Frenzy, Click frenzy, Elder frenzy, Dragonflight,
   Clot, …), stacked in lanes when they overlap, and **event markers** for golden/wrath cookies, reindeer, stock trades
@@ -53,9 +55,11 @@ The Graphs page has three tabs — **Cookies**, **Bank** and **Prestige** — of
 **Cookies tab**
 
 - **Cookies per second** — stacked bars of Production (the game's CpS) with Clicking on top, a dashed Unbuffed CpS
-  line, and an average line. Below it, an **averages table**: production (raw CpS), clicking, production + clicking,
-  the with ÷ without clicking ratio, unbuffed CpS and what was actually baked — now and averaged over the last 1, 5,
-  15 minutes, 1 and 3 hours of active play.
+  line, and an average line. Below it, a table of **three stages**, each building on the last — **1 raw production**
+  (CpS with every temporary effect removed), **2 + raw clicking** (clicking with click effects like Click frenzy
+  divided back out), **3 actual** (everything really baked: effects, golden cookies, wrinklers…) — and the
+  multipliers between them: what clicking adds (2 ÷ 1), what effects & golden cookies add (3 ÷ 2), and the total
+  (3 ÷ 1). Now and averaged over the last 1, 5, 15 minutes, 1 and 3 hours of active play.
 - **Actual CpS** — what really got baked each second (the derivative of cookies baked), stacked by source:
   production, clicking, golden cookies & reindeer, other. A dashed line shows the CpS the game displays, for
   comparison; tiles show how far apart they are.
@@ -67,8 +71,10 @@ plus stock sales and other income) and spending and wrinkler withering below it,
 running total. **▲ Gains** / **▼ Losses** chips show either side alone (the axis rescales to it — handy when one big
 purchase dwarfs everything else) or both.
 
-**Prestige tab** — prestige level if you ascended now against your current level, with how many cookies the next
-level needs and when you'll reach it at your recent actual CpS; and **prestige gained per hour**.
+**Prestige tab** — a **prestige target**: type a number (1–999) and pick a magnitude (thousand, million, …) to see
+levels and cookies to go, when you'll get there at your recent actual CpS, and a progress bar for this run (the
+target is also drawn on the chart when it's in reach). Then prestige level if you ascended now against your current
+level, with how many cookies the next level needs; and **prestige gained per hour**.
 
 ### Events
 
@@ -114,6 +120,8 @@ Everything CookieMgr automates is a **macro**: one or more **actions** run in or
 - **Repeat** — while it's on, every so often (the autoclickers: every 0.05–0.1 s);
 - **When…** — while it's on, it watches a **condition** and runs when it happens (or on every check while it holds);
 - **Once** — no on/off: its **Run** button or hotkey runs it one time.
+- **Group** — a switch for several macros at once: on turns all its members on, off turns them all off (it shows as
+  on while all of them are). Handy for your own set of autoclickers under one button or hotkey.
 
 **Built-in macros** (can't be removed or edited — duplicate one to make your own version):
 
@@ -177,9 +185,11 @@ Things on the game's left panel, around the big cookie (and over it — they sit
 always grab them again). Drag them anywhere; hover for ×.
 
 - **Macro buttons** — ★ a macro (or a spell) and it gets its own round icon button: click to switch it on/off (it
-  glows while running) or to run it; hover for its name. Un-star it, or ×, to take it away. Each moves on its own.
+  glows green while running) or to run it; hover for its name, state and hotkey. Un-star it, or ×, to take it away.
+  Each moves on its own. New buttons line up from the bottom-right corner upwards (clear of the dragon and Santa in
+  the bottom-left), starting a new column to the left when one reaches the CookieMgr sidebar.
 - **Running now** — a slim status bar: an icon per running macro, pulsing while its actions are doing something. Hover
-  an icon for what each action has done; click to open the Macros page. (Add it on the Widgets page or from the
+  an icon for a popup of what each action has done; click to open the Macros page. (Add it on the Widgets page or from the
   Running now card.)
 - **Quick stats** — CpS, actual CpS over the last minute, cookies in the bank, prestige this run, time to the next level.
 - **Latest events** — the six newest entries in the event log.
@@ -197,6 +207,8 @@ automatically whenever CookieMgr starts (skipped if Cookie Monster is already ru
 save through the official mod API (`Game.registerMod`), so it survives exports and imports. Settings are also
 mirrored to localStorage the instant anything changes, since Cookie Clicker itself only autosaves once a minute and
 won't force a save on a quick refresh — without the mirror, a change made right before reloading could be lost.
+The mirror is restored even when the game save holds no CookieMgr data yet (the game only hands a mod its saved data
+once it has autosaved with it).
 
 Every golden/wrath cookie and reindeer pop is also recorded with which buff(s) it granted (name, duration,
 multipliers) as structured data, not just a text summary — for future use.

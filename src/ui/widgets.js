@@ -43,48 +43,50 @@ CA.UI.Widgets = (() => {
 
   // ---- built-in widget types ----------------------------------------------------------------
 
-  function macroTitle(m) {
-    const on = CA.Macros.isOn(m.id);
-    const key = CA.Settings.getHotkey(`macro.${m.id}`);
-    const what = m.mode === 'once' ? 'click to run' : on ? 'on — click to switch off' : 'off — click to switch on';
-    return `${m.name} (${what})${key ? ` · ${CA.Hotkeys.format(key)}` : ''}`;
-  }
-
   function macroHtml(inst) {
     const m = CA.Macros.get(inst.macro);
     if (!m) return '';
     const on = CA.Macros.isOn(m.id);
+    const key = CA.Settings.getHotkey(`macro.${m.id}`);
+    const state = m.mode === 'once' ? 'click to run' : on ? 'on' : 'off';
     return (
-      `<button type="button" class="ca-wb${on ? ' on' : ''}${m.mode === 'once' ? ' once' : ''}" data-w-trigger="${esc(m.id)}" title="${esc(macroTitle(m))}">` +
+      `<button type="button" class="ca-wb${on ? ' on' : ''}${m.mode === 'once' ? ' once' : ''}" data-w-trigger="${esc(m.id)}" aria-label="${esc(m.name)}">` +
       `${CA.UI.MacrosPage.icon(m, true)}</button>` +
-      `<span class="ca-wb-label">${esc(m.name)}</span>`
+      `<span class="ca-wb-label"><b>${esc(m.name)}</b><em class="${on ? 'on' : ''}">${state}${key ? ` · ${esc(CA.Hotkeys.format(key))}` : ''}</em></span>`
     );
   }
 
-  function statusTitle(m) {
+  /** The popup shown while hovering a running macro's icon on the status bar. */
+  function statusPop(m) {
     const st = CA.Macros.status(m.id);
     const { beautify, span } = CA.UI.Plot.fmt;
-    const lines = [`${m.name} — ${CA.Macros.triggerText(m)} · on for ${span((Date.now() - CA.Macros.since(m.id)) / 1000)}`];
+    let h =
+      '<span class="ca-wpop">' +
+      `<span class="ca-wpop-head">${CA.UI.MacrosPage.icon(m, true)}<b>${esc(m.name)}</b></span>` +
+      `<span class="ca-wpop-sub">${esc(CA.Macros.triggerText(m))} · on for ${span((Date.now() - CA.Macros.since(m.id)) / 1000)}</span>`;
     m.steps.forEach((step, i) => {
       const s = (st && st.steps[i]) || {};
       const a = CA.Actions.get(step.action) || {};
-      const last = s.lastAt ? `${span((Date.now() - s.lastAt) / 1000)} ago` : 'nothing yet';
-      lines.push(`• ${CA.Actions.describe(step)}: ${s.error ? s.error : `${beautify(s.total || 0, 0)}${a.unit ? ' ' + a.unit : ''}, ${last}`}`);
+      const hot = s.lastAt && Date.now() - s.lastAt < HOT_MS;
+      const val = s.error ? esc(s.error) : `${beautify(s.total || 0, 0)}${a.unit ? ' ' + esc(a.unit) : ''} · ${s.lastAt ? `${span((Date.now() - s.lastAt) / 1000)} ago` : 'nothing yet'}`;
+      h +=
+        `<span class="ca-wpop-row${hot ? ' hot' : ''}${s.error ? ' err' : ''}">${I(a.icon || 'close', 11)}` +
+        `<span class="ca-wpop-name">${esc(CA.Actions.describe(step))}</span><span class="ca-wpop-val">${val}</span></span>`;
     });
-    return lines.join('\n');
+    return h + '<span class="ca-wpop-foot">click to open the Macros page</span></span>';
   }
 
   function statusHtml() {
     const ids = CA.Macros.runningIds();
-    let h = `<span class="ca-wbar-lead" title="Running now">${I('play', 11)}</span>`;
-    if (!ids.length) return `${h}<span class="ca-wbar-idle" title="No macros running">idle</span>`;
+    let h = `<span class="ca-wbar-lead">${I('play', 11)}</span>`;
+    if (!ids.length) return `${h}<span class="ca-wbar-idle">idle</span>`;
     ids.forEach((id) => {
       const m = CA.Macros.get(id);
       if (!m) return;
       const st = CA.Macros.status(id);
       const hot = st && st.steps.some((s) => s.lastAt && Date.now() - s.lastAt < HOT_MS);
       const err = st && st.steps.some((s) => s.error);
-      h += `<span class="ca-wbar-item${hot ? ' hot' : ''}${err ? ' err' : ''}" data-w-open="clickers" title="${esc(statusTitle(m))}">${CA.UI.MacrosPage.icon(m, true)}</span>`;
+      h += `<span class="ca-wbar-item${hot ? ' hot' : ''}${err ? ' err' : ''}" data-w-open="clickers" aria-label="${esc(m.name)}">${CA.UI.MacrosPage.icon(m, true)}${statusPop(m)}</span>`;
     });
     return h;
   }
@@ -98,13 +100,13 @@ CA.UI.Widgets = (() => {
     const lvl = Math.floor(Game.HowMuchPrestige(total));
     const need = typeof Game.HowManyCookiesReset === 'function' ? Game.HowManyCookiesReset(lvl + 1) - total : NaN;
     const eta = r && r.actual > 0 && need > 0 ? need / r.actual : NaN;
-    const row = (label, value, title) => `<div class="ca-w-stat"${title ? ` title="${esc(title)}"` : ''}><span>${label}</span><b>${value}</b></div>`;
+    const row = (label, value) => `<div class="ca-w-stat"><span>${label}</span><b>${value}</b></div>`;
     return (
-      row('CpS', f ? `${beautify((f.cps || 0) + (f.click || 0))}/s` : '—', 'Production + clicking, now') +
-      row('Actual, 1 min', r ? `${beautify(r.actual)}/s` : '—', 'What really got baked per second over the last minute of play') +
+      row('CpS + clicking', f ? `${beautify((f.cps || 0) + (f.click || 0))}/s` : '—') +
+      row('Actual, last min', r ? `${beautify(r.actual)}/s` : '—') +
       row('Bank', beautify(Game.cookies || 0)) +
       row('Prestige', `${beautify(lvl - (Game.prestige || 0), 0)} <em>this run</em>`) +
-      row('Next level', Number.isFinite(eta) ? span(eta) : '—', 'At the last minute’s actual CpS')
+      row('Next level in', Number.isFinite(eta) ? span(eta) : '—')
     );
   }
 
@@ -115,8 +117,8 @@ CA.UI.Widgets = (() => {
   }
 
   function registerBuiltins() {
-    defineType({ id: 'macro', name: 'Macro button', icon: 'star', bare: true, hidden: true, html: macroHtml });
-    defineType({ id: 'status', name: 'Running now', icon: 'play', desc: 'A status bar: an icon for each running macro, pulsing while it works. Hover an icon for what its actions have done.', bare: true, single: true, html: statusHtml });
+    defineType({ id: 'macro', name: 'Macro button', icon: 'star', bare: true, hidden: true, html: macroHtml, update: macroUpdate });
+    defineType({ id: 'status', name: 'Running now', icon: 'play', desc: 'A status bar: an icon for each running macro, pulsing while it works. Hover an icon for what its actions have done.', bare: true, single: true, html: statusHtml, update: statusUpdate });
     defineType({ id: 'stats', name: 'Quick stats', icon: 'graphs', desc: 'CpS, actual CpS over the last minute, cookies in the bank, prestige this run and the time to the next level.', width: 190, single: true, html: statsHtml });
     defineType({ id: 'events', name: 'Latest events', icon: 'events', desc: 'The six newest entries in the event log.', width: 260, single: true, html: eventsHtml });
   }
@@ -139,19 +141,40 @@ CA.UI.Widgets = (() => {
     return w;
   }
 
-  /** The next free spot for a macro button: a row along the bottom of the panel (or where an old
-   *  Shortcuts widget was), wrapping upwards. */
+  /** Where columns of buttons stop going up: just below the CookieMgr sidebar on the right edge
+   *  of the panel (or a third of the way down if it can't be measured). */
+  function columnTop(host, H) {
+    const tab = document.getElementById('CookieMgrTab');
+    if (tab && tab.getBoundingClientRect && host.getBoundingClientRect) {
+      const r = tab.getBoundingClientRect();
+      if (r.height) return Math.max(0, r.bottom - host.getBoundingClientRect().top + 8);
+    }
+    return H * 0.35;
+  }
+
+  /** The next free spot for a macro button: from the bottom-right corner upwards (clear of the
+   *  bottom-left, where the dragon and Santa live), then the next column to the left, again from
+   *  the bottom. A v2.1 Shortcuts widget's buttons start where it was instead. */
   function nextButtonPos() {
     const host = layer && layer.parentNode;
     const W = (host && host.clientWidth) || 400;
     const H = (host && host.clientHeight) || 800;
-    const n = widgets.filter((w) => w.type === 'macro').length;
-    const perRow = Math.max(1, Math.floor((W - 16) / BUTTON_PX));
-    const ox = anchor ? anchor.x * (W - BUTTON_PX) : 8;
-    const oy = anchor ? anchor.y * (H - BUTTON_PX) : H - BUTTON_PX - 70;
-    const px = Math.min(W - BUTTON_PX, ox + (n % perRow) * BUTTON_PX);
-    const py = Math.max(0, oy - Math.floor(n / perRow) * BUTTON_PX);
-    return { x: W > BUTTON_PX ? px / (W - BUTTON_PX) : 0, y: H > BUTTON_PX ? py / (H - BUTTON_PX) : 0 };
+    const fx = (px) => (W > BUTTON_PX ? px / (W - BUTTON_PX) : 0);
+    const fy = (py) => (H > BUTTON_PX ? py / (H - BUTTON_PX) : 0);
+    const taken = widgets.filter((w) => w.type === 'macro').map((w) => ({ x: w.x * (W - BUTTON_PX), y: w.y * (H - BUTTON_PX) }));
+    const free = (x, y) => !taken.some((t) => Math.abs(t.x - x) < BUTTON_PX / 2 && Math.abs(t.y - y) < BUTTON_PX / 2);
+    if (anchor) return { x: Math.min(1, fx(anchor.x * (W - BUTTON_PX) + taken.length * BUTTON_PX)), y: anchor.y };
+    const bottom = H - BUTTON_PX - 12;
+    const rows = Math.max(1, Math.floor((bottom - columnTop(host, H)) / BUTTON_PX) + 1);
+    const cols = Math.max(1, Math.floor((W - 8) / BUTTON_PX));
+    for (let c = 0; c < cols; c++) {
+      for (let r = 0; r < rows; r++) {
+        const x = W - BUTTON_PX - 8 - c * BUTTON_PX;
+        const y = bottom - r * BUTTON_PX;
+        if (free(x, y)) return { x: fx(x), y: fy(y) };
+      }
+    }
+    return { x: fx(W - BUTTON_PX - 8), y: fy(bottom) };
   }
 
   /** Keeps macro buttons in step with ★ favourites: one button per favourite, none for the rest. */
@@ -211,7 +234,7 @@ CA.UI.Widgets = (() => {
       return (
         `<div class="ca-w ca-w-bare ca-w-${w.type}" data-widget="${w.id}" data-w-drag>` +
         `<div class="ca-w-body" data-w-body>${safeHtml(t, w)}</div>` +
-        `<button type="button" class="ca-w-x" data-w-remove title="${w.type === 'macro' ? 'Remove (un-favourites the macro)' : 'Remove widget'}">${I('close', 8)}</button>` +
+        `<button type="button" class="ca-w-x" data-w-remove aria-label="${w.type === 'macro' ? 'Remove (un-favourites the macro)' : 'Remove widget'}">${I('close', 8)}</button>` +
         '</div>'
       );
     }
@@ -219,8 +242,8 @@ CA.UI.Widgets = (() => {
       `<div class="ca-w${w.collapsed ? ' collapsed' : ''}" data-widget="${w.id}" style="width:${t.width}px">` +
       '<div class="ca-w-head" data-w-drag>' +
       `${I(t.icon, 12)}<span class="ca-w-title">${esc(t.name)}</span>` +
-      `<button type="button" class="ca-w-btn" data-w-collapse title="${w.collapsed ? 'Expand' : 'Collapse'}">${w.collapsed ? '▸' : '▾'}</button>` +
-      `<button type="button" class="ca-w-btn" data-w-remove title="Remove widget">${I('close', 10)}</button>` +
+      `<button type="button" class="ca-w-btn" data-w-collapse aria-label="${w.collapsed ? 'Expand' : 'Collapse'}">${w.collapsed ? '▸' : '▾'}</button>` +
+      `<button type="button" class="ca-w-btn" data-w-remove aria-label="Remove widget">${I('close', 10)}</button>` +
       '</div>' +
       `<div class="ca-w-body" data-w-body>${w.collapsed ? '' : safeHtml(t, w)}</div>` +
       '</div>'
@@ -243,6 +266,8 @@ CA.UI.Widgets = (() => {
     const y = Math.max(0, Math.min(1, w.y)) * Math.max(0, H - (el.offsetHeight || 0));
     el.style.left = `${Math.round(x)}px`;
     el.style.top = `${Math.round(y)}px`;
+    el.classList.toggle('pop-below', y < 220);
+    el.classList.toggle('pop-left', x > W / 2);
   }
 
   function render() {
@@ -265,9 +290,47 @@ CA.UI.Widgets = (() => {
       const body = layer.querySelector(`[data-widget="${w.id}"] [data-w-body]`);
       const t = typeById[w.type];
       if (!body || !t) return;
+      // types with update() patch themselves in place, so whatever is hovered (and its popup)
+      // isn't replaced under the mouse
+      if (t.update && body.firstChild && t.update(body, w)) return;
       const html = safeHtml(t, w);
       if (body.innerHTML !== html) body.innerHTML = html;
     });
+  }
+
+  /** Status bar in place: rebuilt only when which macros run (or their pulse/error) changes. */
+  function statusUpdate(body) {
+    const ids = CA.Macros.runningIds();
+    const items = body.querySelectorAll('.ca-wbar-item');
+    if (items.length !== ids.length || !ids.length) return false;
+    for (let i = 0; i < ids.length; i++) {
+      const m = CA.Macros.get(ids[i]);
+      const el = items[i];
+      if (!m || el.getAttribute('aria-label') !== m.name) return false;
+      const st = CA.Macros.status(m.id);
+      el.classList.toggle('hot', !!(st && st.steps.some((s) => s.lastAt && Date.now() - s.lastAt < HOT_MS)));
+      el.classList.toggle('err', !!(st && st.steps.some((s) => s.error)));
+      const pop = el.querySelector('.ca-wpop');
+      const fresh = statusPop(m);
+      const inner = fresh.slice(fresh.indexOf('>') + 1, fresh.lastIndexOf('</span>'));
+      if (pop && pop.innerHTML !== inner) pop.innerHTML = inner;
+    }
+    return true;
+  }
+
+  /** Macro button in place: just its on/off look and its label. */
+  function macroUpdate(body, inst) {
+    const m = CA.Macros.get(inst.macro);
+    const btn = body.querySelector('.ca-wb');
+    const em = body.querySelector('.ca-wb-label em');
+    if (!m || !btn || !em) return false;
+    const on = CA.Macros.isOn(m.id);
+    btn.classList.toggle('on', on);
+    const key = CA.Settings.getHotkey(`macro.${m.id}`);
+    const text = `${m.mode === 'once' ? 'click to run' : on ? 'on' : 'off'}${key ? ` · ${CA.Hotkeys.format(key)}` : ''}`;
+    if (em.textContent !== text) em.textContent = text;
+    em.classList.toggle('on', on);
+    return true;
   }
 
   // ---- interaction ----------------------------------------------------------------------------
@@ -302,6 +365,8 @@ CA.UI.Widgets = (() => {
     const y = Math.max(0, Math.min(maxY, e.clientY - press.dy));
     press.el.style.left = `${x}px`;
     press.el.style.top = `${y}px`;
+    press.el.classList.toggle('pop-below', y < 220);
+    press.el.classList.toggle('pop-left', x > host.clientWidth / 2);
     press.w.x = maxX ? x / maxX : 0;
     press.w.y = maxY ? y / maxY : 0;
   }

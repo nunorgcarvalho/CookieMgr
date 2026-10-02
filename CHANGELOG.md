@@ -2,6 +2,31 @@
 
 ## Unreleased
 
+## 2.4.0 — 2026-10-01
+
+- **Fix: settings (and running macros, widgets…) lost on refresh/upgrade.** The game only calls a mod's `load()` when
+  its save already holds data for that mod — which it doesn't until its first autosave with CookieMgr (once a
+  minute). In that window CookieMgr skipped its own local mirror and started from defaults, and the next change
+  overwrote the mirror. The mirror is now restored either way.
+- **Group macros:** a new **Group** trigger — a switch for several macros at once (on turns all members on, off turns
+  them all off; it's on while they all are). Pick members from a checklist in the editor.
+- **CpS table as three stages:** 1 raw production → 2 + raw clicking (click effects like Click frenzy divided back
+  out) → 3 actual, plus the multipliers between them (clicking, effects & golden, total). New recorded state:
+  clicking without click effects.
+- **Fix: averages right after loading read low** — the first frame after a gap recorded its flows (cookies baked,
+  clicking…) as zero instead of unknown. They're now left out, and rates divide by the seconds actually measured.
+- **Log scale fits the data** (just under the smallest bar total to just over the largest, round ticks) instead of
+  whole powers of ten, so the variation is visible.
+- **Prestige target** on the Prestige tab: a 1–999 number and a magnitude; levels and cookies to go, ETA, progress
+  bar, and the target line on the chart.
+- **Widgets:**
+  - New macro buttons line up from the bottom-right corner upwards, wrapping to the next column on the left at the
+    CookieMgr sidebar.
+  - The Running now bar shows a styled popup per icon instead of the browser's tooltip, and refreshes in place.
+  - Button labels show name, state and hotkey.
+  - Whatever you hover comes to the front, so labels are never hidden under a neighbour.
+  - Starker green ring on running macros.
+
 ## 2.3.0 — 2026-10-01
 
 - **Fix: widgets dragged over the big cookie couldn't be grabbed again** — the game's invisible cookie click

@@ -24,6 +24,7 @@ CA.UI.MacrosPage = (() => {
     { v: 'repeat', label: 'Repeat', icon: 'refresh', hint: 'While it’s on, runs its steps every so often.' },
     { v: 'when', label: 'When…', icon: 'filter', hint: 'While it’s on, watches for a condition and runs its steps when it happens.' },
     { v: 'once', label: 'Once', icon: 'play', hint: 'No on/off: its button or hotkey runs the steps one time.' },
+    { v: 'group', label: 'Group', icon: 'widget', hint: 'A switch for several macros at once: on turns them all on, off turns them all off.' },
   ];
 
   let root = null;
@@ -52,6 +53,12 @@ CA.UI.MacrosPage = (() => {
     return `<span class="ca-step">${I(a ? a.icon : 'close', 12)}${esc(CA.Actions.describe(step))}</span>`;
   }
 
+  function memberChips(m) {
+    const members = M().membersOf(m);
+    if (!members.length) return '<span class="ca-step">no members</span>';
+    return members.map((x) => `<span class="ca-step ca-step-member">${icon(x, true)}${esc(x.name)}</span>`).join('');
+  }
+
   /** One macro as a row: picture, name + trigger, steps, status, and its controls. */
   function row(m) {
     const once = m.mode === 'once';
@@ -62,7 +69,7 @@ CA.UI.MacrosPage = (() => {
       '<div class="ca-row-text">' +
       `<div class="ca-row-name">${esc(m.name)} <span class="ca-badge ca-badge-${m.mode}">${esc(M().triggerText(m))}</span></div>` +
       (m.desc ? `<div class="ca-row-desc">${esc(m.desc)}</div>` : '') +
-      `<div class="ca-steps">${m.steps.map(stepChip).join('<span class="ca-step-arrow">›</span>')}</div>` +
+      `<div class="ca-steps">${m.mode === 'group' ? memberChips(m) : m.steps.map(stepChip).join('<span class="ca-step-arrow">›</span>')}</div>` +
       '<div class="ca-macro-status" data-macro-status></div>' +
       '</div>' +
       '<div class="ca-controls">' +
@@ -112,7 +119,7 @@ CA.UI.MacrosPage = (() => {
   // ---- the editor ----------------------------------------------------------------------------
 
   function blankDraft() {
-    return { id: null, name: '', desc: '', icon: { ico: 'bolt' }, mode: 'repeat', every: 1000, steps: [{ action: 'pop.golden', params: {} }], inAll: false, when: blankWhen() };
+    return { id: null, name: '', desc: '', icon: { ico: 'bolt' }, mode: 'repeat', every: 1000, steps: [{ action: 'pop.golden', params: {} }], members: [], inAll: false, when: blankWhen() };
   }
   const blankCond = () => ({ cond: 'buff', params: {}, not: false });
   const blankWhen = () => ({ all: [blankCond()], edge: 'rise' });
@@ -166,7 +173,7 @@ CA.UI.MacrosPage = (() => {
       `<div class="ca-editor-row"><span class="ca-field-label">Trigger</span><div class="ca-chipgroup">${MODES.map(
         (x) => `<button type="button" class="ca-chip${x.v === d.mode ? ' on' : ''}" data-edit-act="mode" data-val="${x.v}" title="${esc(x.hint)}">${I(x.icon, 12)} ${x.label}</button>`
       ).join('')}</div><span class="ca-hint">${esc(mode.hint)}</span></div>`;
-    if (d.mode !== 'once') {
+    if (d.mode !== 'once' && d.mode !== 'group') {
       h +=
         '<div class="ca-editor-row">' +
         `<label class="ca-field"><span>${d.mode === 'when' ? 'Check every' : 'Every'}</span><input type="number" step="any" min="${M().MIN_EVERY / 1000}" data-edit="everySec" data-type="number" value="${d.every / 1000}"><em>seconds</em></label>` +
@@ -194,7 +201,23 @@ CA.UI.MacrosPage = (() => {
         `<label class="ca-field"><span>Run</span><select data-edit="when.edge"><option value="rise"${w.edge !== 'while' ? ' selected' : ''}>once each time it happens</option><option value="while"${w.edge === 'while' ? ' selected' : ''}>on every check while it holds</option></select></label>` +
         '</div></div>';
     }
-    h += `<div class="ca-editor-row"><span class="ca-field-label">${I('bolt', 13)} Steps</span><span class="ca-hint">Run in order, every time the macro fires.</span></div><div class="ca-editor-steps">`;
+    if (d.mode === 'group') {
+      const choices = M()
+        .list()
+        .filter((m) => m.mode !== 'once' && m.mode !== 'group' && m.id !== d.id);
+      h +=
+        `<div class="ca-editor-row"><span class="ca-field-label">${I('widget', 13)} Members</span><span class="ca-hint">Switching the group switches all of these together.</span></div>` +
+        '<div class="ca-members">' +
+        choices
+          .map(
+            (m) =>
+              `<label class="ca-member${d.members.includes(m.id) ? ' on' : ''}"><input type="checkbox" data-member="${esc(m.id)}"${d.members.includes(m.id) ? ' checked' : ''}>` +
+              `${icon(m, true)}<span>${esc(m.name)}</span></label>`
+          )
+          .join('') +
+        '</div>';
+    } else {
+      h += `<div class="ca-editor-row"><span class="ca-field-label">${I('bolt', 13)} Steps</span><span class="ca-hint">Run in order, every time the macro fires.</span></div><div class="ca-editor-steps">`;
     d.steps.forEach((s, i) => {
       const a = CA.Actions.get(s.action);
       h +=
@@ -207,8 +230,9 @@ CA.UI.MacrosPage = (() => {
         `<button type="button" class="ca-iconbtn" data-edit-act="del" data-val="${i}" title="Remove step">${I('close', 12)}</button>` +
         '</span></div>';
     });
+      h += `<button type="button" class="ca-btn ca-btn-small" data-edit-act="add">${I('plus', 12)} Add step</button></div>`;
+    }
     h +=
-      `<button type="button" class="ca-btn ca-btn-small" data-edit-act="add">${I('plus', 12)} Add step</button></div>` +
       (draftError ? `<div class="ca-editor-error">${esc(draftError)}</div>` : '') +
       '<div class="ca-editor-actions">' +
       C().button(`${I('save', 13)} Save`, 'data-edit-act="save"', 'ca-btn-on') +
@@ -230,6 +254,13 @@ CA.UI.MacrosPage = (() => {
 
   function onEditInput(e) {
     const el = e.target;
+    if (el.dataset && el.dataset.member && draft) {
+      const id = el.dataset.member;
+      draft.members = (draft.members || []).filter((x) => x !== id);
+      if (el.checked) draft.members.push(id);
+      el.closest('.ca-member').classList.toggle('on', el.checked);
+      return;
+    }
     if (!el.dataset || !el.dataset.edit || !draft) return;
     const type = el.dataset.type;
     let v = type === 'bool' ? el.checked : type === 'number' ? Number(el.value) : el.value;
@@ -251,6 +282,7 @@ CA.UI.MacrosPage = (() => {
 
   function validate(d) {
     if (!d.name.trim()) return 'Give it a name.';
+    if (d.mode === 'group') return d.members && d.members.length ? '' : 'Tick at least one macro for the group.';
     if (!d.steps.length) return 'Add at least one step.';
     if (d.mode !== 'once' && !(d.every >= M().MIN_EVERY)) return `Run it at most every ${M().MIN_EVERY / 1000}s.`;
     const self = d.steps.find((s) => (s.action === 'macro.run' || s.action === 'macro.set') && d.id && s.params.macro === d.id);
@@ -312,6 +344,8 @@ CA.UI.MacrosPage = (() => {
     const m = id ? M().get(id) : null;
     draft = m ? JSON.parse(JSON.stringify(m)) : { ...blankDraft(), ...(preset || {}) };
     if (!draft.when || !Array.isArray(draft.when.all)) draft.when = blankWhen();
+    if (!Array.isArray(draft.members)) draft.members = [];
+    if (!draft.steps.length) draft.steps = [{ action: 'pop.golden', params: {} }]; // a group switched to another mode
     if (CA.Settings.get('tab') !== 'clickers' && CA.UI.Menu.isOpen()) CA.Settings.set('tab', 'clickers');
     draftError = '';
     rerender();

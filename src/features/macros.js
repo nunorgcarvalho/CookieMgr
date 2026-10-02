@@ -5,6 +5,9 @@
 //   when     while it's on, checks a condition (core/conditions.js) every `every` ms and runs its
 //            steps when it becomes true ("rise") or on every check while it holds ("while")
 //   once     no on/off — a button or hotkey runs its steps one time       (Sell all stocks)
+//   group    a switch for several other macros: on turns them all on, off turns them all off.
+//            It has no steps or timer of its own; it counts as on while all its members are on,
+//            so it stays right however its members get switched.
 //
 // Built-in macros (the original autoclickers, the stock autobuyer, Sell all…) can't be removed or
 // edited, only duplicated. Your own macros are saved in the game save with the rest of the
@@ -124,7 +127,7 @@ CA.Macros = (() => {
   // ---- definitions --------------------------------------------------------------------
 
   function clean(def) {
-    const mode = ['repeat', 'when', 'once'].includes(def.mode) ? def.mode : 'repeat';
+    const mode = ['repeat', 'when', 'once', 'group'].includes(def.mode) ? def.mode : 'repeat';
     const m = {
       id: String(def.id),
       name: String(def.name || 'Macro').slice(0, 60),
@@ -138,6 +141,10 @@ CA.Macros = (() => {
       inAll: !!def.inAll,
       builtin: !!def.builtin,
     };
+    if (mode === 'group') {
+      m.steps = [];
+      m.members = (Array.isArray(def.members) ? def.members : []).map(String).filter((id) => id !== m.id);
+    }
     if (mode === 'when') {
       // { all: [{ cond, params, not }, …], edge } — v2.0 saved a single condition at the top level
       const w = def.when || {};
@@ -289,11 +296,22 @@ CA.Macros = (() => {
     CA.Events.emit('macros', id);
   }
 
-  /** Turns a repeat/when macro on or off. */
+  /** A group's members that exist and can be switched (no once macros, no other groups). */
+  const membersOf = (m) => (m && m.mode === 'group' ? m.members.map((id) => byId[id]).filter((x) => x && x.mode !== 'once' && x.mode !== 'group') : []);
+
+  /** Turns a repeat/when macro — or every member of a group — on or off. */
   function set(id, on, { silent = false } = {}) {
     const m = byId[id];
     if (!m || m.mode === 'once') return;
     on = !!on;
+    if (m.mode === 'group') {
+      const members = membersOf(m);
+      if (!members.length || (isOn(id) === on && members.every((x) => isOn(x.id) === on))) return;
+      members.forEach((x) => set(x.id, on, { silent: true }));
+      if (!silent) announce(m, on);
+      changed(id);
+      return;
+    }
     if (isOn(id) === on) return;
     if (on) start(id);
     else stop(id);
@@ -333,7 +351,14 @@ CA.Macros = (() => {
 
   // ---- queries --------------------------------------------------------------------------------
 
-  const isOn = (id) => !!running[id];
+  function isOn(id) {
+    const m = byId[id];
+    if (m && m.mode === 'group') {
+      const members = membersOf(m);
+      return members.length > 0 && members.every((x) => !!running[x.id]);
+    }
+    return !!running[id];
+  }
   const list = () => macros.slice();
   const get = (id) => byId[id] || null;
   const activeCount = () => Object.keys(running).length;
@@ -351,6 +376,7 @@ CA.Macros = (() => {
   function triggerText(m) {
     const secs = (ms) => (ms < 1000 ? `${ms / 1000}s` : `${Math.round(ms / 100) / 10}s`);
     if (m.mode === 'once') return 'on demand';
+    if (m.mode === 'group') return `group of ${membersOf(m).length}`;
     if (m.mode === 'repeat') return `every ${secs(m.every)}`;
     return `${m.when.edge === 'while' ? 'while' : 'when'} ${CA.Conditions.describe(m.when)}`;
   }
@@ -374,6 +400,9 @@ CA.Macros = (() => {
     prefs = data.prefs && typeof data.prefs === 'object' ? { ...data.prefs } : {};
     changed(null);
   }
+
+  /** Groups that `id` is a member of (so the UI can refresh them too). */
+  const groupsWith = (id) => macros.filter((m) => m.mode === 'group' && m.members.includes(id));
 
   /** Turns on the macros that were running when the game was saved (rememberStates). */
   function restore(ids) {
@@ -439,6 +468,8 @@ CA.Macros = (() => {
     activeCount,
     runningIds,
     status: statusOf,
+    membersOf,
+    groupsWith,
     isFav,
     setFav,
     triggerText,

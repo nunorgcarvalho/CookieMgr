@@ -24,6 +24,8 @@ function migrateOldSaveData() {
   delete Game.modSaveData[OLD_ID];
 }
 
+let loaded = false;
+
 const mod = {
   init() {
     const hadLegacy = removeLegacyBookmarklet();
@@ -72,6 +74,7 @@ const mod = {
   },
 
   load(str) {
+    loaded = true;
     // Prefer our own localStorage mirror when we have one — it's updated the moment anything
     // changes, while the game's save can be up to 60s stale or skipped by a quick reload.
     // Read it first: deserializing re-mirrors the current, not-yet-restored state over it.
@@ -93,6 +96,11 @@ const mod = {
 
 function register() {
   Game.registerMod(CA.ID, mod);
+  // The game only calls load() when its save already holds data for this mod (main.js:
+  // `if (mod.load && Game.modSaveData[id]) mod.load(...)`), and it only autosaves once a minute.
+  // Without this, a refresh before that first save skipped our local mirror entirely and started
+  // from defaults — and the next change then overwrote the mirror with them.
+  if (!loaded) mod.load('');
 }
 
 if (window.CookieMgr) {

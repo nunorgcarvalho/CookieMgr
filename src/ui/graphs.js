@@ -39,7 +39,7 @@ CA.UI.Graphs = (() => {
   const TABS = [
     { id: 'cookies', label: 'Cookies', icon: 'cookie', plots: ['cps', 'actual', 'baked'] },
     { id: 'bank', label: 'Bank', icon: 'dollar', plots: ['bank', 'bankflow', 'bankcum'] },
-    { id: 'prestige', label: 'Prestige', icon: 'ascend', plots: ['prestige', 'prestigeRate'] },
+    { id: 'prestige', label: 'Prestige', icon: 'ascend', plots: ['prestige', 'prestigeRate'], top: () => targetCardHtml() },
   ];
 
   // ---- shared overlays --------------------------------------------------------------------
@@ -105,8 +105,9 @@ CA.UI.Graphs = (() => {
       }));
   }
 
-  /** Bars with each source as a per-second rate. */
-  const rate = (b, k) => (b.secs > 0 && Number.isFinite(b.v[k]) ? b.v[k] / b.secs : 0);
+  /** A flow as a per-second rate over the seconds it was actually measured. */
+  const coverOf = (b, k) => (b.cover && b.cover[k] > 0 ? b.cover[k] : b.secs);
+  const rate = (b, k) => (Number.isFinite(b.v[k]) && coverOf(b, k) > 0 ? b.v[k] / coverOf(b, k) : 0);
 
   /** Running totals of flows across bars, from `startX` (bars before it are dropped). */
   function cumulative(bars, keys, startX, sign = {}) {
@@ -142,18 +143,32 @@ CA.UI.Graphs = (() => {
   function recent(seconds) {
     const frames = CA.Recorder.frames();
     const from = CA.Recorder.activeNow() - seconds * SEC;
-    const acc = { secs: 0, cps: 0, click: 0, base: 0, earned: 0 };
+    // each value averaged over the seconds it was actually measured (the first frame after a
+    // gap has no clicking / baked figures — it mustn't count as a second of zero)
+    const sum = { cps: 0, click: 0, clickRaw: 0, base: 0 };
+    const secs = { cps: 0, click: 0, clickRaw: 0, base: 0 };
+    let earned = 0;
+    let earnedSecs = 0;
+    let total = 0;
     for (let i = frames.length - 1; i >= 0 && frames[i].a > from; i--) {
       const f = frames[i];
       const dt = f.dt || 0;
-      acc.secs += dt;
-      acc.cps += (f.cps || 0) * dt;
-      acc.click += (f.click || 0) * dt;
-      acc.base += (f.base || 0) * dt;
-      acc.earned += f.earned || 0;
+      total += dt;
+      Object.keys(sum).forEach((k) => {
+        // frames from before v2.4 have no clickRaw: use clicking as it was
+        const v = k === 'clickRaw' && !Number.isFinite(f.clickRaw) ? f.click : f[k];
+        if (!Number.isFinite(v)) return;
+        sum[k] += v * dt;
+        secs[k] += dt;
+      });
+      if (Number.isFinite(f.earned)) {
+        earned += f.earned;
+        earnedSecs += dt;
+      }
     }
-    if (!acc.secs) return null;
-    return { cps: acc.cps / acc.secs, click: acc.click / acc.secs, base: acc.base / acc.secs, actual: acc.earned / acc.secs, secs: acc.secs };
+    if (!total) return null;
+    const per = (k) => (secs[k] ? sum[k] / secs[k] : 0);
+    return { cps: per('cps'), click: per('click'), clickRaw: per('clickRaw'), base: per('base'), actual: earnedSecs ? earned / earnedSecs : 0, secs: total };
   }
 
   // ---- Cookies tab --------------------------------------------------------------------------
@@ -233,6 +248,14 @@ CA.UI.Graphs = (() => {
   }
 
   /** The averages table under the CpS plot: rows of measures, columns of time spans. */
+  /**
+   * The CpS table, as three stages that build on each other:
+   *   1 raw production         unbuffed CpS — no golden-cookie effects
+   *   2 + raw clicking         plus clicking with click effects (Click frenzy, …) divided back out
+   *   3 actual                 everything that really got baked: buffed production, buffed
+   *                            clicking, golden cookie payouts, wrinklers…
+   * and the multipliers between them: what clicking adds, what effects & golden cookies add, total.
+   */
   function averagesTable() {
     const { beautify } = F();
     const COLS = [
@@ -243,25 +266,29 @@ CA.UI.Graphs = (() => {
       { s: 3600, label: '1 h' },
       { s: 10800, label: '3 h' },
     ];
-    const vals = COLS.map((c) => {
-      if (c.s) return recent(c.s);
-      const frames = CA.Recorder.frames();
-      const f = frames[frames.length - 1];
-      return f ? { cps: f.cps || 0, click: f.click || 0, base: f.base || 0, actual: f.dt ? (f.earned || 0) / f.dt : 0 } : null;
-    });
+    // "Now" = the last 3 seconds: one frame alone is too jumpy (and may be a just-resumed one)
+    const vals = COLS.map((c) => recent(c.s || 3));
+    const stage1 = (r) => r.base;
+    const stage2 = (r) => r.base + r.clickRaw;
+    const stage3 = (r) => r.actual;
+    const times = (a, b) => (b > 0 && Number.isFinite(a) ? `×${(a / b).toFixed(a / b >= 10 ? 1 : 2)}` : '—');
     const ROWS = [
-      { label: 'Production', title: 'Raw CpS — what the game shows, without clicking', fn: (r) => beautify(r.cps) + '/s', color: C_CPS },
-      { label: 'Clicking', title: 'Cookies per second from clicking the big cookie', fn: (r) => beautify(r.click) + '/s', color: C_CLICK },
-      { label: 'Production + clicking', title: 'Raw CpS plus clicking', fn: (r) => beautify(r.cps + r.click) + '/s', strong: true },
-      { label: 'With ÷ without clicking', title: 'How much clicking multiplies your income', fn: (r) => (r.cps > 0 ? `×${((r.cps + r.click) / r.cps).toFixed(r.click / r.cps > 9 ? 1 : 2)}` : '—') },
-      { label: 'Unbuffed', title: 'Production with every temporary effect removed', fn: (r) => beautify(r.base) + '/s', color: C_BASE },
-      { label: 'Actually baked', title: 'What really went into cookies baked, per second — includes golden cookies and everything else', fn: (r) => beautify(r.actual) + '/s', color: SOURCES[2].color },
+      { n: 1, label: 'Raw production', desc: 'CpS with every temporary effect removed', fn: (r) => beautify(stage1(r)) + '/s', color: C_BASE },
+      { n: 2, label: '+ raw clicking', desc: 'plus clicking, with click effects (Click frenzy…) taken out', fn: (r) => beautify(stage2(r)) + '/s', color: C_CLICK },
+      { n: 3, label: 'Actual', desc: 'everything really baked: effects, golden cookies, wrinklers…', fn: (r) => beautify(stage3(r)) + '/s', color: SOURCES[2].color, strong: true },
+      { label: 'Clicking adds', desc: '2 ÷ 1', fn: (r) => times(stage2(r), stage1(r)), mult: true },
+      { label: 'Effects & golden add', desc: '3 ÷ 2', fn: (r) => times(stage3(r), stage2(r)), mult: true },
+      { label: 'Total', desc: '3 ÷ 1', fn: (r) => times(stage3(r), stage1(r)), mult: true, strong: true },
     ];
-    let h = '<div class="ca-table-wrap"><table class="ca-table"><thead><tr><th>Average over the last…</th>';
+    let h = '<div class="ca-table-wrap"><table class="ca-table ca-stages"><thead><tr><th>Average over the last…</th>';
     COLS.forEach((c) => (h += `<th>${c.label}</th>`));
     h += '</tr></thead><tbody>';
     ROWS.forEach((r) => {
-      h += `<tr${r.strong ? ' class="strong"' : ''}><td title="${esc(r.title)}">${r.color ? F().swatch(r.color) : ''}${esc(r.label)}</td>`;
+      const cls = [r.strong ? 'strong' : '', r.mult ? 'mult' : ''].filter(Boolean).join(' ');
+      h +=
+        `<tr${cls ? ` class="${cls}"` : ''}><td>` +
+        (r.n ? `<span class="ca-stage-n" style="background:${r.color}">${r.n}</span>` : '<span class="ca-stage-n ca-stage-x">×</span>') +
+        `${esc(r.label)}<span class="ca-row-sub">${esc(r.desc)}</span></td>`;
       vals.forEach((val) => (h += `<td>${val ? esc(r.fn(val)) : '—'}</td>`));
       h += '</tr>';
     });
@@ -287,8 +314,9 @@ CA.UI.Graphs = (() => {
         let sum = 0;
         let secs = 0;
         bars.forEach((b) => {
-          sum += b.v.earned || 0;
-          secs += b.secs;
+          if (!Number.isFinite(b.v.earned)) return;
+          sum += b.v.earned;
+          secs += coverOf(b, 'earned');
         });
         const avg = secs ? sum / secs : NaN;
         return {
@@ -464,7 +492,7 @@ CA.UI.Graphs = (() => {
         const totals = {};
         let secs = 0;
         raw.forEach((b) => {
-          secs += b.secs;
+          secs += coverOf(b, 'spent');
           bankKeys.forEach((k) => (totals[k] = (totals[k] || 0) + (b.v[k] || 0) * (OUT_SIGN[k] || 1)));
         });
         return {
@@ -536,15 +564,21 @@ CA.UI.Graphs = (() => {
       tipFmt: (val) => F().beautify(Math.floor(val), 0),
       build(v) {
         const bars = v.bucketize(['prestigeTotal', 'prestige']);
+        const totals = P().linePoints(bars, (b) => b.v.prestigeTotal);
+        // the target as a line, when it's close enough not to squash the chart
+        const target = prestigeTarget();
+        const top = totals.reduce((m, p) => Math.max(m, p.v), 0);
+        const showTarget = target > 0 && top > 0 && target <= top * 1.5;
         return {
           series: [
             { key: 'prestigeTotal', name: 'Level if you ascended now', color: '#c9bcff', type: 'area', width: 1.8 },
             { key: 'prestige', name: 'Current level', color: C_BASE, type: 'line', dash: true },
           ],
           lines: {
-            prestigeTotal: P().linePoints(bars, (b) => b.v.prestigeTotal),
+            prestigeTotal: totals,
             prestige: P().linePoints(bars, (b) => b.v.prestige),
           },
+          hlines: showTarget ? [{ v: target, label: `target ${F().beautify(target, 0)}`, color: 'rgba(201,188,255,0.85)' }] : [],
           markers: markers(v, ['ascend'], []),
           zero: false,
         };
@@ -606,6 +640,82 @@ CA.UI.Graphs = (() => {
       },
     });
 
+  // ---- prestige target --------------------------------------------------------------------
+  // A target prestige level, entered as a number from 1–999 and a magnitude (thousand, million…),
+  // with how far there is to go and when you'll get there at your recent actual CpS.
+
+  const UNITS = [
+    { e: 0, label: 'levels' },
+    { e: 3, label: 'thousand' },
+    { e: 6, label: 'million' },
+    { e: 9, label: 'billion' },
+    { e: 12, label: 'trillion' },
+    { e: 15, label: 'quadrillion' },
+    { e: 18, label: 'quintillion' },
+  ];
+
+  /** The target level, or 0 when none is set. */
+  function prestigeTarget() {
+    const n = Number(S().get('prestigeTargetNum')) || 0;
+    return n > 0 ? n * Math.pow(10, Number(S().get('prestigeTargetUnit')) || 0) : 0;
+  }
+
+  function targetCardHtml() {
+    const n = Number(S().get('prestigeTargetNum')) || 0;
+    const u = Number(S().get('prestigeTargetUnit')) || 0;
+    return (
+      '<div class="ca-card" data-ptarget>' +
+      CA.UI.C.cardHead('Prestige target', 'marker') +
+      '<div class="ca-target">' +
+      '<span class="ca-field-label">Reach level</span>' +
+      `<input type="number" min="1" max="999" step="1" placeholder="e.g. 250" value="${n > 0 ? n : ''}" data-ptarget-num>` +
+      `<select data-ptarget-unit>${UNITS.map((x) => `<option value="${x.e}"${x.e === u ? ' selected' : ''}>${x.label}</option>`).join('')}</select>` +
+      '</div>' +
+      '<div data-ptarget-out></div>' +
+      '</div>'
+    );
+  }
+
+  function targetOutHtml() {
+    const { tile, beautify, span } = F();
+    const target = prestigeTarget();
+    if (!target) return '<div class="ca-card-note">Pick a level to aim for — how far it is and when you’ll get there show up here.</div>';
+    const baked = (Game.cookiesReset || 0) + (Game.cookiesEarned || 0);
+    const now = Math.floor(Game.HowMuchPrestige(baked));
+    const start = Game.prestige || 0;
+    if (target <= start) return `<div class="ca-card-note">You’re already at prestige ${beautify(start, 0)} — past this target.</div>`;
+    const need = typeof Game.HowManyCookiesReset === 'function' ? Math.max(0, Game.HowManyCookiesReset(target) - baked) : NaN;
+    const r = recent(900);
+    const eta = need > 0 && r && r.actual > 0 ? need / r.actual : need === 0 ? 0 : NaN;
+    const pct = Math.max(0, Math.min(100, ((now - start) / (target - start)) * 100));
+    const reached = now >= target;
+    return (
+      `<div class="ca-progress"><div class="ca-progress-fill" style="width:${pct}%"></div><div class="ca-progress-text">${reached ? 'Reached — ascend any time' : `${pct.toFixed(pct < 10 ? 2 : 1)}% of the way this run`}</div></div>` +
+      '<div class="ca-stats">' +
+      tile('Target', beautify(target, 0), `+${beautify(target - start, 0)} on this ascension`) +
+      tile('Levels to go', reached ? '0' : beautify(target - now, 0), `at ${beautify(now, 0)} if you ascended now`) +
+      tile('Cookies to go', Number.isFinite(need) ? beautify(need) : '—', 'baked, all time') +
+      tile('Reached in', reached ? 'now' : Number.isFinite(eta) ? span(eta) : '—', 'at the last 15 min’s actual CpS') +
+      '</div>'
+    );
+  }
+
+  function onTargetInput(e) {
+    const el = e.target;
+    if (!el.matches || !el.matches('[data-ptarget-num],[data-ptarget-unit]')) return;
+    if (el.matches('[data-ptarget-num]')) {
+      const n = Math.round(Number(el.value));
+      S().set('prestigeTargetNum', Number.isFinite(n) && n > 0 ? Math.min(999, n) : 0);
+    } else S().set('prestigeTargetUnit', Number(el.value) || 0);
+    refreshTarget();
+    if (plots.prestige) plots.prestige.tick();
+  }
+
+  function refreshTarget() {
+    const out = mountedRoot && mountedRoot.querySelector('[data-ptarget-out]');
+    if (out) out.innerHTML = targetOutHtml();
+  }
+
   // ---- the page ---------------------------------------------------------------------------
 
   const plots = {};
@@ -626,6 +736,7 @@ CA.UI.Graphs = (() => {
           `${CA.UI.Icons.html(t.icon, 14)}<span>${t.label}</span></button>`
       ).join('') +
       '</div>' +
+      (cur.top ? cur.top() : '') +
       cur.plots.map((id) => plots[id].html()).join('')
     );
   }
@@ -643,21 +754,31 @@ CA.UI.Graphs = (() => {
     unmount();
     mountedRoot = root;
     root.addEventListener('click', onClick);
+    root.addEventListener('input', onTargetInput);
+    root.addEventListener('change', onTargetInput);
     currentTab().plots.forEach((id) => plots[id].mount(root));
+    refreshTarget();
   }
 
   function unmount() {
     TABS.forEach((t) => t.plots.forEach((id) => plots[id] && plots[id].unmount()));
-    if (mountedRoot) mountedRoot.removeEventListener('click', onClick);
+    if (mountedRoot) {
+      mountedRoot.removeEventListener('click', onClick);
+      mountedRoot.removeEventListener('input', onTargetInput);
+      mountedRoot.removeEventListener('change', onTargetInput);
+    }
     mountedRoot = null;
   }
 
   function tick() {
     currentTab().plots.forEach((id) => plots[id].tick());
+    refreshTarget();
   }
 
   function init() {
     S().defineOption({ key: 'graphTab', group: 'ui', name: 'Graphs tab', desc: '', default: 'cookies' });
+    S().defineOption({ key: 'prestigeTargetNum', group: 'ui', name: 'Prestige target (number)', desc: '', default: 0 });
+    S().defineOption({ key: 'prestigeTargetUnit', group: 'ui', name: 'Prestige target (magnitude)', desc: '', default: 0 });
     S().defineOption({ key: 'bankGains', group: 'plot', name: 'Bank charts: gains', desc: '', default: true });
     S().defineOption({ key: 'bankLosses', group: 'plot', name: 'Bank charts: losses', desc: '', default: true });
     S().defineOption({

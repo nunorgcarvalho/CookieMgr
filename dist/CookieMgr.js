@@ -1,9 +1,9 @@
-/*! CookieMgr v2.3.0 */
+/*! CookieMgr v2.4.0 */
 (function () {
 'use strict';
 const CA = {};
-CA.VERSION = "2.3.0";
-CA.CSS = "/* ==========================================================================\n   CookieMgr — styles\n   Colours and borders borrow from the game's own \"framed\" look so the panel\n   feels native. Everything is scoped under #CookieMgrTab / #CookieMgrMenu.\n   ========================================================================== */\n\n/* ---------- Sidebar (icon tabs sticking out of the left beam, one per page) ---------- */\n\n#CookieMgrTab {\n  position: absolute;\n  left: 30%;\n  top: calc(10% + 96px); /* fallback; tab.js pins it just under the game's cookie-count banner */\n  margin-left: 3px; /* tuck slightly under the beam */\n  transform: translateX(-100%);\n  z-index: 110;\n  display: flex;\n  flex-direction: column;\n  align-items: flex-end; /* items grow leftwards, away from the beam */\n  gap: 4px;\n}\n#CookieMgrTab .ca-tab-item {\n  box-sizing: border-box;\n  height: 32px;\n  display: flex;\n  align-items: center;\n  cursor: pointer;\n  user-select: none;\n  background: linear-gradient(to right, #3d2716, #221409);\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-right: none;\n  border-radius: 8px 0 0 8px;\n  box-shadow:\n    -3px 3px 10px rgba(0, 0, 0, 0.65),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.18);\n  transition:\n    background 0.2s,\n    box-shadow 0.2s;\n  outline: none;\n}\n#CookieMgrTab .ca-tab-item:hover,\n#CookieMgrTab .ca-tab-item:focus-visible {\n  box-shadow:\n    -3px 3px 12px rgba(0, 0, 0, 0.75),\n    0 0 12px rgba(255, 215, 110, 0.35),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.25);\n}\n#CookieMgrTab .ca-tab-item.selected {\n  background: linear-gradient(to right, #7a4f22, #43290f);\n  box-shadow:\n    -3px 3px 12px rgba(0, 0, 0, 0.75),\n    0 0 14px rgba(255, 215, 110, 0.55),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.3);\n}\n#CookieMgrTab .ca-tab-label {\n  max-width: 0;\n  overflow: hidden;\n  opacity: 0;\n  padding: 0;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-weight: bold;\n  font-size: 13px;\n  letter-spacing: 0.5px;\n  color: #f4e6c3;\n  text-shadow:\n    0 1px 2px #000,\n    0 0 6px rgba(255, 200, 120, 0.25);\n  white-space: nowrap;\n  transition:\n    max-width 0.22s ease-out,\n    opacity 0.15s,\n    padding 0.22s ease-out;\n}\n#CookieMgrTab .ca-tab-item:hover .ca-tab-label,\n#CookieMgrTab .ca-tab-item:focus-visible .ca-tab-label {\n  max-width: 180px;\n  opacity: 1;\n  padding: 0 2px 0 12px;\n}\n#CookieMgrTab .ca-tab-icon {\n  position: relative;\n  flex: none;\n  width: 30px;\n  height: 30px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  color: #f4e6c3;\n  filter: drop-shadow(0 1px 1px #000);\n}\n#CookieMgrTab .ca-tab-item.selected .ca-tab-icon,\n#CookieMgrTab .ca-tab-item:hover .ca-tab-icon {\n  color: #ffeab0;\n}\n#CookieMgrTab .ca-tab-badge {\n  display: none;\n  position: absolute;\n  top: -5px;\n  left: -5px;\n  min-width: 15px;\n  height: 15px;\n  padding: 0 3px;\n  box-sizing: border-box;\n  border-radius: 8px;\n  font:\n    bold 9px/15px Tahoma,\n    Arial,\n    sans-serif;\n  text-align: center;\n  color: #fff;\n  background: linear-gradient(#63c64a, #2f7d24);\n  box-shadow:\n    0 0 6px rgba(120, 240, 100, 0.8),\n    0 1px 1px #000;\n  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);\n}\n#CookieMgrTab .ca-tab-item.active .ca-tab-badge {\n  display: block;\n  animation: caBadgeGlow 2s infinite ease-in-out;\n}\n@keyframes caBadgeGlow {\n  0%,\n  100% {\n    box-shadow:\n      0 0 4px rgba(120, 240, 100, 0.6),\n      0 1px 1px #000;\n  }\n  50% {\n    box-shadow:\n      0 0 10px rgba(120, 240, 100, 1),\n      0 1px 1px #000;\n  }\n}\n#game.ascending #CookieMgrTab,\n#game.ascendIntro #CookieMgrTab,\n#game.reincarnating #CookieMgrTab {\n  display: none;\n}\n\n/* ---------- Icons (used everywhere, not just inside the panel) ---------- */\n\n.ca-ico {\n  display: inline-block;\n  flex: none;\n  vertical-align: middle;\n}\n.ca-ico-cookie {\n  background: url(img/perfectCookie.png) center / contain no-repeat;\n}\n\n/* ---------- Stock market toolbar inside the Bank minigame ---------- */\n\n#cm-bank-toolbar {\n  position: relative;\n  z-index: 10;\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  justify-content: center;\n  gap: 6px;\n  padding: 4px 4px 6px;\n}\n#cm-bank-toolbar .bankButton {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  font-size: 11px;\n  padding: 3px 9px;\n}\n#cm-bank-toolbar .cm-bt-open {\n  color: #f4e6c3;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n}\n\n/* ---------- Panel ---------- */\n\n#CookieMgrMenu {\n  max-width: 780px;\n  margin: 0 auto;\n  padding: 0 12px 120px;\n  color: #ddd;\n}\n#CookieMgrMenu .ca-tagline {\n  text-align: center;\n  margin: -6px 0 14px;\n  font-size: 12px;\n  font-style: italic;\n  color: #b9ab93;\n  text-shadow: 0 1px 1px #000;\n}\n\n/* Cards */\n#CookieMgrMenu .ca-card {\n  margin: 14px 4px;\n  border-radius: 6px;\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  background: rgba(0, 0, 0, 0.38);\n  box-shadow:\n    0 0 1px #000,\n    inset 0 0 1px #000,\n    0 6px 16px rgba(0, 0, 0, 0.35);\n  overflow: hidden;\n}\n#CookieMgrMenu .ca-card-head {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 10px;\n  padding: 9px 14px;\n  background: linear-gradient(to right, rgba(255, 235, 190, 0.09), rgba(255, 235, 190, 0));\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-card-title {\n  flex: 1;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-size: 20px;\n  color: #fff;\n  text-shadow:\n    0 -1px 5px rgba(255, 255, 200, 0.35),\n    0 1px 3px #000;\n}\n#CookieMgrMenu .ca-card-ico {\n  margin-right: 8px;\n  vertical-align: -1px;\n  color: #ffd98a;\n  filter: drop-shadow(0 1px 2px #000);\n}\n#CookieMgrMenu .ca-row-ico {\n  flex: 0 0 28px;\n  width: 28px;\n  height: 28px;\n  border-radius: 50%;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  color: #e8d7b0;\n  background: radial-gradient(circle at 35% 30%, rgba(255, 230, 170, 0.18), rgba(0, 0, 0, 0.25));\n  box-shadow:\n    inset 0 0 0 1px rgba(255, 220, 150, 0.25),\n    0 1px 3px rgba(0, 0, 0, 0.6);\n}\n#CookieMgrMenu .ca-row-option:has(.ca-switch.on) .ca-row-ico {\n  color: #ffeab0;\n  box-shadow:\n    inset 0 0 0 1px rgba(255, 220, 150, 0.55),\n    0 0 8px rgba(255, 210, 110, 0.35);\n}\n#CookieMgrMenu .ca-row-ico .ca-ico-cookie {\n  width: 18px !important;\n  height: 18px !important;\n}\n#CookieMgrMenu .ca-pill {\n  font-size: 11px;\n  white-space: nowrap;\n  padding: 3px 10px;\n  border-radius: 10px;\n  color: #bbb;\n  background: rgba(255, 255, 255, 0.07);\n  border: 1px solid rgba(255, 255, 255, 0.15);\n  transition: all 0.2s;\n}\n#CookieMgrMenu .ca-pill.on {\n  color: #cfc;\n  background: rgba(80, 200, 90, 0.16);\n  border-color: rgba(130, 235, 120, 0.5);\n}\n\n/* Rows */\n#CookieMgrMenu .ca-row {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 8px 12px;\n  padding: 8px 14px;\n  border-top: 1px solid rgba(255, 255, 255, 0.05);\n  transition: background 0.2s;\n}\n#CookieMgrMenu .ca-list .ca-row:first-child {\n  border-top: none;\n}\n#CookieMgrMenu .ca-row:hover {\n  background: rgba(255, 255, 255, 0.035);\n}\n#CookieMgrMenu .ca-row.on {\n  background: linear-gradient(to right, rgba(255, 210, 90, 0.12), rgba(255, 210, 90, 0) 65%);\n}\n#CookieMgrMenu .ca-row-master {\n  background: rgba(0, 0, 0, 0.22);\n  border-top: none;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-row-option {\n  padding-top: 10px;\n  padding-bottom: 10px;\n}\n#CookieMgrMenu .ca-row-text {\n  flex: 1 1 160px;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-row-option {\n  flex-wrap: nowrap;\n}\n#CookieMgrMenu .ca-row-option .ca-row-text {\n  flex-basis: 0;\n}\n#CookieMgrMenu .ca-controls {\n  flex: 0 1 auto;\n  max-width: 100%;\n  margin-left: auto;\n  display: flex;\n  flex-wrap: wrap;\n  justify-content: flex-end;\n  align-items: center;\n  gap: 8px;\n}\n#CookieMgrMenu .ca-row-name {\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 14px;\n  color: #f2ead2;\n  text-shadow: 0 1px 2px #000;\n}\n#CookieMgrMenu .ca-row-desc {\n  margin-top: 2px;\n  font-size: 11px;\n  color: #b3a590;\n  text-shadow: 0 1px 1px #000;\n}\n\n/* Icons */\n#CookieMgrMenu .ca-icon {\n  flex: 0 0 36px;\n  width: 36px;\n  height: 36px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  transition:\n    filter 0.25s,\n    transform 0.25s;\n  filter: grayscale(0.55) brightness(0.8);\n}\n#CookieMgrMenu .ca-row.on .ca-icon,\n#CookieMgrMenu .ca-row-master .ca-icon {\n  filter: drop-shadow(0 0 6px rgba(255, 220, 120, 0.75));\n}\n#CookieMgrMenu .ca-row.on .ca-icon {\n  transform: scale(1.06);\n}\n#CookieMgrMenu .ca-img {\n  width: 36px;\n  height: 36px;\n  background-size: contain;\n  background-repeat: no-repeat;\n  background-position: center;\n}\n#CookieMgrMenu .ca-sprite {\n  flex: none;\n  width: 48px;\n  height: 48px;\n  background-image: url(img/icons.png);\n  transform: scale(0.75);\n}\n\n/* Toggle switch */\n#CookieMgrMenu .ca-switch {\n  flex: none;\n  padding: 2px;\n  background: none;\n  border: none;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-switch:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-switch-track {\n  display: block;\n  position: relative;\n  width: 42px;\n  height: 22px;\n  box-sizing: border-box;\n  border-radius: 11px;\n  background: #2a211c;\n  border: 1px solid rgba(255, 255, 255, 0.22);\n  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.75);\n  transition:\n    background 0.2s,\n    border-color 0.2s,\n    box-shadow 0.2s;\n}\n#CookieMgrMenu .ca-switch-knob {\n  position: absolute;\n  top: 2px;\n  left: 2px;\n  width: 16px;\n  height: 16px;\n  border-radius: 50%;\n  background: radial-gradient(circle at 35% 30%, #fff, #c9c1b5 55%, #8a8178);\n  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);\n  transition: left 0.18s ease-out;\n}\n#CookieMgrMenu .ca-switch:hover .ca-switch-track {\n  border-color: rgba(255, 225, 150, 0.6);\n}\n#CookieMgrMenu .ca-switch.on .ca-switch-track {\n  background: linear-gradient(#66c84b, #2f7d24);\n  border-color: #a5ea93;\n  box-shadow:\n    inset 0 1px 3px rgba(0, 0, 0, 0.35),\n    0 0 9px rgba(110, 230, 90, 0.45);\n}\n#CookieMgrMenu .ca-switch.on .ca-switch-knob {\n  left: 22px;\n}\n#CookieMgrMenu .ca-switch:focus-visible .ca-switch-track {\n  outline: 2px solid #ffd76a;\n  outline-offset: 2px;\n}\n\n/* Hotkey chips */\n#CookieMgrMenu .ca-hotkey {\n  flex: none;\n  display: inline-flex;\n  align-items: center;\n}\n#CookieMgrMenu .ca-key {\n  min-width: 46px;\n  height: 26px;\n  padding: 0 10px;\n  font:\n    bold 12px Tahoma,\n    Arial,\n    sans-serif;\n  color: #f4e6c3;\n  text-shadow: 0 1px 1px #000;\n  background: linear-gradient(#4d3c2d, #2a2018);\n  border: 1px solid;\n  border-color: #9a7d5b #3b2c1f #2a1f15 #74604a;\n  border-radius: 5px;\n  box-shadow:\n    0 2px 0 #140d08,\n    inset 0 1px 0 rgba(255, 255, 255, 0.16);\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    border-color 0.15s,\n    box-shadow 0.15s;\n}\n#CookieMgrMenu .ca-key:hover {\n  color: #fff;\n  border-color: #e0c08a #5a4430 #3d2e20 #b39468;\n}\n#CookieMgrMenu .ca-key:active {\n  transform: translateY(1px);\n  box-shadow:\n    0 1px 0 #140d08,\n    inset 0 1px 0 rgba(255, 255, 255, 0.16);\n}\n#CookieMgrMenu .ca-key:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-hotkey.unset .ca-key {\n  color: #8f877a;\n  font-weight: normal;\n  font-style: italic;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px dashed rgba(255, 255, 255, 0.22);\n  box-shadow: none;\n}\n#CookieMgrMenu .ca-hotkey.capturing .ca-key {\n  color: #ffe9a6;\n  border-color: #ffd76a;\n  animation: caCapture 1.1s infinite ease-in-out;\n}\n@keyframes caCapture {\n  0%,\n  100% {\n    box-shadow:\n      0 2px 0 #140d08,\n      0 0 0 0 rgba(255, 215, 106, 0.5);\n  }\n  50% {\n    box-shadow:\n      0 2px 0 #140d08,\n      0 0 12px 2px rgba(255, 215, 106, 0.55);\n  }\n}\n#CookieMgrMenu .ca-key-clear {\n  width: 18px;\n  height: 18px;\n  margin-left: 3px;\n  padding: 0;\n  border: none;\n  border-radius: 50%;\n  background: transparent;\n  color: #b09a8a;\n  font-size: 14px;\n  line-height: 18px;\n  cursor: pointer;\n  opacity: 0;\n  transition:\n    opacity 0.15s,\n    background 0.15s;\n}\n#CookieMgrMenu .ca-row:hover .ca-key-clear {\n  opacity: 0.8;\n}\n#CookieMgrMenu .ca-key-clear:hover {\n  color: #fff;\n  background: rgba(255, 80, 80, 0.35);\n}\n#CookieMgrMenu .ca-hotkey.unset .ca-key-clear,\n#CookieMgrMenu .ca-hotkey.capturing .ca-key-clear {\n  visibility: hidden;\n}\n\n/* Buttons */\n#CookieMgrMenu .ca-btn {\n  padding: 4px 12px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-weight: bold;\n  font-size: 12px;\n  color: #ddd;\n  text-shadow: 0 1px 1px #000;\n  background: linear-gradient(#3e2f23, #1d140f);\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 4px;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    inset 0 1px 0 rgba(255, 255, 255, 0.12);\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    box-shadow 0.15s,\n    opacity 0.15s;\n}\n#CookieMgrMenu .ca-btn:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-btn:not(:disabled):hover {\n  color: #fff;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    0 0 9px rgba(255, 220, 120, 0.35),\n    inset 0 1px 0 rgba(255, 255, 255, 0.18);\n}\n#CookieMgrMenu .ca-btn:not(:disabled):active {\n  transform: translateY(1px);\n}\n#CookieMgrMenu .ca-btn-on:not(:disabled):hover {\n  color: #d6ffcc;\n}\n#CookieMgrMenu .ca-btn-off:not(:disabled):hover {\n  color: #ffd2cc;\n}\n#CookieMgrMenu .ca-btn:disabled {\n  opacity: 0.38;\n  cursor: default;\n  box-shadow: none;\n}\n#CookieMgrMenu .ca-btn-small {\n  font-size: 11px;\n  padding: 3px 10px;\n}\n#CookieMgrMenu .ca-btn .ca-ico {\n  vertical-align: -2px;\n}\n#CookieMgrMenu .ca-btn.ca-armed {\n  color: #fff;\n  background: #8a2a22;\n  box-shadow: 0 0 0 1px #e5484d, 0 0 8px rgba(229, 72, 77, 0.6);\n}\n#CookieMgrMenu .ca-btn-lg {\n  padding: 10px 20px;\n  font-size: 15px;\n  border-radius: 6px;\n}\n#CookieMgrMenu .ca-btn-danger {\n  color: #ffdcd2;\n  background: linear-gradient(#6b2420, #3a1210);\n  border-color: #ffb199 #7a2a1e #5c1b12 #d98a6e;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    0 0 10px rgba(255, 90, 60, 0.25),\n    inset 0 1px 0 rgba(255, 255, 255, 0.15);\n}\n#CookieMgrMenu .ca-btn-danger:not(:disabled):hover {\n  color: #fff;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    0 0 16px rgba(255, 90, 60, 0.5),\n    inset 0 1px 0 rgba(255, 255, 255, 0.2);\n}\n#CookieMgrMenu .ca-card-danger {\n  border-color: rgba(255, 110, 80, 0.3);\n  box-shadow:\n    0 0 1px #000,\n    inset 0 0 1px #000,\n    0 0 14px rgba(255, 70, 40, 0.12),\n    0 6px 16px rgba(0, 0, 0, 0.35);\n}\n#CookieMgrMenu .ca-row-sellall {\n  align-items: center;\n  justify-content: space-between;\n  gap: 12px;\n}\n\n/* Footer */\n#CookieMgrMenu .ca-footer {\n  margin: 18px 8px 0;\n  font-size: 11px;\n  line-height: 1.7;\n  text-align: center;\n  color: #9b907f;\n  text-shadow: 0 1px 1px #000;\n}\n#CookieMgrMenu .ca-footer b {\n  color: #c9bba3;\n}\n#CookieMgrMenu kbd {\n  display: inline-block;\n  padding: 0 5px;\n  font:\n    bold 10px/16px Tahoma,\n    Arial,\n    sans-serif;\n  color: #e8dcc2;\n  background: #2a2018;\n  border: 1px solid #5a4632;\n  border-radius: 3px;\n  box-shadow: 0 1px 0 #140d08;\n}\n#CookieMgrMenu .ca-footer-actions {\n  margin-top: 8px;\n}\n\n#CookieMgrMenu .ca-page {\n  animation: caFade 0.18s ease-out;\n}\n@keyframes caFade {\n  from {\n    opacity: 0;\n    transform: translateY(3px);\n  }\n  to {\n    opacity: 1;\n    transform: none;\n  }\n}\n#CookieMgrMenu a {\n  color: #ffd98a;\n}\n\n/* ---------- Graph ---------- */\n\n#CookieMgrMenu .ca-live {\n  font-size: 11px;\n  padding: 3px 10px 3px 20px;\n  position: relative;\n  border-radius: 10px;\n  color: #cfc;\n  background: rgba(80, 200, 90, 0.16);\n  border: 1px solid rgba(130, 235, 120, 0.5);\n}\n#CookieMgrMenu .ca-live:before {\n  content: '';\n  position: absolute;\n  left: 8px;\n  top: 50%;\n  width: 6px;\n  height: 6px;\n  margin-top: -3px;\n  border-radius: 50%;\n  background: #7be07b;\n  box-shadow: 0 0 6px #7be07b;\n  animation: caBadgeGlow 1.6s infinite ease-in-out;\n}\n#CookieMgrMenu .ca-live.paused {\n  color: #ffd9a0;\n  background: rgba(255, 170, 60, 0.14);\n  border-color: rgba(255, 190, 100, 0.5);\n}\n#CookieMgrMenu .ca-live.paused:before {\n  background: #ffb45c;\n  box-shadow: none;\n  animation: none;\n}\n\n#CookieMgrMenu .ca-stats {\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));\n  gap: 1px;\n  background: rgba(255, 255, 255, 0.06);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-stat {\n  min-width: 0; /* lets the grid cell shrink below its content so overflow/ellipsis below can work */\n  padding: 8px 12px;\n  background: rgba(0, 0, 0, 0.32);\n}\n#CookieMgrMenu .ca-stat-label {\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #a89a83;\n}\n#CookieMgrMenu .ca-stat-value {\n  margin-top: 2px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 17px;\n  color: #ffeab0;\n  text-shadow: 0 1px 3px #000;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n#CookieMgrMenu .ca-stat-sub {\n  margin-top: 1px;\n  font-size: 10px;\n  color: #93866f;\n  white-space: nowrap;\n}\n\n#CookieMgrMenu .ca-toolbar {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  justify-content: space-between;\n  gap: 6px 12px;\n  padding: 8px 12px;\n}\n#CookieMgrMenu .ca-toolbar-bottom {\n  padding-top: 6px;\n}\n#CookieMgrMenu .ca-chipgroup {\n  display: inline-flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 4px;\n}\n#CookieMgrMenu .ca-chip-label {\n  margin-right: 2px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-chip {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  padding: 3px 9px;\n  font:\n    bold 11px Tahoma,\n    Arial,\n    sans-serif;\n  color: #b9ab93;\n  text-shadow: 0 1px 1px #000;\n  background: rgba(255, 255, 255, 0.05);\n  border: 1px solid rgba(255, 255, 255, 0.14);\n  border-radius: 11px;\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    background 0.15s,\n    border-color 0.15s;\n}\n#CookieMgrMenu .ca-chip:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-chip:hover {\n  color: #fff;\n  border-color: rgba(255, 225, 150, 0.5);\n}\n#CookieMgrMenu .ca-chip.on {\n  color: #fff3cf;\n  background: rgba(255, 200, 100, 0.18);\n  border-color: rgba(255, 210, 120, 0.6);\n}\n#CookieMgrMenu .ca-sw {\n  display: inline-block;\n  width: 9px;\n  height: 9px;\n  margin-right: 1px;\n  border-radius: 50%;\n  vertical-align: -1px;\n  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);\n}\n\n#CookieMgrMenu .ca-graph-wrap {\n  position: relative;\n  margin: 0 8px;\n}\n#CookieMgrMenu canvas.ca-graph {\n  display: block;\n  width: 100%;\n  height: 300px;\n  cursor: crosshair;\n}\n#CookieMgrMenu canvas.ca-graph.ca-graph-small {\n  height: 160px;\n}\n#CookieMgrMenu .ca-tip {\n  display: none;\n  position: absolute;\n  z-index: 5;\n  max-width: 270px;\n  min-width: 150px;\n  padding: 7px 10px;\n  pointer-events: none;\n  font-size: 11px;\n  line-height: 1.35;\n  color: #e6dcc6;\n  background: rgba(14, 10, 6, 0.95);\n  border: 1px solid;\n  border-color: #b98a4e #6a4626 #55301c #a0764a;\n  border-radius: 5px;\n  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7);\n}\n#CookieMgrMenu .ca-tip-head {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  margin-bottom: 4px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 12px;\n  color: #ffeab0;\n}\n#CookieMgrMenu .ca-tip-head span {\n  margin-left: auto;\n  padding-left: 10px;\n  font:\n    normal 10px Tahoma,\n    Arial,\n    sans-serif;\n  color: #a89a83;\n}\n#CookieMgrMenu .ca-tip-row {\n  display: flex;\n  align-items: center;\n  gap: 5px;\n  padding: 1px 0;\n}\n#CookieMgrMenu .ca-tip-row b {\n  font-weight: normal;\n  color: #b9ab93;\n}\n#CookieMgrMenu .ca-tip-row span {\n  margin-left: auto;\n  padding-left: 12px;\n  text-align: right;\n  color: #f2ead2;\n}\n#CookieMgrMenu .ca-tip-row.strong b,\n#CookieMgrMenu .ca-tip-row.strong span {\n  color: #fff3cf;\n  font-weight: bold;\n}\n#CookieMgrMenu .ca-tip-sep {\n  height: 1px;\n  margin: 5px 0;\n  background: rgba(255, 255, 255, 0.14);\n}\n#CookieMgrMenu .ca-tip-note {\n  margin: 2px 0 4px;\n  font-style: italic;\n  color: #a89a83;\n}\n\n#CookieMgrMenu .ca-legend {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 4px 12px;\n  min-height: 16px;\n  padding: 2px 14px 12px;\n  font-size: 11px;\n  color: #b9ab93;\n}\n#CookieMgrMenu .ca-legend-item em {\n  font-style: normal;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-legend-empty {\n  font-style: italic;\n  color: #7f735f;\n}\n\n#CookieMgrMenu .ca-hidden {\n  display: none;\n}\n\n/* ---------- Stock transaction log + ticker ---------- */\n\n#CookieMgrMenu .cm-tx-wrap {\n  max-height: 220px;\n  overflow-y: auto;\n  margin: 0 4px 6px;\n}\n#CookieMgrMenu .cm-tx-table {\n  width: 100%;\n  border-collapse: collapse;\n  font-size: 11px;\n}\n#CookieMgrMenu .cm-tx-table th {\n  position: sticky;\n  top: 0;\n  text-align: left;\n  padding: 4px 8px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.06em;\n  color: #93866f;\n  background: #1c150d;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.1);\n}\n#CookieMgrMenu .cm-tx-table td {\n  padding: 3px 8px;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.05);\n  white-space: nowrap;\n  color: #d8cbb0;\n}\n#CookieMgrMenu .cm-tx-row:hover td {\n  background: rgba(255, 255, 255, 0.04);\n}\n#CookieMgrMenu .cm-tx-buy {\n  color: #8f8;\n  font-weight: bold;\n}\n#CookieMgrMenu .cm-tx-sell {\n  color: #f88;\n  font-weight: bold;\n}\n#CookieMgrMenu .cm-tx-empty {\n  padding: 14px 8px;\n  text-align: center;\n  font-style: italic;\n  color: #7f735f;\n  font-size: 12px;\n}\n\n#CookieMgrMenu .cm-tickbars {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 6px;\n  margin: 0 8px 8px;\n}\n#CookieMgrMenu .cm-tickbar {\n  flex: 1 1 90px;\n  min-width: 70px;\n  padding: 5px 6px;\n  background: rgba(0, 0, 0, 0.28);\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  border-radius: 4px;\n  font-size: 10px;\n}\n#CookieMgrMenu .cm-tickbar-time {\n  color: #93866f;\n  text-align: center;\n  margin-bottom: 3px;\n  white-space: nowrap;\n}\n#CookieMgrMenu .cm-tickbar-row {\n  height: 5px;\n  background: rgba(255, 255, 255, 0.06);\n  border-radius: 3px;\n  margin-bottom: 2px;\n  overflow: hidden;\n}\n#CookieMgrMenu .cm-tickbar-fill {\n  display: block;\n  height: 100%;\n  border-radius: 3px;\n}\n#CookieMgrMenu .cm-tickbar-buy {\n  background: #8f8;\n}\n#CookieMgrMenu .cm-tickbar-sell {\n  background: #f88;\n}\n#CookieMgrMenu .cm-tickbar-net {\n  text-align: center;\n  font-weight: bold;\n  margin-top: 3px;\n}\n#CookieMgrMenu .cm-ticks-empty {\n  margin: 0 8px 8px;\n  padding: 10px;\n  text-align: center;\n  font-style: italic;\n  color: #7f735f;\n  font-size: 11px;\n}\n\n#CookieMgrMenu .cm-ticker {\n  margin: 8px 8px 10px;\n  padding: 6px 0;\n  overflow: hidden;\n  white-space: nowrap;\n  background: rgba(0, 0, 0, 0.32);\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  border-radius: 4px;\n}\n#CookieMgrMenu .cm-ticker-track {\n  display: inline-block;\n  will-change: transform;\n}\n#CookieMgrMenu .cm-tick-item {\n  display: inline-block;\n  padding: 0 16px;\n  font:\n    bold 11px Tahoma,\n    Arial,\n    sans-serif;\n  color: #cbbfa6;\n}\n#CookieMgrMenu .cm-tick-buy {\n  color: #8f8;\n}\n#CookieMgrMenu .cm-tick-sell {\n  color: #f88;\n}\n#CookieMgrMenu .cm-tick-empty {\n  color: #7f735f;\n  font-style: italic;\n  font-weight: normal;\n}\n#CookieMgrMenu .cm-tick-sep {\n  color: #4a4232;\n  padding: 0 4px;\n}\n\n@keyframes cmTickerScroll {\n  from {\n    transform: translateX(0);\n  }\n  to {\n    transform: translateX(-50%);\n  }\n}\n\n/* ---------- Sub-tabs (Graphs page and others) ---------- */\n\n#CookieMgrMenu .ca-subtabs {\n  display: flex;\n  gap: 4px;\n  margin: 2px 0 10px;\n  padding: 0 4px;\n  border-bottom: 1px solid rgba(255, 220, 150, 0.25);\n}\n#CookieMgrMenu .ca-subtab {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  padding: 6px 14px 5px;\n  margin-bottom: -1px;\n  font:\n    bold 12px Tahoma,\n    Arial,\n    sans-serif;\n  color: #b9ab93;\n  text-shadow: 0 1px 1px #000;\n  background: rgba(0, 0, 0, 0.25);\n  border: 1px solid rgba(255, 220, 150, 0.18);\n  border-bottom-color: transparent;\n  border-radius: 6px 6px 0 0;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-subtab:hover {\n  color: #f0e2c0;\n}\n#CookieMgrMenu .ca-subtab.on {\n  color: #fff3cf;\n  background: linear-gradient(to bottom, rgba(255, 200, 100, 0.2), rgba(0, 0, 0, 0.3));\n  border-color: rgba(255, 220, 150, 0.45);\n  border-bottom-color: #1c150d;\n}\n#CookieMgrMenu .ca-subtab .ca-ico-cookie {\n  width: 14px !important;\n  height: 14px !important;\n}\n\n/* ---------- Tables, notes ---------- */\n\n#CookieMgrMenu .ca-card-note {\n  padding: 0 14px 6px;\n  font-size: 11px;\n  line-height: 1.4;\n  color: #a39477;\n}\n#CookieMgrMenu .ca-table-wrap {\n  padding: 4px 10px 6px;\n  overflow-x: auto;\n}\n#CookieMgrMenu .ca-table {\n  width: 100%;\n  border-collapse: collapse;\n  font-size: 11px;\n}\n#CookieMgrMenu .ca-table th {\n  text-align: right;\n  padding: 4px 8px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.06em;\n  color: #93866f;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.1);\n  white-space: nowrap;\n}\n#CookieMgrMenu .ca-table th:first-child,\n#CookieMgrMenu .ca-table td:first-child {\n  text-align: left;\n}\n#CookieMgrMenu .ca-table td {\n  text-align: right;\n  padding: 3px 8px;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.05);\n  white-space: nowrap;\n  color: #d8cbb0;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrMenu .ca-table tr.strong td {\n  color: #fff3cf;\n  font-weight: bold;\n}\n#CookieMgrMenu .ca-table tbody tr:hover td {\n  background: rgba(255, 255, 255, 0.04);\n}\n#CookieMgrMenu .ca-sw.ca-sw-dash {\n  width: 10px;\n  height: 0;\n  border-radius: 0;\n  border-top: 2px dashed;\n  box-shadow: none;\n  vertical-align: 2px;\n}\n#CookieMgrMenu .ca-chip .ca-ico {\n  vertical-align: -2px;\n}\n\n/* ---------- Events page ---------- */\n\n#CookieMgrMenu .ca-table td.pos {\n  color: #9be89b;\n}\n#CookieMgrMenu .ca-table td.neg {\n  color: #ff9a8a;\n}\n#CookieMgrMenu .ca-table tr.muted td {\n  color: #6f6555;\n}\n#CookieMgrMenu .ca-ev-dot {\n  display: inline-flex;\n  width: 16px;\n  margin-right: 5px;\n  vertical-align: -2px;\n}\n#CookieMgrMenu .ca-ev-chip em {\n  font-style: normal;\n  opacity: 0.6;\n  font-weight: normal;\n}\n#CookieMgrMenu .ca-ev-chip .ca-ico {\n  color: var(--c);\n}\n#CookieMgrMenu .ca-ev-chip:not(.on) {\n  opacity: 0.5;\n}\n#CookieMgrMenu .ca-ev-chip:not(.on) .ca-ico {\n  color: inherit;\n}\n#CookieMgrMenu .ca-search {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  flex: 1 1 160px;\n  padding: 3px 8px;\n  color: #93866f;\n  background: rgba(0, 0, 0, 0.35);\n  border: 1px solid rgba(255, 220, 150, 0.2);\n  border-radius: 12px;\n}\n#CookieMgrMenu .ca-search input {\n  flex: 1;\n  min-width: 0;\n  font: 12px Tahoma, Arial, sans-serif;\n  color: #f0e2c0;\n  background: transparent;\n  border: none;\n  outline: none;\n}\n#CookieMgrMenu .ca-ev-list {\n  max-height: 420px;\n  overflow-y: auto;\n  padding: 0 6px 8px;\n}\n#CookieMgrMenu .ca-ev-row {\n  display: flex;\n  align-items: baseline;\n  gap: 8px;\n  padding: 4px 8px;\n  font-size: 11px;\n  color: #d8cbb0;\n  border-left: 2px solid var(--c);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.04);\n}\n#CookieMgrMenu .ca-ev-row:hover {\n  background: rgba(255, 255, 255, 0.04);\n}\n#CookieMgrMenu .ca-ev-ico {\n  flex: none;\n  color: var(--c);\n  align-self: center;\n  display: inline-flex;\n}\n#CookieMgrMenu .ca-ev-ico .ca-ico-cookie {\n  width: 14px !important;\n  height: 14px !important;\n}\n#CookieMgrMenu .ca-ev-time {\n  flex: none;\n  color: #93866f;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrMenu .ca-ev-text {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n#CookieMgrMenu .ca-ev-text b {\n  color: #f0e2c0;\n}\n#CookieMgrMenu .ca-ev-text span {\n  color: #a39477;\n}\n#CookieMgrMenu .ca-ev-cookies {\n  flex: none;\n  font-weight: bold;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrMenu .ca-ev-cookies.pos {\n  color: #9be89b;\n}\n#CookieMgrMenu .ca-ev-cookies.neg {\n  color: #ff9a8a;\n}\n#CookieMgrMenu .ca-ev-more {\n  display: block;\n  margin: 8px auto 0;\n}\n#CookieMgrMenu .ca-ev-empty {\n  display: block;\n  padding: 12px;\n  text-align: center;\n}\n\n/* ---------- Macros ---------- */\n\n#CookieMgrMenu .ca-icon-ico {\n  color: #ffd98a;\n  border-radius: 50%;\n  background: radial-gradient(circle at 35% 30%, rgba(255, 230, 170, 0.22), rgba(0, 0, 0, 0.3));\n  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.3);\n}\n#CookieMgrMenu .ca-icon-ico.small {\n  flex: 0 0 20px;\n  width: 20px;\n  height: 20px;\n}\n#CookieMgrMenu .ca-status-head .ca-icon {\n  flex: 0 0 20px;\n  width: 20px;\n  height: 20px;\n}\n#CookieMgrMenu .ca-status-head .ca-img,\n#CookieMgrMenu .ca-status-head .ca-sprite {\n  transform: scale(0.42);\n  transform-origin: center;\n}\n#CookieMgrMenu .ca-badge {\n  display: inline-block;\n  margin-left: 6px;\n  padding: 1px 7px;\n  font:\n    bold 9px Tahoma,\n    Arial,\n    sans-serif;\n  letter-spacing: 0.04em;\n  text-transform: uppercase;\n  vertical-align: 2px;\n  color: #c9bba0;\n  border-radius: 8px;\n  background: rgba(255, 255, 255, 0.07);\n  border: 1px solid rgba(255, 255, 255, 0.12);\n}\n#CookieMgrMenu .ca-badge-when {\n  color: #9fd3ff;\n  border-color: rgba(120, 190, 255, 0.35);\n}\n#CookieMgrMenu .ca-badge-once {\n  color: #ffd27a;\n  border-color: rgba(255, 200, 100, 0.35);\n}\n#CookieMgrMenu .ca-steps {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 3px;\n  margin-top: 4px;\n}\n#CookieMgrMenu .ca-step {\n  display: inline-flex;\n  align-items: center;\n  gap: 4px;\n  padding: 1px 7px 1px 5px;\n  font-size: 10px;\n  color: #d8cbb0;\n  border-radius: 9px;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px solid rgba(255, 220, 150, 0.15);\n}\n#CookieMgrMenu .ca-step .ca-ico {\n  color: #ffd98a;\n}\n#CookieMgrMenu .ca-step .ca-ico-cookie {\n  width: 12px !important;\n  height: 12px !important;\n}\n#CookieMgrMenu .ca-step-arrow {\n  color: #93866f;\n  font-weight: bold;\n}\n#CookieMgrMenu .ca-macro-status {\n  margin-top: 3px;\n  font-size: 10px;\n  color: #8fd18f;\n}\n#CookieMgrMenu .ca-macro-status:empty {\n  display: none;\n}\n#CookieMgrMenu .ca-macro:not(.on) .ca-macro-status {\n  color: #93866f;\n}\n#CookieMgrMenu .ca-iconbtn {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  min-width: 24px;\n  height: 24px;\n  padding: 0 4px;\n  font-size: 10px;\n  color: #b9ab93;\n  background: rgba(0, 0, 0, 0.25);\n  border: 1px solid rgba(255, 220, 150, 0.15);\n  border-radius: 6px;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-iconbtn:hover:not(:disabled) {\n  color: #fff3cf;\n  border-color: rgba(255, 220, 150, 0.45);\n}\n#CookieMgrMenu .ca-iconbtn:disabled {\n  opacity: 0.3;\n  cursor: default;\n}\n#CookieMgrMenu .ca-iconbtn.on,\n#CookieMgrMenu .ca-fav.on {\n  color: #ffd54a;\n  border-color: rgba(255, 213, 74, 0.55);\n}\n#CookieMgrMenu .ca-btn-run .ca-ico {\n  vertical-align: -1px;\n}\n\n/* status block (\"Running now\", also a widget) */\n#CookieMgrMenu .ca-status {\n  padding: 4px 12px 10px;\n}\n.ca-status-empty {\n  padding: 6px 2px;\n  font-size: 11px;\n  color: #93866f;\n}\n.ca-status-macro {\n  padding: 5px 0 6px;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.05);\n}\n.ca-status-macro:last-child {\n  border-bottom: none;\n}\n.ca-status-head {\n  display: flex;\n  align-items: center;\n  gap: 7px;\n  font-size: 12px;\n  color: #f0e2c0;\n}\n.ca-status-head > span:not(.ca-icon) {\n  flex: 1;\n  font-size: 10px;\n  color: #93866f;\n}\n.ca-status-step {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  margin: 3px 0 0 27px;\n  font-size: 10.5px;\n  color: #c9bba0;\n}\n.ca-status-step .ca-ico {\n  color: #93866f;\n}\n.ca-status-step.hot .ca-ico {\n  color: #7fe08b;\n  filter: drop-shadow(0 0 3px rgba(127, 224, 139, 0.8));\n}\n.ca-status-step.err {\n  color: #ff9a8a;\n}\n.ca-status-step.idle {\n  opacity: 0.55;\n}\n.ca-status-name {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n.ca-status-val {\n  flex: none;\n  font-variant-numeric: tabular-nums;\n  color: #a39477;\n}\n\n/* editor */\n#CookieMgrMenu .ca-editor {\n  box-shadow:\n    0 0 0 1px rgba(255, 210, 120, 0.45),\n    0 0 18px rgba(255, 200, 100, 0.15);\n}\n#CookieMgrMenu .ca-editor-body {\n  padding: 4px 14px 12px;\n}\n#CookieMgrMenu .ca-editor-row {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 8px 12px;\n  margin: 6px 0;\n}\n#CookieMgrMenu .ca-editor-block {\n  margin: 8px 0;\n  padding: 4px 10px;\n  border-left: 2px solid rgba(120, 190, 255, 0.5);\n  background: rgba(120, 190, 255, 0.05);\n}\n#CookieMgrMenu .ca-field {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  font-size: 11px;\n  color: #b9ab93;\n}\n#CookieMgrMenu .ca-field.ca-grow {\n  flex: 1 1 200px;\n}\n#CookieMgrMenu .ca-field.ca-grow input {\n  flex: 1;\n}\n#CookieMgrMenu .ca-field em {\n  font-style: normal;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-field-label {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  min-width: 64px;\n  font:\n    bold 11px Tahoma,\n    Arial,\n    sans-serif;\n  color: #e8d7b0;\n}\n#CookieMgrMenu .ca-hint {\n  font-size: 10.5px;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-editor input[type='text'],\n#CookieMgrMenu .ca-editor input[type='number'],\n#CookieMgrMenu .ca-editor select {\n  font: 12px Tahoma, Arial, sans-serif;\n  color: #f0e2c0;\n  background: rgba(0, 0, 0, 0.45);\n  border: 1px solid rgba(255, 220, 150, 0.25);\n  border-radius: 4px;\n  padding: 3px 6px;\n}\n#CookieMgrMenu .ca-editor input[type='number'] {\n  width: 80px;\n}\n#CookieMgrMenu .ca-editor select option,\n#CookieMgrMenu .ca-editor select optgroup {\n  background: #1c150d;\n  color: #f0e2c0;\n}\n#CookieMgrMenu .ca-iconpick {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 4px;\n}\n#CookieMgrMenu .ca-editor-steps {\n  display: flex;\n  flex-direction: column;\n  align-items: flex-start;\n  gap: 6px;\n  margin: 4px 0 8px;\n}\n#CookieMgrMenu .ca-editor-step {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 6px 10px;\n  width: 100%;\n  box-sizing: border-box;\n  padding: 6px 8px;\n  border-radius: 6px;\n  background: rgba(0, 0, 0, 0.25);\n  border: 1px solid rgba(255, 220, 150, 0.12);\n}\n#CookieMgrMenu .ca-step-n {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 18px;\n  height: 18px;\n  font:\n    bold 10px Tahoma,\n    Arial,\n    sans-serif;\n  color: #1c150d;\n  background: #ffd98a;\n  border-radius: 50%;\n}\n#CookieMgrMenu .ca-step-tools {\n  margin-left: auto;\n  display: inline-flex;\n  gap: 3px;\n}\n#CookieMgrMenu .ca-editor-error {\n  margin: 6px 0;\n  padding: 5px 9px;\n  font-size: 11px;\n  color: #ffd2cc;\n  background: rgba(229, 72, 77, 0.18);\n  border: 1px solid rgba(229, 72, 77, 0.5);\n  border-radius: 5px;\n}\n#CookieMgrMenu .ca-editor-actions {\n  display: flex;\n  gap: 8px;\n  margin-top: 10px;\n}\n\n/* ---------- Widgets (left panel) ---------- */\n\n#CookieMgrWidgets {\n  position: absolute;\n  inset: 0;\n  /* above the game's big-cookie click target (#bigCookie, 10000) so widgets dragged over the\n     cookie can still be grabbed; below its popups (20000+), golden cookies, notes and tooltips */\n  z-index: 15000;\n  pointer-events: none;\n  font-family: Tahoma, Arial, sans-serif;\n}\n#CookieMgrWidgets.ca-hidden,\n#game.ascending #CookieMgrWidgets,\n#game.ascendIntro #CookieMgrWidgets,\n#game.reincarnating #CookieMgrWidgets {\n  display: none;\n}\n#CookieMgrWidgets .ca-w {\n  position: absolute;\n  pointer-events: auto;\n  box-sizing: border-box;\n  max-width: calc(100% - 4px);\n  color: #e8d7b0;\n  background:\n    linear-gradient(to bottom, rgba(70, 45, 22, 0.92), rgba(28, 18, 9, 0.92)),\n    #1c120a;\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 6px;\n  box-shadow:\n    0 4px 14px rgba(0, 0, 0, 0.7),\n    inset 0 1px 0 rgba(255, 255, 255, 0.15);\n  user-select: none;\n}\n#CookieMgrWidgets .ca-w.dragging {\n  box-shadow:\n    0 8px 24px rgba(0, 0, 0, 0.85),\n    0 0 14px rgba(255, 215, 110, 0.35);\n  opacity: 0.95;\n}\n#CookieMgrWidgets .ca-w-head {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  padding: 3px 4px 3px 8px;\n  cursor: grab;\n  border-bottom: 1px solid rgba(255, 220, 150, 0.18);\n  color: #ffd98a;\n}\n#CookieMgrWidgets.locked .ca-w-head {\n  cursor: default;\n}\n#CookieMgrWidgets .ca-w.collapsed .ca-w-head {\n  border-bottom: none;\n}\n#CookieMgrWidgets .ca-w-title {\n  flex: 1;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-size: 13px;\n  color: #fff;\n  text-shadow: 0 1px 2px #000;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n#CookieMgrWidgets .ca-w-btn {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 18px;\n  height: 18px;\n  padding: 0;\n  font-size: 10px;\n  color: #b9ab93;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px solid rgba(255, 220, 150, 0.15);\n  border-radius: 4px;\n  cursor: pointer;\n  opacity: 0;\n  transition: opacity 0.15s;\n}\n#CookieMgrWidgets .ca-w:hover .ca-w-btn {\n  opacity: 1;\n}\n#CookieMgrWidgets .ca-w-btn:hover {\n  color: #fff3cf;\n}\n#CookieMgrWidgets .ca-w-body {\n  padding: 6px 8px 8px;\n  max-height: 320px;\n  overflow-y: auto;\n}\n#CookieMgrWidgets .ca-w.collapsed .ca-w-body {\n  display: none;\n}\n#CookieMgrWidgets .ca-w-empty {\n  font-size: 11px;\n  color: #93866f;\n  line-height: 1.4;\n}\n/* bare widgets: no frame, dragged from anywhere */\n#CookieMgrWidgets .ca-w.ca-w-bare {\n  background: none;\n  border: none;\n  box-shadow: none;\n  cursor: grab;\n}\n#CookieMgrWidgets.locked .ca-w.ca-w-bare {\n  cursor: default;\n}\n#CookieMgrWidgets .ca-w-bare > .ca-w-body {\n  padding: 0;\n  max-height: none;\n  overflow: visible;\n}\n#CookieMgrWidgets .ca-w-x {\n  position: absolute;\n  top: -6px;\n  right: -6px;\n  z-index: 2;\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 15px;\n  height: 15px;\n  padding: 0;\n  color: #f0e2c0;\n  background: #3a2414;\n  border: 1px solid #875526;\n  border-radius: 50%;\n  cursor: pointer;\n  opacity: 0;\n  transition: opacity 0.15s;\n}\n#CookieMgrWidgets .ca-w-bare:hover .ca-w-x {\n  opacity: 1;\n}\n#CookieMgrWidgets .ca-w-bare.dragging .ca-w-x {\n  opacity: 0;\n}\n\n/* a macro's own button */\n#CookieMgrWidgets .ca-wb {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  width: 38px;\n  height: 38px;\n  padding: 0;\n  border-radius: 50%;\n  cursor: inherit;\n  background: radial-gradient(circle at 35% 30%, rgba(110, 72, 36, 0.95), rgba(28, 18, 9, 0.95));\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  box-shadow:\n    0 3px 8px rgba(0, 0, 0, 0.7),\n    inset 0 1px 0 rgba(255, 255, 255, 0.2);\n  transition:\n    box-shadow 0.2s,\n    transform 0.1s,\n    filter 0.2s;\n}\n#CookieMgrWidgets .ca-wb:not(.on):not(.once) {\n  filter: grayscale(0.6) brightness(0.8);\n}\n#CookieMgrWidgets .ca-wb:hover {\n  filter: none;\n  box-shadow:\n    0 3px 10px rgba(0, 0, 0, 0.8),\n    0 0 10px rgba(255, 215, 110, 0.45),\n    inset 0 1px 0 rgba(255, 255, 255, 0.25);\n}\n#CookieMgrWidgets .ca-wb.on {\n  box-shadow:\n    0 3px 8px rgba(0, 0, 0, 0.7),\n    0 0 0 2px rgba(130, 235, 120, 0.85),\n    0 0 12px rgba(130, 235, 120, 0.6);\n}\n#CookieMgrWidgets .ca-wb:active {\n  transform: scale(0.94);\n}\n#CookieMgrWidgets .ca-wb .ca-icon,\n#CookieMgrWidgets .ca-wb .ca-icon-ico {\n  flex: 0 0 26px;\n  width: 26px;\n  height: 26px;\n  background: none;\n  box-shadow: none;\n}\n#CookieMgrWidgets .ca-wb .ca-img {\n  width: 26px;\n  height: 26px;\n}\n#CookieMgrWidgets .ca-wb .ca-sprite {\n  transform: scale(0.54);\n}\n#CookieMgrWidgets .ca-wb .ca-icon-ico .ca-ico {\n  width: 20px;\n  height: 20px;\n}\n#CookieMgrWidgets .ca-wb-label {\n  position: absolute;\n  top: 100%;\n  left: 50%;\n  margin-top: 4px;\n  padding: 2px 7px;\n  font:\n    bold 10px Tahoma,\n    Arial,\n    sans-serif;\n  color: #fff3cf;\n  white-space: nowrap;\n  text-shadow: 0 1px 1px #000;\n  background: rgba(20, 12, 6, 0.92);\n  border: 1px solid rgba(255, 220, 150, 0.35);\n  border-radius: 8px;\n  transform: translateX(-50%) translateY(-3px);\n  opacity: 0;\n  pointer-events: none;\n  transition:\n    opacity 0.15s,\n    transform 0.15s;\n}\n#CookieMgrWidgets .ca-w-macro:hover .ca-wb-label {\n  opacity: 1;\n  transform: translateX(-50%) translateY(0);\n}\n#CookieMgrWidgets .ca-w-macro.dragging .ca-wb-label {\n  opacity: 0;\n}\n\n/* \"Running now\" as a status bar */\n#CookieMgrWidgets .ca-w-status > .ca-w-body {\n  display: flex;\n  align-items: center;\n  gap: 4px;\n  min-height: 30px;\n  padding: 3px 8px 3px 6px;\n  background: linear-gradient(to bottom, rgba(70, 45, 22, 0.9), rgba(28, 18, 9, 0.9));\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 16px;\n  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.7);\n}\n#CookieMgrWidgets .ca-wbar-lead {\n  display: inline-flex;\n  color: #93866f;\n  margin-right: 2px;\n}\n#CookieMgrWidgets .ca-wbar-idle {\n  font-size: 10px;\n  font-style: italic;\n  color: #93866f;\n}\n#CookieMgrWidgets .ca-wbar-item {\n  display: inline-flex;\n  border-radius: 50%;\n  cursor: pointer;\n  box-shadow: 0 0 0 1px rgba(130, 235, 120, 0.5);\n}\n#CookieMgrWidgets .ca-wbar-item .ca-icon,\n#CookieMgrWidgets .ca-wbar-item .ca-icon-ico {\n  flex: 0 0 22px;\n  width: 22px;\n  height: 22px;\n}\n#CookieMgrWidgets .ca-wbar-item .ca-img {\n  width: 22px;\n  height: 22px;\n}\n#CookieMgrWidgets .ca-wbar-item .ca-sprite {\n  transform: scale(0.45);\n}\n#CookieMgrWidgets .ca-wbar-item.hot {\n  animation: caWbarPulse 1s ease-in-out infinite;\n}\n#CookieMgrWidgets .ca-wbar-item.err {\n  box-shadow: 0 0 0 2px rgba(229, 72, 77, 0.85);\n}\n@keyframes caWbarPulse {\n  0%,\n  100% {\n    box-shadow: 0 0 0 1px rgba(130, 235, 120, 0.5);\n  }\n  50% {\n    box-shadow:\n      0 0 0 2px rgba(130, 235, 120, 0.95),\n      0 0 10px rgba(130, 235, 120, 0.7);\n  }\n}\n#CookieMgrWidgets .ca-icon {\n  flex: 0 0 22px;\n  width: 22px;\n  height: 22px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  overflow: hidden;\n}\n#CookieMgrWidgets .ca-img {\n  width: 22px;\n  height: 22px;\n  background-size: contain;\n  background-repeat: no-repeat;\n  background-position: center;\n}\n#CookieMgrWidgets .ca-sprite {\n  flex: none;\n  width: 48px;\n  height: 48px;\n  background-image: url(img/icons.png);\n  transform: scale(0.45);\n}\n#CookieMgrWidgets .ca-icon-ico {\n  color: #ffd98a;\n  border-radius: 50%;\n  background: radial-gradient(circle at 35% 30%, rgba(255, 230, 170, 0.22), rgba(0, 0, 0, 0.3));\n}\n/* status block inside a widget */\n#CookieMgrWidgets .ca-status-head .ca-icon,\n#CookieMgrWidgets .ca-status-head .ca-icon-ico {\n  flex: 0 0 18px;\n  width: 18px;\n  height: 18px;\n}\n#CookieMgrWidgets .ca-status-head .ca-sprite {\n  transform: scale(0.38);\n}\n#CookieMgrWidgets .ca-status-step {\n  margin-left: 24px;\n}\n#CookieMgrWidgets .ca-iconbtn {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 18px;\n  height: 18px;\n  padding: 0;\n  color: #b9ab93;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px solid rgba(255, 220, 150, 0.15);\n  border-radius: 4px;\n  cursor: pointer;\n}\n/* quick stats */\n#CookieMgrWidgets .ca-w-stat {\n  display: flex;\n  justify-content: space-between;\n  gap: 10px;\n  padding: 2px 0;\n  font-size: 11px;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.05);\n}\n#CookieMgrWidgets .ca-w-stat:last-child {\n  border-bottom: none;\n}\n#CookieMgrWidgets .ca-w-stat span {\n  color: #a39477;\n}\n#CookieMgrWidgets .ca-w-stat b {\n  color: #fff3cf;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrWidgets .ca-w-stat em {\n  font-style: normal;\n  font-weight: normal;\n  color: #93866f;\n}\n/* latest events */\n#CookieMgrWidgets .ca-ev-row {\n  display: flex;\n  align-items: baseline;\n  gap: 6px;\n  padding: 2px 4px;\n  font-size: 10.5px;\n  color: #d8cbb0;\n  border-left: 2px solid var(--c);\n}\n#CookieMgrWidgets .ca-ev-ico {\n  flex: none;\n  align-self: center;\n  display: inline-flex;\n  color: var(--c);\n}\n#CookieMgrWidgets .ca-ev-ico .ca-ico-cookie {\n  width: 12px !important;\n  height: 12px !important;\n}\n#CookieMgrWidgets .ca-ev-time {\n  flex: none;\n  color: #93866f;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrWidgets .ca-ev-text {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n#CookieMgrWidgets .ca-ev-text span {\n  display: none;\n}\n#CookieMgrWidgets .ca-ev-cookies {\n  flex: none;\n  font-weight: bold;\n}\n#CookieMgrWidgets .ca-ev-cookies.pos {\n  color: #9be89b;\n}\n#CookieMgrWidgets .ca-ev-cookies.neg {\n  color: #ff9a8a;\n}\n#CookieMgrMenu .ca-status-head .ca-icon {\n  filter: none;\n}\n#CookieMgrMenu .ca-card-meta .ca-iconbtn {\n  margin-left: 4px;\n}\n\n/* ---------- Wizard tower ---------- */\n\n#CookieMgrMenu .ca-magic {\n  position: relative;\n  height: 18px;\n  margin: 6px 14px 4px;\n  border-radius: 9px;\n  overflow: hidden;\n  background: rgba(0, 0, 0, 0.5);\n  box-shadow:\n    inset 0 1px 3px rgba(0, 0, 0, 0.8),\n    0 0 0 1px rgba(179, 136, 255, 0.35);\n}\n#CookieMgrMenu .ca-magic-fill {\n  position: absolute;\n  inset: 0 auto 0 0;\n  width: 0;\n  background: linear-gradient(to bottom, #c9a6ff, #7c4dff);\n  box-shadow: 0 0 10px rgba(179, 136, 255, 0.7);\n  transition: width 0.4s;\n}\n#CookieMgrMenu .ca-magic-text {\n  position: relative;\n  text-align: center;\n  font:\n    bold 11px/18px Tahoma,\n    Arial,\n    sans-serif;\n  color: #fff;\n  text-shadow:\n    0 0 3px #000,\n    0 1px 1px #000;\n}\n#CookieMgrMenu .ca-spells {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));\n  gap: 8px;\n  padding: 6px 12px 12px;\n}\n#CookieMgrMenu .ca-spell {\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  gap: 3px;\n  padding: 8px 6px;\n  text-align: center;\n  border-radius: 8px;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px solid rgba(179, 136, 255, 0.2);\n  opacity: 0.75;\n  transition:\n    opacity 0.2s,\n    box-shadow 0.2s;\n}\n#CookieMgrMenu .ca-spell.ready {\n  opacity: 1;\n  border-color: rgba(179, 136, 255, 0.55);\n  box-shadow: 0 0 10px rgba(179, 136, 255, 0.25);\n}\n#CookieMgrMenu .ca-spell-ico {\n  display: block;\n  width: 48px;\n  height: 48px;\n  margin: -6px 0 -8px;\n  transform: scale(0.75);\n}\n#CookieMgrMenu .ca-spell:not(.ready) .ca-spell-ico {\n  filter: grayscale(0.7) brightness(0.75);\n}\n#CookieMgrMenu .ca-spell-name {\n  font-family: 'Merriweather', Georgia, serif;\n  font-size: 12px;\n  color: #f0e2c0;\n}\n#CookieMgrMenu .ca-spell-meta {\n  min-height: 26px;\n  font-size: 10px;\n  color: #a39477;\n}\n#CookieMgrMenu .ca-spell-actions {\n  display: flex;\n  gap: 5px;\n  align-items: center;\n}\n#CookieMgrMenu .ca-cond + .ca-cond .ca-field-label {\n  color: #9fd3ff;\n}\n\n/* toolbar inside the Grimoire */\n#cm-grimoire-toolbar {\n  position: relative;\n  z-index: 10;\n  display: flex;\n  flex-wrap: wrap;\n  justify-content: center;\n  gap: 6px;\n  margin: 6px auto 2px;\n}\n#cm-grimoire-toolbar .cm-gt-btn {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  padding: 3px 9px;\n  font:\n    11px Merriweather,\n    Georgia,\n    serif;\n  color: #ccc;\n  cursor: pointer;\n  background: rgba(0, 0, 0, 0.45);\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 4px;\n  text-shadow: 0 1px 1px #000;\n}\n#cm-grimoire-toolbar .cm-gt-btn:hover {\n  color: #fff;\n  box-shadow: 0 0 6px rgba(255, 220, 150, 0.4);\n}\n#cm-grimoire-toolbar .cm-gt-btn.on {\n  color: #e9d8ff;\n  background: rgba(124, 77, 255, 0.35);\n  box-shadow: 0 0 8px rgba(179, 136, 255, 0.55);\n}\n";
+CA.VERSION = "2.4.0";
+CA.CSS = "/* ==========================================================================\n   CookieMgr — styles\n   Colours and borders borrow from the game's own \"framed\" look so the panel\n   feels native. Everything is scoped under #CookieMgrTab / #CookieMgrMenu.\n   ========================================================================== */\n\n/* ---------- Sidebar (icon tabs sticking out of the left beam, one per page) ---------- */\n\n#CookieMgrTab {\n  position: absolute;\n  left: 30%;\n  top: calc(10% + 96px); /* fallback; tab.js pins it just under the game's cookie-count banner */\n  margin-left: 3px; /* tuck slightly under the beam */\n  transform: translateX(-100%);\n  z-index: 110;\n  display: flex;\n  flex-direction: column;\n  align-items: flex-end; /* items grow leftwards, away from the beam */\n  gap: 4px;\n}\n#CookieMgrTab .ca-tab-item {\n  box-sizing: border-box;\n  height: 32px;\n  display: flex;\n  align-items: center;\n  cursor: pointer;\n  user-select: none;\n  background: linear-gradient(to right, #3d2716, #221409);\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-right: none;\n  border-radius: 8px 0 0 8px;\n  box-shadow:\n    -3px 3px 10px rgba(0, 0, 0, 0.65),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.18);\n  transition:\n    background 0.2s,\n    box-shadow 0.2s;\n  outline: none;\n}\n#CookieMgrTab .ca-tab-item:hover,\n#CookieMgrTab .ca-tab-item:focus-visible {\n  box-shadow:\n    -3px 3px 12px rgba(0, 0, 0, 0.75),\n    0 0 12px rgba(255, 215, 110, 0.35),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.25);\n}\n#CookieMgrTab .ca-tab-item.selected {\n  background: linear-gradient(to right, #7a4f22, #43290f);\n  box-shadow:\n    -3px 3px 12px rgba(0, 0, 0, 0.75),\n    0 0 14px rgba(255, 215, 110, 0.55),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.3);\n}\n#CookieMgrTab .ca-tab-label {\n  max-width: 0;\n  overflow: hidden;\n  opacity: 0;\n  padding: 0;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-weight: bold;\n  font-size: 13px;\n  letter-spacing: 0.5px;\n  color: #f4e6c3;\n  text-shadow:\n    0 1px 2px #000,\n    0 0 6px rgba(255, 200, 120, 0.25);\n  white-space: nowrap;\n  transition:\n    max-width 0.22s ease-out,\n    opacity 0.15s,\n    padding 0.22s ease-out;\n}\n#CookieMgrTab .ca-tab-item:hover .ca-tab-label,\n#CookieMgrTab .ca-tab-item:focus-visible .ca-tab-label {\n  max-width: 180px;\n  opacity: 1;\n  padding: 0 2px 0 12px;\n}\n#CookieMgrTab .ca-tab-icon {\n  position: relative;\n  flex: none;\n  width: 30px;\n  height: 30px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  color: #f4e6c3;\n  filter: drop-shadow(0 1px 1px #000);\n}\n#CookieMgrTab .ca-tab-item.selected .ca-tab-icon,\n#CookieMgrTab .ca-tab-item:hover .ca-tab-icon {\n  color: #ffeab0;\n}\n#CookieMgrTab .ca-tab-badge {\n  display: none;\n  position: absolute;\n  top: -5px;\n  left: -5px;\n  min-width: 15px;\n  height: 15px;\n  padding: 0 3px;\n  box-sizing: border-box;\n  border-radius: 8px;\n  font:\n    bold 9px/15px Tahoma,\n    Arial,\n    sans-serif;\n  text-align: center;\n  color: #fff;\n  background: linear-gradient(#63c64a, #2f7d24);\n  box-shadow:\n    0 0 6px rgba(120, 240, 100, 0.8),\n    0 1px 1px #000;\n  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);\n}\n#CookieMgrTab .ca-tab-item.active .ca-tab-badge {\n  display: block;\n  animation: caBadgeGlow 2s infinite ease-in-out;\n}\n@keyframes caBadgeGlow {\n  0%,\n  100% {\n    box-shadow:\n      0 0 4px rgba(120, 240, 100, 0.6),\n      0 1px 1px #000;\n  }\n  50% {\n    box-shadow:\n      0 0 10px rgba(120, 240, 100, 1),\n      0 1px 1px #000;\n  }\n}\n#game.ascending #CookieMgrTab,\n#game.ascendIntro #CookieMgrTab,\n#game.reincarnating #CookieMgrTab {\n  display: none;\n}\n\n/* ---------- Icons (used everywhere, not just inside the panel) ---------- */\n\n.ca-ico {\n  display: inline-block;\n  flex: none;\n  vertical-align: middle;\n}\n.ca-ico-cookie {\n  background: url(img/perfectCookie.png) center / contain no-repeat;\n}\n\n/* ---------- Stock market toolbar inside the Bank minigame ---------- */\n\n#cm-bank-toolbar {\n  position: relative;\n  z-index: 10;\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  justify-content: center;\n  gap: 6px;\n  padding: 4px 4px 6px;\n}\n#cm-bank-toolbar .bankButton {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  font-size: 11px;\n  padding: 3px 9px;\n}\n#cm-bank-toolbar .cm-bt-open {\n  color: #f4e6c3;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n}\n\n/* ---------- Panel ---------- */\n\n#CookieMgrMenu {\n  max-width: 780px;\n  margin: 0 auto;\n  padding: 0 12px 120px;\n  color: #ddd;\n}\n#CookieMgrMenu .ca-tagline {\n  text-align: center;\n  margin: -6px 0 14px;\n  font-size: 12px;\n  font-style: italic;\n  color: #b9ab93;\n  text-shadow: 0 1px 1px #000;\n}\n\n/* Cards */\n#CookieMgrMenu .ca-card {\n  margin: 14px 4px;\n  border-radius: 6px;\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  background: rgba(0, 0, 0, 0.38);\n  box-shadow:\n    0 0 1px #000,\n    inset 0 0 1px #000,\n    0 6px 16px rgba(0, 0, 0, 0.35);\n  overflow: hidden;\n}\n#CookieMgrMenu .ca-card-head {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 10px;\n  padding: 9px 14px;\n  background: linear-gradient(to right, rgba(255, 235, 190, 0.09), rgba(255, 235, 190, 0));\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-card-title {\n  flex: 1;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-size: 20px;\n  color: #fff;\n  text-shadow:\n    0 -1px 5px rgba(255, 255, 200, 0.35),\n    0 1px 3px #000;\n}\n#CookieMgrMenu .ca-card-ico {\n  margin-right: 8px;\n  vertical-align: -1px;\n  color: #ffd98a;\n  filter: drop-shadow(0 1px 2px #000);\n}\n#CookieMgrMenu .ca-row-ico {\n  flex: 0 0 28px;\n  width: 28px;\n  height: 28px;\n  border-radius: 50%;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  color: #e8d7b0;\n  background: radial-gradient(circle at 35% 30%, rgba(255, 230, 170, 0.18), rgba(0, 0, 0, 0.25));\n  box-shadow:\n    inset 0 0 0 1px rgba(255, 220, 150, 0.25),\n    0 1px 3px rgba(0, 0, 0, 0.6);\n}\n#CookieMgrMenu .ca-row-option:has(.ca-switch.on) .ca-row-ico {\n  color: #ffeab0;\n  box-shadow:\n    inset 0 0 0 1px rgba(255, 220, 150, 0.55),\n    0 0 8px rgba(255, 210, 110, 0.35);\n}\n#CookieMgrMenu .ca-row-ico .ca-ico-cookie {\n  width: 18px !important;\n  height: 18px !important;\n}\n#CookieMgrMenu .ca-pill {\n  font-size: 11px;\n  white-space: nowrap;\n  padding: 3px 10px;\n  border-radius: 10px;\n  color: #bbb;\n  background: rgba(255, 255, 255, 0.07);\n  border: 1px solid rgba(255, 255, 255, 0.15);\n  transition: all 0.2s;\n}\n#CookieMgrMenu .ca-pill.on {\n  color: #cfc;\n  background: rgba(80, 200, 90, 0.16);\n  border-color: rgba(130, 235, 120, 0.5);\n}\n\n/* Rows */\n#CookieMgrMenu .ca-row {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 8px 12px;\n  padding: 8px 14px;\n  border-top: 1px solid rgba(255, 255, 255, 0.05);\n  transition: background 0.2s;\n}\n#CookieMgrMenu .ca-list .ca-row:first-child {\n  border-top: none;\n}\n#CookieMgrMenu .ca-row:hover {\n  background: rgba(255, 255, 255, 0.035);\n}\n#CookieMgrMenu .ca-row.on {\n  background: linear-gradient(to right, rgba(255, 210, 90, 0.12), rgba(255, 210, 90, 0) 65%);\n}\n#CookieMgrMenu .ca-row-master {\n  background: rgba(0, 0, 0, 0.22);\n  border-top: none;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-row-option {\n  padding-top: 10px;\n  padding-bottom: 10px;\n}\n#CookieMgrMenu .ca-row-text {\n  flex: 1 1 160px;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-row-option {\n  flex-wrap: nowrap;\n}\n#CookieMgrMenu .ca-row-option .ca-row-text {\n  flex-basis: 0;\n}\n#CookieMgrMenu .ca-controls {\n  flex: 0 1 auto;\n  max-width: 100%;\n  margin-left: auto;\n  display: flex;\n  flex-wrap: wrap;\n  justify-content: flex-end;\n  align-items: center;\n  gap: 8px;\n}\n#CookieMgrMenu .ca-row-name {\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 14px;\n  color: #f2ead2;\n  text-shadow: 0 1px 2px #000;\n}\n#CookieMgrMenu .ca-row-desc {\n  margin-top: 2px;\n  font-size: 11px;\n  color: #b3a590;\n  text-shadow: 0 1px 1px #000;\n}\n\n/* Icons */\n#CookieMgrMenu .ca-icon {\n  flex: 0 0 36px;\n  width: 36px;\n  height: 36px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  transition:\n    filter 0.25s,\n    transform 0.25s;\n  filter: grayscale(0.55) brightness(0.8);\n}\n#CookieMgrMenu .ca-row.on .ca-icon,\n#CookieMgrMenu .ca-row-master .ca-icon {\n  filter: drop-shadow(0 0 6px rgba(255, 220, 120, 0.75));\n}\n#CookieMgrMenu .ca-row.on .ca-icon {\n  transform: scale(1.06);\n}\n#CookieMgrMenu .ca-img {\n  width: 36px;\n  height: 36px;\n  background-size: contain;\n  background-repeat: no-repeat;\n  background-position: center;\n}\n#CookieMgrMenu .ca-sprite {\n  flex: none;\n  width: 48px;\n  height: 48px;\n  background-image: url(img/icons.png);\n  transform: scale(0.75);\n}\n\n/* Toggle switch */\n#CookieMgrMenu .ca-switch {\n  flex: none;\n  padding: 2px;\n  background: none;\n  border: none;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-switch:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-switch-track {\n  display: block;\n  position: relative;\n  width: 42px;\n  height: 22px;\n  box-sizing: border-box;\n  border-radius: 11px;\n  background: #2a211c;\n  border: 1px solid rgba(255, 255, 255, 0.22);\n  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.75);\n  transition:\n    background 0.2s,\n    border-color 0.2s,\n    box-shadow 0.2s;\n}\n#CookieMgrMenu .ca-switch-knob {\n  position: absolute;\n  top: 2px;\n  left: 2px;\n  width: 16px;\n  height: 16px;\n  border-radius: 50%;\n  background: radial-gradient(circle at 35% 30%, #fff, #c9c1b5 55%, #8a8178);\n  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);\n  transition: left 0.18s ease-out;\n}\n#CookieMgrMenu .ca-switch:hover .ca-switch-track {\n  border-color: rgba(255, 225, 150, 0.6);\n}\n#CookieMgrMenu .ca-switch.on .ca-switch-track {\n  background: linear-gradient(#66c84b, #2f7d24);\n  border-color: #a5ea93;\n  box-shadow:\n    inset 0 1px 3px rgba(0, 0, 0, 0.35),\n    0 0 9px rgba(110, 230, 90, 0.45);\n}\n#CookieMgrMenu .ca-switch.on .ca-switch-knob {\n  left: 22px;\n}\n#CookieMgrMenu .ca-switch:focus-visible .ca-switch-track {\n  outline: 2px solid #ffd76a;\n  outline-offset: 2px;\n}\n\n/* Hotkey chips */\n#CookieMgrMenu .ca-hotkey {\n  flex: none;\n  display: inline-flex;\n  align-items: center;\n}\n#CookieMgrMenu .ca-key {\n  min-width: 46px;\n  height: 26px;\n  padding: 0 10px;\n  font:\n    bold 12px Tahoma,\n    Arial,\n    sans-serif;\n  color: #f4e6c3;\n  text-shadow: 0 1px 1px #000;\n  background: linear-gradient(#4d3c2d, #2a2018);\n  border: 1px solid;\n  border-color: #9a7d5b #3b2c1f #2a1f15 #74604a;\n  border-radius: 5px;\n  box-shadow:\n    0 2px 0 #140d08,\n    inset 0 1px 0 rgba(255, 255, 255, 0.16);\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    border-color 0.15s,\n    box-shadow 0.15s;\n}\n#CookieMgrMenu .ca-key:hover {\n  color: #fff;\n  border-color: #e0c08a #5a4430 #3d2e20 #b39468;\n}\n#CookieMgrMenu .ca-key:active {\n  transform: translateY(1px);\n  box-shadow:\n    0 1px 0 #140d08,\n    inset 0 1px 0 rgba(255, 255, 255, 0.16);\n}\n#CookieMgrMenu .ca-key:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-hotkey.unset .ca-key {\n  color: #8f877a;\n  font-weight: normal;\n  font-style: italic;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px dashed rgba(255, 255, 255, 0.22);\n  box-shadow: none;\n}\n#CookieMgrMenu .ca-hotkey.capturing .ca-key {\n  color: #ffe9a6;\n  border-color: #ffd76a;\n  animation: caCapture 1.1s infinite ease-in-out;\n}\n@keyframes caCapture {\n  0%,\n  100% {\n    box-shadow:\n      0 2px 0 #140d08,\n      0 0 0 0 rgba(255, 215, 106, 0.5);\n  }\n  50% {\n    box-shadow:\n      0 2px 0 #140d08,\n      0 0 12px 2px rgba(255, 215, 106, 0.55);\n  }\n}\n#CookieMgrMenu .ca-key-clear {\n  width: 18px;\n  height: 18px;\n  margin-left: 3px;\n  padding: 0;\n  border: none;\n  border-radius: 50%;\n  background: transparent;\n  color: #b09a8a;\n  font-size: 14px;\n  line-height: 18px;\n  cursor: pointer;\n  opacity: 0;\n  transition:\n    opacity 0.15s,\n    background 0.15s;\n}\n#CookieMgrMenu .ca-row:hover .ca-key-clear {\n  opacity: 0.8;\n}\n#CookieMgrMenu .ca-key-clear:hover {\n  color: #fff;\n  background: rgba(255, 80, 80, 0.35);\n}\n#CookieMgrMenu .ca-hotkey.unset .ca-key-clear,\n#CookieMgrMenu .ca-hotkey.capturing .ca-key-clear {\n  visibility: hidden;\n}\n\n/* Buttons */\n#CookieMgrMenu .ca-btn {\n  padding: 4px 12px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-weight: bold;\n  font-size: 12px;\n  color: #ddd;\n  text-shadow: 0 1px 1px #000;\n  background: linear-gradient(#3e2f23, #1d140f);\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 4px;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    inset 0 1px 0 rgba(255, 255, 255, 0.12);\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    box-shadow 0.15s,\n    opacity 0.15s;\n}\n#CookieMgrMenu .ca-btn:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-btn:not(:disabled):hover {\n  color: #fff;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    0 0 9px rgba(255, 220, 120, 0.35),\n    inset 0 1px 0 rgba(255, 255, 255, 0.18);\n}\n#CookieMgrMenu .ca-btn:not(:disabled):active {\n  transform: translateY(1px);\n}\n#CookieMgrMenu .ca-btn-on:not(:disabled):hover {\n  color: #d6ffcc;\n}\n#CookieMgrMenu .ca-btn-off:not(:disabled):hover {\n  color: #ffd2cc;\n}\n#CookieMgrMenu .ca-btn:disabled {\n  opacity: 0.38;\n  cursor: default;\n  box-shadow: none;\n}\n#CookieMgrMenu .ca-btn-small {\n  font-size: 11px;\n  padding: 3px 10px;\n}\n#CookieMgrMenu .ca-btn .ca-ico {\n  vertical-align: -2px;\n}\n#CookieMgrMenu .ca-btn.ca-armed {\n  color: #fff;\n  background: #8a2a22;\n  box-shadow: 0 0 0 1px #e5484d, 0 0 8px rgba(229, 72, 77, 0.6);\n}\n#CookieMgrMenu .ca-btn-lg {\n  padding: 10px 20px;\n  font-size: 15px;\n  border-radius: 6px;\n}\n#CookieMgrMenu .ca-btn-danger {\n  color: #ffdcd2;\n  background: linear-gradient(#6b2420, #3a1210);\n  border-color: #ffb199 #7a2a1e #5c1b12 #d98a6e;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    0 0 10px rgba(255, 90, 60, 0.25),\n    inset 0 1px 0 rgba(255, 255, 255, 0.15);\n}\n#CookieMgrMenu .ca-btn-danger:not(:disabled):hover {\n  color: #fff;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    0 0 16px rgba(255, 90, 60, 0.5),\n    inset 0 1px 0 rgba(255, 255, 255, 0.2);\n}\n#CookieMgrMenu .ca-card-danger {\n  border-color: rgba(255, 110, 80, 0.3);\n  box-shadow:\n    0 0 1px #000,\n    inset 0 0 1px #000,\n    0 0 14px rgba(255, 70, 40, 0.12),\n    0 6px 16px rgba(0, 0, 0, 0.35);\n}\n#CookieMgrMenu .ca-row-sellall {\n  align-items: center;\n  justify-content: space-between;\n  gap: 12px;\n}\n\n/* Footer */\n#CookieMgrMenu .ca-footer {\n  margin: 18px 8px 0;\n  font-size: 11px;\n  line-height: 1.7;\n  text-align: center;\n  color: #9b907f;\n  text-shadow: 0 1px 1px #000;\n}\n#CookieMgrMenu .ca-footer b {\n  color: #c9bba3;\n}\n#CookieMgrMenu kbd {\n  display: inline-block;\n  padding: 0 5px;\n  font:\n    bold 10px/16px Tahoma,\n    Arial,\n    sans-serif;\n  color: #e8dcc2;\n  background: #2a2018;\n  border: 1px solid #5a4632;\n  border-radius: 3px;\n  box-shadow: 0 1px 0 #140d08;\n}\n#CookieMgrMenu .ca-footer-actions {\n  margin-top: 8px;\n}\n\n#CookieMgrMenu .ca-page {\n  animation: caFade 0.18s ease-out;\n}\n@keyframes caFade {\n  from {\n    opacity: 0;\n    transform: translateY(3px);\n  }\n  to {\n    opacity: 1;\n    transform: none;\n  }\n}\n#CookieMgrMenu a {\n  color: #ffd98a;\n}\n\n/* ---------- Graph ---------- */\n\n#CookieMgrMenu .ca-live {\n  font-size: 11px;\n  padding: 3px 10px 3px 20px;\n  position: relative;\n  border-radius: 10px;\n  color: #cfc;\n  background: rgba(80, 200, 90, 0.16);\n  border: 1px solid rgba(130, 235, 120, 0.5);\n}\n#CookieMgrMenu .ca-live:before {\n  content: '';\n  position: absolute;\n  left: 8px;\n  top: 50%;\n  width: 6px;\n  height: 6px;\n  margin-top: -3px;\n  border-radius: 50%;\n  background: #7be07b;\n  box-shadow: 0 0 6px #7be07b;\n  animation: caBadgeGlow 1.6s infinite ease-in-out;\n}\n#CookieMgrMenu .ca-live.paused {\n  color: #ffd9a0;\n  background: rgba(255, 170, 60, 0.14);\n  border-color: rgba(255, 190, 100, 0.5);\n}\n#CookieMgrMenu .ca-live.paused:before {\n  background: #ffb45c;\n  box-shadow: none;\n  animation: none;\n}\n\n#CookieMgrMenu .ca-stats {\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));\n  gap: 1px;\n  background: rgba(255, 255, 255, 0.06);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-stat {\n  min-width: 0; /* lets the grid cell shrink below its content so overflow/ellipsis below can work */\n  padding: 8px 12px;\n  background: rgba(0, 0, 0, 0.32);\n}\n#CookieMgrMenu .ca-stat-label {\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #a89a83;\n}\n#CookieMgrMenu .ca-stat-value {\n  margin-top: 2px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 17px;\n  color: #ffeab0;\n  text-shadow: 0 1px 3px #000;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n#CookieMgrMenu .ca-stat-sub {\n  margin-top: 1px;\n  font-size: 10px;\n  color: #93866f;\n  white-space: nowrap;\n}\n\n#CookieMgrMenu .ca-toolbar {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  justify-content: space-between;\n  gap: 6px 12px;\n  padding: 8px 12px;\n}\n#CookieMgrMenu .ca-toolbar-bottom {\n  padding-top: 6px;\n}\n#CookieMgrMenu .ca-chipgroup {\n  display: inline-flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 4px;\n}\n#CookieMgrMenu .ca-chip-label {\n  margin-right: 2px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-chip {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  padding: 3px 9px;\n  font:\n    bold 11px Tahoma,\n    Arial,\n    sans-serif;\n  color: #b9ab93;\n  text-shadow: 0 1px 1px #000;\n  background: rgba(255, 255, 255, 0.05);\n  border: 1px solid rgba(255, 255, 255, 0.14);\n  border-radius: 11px;\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    background 0.15s,\n    border-color 0.15s;\n}\n#CookieMgrMenu .ca-chip:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-chip:hover {\n  color: #fff;\n  border-color: rgba(255, 225, 150, 0.5);\n}\n#CookieMgrMenu .ca-chip.on {\n  color: #fff3cf;\n  background: rgba(255, 200, 100, 0.18);\n  border-color: rgba(255, 210, 120, 0.6);\n}\n#CookieMgrMenu .ca-sw {\n  display: inline-block;\n  width: 9px;\n  height: 9px;\n  margin-right: 1px;\n  border-radius: 50%;\n  vertical-align: -1px;\n  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);\n}\n\n#CookieMgrMenu .ca-graph-wrap {\n  position: relative;\n  margin: 0 8px;\n}\n#CookieMgrMenu canvas.ca-graph {\n  display: block;\n  width: 100%;\n  height: 300px;\n  cursor: crosshair;\n}\n#CookieMgrMenu canvas.ca-graph.ca-graph-small {\n  height: 160px;\n}\n#CookieMgrMenu .ca-tip {\n  display: none;\n  position: absolute;\n  z-index: 5;\n  max-width: 270px;\n  min-width: 150px;\n  padding: 7px 10px;\n  pointer-events: none;\n  font-size: 11px;\n  line-height: 1.35;\n  color: #e6dcc6;\n  background: rgba(14, 10, 6, 0.95);\n  border: 1px solid;\n  border-color: #b98a4e #6a4626 #55301c #a0764a;\n  border-radius: 5px;\n  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7);\n}\n#CookieMgrMenu .ca-tip-head {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  margin-bottom: 4px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 12px;\n  color: #ffeab0;\n}\n#CookieMgrMenu .ca-tip-head span {\n  margin-left: auto;\n  padding-left: 10px;\n  font:\n    normal 10px Tahoma,\n    Arial,\n    sans-serif;\n  color: #a89a83;\n}\n#CookieMgrMenu .ca-tip-row {\n  display: flex;\n  align-items: center;\n  gap: 5px;\n  padding: 1px 0;\n}\n#CookieMgrMenu .ca-tip-row b {\n  font-weight: normal;\n  color: #b9ab93;\n}\n#CookieMgrMenu .ca-tip-row span {\n  margin-left: auto;\n  padding-left: 12px;\n  text-align: right;\n  color: #f2ead2;\n}\n#CookieMgrMenu .ca-tip-row.strong b,\n#CookieMgrMenu .ca-tip-row.strong span {\n  color: #fff3cf;\n  font-weight: bold;\n}\n#CookieMgrMenu .ca-tip-sep {\n  height: 1px;\n  margin: 5px 0;\n  background: rgba(255, 255, 255, 0.14);\n}\n#CookieMgrMenu .ca-tip-note {\n  margin: 2px 0 4px;\n  font-style: italic;\n  color: #a89a83;\n}\n\n#CookieMgrMenu .ca-legend {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 4px 12px;\n  min-height: 16px;\n  padding: 2px 14px 12px;\n  font-size: 11px;\n  color: #b9ab93;\n}\n#CookieMgrMenu .ca-legend-item em {\n  font-style: normal;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-legend-empty {\n  font-style: italic;\n  color: #7f735f;\n}\n\n#CookieMgrMenu .ca-hidden {\n  display: none;\n}\n\n/* ---------- Stock transaction log + ticker ---------- */\n\n#CookieMgrMenu .cm-tx-wrap {\n  max-height: 220px;\n  overflow-y: auto;\n  margin: 0 4px 6px;\n}\n#CookieMgrMenu .cm-tx-table {\n  width: 100%;\n  border-collapse: collapse;\n  font-size: 11px;\n}\n#CookieMgrMenu .cm-tx-table th {\n  position: sticky;\n  top: 0;\n  text-align: left;\n  padding: 4px 8px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.06em;\n  color: #93866f;\n  background: #1c150d;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.1);\n}\n#CookieMgrMenu .cm-tx-table td {\n  padding: 3px 8px;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.05);\n  white-space: nowrap;\n  color: #d8cbb0;\n}\n#CookieMgrMenu .cm-tx-row:hover td {\n  background: rgba(255, 255, 255, 0.04);\n}\n#CookieMgrMenu .cm-tx-buy {\n  color: #8f8;\n  font-weight: bold;\n}\n#CookieMgrMenu .cm-tx-sell {\n  color: #f88;\n  font-weight: bold;\n}\n#CookieMgrMenu .cm-tx-empty {\n  padding: 14px 8px;\n  text-align: center;\n  font-style: italic;\n  color: #7f735f;\n  font-size: 12px;\n}\n\n#CookieMgrMenu .cm-tickbars {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 6px;\n  margin: 0 8px 8px;\n}\n#CookieMgrMenu .cm-tickbar {\n  flex: 1 1 90px;\n  min-width: 70px;\n  padding: 5px 6px;\n  background: rgba(0, 0, 0, 0.28);\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  border-radius: 4px;\n  font-size: 10px;\n}\n#CookieMgrMenu .cm-tickbar-time {\n  color: #93866f;\n  text-align: center;\n  margin-bottom: 3px;\n  white-space: nowrap;\n}\n#CookieMgrMenu .cm-tickbar-row {\n  height: 5px;\n  background: rgba(255, 255, 255, 0.06);\n  border-radius: 3px;\n  margin-bottom: 2px;\n  overflow: hidden;\n}\n#CookieMgrMenu .cm-tickbar-fill {\n  display: block;\n  height: 100%;\n  border-radius: 3px;\n}\n#CookieMgrMenu .cm-tickbar-buy {\n  background: #8f8;\n}\n#CookieMgrMenu .cm-tickbar-sell {\n  background: #f88;\n}\n#CookieMgrMenu .cm-tickbar-net {\n  text-align: center;\n  font-weight: bold;\n  margin-top: 3px;\n}\n#CookieMgrMenu .cm-ticks-empty {\n  margin: 0 8px 8px;\n  padding: 10px;\n  text-align: center;\n  font-style: italic;\n  color: #7f735f;\n  font-size: 11px;\n}\n\n#CookieMgrMenu .cm-ticker {\n  margin: 8px 8px 10px;\n  padding: 6px 0;\n  overflow: hidden;\n  white-space: nowrap;\n  background: rgba(0, 0, 0, 0.32);\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  border-radius: 4px;\n}\n#CookieMgrMenu .cm-ticker-track {\n  display: inline-block;\n  will-change: transform;\n}\n#CookieMgrMenu .cm-tick-item {\n  display: inline-block;\n  padding: 0 16px;\n  font:\n    bold 11px Tahoma,\n    Arial,\n    sans-serif;\n  color: #cbbfa6;\n}\n#CookieMgrMenu .cm-tick-buy {\n  color: #8f8;\n}\n#CookieMgrMenu .cm-tick-sell {\n  color: #f88;\n}\n#CookieMgrMenu .cm-tick-empty {\n  color: #7f735f;\n  font-style: italic;\n  font-weight: normal;\n}\n#CookieMgrMenu .cm-tick-sep {\n  color: #4a4232;\n  padding: 0 4px;\n}\n\n@keyframes cmTickerScroll {\n  from {\n    transform: translateX(0);\n  }\n  to {\n    transform: translateX(-50%);\n  }\n}\n\n/* ---------- Sub-tabs (Graphs page and others) ---------- */\n\n#CookieMgrMenu .ca-subtabs {\n  display: flex;\n  gap: 4px;\n  margin: 2px 0 10px;\n  padding: 0 4px;\n  border-bottom: 1px solid rgba(255, 220, 150, 0.25);\n}\n#CookieMgrMenu .ca-subtab {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  padding: 6px 14px 5px;\n  margin-bottom: -1px;\n  font:\n    bold 12px Tahoma,\n    Arial,\n    sans-serif;\n  color: #b9ab93;\n  text-shadow: 0 1px 1px #000;\n  background: rgba(0, 0, 0, 0.25);\n  border: 1px solid rgba(255, 220, 150, 0.18);\n  border-bottom-color: transparent;\n  border-radius: 6px 6px 0 0;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-subtab:hover {\n  color: #f0e2c0;\n}\n#CookieMgrMenu .ca-subtab.on {\n  color: #fff3cf;\n  background: linear-gradient(to bottom, rgba(255, 200, 100, 0.2), rgba(0, 0, 0, 0.3));\n  border-color: rgba(255, 220, 150, 0.45);\n  border-bottom-color: #1c150d;\n}\n#CookieMgrMenu .ca-subtab .ca-ico-cookie {\n  width: 14px !important;\n  height: 14px !important;\n}\n\n/* ---------- Tables, notes ---------- */\n\n#CookieMgrMenu .ca-card-note {\n  padding: 0 14px 6px;\n  font-size: 11px;\n  line-height: 1.4;\n  color: #a39477;\n}\n#CookieMgrMenu .ca-table-wrap {\n  padding: 4px 10px 6px;\n  overflow-x: auto;\n}\n#CookieMgrMenu .ca-table {\n  width: 100%;\n  border-collapse: collapse;\n  font-size: 11px;\n}\n#CookieMgrMenu .ca-table th {\n  text-align: right;\n  padding: 4px 8px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.06em;\n  color: #93866f;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.1);\n  white-space: nowrap;\n}\n#CookieMgrMenu .ca-table th:first-child,\n#CookieMgrMenu .ca-table td:first-child {\n  text-align: left;\n}\n#CookieMgrMenu .ca-table td {\n  text-align: right;\n  padding: 3px 8px;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.05);\n  white-space: nowrap;\n  color: #d8cbb0;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrMenu .ca-table tr.strong td {\n  color: #fff3cf;\n  font-weight: bold;\n}\n#CookieMgrMenu .ca-table tbody tr:hover td {\n  background: rgba(255, 255, 255, 0.04);\n}\n#CookieMgrMenu .ca-sw.ca-sw-dash {\n  width: 10px;\n  height: 0;\n  border-radius: 0;\n  border-top: 2px dashed;\n  box-shadow: none;\n  vertical-align: 2px;\n}\n#CookieMgrMenu .ca-chip .ca-ico {\n  vertical-align: -2px;\n}\n\n/* ---------- Events page ---------- */\n\n#CookieMgrMenu .ca-table td.pos {\n  color: #9be89b;\n}\n#CookieMgrMenu .ca-table td.neg {\n  color: #ff9a8a;\n}\n#CookieMgrMenu .ca-table tr.muted td {\n  color: #6f6555;\n}\n#CookieMgrMenu .ca-ev-dot {\n  display: inline-flex;\n  width: 16px;\n  margin-right: 5px;\n  vertical-align: -2px;\n}\n#CookieMgrMenu .ca-ev-chip em {\n  font-style: normal;\n  opacity: 0.6;\n  font-weight: normal;\n}\n#CookieMgrMenu .ca-ev-chip .ca-ico {\n  color: var(--c);\n}\n#CookieMgrMenu .ca-ev-chip:not(.on) {\n  opacity: 0.5;\n}\n#CookieMgrMenu .ca-ev-chip:not(.on) .ca-ico {\n  color: inherit;\n}\n#CookieMgrMenu .ca-search {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  flex: 1 1 160px;\n  padding: 3px 8px;\n  color: #93866f;\n  background: rgba(0, 0, 0, 0.35);\n  border: 1px solid rgba(255, 220, 150, 0.2);\n  border-radius: 12px;\n}\n#CookieMgrMenu .ca-search input {\n  flex: 1;\n  min-width: 0;\n  font: 12px Tahoma, Arial, sans-serif;\n  color: #f0e2c0;\n  background: transparent;\n  border: none;\n  outline: none;\n}\n#CookieMgrMenu .ca-ev-list {\n  max-height: 420px;\n  overflow-y: auto;\n  padding: 0 6px 8px;\n}\n#CookieMgrMenu .ca-ev-row {\n  display: flex;\n  align-items: baseline;\n  gap: 8px;\n  padding: 4px 8px;\n  font-size: 11px;\n  color: #d8cbb0;\n  border-left: 2px solid var(--c);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.04);\n}\n#CookieMgrMenu .ca-ev-row:hover {\n  background: rgba(255, 255, 255, 0.04);\n}\n#CookieMgrMenu .ca-ev-ico {\n  flex: none;\n  color: var(--c);\n  align-self: center;\n  display: inline-flex;\n}\n#CookieMgrMenu .ca-ev-ico .ca-ico-cookie {\n  width: 14px !important;\n  height: 14px !important;\n}\n#CookieMgrMenu .ca-ev-time {\n  flex: none;\n  color: #93866f;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrMenu .ca-ev-text {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n#CookieMgrMenu .ca-ev-text b {\n  color: #f0e2c0;\n}\n#CookieMgrMenu .ca-ev-text span {\n  color: #a39477;\n}\n#CookieMgrMenu .ca-ev-cookies {\n  flex: none;\n  font-weight: bold;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrMenu .ca-ev-cookies.pos {\n  color: #9be89b;\n}\n#CookieMgrMenu .ca-ev-cookies.neg {\n  color: #ff9a8a;\n}\n#CookieMgrMenu .ca-ev-more {\n  display: block;\n  margin: 8px auto 0;\n}\n#CookieMgrMenu .ca-ev-empty {\n  display: block;\n  padding: 12px;\n  text-align: center;\n}\n\n/* ---------- Macros ---------- */\n\n#CookieMgrMenu .ca-icon-ico {\n  color: #ffd98a;\n  border-radius: 50%;\n  background: radial-gradient(circle at 35% 30%, rgba(255, 230, 170, 0.22), rgba(0, 0, 0, 0.3));\n  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.3);\n}\n#CookieMgrMenu .ca-icon-ico.small {\n  flex: 0 0 20px;\n  width: 20px;\n  height: 20px;\n}\n#CookieMgrMenu .ca-status-head .ca-icon {\n  flex: 0 0 20px;\n  width: 20px;\n  height: 20px;\n}\n#CookieMgrMenu .ca-status-head .ca-img,\n#CookieMgrMenu .ca-status-head .ca-sprite {\n  transform: scale(0.42);\n  transform-origin: center;\n}\n#CookieMgrMenu .ca-badge {\n  display: inline-block;\n  margin-left: 6px;\n  padding: 1px 7px;\n  font:\n    bold 9px Tahoma,\n    Arial,\n    sans-serif;\n  letter-spacing: 0.04em;\n  text-transform: uppercase;\n  vertical-align: 2px;\n  color: #c9bba0;\n  border-radius: 8px;\n  background: rgba(255, 255, 255, 0.07);\n  border: 1px solid rgba(255, 255, 255, 0.12);\n}\n#CookieMgrMenu .ca-badge-when {\n  color: #9fd3ff;\n  border-color: rgba(120, 190, 255, 0.35);\n}\n#CookieMgrMenu .ca-badge-once {\n  color: #ffd27a;\n  border-color: rgba(255, 200, 100, 0.35);\n}\n#CookieMgrMenu .ca-steps {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 3px;\n  margin-top: 4px;\n}\n#CookieMgrMenu .ca-step {\n  display: inline-flex;\n  align-items: center;\n  gap: 4px;\n  padding: 1px 7px 1px 5px;\n  font-size: 10px;\n  color: #d8cbb0;\n  border-radius: 9px;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px solid rgba(255, 220, 150, 0.15);\n}\n#CookieMgrMenu .ca-step .ca-ico {\n  color: #ffd98a;\n}\n#CookieMgrMenu .ca-step .ca-ico-cookie {\n  width: 12px !important;\n  height: 12px !important;\n}\n#CookieMgrMenu .ca-step-arrow {\n  color: #93866f;\n  font-weight: bold;\n}\n#CookieMgrMenu .ca-macro-status {\n  margin-top: 3px;\n  font-size: 10px;\n  color: #8fd18f;\n}\n#CookieMgrMenu .ca-macro-status:empty {\n  display: none;\n}\n#CookieMgrMenu .ca-macro:not(.on) .ca-macro-status {\n  color: #93866f;\n}\n#CookieMgrMenu .ca-iconbtn {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  min-width: 24px;\n  height: 24px;\n  padding: 0 4px;\n  font-size: 10px;\n  color: #b9ab93;\n  background: rgba(0, 0, 0, 0.25);\n  border: 1px solid rgba(255, 220, 150, 0.15);\n  border-radius: 6px;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-iconbtn:hover:not(:disabled) {\n  color: #fff3cf;\n  border-color: rgba(255, 220, 150, 0.45);\n}\n#CookieMgrMenu .ca-iconbtn:disabled {\n  opacity: 0.3;\n  cursor: default;\n}\n#CookieMgrMenu .ca-iconbtn.on,\n#CookieMgrMenu .ca-fav.on {\n  color: #ffd54a;\n  border-color: rgba(255, 213, 74, 0.55);\n}\n#CookieMgrMenu .ca-btn-run .ca-ico {\n  vertical-align: -1px;\n}\n\n/* status block (\"Running now\", also a widget) */\n#CookieMgrMenu .ca-status {\n  padding: 4px 12px 10px;\n}\n.ca-status-empty {\n  padding: 6px 2px;\n  font-size: 11px;\n  color: #93866f;\n}\n.ca-status-macro {\n  padding: 5px 0 6px;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.05);\n}\n.ca-status-macro:last-child {\n  border-bottom: none;\n}\n.ca-status-head {\n  display: flex;\n  align-items: center;\n  gap: 7px;\n  font-size: 12px;\n  color: #f0e2c0;\n}\n.ca-status-head > span:not(.ca-icon) {\n  flex: 1;\n  font-size: 10px;\n  color: #93866f;\n}\n.ca-status-step {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  margin: 3px 0 0 27px;\n  font-size: 10.5px;\n  color: #c9bba0;\n}\n.ca-status-step .ca-ico {\n  color: #93866f;\n}\n.ca-status-step.hot .ca-ico {\n  color: #7fe08b;\n  filter: drop-shadow(0 0 3px rgba(127, 224, 139, 0.8));\n}\n.ca-status-step.err {\n  color: #ff9a8a;\n}\n.ca-status-step.idle {\n  opacity: 0.55;\n}\n.ca-status-name {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n.ca-status-val {\n  flex: none;\n  font-variant-numeric: tabular-nums;\n  color: #a39477;\n}\n\n/* editor */\n#CookieMgrMenu .ca-editor {\n  box-shadow:\n    0 0 0 1px rgba(255, 210, 120, 0.45),\n    0 0 18px rgba(255, 200, 100, 0.15);\n}\n#CookieMgrMenu .ca-editor-body {\n  padding: 4px 14px 12px;\n}\n#CookieMgrMenu .ca-editor-row {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 8px 12px;\n  margin: 6px 0;\n}\n#CookieMgrMenu .ca-editor-block {\n  margin: 8px 0;\n  padding: 4px 10px;\n  border-left: 2px solid rgba(120, 190, 255, 0.5);\n  background: rgba(120, 190, 255, 0.05);\n}\n#CookieMgrMenu .ca-field {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  font-size: 11px;\n  color: #b9ab93;\n}\n#CookieMgrMenu .ca-field.ca-grow {\n  flex: 1 1 200px;\n}\n#CookieMgrMenu .ca-field.ca-grow input {\n  flex: 1;\n}\n#CookieMgrMenu .ca-field em {\n  font-style: normal;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-field-label {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  min-width: 64px;\n  font:\n    bold 11px Tahoma,\n    Arial,\n    sans-serif;\n  color: #e8d7b0;\n}\n#CookieMgrMenu .ca-hint {\n  font-size: 10.5px;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-editor input[type='text'],\n#CookieMgrMenu .ca-editor input[type='number'],\n#CookieMgrMenu .ca-editor select {\n  font: 12px Tahoma, Arial, sans-serif;\n  color: #f0e2c0;\n  background: rgba(0, 0, 0, 0.45);\n  border: 1px solid rgba(255, 220, 150, 0.25);\n  border-radius: 4px;\n  padding: 3px 6px;\n}\n#CookieMgrMenu .ca-editor input[type='number'] {\n  width: 80px;\n}\n#CookieMgrMenu .ca-editor select option,\n#CookieMgrMenu .ca-editor select optgroup {\n  background: #1c150d;\n  color: #f0e2c0;\n}\n#CookieMgrMenu .ca-iconpick {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 4px;\n}\n#CookieMgrMenu .ca-editor-steps {\n  display: flex;\n  flex-direction: column;\n  align-items: flex-start;\n  gap: 6px;\n  margin: 4px 0 8px;\n}\n#CookieMgrMenu .ca-editor-step {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 6px 10px;\n  width: 100%;\n  box-sizing: border-box;\n  padding: 6px 8px;\n  border-radius: 6px;\n  background: rgba(0, 0, 0, 0.25);\n  border: 1px solid rgba(255, 220, 150, 0.12);\n}\n#CookieMgrMenu .ca-step-n {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 18px;\n  height: 18px;\n  font:\n    bold 10px Tahoma,\n    Arial,\n    sans-serif;\n  color: #1c150d;\n  background: #ffd98a;\n  border-radius: 50%;\n}\n#CookieMgrMenu .ca-step-tools {\n  margin-left: auto;\n  display: inline-flex;\n  gap: 3px;\n}\n#CookieMgrMenu .ca-editor-error {\n  margin: 6px 0;\n  padding: 5px 9px;\n  font-size: 11px;\n  color: #ffd2cc;\n  background: rgba(229, 72, 77, 0.18);\n  border: 1px solid rgba(229, 72, 77, 0.5);\n  border-radius: 5px;\n}\n#CookieMgrMenu .ca-editor-actions {\n  display: flex;\n  gap: 8px;\n  margin-top: 10px;\n}\n\n/* ---------- Widgets (left panel) ---------- */\n\n#CookieMgrWidgets {\n  position: absolute;\n  inset: 0;\n  /* above the game's big-cookie click target (#bigCookie, 10000) so widgets dragged over the\n     cookie can still be grabbed; below its popups (20000+), golden cookies, notes and tooltips */\n  z-index: 15000;\n  pointer-events: none;\n  font-family: Tahoma, Arial, sans-serif;\n}\n#CookieMgrWidgets.ca-hidden,\n#game.ascending #CookieMgrWidgets,\n#game.ascendIntro #CookieMgrWidgets,\n#game.reincarnating #CookieMgrWidgets {\n  display: none;\n}\n#CookieMgrWidgets .ca-w {\n  position: absolute;\n  pointer-events: auto;\n  box-sizing: border-box;\n  max-width: calc(100% - 4px);\n  color: #e8d7b0;\n  background:\n    linear-gradient(to bottom, rgba(70, 45, 22, 0.92), rgba(28, 18, 9, 0.92)),\n    #1c120a;\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 6px;\n  box-shadow:\n    0 4px 14px rgba(0, 0, 0, 0.7),\n    inset 0 1px 0 rgba(255, 255, 255, 0.15);\n  user-select: none;\n}\n#CookieMgrWidgets .ca-w.dragging {\n  box-shadow:\n    0 8px 24px rgba(0, 0, 0, 0.85),\n    0 0 14px rgba(255, 215, 110, 0.35);\n  opacity: 0.95;\n}\n#CookieMgrWidgets .ca-w-head {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  padding: 3px 4px 3px 8px;\n  cursor: grab;\n  border-bottom: 1px solid rgba(255, 220, 150, 0.18);\n  color: #ffd98a;\n}\n#CookieMgrWidgets.locked .ca-w-head {\n  cursor: default;\n}\n#CookieMgrWidgets .ca-w.collapsed .ca-w-head {\n  border-bottom: none;\n}\n#CookieMgrWidgets .ca-w-title {\n  flex: 1;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-size: 13px;\n  color: #fff;\n  text-shadow: 0 1px 2px #000;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n#CookieMgrWidgets .ca-w-btn {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 18px;\n  height: 18px;\n  padding: 0;\n  font-size: 10px;\n  color: #b9ab93;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px solid rgba(255, 220, 150, 0.15);\n  border-radius: 4px;\n  cursor: pointer;\n  opacity: 0;\n  transition: opacity 0.15s;\n}\n#CookieMgrWidgets .ca-w:hover .ca-w-btn {\n  opacity: 1;\n}\n#CookieMgrWidgets .ca-w-btn:hover {\n  color: #fff3cf;\n}\n#CookieMgrWidgets .ca-w-body {\n  padding: 6px 8px 8px;\n  max-height: 320px;\n  overflow-y: auto;\n}\n#CookieMgrWidgets .ca-w.collapsed .ca-w-body {\n  display: none;\n}\n#CookieMgrWidgets .ca-w-empty {\n  font-size: 11px;\n  color: #93866f;\n  line-height: 1.4;\n}\n/* bare widgets: no frame, dragged from anywhere */\n#CookieMgrWidgets .ca-w.ca-w-bare {\n  background: none;\n  border: none;\n  box-shadow: none;\n  cursor: grab;\n}\n#CookieMgrWidgets.locked .ca-w.ca-w-bare {\n  cursor: default;\n}\n#CookieMgrWidgets .ca-w-bare > .ca-w-body {\n  padding: 0;\n  max-height: none;\n  overflow: visible;\n}\n#CookieMgrWidgets .ca-w-x {\n  position: absolute;\n  top: -6px;\n  right: -6px;\n  z-index: 2;\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 15px;\n  height: 15px;\n  padding: 0;\n  color: #f0e2c0;\n  background: #3a2414;\n  border: 1px solid #875526;\n  border-radius: 50%;\n  cursor: pointer;\n  opacity: 0;\n  transition: opacity 0.15s;\n}\n#CookieMgrWidgets .ca-w-bare:hover .ca-w-x {\n  opacity: 1;\n}\n#CookieMgrWidgets .ca-w-bare.dragging .ca-w-x {\n  opacity: 0;\n}\n\n/* a macro's own button */\n#CookieMgrWidgets .ca-wb {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  width: 38px;\n  height: 38px;\n  padding: 0;\n  border-radius: 50%;\n  cursor: inherit;\n  background: radial-gradient(circle at 35% 30%, rgba(110, 72, 36, 0.95), rgba(28, 18, 9, 0.95));\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  box-shadow:\n    0 3px 8px rgba(0, 0, 0, 0.7),\n    inset 0 1px 0 rgba(255, 255, 255, 0.2);\n  transition:\n    box-shadow 0.2s,\n    transform 0.1s,\n    filter 0.2s;\n}\n#CookieMgrWidgets .ca-wb:not(.on):not(.once) {\n  filter: grayscale(0.6) brightness(0.8);\n}\n#CookieMgrWidgets .ca-wb:hover {\n  filter: none;\n  box-shadow:\n    0 3px 10px rgba(0, 0, 0, 0.8),\n    0 0 10px rgba(255, 215, 110, 0.45),\n    inset 0 1px 0 rgba(255, 255, 255, 0.25);\n}\n#CookieMgrWidgets .ca-wb.on {\n  box-shadow:\n    0 3px 8px rgba(0, 0, 0, 0.7),\n    0 0 0 2px #1a3d12,\n    0 0 0 4px #4dff5e,\n    0 0 16px 2px rgba(77, 255, 94, 0.75);\n}\n#CookieMgrWidgets .ca-wb:active {\n  transform: scale(0.94);\n}\n#CookieMgrWidgets .ca-wb .ca-icon,\n#CookieMgrWidgets .ca-wb .ca-icon-ico {\n  flex: 0 0 26px;\n  width: 26px;\n  height: 26px;\n  background: none;\n  box-shadow: none;\n}\n#CookieMgrWidgets .ca-wb .ca-img {\n  width: 26px;\n  height: 26px;\n}\n#CookieMgrWidgets .ca-wb .ca-sprite {\n  transform: scale(0.54);\n}\n#CookieMgrWidgets .ca-wb .ca-icon-ico .ca-ico {\n  width: 20px;\n  height: 20px;\n}\n#CookieMgrWidgets .ca-wb-label {\n  position: absolute;\n  top: 100%;\n  left: 50%;\n  margin-top: 4px;\n  padding: 2px 7px;\n  font:\n    bold 10px Tahoma,\n    Arial,\n    sans-serif;\n  color: #fff3cf;\n  white-space: nowrap;\n  text-shadow: 0 1px 1px #000;\n  background: rgba(20, 12, 6, 0.92);\n  border: 1px solid rgba(255, 220, 150, 0.35);\n  border-radius: 8px;\n  transform: translateX(-50%) translateY(-3px);\n  opacity: 0;\n  pointer-events: none;\n  transition:\n    opacity 0.15s,\n    transform 0.15s;\n}\n#CookieMgrWidgets .ca-wb-label b,\n#CookieMgrWidgets .ca-wb-label em {\n  display: block;\n  text-align: center;\n}\n#CookieMgrWidgets .ca-wb-label em {\n  font-style: normal;\n  font-weight: normal;\n  font-size: 9.5px;\n  color: #b9ab93;\n}\n#CookieMgrWidgets .ca-wb-label em.on {\n  color: #7dff8a;\n}\n#CookieMgrWidgets .ca-w-macro:hover .ca-wb-label {\n  opacity: 1;\n  transform: translateX(-50%) translateY(0);\n}\n#CookieMgrWidgets .ca-w-macro.dragging .ca-wb-label {\n  opacity: 0;\n}\n\n/* \"Running now\" as a status bar */\n#CookieMgrWidgets .ca-w-status > .ca-w-body {\n  display: flex;\n  align-items: center;\n  gap: 4px;\n  min-height: 30px;\n  padding: 3px 8px 3px 6px;\n  background: linear-gradient(to bottom, rgba(70, 45, 22, 0.9), rgba(28, 18, 9, 0.9));\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 16px;\n  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.7);\n}\n#CookieMgrWidgets .ca-wbar-lead {\n  display: inline-flex;\n  color: #93866f;\n  margin-right: 2px;\n}\n#CookieMgrWidgets .ca-wbar-idle {\n  font-size: 10px;\n  font-style: italic;\n  color: #93866f;\n}\n#CookieMgrWidgets .ca-wbar-item {\n  position: relative;\n  display: inline-flex;\n  border-radius: 50%;\n  cursor: pointer;\n  box-shadow:\n    0 0 0 2px #4dff5e,\n    0 0 7px rgba(77, 255, 94, 0.6);\n}\n#CookieMgrWidgets .ca-wbar-item .ca-icon,\n#CookieMgrWidgets .ca-wbar-item .ca-icon-ico {\n  flex: 0 0 22px;\n  width: 22px;\n  height: 22px;\n}\n#CookieMgrWidgets .ca-wbar-item .ca-img {\n  width: 22px;\n  height: 22px;\n}\n#CookieMgrWidgets .ca-wbar-item .ca-sprite {\n  transform: scale(0.45);\n}\n#CookieMgrWidgets .ca-wbar-item.hot {\n  animation: caWbarPulse 1s ease-in-out infinite;\n}\n#CookieMgrWidgets .ca-wbar-item.err {\n  box-shadow: 0 0 0 2px rgba(229, 72, 77, 0.85);\n}\n@keyframes caWbarPulse {\n  0%,\n  100% {\n    box-shadow:\n      0 0 0 2px #4dff5e,\n      0 0 7px rgba(77, 255, 94, 0.6);\n  }\n  50% {\n    box-shadow:\n      0 0 0 3px #8dff98,\n      0 0 16px 3px rgba(77, 255, 94, 0.9);\n  }\n}\n#CookieMgrWidgets .ca-icon {\n  flex: 0 0 22px;\n  width: 22px;\n  height: 22px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  overflow: hidden;\n}\n#CookieMgrWidgets .ca-img {\n  width: 22px;\n  height: 22px;\n  background-size: contain;\n  background-repeat: no-repeat;\n  background-position: center;\n}\n#CookieMgrWidgets .ca-sprite {\n  flex: none;\n  width: 48px;\n  height: 48px;\n  background-image: url(img/icons.png);\n  transform: scale(0.45);\n}\n#CookieMgrWidgets .ca-icon-ico {\n  color: #ffd98a;\n  border-radius: 50%;\n  background: radial-gradient(circle at 35% 30%, rgba(255, 230, 170, 0.22), rgba(0, 0, 0, 0.3));\n}\n/* status block inside a widget */\n#CookieMgrWidgets .ca-status-head .ca-icon,\n#CookieMgrWidgets .ca-status-head .ca-icon-ico {\n  flex: 0 0 18px;\n  width: 18px;\n  height: 18px;\n}\n#CookieMgrWidgets .ca-status-head .ca-sprite {\n  transform: scale(0.38);\n}\n#CookieMgrWidgets .ca-status-step {\n  margin-left: 24px;\n}\n#CookieMgrWidgets .ca-iconbtn {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 18px;\n  height: 18px;\n  padding: 0;\n  color: #b9ab93;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px solid rgba(255, 220, 150, 0.15);\n  border-radius: 4px;\n  cursor: pointer;\n}\n/* quick stats */\n#CookieMgrWidgets .ca-w-stat {\n  display: flex;\n  justify-content: space-between;\n  gap: 10px;\n  padding: 2px 0;\n  font-size: 11px;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.05);\n}\n#CookieMgrWidgets .ca-w-stat:last-child {\n  border-bottom: none;\n}\n#CookieMgrWidgets .ca-w-stat span {\n  color: #a39477;\n}\n#CookieMgrWidgets .ca-w-stat b {\n  color: #fff3cf;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrWidgets .ca-w-stat em {\n  font-style: normal;\n  font-weight: normal;\n  color: #93866f;\n}\n/* latest events */\n#CookieMgrWidgets .ca-ev-row {\n  display: flex;\n  align-items: baseline;\n  gap: 6px;\n  padding: 2px 4px;\n  font-size: 10.5px;\n  color: #d8cbb0;\n  border-left: 2px solid var(--c);\n}\n#CookieMgrWidgets .ca-ev-ico {\n  flex: none;\n  align-self: center;\n  display: inline-flex;\n  color: var(--c);\n}\n#CookieMgrWidgets .ca-ev-ico .ca-ico-cookie {\n  width: 12px !important;\n  height: 12px !important;\n}\n#CookieMgrWidgets .ca-ev-time {\n  flex: none;\n  color: #93866f;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrWidgets .ca-ev-text {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n#CookieMgrWidgets .ca-ev-text span {\n  display: none;\n}\n#CookieMgrWidgets .ca-ev-cookies {\n  flex: none;\n  font-weight: bold;\n}\n#CookieMgrWidgets .ca-ev-cookies.pos {\n  color: #9be89b;\n}\n#CookieMgrWidgets .ca-ev-cookies.neg {\n  color: #ff9a8a;\n}\n#CookieMgrMenu .ca-status-head .ca-icon {\n  filter: none;\n}\n#CookieMgrMenu .ca-card-meta .ca-iconbtn {\n  margin-left: 4px;\n}\n\n/* ---------- Wizard tower ---------- */\n\n#CookieMgrMenu .ca-magic {\n  position: relative;\n  height: 18px;\n  margin: 6px 14px 4px;\n  border-radius: 9px;\n  overflow: hidden;\n  background: rgba(0, 0, 0, 0.5);\n  box-shadow:\n    inset 0 1px 3px rgba(0, 0, 0, 0.8),\n    0 0 0 1px rgba(179, 136, 255, 0.35);\n}\n#CookieMgrMenu .ca-magic-fill {\n  position: absolute;\n  inset: 0 auto 0 0;\n  width: 0;\n  background: linear-gradient(to bottom, #c9a6ff, #7c4dff);\n  box-shadow: 0 0 10px rgba(179, 136, 255, 0.7);\n  transition: width 0.4s;\n}\n#CookieMgrMenu .ca-magic-text {\n  position: relative;\n  text-align: center;\n  font:\n    bold 11px/18px Tahoma,\n    Arial,\n    sans-serif;\n  color: #fff;\n  text-shadow:\n    0 0 3px #000,\n    0 1px 1px #000;\n}\n#CookieMgrMenu .ca-spells {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));\n  gap: 8px;\n  padding: 6px 12px 12px;\n}\n#CookieMgrMenu .ca-spell {\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  gap: 3px;\n  padding: 8px 6px;\n  text-align: center;\n  border-radius: 8px;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px solid rgba(179, 136, 255, 0.2);\n  opacity: 0.75;\n  transition:\n    opacity 0.2s,\n    box-shadow 0.2s;\n}\n#CookieMgrMenu .ca-spell.ready {\n  opacity: 1;\n  border-color: rgba(179, 136, 255, 0.55);\n  box-shadow: 0 0 10px rgba(179, 136, 255, 0.25);\n}\n#CookieMgrMenu .ca-spell-ico {\n  display: block;\n  width: 48px;\n  height: 48px;\n  margin: -6px 0 -8px;\n  transform: scale(0.75);\n}\n#CookieMgrMenu .ca-spell:not(.ready) .ca-spell-ico {\n  filter: grayscale(0.7) brightness(0.75);\n}\n#CookieMgrMenu .ca-spell-name {\n  font-family: 'Merriweather', Georgia, serif;\n  font-size: 12px;\n  color: #f0e2c0;\n}\n#CookieMgrMenu .ca-spell-meta {\n  min-height: 26px;\n  font-size: 10px;\n  color: #a39477;\n}\n#CookieMgrMenu .ca-spell-actions {\n  display: flex;\n  gap: 5px;\n  align-items: center;\n}\n#CookieMgrMenu .ca-cond + .ca-cond .ca-field-label {\n  color: #9fd3ff;\n}\n\n/* toolbar inside the Grimoire */\n#cm-grimoire-toolbar {\n  position: relative;\n  z-index: 10;\n  display: flex;\n  flex-wrap: wrap;\n  justify-content: center;\n  gap: 6px;\n  margin: 6px auto 2px;\n}\n#cm-grimoire-toolbar .cm-gt-btn {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  padding: 3px 9px;\n  font:\n    11px Merriweather,\n    Georgia,\n    serif;\n  color: #ccc;\n  cursor: pointer;\n  background: rgba(0, 0, 0, 0.45);\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 4px;\n  text-shadow: 0 1px 1px #000;\n}\n#cm-grimoire-toolbar .cm-gt-btn:hover {\n  color: #fff;\n  box-shadow: 0 0 6px rgba(255, 220, 150, 0.4);\n}\n#cm-grimoire-toolbar .cm-gt-btn.on {\n  color: #e9d8ff;\n  background: rgba(124, 77, 255, 0.35);\n  box-shadow: 0 0 8px rgba(179, 136, 255, 0.55);\n}\n\n/* ---------- v2.4: hover stacking, status popups, groups, stages, prestige target ---------- */\n\n/* whatever you hover comes to the front, so its label/popup is never under a neighbour */\n#CookieMgrWidgets .ca-w:hover,\n#CookieMgrWidgets .ca-w.dragging {\n  z-index: 20;\n}\n#CookieMgrWidgets .ca-w-macro.pop-below .ca-wb-label {\n  top: auto;\n  bottom: 100%;\n  margin: 0 0 4px;\n}\n\n/* styled popup over a status-bar icon */\n#CookieMgrWidgets .ca-wpop {\n  position: absolute;\n  left: 50%;\n  bottom: calc(100% + 10px);\n  z-index: 30;\n  display: none;\n  width: 250px;\n  padding: 7px 9px 6px;\n  text-align: left;\n  font-size: 10.5px;\n  line-height: 1.35;\n  color: #e8d7b0;\n  background: linear-gradient(to bottom, rgba(64, 40, 18, 0.98), rgba(24, 15, 7, 0.98));\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 7px;\n  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.85);\n  transform: translateX(-50%);\n  cursor: default;\n  pointer-events: none;\n}\n#CookieMgrWidgets .ca-wbar-item:hover .ca-wpop {\n  display: block;\n}\n#CookieMgrWidgets .ca-w-status:not(.pop-left) .ca-wpop {\n  left: -6px;\n  transform: none;\n}\n#CookieMgrWidgets .ca-w-status.pop-left .ca-wpop {\n  left: auto;\n  right: -6px;\n  transform: none;\n}\n#CookieMgrWidgets .ca-w-status.pop-below .ca-wpop {\n  bottom: auto;\n  top: calc(100% + 10px);\n}\n#CookieMgrWidgets .ca-wpop-head {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  font-size: 12px;\n  color: #fff3cf;\n}\n#CookieMgrWidgets .ca-wpop-head .ca-icon,\n#CookieMgrWidgets .ca-wpop-head .ca-icon-ico {\n  flex: 0 0 18px;\n  width: 18px;\n  height: 18px;\n}\n#CookieMgrWidgets .ca-wpop-head .ca-sprite {\n  transform: scale(0.38);\n}\n#CookieMgrWidgets .ca-wpop-sub {\n  display: block;\n  margin: 1px 0 5px 24px;\n  color: #93866f;\n}\n#CookieMgrWidgets .ca-wpop-row {\n  display: flex;\n  align-items: center;\n  gap: 5px;\n  padding: 2px 0;\n  border-top: 1px solid rgba(255, 255, 255, 0.06);\n}\n#CookieMgrWidgets .ca-wpop-row .ca-ico {\n  color: #93866f;\n}\n#CookieMgrWidgets .ca-wpop-row.hot .ca-ico {\n  color: #4dff5e;\n}\n#CookieMgrWidgets .ca-wpop-row.err {\n  color: #ff9a8a;\n}\n#CookieMgrWidgets .ca-wpop-name {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n#CookieMgrWidgets .ca-wpop-val {\n  flex: none;\n  color: #c9bba0;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrWidgets .ca-wpop-foot {\n  display: block;\n  margin-top: 4px;\n  font-size: 9.5px;\n  font-style: italic;\n  color: #7d7262;\n}\n\n/* group members (macro rows and the editor) */\n#CookieMgrMenu .ca-step-member .ca-icon,\n#CookieMgrMenu .ca-member .ca-icon {\n  flex: 0 0 16px;\n  width: 16px;\n  height: 16px;\n  filter: none;\n}\n#CookieMgrMenu .ca-step-member .ca-img,\n#CookieMgrMenu .ca-member .ca-img {\n  width: 16px;\n  height: 16px;\n}\n#CookieMgrMenu .ca-step-member .ca-sprite,\n#CookieMgrMenu .ca-member .ca-sprite {\n  transform: scale(0.33);\n}\n#CookieMgrMenu .ca-step-member .ca-icon-ico .ca-ico,\n#CookieMgrMenu .ca-member .ca-icon-ico .ca-ico {\n  width: 11px;\n  height: 11px;\n}\n#CookieMgrMenu .ca-members {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));\n  gap: 5px;\n  margin: 4px 0 8px;\n}\n#CookieMgrMenu .ca-member {\n  display: flex;\n  align-items: center;\n  gap: 7px;\n  padding: 5px 8px;\n  font-size: 11px;\n  color: #c9bba0;\n  border-radius: 6px;\n  background: rgba(0, 0, 0, 0.25);\n  border: 1px solid rgba(255, 220, 150, 0.12);\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-member.on {\n  color: #fff3cf;\n  border-color: rgba(77, 255, 94, 0.55);\n  background: rgba(77, 255, 94, 0.08);\n}\n\n/* CpS stages table */\n#CookieMgrMenu .ca-stage-n {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 16px;\n  height: 16px;\n  margin-right: 7px;\n  font:\n    bold 10px Tahoma,\n    Arial,\n    sans-serif;\n  color: #10141a;\n  border-radius: 50%;\n  vertical-align: 1px;\n}\n#CookieMgrMenu .ca-stage-x {\n  color: #ffd98a;\n  background: rgba(255, 217, 138, 0.15);\n  border: 1px solid rgba(255, 217, 138, 0.4);\n}\n#CookieMgrMenu .ca-row-sub {\n  display: block;\n  margin: 1px 0 0 23px;\n  font-size: 9.5px;\n  font-weight: normal;\n  color: #8a7e69;\n  white-space: normal;\n}\n#CookieMgrMenu .ca-stages tr.mult td {\n  color: #ffd98a;\n}\n#CookieMgrMenu .ca-stages tbody tr:nth-child(4) td {\n  border-top: 1px solid rgba(255, 217, 138, 0.25);\n}\n\n/* prestige target */\n#CookieMgrMenu .ca-target {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 8px;\n  padding: 4px 14px 8px;\n}\n#CookieMgrMenu .ca-target input[type='number'],\n#CookieMgrMenu .ca-target select {\n  font: 13px Tahoma, Arial, sans-serif;\n  color: #f0e2c0;\n  background: rgba(0, 0, 0, 0.45);\n  border: 1px solid rgba(255, 220, 150, 0.3);\n  border-radius: 4px;\n  padding: 3px 6px;\n}\n#CookieMgrMenu .ca-target input[type='number'] {\n  width: 70px;\n}\n#CookieMgrMenu .ca-target select option {\n  background: #1c150d;\n}\n#CookieMgrMenu .ca-progress {\n  position: relative;\n  height: 14px;\n  margin: 2px 14px 10px;\n  border-radius: 7px;\n  overflow: hidden;\n  background: rgba(0, 0, 0, 0.5);\n  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.8);\n}\n#CookieMgrMenu .ca-progress-fill {\n  position: absolute;\n  inset: 0 auto 0 0;\n  background: linear-gradient(to bottom, #e6dcff, #9c7cff);\n  box-shadow: 0 0 8px rgba(201, 188, 255, 0.7);\n  transition: width 0.4s;\n}\n#CookieMgrMenu .ca-progress-text {\n  position: relative;\n  text-align: center;\n  font:\n    bold 10px/14px Tahoma,\n    Arial,\n    sans-serif;\n  color: #fff;\n  text-shadow: 0 0 3px #000;\n}\n";
 
 // ---- src/core/util.js ------------------------------------------------
 // Small helpers shared by every module.
@@ -1749,6 +1749,9 @@ CA.GameActions = (() => {
 //   when     while it's on, checks a condition (core/conditions.js) every `every` ms and runs its
 //            steps when it becomes true ("rise") or on every check while it holds ("while")
 //   once     no on/off — a button or hotkey runs its steps one time       (Sell all stocks)
+//   group    a switch for several other macros: on turns them all on, off turns them all off.
+//            It has no steps or timer of its own; it counts as on while all its members are on,
+//            so it stays right however its members get switched.
 //
 // Built-in macros (the original autoclickers, the stock autobuyer, Sell all…) can't be removed or
 // edited, only duplicated. Your own macros are saved in the game save with the rest of the
@@ -1868,7 +1871,7 @@ CA.Macros = (() => {
   // ---- definitions --------------------------------------------------------------------
 
   function clean(def) {
-    const mode = ['repeat', 'when', 'once'].includes(def.mode) ? def.mode : 'repeat';
+    const mode = ['repeat', 'when', 'once', 'group'].includes(def.mode) ? def.mode : 'repeat';
     const m = {
       id: String(def.id),
       name: String(def.name || 'Macro').slice(0, 60),
@@ -1882,6 +1885,10 @@ CA.Macros = (() => {
       inAll: !!def.inAll,
       builtin: !!def.builtin,
     };
+    if (mode === 'group') {
+      m.steps = [];
+      m.members = (Array.isArray(def.members) ? def.members : []).map(String).filter((id) => id !== m.id);
+    }
     if (mode === 'when') {
       // { all: [{ cond, params, not }, …], edge } — v2.0 saved a single condition at the top level
       const w = def.when || {};
@@ -2033,11 +2040,22 @@ CA.Macros = (() => {
     CA.Events.emit('macros', id);
   }
 
-  /** Turns a repeat/when macro on or off. */
+  /** A group's members that exist and can be switched (no once macros, no other groups). */
+  const membersOf = (m) => (m && m.mode === 'group' ? m.members.map((id) => byId[id]).filter((x) => x && x.mode !== 'once' && x.mode !== 'group') : []);
+
+  /** Turns a repeat/when macro — or every member of a group — on or off. */
   function set(id, on, { silent = false } = {}) {
     const m = byId[id];
     if (!m || m.mode === 'once') return;
     on = !!on;
+    if (m.mode === 'group') {
+      const members = membersOf(m);
+      if (!members.length || (isOn(id) === on && members.every((x) => isOn(x.id) === on))) return;
+      members.forEach((x) => set(x.id, on, { silent: true }));
+      if (!silent) announce(m, on);
+      changed(id);
+      return;
+    }
     if (isOn(id) === on) return;
     if (on) start(id);
     else stop(id);
@@ -2077,7 +2095,14 @@ CA.Macros = (() => {
 
   // ---- queries --------------------------------------------------------------------------------
 
-  const isOn = (id) => !!running[id];
+  function isOn(id) {
+    const m = byId[id];
+    if (m && m.mode === 'group') {
+      const members = membersOf(m);
+      return members.length > 0 && members.every((x) => !!running[x.id]);
+    }
+    return !!running[id];
+  }
   const list = () => macros.slice();
   const get = (id) => byId[id] || null;
   const activeCount = () => Object.keys(running).length;
@@ -2095,6 +2120,7 @@ CA.Macros = (() => {
   function triggerText(m) {
     const secs = (ms) => (ms < 1000 ? `${ms / 1000}s` : `${Math.round(ms / 100) / 10}s`);
     if (m.mode === 'once') return 'on demand';
+    if (m.mode === 'group') return `group of ${membersOf(m).length}`;
     if (m.mode === 'repeat') return `every ${secs(m.every)}`;
     return `${m.when.edge === 'while' ? 'while' : 'when'} ${CA.Conditions.describe(m.when)}`;
   }
@@ -2118,6 +2144,9 @@ CA.Macros = (() => {
     prefs = data.prefs && typeof data.prefs === 'object' ? { ...data.prefs } : {};
     changed(null);
   }
+
+  /** Groups that `id` is a member of (so the UI can refresh them too). */
+  const groupsWith = (id) => macros.filter((m) => m.mode === 'group' && m.members.includes(id));
 
   /** Turns on the macros that were running when the game was saved (rememberStates). */
   function restore(ids) {
@@ -2183,6 +2212,8 @@ CA.Macros = (() => {
     activeCount,
     runningIds,
     status: statusOf,
+    membersOf,
+    groupsWith,
     isFav,
     setFav,
     triggerText,
@@ -2738,8 +2769,14 @@ CA.GameStates = (() => {
    *   other       whatever's left (wrinkler pops, sugar lumps, …)
    * Computed once per frame and cached on ctx.
    */
+  // The first frame after a gap (page load, closed tab…) has nothing to compare against: its
+  // flows are unknown, not zero — recording 0 would drag every average down.
+  const UNKNOWN_EARN = { total: undefined, click: undefined, golden: undefined, production: undefined, other: undefined };
+  const UNKNOWN_BANK = { withered: undefined, spent: undefined, otherIn: undefined };
+
   function attribute(ctx) {
     if (ctx._earn) return ctx._earn;
+    if (!ctx.prev) return (ctx._earn = UNKNOWN_EARN);
     const total = Math.max(0, delta(ctx, 'baked'));
     let left = total;
     const take = (want) => {
@@ -2762,8 +2799,9 @@ CA.GameStates = (() => {
 
   function bankFlows(ctx) {
     if (ctx._bank) return ctx._bank;
+    if (!ctx.prev) return (ctx._bank = UNKNOWN_BANK);
     const earned = attribute(ctx).total;
-    const withered = ctx.prev ? (Game.cookiesPs || 0) * (Game.cpsSucked || 0) * ctx.dt : 0;
+    const withered = (Game.cookiesPs || 0) * (Game.cpsSucked || 0) * ctx.dt;
     const change = delta(ctx, 'cookies');
     const expected = earned - withered;
     ctx._bank = {
@@ -2784,7 +2822,25 @@ CA.GameStates = (() => {
     // CpS — field names match what the CpS graph has always read (s.cps, s.base, s.click)
     S({ id: 'cps', name: 'CpS', unit: '/s', group: 'cps', kind: 'gauge', get: () => (Game.cookiesPs || 0) * shown() });
     S({ id: 'base', name: 'Unbuffed CpS', unit: '/s', group: 'cps', kind: 'gauge', get: () => (Game.unbuffedCps || Game.cookiesPs || 0) * shown() });
-    S({ id: 'click', name: 'Clicking', unit: '/s', group: 'cps', kind: 'gauge', get: (ctx) => (ctx.dt ? Math.max(0, delta(ctx, 'handmade')) / ctx.dt : 0) });
+    S({ id: 'click', name: 'Clicking', unit: '/s', group: 'cps', kind: 'gauge', get: (ctx) => (ctx.prev && ctx.dt ? Math.max(0, delta(ctx, 'handmade')) / ctx.dt : undefined) });
+    // Clicking with click effects (Click frenzy, Dragonflight, Cursed finger…) divided back out —
+    // each active buff's multClick, the same factors the game multiplies a click by.
+    S({
+      id: 'clickRaw',
+      name: 'Clicking without click effects',
+      unit: '/s',
+      group: 'cps',
+      kind: 'gauge',
+      get: (ctx) => {
+        if (!ctx.frame || !Number.isFinite(ctx.frame.click)) return undefined;
+        const click = ctx.frame.click;
+        let mult = 1;
+        Object.values(Game.buffs || {}).forEach((b) => {
+          if (b && b.time > 0 && typeof b.multClick === 'number' && b.multClick > 0) mult *= b.multClick;
+        });
+        return click / mult;
+      },
+    });
 
     // earnings — where this frame's baked cookies came from
     S({ id: 'earned', name: 'Baked', group: 'earnings', kind: 'flow', get: (ctx) => attribute(ctx).total });
@@ -4113,10 +4169,12 @@ CA.UI.Plot = (() => {
       if (prev && cur.x0 < prev.x1) cur.x0 = prev.x1;
       cur.v = {};
       cur.first = {};
+      cur.cover = {}; // seconds each field was actually measured for (unknown frames don't count)
       fields.forEach((k, i) => {
         const a = cur.acc[i];
         if (a.last === undefined) return;
         cur.first[k] = a.first;
+        cur.cover[k] = a.c;
         if (aggs[i] === 'sum') cur.v[k] = a.s;
         else if (aggs[i] === 'last') cur.v[k] = a.last;
         else cur.v[k] = a.c > 0 ? a.w / a.c : a.last;
@@ -4236,6 +4294,26 @@ CA.UI.Plot = (() => {
         );
         lines[s.key] = pts.map((p, i) => ({ ...p, v: out[i] }));
       });
+  }
+
+  /** Round tick values inside [lo, hi] for a log axis: whole powers of ten when the range is
+   *  wide, 1-2-5 or finer steps as it narrows, evenly spaced round numbers when very narrow. */
+  function logTicks(lo, hi) {
+    const SETS = [[1], [1, 3], [1, 2, 5], [1, 1.5, 2, 3, 5, 7], [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 7, 8, 9]];
+    for (const set of SETS) {
+      let t = [];
+      for (let d = Math.floor(Math.log10(lo)); d <= Math.ceil(Math.log10(hi)); d++) {
+        set.forEach((m) => {
+          const v = m * Math.pow(10, d);
+          if (v >= lo && v <= hi) t.push(v);
+        });
+      }
+      if (t.length >= 3) {
+        while (t.length > 7) t = t.filter((_, i) => i % 2 === 0);
+        return t;
+      }
+    }
+    return CA.UI.Chart.niceLinearScale(lo, hi, 4).ticks.filter((v) => v >= lo && v <= hi);
   }
 
   /** Spots in [x0, x1] where active-time mode cut out a stretch of inactive time. */
@@ -4424,12 +4502,12 @@ CA.UI.Plot = (() => {
       // y range
       let maxV = -Infinity;
       let minV = Infinity;
-      let minPos = Infinity;
-      const see = (val) => {
+      let minPos = Infinity; // smallest positive bar *total* / line value — what a log axis fits
+      const see = (val, fit = true) => {
         if (!Number.isFinite(val)) return;
         if (val > maxV) maxV = val;
         if (val < minV) minV = val;
-        if (val > 0 && val < minPos) minPos = val;
+        if (fit && val > 0 && val < minPos) minPos = val;
       };
       bars.forEach((b) => {
         let pos = 0;
@@ -4439,7 +4517,7 @@ CA.UI.Plot = (() => {
           if (!Number.isFinite(val)) return;
           if (val >= 0) pos += val;
           else neg += val;
-          if (val > 0) see(val);
+          if (val > 0) see(val, false); // a thin slice on top mustn't drag a log axis down
         });
         see(pos);
         see(neg);
@@ -4452,13 +4530,18 @@ CA.UI.Plot = (() => {
       let yMax;
       let ticks = [];
       if (log) {
+        // Fit the axis to the data instead of whole powers of ten, so the variation fills the
+        // chart: just under the smallest bar total / line value, just over the largest.
         if (!isFinite(minPos)) minPos = 1;
-        if (!(maxV > 0)) maxV = 10;
-        yMin = Math.pow(10, Math.floor(Math.log10(minPos)));
-        yMax = Math.pow(10, Math.ceil(Math.log10(maxV * 1.02)));
-        if (yMax / yMin < 10) yMax = yMin * 10;
-        for (let t = yMin; t <= yMax * 1.0001; t *= 10) ticks.push(t);
-        while (ticks.length > 7) ticks = ticks.filter((_, i) => i % 2 === 0);
+        if (!(maxV > 0)) maxV = minPos * 10;
+        yMin = minPos / 1.25;
+        yMax = maxV * 1.08;
+        if (yMax / yMin < 1.5) {
+          const mid = Math.sqrt(yMin * yMax);
+          yMin = mid / 1.25;
+          yMax = mid * 1.25;
+        }
+        ticks = logTicks(yMin, yMax);
       } else if (!isFinite(maxV)) {
         yMin = 0;
         yMax = 10;
@@ -5039,6 +5122,7 @@ CA.UI.Plot = (() => {
     get: (id) => all.get(id),
     bucketize,
     movingAverage,
+    logTicks,
     linePoints,
     smooth,
     axis,
@@ -5090,7 +5174,7 @@ CA.UI.Graphs = (() => {
   const TABS = [
     { id: 'cookies', label: 'Cookies', icon: 'cookie', plots: ['cps', 'actual', 'baked'] },
     { id: 'bank', label: 'Bank', icon: 'dollar', plots: ['bank', 'bankflow', 'bankcum'] },
-    { id: 'prestige', label: 'Prestige', icon: 'ascend', plots: ['prestige', 'prestigeRate'] },
+    { id: 'prestige', label: 'Prestige', icon: 'ascend', plots: ['prestige', 'prestigeRate'], top: () => targetCardHtml() },
   ];
 
   // ---- shared overlays --------------------------------------------------------------------
@@ -5156,8 +5240,9 @@ CA.UI.Graphs = (() => {
       }));
   }
 
-  /** Bars with each source as a per-second rate. */
-  const rate = (b, k) => (b.secs > 0 && Number.isFinite(b.v[k]) ? b.v[k] / b.secs : 0);
+  /** A flow as a per-second rate over the seconds it was actually measured. */
+  const coverOf = (b, k) => (b.cover && b.cover[k] > 0 ? b.cover[k] : b.secs);
+  const rate = (b, k) => (Number.isFinite(b.v[k]) && coverOf(b, k) > 0 ? b.v[k] / coverOf(b, k) : 0);
 
   /** Running totals of flows across bars, from `startX` (bars before it are dropped). */
   function cumulative(bars, keys, startX, sign = {}) {
@@ -5193,18 +5278,32 @@ CA.UI.Graphs = (() => {
   function recent(seconds) {
     const frames = CA.Recorder.frames();
     const from = CA.Recorder.activeNow() - seconds * SEC;
-    const acc = { secs: 0, cps: 0, click: 0, base: 0, earned: 0 };
+    // each value averaged over the seconds it was actually measured (the first frame after a
+    // gap has no clicking / baked figures — it mustn't count as a second of zero)
+    const sum = { cps: 0, click: 0, clickRaw: 0, base: 0 };
+    const secs = { cps: 0, click: 0, clickRaw: 0, base: 0 };
+    let earned = 0;
+    let earnedSecs = 0;
+    let total = 0;
     for (let i = frames.length - 1; i >= 0 && frames[i].a > from; i--) {
       const f = frames[i];
       const dt = f.dt || 0;
-      acc.secs += dt;
-      acc.cps += (f.cps || 0) * dt;
-      acc.click += (f.click || 0) * dt;
-      acc.base += (f.base || 0) * dt;
-      acc.earned += f.earned || 0;
+      total += dt;
+      Object.keys(sum).forEach((k) => {
+        // frames from before v2.4 have no clickRaw: use clicking as it was
+        const v = k === 'clickRaw' && !Number.isFinite(f.clickRaw) ? f.click : f[k];
+        if (!Number.isFinite(v)) return;
+        sum[k] += v * dt;
+        secs[k] += dt;
+      });
+      if (Number.isFinite(f.earned)) {
+        earned += f.earned;
+        earnedSecs += dt;
+      }
     }
-    if (!acc.secs) return null;
-    return { cps: acc.cps / acc.secs, click: acc.click / acc.secs, base: acc.base / acc.secs, actual: acc.earned / acc.secs, secs: acc.secs };
+    if (!total) return null;
+    const per = (k) => (secs[k] ? sum[k] / secs[k] : 0);
+    return { cps: per('cps'), click: per('click'), clickRaw: per('clickRaw'), base: per('base'), actual: earnedSecs ? earned / earnedSecs : 0, secs: total };
   }
 
   // ---- Cookies tab --------------------------------------------------------------------------
@@ -5284,6 +5383,14 @@ CA.UI.Graphs = (() => {
   }
 
   /** The averages table under the CpS plot: rows of measures, columns of time spans. */
+  /**
+   * The CpS table, as three stages that build on each other:
+   *   1 raw production         unbuffed CpS — no golden-cookie effects
+   *   2 + raw clicking         plus clicking with click effects (Click frenzy, …) divided back out
+   *   3 actual                 everything that really got baked: buffed production, buffed
+   *                            clicking, golden cookie payouts, wrinklers…
+   * and the multipliers between them: what clicking adds, what effects & golden cookies add, total.
+   */
   function averagesTable() {
     const { beautify } = F();
     const COLS = [
@@ -5294,25 +5401,29 @@ CA.UI.Graphs = (() => {
       { s: 3600, label: '1 h' },
       { s: 10800, label: '3 h' },
     ];
-    const vals = COLS.map((c) => {
-      if (c.s) return recent(c.s);
-      const frames = CA.Recorder.frames();
-      const f = frames[frames.length - 1];
-      return f ? { cps: f.cps || 0, click: f.click || 0, base: f.base || 0, actual: f.dt ? (f.earned || 0) / f.dt : 0 } : null;
-    });
+    // "Now" = the last 3 seconds: one frame alone is too jumpy (and may be a just-resumed one)
+    const vals = COLS.map((c) => recent(c.s || 3));
+    const stage1 = (r) => r.base;
+    const stage2 = (r) => r.base + r.clickRaw;
+    const stage3 = (r) => r.actual;
+    const times = (a, b) => (b > 0 && Number.isFinite(a) ? `×${(a / b).toFixed(a / b >= 10 ? 1 : 2)}` : '—');
     const ROWS = [
-      { label: 'Production', title: 'Raw CpS — what the game shows, without clicking', fn: (r) => beautify(r.cps) + '/s', color: C_CPS },
-      { label: 'Clicking', title: 'Cookies per second from clicking the big cookie', fn: (r) => beautify(r.click) + '/s', color: C_CLICK },
-      { label: 'Production + clicking', title: 'Raw CpS plus clicking', fn: (r) => beautify(r.cps + r.click) + '/s', strong: true },
-      { label: 'With ÷ without clicking', title: 'How much clicking multiplies your income', fn: (r) => (r.cps > 0 ? `×${((r.cps + r.click) / r.cps).toFixed(r.click / r.cps > 9 ? 1 : 2)}` : '—') },
-      { label: 'Unbuffed', title: 'Production with every temporary effect removed', fn: (r) => beautify(r.base) + '/s', color: C_BASE },
-      { label: 'Actually baked', title: 'What really went into cookies baked, per second — includes golden cookies and everything else', fn: (r) => beautify(r.actual) + '/s', color: SOURCES[2].color },
+      { n: 1, label: 'Raw production', desc: 'CpS with every temporary effect removed', fn: (r) => beautify(stage1(r)) + '/s', color: C_BASE },
+      { n: 2, label: '+ raw clicking', desc: 'plus clicking, with click effects (Click frenzy…) taken out', fn: (r) => beautify(stage2(r)) + '/s', color: C_CLICK },
+      { n: 3, label: 'Actual', desc: 'everything really baked: effects, golden cookies, wrinklers…', fn: (r) => beautify(stage3(r)) + '/s', color: SOURCES[2].color, strong: true },
+      { label: 'Clicking adds', desc: '2 ÷ 1', fn: (r) => times(stage2(r), stage1(r)), mult: true },
+      { label: 'Effects & golden add', desc: '3 ÷ 2', fn: (r) => times(stage3(r), stage2(r)), mult: true },
+      { label: 'Total', desc: '3 ÷ 1', fn: (r) => times(stage3(r), stage1(r)), mult: true, strong: true },
     ];
-    let h = '<div class="ca-table-wrap"><table class="ca-table"><thead><tr><th>Average over the last…</th>';
+    let h = '<div class="ca-table-wrap"><table class="ca-table ca-stages"><thead><tr><th>Average over the last…</th>';
     COLS.forEach((c) => (h += `<th>${c.label}</th>`));
     h += '</tr></thead><tbody>';
     ROWS.forEach((r) => {
-      h += `<tr${r.strong ? ' class="strong"' : ''}><td title="${esc(r.title)}">${r.color ? F().swatch(r.color) : ''}${esc(r.label)}</td>`;
+      const cls = [r.strong ? 'strong' : '', r.mult ? 'mult' : ''].filter(Boolean).join(' ');
+      h +=
+        `<tr${cls ? ` class="${cls}"` : ''}><td>` +
+        (r.n ? `<span class="ca-stage-n" style="background:${r.color}">${r.n}</span>` : '<span class="ca-stage-n ca-stage-x">×</span>') +
+        `${esc(r.label)}<span class="ca-row-sub">${esc(r.desc)}</span></td>`;
       vals.forEach((val) => (h += `<td>${val ? esc(r.fn(val)) : '—'}</td>`));
       h += '</tr>';
     });
@@ -5338,8 +5449,9 @@ CA.UI.Graphs = (() => {
         let sum = 0;
         let secs = 0;
         bars.forEach((b) => {
-          sum += b.v.earned || 0;
-          secs += b.secs;
+          if (!Number.isFinite(b.v.earned)) return;
+          sum += b.v.earned;
+          secs += coverOf(b, 'earned');
         });
         const avg = secs ? sum / secs : NaN;
         return {
@@ -5515,7 +5627,7 @@ CA.UI.Graphs = (() => {
         const totals = {};
         let secs = 0;
         raw.forEach((b) => {
-          secs += b.secs;
+          secs += coverOf(b, 'spent');
           bankKeys.forEach((k) => (totals[k] = (totals[k] || 0) + (b.v[k] || 0) * (OUT_SIGN[k] || 1)));
         });
         return {
@@ -5587,15 +5699,21 @@ CA.UI.Graphs = (() => {
       tipFmt: (val) => F().beautify(Math.floor(val), 0),
       build(v) {
         const bars = v.bucketize(['prestigeTotal', 'prestige']);
+        const totals = P().linePoints(bars, (b) => b.v.prestigeTotal);
+        // the target as a line, when it's close enough not to squash the chart
+        const target = prestigeTarget();
+        const top = totals.reduce((m, p) => Math.max(m, p.v), 0);
+        const showTarget = target > 0 && top > 0 && target <= top * 1.5;
         return {
           series: [
             { key: 'prestigeTotal', name: 'Level if you ascended now', color: '#c9bcff', type: 'area', width: 1.8 },
             { key: 'prestige', name: 'Current level', color: C_BASE, type: 'line', dash: true },
           ],
           lines: {
-            prestigeTotal: P().linePoints(bars, (b) => b.v.prestigeTotal),
+            prestigeTotal: totals,
             prestige: P().linePoints(bars, (b) => b.v.prestige),
           },
+          hlines: showTarget ? [{ v: target, label: `target ${F().beautify(target, 0)}`, color: 'rgba(201,188,255,0.85)' }] : [],
           markers: markers(v, ['ascend'], []),
           zero: false,
         };
@@ -5657,6 +5775,82 @@ CA.UI.Graphs = (() => {
       },
     });
 
+  // ---- prestige target --------------------------------------------------------------------
+  // A target prestige level, entered as a number from 1–999 and a magnitude (thousand, million…),
+  // with how far there is to go and when you'll get there at your recent actual CpS.
+
+  const UNITS = [
+    { e: 0, label: 'levels' },
+    { e: 3, label: 'thousand' },
+    { e: 6, label: 'million' },
+    { e: 9, label: 'billion' },
+    { e: 12, label: 'trillion' },
+    { e: 15, label: 'quadrillion' },
+    { e: 18, label: 'quintillion' },
+  ];
+
+  /** The target level, or 0 when none is set. */
+  function prestigeTarget() {
+    const n = Number(S().get('prestigeTargetNum')) || 0;
+    return n > 0 ? n * Math.pow(10, Number(S().get('prestigeTargetUnit')) || 0) : 0;
+  }
+
+  function targetCardHtml() {
+    const n = Number(S().get('prestigeTargetNum')) || 0;
+    const u = Number(S().get('prestigeTargetUnit')) || 0;
+    return (
+      '<div class="ca-card" data-ptarget>' +
+      CA.UI.C.cardHead('Prestige target', 'marker') +
+      '<div class="ca-target">' +
+      '<span class="ca-field-label">Reach level</span>' +
+      `<input type="number" min="1" max="999" step="1" placeholder="e.g. 250" value="${n > 0 ? n : ''}" data-ptarget-num>` +
+      `<select data-ptarget-unit>${UNITS.map((x) => `<option value="${x.e}"${x.e === u ? ' selected' : ''}>${x.label}</option>`).join('')}</select>` +
+      '</div>' +
+      '<div data-ptarget-out></div>' +
+      '</div>'
+    );
+  }
+
+  function targetOutHtml() {
+    const { tile, beautify, span } = F();
+    const target = prestigeTarget();
+    if (!target) return '<div class="ca-card-note">Pick a level to aim for — how far it is and when you’ll get there show up here.</div>';
+    const baked = (Game.cookiesReset || 0) + (Game.cookiesEarned || 0);
+    const now = Math.floor(Game.HowMuchPrestige(baked));
+    const start = Game.prestige || 0;
+    if (target <= start) return `<div class="ca-card-note">You’re already at prestige ${beautify(start, 0)} — past this target.</div>`;
+    const need = typeof Game.HowManyCookiesReset === 'function' ? Math.max(0, Game.HowManyCookiesReset(target) - baked) : NaN;
+    const r = recent(900);
+    const eta = need > 0 && r && r.actual > 0 ? need / r.actual : need === 0 ? 0 : NaN;
+    const pct = Math.max(0, Math.min(100, ((now - start) / (target - start)) * 100));
+    const reached = now >= target;
+    return (
+      `<div class="ca-progress"><div class="ca-progress-fill" style="width:${pct}%"></div><div class="ca-progress-text">${reached ? 'Reached — ascend any time' : `${pct.toFixed(pct < 10 ? 2 : 1)}% of the way this run`}</div></div>` +
+      '<div class="ca-stats">' +
+      tile('Target', beautify(target, 0), `+${beautify(target - start, 0)} on this ascension`) +
+      tile('Levels to go', reached ? '0' : beautify(target - now, 0), `at ${beautify(now, 0)} if you ascended now`) +
+      tile('Cookies to go', Number.isFinite(need) ? beautify(need) : '—', 'baked, all time') +
+      tile('Reached in', reached ? 'now' : Number.isFinite(eta) ? span(eta) : '—', 'at the last 15 min’s actual CpS') +
+      '</div>'
+    );
+  }
+
+  function onTargetInput(e) {
+    const el = e.target;
+    if (!el.matches || !el.matches('[data-ptarget-num],[data-ptarget-unit]')) return;
+    if (el.matches('[data-ptarget-num]')) {
+      const n = Math.round(Number(el.value));
+      S().set('prestigeTargetNum', Number.isFinite(n) && n > 0 ? Math.min(999, n) : 0);
+    } else S().set('prestigeTargetUnit', Number(el.value) || 0);
+    refreshTarget();
+    if (plots.prestige) plots.prestige.tick();
+  }
+
+  function refreshTarget() {
+    const out = mountedRoot && mountedRoot.querySelector('[data-ptarget-out]');
+    if (out) out.innerHTML = targetOutHtml();
+  }
+
   // ---- the page ---------------------------------------------------------------------------
 
   const plots = {};
@@ -5677,6 +5871,7 @@ CA.UI.Graphs = (() => {
           `${CA.UI.Icons.html(t.icon, 14)}<span>${t.label}</span></button>`
       ).join('') +
       '</div>' +
+      (cur.top ? cur.top() : '') +
       cur.plots.map((id) => plots[id].html()).join('')
     );
   }
@@ -5694,21 +5889,31 @@ CA.UI.Graphs = (() => {
     unmount();
     mountedRoot = root;
     root.addEventListener('click', onClick);
+    root.addEventListener('input', onTargetInput);
+    root.addEventListener('change', onTargetInput);
     currentTab().plots.forEach((id) => plots[id].mount(root));
+    refreshTarget();
   }
 
   function unmount() {
     TABS.forEach((t) => t.plots.forEach((id) => plots[id] && plots[id].unmount()));
-    if (mountedRoot) mountedRoot.removeEventListener('click', onClick);
+    if (mountedRoot) {
+      mountedRoot.removeEventListener('click', onClick);
+      mountedRoot.removeEventListener('input', onTargetInput);
+      mountedRoot.removeEventListener('change', onTargetInput);
+    }
     mountedRoot = null;
   }
 
   function tick() {
     currentTab().plots.forEach((id) => plots[id].tick());
+    refreshTarget();
   }
 
   function init() {
     S().defineOption({ key: 'graphTab', group: 'ui', name: 'Graphs tab', desc: '', default: 'cookies' });
+    S().defineOption({ key: 'prestigeTargetNum', group: 'ui', name: 'Prestige target (number)', desc: '', default: 0 });
+    S().defineOption({ key: 'prestigeTargetUnit', group: 'ui', name: 'Prestige target (magnitude)', desc: '', default: 0 });
     S().defineOption({ key: 'bankGains', group: 'plot', name: 'Bank charts: gains', desc: '', default: true });
     S().defineOption({ key: 'bankLosses', group: 'plot', name: 'Bank charts: losses', desc: '', default: true });
     S().defineOption({
@@ -6642,6 +6847,7 @@ CA.UI.MacrosPage = (() => {
     { v: 'repeat', label: 'Repeat', icon: 'refresh', hint: 'While it’s on, runs its steps every so often.' },
     { v: 'when', label: 'When…', icon: 'filter', hint: 'While it’s on, watches for a condition and runs its steps when it happens.' },
     { v: 'once', label: 'Once', icon: 'play', hint: 'No on/off: its button or hotkey runs the steps one time.' },
+    { v: 'group', label: 'Group', icon: 'widget', hint: 'A switch for several macros at once: on turns them all on, off turns them all off.' },
   ];
 
   let root = null;
@@ -6670,6 +6876,12 @@ CA.UI.MacrosPage = (() => {
     return `<span class="ca-step">${I(a ? a.icon : 'close', 12)}${esc(CA.Actions.describe(step))}</span>`;
   }
 
+  function memberChips(m) {
+    const members = M().membersOf(m);
+    if (!members.length) return '<span class="ca-step">no members</span>';
+    return members.map((x) => `<span class="ca-step ca-step-member">${icon(x, true)}${esc(x.name)}</span>`).join('');
+  }
+
   /** One macro as a row: picture, name + trigger, steps, status, and its controls. */
   function row(m) {
     const once = m.mode === 'once';
@@ -6680,7 +6892,7 @@ CA.UI.MacrosPage = (() => {
       '<div class="ca-row-text">' +
       `<div class="ca-row-name">${esc(m.name)} <span class="ca-badge ca-badge-${m.mode}">${esc(M().triggerText(m))}</span></div>` +
       (m.desc ? `<div class="ca-row-desc">${esc(m.desc)}</div>` : '') +
-      `<div class="ca-steps">${m.steps.map(stepChip).join('<span class="ca-step-arrow">›</span>')}</div>` +
+      `<div class="ca-steps">${m.mode === 'group' ? memberChips(m) : m.steps.map(stepChip).join('<span class="ca-step-arrow">›</span>')}</div>` +
       '<div class="ca-macro-status" data-macro-status></div>' +
       '</div>' +
       '<div class="ca-controls">' +
@@ -6730,7 +6942,7 @@ CA.UI.MacrosPage = (() => {
   // ---- the editor ----------------------------------------------------------------------------
 
   function blankDraft() {
-    return { id: null, name: '', desc: '', icon: { ico: 'bolt' }, mode: 'repeat', every: 1000, steps: [{ action: 'pop.golden', params: {} }], inAll: false, when: blankWhen() };
+    return { id: null, name: '', desc: '', icon: { ico: 'bolt' }, mode: 'repeat', every: 1000, steps: [{ action: 'pop.golden', params: {} }], members: [], inAll: false, when: blankWhen() };
   }
   const blankCond = () => ({ cond: 'buff', params: {}, not: false });
   const blankWhen = () => ({ all: [blankCond()], edge: 'rise' });
@@ -6784,7 +6996,7 @@ CA.UI.MacrosPage = (() => {
       `<div class="ca-editor-row"><span class="ca-field-label">Trigger</span><div class="ca-chipgroup">${MODES.map(
         (x) => `<button type="button" class="ca-chip${x.v === d.mode ? ' on' : ''}" data-edit-act="mode" data-val="${x.v}" title="${esc(x.hint)}">${I(x.icon, 12)} ${x.label}</button>`
       ).join('')}</div><span class="ca-hint">${esc(mode.hint)}</span></div>`;
-    if (d.mode !== 'once') {
+    if (d.mode !== 'once' && d.mode !== 'group') {
       h +=
         '<div class="ca-editor-row">' +
         `<label class="ca-field"><span>${d.mode === 'when' ? 'Check every' : 'Every'}</span><input type="number" step="any" min="${M().MIN_EVERY / 1000}" data-edit="everySec" data-type="number" value="${d.every / 1000}"><em>seconds</em></label>` +
@@ -6812,7 +7024,23 @@ CA.UI.MacrosPage = (() => {
         `<label class="ca-field"><span>Run</span><select data-edit="when.edge"><option value="rise"${w.edge !== 'while' ? ' selected' : ''}>once each time it happens</option><option value="while"${w.edge === 'while' ? ' selected' : ''}>on every check while it holds</option></select></label>` +
         '</div></div>';
     }
-    h += `<div class="ca-editor-row"><span class="ca-field-label">${I('bolt', 13)} Steps</span><span class="ca-hint">Run in order, every time the macro fires.</span></div><div class="ca-editor-steps">`;
+    if (d.mode === 'group') {
+      const choices = M()
+        .list()
+        .filter((m) => m.mode !== 'once' && m.mode !== 'group' && m.id !== d.id);
+      h +=
+        `<div class="ca-editor-row"><span class="ca-field-label">${I('widget', 13)} Members</span><span class="ca-hint">Switching the group switches all of these together.</span></div>` +
+        '<div class="ca-members">' +
+        choices
+          .map(
+            (m) =>
+              `<label class="ca-member${d.members.includes(m.id) ? ' on' : ''}"><input type="checkbox" data-member="${esc(m.id)}"${d.members.includes(m.id) ? ' checked' : ''}>` +
+              `${icon(m, true)}<span>${esc(m.name)}</span></label>`
+          )
+          .join('') +
+        '</div>';
+    } else {
+      h += `<div class="ca-editor-row"><span class="ca-field-label">${I('bolt', 13)} Steps</span><span class="ca-hint">Run in order, every time the macro fires.</span></div><div class="ca-editor-steps">`;
     d.steps.forEach((s, i) => {
       const a = CA.Actions.get(s.action);
       h +=
@@ -6825,8 +7053,9 @@ CA.UI.MacrosPage = (() => {
         `<button type="button" class="ca-iconbtn" data-edit-act="del" data-val="${i}" title="Remove step">${I('close', 12)}</button>` +
         '</span></div>';
     });
+      h += `<button type="button" class="ca-btn ca-btn-small" data-edit-act="add">${I('plus', 12)} Add step</button></div>`;
+    }
     h +=
-      `<button type="button" class="ca-btn ca-btn-small" data-edit-act="add">${I('plus', 12)} Add step</button></div>` +
       (draftError ? `<div class="ca-editor-error">${esc(draftError)}</div>` : '') +
       '<div class="ca-editor-actions">' +
       C().button(`${I('save', 13)} Save`, 'data-edit-act="save"', 'ca-btn-on') +
@@ -6848,6 +7077,13 @@ CA.UI.MacrosPage = (() => {
 
   function onEditInput(e) {
     const el = e.target;
+    if (el.dataset && el.dataset.member && draft) {
+      const id = el.dataset.member;
+      draft.members = (draft.members || []).filter((x) => x !== id);
+      if (el.checked) draft.members.push(id);
+      el.closest('.ca-member').classList.toggle('on', el.checked);
+      return;
+    }
     if (!el.dataset || !el.dataset.edit || !draft) return;
     const type = el.dataset.type;
     let v = type === 'bool' ? el.checked : type === 'number' ? Number(el.value) : el.value;
@@ -6869,6 +7105,7 @@ CA.UI.MacrosPage = (() => {
 
   function validate(d) {
     if (!d.name.trim()) return 'Give it a name.';
+    if (d.mode === 'group') return d.members && d.members.length ? '' : 'Tick at least one macro for the group.';
     if (!d.steps.length) return 'Add at least one step.';
     if (d.mode !== 'once' && !(d.every >= M().MIN_EVERY)) return `Run it at most every ${M().MIN_EVERY / 1000}s.`;
     const self = d.steps.find((s) => (s.action === 'macro.run' || s.action === 'macro.set') && d.id && s.params.macro === d.id);
@@ -6930,6 +7167,8 @@ CA.UI.MacrosPage = (() => {
     const m = id ? M().get(id) : null;
     draft = m ? JSON.parse(JSON.stringify(m)) : { ...blankDraft(), ...(preset || {}) };
     if (!draft.when || !Array.isArray(draft.when.all)) draft.when = blankWhen();
+    if (!Array.isArray(draft.members)) draft.members = [];
+    if (!draft.steps.length) draft.steps = [{ action: 'pop.golden', params: {} }]; // a group switched to another mode
     if (CA.Settings.get('tab') !== 'clickers' && CA.UI.Menu.isOpen()) CA.Settings.set('tab', 'clickers');
     draftError = '';
     rerender();
@@ -7173,48 +7412,50 @@ CA.UI.Widgets = (() => {
 
   // ---- built-in widget types ----------------------------------------------------------------
 
-  function macroTitle(m) {
-    const on = CA.Macros.isOn(m.id);
-    const key = CA.Settings.getHotkey(`macro.${m.id}`);
-    const what = m.mode === 'once' ? 'click to run' : on ? 'on — click to switch off' : 'off — click to switch on';
-    return `${m.name} (${what})${key ? ` · ${CA.Hotkeys.format(key)}` : ''}`;
-  }
-
   function macroHtml(inst) {
     const m = CA.Macros.get(inst.macro);
     if (!m) return '';
     const on = CA.Macros.isOn(m.id);
+    const key = CA.Settings.getHotkey(`macro.${m.id}`);
+    const state = m.mode === 'once' ? 'click to run' : on ? 'on' : 'off';
     return (
-      `<button type="button" class="ca-wb${on ? ' on' : ''}${m.mode === 'once' ? ' once' : ''}" data-w-trigger="${esc(m.id)}" title="${esc(macroTitle(m))}">` +
+      `<button type="button" class="ca-wb${on ? ' on' : ''}${m.mode === 'once' ? ' once' : ''}" data-w-trigger="${esc(m.id)}" aria-label="${esc(m.name)}">` +
       `${CA.UI.MacrosPage.icon(m, true)}</button>` +
-      `<span class="ca-wb-label">${esc(m.name)}</span>`
+      `<span class="ca-wb-label"><b>${esc(m.name)}</b><em class="${on ? 'on' : ''}">${state}${key ? ` · ${esc(CA.Hotkeys.format(key))}` : ''}</em></span>`
     );
   }
 
-  function statusTitle(m) {
+  /** The popup shown while hovering a running macro's icon on the status bar. */
+  function statusPop(m) {
     const st = CA.Macros.status(m.id);
     const { beautify, span } = CA.UI.Plot.fmt;
-    const lines = [`${m.name} — ${CA.Macros.triggerText(m)} · on for ${span((Date.now() - CA.Macros.since(m.id)) / 1000)}`];
+    let h =
+      '<span class="ca-wpop">' +
+      `<span class="ca-wpop-head">${CA.UI.MacrosPage.icon(m, true)}<b>${esc(m.name)}</b></span>` +
+      `<span class="ca-wpop-sub">${esc(CA.Macros.triggerText(m))} · on for ${span((Date.now() - CA.Macros.since(m.id)) / 1000)}</span>`;
     m.steps.forEach((step, i) => {
       const s = (st && st.steps[i]) || {};
       const a = CA.Actions.get(step.action) || {};
-      const last = s.lastAt ? `${span((Date.now() - s.lastAt) / 1000)} ago` : 'nothing yet';
-      lines.push(`• ${CA.Actions.describe(step)}: ${s.error ? s.error : `${beautify(s.total || 0, 0)}${a.unit ? ' ' + a.unit : ''}, ${last}`}`);
+      const hot = s.lastAt && Date.now() - s.lastAt < HOT_MS;
+      const val = s.error ? esc(s.error) : `${beautify(s.total || 0, 0)}${a.unit ? ' ' + esc(a.unit) : ''} · ${s.lastAt ? `${span((Date.now() - s.lastAt) / 1000)} ago` : 'nothing yet'}`;
+      h +=
+        `<span class="ca-wpop-row${hot ? ' hot' : ''}${s.error ? ' err' : ''}">${I(a.icon || 'close', 11)}` +
+        `<span class="ca-wpop-name">${esc(CA.Actions.describe(step))}</span><span class="ca-wpop-val">${val}</span></span>`;
     });
-    return lines.join('\n');
+    return h + '<span class="ca-wpop-foot">click to open the Macros page</span></span>';
   }
 
   function statusHtml() {
     const ids = CA.Macros.runningIds();
-    let h = `<span class="ca-wbar-lead" title="Running now">${I('play', 11)}</span>`;
-    if (!ids.length) return `${h}<span class="ca-wbar-idle" title="No macros running">idle</span>`;
+    let h = `<span class="ca-wbar-lead">${I('play', 11)}</span>`;
+    if (!ids.length) return `${h}<span class="ca-wbar-idle">idle</span>`;
     ids.forEach((id) => {
       const m = CA.Macros.get(id);
       if (!m) return;
       const st = CA.Macros.status(id);
       const hot = st && st.steps.some((s) => s.lastAt && Date.now() - s.lastAt < HOT_MS);
       const err = st && st.steps.some((s) => s.error);
-      h += `<span class="ca-wbar-item${hot ? ' hot' : ''}${err ? ' err' : ''}" data-w-open="clickers" title="${esc(statusTitle(m))}">${CA.UI.MacrosPage.icon(m, true)}</span>`;
+      h += `<span class="ca-wbar-item${hot ? ' hot' : ''}${err ? ' err' : ''}" data-w-open="clickers" aria-label="${esc(m.name)}">${CA.UI.MacrosPage.icon(m, true)}${statusPop(m)}</span>`;
     });
     return h;
   }
@@ -7228,13 +7469,13 @@ CA.UI.Widgets = (() => {
     const lvl = Math.floor(Game.HowMuchPrestige(total));
     const need = typeof Game.HowManyCookiesReset === 'function' ? Game.HowManyCookiesReset(lvl + 1) - total : NaN;
     const eta = r && r.actual > 0 && need > 0 ? need / r.actual : NaN;
-    const row = (label, value, title) => `<div class="ca-w-stat"${title ? ` title="${esc(title)}"` : ''}><span>${label}</span><b>${value}</b></div>`;
+    const row = (label, value) => `<div class="ca-w-stat"><span>${label}</span><b>${value}</b></div>`;
     return (
-      row('CpS', f ? `${beautify((f.cps || 0) + (f.click || 0))}/s` : '—', 'Production + clicking, now') +
-      row('Actual, 1 min', r ? `${beautify(r.actual)}/s` : '—', 'What really got baked per second over the last minute of play') +
+      row('CpS + clicking', f ? `${beautify((f.cps || 0) + (f.click || 0))}/s` : '—') +
+      row('Actual, last min', r ? `${beautify(r.actual)}/s` : '—') +
       row('Bank', beautify(Game.cookies || 0)) +
       row('Prestige', `${beautify(lvl - (Game.prestige || 0), 0)} <em>this run</em>`) +
-      row('Next level', Number.isFinite(eta) ? span(eta) : '—', 'At the last minute’s actual CpS')
+      row('Next level in', Number.isFinite(eta) ? span(eta) : '—')
     );
   }
 
@@ -7245,8 +7486,8 @@ CA.UI.Widgets = (() => {
   }
 
   function registerBuiltins() {
-    defineType({ id: 'macro', name: 'Macro button', icon: 'star', bare: true, hidden: true, html: macroHtml });
-    defineType({ id: 'status', name: 'Running now', icon: 'play', desc: 'A status bar: an icon for each running macro, pulsing while it works. Hover an icon for what its actions have done.', bare: true, single: true, html: statusHtml });
+    defineType({ id: 'macro', name: 'Macro button', icon: 'star', bare: true, hidden: true, html: macroHtml, update: macroUpdate });
+    defineType({ id: 'status', name: 'Running now', icon: 'play', desc: 'A status bar: an icon for each running macro, pulsing while it works. Hover an icon for what its actions have done.', bare: true, single: true, html: statusHtml, update: statusUpdate });
     defineType({ id: 'stats', name: 'Quick stats', icon: 'graphs', desc: 'CpS, actual CpS over the last minute, cookies in the bank, prestige this run and the time to the next level.', width: 190, single: true, html: statsHtml });
     defineType({ id: 'events', name: 'Latest events', icon: 'events', desc: 'The six newest entries in the event log.', width: 260, single: true, html: eventsHtml });
   }
@@ -7269,19 +7510,40 @@ CA.UI.Widgets = (() => {
     return w;
   }
 
-  /** The next free spot for a macro button: a row along the bottom of the panel (or where an old
-   *  Shortcuts widget was), wrapping upwards. */
+  /** Where columns of buttons stop going up: just below the CookieMgr sidebar on the right edge
+   *  of the panel (or a third of the way down if it can't be measured). */
+  function columnTop(host, H) {
+    const tab = document.getElementById('CookieMgrTab');
+    if (tab && tab.getBoundingClientRect && host.getBoundingClientRect) {
+      const r = tab.getBoundingClientRect();
+      if (r.height) return Math.max(0, r.bottom - host.getBoundingClientRect().top + 8);
+    }
+    return H * 0.35;
+  }
+
+  /** The next free spot for a macro button: from the bottom-right corner upwards (clear of the
+   *  bottom-left, where the dragon and Santa live), then the next column to the left, again from
+   *  the bottom. A v2.1 Shortcuts widget's buttons start where it was instead. */
   function nextButtonPos() {
     const host = layer && layer.parentNode;
     const W = (host && host.clientWidth) || 400;
     const H = (host && host.clientHeight) || 800;
-    const n = widgets.filter((w) => w.type === 'macro').length;
-    const perRow = Math.max(1, Math.floor((W - 16) / BUTTON_PX));
-    const ox = anchor ? anchor.x * (W - BUTTON_PX) : 8;
-    const oy = anchor ? anchor.y * (H - BUTTON_PX) : H - BUTTON_PX - 70;
-    const px = Math.min(W - BUTTON_PX, ox + (n % perRow) * BUTTON_PX);
-    const py = Math.max(0, oy - Math.floor(n / perRow) * BUTTON_PX);
-    return { x: W > BUTTON_PX ? px / (W - BUTTON_PX) : 0, y: H > BUTTON_PX ? py / (H - BUTTON_PX) : 0 };
+    const fx = (px) => (W > BUTTON_PX ? px / (W - BUTTON_PX) : 0);
+    const fy = (py) => (H > BUTTON_PX ? py / (H - BUTTON_PX) : 0);
+    const taken = widgets.filter((w) => w.type === 'macro').map((w) => ({ x: w.x * (W - BUTTON_PX), y: w.y * (H - BUTTON_PX) }));
+    const free = (x, y) => !taken.some((t) => Math.abs(t.x - x) < BUTTON_PX / 2 && Math.abs(t.y - y) < BUTTON_PX / 2);
+    if (anchor) return { x: Math.min(1, fx(anchor.x * (W - BUTTON_PX) + taken.length * BUTTON_PX)), y: anchor.y };
+    const bottom = H - BUTTON_PX - 12;
+    const rows = Math.max(1, Math.floor((bottom - columnTop(host, H)) / BUTTON_PX) + 1);
+    const cols = Math.max(1, Math.floor((W - 8) / BUTTON_PX));
+    for (let c = 0; c < cols; c++) {
+      for (let r = 0; r < rows; r++) {
+        const x = W - BUTTON_PX - 8 - c * BUTTON_PX;
+        const y = bottom - r * BUTTON_PX;
+        if (free(x, y)) return { x: fx(x), y: fy(y) };
+      }
+    }
+    return { x: fx(W - BUTTON_PX - 8), y: fy(bottom) };
   }
 
   /** Keeps macro buttons in step with ★ favourites: one button per favourite, none for the rest. */
@@ -7341,7 +7603,7 @@ CA.UI.Widgets = (() => {
       return (
         `<div class="ca-w ca-w-bare ca-w-${w.type}" data-widget="${w.id}" data-w-drag>` +
         `<div class="ca-w-body" data-w-body>${safeHtml(t, w)}</div>` +
-        `<button type="button" class="ca-w-x" data-w-remove title="${w.type === 'macro' ? 'Remove (un-favourites the macro)' : 'Remove widget'}">${I('close', 8)}</button>` +
+        `<button type="button" class="ca-w-x" data-w-remove aria-label="${w.type === 'macro' ? 'Remove (un-favourites the macro)' : 'Remove widget'}">${I('close', 8)}</button>` +
         '</div>'
       );
     }
@@ -7349,8 +7611,8 @@ CA.UI.Widgets = (() => {
       `<div class="ca-w${w.collapsed ? ' collapsed' : ''}" data-widget="${w.id}" style="width:${t.width}px">` +
       '<div class="ca-w-head" data-w-drag>' +
       `${I(t.icon, 12)}<span class="ca-w-title">${esc(t.name)}</span>` +
-      `<button type="button" class="ca-w-btn" data-w-collapse title="${w.collapsed ? 'Expand' : 'Collapse'}">${w.collapsed ? '▸' : '▾'}</button>` +
-      `<button type="button" class="ca-w-btn" data-w-remove title="Remove widget">${I('close', 10)}</button>` +
+      `<button type="button" class="ca-w-btn" data-w-collapse aria-label="${w.collapsed ? 'Expand' : 'Collapse'}">${w.collapsed ? '▸' : '▾'}</button>` +
+      `<button type="button" class="ca-w-btn" data-w-remove aria-label="Remove widget">${I('close', 10)}</button>` +
       '</div>' +
       `<div class="ca-w-body" data-w-body>${w.collapsed ? '' : safeHtml(t, w)}</div>` +
       '</div>'
@@ -7373,6 +7635,8 @@ CA.UI.Widgets = (() => {
     const y = Math.max(0, Math.min(1, w.y)) * Math.max(0, H - (el.offsetHeight || 0));
     el.style.left = `${Math.round(x)}px`;
     el.style.top = `${Math.round(y)}px`;
+    el.classList.toggle('pop-below', y < 220);
+    el.classList.toggle('pop-left', x > W / 2);
   }
 
   function render() {
@@ -7395,9 +7659,47 @@ CA.UI.Widgets = (() => {
       const body = layer.querySelector(`[data-widget="${w.id}"] [data-w-body]`);
       const t = typeById[w.type];
       if (!body || !t) return;
+      // types with update() patch themselves in place, so whatever is hovered (and its popup)
+      // isn't replaced under the mouse
+      if (t.update && body.firstChild && t.update(body, w)) return;
       const html = safeHtml(t, w);
       if (body.innerHTML !== html) body.innerHTML = html;
     });
+  }
+
+  /** Status bar in place: rebuilt only when which macros run (or their pulse/error) changes. */
+  function statusUpdate(body) {
+    const ids = CA.Macros.runningIds();
+    const items = body.querySelectorAll('.ca-wbar-item');
+    if (items.length !== ids.length || !ids.length) return false;
+    for (let i = 0; i < ids.length; i++) {
+      const m = CA.Macros.get(ids[i]);
+      const el = items[i];
+      if (!m || el.getAttribute('aria-label') !== m.name) return false;
+      const st = CA.Macros.status(m.id);
+      el.classList.toggle('hot', !!(st && st.steps.some((s) => s.lastAt && Date.now() - s.lastAt < HOT_MS)));
+      el.classList.toggle('err', !!(st && st.steps.some((s) => s.error)));
+      const pop = el.querySelector('.ca-wpop');
+      const fresh = statusPop(m);
+      const inner = fresh.slice(fresh.indexOf('>') + 1, fresh.lastIndexOf('</span>'));
+      if (pop && pop.innerHTML !== inner) pop.innerHTML = inner;
+    }
+    return true;
+  }
+
+  /** Macro button in place: just its on/off look and its label. */
+  function macroUpdate(body, inst) {
+    const m = CA.Macros.get(inst.macro);
+    const btn = body.querySelector('.ca-wb');
+    const em = body.querySelector('.ca-wb-label em');
+    if (!m || !btn || !em) return false;
+    const on = CA.Macros.isOn(m.id);
+    btn.classList.toggle('on', on);
+    const key = CA.Settings.getHotkey(`macro.${m.id}`);
+    const text = `${m.mode === 'once' ? 'click to run' : on ? 'on' : 'off'}${key ? ` · ${CA.Hotkeys.format(key)}` : ''}`;
+    if (em.textContent !== text) em.textContent = text;
+    em.classList.toggle('on', on);
+    return true;
   }
 
   // ---- interaction ----------------------------------------------------------------------------
@@ -7432,6 +7734,8 @@ CA.UI.Widgets = (() => {
     const y = Math.max(0, Math.min(maxY, e.clientY - press.dy));
     press.el.style.left = `${x}px`;
     press.el.style.top = `${y}px`;
+    press.el.classList.toggle('pop-below', y < 220);
+    press.el.classList.toggle('pop-left', x > host.clientWidth / 2);
     press.w.x = maxX ? x / maxX : 0;
     press.w.y = maxY ? y / maxY : 0;
   }
@@ -8385,6 +8689,8 @@ function migrateOldSaveData() {
   delete Game.modSaveData[OLD_ID];
 }
 
+let loaded = false;
+
 const mod = {
   init() {
     const hadLegacy = removeLegacyBookmarklet();
@@ -8433,6 +8739,7 @@ const mod = {
   },
 
   load(str) {
+    loaded = true;
     // Prefer our own localStorage mirror when we have one — it's updated the moment anything
     // changes, while the game's save can be up to 60s stale or skipped by a quick reload.
     // Read it first: deserializing re-mirrors the current, not-yet-restored state over it.
@@ -8454,6 +8761,11 @@ const mod = {
 
 function register() {
   Game.registerMod(CA.ID, mod);
+  // The game only calls load() when its save already holds data for this mod (main.js:
+  // `if (mod.load && Game.modSaveData[id]) mod.load(...)`), and it only autosaves once a minute.
+  // Without this, a refresh before that first save skipped our local mirror entirely and started
+  // from defaults — and the next change then overwrote the mirror with them.
+  if (!loaded) mod.load('');
 }
 
 if (window.CookieMgr) {

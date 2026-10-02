@@ -1747,8 +1747,9 @@
 #CookieMgrWidgets .ca-wb.on {
   box-shadow:
     0 3px 8px rgba(0, 0, 0, 0.7),
-    0 0 0 2px rgba(130, 235, 120, 0.85),
-    0 0 12px rgba(130, 235, 120, 0.6);
+    0 0 0 2px #1a3d12,
+    0 0 0 4px #4dff5e,
+    0 0 16px 2px rgba(77, 255, 94, 0.75);
 }
 #CookieMgrWidgets .ca-wb:active {
   transform: scale(0.94);
@@ -1795,6 +1796,20 @@
     opacity 0.15s,
     transform 0.15s;
 }
+#CookieMgrWidgets .ca-wb-label b,
+#CookieMgrWidgets .ca-wb-label em {
+  display: block;
+  text-align: center;
+}
+#CookieMgrWidgets .ca-wb-label em {
+  font-style: normal;
+  font-weight: normal;
+  font-size: 9.5px;
+  color: #b9ab93;
+}
+#CookieMgrWidgets .ca-wb-label em.on {
+  color: #7dff8a;
+}
 #CookieMgrWidgets .ca-w-macro:hover .ca-wb-label {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
@@ -1827,10 +1842,13 @@
   color: #93866f;
 }
 #CookieMgrWidgets .ca-wbar-item {
+  position: relative;
   display: inline-flex;
   border-radius: 50%;
   cursor: pointer;
-  box-shadow: 0 0 0 1px rgba(130, 235, 120, 0.5);
+  box-shadow:
+    0 0 0 2px #4dff5e,
+    0 0 7px rgba(77, 255, 94, 0.6);
 }
 #CookieMgrWidgets .ca-wbar-item .ca-icon,
 #CookieMgrWidgets .ca-wbar-item .ca-icon-ico {
@@ -1854,12 +1872,14 @@
 @keyframes caWbarPulse {
   0%,
   100% {
-    box-shadow: 0 0 0 1px rgba(130, 235, 120, 0.5);
+    box-shadow:
+      0 0 0 2px #4dff5e,
+      0 0 7px rgba(77, 255, 94, 0.6);
   }
   50% {
     box-shadow:
-      0 0 0 2px rgba(130, 235, 120, 0.95),
-      0 0 10px rgba(130, 235, 120, 0.7);
+      0 0 0 3px #8dff98,
+      0 0 16px 3px rgba(77, 255, 94, 0.9);
   }
 }
 #CookieMgrWidgets .ca-icon {
@@ -2115,4 +2135,244 @@
   color: #e9d8ff;
   background: rgba(124, 77, 255, 0.35);
   box-shadow: 0 0 8px rgba(179, 136, 255, 0.55);
+}
+
+/* ---------- v2.4: hover stacking, status popups, groups, stages, prestige target ---------- */
+
+/* whatever you hover comes to the front, so its label/popup is never under a neighbour */
+#CookieMgrWidgets .ca-w:hover,
+#CookieMgrWidgets .ca-w.dragging {
+  z-index: 20;
+}
+#CookieMgrWidgets .ca-w-macro.pop-below .ca-wb-label {
+  top: auto;
+  bottom: 100%;
+  margin: 0 0 4px;
+}
+
+/* styled popup over a status-bar icon */
+#CookieMgrWidgets .ca-wpop {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  z-index: 30;
+  display: none;
+  width: 250px;
+  padding: 7px 9px 6px;
+  text-align: left;
+  font-size: 10.5px;
+  line-height: 1.35;
+  color: #e8d7b0;
+  background: linear-gradient(to bottom, rgba(64, 40, 18, 0.98), rgba(24, 15, 7, 0.98));
+  border: 1px solid;
+  border-color: #ece2b6 #875526 #733726 #dfbc9a;
+  border-radius: 7px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.85);
+  transform: translateX(-50%);
+  cursor: default;
+  pointer-events: none;
+}
+#CookieMgrWidgets .ca-wbar-item:hover .ca-wpop {
+  display: block;
+}
+#CookieMgrWidgets .ca-w-status:not(.pop-left) .ca-wpop {
+  left: -6px;
+  transform: none;
+}
+#CookieMgrWidgets .ca-w-status.pop-left .ca-wpop {
+  left: auto;
+  right: -6px;
+  transform: none;
+}
+#CookieMgrWidgets .ca-w-status.pop-below .ca-wpop {
+  bottom: auto;
+  top: calc(100% + 10px);
+}
+#CookieMgrWidgets .ca-wpop-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #fff3cf;
+}
+#CookieMgrWidgets .ca-wpop-head .ca-icon,
+#CookieMgrWidgets .ca-wpop-head .ca-icon-ico {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+}
+#CookieMgrWidgets .ca-wpop-head .ca-sprite {
+  transform: scale(0.38);
+}
+#CookieMgrWidgets .ca-wpop-sub {
+  display: block;
+  margin: 1px 0 5px 24px;
+  color: #93866f;
+}
+#CookieMgrWidgets .ca-wpop-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+#CookieMgrWidgets .ca-wpop-row .ca-ico {
+  color: #93866f;
+}
+#CookieMgrWidgets .ca-wpop-row.hot .ca-ico {
+  color: #4dff5e;
+}
+#CookieMgrWidgets .ca-wpop-row.err {
+  color: #ff9a8a;
+}
+#CookieMgrWidgets .ca-wpop-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#CookieMgrWidgets .ca-wpop-val {
+  flex: none;
+  color: #c9bba0;
+  font-variant-numeric: tabular-nums;
+}
+#CookieMgrWidgets .ca-wpop-foot {
+  display: block;
+  margin-top: 4px;
+  font-size: 9.5px;
+  font-style: italic;
+  color: #7d7262;
+}
+
+/* group members (macro rows and the editor) */
+#CookieMgrMenu .ca-step-member .ca-icon,
+#CookieMgrMenu .ca-member .ca-icon {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  filter: none;
+}
+#CookieMgrMenu .ca-step-member .ca-img,
+#CookieMgrMenu .ca-member .ca-img {
+  width: 16px;
+  height: 16px;
+}
+#CookieMgrMenu .ca-step-member .ca-sprite,
+#CookieMgrMenu .ca-member .ca-sprite {
+  transform: scale(0.33);
+}
+#CookieMgrMenu .ca-step-member .ca-icon-ico .ca-ico,
+#CookieMgrMenu .ca-member .ca-icon-ico .ca-ico {
+  width: 11px;
+  height: 11px;
+}
+#CookieMgrMenu .ca-members {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 5px;
+  margin: 4px 0 8px;
+}
+#CookieMgrMenu .ca-member {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 8px;
+  font-size: 11px;
+  color: #c9bba0;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 220, 150, 0.12);
+  cursor: pointer;
+}
+#CookieMgrMenu .ca-member.on {
+  color: #fff3cf;
+  border-color: rgba(77, 255, 94, 0.55);
+  background: rgba(77, 255, 94, 0.08);
+}
+
+/* CpS stages table */
+#CookieMgrMenu .ca-stage-n {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-right: 7px;
+  font:
+    bold 10px Tahoma,
+    Arial,
+    sans-serif;
+  color: #10141a;
+  border-radius: 50%;
+  vertical-align: 1px;
+}
+#CookieMgrMenu .ca-stage-x {
+  color: #ffd98a;
+  background: rgba(255, 217, 138, 0.15);
+  border: 1px solid rgba(255, 217, 138, 0.4);
+}
+#CookieMgrMenu .ca-row-sub {
+  display: block;
+  margin: 1px 0 0 23px;
+  font-size: 9.5px;
+  font-weight: normal;
+  color: #8a7e69;
+  white-space: normal;
+}
+#CookieMgrMenu .ca-stages tr.mult td {
+  color: #ffd98a;
+}
+#CookieMgrMenu .ca-stages tbody tr:nth-child(4) td {
+  border-top: 1px solid rgba(255, 217, 138, 0.25);
+}
+
+/* prestige target */
+#CookieMgrMenu .ca-target {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 14px 8px;
+}
+#CookieMgrMenu .ca-target input[type='number'],
+#CookieMgrMenu .ca-target select {
+  font: 13px Tahoma, Arial, sans-serif;
+  color: #f0e2c0;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 220, 150, 0.3);
+  border-radius: 4px;
+  padding: 3px 6px;
+}
+#CookieMgrMenu .ca-target input[type='number'] {
+  width: 70px;
+}
+#CookieMgrMenu .ca-target select option {
+  background: #1c150d;
+}
+#CookieMgrMenu .ca-progress {
+  position: relative;
+  height: 14px;
+  margin: 2px 14px 10px;
+  border-radius: 7px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+#CookieMgrMenu .ca-progress-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: linear-gradient(to bottom, #e6dcff, #9c7cff);
+  box-shadow: 0 0 8px rgba(201, 188, 255, 0.7);
+  transition: width 0.4s;
+}
+#CookieMgrMenu .ca-progress-text {
+  position: relative;
+  text-align: center;
+  font:
+    bold 10px/14px Tahoma,
+    Arial,
+    sans-serif;
+  color: #fff;
+  text-shadow: 0 0 3px #000;
 }

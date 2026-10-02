@@ -150,10 +150,12 @@ CA.UI.Plot = (() => {
       if (prev && cur.x0 < prev.x1) cur.x0 = prev.x1;
       cur.v = {};
       cur.first = {};
+      cur.cover = {}; // seconds each field was actually measured for (unknown frames don't count)
       fields.forEach((k, i) => {
         const a = cur.acc[i];
         if (a.last === undefined) return;
         cur.first[k] = a.first;
+        cur.cover[k] = a.c;
         if (aggs[i] === 'sum') cur.v[k] = a.s;
         else if (aggs[i] === 'last') cur.v[k] = a.last;
         else cur.v[k] = a.c > 0 ? a.w / a.c : a.last;
@@ -273,6 +275,26 @@ CA.UI.Plot = (() => {
         );
         lines[s.key] = pts.map((p, i) => ({ ...p, v: out[i] }));
       });
+  }
+
+  /** Round tick values inside [lo, hi] for a log axis: whole powers of ten when the range is
+   *  wide, 1-2-5 or finer steps as it narrows, evenly spaced round numbers when very narrow. */
+  function logTicks(lo, hi) {
+    const SETS = [[1], [1, 3], [1, 2, 5], [1, 1.5, 2, 3, 5, 7], [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 7, 8, 9]];
+    for (const set of SETS) {
+      let t = [];
+      for (let d = Math.floor(Math.log10(lo)); d <= Math.ceil(Math.log10(hi)); d++) {
+        set.forEach((m) => {
+          const v = m * Math.pow(10, d);
+          if (v >= lo && v <= hi) t.push(v);
+        });
+      }
+      if (t.length >= 3) {
+        while (t.length > 7) t = t.filter((_, i) => i % 2 === 0);
+        return t;
+      }
+    }
+    return CA.UI.Chart.niceLinearScale(lo, hi, 4).ticks.filter((v) => v >= lo && v <= hi);
   }
 
   /** Spots in [x0, x1] where active-time mode cut out a stretch of inactive time. */
@@ -461,12 +483,12 @@ CA.UI.Plot = (() => {
       // y range
       let maxV = -Infinity;
       let minV = Infinity;
-      let minPos = Infinity;
-      const see = (val) => {
+      let minPos = Infinity; // smallest positive bar *total* / line value — what a log axis fits
+      const see = (val, fit = true) => {
         if (!Number.isFinite(val)) return;
         if (val > maxV) maxV = val;
         if (val < minV) minV = val;
-        if (val > 0 && val < minPos) minPos = val;
+        if (fit && val > 0 && val < minPos) minPos = val;
       };
       bars.forEach((b) => {
         let pos = 0;
@@ -476,7 +498,7 @@ CA.UI.Plot = (() => {
           if (!Number.isFinite(val)) return;
           if (val >= 0) pos += val;
           else neg += val;
-          if (val > 0) see(val);
+          if (val > 0) see(val, false); // a thin slice on top mustn't drag a log axis down
         });
         see(pos);
         see(neg);
@@ -489,13 +511,18 @@ CA.UI.Plot = (() => {
       let yMax;
       let ticks = [];
       if (log) {
+        // Fit the axis to the data instead of whole powers of ten, so the variation fills the
+        // chart: just under the smallest bar total / line value, just over the largest.
         if (!isFinite(minPos)) minPos = 1;
-        if (!(maxV > 0)) maxV = 10;
-        yMin = Math.pow(10, Math.floor(Math.log10(minPos)));
-        yMax = Math.pow(10, Math.ceil(Math.log10(maxV * 1.02)));
-        if (yMax / yMin < 10) yMax = yMin * 10;
-        for (let t = yMin; t <= yMax * 1.0001; t *= 10) ticks.push(t);
-        while (ticks.length > 7) ticks = ticks.filter((_, i) => i % 2 === 0);
+        if (!(maxV > 0)) maxV = minPos * 10;
+        yMin = minPos / 1.25;
+        yMax = maxV * 1.08;
+        if (yMax / yMin < 1.5) {
+          const mid = Math.sqrt(yMin * yMax);
+          yMin = mid / 1.25;
+          yMax = mid * 1.25;
+        }
+        ticks = logTicks(yMin, yMax);
       } else if (!isFinite(maxV)) {
         yMin = 0;
         yMax = 10;
@@ -1076,6 +1103,7 @@ CA.UI.Plot = (() => {
     get: (id) => all.get(id),
     bucketize,
     movingAverage,
+    logTicks,
     linePoints,
     smooth,
     axis,

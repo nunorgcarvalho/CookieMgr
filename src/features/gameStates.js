@@ -30,8 +30,14 @@ CA.GameStates = (() => {
    *   other       whatever's left (wrinkler pops, sugar lumps, …)
    * Computed once per frame and cached on ctx.
    */
+  // The first frame after a gap (page load, closed tab…) has nothing to compare against: its
+  // flows are unknown, not zero — recording 0 would drag every average down.
+  const UNKNOWN_EARN = { total: undefined, click: undefined, golden: undefined, production: undefined, other: undefined };
+  const UNKNOWN_BANK = { withered: undefined, spent: undefined, otherIn: undefined };
+
   function attribute(ctx) {
     if (ctx._earn) return ctx._earn;
+    if (!ctx.prev) return (ctx._earn = UNKNOWN_EARN);
     const total = Math.max(0, delta(ctx, 'baked'));
     let left = total;
     const take = (want) => {
@@ -54,8 +60,9 @@ CA.GameStates = (() => {
 
   function bankFlows(ctx) {
     if (ctx._bank) return ctx._bank;
+    if (!ctx.prev) return (ctx._bank = UNKNOWN_BANK);
     const earned = attribute(ctx).total;
-    const withered = ctx.prev ? (Game.cookiesPs || 0) * (Game.cpsSucked || 0) * ctx.dt : 0;
+    const withered = (Game.cookiesPs || 0) * (Game.cpsSucked || 0) * ctx.dt;
     const change = delta(ctx, 'cookies');
     const expected = earned - withered;
     ctx._bank = {
@@ -76,7 +83,25 @@ CA.GameStates = (() => {
     // CpS — field names match what the CpS graph has always read (s.cps, s.base, s.click)
     S({ id: 'cps', name: 'CpS', unit: '/s', group: 'cps', kind: 'gauge', get: () => (Game.cookiesPs || 0) * shown() });
     S({ id: 'base', name: 'Unbuffed CpS', unit: '/s', group: 'cps', kind: 'gauge', get: () => (Game.unbuffedCps || Game.cookiesPs || 0) * shown() });
-    S({ id: 'click', name: 'Clicking', unit: '/s', group: 'cps', kind: 'gauge', get: (ctx) => (ctx.dt ? Math.max(0, delta(ctx, 'handmade')) / ctx.dt : 0) });
+    S({ id: 'click', name: 'Clicking', unit: '/s', group: 'cps', kind: 'gauge', get: (ctx) => (ctx.prev && ctx.dt ? Math.max(0, delta(ctx, 'handmade')) / ctx.dt : undefined) });
+    // Clicking with click effects (Click frenzy, Dragonflight, Cursed finger…) divided back out —
+    // each active buff's multClick, the same factors the game multiplies a click by.
+    S({
+      id: 'clickRaw',
+      name: 'Clicking without click effects',
+      unit: '/s',
+      group: 'cps',
+      kind: 'gauge',
+      get: (ctx) => {
+        if (!ctx.frame || !Number.isFinite(ctx.frame.click)) return undefined;
+        const click = ctx.frame.click;
+        let mult = 1;
+        Object.values(Game.buffs || {}).forEach((b) => {
+          if (b && b.time > 0 && typeof b.multClick === 'number' && b.multClick > 0) mult *= b.multClick;
+        });
+        return click / mult;
+      },
+    });
 
     // earnings — where this frame's baked cookies came from
     S({ id: 'earned', name: 'Baked', group: 'earnings', kind: 'flow', get: (ctx) => attribute(ctx).total });
