@@ -442,6 +442,41 @@ CA.UI.MacrosPage = (() => {
     if (allOff) allOff.disabled = !M().inAll().some((m) => M().isOn(m.id));
   }
 
+  /**
+   * Runs a once-macro from a button — with feedback when it couldn't do anything because a spell
+   * it casts needs more magic than there is: the button shakes, the game's spell-fail sound plays,
+   * and a notice says how much it costs and when it'll be ready.
+   */
+  function run(id, el) {
+    const m = M().get(id);
+    if (!m) return 0;
+    const spells = m.steps.filter((x) => x.action === 'spell.cast').map((x) => x.params && x.params.spell);
+    const n = M().runOnce(id);
+    if (n > 0 || !spells.length) {
+      CA.Util.sound('snd/clickOn2.mp3');
+      return n;
+    }
+    CA.Util.sound('snd/spellFail.mp3');
+    if (el && el.classList) {
+      el.classList.remove('ca-shake');
+      void el.offsetWidth; // restart the animation
+      el.classList.add('ca-shake');
+      setTimeout(() => el.classList.remove('ca-shake'), 500);
+    }
+    const mg = CA.Grimoire.magicNow();
+    if (!mg) {
+      CA.Util.notify(m.name, 'The Grimoire isn’t open yet (Wizard tower level 1).', [22, 11], 3);
+      return 0;
+    }
+    const s = CA.Grimoire.spells().find((x) => spells.includes(x.key) && !x.affordable);
+    if (s) {
+      const { span } = CA.UI.Plot.fmt;
+      const when = Number.isFinite(s.wait) ? `ready in ${span(s.wait)}` : `more than your maximum of ${Math.floor(mg.max)}`;
+      CA.Util.notify('Not enough magic', `${esc(s.name)} needs <b>${s.cost}</b> magic — you have ${Math.floor(mg.magic)} (${when}).`, s.icon, 3);
+    }
+    return 0;
+  }
+
   function rerender() {
     if (CA.UI.Menu.isOpen()) CA.UI.Menu.render();
   }
@@ -455,8 +490,7 @@ CA.UI.MacrosPage = (() => {
         M().toggle(id);
         return true;
       case 'macro-run':
-        CA.Util.sound('snd/clickOn2.mp3');
-        M().runOnce(id);
+        run(id, t);
         return true;
       case 'macro-fav': {
         CA.Util.sound('snd/tick.mp3');
@@ -540,5 +574,5 @@ CA.UI.MacrosPage = (() => {
     CA.UI.Pages.register({ id: 'clickers', label: 'Macros', icon: 'bolt', order: 70, html, mount, unmount, tick: () => sync(root) });
   }
 
-  return { init, row, status, sync, handle, icon, edit, draft: () => draft };
+  return { init, row, status, sync, handle, icon, edit, run, draft: () => draft };
 })();

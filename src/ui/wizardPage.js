@@ -129,7 +129,7 @@ CA.UI.WizardPage = (() => {
         meta.textContent = `${Number.isFinite(s.cost) ? s.cost : '—'} magic${fail}${!s.affordable && Number.isFinite(s.wait) && s.wait > 0 ? ` · ready in ${span(s.wait)}` : ''}`;
       }
       const btn = el.querySelector('[data-wiz-cast-btn]');
-      if (btn) btn.disabled = !s.affordable;
+      if (btn) btn.classList.toggle('ca-unaffordable', !s.affordable);
       const fav = el.querySelector('[data-wiz-fav]');
       if (fav) {
         const on = CA.Macros.isFav(s.id);

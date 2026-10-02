@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## 2.8.0 — 2026-10-02
+
+- **Feedback when a spell needs more magic:** cast buttons stay clickable (dimmed) when you can't afford the spell;
+  clicking one shakes it, plays the game's spell-fail sound and says the cost, your magic and when it'll be ready.
+  Spell buttons on the left panel do the same.
+- **Minigame widgets**, each in its minigame's colours, opening it on click:
+  - **Garden** — plants at each growth stage (bud, sprout, bloom, mature; the game's own thresholds) and a countdown
+    to the next garden tick.
+  - **Stock market** — how many different stocks you hold, the last market tick's change for the stocks you held
+    going into it ($ and cookies), and a countdown to the next tick.
+  - **Grimoire** — magic meter and time until full.
+- **Latest events widget is configurable:** ⚙ sets how many events to keep (scrollable) and which types to show;
+  add as many as you like.
+
 ## 2.7.0 — 2026-10-02
 
 - **Drops split into unboosted / CpS boost:** a drop's payout scales with CpS, so under a CpS effect part of it is the

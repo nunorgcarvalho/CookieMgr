@@ -23,7 +23,7 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 | **Widget** | Something on the game's left panel: a macro's button, the Running now bar, quick stats, events. |
 
-## Features (v2.7)
+## Features (v2.8)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
 **Events**, **Graphs**, **Stock market**, **Wizard tower**, **Macros**, **Widgets** and **Settings**. Hovering an icon slides its name out to the left.
@@ -179,7 +179,8 @@ The **Wizard tower** page is the Grimoire, CookieMgr-style:
 - **Grimoire** — the magic meter (now / max, refill per second, time until full) and spells cast.
 - **Spells** — every spell with its live cost and backfire chance, a **Cast** button (or how long until you can
   afford it, from the game's own refill formula) and a ★ for its own button on the left panel. Each spell is a built-in
-  "Cast …" macro, so it can have a hotkey too.
+  "Cast …" macro, so it can have a hotkey too. A spell you can't afford yet stays clickable but dimmed: clicking it
+  shakes the button and tells you its cost, your magic, and when it'll be ready (the same on its left-panel button).
 - **Auto-cast** — the built-in, non-removable **Force the Hand of Fate on Click frenzy**: while it's on, as soon as a
   Click frenzy is running *and* there's enough magic, it casts Force the Hand of Fate (so a frenzy that starts when
   you're short of magic still gets its cast once the magic is there). Pair it with the Golden cookies macro to pop the
@@ -206,9 +207,16 @@ always grab them again). Drag them anywhere; hover for ×.
   Running now card.)
 - **Quick stats** — CpS + clicking, actual CpS (last minute), when this run started, upgrades, prestige level (and the
   most you'd reach by ascending now), achievements, and all-time cookies baked.
-- **Latest events** — the six newest entries in the event log.
+- **Latest events** — the newest entries in the event log, scrollable. Its ⚙ sets how many to keep and which event
+  types to show; add as many as you like (one for golden cookies, one for trades…).
+- **Garden** — how many plants are at each stage of growth (bud, sprout, bloom, mature) and a countdown to the next
+  garden tick. Click it to open the Garden.
+- **Stock market** — how many different stocks you hold, what the last market tick did to the ones you held going into
+  it (in $ and cookies), and a countdown to the next tick. Click it to open the Stock market.
+- **Grimoire** — your magic meter and how long until it's full. Click it to open the Grimoire.
 
-Quick stats and Latest events are framed boxes, dragged by their title bar and folded with ▾. **Resize** any widget
+The Garden, Stock market and Grimoire widgets are styled in their minigame's colours. Framed boxes (all but the
+buttons and the status bar) are dragged by their title bar and folded with ▾. **Resize** any widget
 from its bottom-right corner: buttons and the status bar scale up or down keeping their shape, framed boxes take any
 width and height. Options: show/hide them all, and lock them so they can't be moved or resized by accident.
 Positions are kept relative to the panel with CSS alone, so widgets follow the window (and Cookie Monster's layout

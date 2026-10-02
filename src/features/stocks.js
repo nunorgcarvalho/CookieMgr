@@ -110,9 +110,43 @@ CA.Stocks = (() => {
 
   function sample() {
     const m = minigame();
-    if (!m || holdingsFor !== CA.Store.saveId()) return;
+    if (!m) return;
+    watchTicks(m);
+    if (holdingsFor !== CA.Store.saveId()) return;
     ensurePriceStates(m);
     m.goodsById.forEach(updateHolding);
+  }
+
+  // ---- market ticks ---------------------------------------------------------------------
+  // The market moves once a tick (M.ticks counts them; every 60 s by default). At each tick we
+  // note what you held and the prices, so the change over the last tick — for the stocks you held
+  // going into it — is Σ shares then × (price now − price then).
+
+  let tickSnap = null; // { ticks, goods: [{ stock, val }] }
+  let lastTick = null; // { dollars, cookies, held, t }
+
+  function watchTicks(m) {
+    const ticks = m.ticks || 0;
+    if (tickSnap && tickSnap.ticks === ticks) return;
+    if (tickSnap) {
+      let dollars = 0;
+      let held = 0;
+      m.goodsById.forEach((g, i) => {
+        const before = tickSnap.goods[i];
+        if (!before || !(before.stock > 0)) return;
+        held++;
+        dollars += before.stock * (priceOf(g) - before.val);
+      });
+      lastTick = { dollars, cookies: dollars * (Game.cookiesPsRawHighest || 0), held, t: Date.now() };
+    }
+    tickSnap = { ticks, goods: m.goodsById.map((g) => ({ stock: g.stock || 0, val: priceOf(g) })) };
+  }
+
+  /** Seconds until the market's next tick (null without the minigame). */
+  function nextTickIn() {
+    const m = minigame();
+    if (!m || !Number.isFinite(m.tickT) || !m.secondsPerTick) return null;
+    return Math.max(0, (Game.fps * m.secondsPerTick - m.tickT) / Game.fps);
   }
 
   /** Current totals plus a per-stock breakdown; null while the Bank minigame isn't open. */
@@ -273,5 +307,5 @@ CA.Stocks = (() => {
     refresh();
   }
 
-  return { init, refresh, MODES, list, portfolioNow, minigame };
+  return { init, refresh, MODES, list, portfolioNow, minigame, lastTick: () => lastTick, nextTickIn, sample };
 })();

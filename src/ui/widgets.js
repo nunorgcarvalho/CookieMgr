@@ -5,8 +5,9 @@
 //            removes it.
 //   status   "Running now" as a status bar: an icon per running macro, pulsing while its actions
 //            are doing something; hover one for the details, click to open the Macros page
-//   stats    CpS, actual CpS, bank and next prestige level at a glance (a framed box)
-//   events   the latest events from the event log (a framed box)
+//   stats    CpS, actual CpS, run, upgrades, prestige, achievements at a glance (a framed box)
+//   events   the latest events — how many and which types are up to you; add as many as you like
+//   garden / market / grimoire   one per minigame: its state at a glance, click to open it
 //
 // Two looks: framed boxes (dragged by their title bar) and bare widgets — buttons and bars with
 // no frame, dragged from anywhere (a press that doesn't move is a click). Every widget resizes from
@@ -133,17 +134,133 @@ CA.UI.Widgets = (() => {
     return achTotal;
   }
 
-  function eventsHtml() {
-    const list = CA.EventLog.list().slice(-6).reverse();
-    if (!list.length) return '<div class="ca-w-empty">Nothing has happened yet.</div>';
+  // ---- latest events (configurable) ----------------------------------------------------------
+
+  const DEFAULT_EVENTS = 8;
+  const eventCount = (inst) => Math.max(1, Math.min(200, Math.round(inst.count || DEFAULT_EVENTS)));
+
+  function eventsHtml(inst) {
+    if (inst.config) return eventsConfigHtml(inst);
+    const types = Array.isArray(inst.types) && inst.types.length ? inst.types : null;
+    const list = CA.EventLog.list(types).slice(-eventCount(inst)).reverse();
+    if (!list.length) return `<div class="ca-w-empty">${types ? 'No events of the chosen types yet.' : 'Nothing has happened yet.'}</div>`;
     return `<div class="ca-w-events">${list.map((e) => CA.UI.EventsPage.rowHtml(e)).join('')}</div>`;
+  }
+
+  function eventsConfigHtml(inst) {
+    const chosen = new Set(inst.types || []);
+    const t = CA.EventLog.types();
+    return (
+      '<div class="ca-w-config">' +
+      `<label class="ca-w-field"><span>Keep the last</span><input type="number" min="1" max="200" value="${eventCount(inst)}" data-w-count><span>events</span></label>` +
+      '<div class="ca-w-field-label">Show (none ticked = all)</div>' +
+      '<div class="ca-w-chips">' +
+      Object.keys(t)
+        .map(
+          (k) =>
+            `<button type="button" class="ca-w-chip${chosen.has(k) ? ' on' : ''}" data-w-type="${esc(k)}" style="--c:${t[k].color}">${I(t[k].icon, 11)}${esc(t[k].name)}</button>`
+        )
+        .join('') +
+      '</div>' +
+      '<button type="button" class="ca-w-done" data-w-config-done>Done</button>' +
+      '</div>'
+    );
+  }
+
+  // ---- minigame widgets ---------------------------------------------------------------------
+  // Garden (Farm), Stock market (Bank) and Grimoire (Wizard tower): each shows its minigame's
+  // state; a click opens that minigame in the game and scrolls to it.
+
+  function openMinigame(building) {
+    const b = Game.Objects && Game.Objects[building];
+    if (!b || !b.minigame || typeof b.switchMinigame !== 'function') {
+      CA.Util.notify(building, 'This minigame isn’t unlocked yet (the building needs level 1 — a sugar lump).', CA.ICON, 3);
+      return;
+    }
+    if (!b.onMinigame) b.switchMinigame(1);
+    const row = document.getElementById(`row${b.id}`);
+    if (row && row.scrollIntoView) row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+
+  const STAGES = ['bud', 'sprout', 'bloom', 'mature'];
+
+  /** Plants per growth stage — the game's own thresholds: ⅓, ⅔ and all of a plant's maturity. */
+  function gardenInfo() {
+    const farm = Game.Objects && Game.Objects.Farm;
+    const M = farm && farm.minigame;
+    if (!M || !M.plot || !M.plantsById) return null;
+    const counts = [0, 0, 0, 0];
+    M.plot.forEach((rowTiles) =>
+      (rowTiles || []).forEach((tile) => {
+        if (!tile || !tile[0]) return;
+        const me = M.plantsById[tile[0] - 1];
+        if (!me) return;
+        const age = tile[1];
+        counts[age >= me.mature ? 3 : age >= me.mature * 0.666 ? 2 : age >= me.mature * 0.333 ? 1 : 0]++;
+      })
+    );
+    const next = M.nextStep ? Math.max(0, (M.nextStep - Date.now()) / 1000) : null;
+    return { counts, next, step: M.stepT || 0 };
+  }
+
+  const bar = (frac) => `<div class="ca-mg-bar"><i style="width:${Math.round(Math.max(0, Math.min(1, frac)) * 100)}%"></i></div>`;
+  const locked = (what) => `<div class="ca-w-empty">${what} isn’t unlocked yet.</div>`;
+
+  function gardenHtml() {
+    const { span } = CA.UI.Plot.fmt;
+    const g = gardenInfo();
+    if (!g) return locked('The Garden');
+    return (
+      '<div class="ca-mg" data-w-open-mg="Farm">' +
+      `<div class="ca-mg-stages">${STAGES.map((st, i) => `<span class="ca-mg-stage s${i}"><b>${g.counts[i]}</b><em>${st}</em></span>`).join('')}</div>` +
+      `<div class="ca-mg-line"><span>Next tick</span><b>${g.next == null ? '—' : span(g.next)}</b></div>` +
+      (g.next != null && g.step ? bar(1 - g.next / g.step) : '') +
+      '</div>'
+    );
+  }
+
+  function marketHtml() {
+    const { span, beautify } = CA.UI.Plot.fmt;
+    const m = CA.Stocks.minigame();
+    if (!m) return locked('The Stock market');
+    const owned = m.goodsById.filter((g) => g.stock > 0).length;
+    const last = CA.Stocks.lastTick();
+    const next = CA.Stocks.nextTickIn();
+    const signed = (v, unit) => `${v < 0 ? '−' : '+'}${unit}${beautify(Math.abs(v), unit ? 2 : 1)}`;
+    return (
+      '<div class="ca-mg" data-w-open-mg="Bank">' +
+      `<div class="ca-mg-line big"><span>Holding</span><b>${owned} <em>of ${m.goodsById.length} stocks</em></b></div>` +
+      `<div class="ca-mg-line"><span>Last tick</span>${
+        last && last.held
+          ? `<b class="${last.dollars < 0 ? 'neg' : 'pos'}">${signed(last.dollars, '$')} <em>${signed(last.cookies, '')} cookies</em></b>`
+          : '<b><em>no stocks held into it</em></b>'
+      }</div>` +
+      `<div class="ca-mg-line"><span>Next tick</span><b>${next == null ? '—' : span(next)}</b></div>` +
+      (next != null && m.secondsPerTick ? bar(1 - next / m.secondsPerTick) : '') +
+      '</div>'
+    );
+  }
+
+  function grimoireHtml() {
+    const { span } = CA.UI.Plot.fmt;
+    const mg = CA.Grimoire.magicNow();
+    if (!mg) return locked('The Grimoire');
+    return (
+      '<div class="ca-mg" data-w-open-mg="Wizard tower">' +
+      `<div class="ca-mg-magic"><i style="width:${Math.round((mg.magic / mg.max) * 100)}%"></i><span>${Math.floor(mg.magic)} / ${Math.floor(mg.max)} magic</span></div>` +
+      `<div class="ca-mg-line"><span>Full in</span><b>${mg.fullIn === 0 ? 'full' : Number.isFinite(mg.fullIn) ? span(mg.fullIn) : '—'}</b></div>` +
+      '</div>'
+    );
   }
 
   function registerBuiltins() {
     defineType({ id: 'macro', name: 'Macro button', icon: 'star', bare: true, hidden: true, resize: 'scale', html: macroHtml, update: macroUpdate });
     defineType({ id: 'status', name: 'Running now', icon: 'play', desc: 'A status bar: an icon for each running macro, pulsing while it works. Hover an icon for what its actions have done.', bare: true, single: true, resize: 'scale', html: statusHtml, update: statusUpdate });
     defineType({ id: 'stats', name: 'Quick stats', icon: 'graphs', desc: 'CpS + clicking, actual CpS, when this run started, upgrades, prestige level (and the most you could reach now), achievements and all-time cookies baked.', width: 190, single: true, resize: 'free', html: statsHtml });
-    defineType({ id: 'events', name: 'Latest events', icon: 'events', desc: 'The six newest entries in the event log.', width: 260, single: true, resize: 'free', html: eventsHtml });
+    defineType({ id: 'events', name: 'Latest events', icon: 'events', desc: 'The newest entries in the event log — ⚙ to choose how many and which types. Add as many as you like (one for golden cookies, one for trades…).', width: 260, resize: 'free', config: true, html: eventsHtml });
+    defineType({ id: 'garden', name: 'Garden', icon: 'leaf', theme: 'garden', desc: 'Plants at each stage of growth (bud, sprout, bloom, mature) and a countdown to the next garden tick. Click it to open the Garden.', width: 210, single: true, resize: 'free', html: gardenHtml });
+    defineType({ id: 'market', name: 'Stock market', icon: 'stocks', theme: 'market', desc: 'How many different stocks you hold, what the last market tick did to them, and when the next one comes. Click it to open the Stock market.', width: 220, single: true, resize: 'free', html: marketHtml });
+    defineType({ id: 'grimoire', name: 'Grimoire', icon: 'wizard', theme: 'grimoire', desc: 'Your magic meter and how long until it’s full. Click it to open the Grimoire.', width: 200, single: true, resize: 'free', html: grimoireHtml });
   }
 
   // ---- instances ------------------------------------------------------------------------------
@@ -247,6 +364,7 @@ CA.UI.Widgets = (() => {
     layer.id = 'CookieMgrWidgets';
     layer.addEventListener('mousedown', onMouseDown);
     layer.addEventListener('click', onClick);
+    layer.addEventListener('input', onInput);
     host.appendChild(layer);
     return layer;
   }
@@ -265,9 +383,10 @@ CA.UI.Widgets = (() => {
       );
     }
     return (
-      `<div class="ca-w${w.collapsed ? ' collapsed' : ''}${w.h ? ' sized' : ''}" data-widget="${w.id}" style="width:${w.w || t.width}px${w.h && !w.collapsed ? `;height:${w.h}px` : ''}">` +
+      `<div class="ca-w${w.collapsed ? ' collapsed' : ''}${w.h ? ' sized' : ''}${t.theme ? ` ca-w-theme-${t.theme}` : ''}" data-widget="${w.id}" style="width:${w.w || t.width}px${w.h && !w.collapsed ? `;height:${w.h}px` : ''}">` +
       '<div class="ca-w-head" data-w-drag>' +
       `${I(t.icon, 12)}<span class="ca-w-title">${esc(t.name)}</span>` +
+      (t.config ? `<button type="button" class="ca-w-btn" data-w-config aria-label="Settings">${I('settings', 10)}</button>` : '') +
       `<button type="button" class="ca-w-btn" data-w-collapse aria-label="${w.collapsed ? 'Expand' : 'Collapse'}">${w.collapsed ? '▸' : '▾'}</button>` +
       `<button type="button" class="ca-w-btn" data-w-remove aria-label="Remove widget">${I('close', 10)}</button>` +
       '</div>' +
@@ -335,7 +454,7 @@ CA.UI.Widgets = (() => {
     if (!layer || !layer.isConnected) return render();
     if (!S().get('widgetsShown') || (press && press.moved)) return;
     widgets.forEach((w) => {
-      if (w.collapsed) return;
+      if (w.collapsed || w.config) return;
       const body = layer.querySelector(`[data-widget="${w.id}"] [data-w-body]`);
       const t = typeById[w.type];
       if (!body || !t) return;
@@ -482,9 +601,40 @@ CA.UI.Widgets = (() => {
     if (trig) {
       const m = CA.Macros.get(trig.dataset.wTrigger);
       if (!m) return;
-      CA.Util.sound(m.mode === 'once' || !CA.Macros.isOn(m.id) ? 'snd/clickOn2.mp3' : 'snd/clickOff2.mp3');
-      CA.Macros.trigger(m.id);
+      if (m.mode !== 'once') CA.Util.sound(CA.Macros.isOn(m.id) ? 'snd/clickOff2.mp3' : 'snd/clickOn2.mp3'); // once macros: run() picks the sound
+      if (m.mode === 'once') CA.UI.MacrosPage.run(m.id, trig);
+      else CA.Macros.trigger(m.id);
       tick();
+      return;
+    }
+    if (e.target.closest('[data-w-config]')) {
+      CA.Util.sound('snd/tick.mp3');
+      w.config = !w.config;
+      changed();
+      return;
+    }
+    if (e.target.closest('[data-w-config-done]')) {
+      CA.Util.sound('snd/tick.mp3');
+      w.config = false;
+      changed();
+      return;
+    }
+    const typeChip = e.target.closest('[data-w-type]');
+    if (typeChip) {
+      CA.Util.sound('snd/tick.mp3');
+      const set = new Set(w.types || []);
+      const k = typeChip.dataset.wType;
+      if (set.has(k)) set.delete(k);
+      else set.add(k);
+      w.types = [...set];
+      typeChip.classList.toggle('on', set.has(k));
+      CA.Events.emit('widgets');
+      return;
+    }
+    const mg = e.target.closest('[data-w-open-mg]');
+    if (mg) {
+      CA.Util.sound('snd/tick.mp3');
+      openMinigame(mg.dataset.wOpenMg);
       return;
     }
     const open = e.target.closest('[data-w-open]');
@@ -497,12 +647,23 @@ CA.UI.Widgets = (() => {
     if (ca && CA.UI.MacrosPage.handle(ca.dataset.ca, ca)) tick();
   }
 
+  function onInput(e) {
+    const el = e.target;
+    if (!el.matches || !el.matches('[data-w-count]')) return;
+    const box = el.closest('[data-widget]');
+    const w = box && widgets.find((x) => x.id === box.dataset.widget);
+    const n = Math.round(Number(el.value));
+    if (!w || !Number.isFinite(n) || n < 1) return;
+    w.count = Math.min(200, n);
+    CA.Events.emit('widgets');
+  }
+
   // ---- save / load ------------------------------------------------------------------------
 
   const round = (v) => Math.round(v * 1000) / 1000;
 
   function serialize() {
-    return widgets.map(({ id, type, x, y, collapsed, macro, scale, w, h }) => ({
+    return widgets.map(({ id, type, x, y, collapsed, macro, scale, w, h, count, types: kinds }) => ({
       id,
       type,
       x: round(x),
@@ -512,6 +673,8 @@ CA.UI.Widgets = (() => {
       ...(scale && scale !== 1 ? { scale: round(scale) } : {}),
       ...(w ? { w } : {}),
       ...(h ? { h } : {}),
+      ...(count ? { count } : {}),
+      ...(kinds && kinds.length ? { types: kinds.slice() } : {}),
     }));
   }
 
@@ -533,6 +696,8 @@ CA.UI.Widgets = (() => {
         ...(Number.isFinite(w.scale) ? { scale: Math.max(SCALE_MIN, Math.min(SCALE_MAX, w.scale)) } : {}),
         ...(Number.isFinite(w.w) ? { w: Math.max(MIN_W, w.w) } : {}),
         ...(Number.isFinite(w.h) ? { h: Math.max(MIN_H, w.h) } : {}),
+        ...(Number.isFinite(w.count) ? { count: w.count } : {}),
+        ...(Array.isArray(w.types) ? { types: w.types.map(String) } : {}),
       }));
     render();
     reconcile();
