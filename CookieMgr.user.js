@@ -12,6 +12,7 @@ const readyCheck = setInterval(() => {
   const Game = (typeof unsafeWindow !== 'undefined' ? unsafeWindow : window).Game;
   if (typeof Game !== 'undefined' && Game.ready) {
     clearInterval(readyCheck);
-    Game.LoadMod(COOKIE_MGR_URL);
+    // timestamp: always the newest build, never a cached copy (GitHub Pages allows 10 minutes)
+    Game.LoadMod(`${COOKIE_MGR_URL}?v=${Date.now()}`);
   }
 }, 1000);

@@ -248,8 +248,11 @@ The **Stock market** tab in the CookieMgr panel has:
 Create a bookmark with this as the URL, then click it with the game open:
 
 ```text
-javascript:(function(){Game.LoadMod('https://nunorgcarvalho.github.io/CookieMgr/dist/CookieMgr.js');}());
+javascript:(function(){Game.LoadMod('https://nunorgcarvalho.github.io/CookieMgr/dist/CookieMgr.js?v='+Date.now());}());
 ```
+
+The `?v=` timestamp makes the browser fetch the newest build every time — without it, GitHub Pages lets the
+browser reuse a cached copy for up to 10 minutes after an update.
 
 ### Userscript
 
