@@ -807,8 +807,8 @@
 }
 #CookieMgrMenu .ca-tip {
   display: none;
-  position: absolute;
-  z-index: 5;
+  position: fixed;
+  z-index: 100000;
   max-width: 270px;
   min-width: 150px;
   padding: 7px 10px;

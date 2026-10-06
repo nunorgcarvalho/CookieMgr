@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 2.12.1 — 2026-10-05
+
+- **Fix: minigame widgets now take you to the minigame** from anywhere: a click closes whatever menu is open
+  (CookieMgr's, Stats, Options…) before opening the minigame, then scrolls to the top of its building's row.
+- **Fix: chart hover boxes were cut off** at the edges of their card; they now stay whole and inside the window.
+
 ## 2.12.0 — 2026-10-05
 
 - **Store side switch:** a small column on the left edge of the store, level with the buildings:

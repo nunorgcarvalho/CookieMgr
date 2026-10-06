@@ -158,9 +158,14 @@ CA.UI.WidgetTypes = (() => {
       CA.Util.notify(building, 'This minigame isn’t unlocked yet (the building needs level 1 — a sugar lump).', CA.ICON, 3);
       return;
     }
+    // the building rows are hidden while a menu (ours, Stats, Options…) is open: close it first
+    if (Game.onMenu && typeof Game.ShowMenu === 'function') Game.ShowMenu(Game.onMenu);
     if (!b.onMinigame) b.switchMinigame(1);
-    const row = document.getElementById(`row${b.id}`);
-    if (row && row.scrollIntoView) row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    // after the rows are back on screen: the minigame sits at the top of its building's row
+    setTimeout(() => {
+      const row = document.getElementById(`row${b.id}`);
+      if (row && row.scrollIntoView) row.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }, 50);
   }
 
   const RING_R = 19;

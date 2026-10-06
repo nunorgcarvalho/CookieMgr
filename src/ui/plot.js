@@ -990,14 +990,20 @@ CA.UI.Plot = (() => {
       tipEl.innerHTML = html;
       tipEl.style.display = html ? 'block' : 'none';
       if (!html) return;
+      // fixed to the window, so the card's edges (overflow: hidden) never cut it off
       const tw = tipEl.offsetWidth;
       const th = tipEl.offsetHeight;
-      let left = hover.x + 16;
-      if (left + tw > w - 4) left = hover.x - tw - 16;
-      let top = hover.y + 12;
-      if (top + th > h) top = Math.max(2, h - th - 2);
-      tipEl.style.left = Math.max(2, left) + 'px';
-      tipEl.style.top = top + 'px';
+      const r = canvas.getBoundingClientRect();
+      const W = window.innerWidth || r.right;
+      const H = window.innerHeight || r.bottom;
+      const vx = r.left + hover.x;
+      const vy = r.top + hover.y;
+      let left = vx + 16;
+      if (left + tw > W - 4) left = vx - tw - 16;
+      let top = vy + 12;
+      if (top + th > H - 4) top = H - th - 4;
+      tipEl.style.left = Math.max(4, left) + 'px';
+      tipEl.style.top = Math.max(4, top) + 'px';
     }
 
     function barTip(x, bar) {
