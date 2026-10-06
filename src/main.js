@@ -36,6 +36,7 @@ const mod = {
     CA.Macros.init();
     CA.Grimoire.init();
     CA.Garden.init();
+    CA.Shop.init();
     CA.Stocks.init();
     CA.StockLog.init();
     CA.History.init();
@@ -48,6 +49,7 @@ const mod = {
     CA.UI.Widgets.init();
     CA.UI.WizardPage.init();
     CA.UI.GardenPage.init();
+    CA.UI.StoreSwitch.init();
     CA.UI.StockGraph.init();
     CA.UI.StockPerf.init();
     CA.UI.StockLog.init();

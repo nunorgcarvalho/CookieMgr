@@ -43,6 +43,7 @@ const MODULES = [
   'features/stockLog.js',
   'features/history.js',
   'features/cookieMonster.js',
+  'features/shop.js',
   'features/gameEvents.js',
   'ui/components.js',
   'ui/icons.js',
@@ -60,6 +61,7 @@ const MODULES = [
   'ui/widgetTypes.js',
   'ui/wizardPage.js',
   'ui/gardenPage.js',
+  'ui/storeSwitch.js',
   'ui/menu.js',
   'main.js',
 ];

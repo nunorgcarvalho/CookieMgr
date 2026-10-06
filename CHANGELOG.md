@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 2.12.0 — 2026-10-05
+
+- **Store side switch:** a small column on the left edge of the store, level with the buildings:
+  - **Building sort** (needs Cookie Monster) — best buy first (Cookie Monster's payback period for the amount you're
+    buying: ×1, ×10 or ×100), next achievement first, or the game's order. It sets Cookie Monster's own sort setting,
+    so it stays in step with Cookie Monster's menu.
+  - **Round up** — with ×10 or ×100 selected, a click buys only what it takes to reach the next multiple (37 owned,
+    ×10 → buys 3). The store's price shows the rounded amount too. Also in Settings → Store.
+- **Cookie Monster dependency:** without Cookie Monster the sort buttons are locked and say so; clicking one loads
+  Cookie Monster. Settings → Integrations lists what needs it.
+
 ## 2.11.0 — 2026-10-05
 
 - **Garden page** (new, under the Wizard tower): your plot as it is now — each plant at its growth stage, the chance

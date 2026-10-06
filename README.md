@@ -23,7 +23,7 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 | **Widget** | Something on the game's left panel: a macro's button, the Running now bar, quick stats, events, minigames. |
 
-## Features (v2.11)
+## Features (v2.12)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
 **Events**, **Graphs**, **Stock market**, **Wizard tower**, **Garden**, **Macros**, **Widgets** and **Settings**. Hovering an icon slides its name out to the left.
@@ -263,6 +263,19 @@ size, size (or a title, for framed boxes), and whatever that widget adds — whi
 Positions are kept relative to the panel with CSS alone, so widgets follow the window (and Cookie Monster's layout
 changes) smoothly instead of jumping when the page loads; positions and sizes are saved with your settings.
 
+### Store
+
+A small switch sticks out of the left edge of the store, level with the building list (hover a button for what it
+does; Settings → Store can hide it):
+
+- **Building sort** — best buy first (Cookie Monster's payback period for the amount you're buying: ×1, ×10 or
+  ×100), next achievement first (cheapest to reach a building's next count achievement), or the game's own order.
+  It flips Cookie Monster's own sort setting, so it **needs Cookie Monster**: without it the buttons are locked, and
+  clicking one loads Cookie Monster.
+- **Round up** (⌈10⌉) — with ×10 or ×100 selected, a click buys only what it takes to reach the next multiple: 37
+  owned and ×10 buys 3 (to 40); on a multiple it buys the full 10. The store's price follows (Cookie Monster's own
+  price display shows the full bulk).
+
 ### Settings
 
 Every row has its icon. Turn macros off when ascending (default on), on/off notifications, golden cookie notifications
@@ -399,6 +412,7 @@ src/
     gameEvents.js    logs wrinkler pops, sugar lumps and achievements as events
     grimoire.js      spells as actions/macros, magic conditions, spell events, the auto-cast macro
     garden.js        garden profiles, the death-chance maths, the auto-gardener macro
+    shop.js          the building store: Cookie Monster sort, rounding bulk buys up
   ui/
     components.js    HTML snippets: switch, hotkey chip, icon, button
     icons.js         the inline-SVG icon set used everywhere
@@ -413,6 +427,7 @@ src/
     widgetTypes.js   what each widget shows (macro buttons, status bar, stats, events, minigames)
     wizardPage.js    the Wizard tower page and the toolbar inside the Grimoire
     gardenPage.js    the Garden page: the plot against the active profile, the auto-gardener, profiles
+    storeSwitch.js   the store side switch (building sort, round up)
     stockGraph.js    the Stock market page charts: portfolio value / per-stock prices, rolling performance
     stockLog.js      the trade ticker + transaction history table, also on the Stock market page
     bankToolbar.js   Sell all / autobuyer / CookieMgr buttons inside the Bank minigame

@@ -105,6 +105,7 @@ CA.UI.Menu = (() => {
       optionsCard('Events', 'events', 'events') +
       optionsCard('Stock market', 'stocks', 'stocks') +
       optionsCard('Wizard tower', 'wizard', 'grimoire') +
+      optionsCard('Store', 'dollar', 'store') +
       integrationsCard() +
       '<div class="ca-footer">' +
       `<div>CookieMgr v${CA.VERSION} &middot; <a href="https://github.com/nunorgcarvalho/CookieMgr" target="_blank" rel="noopener">GitHub</a></div>` +
@@ -213,7 +214,8 @@ CA.UI.Menu = (() => {
       '<div class="ca-row ca-row-option">' +
       rowIcon('puzzle') +
       '<div class="ca-row-text"><div class="ca-row-name">Cookie Monster</div>' +
-      `<div class="ca-row-desc" data-ca-cm-status>${loaded ? 'Running.' : 'Not loaded.'} Loads the latest release straight from Cookie Monster's own site.</div></div>` +
+      `<div class="ca-row-desc" data-ca-cm-status>${loaded ? 'Running.' : 'Not loaded.'} Loads the latest release straight from Cookie Monster's own site.</div>` +
+      `<div class="ca-row-desc">${loaded ? '' : '⚠ '}Needed for the store's building sort switch${loaded ? '' : ' (locked until it runs)'}.</div></div>` +
       C.button(loaded ? 'Loaded' : 'Load now', 'data-ca="cm-load" data-ca-cm-load' + (loaded ? ' disabled' : ''), 'ca-btn-small') +
       '</div>' +
       CA.Settings.optionsIn('integrations').map(optionRow).join('') +
