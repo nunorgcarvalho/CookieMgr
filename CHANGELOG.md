@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 2.13.0 — 2026-10-05
+
+- **Every macro switches off when you ascend** (with "Turn off when ascending" on) — the stock autobuyer and the
+  sugar lump harvester no longer keep going.
+- **Big cookie click animation:** a choice on the Big cookie's row — cookie + number (the game's), cookie only, or
+  none. Only CookieMgr's clicks are affected. Also an option of the "Click the big cookie" action in your own macros.
+- **Activity rings on macro buttons:** a band around each button shows how busy it has been over the last few
+  minutes — none when idle, thicker and warmer up to many times a second. Hover for the rate.
+- **Spell buttons show whether you can cast:** muted green with enough magic, muted red without.
+- **Grimoire widget target:** count down to full magic, to a spell's cost, or to a fixed amount (settings ⚙). A tick
+  on the ring marks the target and the widget glows once you have enough.
+- The Auto-gardener's icon now shows (mature Baker's wheat).
+
 ## 2.12.1 — 2026-10-05
 
 - **Fix: minigame widgets now take you to the minigame** from anywhere: a click closes whatever menu is open

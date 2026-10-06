@@ -3018,3 +3018,73 @@
 #CookieMgrStoreSwitch .ca-ss-group.locked .ca-sspop em {
   color: #ffb36a;
 }
+
+/* ---------- v2.13: macro activity rings, spell readiness, Grimoire target ---------- */
+
+/* activity: a band around the button, thicker and warmer the more it has been doing lately */
+#CookieMgrWidgets .ca-wb {
+  position: relative;
+}
+#CookieMgrWidgets .ca-wb-heat {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 0 solid transparent;
+  pointer-events: none;
+  transition:
+    border-width 0.6s,
+    border-color 0.6s,
+    inset 0.6s;
+}
+#CookieMgrWidgets .ca-wb-heat.h1 {
+  inset: -6px;
+  border-width: 1px;
+  border-color: rgba(160, 140, 110, 0.55);
+}
+#CookieMgrWidgets .ca-wb-heat.h2 {
+  inset: -7px;
+  border-width: 2px;
+  border-color: rgba(214, 178, 96, 0.7);
+}
+#CookieMgrWidgets .ca-wb-heat.h3 {
+  inset: -8px;
+  border-width: 3px;
+  border-color: rgba(240, 168, 64, 0.8);
+}
+#CookieMgrWidgets .ca-wb-heat.h4 {
+  inset: -9px;
+  border-width: 4px;
+  border-color: rgba(255, 130, 50, 0.85);
+  box-shadow: 0 0 8px rgba(255, 130, 50, 0.45);
+}
+#CookieMgrWidgets .ca-wb-heat.h5 {
+  inset: -10px;
+  border-width: 5px;
+  border-color: rgba(255, 82, 40, 0.9);
+  box-shadow: 0 0 12px rgba(255, 82, 40, 0.6);
+}
+/* spells: a muted green/red wash for whether there's magic for them right now */
+#CookieMgrWidgets .ca-wb.spell-can {
+  background: radial-gradient(circle at 35% 30%, rgba(96, 140, 84, 0.95), rgba(26, 44, 20, 0.95));
+}
+#CookieMgrWidgets .ca-wb.spell-cant {
+  background: radial-gradient(circle at 35% 30%, rgba(140, 78, 70, 0.95), rgba(44, 20, 18, 0.95));
+}
+#CookieMgrWidgets .ca-wb.spell-cant:not(:hover) {
+  filter: saturate(0.8) brightness(0.85);
+}
+#CookieMgrWidgets .ca-wb-label em.off {
+  color: #e59a8e;
+}
+/* Grimoire: a tick where the target is, and a glow once there's enough */
+#CookieMgrWidgets .ca-orb-mark {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 7;
+  opacity: 0.9;
+}
+#CookieMgrWidgets .ca-orb.ready .ca-orb-ring {
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.7),
+    0 0 12px var(--glow);
+}

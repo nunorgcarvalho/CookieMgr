@@ -28,7 +28,8 @@ CA.Macros = (() => {
       icon: sprite(11, 0, 'img/perfectCookie.png'),
       mode: 'repeat',
       every: 50,
-      steps: [{ action: 'click.bigCookie' }],
+      steps: [{ action: 'click.bigCookie', params: { anim: 'default' } }],
+      options: [{ step: 0, key: 'anim' }],
       defaultKey: 'KeyC',
       inAll: true,
       section: 'autoclickers',
@@ -102,7 +103,6 @@ CA.Macros = (() => {
       every: 1000,
       steps: [{ action: 'stocks.trade' }],
       defaultKey: '',
-      keepOnAscend: true,
       section: 'stocks',
     },
     {
@@ -137,7 +137,6 @@ CA.Macros = (() => {
       steps: [{ action: 'lump.harvest', params: { when: 'ripe' } }],
       options: [{ step: 0, key: 'when' }],
       defaultKey: '',
-      keepOnAscend: true,
       section: 'upkeep',
     },
   ];
@@ -148,6 +147,10 @@ CA.Macros = (() => {
   const status = {}; // id -> { runs, lastRun, steps: [{ total, runs, last, lastAt, error }] }
   let prefs = {}; // id -> { fav }
   let depth = 0;
+  // how busy each macro has been: an exponentially decaying count of the things it did
+  // (time constant ACTIVITY_S), so rate() ≈ things per second over the last few minutes
+  const ACTIVITY_S = 300;
+  const activity = {}; // id -> { h, t }
 
   // ---- definitions --------------------------------------------------------------------
 
@@ -183,7 +186,7 @@ CA.Macros = (() => {
         edge: w.edge === 'while' ? 'while' : 'rise',
       };
     }
-    ['defaultKey', 'keepOnAscend', 'section', 'spell'].forEach((k) => def[k] !== undefined && (m[k] = def[k]));
+    ['defaultKey', 'section', 'spell'].forEach((k) => def[k] !== undefined && (m[k] = def[k]));
     // built-ins can let you choose some of their steps' params right on their row (saved in prefs)
     if (m.builtin && Array.isArray(def.options)) m.options = def.options.filter((o) => m.steps[o.step]);
     return m;
@@ -245,7 +248,6 @@ CA.Macros = (() => {
     delete copy.options;
     delete copy.defaultKey;
     delete copy.section;
-    delete copy.keepOnAscend;
     return save({ ...copy, id: null, builtin: false, name: `${m.name} (copy)`.slice(0, 60) });
   }
 
@@ -281,6 +283,7 @@ CA.Macros = (() => {
     }
     st.runs++;
     st.lastRun = Date.now();
+    if (done > 0) bump(m.id, done);
     return done;
   }
 
@@ -393,6 +396,26 @@ CA.Macros = (() => {
   const runningIds = () => Object.keys(running);
   const statusOf = (id) => status[id] || null;
   const since = (id) => (running[id] ? running[id].since : 0);
+  function bump(id, n) {
+    const now = Date.now();
+    const a = activity[id] || { h: 0, t: now };
+    a.h = a.h * Math.exp(-(now - a.t) / 1000 / ACTIVITY_S) + n;
+    a.t = now;
+    activity[id] = a;
+  }
+  /** Things done per second lately (a group: its members together). */
+  function rate(id) {
+    const m = byId[id];
+    if (m && m.mode === 'group') return membersOf(m).reduce((s, x) => s + rate(x.id), 0);
+    const a = activity[id];
+    return a ? (a.h * Math.exp(-(Date.now() - a.t) / 1000 / ACTIVITY_S)) / ACTIVITY_S : 0;
+  }
+  /** rate() in six bands (0 idle … 5 many per second), for the activity ring on macro buttons. */
+  function activityLevel(id) {
+    const r = rate(id);
+    return r < 0.0005 ? 0 : r < 0.01 ? 1 : r < 0.1 ? 2 : r < 1 ? 3 : r < 10 ? 4 : 5;
+  }
+
   /** A macro's steps with the choices you made on a built-in's row applied. */
   function stepsOf(m) {
     const chosen = (prefs[m.id] && prefs[m.id].params) || {};
@@ -465,7 +488,7 @@ CA.Macros = (() => {
       icon: 'ascend',
       group: 'macros',
       name: 'Turn off when ascending',
-      desc: 'Switches every running macro off as soon as you ascend (the stock autobuyer keeps going).',
+      desc: 'Switches every running macro off as soon as you ascend.',
       default: true,
     });
     CA.Settings.defineOption({
@@ -487,7 +510,7 @@ CA.Macros = (() => {
 
     CA.Events.on('ascend', () => {
       if (!CA.Settings.get('disableOnAscend')) return;
-      const stopping = runningIds().filter((id) => !byId[id].keepOnAscend);
+      const stopping = runningIds();
       if (!stopping.length) return;
       stopping.forEach((id) => set(id, false, { silent: true }));
       CA.Util.notify('CookieMgr', 'Your macros were turned off for your ascension.', [20, 7], 4);
@@ -521,6 +544,8 @@ CA.Macros = (() => {
     setFav,
     stepsOf,
     setParam,
+    rate,
+    activityLevel,
     triggerText,
     serialize,
     load,

@@ -242,12 +242,11 @@ CA.Garden = (() => {
       id: GARDENER,
       name: 'Auto-gardener',
       desc: 'Keeps your garden like the active profile on the Garden page: replants, pulls out what doesn’t belong, saves plants about to die and unlocks new seeds.',
-      icon: { sprite: [0, 0], img: 'img/gardenPlants.png' },
+      icon: { sprite: [4, 0], sheet: 'img/gardenPlants.png' }, // mature Baker's wheat
       mode: 'repeat',
       every: 1000,
       steps: [{ action: 'garden.tend' }],
       defaultKey: '',
-      keepOnAscend: false,
       section: 'garden',
     });
   }

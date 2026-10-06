@@ -7,7 +7,12 @@ CA.UI.C = (() => {
   const esc = (s) => CA.Util.escapeHtml(s);
 
   /** Picture for a clicker/action: a standalone image, or a sprite from img/icons.png. */
-  function icon({ img, icon }) {
+  function icon({ img, icon, sheet }) {
+    // a 48px cell of another sprite sheet (e.g. img/gardenPlants.png)
+    if (sheet) {
+      const [x, y] = icon || [0, 0];
+      return `<span class="ca-icon"><span class="ca-sprite" style="background-image:url(${CA.Util.res(sheet)});background-position:${-x * 48}px ${-y * 48}px"></span></span>`;
+    }
     if (img) return `<span class="ca-icon"><span class="ca-img" style="background-image:url(${CA.Util.res(img)})"></span></span>`;
     const [x, y] = icon || CA.ICON;
     return `<span class="ca-icon"><span class="ca-sprite" style="background-image:url(${CA.Util.res('img/icons.png')});background-position:${-x * 48}px ${-y * 48}px"></span></span>`;

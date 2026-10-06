@@ -157,7 +157,8 @@ Everything CookieMgr automates is a **macro**: one or more **actions** run in or
 The autobuyer is the same switch as on the Stock market page and in the Bank minigame toolbar, and it isn't part
 of "All autoclickers".
 
-Some built-ins have a choice right on their row: the **Season keeper**'s season (it buys that season's biscuit as soon
+Some built-ins have a choice right on their row: how the **Big cookie**'s clicks look (the falling cookie and the
+"+N" number, the cookie only, or nothing — your own clicks are left as the game has them), the **Season keeper**'s season (it buys that season's biscuit as soon
 as you can afford it, switching from any other season, and again whenever it runs out — needs the Season switcher),
 and when the **Sugar lump harvester** picks: **ripe** (always pays) or **mature** (about 3 hours sooner, but with the
 game's 50% chance of getting nothing).
@@ -236,6 +237,9 @@ always grab them again). Drag them anywhere; hover for × and ⚙ (its settings)
 
 - **Macro buttons** — ★ a macro (or a spell) and it gets its own round icon button: click to switch it on/off (it
   glows green while running) or to run it; hover for its name, state and hotkey. Un-star it, or ×, to take it away.
+  A band around the button shows how busy it has been lately — none when idle, thicker and warmer up to many times a
+  second (hover for the rate). A button that casts spells is tinted muted green when there's magic for them, muted
+  red when not.
   Each moves on its own. New buttons line up from the bottom-right corner upwards (clear of the dragon and Santa in
   the bottom-left), starting a new column to the left when one reaches the CookieMgr sidebar.
 - **Running now** — a slim status bar: an icon per running macro, pulsing while its actions are doing something. Hover
@@ -248,7 +252,8 @@ always grab them again). Drag them anywhere; hover for × and ⚙ (its settings)
   event types to show; add as many as you like (one for golden cookies, one for trades…).
 - **Minigames** — one small round widget each, in its minigame's colours: the ring is a timer, a short label sits
   under it, hover for details, click to open the minigame. Unlocked ones only (others say "locked").
-  - **Grimoire** — ring = magic; label = time until it's full.
+  - **Grimoire** — ring = magic; label = time until it's full, or until there's enough for a spell (or a fixed
+    amount) you pick in its settings — a tick on the ring marks it, and it glows once there's enough.
   - **Garden** — ring and label = the next garden tick; four dots count your plants by stage (bud, sprout, bloom, mature).
   - **Stock market** — ring and label = the next market tick; after one, the label is what it did to the stocks you
     held going into it ($; cookies in the popup).
@@ -278,7 +283,7 @@ does; Settings → Store can hide it):
 
 ### Settings
 
-Every row has its icon. Turn macros off when ascending (default on), on/off notifications, golden cookie notifications
+Every row has its icon. Turn every macro off when ascending (default on), on/off notifications, golden cookie notifications
 (a quick popup the moment one is popped), remember which macros were running across reloads, record history, an optional hotkey to open the panel,
 reset hotkeys, checking for updates, stock market indicators, and the History data card (export / import / clear). Under **Integrations**, a **Load now** button loads
 the latest [Cookie Monster](https://github.com/CookieMonsterTeam/CookieMonster) release, and a toggle loads it

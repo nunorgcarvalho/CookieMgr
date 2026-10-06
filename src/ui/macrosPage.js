@@ -40,7 +40,7 @@ CA.UI.MacrosPage = (() => {
   function icon(m, small) {
     const ic = m.icon || {};
     if (ic.ico) return `<span class="ca-icon ca-icon-ico${small ? ' small' : ''}">${I(ic.ico, small ? 16 : 24)}</span>`;
-    return C().icon({ img: ic.img, icon: ic.sprite });
+    return C().icon({ img: ic.img, icon: ic.sprite, sheet: ic.sheet });
   }
 
   function ago(t) {

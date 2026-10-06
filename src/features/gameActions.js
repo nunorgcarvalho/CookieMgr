@@ -47,8 +47,33 @@ CA.GameActions = (() => {
       icon: 'cookie',
       group: 'Clicking',
       unit: 'clicks',
-      run: () => {
-        Game.ClickCookie();
+      // the game draws a falling cookie (prefs.particles) and a "+N" (prefs.numbers) per click;
+      // these switch them off for CookieMgr's clicks only, leaving your own clicks as they are
+      params: [
+        {
+          key: 'anim',
+          label: 'Animation',
+          type: 'select',
+          default: 'default',
+          options: () => [
+            { v: 'default', label: 'cookie + number' },
+            { v: 'noText', label: 'cookie, no number' },
+            { v: 'none', label: 'none' },
+          ],
+        },
+      ],
+      describe: (p) => `Click the big cookie${p.anim === 'none' ? ' (no animation)' : p.anim === 'noText' ? ' (no numbers)' : ''}`,
+      run: (p) => {
+        const prefs = Game.prefs || {};
+        const was = { particles: prefs.particles, numbers: prefs.numbers };
+        if (p.anim === 'noText' || p.anim === 'none') prefs.numbers = 0;
+        if (p.anim === 'none') prefs.particles = 0;
+        try {
+          Game.ClickCookie();
+        } finally {
+          prefs.particles = was.particles;
+          prefs.numbers = was.numbers;
+        }
         return 1;
       },
     });

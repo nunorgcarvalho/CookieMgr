@@ -21,16 +21,45 @@ CA.UI.WidgetTypes = (() => {
 
   // ---- macro buttons ------------------------------------------------------------------------
 
+  /** "20/s", "3/min", "1 per 12m" — how often a macro has been doing things lately. */
+  function rateText(r) {
+    if (r >= 1) return `${r >= 10 ? Math.round(r) : r.toFixed(1)}/s`;
+    if (r * 60 >= 1) return `${Math.round(r * 60)}/min`;
+    return `1 per ${F().span(1 / r)}`;
+  }
+
+  /**
+   * For a once macro that casts spells: whether there's magic for all of them right now
+   * ('can' / 'cant'), or '' when it casts none (or the Grimoire isn't open).
+   */
+  function spellState(m) {
+    if (m.mode !== 'once') return '';
+    const keys = CA.Macros.stepsOf(m).filter((s) => s.action === 'spell.cast').map((s) => s.params && s.params.spell);
+    const mg = keys.length && CA.Grimoire.magicNow();
+    if (!mg) return '';
+    const cost = CA.Grimoire.spells()
+      .filter((s) => keys.includes(s.key))
+      .reduce((sum, s) => sum + (Number.isFinite(s.cost) ? s.cost : Infinity), 0);
+    return mg.magic >= cost ? 'can' : 'cant';
+  }
+
   function macroHtml(inst) {
     const m = CA.Macros.get(inst.macro);
     if (!m) return '';
     const on = CA.Macros.isOn(m.id);
     const key = CA.Settings.getHotkey(`macro.${m.id}`);
     const state = m.mode === 'once' ? 'click to run' : on ? 'on' : 'off';
+    // the ring around the button: thicker and warmer the more it has been doing lately
+    const heat = CA.Macros.activityLevel(m.id);
+    const rate = CA.Macros.rate(m.id);
+    const spell = spellState(m);
     return (
-      `<button type="button" class="ca-wb${on ? ' on' : ''}${m.mode === 'once' ? ' once' : ''}" data-w-trigger="${esc(m.id)}" aria-label="${esc(m.name)}">` +
-      `${CA.UI.MacrosPage.icon(m, true)}</button>` +
-      `<span class="ca-wb-label ca-wt"><b>${esc(m.name)}</b><em class="${on ? 'on' : ''}">${state}${key ? ` · ${esc(CA.Hotkeys.format(key))}` : ''}</em></span>`
+      `<button type="button" class="ca-wb${on ? ' on' : ''}${m.mode === 'once' ? ' once' : ''}${spell ? ` spell-${spell}` : ''}" data-w-trigger="${esc(m.id)}" aria-label="${esc(m.name)}">` +
+      `<span class="ca-wb-heat h${heat}"></span>${CA.UI.MacrosPage.icon(m, true)}</button>` +
+      `<span class="ca-wb-label ca-wt"><b>${esc(m.name)}</b><em class="${on ? 'on' : ''}">${state}${key ? ` · ${esc(CA.Hotkeys.format(key))}` : ''}</em>` +
+      (heat ? `<em>lately ${rateText(rate)}</em>` : '') +
+      (spell ? `<em class="${spell === 'can' ? 'on' : 'off'}">${spell === 'can' ? 'enough magic' : 'not enough magic yet'}</em>` : '') +
+      '</span>'
     );
   }
 
@@ -175,13 +204,15 @@ CA.UI.WidgetTypes = (() => {
    * One round widget: a ring filled to `frac`, an icon in the middle, a short label under it, and
    * a styled popup (rows of [label, value]) on hover. Clicking opens `building`'s minigame.
    */
-  function orb({ theme, building, icon, frac, label, extra, pop }) {
+  function orb({ theme, building, icon, frac, label, extra, pop, mark, ready }) {
     const f = Math.max(0, Math.min(1, Number.isFinite(frac) ? frac : 0));
     return (
-      `<div class="ca-orb ca-orb-${theme}" data-w-open-mg="${esc(building)}">` +
+      `<div class="ca-orb ca-orb-${theme}${ready ? ' ready' : ''}" data-w-open-mg="${esc(building)}">` +
       '<svg class="ca-orb-ring" viewBox="0 0 44 44" aria-hidden="true">' +
       `<circle class="ca-orb-track" cx="22" cy="22" r="${RING_R}"/>` +
       `<circle class="ca-orb-fill" cx="22" cy="22" r="${RING_R}" stroke-dasharray="${RING_C.toFixed(2)}" stroke-dashoffset="${(RING_C * (1 - f)).toFixed(2)}"/>` +
+      // a tick on the ring where a target sits (the Grimoire's chosen amount of magic)
+      (Number.isFinite(mark) ? `<circle class="ca-orb-mark" cx="22" cy="22" r="${RING_R}" stroke-dasharray="1.6 ${RING_C.toFixed(2)}" stroke-dashoffset="${(-RING_C * mark + 0.8).toFixed(2)}"/>` : '') +
       '</svg>' +
       `<span class="ca-orb-ico">${icon}</span>` +
       (extra || '') +
@@ -194,23 +225,48 @@ CA.UI.WidgetTypes = (() => {
   const lockedOrb = (theme, building, icon, name) =>
     orb({ theme, building, icon: I(icon, 18), frac: 0, label: 'locked', pop: [[null, `<b>${name}</b>`], ['', 'not unlocked yet']] });
 
-  function grimoireHtml() {
+  /** What the Grimoire widget counts down to: { magic, name } (full by default; its settings). */
+  function grimoireTarget(inst, mg) {
+    const t = inst.target || 'full';
+    if (t === 'custom') {
+      const n = Math.max(1, Number(inst.targetMagic) || 80);
+      return { magic: n, name: `${n} magic` };
+    }
+    const s = t !== 'full' && CA.Grimoire.spells().find((x) => x.key === t);
+    if (s && Number.isFinite(s.cost)) return { magic: s.cost, name: s.name };
+    return { magic: mg.max, name: 'full' };
+  }
+
+  function grimoireHtml(inst) {
     const { span } = F();
     const mg = CA.Grimoire.magicNow();
     if (!mg) return lockedOrb('grimoire', 'Wizard tower', 'wizard', 'Grimoire');
-    const full = mg.fullIn === 0;
+    const target = grimoireTarget(inst, mg);
+    const isFull = target.name === 'full';
+    const wait = mg.magic >= target.magic ? 0 : CA.Grimoire.secondsUntil(target.magic);
+    const ready = wait === 0;
+    const label = ready ? (isFull ? 'full' : 'ready') : Number.isFinite(wait) ? span(wait) : 'never';
     return orb({
       theme: 'grimoire',
       building: 'Wizard tower',
       icon: I('wizard', 18),
       frac: mg.magic / mg.max,
-      label: full ? 'full' : Number.isFinite(mg.fullIn) ? span(mg.fullIn) : '—',
+      mark: isFull ? null : Math.min(1, target.magic / mg.max),
+      ready: ready && !isFull,
+      label,
       pop: [
         [null, '<b>Grimoire</b>'],
         ['Magic', `${Math.floor(mg.magic)} / ${Math.floor(mg.max)}`],
         ['Refill', mg.perSec ? `+${mg.perSec.toFixed(2)}/s` : 'full'],
-        ['Full in', full ? 'now' : Number.isFinite(mg.fullIn) ? span(mg.fullIn) : '—'],
-      ],
+      ].concat(
+        isFull
+          ? [['Full in', ready ? 'now' : label]]
+          : [
+              ['Target', `${esc(target.name)} (${Math.ceil(target.magic)})`],
+              ['Ready in', ready ? 'now' : target.magic > mg.max ? 'over your maximum' : label],
+              ['Full in', mg.fullIn === 0 ? 'now' : Number.isFinite(mg.fullIn) ? span(mg.fullIn) : '—'],
+            ]
+      ),
     });
   }
 
@@ -352,7 +408,29 @@ CA.UI.WidgetTypes = (() => {
         },
       ],
     });
-    D({ id: 'grimoire', name: 'Grimoire', icon: 'wizard', desc: 'A small round meter: the ring is your magic, the label the time until it’s full. Click it to open the Grimoire.', bare: true, single: true, resize: 'scale', html: grimoireHtml });
+    D({
+      id: 'grimoire',
+      name: 'Grimoire',
+      icon: 'wizard',
+      desc: 'A small round meter: the ring is your magic, the label the time until it’s full — or until there’s enough for a spell you pick in its settings. Click it to open the Grimoire.',
+      bare: true,
+      single: true,
+      resize: 'scale',
+      html: grimoireHtml,
+      settings: [
+        {
+          key: 'target',
+          label: 'Count down to',
+          type: 'select',
+          default: 'full',
+          options: () =>
+            [{ v: 'full', label: 'Full magic' }]
+              .concat(CA.Grimoire.spells().map((s) => ({ v: s.key, label: `${s.name}${Number.isFinite(s.cost) ? ` (${s.cost} magic now)` : ''}` })))
+              .concat([{ v: 'custom', label: 'A fixed amount…' }]),
+        },
+        { key: 'targetMagic', label: 'Fixed amount', type: 'number', min: 1, max: 5000, default: 80, unit: 'magic (when “A fixed amount” is picked)' },
+      ],
+    });
     D({ id: 'garden', name: 'Garden', icon: 'leaf', desc: 'The ring counts down to the next garden tick; the dots under it are your plants by stage (bud, sprout, bloom, mature). Click it to open the Garden.', bare: true, single: true, resize: 'scale', html: gardenHtml });
     D({ id: 'market', name: 'Stock market', icon: 'stocks', desc: 'The ring counts down to the next market tick; the label is what the last tick did to the stocks you held. Click it to open the Stock market.', bare: true, single: true, resize: 'scale', html: marketHtml });
     D({ id: 'pantheon', name: 'Pantheon', icon: 'pantheon', desc: 'Your three slotted spirits, and a ring counting down to the next worship swap. Click it to open the Pantheon.', bare: true, single: true, resize: 'scale', html: pantheonHtml });

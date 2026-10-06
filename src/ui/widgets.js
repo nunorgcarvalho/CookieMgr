@@ -34,7 +34,7 @@ CA.UI.Widgets = (() => {
   const FONT_MAX = 200;
   const MIN_W = 140;
   const MIN_H = 60;
-  const SAVED = ['count', 'types', 'stats', 'font', 'title']; // per-widget settings that are saved
+  const SAVED = ['count', 'types', 'stats', 'font', 'title', 'target', 'targetMagic']; // per-widget settings that are saved
   const TRANSIENT = ['ca-shake']; // classes a refresh leaves alone
   const S = () => CA.Settings;
   const I = (n, s) => CA.UI.Icons.html(n, s);
@@ -470,7 +470,15 @@ CA.UI.Widgets = (() => {
     }
     (t.settings || []).forEach((s) => {
       const cur = w[s.key] !== undefined ? w[s.key] : s.default;
-      if (s.type === 'number') {
+      if (s.type === 'select') {
+        h += field(
+          esc(s.label),
+          `<select data-w-opt="${s.key}" data-type="choice">${s
+            .options()
+            .map((o) => `<option value="${esc(o.v)}"${String(o.v) === String(cur) ? ' selected' : ''}>${esc(o.label)}</option>`)
+            .join('')}</select>`
+        );
+      } else if (s.type === 'number') {
         h += field(esc(s.label), `<input type="number" min="${s.min}" max="${s.max}" value="${esc(cur)}" data-w-opt="${s.key}" data-type="number" data-min="${s.min}" data-max="${s.max}">${s.unit ? `<em>${esc(s.unit)}</em>` : ''}`);
       } else if (s.type === 'multi') {
         const chosen = new Set(cur || []);
@@ -515,7 +523,7 @@ CA.UI.Widgets = (() => {
       if (!Number.isFinite(v)) return;
       if (el.dataset.min) v = Math.max(Number(el.dataset.min), Math.min(Number(el.dataset.max), Math.round(v)));
       if (el.dataset.type === 'percent') v /= 100;
-    } else v = String(v).trim().slice(0, 40);
+    } else v = el.dataset.type === 'choice' ? String(v) : String(v).trim().slice(0, 40);
     const label = el.parentNode.querySelector('.ca-range-val');
     if (label) label.textContent = `${Math.round(el.dataset.type === 'percent' ? v * 100 : v)}%`;
     setOption(w, key, v);
@@ -555,6 +563,8 @@ CA.UI.Widgets = (() => {
         if (Number.isFinite(w.w)) out.w = Math.max(MIN_W, w.w);
         if (Number.isFinite(w.h)) out.h = Math.max(MIN_H, w.h);
         if (Number.isFinite(w.count)) out.count = w.count;
+        if (typeof w.target === 'string') out.target = w.target.slice(0, 40);
+        if (Number.isFinite(w.targetMagic)) out.targetMagic = w.targetMagic;
         if (Number.isFinite(w.font)) out.font = Math.max(FONT_MIN, Math.min(FONT_MAX, w.font));
         if (typeof w.title === 'string') out.title = w.title.slice(0, 40);
         if (Array.isArray(w.types)) out.types = w.types.map(String);
