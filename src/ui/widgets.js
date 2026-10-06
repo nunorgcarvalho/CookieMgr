@@ -173,6 +173,8 @@ CA.UI.Widgets = (() => {
     layer.id = 'CookieMgrWidgets';
     layer.addEventListener('mousedown', onMouseDown);
     layer.addEventListener('click', onClick);
+    layer.addEventListener('mouseover', onLayerHover);
+    layer.addEventListener('mouseleave', () => setLinked(null));
     host.appendChild(layer);
     return layer;
   }
@@ -180,12 +182,15 @@ CA.UI.Widgets = (() => {
   const RESIZE = '<span class="ca-w-resize" data-w-resize aria-label="Resize"></span>';
   const fontOf = (w) => Math.max(FONT_MIN, Math.min(FONT_MAX, w.font || 100)) / 100;
 
+  // glowing: hovered on the Widgets page, or its settings open there
+  const glow = (w) => (w.id === linked || (w.id === editing && pageRoot) ? ' ca-w-linked' : '');
+
   function frameHtml(w) {
     const t = typeById[w.type];
     const fs = `--wfs:${fontOf(w)}`;
     if (t.bare) {
       return (
-        `<div class="ca-w ca-w-bare ca-w-${w.type}" data-widget="${w.id}" data-w-drag style="${fs}">` +
+        `<div class="ca-w ca-w-bare ca-w-${w.type}${glow(w)}" data-widget="${w.id}" data-w-drag style="${fs}">` +
         `<div class="ca-w-body" data-w-body>${safeHtml(t, w)}</div>` +
         `<button type="button" class="ca-w-x" data-w-remove aria-label="${w.type === 'macro' ? 'Remove (un-favourites the macro)' : 'Remove widget'}">${I('close', 8)}</button>` +
         `<button type="button" class="ca-w-x ca-w-gear" data-w-settings aria-label="Settings">${I('settings', 8)}</button>` +
@@ -194,7 +199,7 @@ CA.UI.Widgets = (() => {
       );
     }
     return (
-      `<div class="ca-w${w.collapsed ? ' collapsed' : ''}${w.h ? ' sized' : ''}" data-widget="${w.id}" style="${fs};width:${w.w || t.width}px${w.h && !w.collapsed ? `;height:${w.h}px` : ''}">` +
+      `<div class="ca-w${w.collapsed ? ' collapsed' : ''}${w.h ? ' sized' : ''}${glow(w)}" data-widget="${w.id}" style="${fs};width:${w.w || t.width}px${w.h && !w.collapsed ? `;height:${w.h}px` : ''}">` +
       '<div class="ca-w-head" data-w-drag>' +
       `${I(t.icon, 12)}<span class="ca-w-title">${esc(nameOf(w))}</span>` +
       `<button type="button" class="ca-w-btn" data-w-settings aria-label="Settings">${I('settings', 10)}</button>` +
@@ -462,24 +467,26 @@ CA.UI.Widgets = (() => {
     changed();
   }
 
+  /**
+   * A widget's settings: a header (what it is, Remove, Done) over two sections — Look (text size,
+   * size or title) and Shows (what its type lets you choose). Changes apply at once; the widget
+   * glows on the left panel while its settings are open.
+   */
   function editorHtml(w) {
     const t = typeById[w.type];
     const C = CA.UI.C;
-    const field = (label, input, hint) => `<div class="ca-weditor-row"><span class="ca-field-label">${label}</span>${input}${hint ? `<span class="ca-hint">${hint}</span>` : ''}</div>`;
-    let h =
-      `<div class="ca-card ca-weditor" data-w-editor="${esc(w.id)}">` +
-      C.cardHead(`${esc(nameOf(w))} — settings`, t.icon, `<div class="ca-card-meta">${C.button('Done', 'data-w-edit-done', 'ca-btn-small ca-btn-on')}</div>`) +
-      '<div class="ca-weditor-body">';
-    h += field('Text size', `<input type="range" min="${FONT_MIN}" max="${FONT_MAX}" step="5" value="${Math.round(fontOf(w) * 100)}" data-w-opt="font" data-type="number"><span class="ca-range-val">${Math.round(fontOf(w) * 100)}%</span>`);
-    if (t.resize === 'scale') {
-      h += field('Size', `<input type="range" min="${SCALE_MIN * 100}" max="${SCALE_MAX * 100}" step="5" value="${Math.round(scaleOf(w) * 100)}" data-w-opt="scale" data-type="percent"><span class="ca-range-val">${Math.round(scaleOf(w) * 100)}%</span>`, 'or drag its corner');
-    } else {
-      h += field('Title', `<input type="text" maxlength="40" value="${esc(w.title || '')}" placeholder="${esc(t.name)}" data-w-opt="title" data-type="text">`);
-    }
+    const field = (label, input, hint) =>
+      `<div class="ca-wf"><span class="ca-wf-label">${label}</span><div class="ca-wf-input">${input}</div>${hint ? `<span class="ca-wf-hint">${hint}</span>` : ''}</div>`;
+    const range = (key, min, max, val, type) =>
+      `<input type="range" min="${min}" max="${max}" step="5" value="${val}" data-w-opt="${key}" data-type="${type}"><span class="ca-range-val">${val}%</span>`;
+    let look = field('Text size', range('font', FONT_MIN, FONT_MAX, Math.round(fontOf(w) * 100), 'number'));
+    if (t.resize === 'scale') look += field('Size', range('scale', SCALE_MIN * 100, SCALE_MAX * 100, Math.round(scaleOf(w) * 100), 'percent'), 'or drag its corner');
+    else look += field('Title', `<input type="text" maxlength="40" value="${esc(w.title || '')}" placeholder="${esc(t.name)}" data-w-opt="title" data-type="text">`);
+    let shows = '';
     (t.settings || []).forEach((s) => {
       const cur = w[s.key] !== undefined ? w[s.key] : s.default;
       if (s.type === 'select') {
-        h += field(
+        shows += field(
           esc(s.label),
           `<select data-w-opt="${s.key}" data-type="choice">${s
             .options()
@@ -487,11 +494,11 @@ CA.UI.Widgets = (() => {
             .join('')}</select>`
         );
       } else if (s.type === 'number') {
-        h += field(esc(s.label), `<input type="number" min="${s.min}" max="${s.max}" value="${esc(cur)}" data-w-opt="${s.key}" data-type="number" data-min="${s.min}" data-max="${s.max}">${s.unit ? `<em>${esc(s.unit)}</em>` : ''}`);
+        shows += field(esc(s.label), `<input type="number" min="${s.min}" max="${s.max}" value="${esc(cur)}" data-w-opt="${s.key}" data-type="number" data-min="${s.min}" data-max="${s.max}">${s.unit ? `<em>${esc(s.unit)}</em>` : ''}`);
       } else if (s.type === 'multi') {
         const chosen = new Set(cur || []);
-        h +=
-          `<div class="ca-weditor-row"><span class="ca-field-label">${esc(s.label)}</span></div><div class="ca-members">` +
+        shows +=
+          `<div class="ca-wf ca-wf-wide"><span class="ca-wf-label">${esc(s.label)}</span><div class="ca-members">` +
           s
             .options()
             .map(
@@ -500,11 +507,107 @@ CA.UI.Widgets = (() => {
                 `${o.icon ? `<span style="color:${o.color || 'inherit'}">${I(o.icon, 13)}</span>` : ''}<span>${esc(o.label)}</span></label>`
             )
             .join('') +
-          '</div>';
+          '</div></div>';
       }
     });
-    h += '</div></div>';
-    return h;
+    return (
+      `<div class="ca-card ca-weditor" data-w-editor="${esc(w.id)}" data-wlink="${esc(w.id)}">` +
+      '<div class="ca-weditor-head">' +
+      `<span class="ca-weditor-ico">${I(t.icon, 20)}</span>` +
+      `<div class="ca-weditor-title"><b>${esc(nameOf(w))}</b><span>${esc(w.type === 'macro' ? 'Macro button' : t.name)} · glowing on the left panel</span></div>` +
+      C.button(`${I('close', 11)} Remove`, `data-w-page-del="${esc(w.id)}"`, 'ca-btn-small ca-btn-off') +
+      C.button('Done', 'data-w-edit-done', 'ca-btn-small ca-btn-on') +
+      '</div>' +
+      '<div class="ca-weditor-body">' +
+      `<div class="ca-weditor-sec"><div class="ca-weditor-sec-head">${I('widget', 12)} Look</div>${look}</div>` +
+      (shows ? `<div class="ca-weditor-sec"><div class="ca-weditor-sec-head">${I('filter', 12)} Shows</div>${shows}</div>` : '') +
+      '</div></div>'
+    );
+  }
+
+  // ---- linking: a widget on the page ⇄ the same widget on the left panel ------------------
+
+  let linked = null; // the widget hovered on either side
+
+  /** Puts the glow on the widgets that should have it (without redrawing them). */
+  function refreshGlow() {
+    if (layer) layer.querySelectorAll('[data-widget]').forEach((el) => el.classList.toggle('ca-w-linked', el.dataset.widget === linked || (el.dataset.widget === editing && !!pageRoot)));
+  }
+
+  function setLinked(id) {
+    if (id === linked) return;
+    linked = id;
+    refreshGlow();
+    if (pageRoot) pageRoot.querySelectorAll('[data-wlink]').forEach((el) => el.classList.toggle('linked', el.dataset.wlink === id));
+  }
+
+  /** Where each widget sits on the left panel, in % of it (measured; from its saved place when it can't be). */
+  function placeOf(w) {
+    const host = layer && layer.parentNode;
+    const el = layer && layer.querySelector(`[data-widget="${w.id}"]`);
+    if (host && el && host.getBoundingClientRect) {
+      const H = host.getBoundingClientRect();
+      const r = el.getBoundingClientRect();
+      if (H.width && H.height && r.width) {
+        return { l: ((r.left - H.left) / H.width) * 100, t: ((r.top - H.top) / H.height) * 100, w: (r.width / H.width) * 100, h: (r.height / H.height) * 100 };
+      }
+    }
+    const bare = typeById[w.type] && typeById[w.type].bare;
+    const sw = bare ? 10 : 40;
+    const sh = bare ? 5 : 14;
+    return { l: clamp01(w.x) * (100 - sw), t: clamp01(w.y) * (100 - sh), w: sw, h: sh };
+  }
+
+  /** A small map of the left panel with every widget where it is (and the big cookie, to get your bearings). */
+  function mapHtml() {
+    const host = layer && layer.parentNode;
+    const H = host && host.getBoundingClientRect ? host.getBoundingClientRect() : null;
+    const ratio = H && H.width && H.height ? H.width / H.height : 0.55;
+    const cookie = document.getElementById('bigCookie');
+    let ck = '';
+    if (H && H.width && cookie && cookie.getBoundingClientRect) {
+      const c = cookie.getBoundingClientRect();
+      if (c.width) ck = `<i class="ca-wmap-cookie" style="left:${((c.left - H.left) / H.width) * 100}%;top:${((c.top - H.top) / H.height) * 100}%;width:${(c.width / H.width) * 100}%;height:${(c.height / H.height) * 100}%"></i>`;
+    }
+    return (
+      `<div class="ca-wmap" style="aspect-ratio:${ratio.toFixed(3)}">${ck}` +
+      widgets
+        .filter((w) => typeById[w.type])
+        .map((w) => {
+          const p = placeOf(w);
+          const t = typeById[w.type];
+          const icon = w.type === 'macro' && CA.Macros.get(w.macro) ? CA.UI.MacrosPage.icon(CA.Macros.get(w.macro), true) : I(t.icon, 12);
+          return (
+            `<button type="button" class="ca-wmap-item${t.bare ? ' bare' : ''}${w.id === linked ? ' linked' : ''}${w.id === editing ? ' editing' : ''}" data-wlink="${esc(w.id)}" data-w-page-edit="${esc(w.id)}" ` +
+            `style="left:${p.l.toFixed(2)}%;top:${p.t.toFixed(2)}%;width:${p.w.toFixed(2)}%;height:${p.h.toFixed(2)}%" title="${esc(nameOf(w))} — click for its settings">${icon}</button>`
+          );
+        })
+        .join('') +
+      '</div>'
+    );
+  }
+
+  /** The placed widgets as chips: icon, name, ⚙, ×. */
+  function chipsHtml() {
+    return widgets
+      .filter((w) => typeById[w.type])
+      .map((w) => {
+        const t = typeById[w.type];
+        const icon = w.type === 'macro' && CA.Macros.get(w.macro) ? CA.UI.MacrosPage.icon(CA.Macros.get(w.macro), true) : I(t.icon, 13);
+        return (
+          `<span class="ca-wchip${w.id === editing ? ' editing' : ''}${w.id === linked ? ' linked' : ''}" data-wlink="${esc(w.id)}">` +
+          `<button type="button" class="ca-wchip-main" data-w-page-edit="${esc(w.id)}" title="Settings">${icon}<b>${esc(nameOf(w))}</b>${I('settings', 11)}</button>` +
+          `<button type="button" class="ca-wchip-x" data-w-page-del="${esc(w.id)}" title="Remove">${I('close', 9)}</button></span>`
+        );
+      })
+      .join('');
+  }
+
+  /** Keeps the map in step with the left panel while the page is open. */
+  function syncPage() {
+    if (!pageRoot || !pageRoot.isConnected) return;
+    const map = pageRoot.querySelector('[data-w-map]');
+    if (map) morph(map, mapHtml());
   }
 
   function onEditorInput(e) {
@@ -593,22 +696,14 @@ CA.UI.Widgets = (() => {
     if (ed) h += editorHtml(ed);
     else editing = null;
 
-    // what's placed, each with its settings
+    // what's placed: a map of the left panel, and the same widgets as chips — hover either (or the
+    // widget itself) and they light up together; click for its settings
     if (widgets.length) {
-      h += `<div class="ca-card">${C.cardHead('Your widgets', 'widget')}<div class="ca-list">`;
-      widgets.forEach((w) => {
-        const t = typeById[w.type];
-        if (!t) return;
-        h +=
-          `<div class="ca-row${w.id === editing ? ' on' : ''}">` +
-          `<span class="ca-row-ico">${I(t.icon, 16)}</span>` +
-          `<div class="ca-row-text"><div class="ca-row-name">${esc(nameOf(w))}</div><div class="ca-row-desc">${esc(w.type === 'macro' ? 'Macro button' : t.name)}</div></div>` +
-          '<div class="ca-controls">' +
-          C.button(`${I('settings', 12)} Settings`, `data-w-page-edit="${esc(w.id)}"`, 'ca-btn-small') +
-          `<button type="button" class="ca-iconbtn" data-w-page-del="${esc(w.id)}" title="Remove">${I('close', 12)}</button>` +
-          '</div></div>';
-      });
-      h += '</div></div>';
+      h +=
+        '<div class="ca-card">' +
+        C.cardHead('Your widgets', 'widget', `<div class="ca-card-meta"><span class="ca-pill">${widgets.length} placed</span></div>`) +
+        `<div class="ca-wplaced"><div class="ca-wmap-wrap" data-w-map>${mapHtml()}</div><div class="ca-wchips">${chipsHtml()}</div></div>` +
+        '</div>';
     }
 
     h +=
@@ -650,6 +745,14 @@ CA.UI.Widgets = (() => {
   }
 
   let pageRoot = null;
+  function onPageHover(e) {
+    const el = e.target.closest && e.target.closest('[data-wlink]');
+    setLinked(el ? el.dataset.wlink : null);
+  }
+  function onLayerHover(e) {
+    const el = e.target.closest && e.target.closest('[data-widget]');
+    setLinked(el ? el.dataset.widget : null);
+  }
   function onPageClick(e) {
     const t = e.target.closest('[data-w-page-add],[data-w-page-remove],[data-w-page-clear],[data-w-page-edit],[data-w-page-del],[data-w-edit-done]');
     if (!t) return;
@@ -689,15 +792,21 @@ CA.UI.Widgets = (() => {
         root.addEventListener('click', onPageClick);
         root.addEventListener('input', onEditorInput);
         root.addEventListener('change', onEditorInput);
+        root.addEventListener('mouseover', onPageHover);
+        refreshGlow(); // the edited widget glows
       },
       unmount: () => {
         if (pageRoot) {
           pageRoot.removeEventListener('click', onPageClick);
           pageRoot.removeEventListener('input', onEditorInput);
           pageRoot.removeEventListener('change', onEditorInput);
+          pageRoot.removeEventListener('mouseover', onPageHover);
         }
         pageRoot = null;
+        linked = null;
+        refreshGlow();
       },
+      tick: syncPage,
     });
     CA.Events.on('settings', (k) => {
       if (k === 'widgetsShown' || k === 'widgetsLocked' || k === null) render();

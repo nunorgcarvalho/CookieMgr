@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 2.20.0 — 2026-10-06
+
+- **Your widgets is a map now:** a small map of the left panel with every widget where it sits (the big cookie drawn
+  in for bearings), beside a chip per widget — instead of a list of rows.
+- **Hovering links them:** hover a widget on the map, its chip, or the widget itself on the left panel, and all of
+  them light up together. Click for its settings; × on a chip removes it.
+- **Widget settings redone:** a header (what it is, Remove, Done) over two sections — Look (text size, size or title)
+  and Shows (what that widget lets you choose). The widget glows on the left panel while its settings are open.
+
 ## 2.19.0 — 2026-10-06
 
 - **Settings on every built-in macro:** how often it runs ("20× a second", "every 1s"…) and every choice its actions

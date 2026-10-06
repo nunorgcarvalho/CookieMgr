@@ -3845,3 +3845,275 @@ body.ca-has-storebar #products {
     box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.1);
   }
 }
+
+/* ---------- v2.20: widget settings, the Your widgets map, linking ---------- */
+
+/* a widget hovered on the Widgets page (or being edited there) glows on the left panel */
+#CookieMgrWidgets .ca-w.ca-w-linked {
+  outline: 2px solid #ffd36a;
+  outline-offset: 3px;
+  border-radius: 8px;
+  box-shadow: 0 0 18px rgba(255, 211, 106, 0.55);
+  z-index: 25;
+}
+#CookieMgrWidgets .ca-w-bare.ca-w-linked {
+  border-radius: 50%;
+}
+
+/* settings: header + Look / Shows sections */
+#CookieMgrMenu .ca-weditor {
+  box-shadow:
+    0 0 0 1px rgba(255, 211, 106, 0.5),
+    0 0 18px rgba(255, 200, 100, 0.15);
+}
+#CookieMgrMenu .ca-weditor-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: linear-gradient(to right, rgba(255, 210, 110, 0.12), transparent);
+  border-bottom: 1px solid rgba(255, 220, 150, 0.12);
+}
+#CookieMgrMenu .ca-weditor-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  color: #ffd98a;
+  background: radial-gradient(circle at 35% 30%, rgba(110, 72, 36, 0.95), rgba(28, 18, 9, 0.95));
+  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.35);
+}
+#CookieMgrMenu .ca-weditor-title {
+  flex: 1;
+  min-width: 0;
+}
+#CookieMgrMenu .ca-weditor-title b {
+  display: block;
+  font-family: 'Merriweather', Georgia, serif;
+  font-size: 14px;
+  color: #ffeab0;
+}
+#CookieMgrMenu .ca-weditor-title span {
+  font-size: 10.5px;
+  color: #a39477;
+}
+#CookieMgrMenu .ca-weditor .ca-weditor-body {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px;
+}
+#CookieMgrMenu .ca-weditor-sec {
+  flex: 1 1 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 9px 10px 10px;
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.25);
+}
+#CookieMgrMenu .ca-weditor-sec-head {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #93866f;
+}
+#CookieMgrMenu .ca-wf {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  align-items: center;
+  gap: 4px 10px;
+}
+#CookieMgrMenu .ca-wf.ca-wf-wide {
+  grid-template-columns: 1fr;
+}
+#CookieMgrMenu .ca-wf-label {
+  font-size: 11.5px;
+  color: #e8d7b0;
+}
+#CookieMgrMenu .ca-wf-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+#CookieMgrMenu .ca-wf-input input[type='range'] {
+  flex: 1;
+  accent-color: #e0a84a;
+}
+#CookieMgrMenu .ca-wf-input .ca-range-val {
+  min-width: 42px;
+  padding: 1px 6px;
+  text-align: center;
+  border-radius: 9px;
+  font-size: 10.5px;
+  color: #1c120a;
+  background: #e0b45a;
+}
+#CookieMgrMenu .ca-wf-input input[type='text'],
+#CookieMgrMenu .ca-wf-input input[type='number'],
+#CookieMgrMenu .ca-wf-input select {
+  flex: 1;
+  min-width: 0;
+  font: 12px Tahoma, Arial, sans-serif;
+  color: #f0e2c0;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 220, 150, 0.25);
+  border-radius: 4px;
+  padding: 3px 6px;
+}
+#CookieMgrMenu .ca-wf-input select option {
+  background: #1c150d;
+}
+#CookieMgrMenu .ca-wf-input em {
+  font-style: normal;
+  font-size: 10.5px;
+  color: #93866f;
+}
+#CookieMgrMenu .ca-wf-hint {
+  grid-column: 2;
+  font-size: 10px;
+  color: #93866f;
+}
+
+/* Your widgets: a map of the left panel beside the chips */
+#CookieMgrMenu .ca-wplaced {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 10px;
+}
+#CookieMgrMenu .ca-wmap-wrap {
+  flex: 0 0 150px;
+}
+#CookieMgrMenu .ca-wmap {
+  position: relative;
+  width: 150px;
+  max-height: 300px;
+  border-radius: 6px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(90, 140, 200, 0.18), transparent 70%),
+    linear-gradient(to bottom, #1b2533, #0e131b);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 220, 150, 0.2),
+    inset 0 0 12px rgba(0, 0, 0, 0.6);
+}
+#CookieMgrMenu .ca-wmap-cookie {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, rgba(214, 160, 90, 0.55), rgba(120, 75, 30, 0.45));
+  pointer-events: none;
+}
+#CookieMgrMenu .ca-wmap-item {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 10px;
+  min-height: 10px;
+  padding: 0;
+  overflow: hidden;
+  color: #ffd98a;
+  background: rgba(60, 38, 18, 0.9);
+  border: 1px solid rgba(255, 220, 150, 0.5);
+  border-radius: 3px;
+  cursor: pointer;
+  transition:
+    box-shadow 0.15s,
+    transform 0.15s;
+}
+#CookieMgrMenu .ca-wmap-item.bare {
+  border-radius: 50%;
+}
+#CookieMgrMenu .ca-wmap-item .ca-icon,
+#CookieMgrMenu .ca-wmap-item .ca-icon-ico {
+  flex: none;
+  width: 12px;
+  height: 12px;
+}
+#CookieMgrMenu .ca-wmap-item .ca-sprite {
+  transform: scale(0.25);
+}
+#CookieMgrMenu .ca-wmap-item.linked,
+#CookieMgrMenu .ca-wmap-item:hover,
+#CookieMgrMenu .ca-wmap-item.editing {
+  z-index: 2;
+  border-color: #ffd36a;
+  box-shadow: 0 0 8px rgba(255, 211, 106, 0.8);
+  transform: scale(1.15);
+}
+#CookieMgrMenu .ca-wchips {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 5px;
+  min-width: 0;
+}
+#CookieMgrMenu .ca-wchip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 13px;
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.15);
+  transition: box-shadow 0.15s;
+}
+#CookieMgrMenu .ca-wchip.linked,
+#CookieMgrMenu .ca-wchip.editing {
+  box-shadow:
+    inset 0 0 0 1px #ffd36a,
+    0 0 8px rgba(255, 211, 106, 0.4);
+}
+#CookieMgrMenu .ca-wchip-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 4px 3px 5px;
+  font: 11px Tahoma, Arial, sans-serif;
+  color: #f3e5c3;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+#CookieMgrMenu .ca-wchip-main b {
+  font-weight: normal;
+  white-space: nowrap;
+}
+#CookieMgrMenu .ca-wchip-main > .ca-ico:last-child {
+  color: #93866f;
+}
+#CookieMgrMenu .ca-wchip-main .ca-icon,
+#CookieMgrMenu .ca-wchip-main .ca-icon-ico {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+}
+#CookieMgrMenu .ca-wchip-main .ca-sprite {
+  transform: scale(0.33);
+}
+#CookieMgrMenu .ca-wchip-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-right: 3px;
+  padding: 0;
+  color: #b9ab93;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+#CookieMgrMenu .ca-wchip-x:hover {
+  color: #fff;
+  background: #a8322e;
+}

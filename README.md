@@ -23,7 +23,7 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 | **Widget** | Something on the game's left panel: a macro's button, the Running now bar, quick stats, events, minigames. |
 
-## Features (v2.19)
+## Features (v2.20)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
 the data pages **Events** and **Graphs**; the minigames **Garden**, **Stock market**, **Pantheon** and **Grimoire**;
@@ -289,10 +289,13 @@ Framed boxes (Quick stats, Latest events) are dragged by their title bar and fol
 from its bottom-right corner: buttons, round widgets and the status bar scale up or down keeping their shape, framed
 boxes take any width and height.
 
-**Settings:** a widget's ⚙ opens its settings on the Widgets page, which also lists every widget you've placed: text
-size, size (or a title, for framed boxes), and whatever that widget adds — which Quick stats, how many events. Options: show/hide them all, and lock them so they can't be moved or resized by accident.
-Positions are kept relative to the panel with CSS alone, so widgets follow the window (and Cookie Monster's layout
-changes) smoothly instead of jumping when the page loads; positions and sizes are saved with your settings.
+**Settings:** a widget's ⚙ opens its settings on the Widgets page — **Look** (text size, and its size or a title) and
+**Shows** (whatever that widget adds: which Quick stats, how many events, the Grimoire's target…). Changes apply at
+once, and the widget glows on the left panel while its settings are open.
+
+**Your widgets** on the Widgets page is a small map of the left panel with every widget where it is (the big cookie
+drawn in for bearings), next to a chip for each. Hover a widget on the map, its chip, or the widget itself on the
+left panel, and all three light up together; click one for its settings, × on a chip to remove it.
 
 ### Store
 
