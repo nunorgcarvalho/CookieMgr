@@ -37,6 +37,7 @@ const MODULES = [
   'features/macros.js',
   'features/grimoire.js',
   'features/garden.js',
+  'features/gardenHistory.js',
   'features/stocks.js',
   'features/gameStates.js',
   'features/stockTrader.js',

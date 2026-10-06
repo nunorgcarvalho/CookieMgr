@@ -1,5 +1,7 @@
 // The Garden page: the auto-gardener and its profiles (features/garden.js).
 //
+//   Growth          a stacked bar chart over time: how many of each seed were at each stage (each
+//                   seed its own colour, young stages darker) — features/gardenHistory.js
 //   Garden          your plot as it is now, against the active profile: each tile's plant and growth
 //                   stage, the profile's seed faded in on empty tiles, a red ring on tiles that don't
 //                   match, and the chance a mature plant dies on the coming tick; hover a tile for details
@@ -18,6 +20,7 @@ CA.UI.GardenPage = (() => {
 
   let root = null;
   let timer = null;
+  let plot = null;
 
   const stageOf = (me, age) => (age >= me.mature ? 4 : age >= me.mature * 0.666 ? 3 : age >= me.mature * 0.333 ? 2 : 1);
   const STAGE_NAMES = ['seed', 'bud', 'sprout', 'bloom', 'mature'];
@@ -180,7 +183,7 @@ CA.UI.GardenPage = (() => {
         '<div class="ca-card-note">The Garden opens once you have a level-1 Farm (spend a sugar lump on it). The auto-gardener and its profiles will be here.</div>' +
         '</div>'
       );
-    return gardenCard() + gardenerCard() + profilesCard();
+    return `<div class="ca-garden-row">${gardenCard()}${plot.html()}</div>` + gardenerCard() + profilesCard();
   }
 
   function sync() {
@@ -244,6 +247,7 @@ CA.UI.GardenPage = (() => {
     root.addEventListener('click', onClick);
     root.addEventListener('change', onChange);
     root.addEventListener('input', onChange);
+    if (G().minigame()) plot.mount(el);
     sync();
     timer = setInterval(sync, SYNC_MS);
   }
@@ -251,6 +255,7 @@ CA.UI.GardenPage = (() => {
   function unmount() {
     clearInterval(timer);
     timer = null;
+    if (plot) plot.unmount();
     if (root) {
       root.removeEventListener('click', onClick);
       root.removeEventListener('change', onChange);
@@ -259,7 +264,149 @@ CA.UI.GardenPage = (() => {
     root = null;
   }
 
+  // ---- growth chart ---------------------------------------------------------------------
+
+  const H = () => CA.GardenHistory;
+  const STAGE_COLORS = ['#6b8a52', '#8fc25e', '#b5ec6e', '#eaff8a'];
+  const plantName = (key) => {
+    const M = G().minigame();
+    return (M && M.plants && M.plants[key] && M.plants[key].name) || key;
+  };
+
+  /**
+   * Bars from the snapshots: each bar shows the garden as it was at the end of its slot (the plot
+   * is a step function — it only changes at ticks, plantings and harvests).
+   */
+  function growthBars(v) {
+    const all = H().list();
+    const k = v.key;
+    const bars = [];
+    if (!all.length) return bars;
+    let i = -1;
+    const start = Math.floor(v.x0 / v.bucket) * v.bucket;
+    for (let x = start; x < v.x1; x += v.bucket) {
+      const end = Math.min(x + v.bucket, v.x1);
+      while (i + 1 < all.length && all[i + 1][k] <= end) i++;
+      if (i < 0) continue;
+      bars.push({ x0: Math.max(x, v.x0), x1: end, c: all[i].c });
+    }
+    return bars;
+  }
+
+  function createPlot() {
+    plot = CA.UI.Plot.create({
+      id: 'garden',
+      title: 'Growth',
+      icon: 'leaf',
+      height: 210,
+      windows: [3600, 6 * 3600, 86400, 3 * 86400, 0],
+      window: 6 * 3600,
+      smooth: false,
+      stacked: true,
+      choices: [
+        {
+          key: 'by',
+          label: 'Show',
+          options: [
+            { v: 'both', label: 'Seed × stage' },
+            { v: 'seed', label: 'Seeds' },
+            { v: 'stage', label: 'Stages' },
+          ],
+          default: 'both',
+        },
+      ],
+      fmt: (v) => CA.UI.Plot.fmt.beautify(v, 0),
+      tipFmt: (v) => String(Math.round(v * 10) / 10),
+      totalLabel: 'Plants',
+      build(v) {
+        const by = v.opt('by') || 'both';
+        const raw = growthBars(v);
+        const totals = {}; // seed → plant-slots shown, to put the biggest at the bottom
+        raw.forEach((b) => Object.keys(b.c).forEach((kk) => (totals[kk.split(':')[0]] = (totals[kk.split(':')[0]] || 0) + b.c[kk])));
+        const seeds = Object.keys(totals).sort((a, b) => totals[b] - totals[a]);
+        let series;
+        let partOf;
+        if (by === 'stage') {
+          series = [3, 2, 1, 0].map((s) => ({ key: `stage:${s}`, name: H().STAGES[s][0].toUpperCase() + H().STAGES[s].slice(1), color: STAGE_COLORS[s], type: 'bar' }));
+          partOf = (kk) => `stage:${kk.split(':')[1]}`;
+        } else if (by === 'seed') {
+          series = seeds.map((s) => ({ key: s, name: plantName(s), color: H().colorOf(s), type: 'bar' }));
+          partOf = (kk) => kk.split(':')[0];
+        } else {
+          // each seed's stages together, mature at the bottom: bars "ripen" upwards
+          series = [].concat(
+            ...seeds.map((s) =>
+              [3, 2, 1, 0].map((st) => ({
+                key: `${s}:${st}`,
+                name: `${plantName(s)} (${H().STAGES[st]})`,
+                color: H().shade(s, st),
+                type: 'bar',
+                merge: { id: s, name: plantName(s), label: H().STAGES[st], order: st },
+              }))
+            )
+          );
+          partOf = (kk) => kk;
+        }
+        const bars = raw.map((b) => {
+          const parts = {};
+          Object.keys(b.c).forEach((kk) => {
+            const p = partOf(kk);
+            parts[p] = (parts[p] || 0) + b.c[kk];
+          });
+          return { x0: b.x0, x1: b.x1, parts };
+        });
+        const used = new Set([].concat(...bars.map((b) => Object.keys(b.parts))));
+        series = series.filter((s) => used.has(s.key));
+        const legend =
+          by === 'stage'
+            ? series
+            : seeds.filter((s) => series.some((x) => x.key.split(':')[0] === s)).map((s) => ({ name: plantName(s), color: H().colorOf(s) }));
+        return {
+          series,
+          bars,
+          legend,
+          legendExtra:
+            by === 'both'
+              ? '<span class="ca-legend-item ca-legend-stages">darker = younger: ' +
+                H()
+                  .STAGES.map((st, i) => `<i class="ca-sw" style="background:${H().shade('bakerWheat', i)}"></i>${st}`)
+                  .join(' ') +
+                '</span>'
+              : '',
+          markers: CA.EventLog.list(['garden'])
+            .filter((ev) => {
+              const x = v.active ? ev.a : ev.t;
+              return x >= v.x0 && x <= v.x1;
+            })
+            .map((ev) => ({
+              x: v.active ? ev.a : ev.t,
+              color: '#ffe36a',
+              tip: () => `<div class="ca-tip-head">${esc(ev.title)}<span>${CA.UI.Plot.fmt.clock(ev.t, true)}</span></div>`,
+            })),
+          empty: 'Recording your garden — the chart fills in as it grows (a snapshot each time the plot changes).',
+        };
+      },
+      stats() {
+        const M = G().minigame();
+        if (!M) return '';
+        const { tile, beautify } = CA.UI.Plot.fmt;
+        const c = H().countsNow(M);
+        const n = Object.values(c).reduce((a, b) => a + b, 0);
+        const mature = Object.keys(c)
+          .filter((kk) => kk.endsWith(':3'))
+          .reduce((a, kk) => a + c[kk], 0);
+        const unlocked = Object.values(M.plants || {}).filter((p) => p.unlocked).length;
+        return (
+          tile('Plants now', String(n), `${mature} mature`) +
+          tile('Seeds unlocked', `${unlocked} / ${Object.keys(M.plants || {}).length}`) +
+          tile('Harvests', beautify(M.harvests || 0, 0), `${beautify(M.harvestsTotal || 0, 0)} in total`)
+        );
+      },
+    });
+  }
+
   function init() {
+    createPlot();
     CA.UI.Pages.register({ id: 'garden', label: 'Garden', icon: 'leaf', order: 30, group: 'minigames', html, mount, unmount, tick: sync });
   }
 

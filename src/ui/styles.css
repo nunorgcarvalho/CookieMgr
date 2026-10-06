@@ -3550,3 +3550,28 @@
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.8);
   pointer-events: none;
 }
+
+/* ---------- v2.16: Garden growth chart ---------- */
+
+/* the plot and its growth chart side by side (stacking on narrow panels) */
+#CookieMgrMenu .ca-garden-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+#CookieMgrMenu .ca-garden-row > .ca-card:first-child {
+  flex: 0 1 auto;
+}
+#CookieMgrMenu .ca-garden-row > .ca-graph-card {
+  flex: 1 1 360px;
+  min-width: 0;
+}
+#CookieMgrMenu .ca-garden-row .ca-garden-wrap {
+  flex-direction: column;
+}
+#CookieMgrMenu .ca-legend-stages {
+  color: #a39477;
+}
+#CookieMgrMenu .ca-legend-stages .ca-sw {
+  margin-left: 6px;
+}

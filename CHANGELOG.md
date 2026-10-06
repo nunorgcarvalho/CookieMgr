@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 2.16.0 — 2026-10-05
+
+- **Garden growth chart**, beside the plot on the Garden page: stacked bars over time of how many of each seed were
+  at each growth stage. Each seed has its own colour (close to its sprite), younger stages are darker shades of it,
+  and mature plants sit at the bottom of each seed's stack, so a crop's bars brighten from the bottom up as it grows.
+  **Show**: seed × stage, seeds, or stages. Window chips, "% of total", one tooltip row per seed, stat tiles (plants,
+  seeds unlocked, harvests), and a marker for each newly unlocked seed.
+- New **Garden** event type: "Unlocked …" whenever a seed is unlocked.
+- The garden is recorded as a snapshot each time the plot changes (not every second), kept per save in this browser.
+
 ## 2.15.0 — 2026-10-05
 
 - **Every option has one home:** on the page of the feature it changes, in an Options card at the bottom — no more

@@ -36,6 +36,7 @@ const mod = {
     CA.Macros.init();
     CA.Grimoire.init();
     CA.Garden.init();
+    CA.GardenHistory.init();
     CA.Shop.init();
     CA.Stocks.init();
     CA.StockLog.init();

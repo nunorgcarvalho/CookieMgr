@@ -23,7 +23,7 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 | **Widget** | Something on the game's left panel: a macro's button, the Running now bar, quick stats, events, minigames. |
 
-## Features (v2.15)
+## Features (v2.16)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
 the data pages **Events** and **Graphs**; the minigames **Garden**, **Stock market**, **Pantheon** and **Grimoire**;
@@ -216,6 +216,13 @@ The **Garden** page shows your plot as it is now: every plant at its growth stag
 dies of old age on the coming tick (bottom-right of its tile), a red ring on tiles that don't match the active
 profile, and the profile's seed faded in on empty tiles. Hover a tile for its growth, death chance and what the
 profile wants there.
+
+Beside it, the **Growth** chart shows your garden over time as stacked bars: how many of each seed were at each
+growth stage. Every seed has its own colour (close to its sprite) and its younger stages are darker shades of it, with
+mature plants at the bottom of each seed's stack — so as a crop grows, its bars brighten from the bottom up. **Show**
+switches between seed × stage, seeds only, and stages only; like the other charts it has window chips, "% of total",
+a tooltip with one row per seed ("Thumbcorn (bud / … / mature)"), and markers where a new seed was unlocked (also
+in the event log). It's recorded as a snapshot each time the plot changes, kept per save in this browser.
 
 **Profiles** remember the seed on every tile and the soil: plant your garden the way you want it, then **Save
 current garden**. Rename, switch or delete them on the page.
@@ -429,6 +436,7 @@ src/
     gameEvents.js    logs wrinkler pops, sugar lumps and achievements as events
     grimoire.js      spells as actions/macros, magic conditions, spell events, the auto-cast macro
     garden.js        garden profiles, the death-chance maths, the auto-gardener macro
+    gardenHistory.js snapshots of the garden (seed × stage counts) for the Growth chart; seed unlock events
     shop.js          the building store: Cookie Monster sort, rounding bulk buys up
   ui/
     components.js    HTML snippets: switch, hotkey chip, icon, button
