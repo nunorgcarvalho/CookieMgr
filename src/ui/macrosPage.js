@@ -16,9 +16,9 @@ CA.UI.MacrosPage = (() => {
 
   const SECTIONS = [
     { id: 'autoclickers', title: 'Autoclickers', icon: 'cookie' },
-    { id: 'stocks', title: 'Stock market', icon: 'stocks' },
-    { id: 'grimoire', title: 'Wizard tower', icon: 'wizard' },
-    { id: 'garden', title: 'Garden', icon: 'leaf' },
+    { id: 'stocks', title: 'Stock market', icon: 'stocks', page: 'stocks' },
+    { id: 'grimoire', title: 'Grimoire', icon: 'wizard', page: 'wizard' },
+    { id: 'garden', title: 'Garden', icon: 'leaf', page: 'garden' },
     { id: 'upkeep', title: 'Seasons & sugar lumps', icon: 'calendar' },
   ];
   const ICONS = ['bolt', 'cookie', 'star', 'sparkle', 'play', 'clock', 'stocks', 'dollar', 'wizard', 'wrinkler', 'lump', 'trophy', 'graphs', 'tag', 'marker', 'ascend'];
@@ -396,7 +396,7 @@ CA.UI.MacrosPage = (() => {
   function sectionCard(sec, macros, extraHead, extraTop) {
     return (
       '<div class="ca-card">' +
-      C().cardHead(sec.title, sec.icon, extraHead || '') +
+      C().cardHead(sec.page ? C().link(sec.title, sec.page) : sec.title, sec.icon, extraHead || '') +
       (extraTop || '') +
       `<div class="ca-list">${macros.map(row).join('')}</div>` +
       '</div>'
@@ -609,7 +609,7 @@ CA.UI.MacrosPage = (() => {
   }
 
   function init() {
-    CA.UI.Pages.register({ id: 'clickers', label: 'Macros', icon: 'bolt', order: 70, html, mount, unmount, tick: () => sync(root) });
+    CA.UI.Pages.register({ id: 'clickers', label: 'Macros', icon: 'bolt', order: 70, group: 'custom', html, mount, unmount, tick: () => sync(root) });
   }
 
   return { init, row, status, sync, handle, icon, edit, run, draft: () => draft };

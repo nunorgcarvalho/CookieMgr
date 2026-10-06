@@ -312,6 +312,8 @@ CA.UI.EventsPage = (() => {
       label: 'Events',
       icon: 'events',
       order: 5, // top of the sidebar
+      group: 'data',
+      group: 'data',
       html,
       mount,
       unmount,

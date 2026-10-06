@@ -809,7 +809,7 @@
   display: none;
   position: fixed;
   z-index: 100000;
-  max-width: 270px;
+  max-width: 340px;
   min-width: 150px;
   padding: 7px 10px;
   pointer-events: none;
@@ -3087,4 +3087,193 @@
   box-shadow:
     0 3px 8px rgba(0, 0, 0, 0.7),
     0 0 12px var(--glow);
+}
+
+/* ---------- v2.14: sidebar groups, links, Pantheon page ---------- */
+
+/* a small gap between kinds of page: data | minigames | customization */
+#CookieMgrTab .ca-tab-gap {
+  height: 10px;
+}
+/* links to other pages */
+#CookieMgrMenu .ca-link {
+  color: #ffd98a;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 217, 138, 0.4);
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+#CookieMgrMenu .ca-link:hover {
+  color: #fff3cf;
+  text-decoration-color: #fff3cf;
+}
+#CookieMgrMenu .ca-card-title .ca-link {
+  color: inherit;
+  text-decoration-color: rgba(255, 234, 176, 0.35);
+}
+#CookieMgrMenu .ca-btn-game {
+  margin-left: 6px;
+}
+
+/* Pantheon: the three slots */
+#CookieMgrMenu .ca-slots {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding: 6px 4px 8px;
+}
+#CookieMgrMenu .ca-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 8px 12px;
+  text-align: center;
+  border-radius: 8px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(255, 210, 110, 0.12), rgba(0, 0, 0, 0.35) 70%);
+  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.15);
+}
+#CookieMgrMenu .ca-slot-gem {
+  font: bold 10px Tahoma, Arial, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+#CookieMgrMenu .ca-slot-0 .ca-slot-gem {
+  color: #bfe9ff;
+}
+#CookieMgrMenu .ca-slot-1 .ca-slot-gem {
+  color: #ff8a8a;
+}
+#CookieMgrMenu .ca-slot-2 .ca-slot-gem {
+  color: #8fe6a0;
+}
+#CookieMgrMenu .ca-slot-0 {
+  box-shadow: inset 0 0 0 1px rgba(191, 233, 255, 0.35);
+}
+#CookieMgrMenu .ca-slot-1 {
+  box-shadow: inset 0 0 0 1px rgba(255, 138, 138, 0.3);
+}
+#CookieMgrMenu .ca-slot-2 {
+  box-shadow: inset 0 0 0 1px rgba(143, 230, 160, 0.3);
+}
+#CookieMgrMenu .ca-slot-name {
+  font-family: 'Merriweather', Georgia, serif;
+  font-weight: bold;
+  font-size: 14px;
+  color: #ffeab0;
+}
+#CookieMgrMenu .ca-slot-title {
+  font-size: 10px;
+  color: #a39477;
+}
+#CookieMgrMenu .ca-god-desc {
+  margin-top: 4px;
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: #d8cbb0;
+}
+#CookieMgrMenu .ca-god-desc .green {
+  color: #9be89b;
+}
+#CookieMgrMenu .ca-god-desc .red {
+  color: #ff9a8a;
+}
+#CookieMgrMenu .ca-god-ico {
+  display: inline-block;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  zoom: 0.6;
+}
+#CookieMgrMenu .ca-god-ico.big {
+  zoom: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));
+}
+#CookieMgrMenu .ca-god-ico.empty {
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.4);
+  box-shadow: inset 0 0 0 2px rgba(255, 220, 150, 0.2);
+  zoom: 0.8;
+}
+/* worship swaps */
+#CookieMgrMenu .ca-pips {
+  display: inline-flex;
+  gap: 3px;
+  vertical-align: middle;
+}
+#CookieMgrMenu .ca-pips i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.3);
+}
+#CookieMgrMenu .ca-pips i.on {
+  background: #ffd36a;
+  box-shadow: 0 0 5px rgba(255, 211, 106, 0.7);
+}
+/* every spirit */
+#CookieMgrMenu .ca-gods {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 6px;
+  padding: 4px;
+}
+#CookieMgrMenu .ca-god {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.25);
+  font-size: 11px;
+  color: #e8d7b0;
+}
+#CookieMgrMenu .ca-god:hover {
+  z-index: 5;
+  background: rgba(255, 220, 150, 0.1);
+}
+#CookieMgrMenu .ca-god.in {
+  box-shadow: inset 0 0 0 1px rgba(255, 211, 106, 0.5);
+}
+#CookieMgrMenu .ca-god-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#CookieMgrMenu .ca-god-slot {
+  font-size: 9px;
+  text-transform: uppercase;
+  color: #ffd36a;
+}
+#CookieMgrMenu .ca-god .ca-gpop {
+  width: 260px;
+}
+#CookieMgrMenu .ca-god:hover .ca-gpop {
+  display: block;
+}
+#CookieMgrMenu .ca-god-row {
+  display: block;
+  padding: 3px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+#CookieMgrMenu .ca-god-row em {
+  font-style: normal;
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #a39477;
+}
+#CookieMgrMenu .ca-god-row .ca-god-desc {
+  margin-top: 1px;
+}
+#CookieMgrMenu .ca-god-quote {
+  display: block;
+  margin-top: 4px;
+  font-style: italic;
+  font-size: 10px;
+  color: #93866f;
 }

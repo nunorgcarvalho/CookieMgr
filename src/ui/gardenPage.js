@@ -78,7 +78,7 @@ CA.UI.GardenPage = (() => {
   function gardenCard() {
     return (
       '<div class="ca-card">' +
-      C().cardHead('Garden', 'leaf', '<div class="ca-card-meta"><span class="ca-pill" data-gp-profile></span></div>') +
+      C().cardHead('Garden', 'leaf', `<div class="ca-card-meta"><span class="ca-pill" data-gp-profile></span>${C().gameLink('Farm')}</div>`) +
       '<div class="ca-garden-wrap"><div class="ca-gplot" data-gp-plot></div><div class="ca-stats ca-gstats" data-gp-stats></div></div>' +
       '</div>'
     );
@@ -94,7 +94,7 @@ CA.UI.GardenPage = (() => {
       `<input type="number" min="${min}" max="${max}" value="${esc(S.get(key))}" data-gp-num="${key}" data-min="${min}" data-max="${max}"><em>${unit}</em>`;
     return (
       '<div class="ca-card">' +
-      C().cardHead('Auto-gardener', 'bolt') +
+      C().cardHead('Auto-gardener', 'bolt', `<div class="ca-card-meta"><span class="ca-hint">also on the ${C().link('Macros', 'clickers')} page · ★ for a button on the left panel</span></div>`) +
       `<div class="ca-list">${CA.UI.MacrosPage.row(CA.Macros.get(G().GARDENER))}</div>` +
       '<div class="ca-gsettings">' +
       '<label class="ca-field"><span>Keep the garden like</span>' +
@@ -260,7 +260,7 @@ CA.UI.GardenPage = (() => {
   }
 
   function init() {
-    CA.UI.Pages.register({ id: 'garden', label: 'Garden', icon: 'leaf', order: 47, html, mount, unmount, tick: sync });
+    CA.UI.Pages.register({ id: 'garden', label: 'Garden', icon: 'leaf', order: 30, group: 'minigames', html, mount, unmount, tick: sync });
   }
 
   return { init, sync };

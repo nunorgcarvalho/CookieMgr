@@ -611,7 +611,7 @@ CA.UI.Widgets = (() => {
       '<div class="ca-row">' +
       `<span class="ca-row-ico">${I('star', 16)}</span>` +
       `<div class="ca-row-text"><div class="ca-row-name">Macro buttons${favs.length ? ` <span class="ca-badge">${favs.length} placed</span>` : ''}</div>` +
-      '<div class="ca-row-desc">★ a macro (or a spell on the Wizard tower page) and it gets its own button here: click to switch it on/off or run it, hover for its name. Un-star it to take it away.</div></div>' +
+      `<div class="ca-row-desc">★ a macro (or a spell on the ${C.link('Grimoire', 'wizard')} page) and it gets its own button here: click to switch it on/off or run it, hover for its name. Un-star it to take it away.</div></div>` +
       `<div class="ca-controls">${C.button(`${I('open', 12)} Macros`, 'data-ca="open-macros"', 'ca-btn-small')}</div>` +
       '</div>';
     types
@@ -672,6 +672,7 @@ CA.UI.Widgets = (() => {
       label: 'Widgets',
       icon: 'widget',
       order: 80,
+      group: 'custom',
       html: pageHtml,
       mount: (root) => {
         pageRoot = root;

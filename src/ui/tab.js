@@ -41,7 +41,10 @@ CA.UI.Tab = (() => {
   function create() {
     wrap = document.createElement('div');
     wrap.id = 'CookieMgrTab';
-    wrap.innerHTML = CA.UI.Pages.list().map(itemHtml).join('');
+    // a small gap between groups of pages: data, minigames, customization
+    wrap.innerHTML = CA.UI.Pages.list()
+      .map((p, i, all) => (i && p.group !== all[i - 1].group ? '<div class="ca-tab-gap"></div>' : '') + itemHtml(p))
+      .join('');
     wrap.addEventListener('click', (e) => {
       const item = e.target.closest('[data-tab-item]');
       if (item) go(item.dataset.tabItem);

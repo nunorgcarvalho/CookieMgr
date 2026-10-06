@@ -63,7 +63,7 @@ CA.UI.Menu = (() => {
     return (
       sellAllCard() +
       '<div class="ca-card">' +
-      C.cardHead('Autobuyer', 'bolt', '<div class="ca-card-meta"><button type="button" class="ca-btn ca-btn-small" data-ca="open-macros">All macros</button></div>') +
+      C.cardHead('Autobuyer', 'bolt', `<div class="ca-card-meta"><button type="button" class="ca-btn ca-btn-small" data-ca="open-macros">All macros</button>${C.gameLink('Bank')}</div>`) +
       `<div class="ca-list">${CA.UI.MacrosPage.row(CA.Macros.get('stockTrader'))}</div>` +
       '</div>' +
       optionsCard('Options', 'settings', 'stocks') +
@@ -230,6 +230,8 @@ CA.UI.Menu = (() => {
     label: 'Graphs',
     icon: 'graphs',
     order: 20,
+    group: 'data',
+    group: 'data',
     html: () => CA.UI.Graphs.html(),
     mount: (root) => CA.UI.Graphs.mount(root),
     unmount: () => CA.UI.Graphs.unmount(),
@@ -240,6 +242,8 @@ CA.UI.Menu = (() => {
     label: 'Stock market',
     icon: 'stocks',
     order: 40,
+    group: 'minigames',
+    group: 'minigames',
     html: () => stocksPage(),
     mount: (root) => {
       CA.UI.StockGraph.mount(root);
@@ -258,7 +262,7 @@ CA.UI.Menu = (() => {
       CA.UI.StockLog.tick();
     },
   });
-  CA.UI.Pages.register({ id: 'settings', label: 'Settings', icon: 'settings', order: 90, html: () => settingsPage() });
+  CA.UI.Pages.register({ id: 'settings', label: 'Settings', icon: 'settings', order: 90, group: 'custom', html: () => settingsPage() });
 
   let mounted = null; // the page whose mount() ran for the current render
 
@@ -373,6 +377,14 @@ CA.UI.Menu = (() => {
       case 'open-macros':
         CA.Util.sound('snd/tick.mp3');
         openPage('clickers');
+        break;
+      case 'goto':
+        CA.Util.sound('snd/tick.mp3');
+        openPage(t.dataset.page);
+        break;
+      case 'open-mg':
+        CA.Util.sound('snd/tick.mp3');
+        CA.UI.WidgetTypes.openMinigame(t.dataset.building);
         break;
       case 'option': {
         const key = t.dataset.key;

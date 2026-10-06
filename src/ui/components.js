@@ -47,5 +47,12 @@ CA.UI.C = (() => {
     return `<div class="ca-card-head"><div class="ca-card-title">${ico}${title}</div>${meta}</div>`;
   }
 
-  return { icon, toggle, hotkey, button, cardHead, esc };
+  /** A link to another CookieMgr page (menu.js handles data-ca="goto"). */
+  const link = (label, page) => `<a class="ca-link" data-ca="goto" data-page="${esc(page)}" role="link" tabindex="0">${label}</a>`;
+
+  /** A small "open it in the game" button for a minigame page (closes the panel). */
+  const gameLink = (building, label = 'Open in game') =>
+    `<button type="button" class="ca-btn ca-btn-small ca-btn-game" data-ca="open-mg" data-building="${esc(building)}">${CA.UI.Icons.html('open', 12)} ${label}</button>`;
+
+  return { icon, toggle, hotkey, button, cardHead, esc, link, gameLink };
 })();

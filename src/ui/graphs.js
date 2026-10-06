@@ -343,9 +343,21 @@ CA.UI.Graphs = (() => {
     const { cats, gains, losses, boosted } = ledgerView();
     const out = [];
     cats.forEach((c) => {
-      if (gains && c.in) out.push({ key: c.id, field: c.in, sign: 1, name: c.boost ? `${c.name}${boosted ? ' (unboosted)' : ''}` : c.name, color: c.color });
-      if (gains && boosted && c.boost) out.push({ key: `${c.id}Boost`, field: c.boost, sign: 1, name: `${c.name}: CpS boost`, color: c.boostColor, boost: true });
-      if (losses && c.out) out.push({ key: `${c.id}Out`, field: c.out, sign: -1, name: `${c.name} (out)`, color: c.outColor || c.color });
+      // merge: one tooltip row per category, labelled like the tables ("−bought / +sold", "raw / boosted")
+      const words = c.words || [];
+      if (gains && c.in)
+        out.push({
+          key: c.id,
+          field: c.in,
+          sign: 1,
+          name: c.boost ? `${c.name}${boosted ? ' (unboosted)' : ''}` : c.name,
+          color: c.color,
+          merge: { id: c.id, name: c.name, label: c.boost || !words[1] ? 'raw' : `+${words[1]}`, order: 1 },
+        });
+      if (gains && boosted && c.boost)
+        out.push({ key: `${c.id}Boost`, field: c.boost, sign: 1, name: `${c.name}: CpS boost`, color: c.boostColor, boost: true, merge: { id: c.id, name: c.name, label: 'boosted', order: 2, add: c.id } });
+      if (losses && c.out)
+        out.push({ key: `${c.id}Out`, field: c.out, sign: -1, name: `${c.name} (out)`, color: c.outColor || c.color, merge: { id: c.id, name: c.name, label: `−${words[0] || 'out'}`, order: 0 } });
     });
     return out;
   }
@@ -448,7 +460,7 @@ CA.UI.Graphs = (() => {
         const showShown = gains && cats.some((c) => c.id === 'build' || c.id === 'click');
         return {
           series: parts
-            .map((x) => ({ key: x.key, name: x.name, color: x.color, type: 'bar' }))
+            .map((x) => ({ key: x.key, name: x.name, color: x.color, type: 'bar', merge: x.merge }))
             .concat(showShown ? [{ key: 'shown', name: 'CpS the game shows (+ clicking)', color: C_SHOWN, type: 'line', dash: true, width: 1.2 }] : [])
             .concat(gains && losses ? [{ key: 'net', name: 'Net', color: '#ffd98a', type: 'line', width: 1.4 }] : []),
           bars,
@@ -531,7 +543,7 @@ CA.UI.Graphs = (() => {
         });
         return {
           series: parts
-            .map((x) => ({ key: x.key, name: x.name, color: x.color, type: 'bar' }))
+            .map((x) => ({ key: x.key, name: x.name, color: x.color, type: 'bar', merge: x.merge }))
             .concat(gains && losses ? [{ key: 'net', name: 'Net (selected)', color: '#ffd98a', type: 'line', width: 1.4 }] : [])
             .concat([{ key: 'bank', name: 'Bank, actual change', color: C_SHOWN, type: 'line', dash: true, width: 1.2 }]),
           bars,

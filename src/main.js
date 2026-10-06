@@ -49,6 +49,7 @@ const mod = {
     CA.UI.Widgets.init();
     CA.UI.WizardPage.init();
     CA.UI.GardenPage.init();
+    CA.UI.PantheonPage.init();
     CA.UI.StoreSwitch.init();
     CA.UI.StockGraph.init();
     CA.UI.StockPerf.init();

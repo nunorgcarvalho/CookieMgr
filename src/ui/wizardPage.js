@@ -1,4 +1,5 @@
-// The Wizard tower page, plus a small toolbar inside the game's own Grimoire.
+// The Grimoire page (Wizard tower minigame; page id 'wizard'), plus a small toolbar inside the game's
+// own Grimoire.
 //
 //   Grimoire       magic meter (now / max, refill per second, time to full), spells cast
 //   Spells         every spell: cost, backfire chance, Cast button (or how long until it's
@@ -37,7 +38,7 @@ CA.UI.WizardPage = (() => {
   function grimoireCard() {
     return (
       '<div class="ca-card">' +
-      C().cardHead('Grimoire', 'wizard', '<div class="ca-card-meta"><span class="ca-pill" data-wiz-cast></span></div>') +
+      C().cardHead('Grimoire', 'wizard', `<div class="ca-card-meta"><span class="ca-pill" data-wiz-cast></span>${C().gameLink('Wizard tower')}</div>`) +
       '<div class="ca-magic"><div class="ca-magic-fill" data-wiz-fill></div><div class="ca-magic-text" data-wiz-text></div></div>' +
       '<div class="ca-stats" data-wiz-stats></div>' +
       '</div>'
@@ -47,7 +48,7 @@ CA.UI.WizardPage = (() => {
   function spellsCard() {
     return (
       '<div class="ca-card">' +
-      C().cardHead('Spells', 'sparkle', '<div class="ca-card-meta"><span class="ca-hint">★ gives a spell its own button on the left panel · hotkeys on the Macros page</span></div>') +
+      C().cardHead('Spells', 'sparkle', `<div class="ca-card-meta"><span class="ca-hint">★ gives a spell its own button on the left panel · hotkeys on the ${C().link('Macros', 'clickers')} page</span></div>`) +
       '<div class="ca-spells">' +
       G()
         .SPELLS.map(
@@ -75,7 +76,7 @@ CA.UI.WizardPage = (() => {
     if (!G().minigame()) {
       h +=
         '<div class="ca-card ca-card-note-only">' +
-        C().cardHead('Wizard tower', 'wizard') +
+        C().cardHead('Grimoire', 'wizard') +
         '<div class="ca-card-note">The Grimoire minigame opens once you have a level-1 Wizard tower (spend a sugar lump on it). Your spell macros are ready for when it does.</div>' +
         '</div>';
     } else h += grimoireCard() + spellsCard();
@@ -228,7 +229,7 @@ CA.UI.WizardPage = (() => {
       bar.id = TOOLBAR_ID;
       bar.innerHTML =
         '<div class="cm-gt-btn" data-cm-gt="auto"></div>' +
-        `<div class="cm-gt-btn cm-gt-open" data-cm-gt="open" title="Open the CookieMgr Wizard tower page">${I('open', 12)}CookieMgr</div>`;
+        `<div class="cm-gt-btn cm-gt-open" data-cm-gt="open" title="Open the CookieMgr Grimoire page">${I('open', 12)}CookieMgr</div>`;
       bar.addEventListener('click', (e) => {
         const b = e.target.closest('[data-cm-gt]');
         if (!b) return;
@@ -257,7 +258,7 @@ CA.UI.WizardPage = (() => {
       default: true,
     });
     createPlot();
-    CA.UI.Pages.register({ id: 'wizard', label: 'Wizard tower', icon: 'wizard', order: 45, html, mount, unmount, tick: sync });
+    CA.UI.Pages.register({ id: 'wizard', label: 'Grimoire', icon: 'wizard', order: 60, group: 'minigames', html, mount, unmount, tick: sync });
     CA.Events.on('macros', toolbarSync);
     CA.Events.on('settings', (k) => (k === 'grimoireToolbar' || k === null) && toolbarSync());
     setInterval(toolbarSync, 1000);

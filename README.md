@@ -23,10 +23,13 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 | **Widget** | Something on the game's left panel: a macro's button, the Running now bar, quick stats, events, minigames. |
 
-## Features (v2.12)
+## Features (v2.14)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
-**Events**, **Graphs**, **Stock market**, **Wizard tower**, **Garden**, **Macros**, **Widgets** and **Settings**. Hovering an icon slides its name out to the left.
+the data pages **Events** and **Graphs**; the minigames **Garden**, **Stock market**, **Pantheon** and **Grimoire**;
+then **Macros**, **Widgets** and **Settings** — a small gap between each kind. Hovering an icon slides its name out to
+the left. Wherever a page mentions another (a Macros section, a "Macros page" hint), the name is a link to it, and
+each minigame page has an **Open in game** button that closes the panel and takes you to the minigame.
 Clicking one opens the CookieMgr panel straight to that page (switching pages directly if it's already open on a
 different one); clicking the page that's already showing closes the panel.
 
@@ -180,9 +183,15 @@ it). Modifiers work (`Shift + G`): click a key chip and press the new key (`Esc`
 
 **Favourites** — the ★ on a macro gives it its own button on the left panel (see Widgets).
 
-### Wizard tower
+### Pantheon
 
-The **Wizard tower** page is the Grimoire, CookieMgr-style:
+The **Pantheon** page (Temple minigame) shows your three slots — Diamond, Ruby, Jade — with the spirit in each and what
+it does in that slot (the game's own text), your worship swaps (left, next one back, refill times: 1 h / 4 h / 16 h
+with 2 / 1 / 0 swaps left), and every spirit, with the slotted ones marked; hover one for what it does in each slot.
+
+### Grimoire
+
+The **Grimoire** page (Wizard tower minigame) is the Grimoire, CookieMgr-style:
 
 - **Grimoire** — the magic meter (now / max, refill per second, time until full) and spells cast.
 - **Spells** — every spell with its live cost and backfire chance, a **Cast** button (or how long until you can
@@ -430,7 +439,8 @@ src/
     macrosPage.js    the Macros page: macro rows, "Running now" status, the macro editor
     widgets.js       widgets on the left panel (dragging, sizing, settings, saving) and the Widgets page
     widgetTypes.js   what each widget shows (macro buttons, status bar, stats, events, minigames)
-    wizardPage.js    the Wizard tower page and the toolbar inside the Grimoire
+    wizardPage.js    the Grimoire page and the toolbar inside the game's Grimoire
+    pantheonPage.js  the Pantheon page
     gardenPage.js    the Garden page: the plot against the active profile, the auto-gardener, profiles
     storeSwitch.js   the store side switch (building sort, round up)
     stockGraph.js    the Stock market page charts: portfolio value / per-stock prices, rolling performance

@@ -1,5 +1,6 @@
 // Registry of CookieMgr pages (one sidebar entry each). A page is
-//   { id, label, icon, order, html(), mount(root), unmount(), tick() }
+//   { id, label, icon, order, group, html(), mount(root), unmount(), tick() }
+// `group` ('data' | 'minigames' | 'custom') puts a small gap in the sidebar between kinds of page.
 // html() returns the page markup; mount/unmount/tick are optional lifecycle hooks for pages
 // with live parts (charts, logs). The panel (ui/menu.js) and the sidebar (ui/tab.js) both read
 // this list, so adding a page is just one register() call from the page's own module.

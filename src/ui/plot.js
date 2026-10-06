@@ -1018,12 +1018,37 @@ CA.UI.Plot = (() => {
       let total = 0;
       let parts = 0;
       if (bar) {
+        // series that share a `merge` group show as one row, their figures side by side:
+        // "Clicking (raw / boosted)  1.2K / 3.4K" (merge: { id, name, label, order, add })
+        const rows = [];
+        const groups = {};
         barSeries.forEach((s) => {
           const val = bar.parts[s.key];
-          if (!Number.isFinite(val) || (val === 0 && s.hideZero !== false)) return;
-          h += row(s.color, s.name, tipFmt(val));
-          total += val;
-          parts++;
+          if (!Number.isFinite(val)) return;
+          if (val !== 0) {
+            total += val;
+            parts++;
+          }
+          if (!s.merge) {
+            if (val !== 0 || s.hideZero === false) rows.push({ color: s.color, name: s.name, value: tipFmt(val) });
+            return;
+          }
+          let gp = groups[s.merge.id];
+          if (!gp) {
+            gp = groups[s.merge.id] = { color: s.color, name: s.merge.name, cells: [], nonzero: false };
+            rows.push(gp);
+          }
+          // "boosted" shows the whole (raw + boost), like the tables
+          const shown = s.merge.add ? (bar.parts[s.merge.add] || 0) + val : val;
+          gp.cells.push({ label: s.merge.label, v: shown, order: s.merge.order || 0 });
+          if (val !== 0) gp.nonzero = true;
+        });
+        rows.forEach((r) => {
+          if (!r.cells) h += row(r.color, r.name, r.value);
+          else if (r.nonzero) {
+            const cells = r.cells.sort((a, b) => a.order - b.order);
+            h += row(r.color, `${r.name} (${cells.map((c) => c.label).join(' / ')})`, cells.map((c) => tipFmt(c.v)).join(' / '));
+          } else return;
           any = true;
         });
         if (parts > 1 && spec.total !== false) h += row('transparent', spec.totalLabel || 'Total', tipFmt(total), true);

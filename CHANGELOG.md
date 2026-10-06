@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 2.14.0 — 2026-10-05
+
+- **Sidebar reordered and grouped:** Events, Graphs | Garden, Stock market, Pantheon, Grimoire | Macros, Widgets,
+  Settings — data, minigames, customization, with a small gap between groups.
+- **Grimoire** is the new name of the Wizard tower page.
+- **New Pantheon page:** your three slots with each spirit's effect there, worship swaps (left, next one back), and
+  every spirit — hover one for what it does in each slot.
+- **Links between pages:** a page's mention of another is a link to it (the Garden / Stock market / Grimoire sections
+  on the Macros page, "Macros page" hints…), and each minigame page has **Open in game**.
+- **Condensed chart tooltips:** on the Actual CpS and Cookie bank charts, each category is one row with its figures
+  side by side, as in the tables — "Clicking (raw / boosted)", "Buildings (−bought / +sold)".
+
 ## 2.13.0 — 2026-10-05
 
 - **Every macro switches off when you ascend** (with "Turn off when ascending" on) — the stock autobuyer and the
