@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+## 2.24.0 — 2026-10-06
+
+- **Algorithmic macros** (replacing v2.22's flow blocks): written like pseudo-code, indented like Python — actions,
+  `switch on/off`, `wait until …` / `wait 30 seconds`, `repeat until …:`, `while …:`, `repeat N times:`, `forever:`,
+  `if / elif / else`, `for x in [a, b]:`, `parallel:` with `branch:` blocks, `stop`, `log`, comments. Conditions join
+  with and / or / not and compare values: cookies(), cps(), magic(), owned(season, part), total(season, part),
+  santaLevel(), building(Farm), state(…)…
+- **A code editor** for them: coloured, numbered lines; problems listed as you type (click to jump); Tab / Enter
+  indent for you; while it runs, the lines it's on light up and what it's checking shows underneath.
+- **The library**, always beside the macro editor: every action, condition, value and keyword — search it, click to
+  insert (into the code at the cursor, or as a step), ★ to pin your favourites at the top.
+- **SeasonCompletion is now an algorithm** whose code you can edit ("Edit its code", "Reset to default"). Christmas
+  comes first for its upgrades and Santa's Final Claus, then Easter, Halloween and Valentine's day, then Christmas
+  again for the reindeer cookies, then Business day for good. Its card shows the line it's on with the counts it
+  checks, and the if / elif decisions it took.
+- Old v2.22 flows open in the editor written out as code.
+- New: `season.complete` and `season.buyDrops` take a part (all / upgrades / cookies).
+
 ## 2.23.0 — 2026-10-06
 
 - **Widget settings come to you:** the ⚙ (or a widget on the Widgets page) scrolls its settings into view with a

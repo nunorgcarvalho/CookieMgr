@@ -4613,3 +4613,322 @@ body.ca-has-storebar #products {
     0 0 0 3px #ffd36a,
     0 0 16px rgba(255, 211, 106, 0.8);
 }
+
+/* ---------- v2.24: algorithmic macros — the code editor and the library ---------- */
+
+/* the editor with its library beside it (stacking when the panel is narrow) */
+#CookieMgrMenu .ca-ed-layout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+#CookieMgrMenu .ca-ed-layout > .ca-editor-body {
+  flex: 1 1 420px;
+  min-width: 0;
+}
+#CookieMgrMenu .ca-ed-fixed {
+  display: block;
+  font: bold 15px 'Merriweather', Georgia, serif;
+  color: #ffeab0;
+}
+#CookieMgrMenu .ca-ed-fixed-sub {
+  font-size: 10.5px;
+  color: #a39477;
+}
+
+/* the code: a textarea over its own highlighted copy, line numbers beside */
+#CookieMgrMenu .ca-code {
+  --code-font: 12px/18px Consolas, 'Cascadia Mono', Menlo, Monaco, monospace;
+  display: flex;
+  height: 340px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #120d08;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 220, 150, 0.2),
+    inset 0 2px 10px rgba(0, 0, 0, 0.6);
+}
+#CookieMgrMenu .ca-code-gutter {
+  flex: none;
+  width: 36px;
+  padding: 8px 0;
+  overflow: hidden;
+  font: var(--code-font);
+  text-align: right;
+  color: #5d5444;
+  background: rgba(0, 0, 0, 0.35);
+  user-select: none;
+}
+#CookieMgrMenu .ca-code-gutter span {
+  display: block;
+  padding-right: 7px;
+}
+#CookieMgrMenu .ca-code-gutter span.err {
+  color: #ff9a8a;
+  background: rgba(229, 72, 77, 0.18);
+}
+#CookieMgrMenu .ca-code-gutter span.run {
+  color: #1c120a;
+  background: #7dff8a;
+  box-shadow: 0 0 6px rgba(125, 255, 138, 0.6);
+}
+#CookieMgrMenu .ca-code-box {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+#CookieMgrMenu .ca-code-hl,
+#CookieMgrMenu .ca-code-ta {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 8px 10px;
+  font: var(--code-font);
+  letter-spacing: 0;
+  white-space: pre;
+  tab-size: 2;
+  overflow: auto;
+  box-sizing: border-box;
+  border: none;
+}
+#CookieMgrMenu .ca-code-hl {
+  color: #e8d7b0;
+  pointer-events: none;
+  overflow: hidden;
+}
+#CookieMgrMenu .ca-editor2 textarea.ca-code-ta {
+  color: transparent;
+  caret-color: #ffd98a;
+  background: transparent;
+  border-radius: 0;
+  resize: none;
+  outline: none;
+}
+#CookieMgrMenu .ca-code-ta::selection {
+  background: rgba(255, 210, 110, 0.3);
+  color: transparent;
+}
+#CookieMgrMenu .ca-hl-line.err {
+  text-decoration: underline wavy rgba(255, 110, 100, 0.7);
+  text-underline-offset: 4px;
+}
+#CookieMgrMenu .ca-code-hl .hc {
+  color: #7b8a6a;
+  font-style: italic;
+}
+#CookieMgrMenu .ca-code-hl .hk {
+  color: #ffb86b;
+  font-weight: bold;
+}
+#CookieMgrMenu .ca-code-hl .ha {
+  color: #9be89b;
+}
+#CookieMgrMenu .ca-code-hl .hq {
+  color: #8fc3ea;
+}
+#CookieMgrMenu .ca-code-hl .hv {
+  color: #6fe6ef;
+}
+#CookieMgrMenu .ca-code-hl .hn {
+  color: #ff9a8a;
+}
+#CookieMgrMenu .ca-code-hl .hs {
+  color: #e6c07b;
+}
+#CookieMgrMenu .ca-code-hl .ho {
+  color: #ffd98a;
+}
+#CookieMgrMenu .ca-code-hl .hi {
+  color: #d8cbb0;
+}
+#CookieMgrMenu .ca-code-status {
+  font-size: 11px;
+}
+#CookieMgrMenu .ca-code-ok {
+  color: #7dff8a;
+}
+#CookieMgrMenu .ca-code-bad {
+  color: #ff9a8a;
+  font-weight: bold;
+}
+#CookieMgrMenu .ca-code-err {
+  padding: 1px 6px;
+  color: #ffb3a8;
+  cursor: pointer;
+}
+#CookieMgrMenu .ca-code-err:hover {
+  background: rgba(229, 72, 77, 0.15);
+}
+/* while it runs */
+#CookieMgrMenu .ca-code-live:empty {
+  display: none;
+}
+#CookieMgrMenu .ca-code-live {
+  padding: 6px 8px;
+  border-radius: 5px;
+  font: 11px/1.4 Consolas, Menlo, monospace;
+  background: rgba(125, 255, 138, 0.06);
+  box-shadow: inset 3px 0 0 #7dff8a;
+}
+#CookieMgrMenu .ca-code-live-head {
+  font: bold 10px Tahoma, Arial, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #7dff8a;
+}
+#CookieMgrMenu .ca-code-live-at {
+  color: #f3e5c3;
+}
+#CookieMgrMenu .ca-code-live-tr {
+  color: #93866f;
+}
+#CookieMgrMenu .ca-code-help summary {
+  font-size: 11px;
+  color: #ffd98a;
+  cursor: pointer;
+}
+#CookieMgrMenu .ca-code-help pre {
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  font: 11px/1.5 Consolas, Menlo, monospace;
+  color: #d8cbb0;
+  white-space: pre;
+  overflow-x: auto;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.3);
+}
+/* a running algorithm's decisions, on its card */
+#CookieMgrMenu .ca-trace {
+  margin-top: 3px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font: 10px/1.35 Consolas, Menlo, monospace;
+  color: #a39477;
+  background: rgba(0, 0, 0, 0.25);
+}
+#CookieMgrMenu .ca-trace div {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* the library: everything you can write, pinnable */
+#CookieMgrMenu .ca-ed-lib {
+  flex: 0 1 300px;
+  min-width: 240px;
+  max-height: 640px;
+  display: flex;
+  flex-direction: column;
+  margin: 12px 12px 12px 0;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.12);
+}
+#CookieMgrMenu .ca-lib-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 8px;
+  color: #93866f;
+  border-bottom: 1px solid rgba(255, 220, 150, 0.1);
+}
+#CookieMgrMenu .ca-lib-head input {
+  flex: 1;
+  min-width: 0;
+  font: 11.5px Tahoma, Arial, sans-serif;
+  color: #f0e2c0;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 220, 150, 0.25);
+  border-radius: 4px;
+  padding: 3px 6px;
+}
+#CookieMgrMenu .ca-lib-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 6px 8px;
+}
+#CookieMgrMenu .ca-lib-group.hidden,
+#CookieMgrMenu .ca-lib-row.hidden {
+  display: none;
+}
+#CookieMgrMenu .ca-lib-ghead {
+  position: sticky;
+  top: -4px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 6px 0 2px;
+  padding: 2px 2px;
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #93866f;
+  background: #1a120a;
+}
+#CookieMgrMenu .ca-lib-pinned .ca-lib-ghead {
+  color: #ffd36a;
+}
+#CookieMgrMenu .ca-lib-empty {
+  padding: 3px 6px;
+  font-size: 10px;
+  font-style: italic;
+  color: #6d6252;
+}
+#CookieMgrMenu .ca-lib-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  column-gap: 2px;
+  padding: 2px 3px;
+  border-radius: 4px;
+}
+#CookieMgrMenu .ca-lib-row:hover {
+  background: rgba(255, 220, 150, 0.07);
+}
+#CookieMgrMenu .ca-lib-ins {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 1px 2px;
+  text-align: left;
+  color: #9be89b;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+#CookieMgrMenu .ca-lib-condition .ca-lib-ins {
+  color: #8fc3ea;
+}
+#CookieMgrMenu .ca-lib-value .ca-lib-ins {
+  color: #6fe6ef;
+}
+#CookieMgrMenu .ca-lib-keyword .ca-lib-ins {
+  color: #ffb86b;
+}
+#CookieMgrMenu .ca-lib-ins code {
+  font: 11px Consolas, Menlo, monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#CookieMgrMenu .ca-lib-desc {
+  grid-column: 1;
+  padding-left: 19px;
+  font-size: 9.5px;
+  line-height: 1.25;
+  color: #93866f;
+}
+#CookieMgrMenu .ca-lib-fav {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  opacity: 0.4;
+}
+#CookieMgrMenu .ca-lib-row:hover .ca-lib-fav,
+#CookieMgrMenu .ca-lib-fav.on {
+  opacity: 1;
+}
+#CookieMgrMenu .ca-lib-fav.on {
+  color: #ffd36a;
+}

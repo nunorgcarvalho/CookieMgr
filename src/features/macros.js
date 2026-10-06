@@ -167,6 +167,9 @@ CA.Macros = (() => {
     if (mode === 'flow') {
       m.steps = [];
       m.flow = cleanFlow(def.flow);
+      // an algorithmic macro: its code (features/script.js compiles it when it starts)
+      if (typeof def.source === 'string') m.source = def.source.slice(0, 50000);
+      if (def.builtin && typeof def.defaultSource === 'string') m.defaultSource = def.defaultSource;
       // a built-in flow can be built from its settings (makeFlow(options)) instead of being fixed
       if (def.builtin && typeof def.makeFlow === 'function') {
         m.makeFlow = def.makeFlow;
@@ -250,7 +253,8 @@ CA.Macros = (() => {
     const m = byId[id];
     if (!m) return null;
     // the copy gets the steps (and a flow's blocks) as they are now, settings applied
-    const copy = JSON.parse(JSON.stringify({ ...m, steps: stepsOf(m), every: everyOf(m), flow: m.mode === 'flow' ? flowOf(m) : m.flow }));
+    const copy = JSON.parse(JSON.stringify({ ...m, steps: stepsOf(m), every: everyOf(m), flow: m.mode === 'flow' ? flowOf(m) : m.flow, source: m.mode === 'flow' ? sourceOf(m) : undefined }));
+    delete copy.defaultSource;
     delete copy.options;
     delete copy.flowOptions;
     delete copy.shift;
@@ -308,7 +312,7 @@ CA.Macros = (() => {
   // interval) advances each running branch as far as it can without waiting, but never repeats
   // a body twice in one pass, so nothing can spin. A flow that reaches its end switches itself off.
 
-  const FLOW_TYPES = ['do', 'wait', 'until', 'if', 'parallel', 'forever'];
+  const FLOW_TYPES = ['do', 'wait', 'until', 'if', 'parallel', 'forever', 'sleep', 'times', 'stop', 'log'];
   const MAX_FLOW_DEPTH = 12;
   function cleanCond(c) {
     const list = (c && Array.isArray(c.all) ? c.all : []).filter((x) => x && x.cond).map((x) => ({ cond: String(x.cond), params: x.params && typeof x.params === 'object' ? { ...x.params } : {}, not: !!x.not }));
@@ -324,6 +328,10 @@ CA.Macros = (() => {
         if (n.type === 'until') return { type: 'until', cond: cleanCond(n.cond), body: cleanFlow(n.body, d + 1) };
         if (n.type === 'if') return { type: 'if', cond: cleanCond(n.cond), then: cleanFlow(n.then, d + 1), else: cleanFlow(n.else, d + 1) };
         if (n.type === 'parallel') return { type: 'parallel', branches: (Array.isArray(n.branches) ? n.branches : [[], []]).slice(0, 8).map((b) => cleanFlow(b, d + 1)) };
+        if (n.type === 'sleep') return { type: 'sleep', secs: Math.max(0, Number(n.secs) || 0) };
+        if (n.type === 'times') return { type: 'times', n: Math.max(0, Math.floor(Number(n.n) || 0)), body: cleanFlow(n.body, d + 1) };
+        if (n.type === 'stop') return { type: 'stop' };
+        if (n.type === 'log') return { type: 'log', text: String(n.text || '') };
         return { type: 'forever', body: cleanFlow(n.body, d + 1) };
       });
   }
@@ -336,7 +344,28 @@ CA.Macros = (() => {
     return out;
   }
   /** The blocks a flow runs (a built-in's built from its settings). */
-  const flowOf = (m) => (m.makeFlow ? cleanFlow(m.makeFlow(flowOptsOf(m))) : m.flow || []);
+  /** An algorithmic macro's code: yours, or a built-in's (as you edited it, else its default). */
+  const sourceOf = (m) => (m.builtin ? (prefs[m.id] && typeof prefs[m.id].source === 'string' ? prefs[m.id].source : m.defaultSource) : m.source);
+  /** Sets a built-in's code (null: back to its default), restarting it if it's running. */
+  function setSource(id, source) {
+    const m = byId[id];
+    if (!m || !m.builtin || typeof m.defaultSource !== 'string') return;
+    const p = { ...(prefs[id] || {}) };
+    if (source == null || source === m.defaultSource) delete p.source;
+    else p.source = String(source).slice(0, 50000);
+    prefs[id] = p;
+    if (running[id]) {
+      stop(id);
+      start(id);
+    }
+    changed(id);
+  }
+  /** The blocks a flow runs (compiled from its code when it has some; lines kept for its status). */
+  function flowOf(m) {
+    const src = sourceOf(m);
+    if (typeof src === 'string' && CA.Script) return CA.Script.compile(src).flow;
+    return m.makeFlow ? cleanFlow(m.makeFlow(flowOptsOf(m))) : m.flow || [];
+  }
   /** Sets one of a built-in flow's settings (restarting it if it's running). */
   function setFlowOpt(id, key, value) {
     const m = byId[id];
@@ -353,14 +382,25 @@ CA.Macros = (() => {
 
   const flowRuns = {}; // id -> { prog, S (per-block state by path), at: [what it waits on], done, error }
 
-  const describeCond = (c) => CA.Conditions.describe(c);
+  /** { ok, text } for a block's condition — the text says what it saw. */
+  const check = (c) => (CA.Script ? CA.Script.evaluate(c) : { ok: CA.Conditions.test(c), text: CA.Conditions.describe(c) });
+  const at = (F, n, text) => F.at.push(n.line ? `line ${n.line}: ${text}` : text);
+  /** A line in the flow's trace (the decisions it took), newest last, the last TRACE_MAX kept. */
+  const TRACE_MAX = 40;
+  function trace(F, n, text) {
+    const last = F.trace[F.trace.length - 1];
+    const entry = n.line ? `line ${n.line}: ${text}` : text;
+    if (last && last.text === entry) return;
+    F.trace.push({ t: Date.now(), text: entry, line: n.line || 0 });
+    if (F.trace.length > TRACE_MAX) F.trace.shift();
+  }
   function resetUnder(S, path) {
     Object.keys(S).forEach((k) => (k === path || k.startsWith(`${path}.`)) && delete S[k]);
   }
   function execSeq(F, nodes, path) {
     const st = F.S[path] || (F.S[path] = { i: 0 });
     while (st.i < nodes.length) {
-      if (!execNode(F, nodes[st.i], `${path}.${st.i}`)) return false;
+      if (!execNode(F, nodes[st.i], `${path}.${st.i}`) || F.stopped) return false;
       st.i++;
     }
     return true;
@@ -376,22 +416,61 @@ CA.Macros = (() => {
         }
         return true;
       }
-      case 'wait':
-        if (CA.Conditions.test(n.cond)) return true;
-        F.at.push(`waiting for ${describeCond(n.cond)}`);
+      case 'wait': {
+        const r = check(n.cond);
+        if (r.ok) {
+          trace(F, n, `waited until ${r.text}`);
+          return true;
+        }
+        at(F, n, `waiting until ${r.text}`);
         return false;
-      case 'until':
-        if (CA.Conditions.test(n.cond)) return true;
-        F.at.push(`until ${describeCond(n.cond)}`);
+      }
+      case 'sleep': {
+        const st = F.S[path] || (F.S[path] = { until: Date.now() + n.secs * 1000 });
+        if (Date.now() >= st.until) return true;
+        at(F, n, `waiting ${Math.ceil((st.until - Date.now()) / 1000)}s`);
+        return false;
+      }
+      case 'until': {
+        const r = check(n.cond);
+        if (r.ok) {
+          trace(F, n, `done: ${r.text}`);
+          return true;
+        }
+        at(F, n, `until ${r.text}`);
         if (execSeq(F, n.body, `${path}.b`)) resetUnder(F.S, `${path}.b`);
         return false;
+      }
+      case 'times': {
+        const st = F.S[path] || (F.S[path] = { k: 0 });
+        if (st.k >= n.n) return true;
+        at(F, n, `round ${st.k + 1} of ${n.n}`);
+        if (execSeq(F, n.body, `${path}.b`)) {
+          resetUnder(F.S, `${path}.b`);
+          st.k++;
+        }
+        return st.k >= n.n;
+      }
       case 'if': {
-        const st = F.S[path] || (F.S[path] = { branch: CA.Conditions.test(n.cond) ? 'then' : 'else' });
+        let st = F.S[path];
+        if (!st) {
+          const r = check(n.cond);
+          st = F.S[path] = { branch: r.ok ? 'then' : 'else' };
+          trace(F, n, `if ${r.text} → ${r.ok ? 'yes' : n.else && n.else.length ? 'no: else' : 'no: skipped'}`);
+        }
         return execSeq(F, n[st.branch] || [], `${path}.${st.branch}`);
       }
+      case 'stop':
+        trace(F, n, 'stop');
+        F.stopped = true;
+        return false;
+      case 'log':
+        trace(F, n, n.text);
+        return true;
       case 'parallel': {
         let all = true;
         n.branches.forEach((b, i) => {
+          if (F.stopped) return;
           if (!execSeq(F, b, `${path}.p${i}`)) all = false;
         });
         return all;
@@ -399,7 +478,7 @@ CA.Macros = (() => {
       case 'forever':
       default:
         if (execSeq(F, n.body || [], `${path}.b`)) resetUnder(F.S, `${path}.b`);
-        F.at.push('repeating');
+        at(F, n, 'repeating');
         return false;
     }
   }
@@ -411,7 +490,7 @@ CA.Macros = (() => {
     depth++;
     let finished = false;
     try {
-      finished = execSeq(F, F.prog, 'r');
+      finished = execSeq(F, F.prog, 'r') || F.stopped;
     } finally {
       depth--;
     }
@@ -424,7 +503,17 @@ CA.Macros = (() => {
     }
   }
   /** Where a running flow is: { at: ['until Christmas is complete', …], done, error }. */
-  const flowStatus = (id) => (flowRuns[id] ? { at: flowRuns[id].at.slice(), done: flowRuns[id].done, error: flowRuns[id].error } : null);
+  const flowStatus = (id) =>
+    flowRuns[id]
+      ? {
+          at: flowRuns[id].at.slice(),
+          // the lines it's on right now (for the editor's gutter)
+          lines: flowRuns[id].at.map((a) => Number((a.match(/^line (\d+):/) || [])[1])).filter(Boolean),
+          trace: flowRuns[id].trace.slice(),
+          done: flowRuns[id].done,
+          error: flowRuns[id].error,
+        }
+      : null;
 
   function tick(m) {
     const r = running[m.id];
@@ -450,7 +539,7 @@ CA.Macros = (() => {
   function start(id) {
     const m = byId[id];
     if (!m || m.mode === 'once' || running[id]) return;
-    if (m.mode === 'flow') flowRuns[id] = { prog: flowOf(m), S: {}, at: [], done: 0, error: '' };
+    if (m.mode === 'flow') flowRuns[id] = { prog: flowOf(m), S: {}, at: [], trace: [], done: 0, error: '', stopped: false };
     running[id] = { since: Date.now(), condWas: false, lastFire: 0, timer: setInterval(() => tick(m), everyOf(m)) };
   }
 
@@ -723,6 +812,8 @@ CA.Macros = (() => {
     shiftToggle,
     shiftValue,
     flowOf,
+    sourceOf,
+    setSource,
     flowOptsOf,
     setFlowOpt,
     flowStatus,

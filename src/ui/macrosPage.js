@@ -28,7 +28,7 @@ CA.UI.MacrosPage = (() => {
     { v: 'when', label: 'When…', icon: 'filter', hint: 'While it’s on, watches for a condition and runs its steps when it happens.' },
     { v: 'once', label: 'Once', icon: 'play', hint: 'No on/off: its button or hotkey runs the steps one time.' },
     { v: 'group', label: 'Group', icon: 'widget', hint: 'A switch for several macros at once: on turns them all on, off turns them all off.' },
-    { v: 'flow', label: 'Flow', icon: 'play', hint: 'An agent: blocks in order, with waits, ifs, loops and branches side by side.' },
+    { v: 'flow', label: 'Algorithmic', icon: 'edit', hint: 'Written like pseudo-code: loops, if / else, waits, branches side by side.' },
   ];
 
   let root = null;
@@ -161,6 +161,7 @@ CA.UI.MacrosPage = (() => {
       if (!f) return '';
       return (
         (f.at.length ? f.at.map((a) => `<div class="ca-status-step hot">${I('play', 11)}<span class="ca-status-name">${esc(a)}</span></div>`).join('') : '') +
+        (f.trace.length ? `<div class="ca-trace">${f.trace.slice(-4).map((x) => `<div>${esc(x.text)}</div>`).join('')}</div>` : '') +
         `<div class="ca-status-step${f.error ? ' err' : ''}">${I('bolt', 11)}<span class="ca-status-name">${f.error ? esc(f.error) : 'things done'}</span><span class="ca-status-val">${CA.UI.Plot.fmt.beautify(f.done, 0)}</span></div>`
       );
     }
@@ -252,6 +253,7 @@ CA.UI.MacrosPage = (() => {
       '<div class="ca-mtile-foot">' +
       `<button type="button" class="ca-iconbtn ca-fav${fav ? ' on' : ''}" data-ca="macro-fav" data-id="${esc(m.id)}" title="${fav ? 'Un-favourite (removes its button from the left panel)' : 'Favourite: gives it its own button on the left panel'}">${I(fav ? 'star' : 'starOutline', 14)}</button>` +
       `<button type="button" class="ca-iconbtn" data-ca="macro-dup" data-id="${esc(m.id)}" title="Duplicate into your own editable macro">${I('plus', 13)}</button>` +
+      (m.mode === 'flow' && typeof m.defaultSource === 'string' ? C().button(`${I('edit', 11)} Edit its code`, `data-ca="macro-code" data-id="${esc(m.id)}"`, 'ca-btn-small') : '') +
       C().hotkey(`macro.${m.id}`) +
       '</div></div>'
     );
@@ -436,6 +438,249 @@ CA.UI.MacrosPage = (() => {
     return h + '</div>';
   }
 
+  // ---- algorithmic macros: the code editor and the library beside it -----------------------------
+  //
+  // The code is a <textarea> over a highlighted copy of itself (same font, same scroll), with line
+  // numbers in a gutter; it's checked as you type (features/script.js) and its problems listed under
+  // it. While the macro runs, the lines it's on light up in the gutter and what it's doing shows
+  // under the code. The library lists every action, condition, value and keyword — search it,
+  // click one to insert it where the cursor is, ★ to pin it at the top.
+
+  const LIB_FAVS = 'libFavs';
+  let libItems = [];
+
+  const libFavs = () =>
+    String(CA.Settings.get(LIB_FAVS) || '')
+      .split('\n')
+      .filter(Boolean);
+  function toggleLibFav(key) {
+    const favs = libFavs();
+    const i = favs.indexOf(key);
+    if (i >= 0) favs.splice(i, 1);
+    else favs.push(key);
+    CA.Settings.set(LIB_FAVS, favs.join('\n'));
+  }
+
+  function libraryHtml() {
+    libItems = CA.Script.library();
+    const favs = libFavs();
+    const key = (it) => `${it.kind}:${it.id}`;
+    const row = (it, i) =>
+      `<div class="ca-lib-row ca-lib-${it.kind}" data-lib-text="${esc(`${it.sig} ${it.desc} ${it.group}`.toLowerCase())}">` +
+      `<button type="button" class="ca-lib-ins" data-lib-insert="${i}" title="Insert it">${I(it.icon || 'bolt', 12)}<code>${esc(it.sig)}</code></button>` +
+      `<span class="ca-lib-desc">${esc(it.desc)}</span>` +
+      `<button type="button" class="ca-iconbtn ca-lib-fav${favs.includes(key(it)) ? ' on' : ''}" data-lib-fav="${esc(key(it))}" title="${favs.includes(key(it)) ? 'Unpin' : 'Pin it at the top'}">${I(favs.includes(key(it)) ? 'star' : 'starOutline', 11)}</button>` +
+      '</div>';
+    const pinned = libItems.map((it, i) => [it, i]).filter(([it]) => favs.includes(key(it)));
+    const groups = {};
+    libItems.forEach((it, i) => (groups[it.kind === 'action' ? `Actions · ${it.group}` : it.group] = groups[`${it.kind === 'action' ? `Actions · ${it.group}` : it.group}`] || []).push([it, i]));
+    return (
+      '<aside class="ca-ed-lib" data-ed-lib>' +
+      `<div class="ca-lib-head">${I('search', 12)}<input type="search" placeholder="Actions, conditions, values…" data-lib-search></div>` +
+      '<div class="ca-lib-body">' +
+      `<div class="ca-lib-group ca-lib-pinned"><div class="ca-lib-ghead">${I('star', 11)} Pinned</div>${
+        pinned.length ? pinned.map(([it, i]) => row(it, i)).join('') : '<div class="ca-lib-empty">★ an item to keep it here</div>'
+      }</div>` +
+      Object.keys(groups)
+        .map((g) => `<div class="ca-lib-group"><div class="ca-lib-ghead">${esc(g)}</div>${groups[g].map(([it, i]) => row(it, i)).join('')}</div>`)
+        .join('') +
+      '</div></aside>'
+    );
+  }
+
+  // syntax colouring for the code (one line at a time)
+  const KW = new Set(['if', 'elif', 'else', 'for', 'in', 'repeat', 'until', 'while', 'times', 'forever', 'parallel', 'branch', 'wait', 'seconds', 'second', 'minutes', 'minute', 'stop', 'log', 'switch', 'on', 'off', 'and', 'or', 'not', 'true', 'false']);
+  function highlightLine(line) {
+    let out = '';
+    let i = 0;
+    const span = (cls, t) => `<span class="${cls}">${esc(t)}</span>`;
+    while (i < line.length) {
+      const rest = line.slice(i);
+      let m;
+      if (rest[0] === '#') {
+        out += span('hc', rest);
+        break;
+      }
+      if ((m = rest.match(/^("[^"]*"?|'[^']*'?)/))) out += span('hs', m[0]);
+      else if ((m = rest.match(/^\d+(?:\.\d+)?(?:e[+-]?\d+)?(?:qa|qi|k|m|b|t)?(?![A-Za-z_])/i))) out += span('hn', m[0]);
+      else if ((m = rest.match(/^[A-Za-z_][\w.\-']*\w|^[A-Za-z_]/))) {
+        const w = m[0];
+        const cls = KW.has(w) ? 'hk' : CA.Actions.get(w) ? 'ha' : CA.Conditions.get(w) ? 'hq' : CA.Script.VALUES.some((v) => v.id === w) ? 'hv' : 'hi';
+        out += span(cls, w);
+      } else if ((m = rest.match(/^(>=|<=|==|!=|>|<|=)/))) out += span('ho', m[0]);
+      else m = [rest[0]], (out += esc(rest[0]));
+      i += m[0].length;
+    }
+    return out;
+  }
+
+  function codeView(src) {
+    const lines = String(src || '').split('\n');
+    const { errors } = CA.Script.compile(src);
+    const bad = new Set(errors.map((e) => e.line));
+    return {
+      gutter: lines.map((_, i) => `<span class="${bad.has(i + 1) ? 'err' : ''}">${i + 1}</span>`).join(''),
+      hl: lines.map((l, i) => `<span class="ca-hl-line${bad.has(i + 1) ? ' err' : ''}">${highlightLine(l) || ' '}</span>`).join('\n') + '\n',
+      status: errors.length
+        ? `<div class="ca-code-bad">${I('close', 11)} ${errors.length} problem${errors.length === 1 ? '' : 's'}</div>` +
+          errors
+            .slice(0, 6)
+            .map((e) => `<div class="ca-code-err" data-code-goto="${e.line}">line ${e.line}: ${esc(e.message)}</div>`)
+            .join('')
+        : `<div class="ca-code-ok">${I('play', 11)} ${lines.length} line${lines.length === 1 ? '' : 's'} · reads fine</div>`,
+    };
+  }
+
+  function codeHtml(d) {
+    const v = codeView(d.source);
+    return (
+      `<div class="ca-ed-sec ca-ed-code"><div class="ca-ed-sec-head">${I('edit', 12)} Algorithm <span class="ca-hint">indent a block under a line ending in “:” · Tab indents · click the library to insert</span></div>` +
+      '<div class="ca-code">' +
+      `<div class="ca-code-gutter" data-code-gutter>${v.gutter}</div>` +
+      `<div class="ca-code-box"><pre class="ca-code-hl" data-code-hl aria-hidden="true">${v.hl}</pre>` +
+      `<textarea class="ca-code-ta" data-code spellcheck="false" wrap="off" autocomplete="off">${esc(d.source || '')}</textarea></div>` +
+      '</div>' +
+      `<div class="ca-code-status" data-code-status>${v.status}</div>` +
+      '<div class="ca-code-live" data-code-live></div>' +
+      '<details class="ca-code-help"><summary>How it reads</summary><pre>' +
+      esc(
+        [
+          'pop.golden()                         run an action (options in brackets)',
+          'season.keep(christmas)               …by position, or season.keep(season=christmas)',
+          'switch on reindeer                   switch another macro on / off',
+          'wait until magic() >= 80             wait for something  ·  wait 30 seconds',
+          'repeat until owned(easter) >= 20:    a block, each pass, until it holds',
+          'while buff(Frenzy):                  …as long as it holds',
+          'repeat 5 times:   forever:',
+          'if …:   elif …:   else:',
+          'for season in [easter, halloween]:   once per item, “season” standing for it',
+          'parallel:                            side by side:',
+          '  branch a:                            each branch its own block',
+          'stop     log "text"     # a comment',
+          'conditions: and · or · not · ( … ) · comparisons: >= <= > < == !=',
+          'numbers: 1e12, 25K, 2.5M, 3B, 1T',
+        ].join('\n')
+      ) +
+      '</pre></details></div>'
+    );
+  }
+
+  /** After typing: the highlighting, the line numbers and the problems follow the code. */
+  function refreshCode(ta) {
+    const wrap = ta.closest('[data-macro-editor]');
+    if (!wrap || !draft) return;
+    draft.source = ta.value;
+    const v = codeView(ta.value);
+    const hl = wrap.querySelector('[data-code-hl]');
+    if (hl) hl.innerHTML = v.hl;
+    const gut = wrap.querySelector('[data-code-gutter]');
+    if (gut) gut.innerHTML = v.gutter;
+    const st = wrap.querySelector('[data-code-status]');
+    if (st) st.innerHTML = v.status;
+    syncCodeScroll(ta);
+  }
+  function syncCodeScroll(ta) {
+    const wrap = ta.closest('[data-macro-editor]');
+    const hl = wrap && wrap.querySelector('[data-code-hl]');
+    const gut = wrap && wrap.querySelector('[data-code-gutter]');
+    if (hl) {
+      hl.scrollTop = ta.scrollTop;
+      hl.scrollLeft = ta.scrollLeft;
+    }
+    if (gut) gut.scrollTop = ta.scrollTop;
+  }
+
+  /** Puts `text` into the code where the cursor is: on its own line, at that line's indentation. */
+  function insertCode(ta, text) {
+    const v = ta.value;
+    const pos = ta.selectionStart != null ? ta.selectionStart : v.length;
+    const lineStart = v.lastIndexOf('\n', pos - 1) + 1;
+    let lineEnd = v.indexOf('\n', pos);
+    if (lineEnd < 0) lineEnd = v.length;
+    const line = v.slice(lineStart, lineEnd);
+    const indent = (line.match(/^\s*/) || [''])[0] + (/:\s*$/.test(line) ? '  ' : '');
+    const body = text.split('\n').join(`\n${indent}`);
+    let next;
+    let caret;
+    if (!line.trim()) {
+      next = v.slice(0, lineStart) + indent + body + v.slice(lineEnd);
+      caret = lineStart + indent.length + body.length;
+    } else {
+      next = `${v.slice(0, lineEnd)}\n${indent}${body}${v.slice(lineEnd)}`;
+      caret = lineEnd + 1 + indent.length + body.length;
+    }
+    ta.value = next;
+    ta.focus();
+    if (ta.setSelectionRange) ta.setSelectionRange(caret, caret);
+    refreshCode(ta);
+  }
+
+  /** Tab / Shift+Tab indent, Enter keeps the indentation (one deeper after a “:”). */
+  function onCodeKey(e) {
+    const ta = e.target;
+    if (!ta.matches || !ta.matches('[data-code]')) return;
+    const v = ta.value;
+    const a = ta.selectionStart;
+    const b = ta.selectionEnd;
+    const lineStart = v.lastIndexOf('\n', a - 1) + 1;
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      if (e.shiftKey) {
+        const cut = v.slice(lineStart, lineStart + 2) === '  ' ? 2 : v[lineStart] === ' ' ? 1 : 0;
+        ta.value = v.slice(0, lineStart) + v.slice(lineStart + cut);
+        ta.setSelectionRange(Math.max(lineStart, a - cut), Math.max(lineStart, b - cut));
+      } else {
+        ta.value = `${v.slice(0, a)}  ${v.slice(b)}`;
+        ta.setSelectionRange(a + 2, a + 2);
+      }
+      refreshCode(ta);
+    } else if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+      e.preventDefault();
+      const line = v.slice(lineStart, a);
+      const indent = (line.match(/^\s*/) || [''])[0] + (/:\s*$/.test(line) ? '  ' : '');
+      ta.value = `${v.slice(0, a)}\n${indent}${v.slice(b)}`;
+      ta.setSelectionRange(a + 1 + indent.length, a + 1 + indent.length);
+      refreshCode(ta);
+    }
+    e.stopPropagation(); // the game and CookieMgr's hotkeys don't see what you type
+  }
+
+  function onCodeScroll(e) {
+    if (e.target && e.target.matches && e.target.matches('[data-code]')) syncCodeScroll(e.target);
+  }
+
+  /** Library: search, pin, insert. */
+  function onLibClick(t) {
+    const fav = t.closest('[data-lib-fav]');
+    if (fav) {
+      CA.Util.sound('snd/tick.mp3');
+      toggleLibFav(fav.dataset.libFav);
+      renderEditor();
+      return true;
+    }
+    const ins = t.closest('[data-lib-insert]');
+    if (!ins || !draft) return false;
+    const it = libItems[Number(ins.dataset.libInsert)];
+    if (!it) return true;
+    CA.Util.sound('snd/tick.mp3');
+    const ta = root && root.querySelector('[data-macro-editor] [data-code]');
+    if (draft.mode === 'flow' && ta) insertCode(ta, it.insert);
+    else if (it.kind === 'action' && draft.mode !== 'group') {
+      draft.steps.push({ action: it.id, params: {} });
+      renderEditor();
+    } else if (it.kind === 'condition' && draft.mode === 'when') {
+      draft.when.all.push({ cond: it.id, params: {}, not: false });
+      renderEditor();
+    } else CA.Util.notify('Library', 'That one is for algorithmic macros — switch the kind to Algorithmic to write with it.', CA.ICON, 3);
+    return true;
+  }
+  function onLibSearch(input) {
+    const q = input.value.trim().toLowerCase();
+    const lib = input.closest('[data-ed-lib]');
+    lib.querySelectorAll('.ca-lib-row').forEach((r) => r.classList.toggle('hidden', !!q && !r.dataset.libText.includes(q)));
+    lib.querySelectorAll('.ca-lib-group').forEach((g) => g.classList.toggle('hidden', !!q && !g.querySelector('.ca-lib-row:not(.hidden)')));
+  }
+
   // how often presets for the interval row
   const EVERY_PRESETS = [100, 250, 1000, 5000, 30000];
 
@@ -447,22 +692,28 @@ CA.UI.MacrosPage = (() => {
       // header: icon, name, description, the buttons
       '<div class="ca-ed-head">' +
       `<span class="ca-ed-icon">${icon({ icon: d.icon })}</span>` +
-      '<div class="ca-ed-names">' +
-      `<input type="text" class="ca-ed-name" maxlength="60" data-edit="name" value="${esc(d.name)}" placeholder="${d.id ? 'Name' : 'Name your macro…'}">` +
-      `<input type="text" class="ca-ed-desc" maxlength="300" data-edit="desc" value="${esc(d.desc)}" placeholder="What it does (optional)">` +
-      '</div>' +
+      (d.builtinSource
+        ? `<div class="ca-ed-names"><b class="ca-ed-fixed">${esc(d.name)} — its code</b><span class="ca-ed-fixed-sub">a built-in: change it as you like, “Reset to default” brings back the original</span></div>`
+        : '<div class="ca-ed-names">' +
+          `<input type="text" class="ca-ed-name" maxlength="60" data-edit="name" value="${esc(d.name)}" placeholder="${d.id ? 'Name' : 'Name your macro…'}">` +
+          `<input type="text" class="ca-ed-desc" maxlength="300" data-edit="desc" value="${esc(d.desc)}" placeholder="What it does (optional)">` +
+          '</div>') +
       '<div class="ca-ed-actions">' +
       C().button(`${I('save', 13)} Save`, 'data-edit-act="save"', 'ca-btn-on') +
       C().button('Cancel', 'data-edit-act="cancel"') +
-      (d.id ? C().button(`${I('trash', 13)}`, 'data-edit-act="delete" data-arm-label="Delete it?" title="Delete this macro"', 'ca-btn-off') : '') +
+      (d.builtinSource ? C().button(`${I('refresh', 12)} Reset to default`, 'data-edit-act="reset-source" data-arm-label="Back to the original?"') : '') +
+      (d.id && !d.builtinSource ? C().button(`${I('trash', 13)}`, 'data-edit-act="delete" data-arm-label="Delete it?" title="Delete this macro"', 'ca-btn-off') : '') +
       '</div></div>' +
       (draftError ? `<div class="ca-editor-error">${esc(draftError)}</div>` : '') +
-      '<div class="ca-editor-body">' +
+      // the editor, with the library always beside it
+      '<div class="ca-ed-layout"><div class="ca-editor-body">' +
       // the kind of macro, as cards
-      `<div class="ca-ed-kinds">${MODES.map(
-        (x) => `<button type="button" class="ca-ed-kind${x.v === d.mode ? ' on' : ''}" data-edit-act="mode" data-val="${x.v}">${I(x.icon, 16)}<b>${x.label}</b><span>${esc(x.hint)}</span></button>`
-      ).join('')}</div>`;
-    if (d.mode !== 'once' && d.mode !== 'group') {
+      (d.builtinSource
+        ? ''
+        : `<div class="ca-ed-kinds">${MODES.map(
+            (x) => `<button type="button" class="ca-ed-kind${x.v === d.mode ? ' on' : ''}" data-edit-act="mode" data-val="${x.v}">${I(x.icon, 16)}<b>${x.label}</b><span>${esc(x.hint)}</span></button>`
+          ).join('')}</div>`);
+    if (d.mode !== 'once' && d.mode !== 'group' && !d.builtinSource) {
       const secs = d.every / 1000;
       h +=
         '<div class="ca-ed-row">' +
@@ -493,10 +744,7 @@ CA.UI.MacrosPage = (() => {
           .join('') +
         '</div></div>';
     } else if (d.mode === 'flow') {
-      h +=
-        `<div class="ca-ed-sec"><div class="ca-ed-sec-head">${I('widget', 12)} Flow <span class="ca-hint">blocks run top to bottom; a pass moves each branch on as far as it can</span></div>` +
-        blocksHtml(d.flow, 'flow') +
-        '</div>';
+      h += codeHtml(d);
     } else {
       h +=
         `<div class="ca-ed-sec"><div class="ca-ed-sec-head">${I('bolt', 12)} Steps <span class="ca-hint">run in order, every time it ${d.mode === 'once' ? 'runs' : 'fires'}</span></div><div class="ca-ed-steps">` +
@@ -504,15 +752,27 @@ CA.UI.MacrosPage = (() => {
         `<button type="button" class="ca-btn ca-btn-small ca-ed-add" data-edit-act="step-add" data-path="steps">${I('plus', 12)} Add step</button></div></div>`;
     }
     h +=
-      `<div class="ca-ed-sec ca-ed-icons"><div class="ca-ed-sec-head">${I('star', 12)} Icon</div><div class="ca-iconpick">${ICONS.map(
-        (n) => `<button type="button" class="ca-iconbtn${(d.icon || {}).ico === n ? ' on' : ''}" data-edit-act="icon" data-val="${n}" title="${n}">${I(n, 16)}</button>`
-      ).join('')}</div></div>` +
+      (d.builtinSource
+        ? ''
+        : `<div class="ca-ed-sec ca-ed-icons"><div class="ca-ed-sec-head">${I('star', 12)} Icon</div><div class="ca-iconpick">${ICONS.map(
+            (n) => `<button type="button" class="ca-iconbtn${(d.icon || {}).ico === n ? ' on' : ''}" data-edit-act="icon" data-val="${n}" title="${n}">${I(n, 16)}</button>`
+          ).join('')}</div></div>`) +
+      '</div>' +
+      libraryHtml() +
       '</div></div>';
     return h;
   }
 
   function onEditInput(e) {
     const el = e.target;
+    if (el.matches && el.matches('[data-code]')) {
+      refreshCode(el);
+      return;
+    }
+    if (el.matches && el.matches('[data-lib-search]')) {
+      onLibSearch(el);
+      return;
+    }
     if (el.dataset && el.dataset.macroFlowopt) {
       if (e.type !== 'change') return;
       CA.Util.sound('snd/tick.mp3');
@@ -620,10 +880,12 @@ CA.UI.MacrosPage = (() => {
       d.mode = t.dataset.val;
       if (d.mode === 'when' && !(d.when && d.when.all && d.when.all.length)) d.when = blankWhen();
       if (d.mode === 'when' && d.every >= 1000) d.every = 250;
-      // a flow starts from the steps it had (and steps from a flow's top-level "do" blocks)
-      if (d.mode === 'flow' && !(d.flow && d.flow.length)) d.flow = d.steps.map((x) => ({ type: 'do', action: x.action, params: { ...x.params } }));
+      // an algorithm starts as the steps it had, written out (and steps from an algorithm's top lines)
+      if (d.mode === 'flow' && typeof d.source !== 'string') {
+        d.source = CA.Script.decompile(d.flow && d.flow.length ? d.flow : d.steps.map((x) => ({ type: 'do', action: x.action, params: { ...x.params } })));
+      }
       if (was === 'flow' && d.mode !== 'flow' && d.mode !== 'group') {
-        const dos = d.flow.filter((n) => n.type === 'do').map((n) => ({ action: n.action, params: { ...n.params } }));
+        const dos = CA.Script.compile(d.source || '').flow.filter((n) => n.type === 'do').map((n) => ({ action: n.action, params: { ...n.params } }));
         if (dos.length) d.steps = dos;
       }
     } else if (list && /-(up|down|del)$/.test(act)) {
@@ -645,6 +907,38 @@ CA.UI.MacrosPage = (() => {
       M().remove(d.id);
       draft = null;
       return rerender();
+    } else if (act === 'reset-source') {
+      if (!CA.UI.Menu.armed(t)) return;
+      const m = M().get(d.id);
+      if (m) d.source = m.defaultSource;
+    } else if (act === 'save' && d.mode === 'flow') {
+      // an algorithm: it has to read right before it's kept
+      const r = CA.Script.compile(d.source || '');
+      if (r.errors.length) {
+        draftError = `Line ${r.errors[0].line}: ${r.errors[0].message}${r.errors.length > 1 ? ` (and ${r.errors.length - 1} more)` : ''}`;
+        return renderEditor();
+      }
+      if (!r.flow.length) {
+        draftError = 'Write at least one line.';
+        return renderEditor();
+      }
+      if (d.builtinSource) {
+        M().setSource(d.id, d.source);
+        CA.Util.notify(d.name, 'Its code is saved.', CA.ICON, 2);
+        draft = null;
+        return rerender();
+      }
+      d.flow = r.flow;
+      draftError = validate(d);
+      if (draftError) return renderEditor();
+      try {
+        const saved = M().save(d);
+        CA.Util.notify('Macro saved', esc(saved.name), CA.ICON, 2);
+        draft = null;
+        return rerender();
+      } catch (e) {
+        draftError = e.message;
+      }
     } else if (act === 'save') {
       // fill in each param's default so the saved macro is explicit
       d.steps.forEach((x) => (x.params = CA.Actions.paramsFor(x.action, x.params)));
@@ -675,7 +969,18 @@ CA.UI.MacrosPage = (() => {
   /** Opens the editor on macro `id`, or a new macro (optionally starting from `preset` fields). */
   function edit(id, preset) {
     const m = id ? M().get(id) : null;
+    if (m && m.builtin && m.mode === 'flow' && typeof m.defaultSource === 'string') {
+      // a built-in algorithm: only its code can change
+      draft = { ...blankDraft(), id: m.id, name: m.name, desc: m.desc, icon: m.icon, mode: 'flow', every: M().everyOf(m), source: M().sourceOf(m), builtinSource: true };
+      if (CA.Settings.get('tab') !== 'clickers' && CA.UI.Menu.isOpen()) CA.Settings.set('tab', 'clickers');
+      draftError = '';
+      rerender();
+      const ed = root && root.querySelector('[data-macro-editor]');
+      if (ed && ed.scrollIntoView) ed.scrollIntoView({ block: 'nearest' });
+      return;
+    }
     draft = m ? JSON.parse(JSON.stringify(m)) : { ...blankDraft(), ...(preset || {}) };
+    if (draft.mode === 'flow' && typeof draft.source !== 'string') draft.source = CA.Script.decompile(draft.flow || []);
     if (!draft.when || !Array.isArray(draft.when.all)) draft.when = blankWhen();
     if (!Array.isArray(draft.members)) draft.members = [];
     if (!draft.steps.length) draft.steps = [{ action: 'pop.golden', params: {} }]; // a group switched to another mode
@@ -761,6 +1066,20 @@ CA.UI.MacrosPage = (() => {
     });
     const block = el.querySelector('[data-macro-statusblock]');
     if (block) block.innerHTML = status();
+    const live = el.querySelector('[data-macro-editor] [data-code-live]');
+    if (live && draft && draft.id) {
+      const f = M().isOn(draft.id) ? M().flowStatus(draft.id) : null;
+      el.querySelectorAll('[data-macro-editor] [data-code-gutter] span').forEach((sp, i) => sp.classList.toggle('run', !!f && f.lines.includes(i + 1)));
+      CA.UI.Widgets.morph(
+        live,
+        f
+          ? `<div class="ca-code-live-head">${I('play', 11)} running</div>${f.at.map((a) => `<div class="ca-code-live-at">${esc(a)}</div>`).join('')}${f.trace
+              .slice(-6)
+              .map((x) => `<div class="ca-code-live-tr">${esc(x.text)}</div>`)
+              .join('')}`
+          : ''
+      );
+    }
     const strip = el.querySelector('[data-macro-runbar]');
     if (strip) {
       const ids = M().runningIds();
@@ -913,6 +1232,10 @@ CA.UI.MacrosPage = (() => {
         rerender();
         return true;
       }
+      case 'macro-code':
+        CA.Util.sound('snd/tick.mp3');
+        edit(id);
+        return true;
       case 'macro-locate': {
         const card = root && [...root.querySelectorAll('.ca-macro[data-macro-row]')].find((c) => c.dataset.macroRow === id);
         if (card) {
@@ -937,6 +1260,21 @@ CA.UI.MacrosPage = (() => {
   }
 
   function onRootClick(e) {
+    if (e.target.closest && e.target.closest('[data-ed-lib]') && onLibClick(e.target)) {
+      e.stopPropagation();
+      return;
+    }
+    const go = e.target.closest && e.target.closest('[data-code-goto]');
+    if (go) {
+      const ta = root.querySelector('[data-macro-editor] [data-code]');
+      const n = Number(go.dataset.codeGoto);
+      if (ta && n > 0) {
+        const pos = ta.value.split('\n').slice(0, n - 1).join('\n').length + (n > 1 ? 1 : 0);
+        ta.focus();
+        if (ta.setSelectionRange) ta.setSelectionRange(pos, pos);
+      }
+      return;
+    }
     const t = e.target.closest('[data-edit-act]');
     if (!t || !draft) return;
     e.stopPropagation();
@@ -950,6 +1288,8 @@ CA.UI.MacrosPage = (() => {
     root.addEventListener('click', onRootClick);
     root.addEventListener('change', onEditInput);
     root.addEventListener('input', onEditInput);
+    root.addEventListener('keydown', onCodeKey);
+    root.addEventListener('scroll', onCodeScroll, true);
     sync(root);
     timer = setInterval(() => root && root.isConnected && sync(root), STATUS_MS);
   }
@@ -961,11 +1301,14 @@ CA.UI.MacrosPage = (() => {
       root.removeEventListener('click', onRootClick);
       root.removeEventListener('change', onEditInput);
       root.removeEventListener('input', onEditInput);
+      root.removeEventListener('keydown', onCodeKey);
+      root.removeEventListener('scroll', onCodeScroll, true);
     }
     root = null;
   }
 
   function init() {
+    CA.Settings.defineOption({ key: LIB_FAVS, group: 'ui', name: 'Pinned library items', desc: '', default: '' });
     CA.UI.Pages.register({ id: 'clickers', label: 'Macros', icon: 'bolt', order: 70, group: 'custom', html, mount, unmount, tick: () => sync(root) });
     // Cookie Monster arriving unlocks the macros that need it
     CA.Events.on('integrations', () => CA.Settings.get('tab') === 'clickers' && rerender());

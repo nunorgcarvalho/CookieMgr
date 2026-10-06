@@ -23,7 +23,7 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 | **Widget** | Something on the game's left panel: a macro's button, the Running now bar, quick stats, events, minigames. |
 
-## Features (v2.23)
+## Features (v2.24)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
 the data pages **Events** and **Graphs**; the minigames **Garden**, **Stock market**, **Pantheon** and **Grimoire**;
@@ -152,7 +152,7 @@ Everything CookieMgr automates is a **macro**: one or more **actions** run in or
 | Stock market autobuyer | —           | Buys fast/slow-rising stocks, sells the rest, every second           |
 | Sell all stocks        | —           | Once: autobuyer off, then sells every stock                          |
 | Cast … (one per spell) | —           | Once: casts that Grimoire spell                                      |
-| SeasonCompletion       | —           | An agent (flow): research, then every season until complete           |
+| SeasonCompletion       | —           | An algorithmic macro: research, then every season until complete      |
 | Sugar lump harvester   | —           | Harvests your lump when ripe — or when mature, if you pick that      |
 | FtHoF on Click frenzy  | —           | When a Click frenzy runs and there's magic: Force the Hand of Fate   |
 | Best building          | —           | Buys the lowest-payback building (Cookie Monster)                    |
@@ -173,23 +173,50 @@ hold when it stops rising — **shift-click** its button on the left panel to sw
 harvester** picks: **ripe** (always pays) or
 **mature** (about 3 hours sooner, but with the game's 50% chance of getting nothing).
 
-**SeasonCompletion** is an agent — a built-in **flow** (below). Switched on, it starts buying the Bingo center's
-research right away (which starts the Grandmapocalypse — Halloween's cookies come from wrinklers), and alongside it
-goes through the seasons in your order: for each, it switches on what collects its drops (reindeer for Christmas,
-golden and wrath cookies for Easter, wrinklers for Halloween), keeps the season on, buys its drops as they show up
-(and upgrades Santa), until the season is complete — every one of its cookies and upgrades owned. On the last
-season it stays, and leaves the Grandmapocalypse (by default it keeps the elders pledged — or takes the Elder
-Covenant, or stays, as you choose). Its settings: the season order (default Christmas → Easter → Halloween → Valentine's day →
-Business day; reorder, drop or add seasons) and what to do at the end. Duplicate it to change the flow itself.
+**SeasonCompletion** is an **algorithmic macro** (below) — its code is yours to change ("Edit its code" on its card;
+"Reset to default" brings the original back). Switched on, it buys the Bingo center's research right away (which
+starts the Grandmapocalypse — Halloween's cookies come from wrinklers), and alongside goes through the seasons:
+Christmas first for Santa's upgrades and Santa all the way to Final Claus, then Easter, Halloween and Valentine's day
+each until every one of its cookies is owned (switching on what collects them: golden and wrath cookies for Easter,
+wrinklers for Halloween), then Christmas again for its reindeer cookies, and finally Business day for good, keeping
+the elders pledged. Its card shows the line it's on with the counts it's checking ("owned(christmas, upgrades) = 12 ≥
+total(christmas, upgrades) = 15 ✗") and the if / elif decisions it took.
 
 **Your macros** — **New macro** opens the editor: a header with the icon, name and description (Save, Cancel,
-Delete), the kind of macro as cards — **Repeat**, **When…**, **Once**, **Group**, **Flow** — how often it runs, then
-what it does: numbered step cards (an action each, with its options; ▲ ▼ × to move or remove), a "When…" macro's
-conditions, a group's members, or a flow's blocks. A **flow** is a list of blocks run top to bottom: **Do** (an
-action), **Wait** (until conditions hold), **Until** (repeat some blocks until conditions hold), **If** (then / else),
-**Parallel** (branches side by side; done when all are) and **Forever** — nested as deep as you like. Every pass (its
-interval) moves each branch on as far as it can without waiting; a flow that reaches its end switches itself off,
-and a running flow's card says what it's waiting for. Actions:
+Delete), the kind of macro as cards — **Repeat**, **When…**, **Once**, **Group**, **Algorithmic** — how often it runs,
+then what it does: numbered step cards (an action each, with its options; ▲ ▼ × to move or remove), a "When…"
+macro's conditions, a group's members, or an algorithm's code. Beside it, always, the **library**: every action,
+condition, value and keyword, searchable — click one to insert it (into the code where the cursor is, or as a new
+step), ★ to pin it at the top.
+
+**Algorithmic macros** are written like pseudo-code, indented like Python:
+
+```
+# research alongside, seasons one by one
+parallel:
+  branch research:
+    repeat until researchOwned() >= 9:
+      buy.research(none)
+  branch seasons:
+    for season in [easter, halloween]:
+      if season == halloween:
+        switch on wrinklers
+      repeat until owned(season, all) >= total(season, all):
+        season.keep(season)
+        season.buyDrops(season, all)
+    wait until cookies() >= 1e15
+    stop
+```
+
+Lines: an action with its options (`pop.golden()`, `season.keep(christmas)` or `season.keep(season=christmas)`),
+`switch on / off <macro>`, `wait until …`, `wait 30 seconds`, `repeat until …:`, `while …:`, `repeat 5 times:`,
+`forever:`, `if …: / elif …: / else:`, `for x in [a, b]:`, `parallel:` with `branch:` blocks, `stop`, `log "…"` and
+`# comments`. Conditions join with `and` / `or` / `not` and brackets, and compare **values** — `cookies()`, `cps()`,
+`magic()`, `owned(season, part)`, `total(season, part)`, `santaLevel()`, `building(Farm)`, `state(…)` and more —
+with `>= <= > < == !=`; numbers can be written 1e12, 25K, 2.5M, 3B. The editor colours the code, numbers the lines,
+lists any problems as you type (click one to jump to it), indents for you (Tab, and Enter after a `:`), and while
+the macro runs lights up the lines it's on and shows what it's checking. Every pass (its interval) moves each branch
+on as far as it can without waiting; reaching the end (or `stop`) switches it off. Actions:
 click the big cookie, pop golden / wrath cookies, reindeer, wrinklers (optionally sparing shiny ones), click fortune
 news, trade stocks, sell all stocks, harvest the sugar lump (once ripe, or once mature), keep a season going, buy a season's drops, upgrade Santa,
 leave the Grandmapocalypse, the buying actions, pet the dragon, cast a spell, switch another macro
@@ -499,6 +526,10 @@ src/
     garden.js        garden profiles, the death-chance maths, the auto-gardener macro
     gardenHistory.js snapshots of the garden (seed × stage counts) for the Growth chart; seed unlock events
     shop.js          the building store: Cookie Monster sort, rounding bulk buys up
+    autoBuy.js       buying macros (Cookie Monster PP, research, cheap upgrades) and petting the dragon
+    seasons.js       season drops and completion, the Grandmapocalypse, SeasonCompletion's code
+    script.js        the language of algorithmic macros: parsing, values, explaining conditions
+    notifyTips.js    tooltips on the game's notifications about upgrades and achievements
   ui/
     components.js    HTML snippets: switch, hotkey chip, icon, button
     icons.js         the inline-SVG icon set used everywhere

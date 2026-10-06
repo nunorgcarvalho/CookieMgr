@@ -23,9 +23,18 @@ CA.Seasons = (() => {
   ];
   const label = (s) => (SEASONS.find((x) => x.v === s) || { label: s }).label;
 
-  /** The upgrades a season has you collect (the game's own lists). */
-  function dropsOf(s) {
-    if (s === 'christmas') return ['A festive hat'].concat(Game.santaDrops || [], Game.reindeerDrops || []);
+  /**
+   * The upgrades a season has you collect (the game's own lists). part: 'all', 'upgrades' or
+   * 'cookies' — Christmas has both (A festive hat + Santa's gifts are upgrades, the reindeer drops
+   * are cookies); every other season's drops are all cookies.
+   */
+  function dropsOf(s, part = 'all') {
+    if (s === 'christmas') {
+      const ups = ['A festive hat'].concat(Game.santaDrops || []);
+      const cookies = (Game.reindeerDrops || []).slice();
+      return part === 'upgrades' ? ups : part === 'cookies' ? cookies : ups.concat(cookies);
+    }
+    if (part === 'upgrades') return [];
     if (s === 'halloween') return (Game.halloweenDrops || []).slice();
     if (s === 'easter') return (Game.easterEggs || []).slice();
     if (s === 'valentines') return (Game.heartDrops || []).slice();
@@ -33,21 +42,20 @@ CA.Seasons = (() => {
   }
   const has = (n) => typeof Game.Has === 'function' && Game.Has(n);
 
-  function complete(s) {
-    const drops = dropsOf(s);
-    if (s === 'christmas' && (Game.santaLevel || 0) < 14) return false;
-    return drops.every(has);
+  function complete(s, part = 'all') {
+    if (s === 'christmas' && part !== 'cookies' && (Game.santaLevel || 0) < 14) return false;
+    return dropsOf(s, part).every(has);
   }
   /** "5 / 21" — how far a season is. */
-  function progress(s) {
-    const drops = dropsOf(s);
+  function progress(s, part = 'all') {
+    const drops = dropsOf(s, part);
     return { have: drops.filter(has).length, of: drops.length };
   }
 
   /** Buys every one of a season's drops that's in the store and affordable. Returns how many. */
-  function buyDrops(s) {
+  function buyDrops(s, part = 'all') {
     let n = 0;
-    dropsOf(s).forEach((name) => {
+    dropsOf(s, part).forEach((name) => {
       const u = Game.Upgrades && Game.Upgrades[name];
       if (!u || u.bought || !u.unlocked) return;
       const price = typeof u.getPrice === 'function' ? u.getPrice() : u.basePrice || 0;
@@ -93,6 +101,9 @@ CA.Seasons = (() => {
   const HELPERS = { christmas: ['reindeer'], halloween: ['wrinklers'], easter: ['golden', 'wrath'], valentines: [] };
   const DEFAULT_ORDER = ['christmas', 'easter', 'halloween', 'valentines', 'fools'];
 
+  /** SeasonCompletion's code (an algorithmic macro — features/script.js). */
+  const DEFAULT_SOURCE = "# SeasonCompletion — every season's cookies and upgrades, one season after another.\n# The research starts right away, alongside: One mind starts the Grandmapocalypse,\n# and Halloween's cookies come from popping wrinklers.\nparallel:\n  branch research:\n    repeat until researchOwned() >= 9:\n      buy.research(none)\n  branch seasons:\n    # Christmas, first visit: Santa's upgrades, and Santa all the way to Final Claus\n    # (its reindeer cookies wait for a second visit, near the end)\n    switch on reindeer\n    repeat until owned(christmas, upgrades) >= total(christmas, upgrades) and santaLevel() >= 14:\n      season.keep(christmas)\n      season.buyDrops(christmas, upgrades)\n      santa.upgrade()\n    for season in [easter, halloween, valentines]:\n      if season == easter:\n        # eggs drop from golden and wrath cookies\n        switch on golden\n        switch on wrath\n      elif season == halloween:\n        # Halloween cookies drop from wrinklers that have eaten\n        switch on wrinklers\n      repeat until owned(season, all) >= total(season, all):\n        season.keep(season)\n        season.buyDrops(season, all)\n    # Christmas again, for the reindeer cookies\n    repeat until owned(christmas, cookies) >= total(christmas, cookies):\n      season.keep(christmas)\n      season.buyDrops(christmas, cookies)\n    # and Business day for good, with the elders kept pledged\n    forever:\n      season.keep(fools)\n      grandma.exit(pledge)\n";
+
   const cond = (id, params) => ({ all: [{ cond: id, params, not: false }] });
   const doIt = (action, params) => ({ type: 'do', action, params });
 
@@ -132,13 +143,27 @@ CA.Seasons = (() => {
       describe: (p) => `${label(p.season)} is on`,
       test: (p) => Game.season === p.season,
     });
+    const partParam = {
+      key: 'part',
+      label: 'Which',
+      type: 'select',
+      default: 'all',
+      options: () => [
+        { v: 'all', label: 'everything' },
+        { v: 'upgrades', label: 'its upgrades (Christmas: the hat, Santa’s gifts, Final Claus)' },
+        { v: 'cookies', label: 'its cookies' },
+      ],
+    };
     C({
       id: 'season.complete',
       name: 'A season is complete (all its drops owned)',
       icon: 'calendar',
-      params: [seasonParam],
-      describe: (p) => `${label(p.season)} is complete`,
-      test: (p) => complete(p.season),
+      params: [seasonParam, partParam],
+      describe: (p) => {
+        const pr = progress(p.season, p.part);
+        return `${label(p.season)}${p.part && p.part !== 'all' ? ` ${p.part}` : ''} complete (${pr.have}/${pr.of})`;
+      },
+      test: (p) => complete(p.season, p.part),
     });
     C({
       id: 'research.done',
@@ -160,9 +185,9 @@ CA.Seasons = (() => {
       icon: 'calendar',
       group: 'Other',
       unit: 'bought',
-      params: [seasonParam],
-      describe: (p) => `Buy ${label(p.season)}’s drops`,
-      run: (p) => buyDrops(p.season),
+      params: [seasonParam, partParam],
+      describe: (p) => `Buy ${label(p.season)}’s ${p.part === 'upgrades' ? 'upgrades' : p.part === 'cookies' ? 'cookies' : 'drops'}`,
+      run: (p) => buyDrops(p.season, p.part),
     });
     A({
       id: 'santa.upgrade',
@@ -198,28 +223,14 @@ CA.Seasons = (() => {
     CA.Macros.addBuiltin({
       id: 'seasonCompletion',
       name: 'SeasonCompletion',
-      desc: 'An agent that collects every season: starts the research (and the Grandmapocalypse) right away, then goes through the seasons in your order, keeping each one on — and its drops collected and bought — until it’s complete, and stays on the last one, leaving the Grandmapocalypse. Duplicate it to change the flow itself.',
+      desc: 'An algorithmic macro that collects every season: research (and the Grandmapocalypse) right away, then Christmas’s upgrades and Final Claus, Easter, Halloween and Valentine’s day until each is complete, Christmas again for its cookies, and Business day for good, the elders kept pledged. Its code is yours to change — “Edit its code”.',
       icon: { sprite: [16, 6] },
       mode: 'flow',
       every: 1000,
-      makeFlow,
-      flowOptions: [
-        { key: 'order', label: 'Seasons, in order (the last one is kept)', type: 'order', default: DEFAULT_ORDER, options: () => SEASONS },
-        {
-          key: 'exit',
-          label: 'At the last season',
-          type: 'select',
-          default: 'pledge',
-          options: () => [
-            { v: 'covenant', label: 'leave the Grandmapocalypse for good' },
-            { v: 'pledge', label: 'keep the elders pledged' },
-            { v: 'none', label: 'stay in the Grandmapocalypse' },
-          ],
-        },
-      ],
+      defaultSource: DEFAULT_SOURCE,
       section: 'upkeep',
     });
   }
 
-  return { init, SEASONS, dropsOf, complete, progress, makeFlow, DEFAULT_ORDER };
+  return { init, SEASONS, dropsOf, complete, progress, makeFlow, DEFAULT_ORDER, DEFAULT_SOURCE };
 })();
