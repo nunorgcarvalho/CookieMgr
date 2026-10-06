@@ -572,7 +572,7 @@ CA.UI.Widgets = (() => {
     const place =
       `<div class="ca-wsnap">${[].concat(
         ...spots.map((y) =>
-          spots.map((x) => `<button type="button" class="ca-wsnap-cell${at(w.x) === x && at(w.y) === y && Math.abs(w.x - x) < 0.02 && Math.abs(w.y - y) < 0.02 ? ' on' : ''}" data-w-snap="${x},${y}" title="Move it here"><i></i></button>`)
+          spots.map((x) => `<button type="button" class="ca-wsnap-cell${at(w.x) === x && at(w.y) === y && Math.abs(w.x - x) < 0.02 && Math.abs(w.y - y) < 0.02 ? ' on' : ''}" data-w-snap="${x},${y}" data-tip="Move it here"><i></i></button>`)
         )
       ).join('')}</div><span class="ca-wf-hint">snap it to a corner, an edge or the middle — or drag it anywhere</span>`;
     return (
@@ -645,7 +645,7 @@ CA.UI.Widgets = (() => {
           const icon = w.type === 'macro' && CA.Macros.get(w.macro) ? CA.UI.MacrosPage.icon(CA.Macros.get(w.macro), true) : I(t.icon, 12);
           return (
             `<button type="button" class="ca-wmap-item${t.bare ? ' bare' : ''}${w.id === linked ? ' linked' : ''}${w.id === editing ? ' editing' : ''}" data-wlink="${esc(w.id)}" data-w-page-edit="${esc(w.id)}" ` +
-            `style="left:${p.l.toFixed(2)}%;top:${p.t.toFixed(2)}%;width:${p.w.toFixed(2)}%;height:${p.h.toFixed(2)}%" title="${esc(nameOf(w))} — click for its settings">${icon}</button>`
+            `style="left:${p.l.toFixed(2)}%;top:${p.t.toFixed(2)}%;width:${p.w.toFixed(2)}%;height:${p.h.toFixed(2)}%" data-tip="${esc(nameOf(w))} — click for its settings">${icon}</button>`
           );
         })
         .join('') +
@@ -662,8 +662,8 @@ CA.UI.Widgets = (() => {
         const icon = w.type === 'macro' && CA.Macros.get(w.macro) ? CA.UI.MacrosPage.icon(CA.Macros.get(w.macro), true) : I(t.icon, 13);
         return (
           `<span class="ca-wchip${w.id === editing ? ' editing' : ''}${w.id === linked ? ' linked' : ''}" data-wlink="${esc(w.id)}">` +
-          `<button type="button" class="ca-wchip-main" data-w-page-edit="${esc(w.id)}" title="Settings">${icon}<b>${esc(nameOf(w))}</b>${I('settings', 11)}</button>` +
-          `<button type="button" class="ca-wchip-x" data-w-page-del="${esc(w.id)}" title="Remove">${I('close', 9)}</button></span>`
+          `<button type="button" class="ca-wchip-main" data-w-page-edit="${esc(w.id)}" data-tip="Settings">${icon}<b>${esc(nameOf(w))}</b>${I('settings', 11)}</button>` +
+          `<button type="button" class="ca-wchip-x" data-w-page-del="${esc(w.id)}" data-tip="Remove">${I('close', 9)}</button></span>`
         );
       })
       .join('');

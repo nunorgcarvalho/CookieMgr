@@ -20,6 +20,8 @@ CA.Settings = (() => {
   function optionsIn(group) {
     return optionDefs.filter((d) => d.group === group);
   }
+  /** Every option defined so far (for the Settings page and the tests). */
+  const definitions = () => optionDefs.slice();
 
   function get(key) {
     return options[key];
@@ -173,6 +175,7 @@ CA.Settings = (() => {
   return {
     defineOption,
     optionsIn,
+    definitions,
     get,
     set,
     getHotkey,

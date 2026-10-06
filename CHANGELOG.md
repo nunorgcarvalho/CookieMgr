@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+## 2.27.0 — 2026-10-06
+
+- **Tests in the repo**: `npm test` builds and runs every suite in parallel (about half a minute), and CI runs them
+  on every push. New **contract tests** check everything that's registered — every page opens and refreshes, every
+  widget renders, every action runs with its defaults, every condition and value works, every library entry
+  compiles, every built-in's code compiles and round-trips, the save survives save → load → save, a broken save
+  doesn't stop start-up — so new features are covered the moment they're registered. A unit suite covers the
+  algorithmic language line by line. See `tests/README.md`.
+- **Fix: a macro's settings on the Stock market, Garden and Grimoire pages** (its interval box, its choices) didn't
+  do anything — they only worked on the Macros page.
+- **Fix: the browser's own tooltips showing** instead of (or along with) CookieMgr's: on refreshing parts (the store
+  bar, the running strip, the widget map), the Sell all buttons and the toolbars. Every tip is a styled one now, and
+  the Sell all estimate updates while you hover it.
+- **Fix: library entries that didn't compile** when inserted — names with spaces (`spell.cast("hand of fate")`) and
+  comparison options are quoted now.
+- **Fix: `state(…)` couldn't be compared** in code (`if state(cps) > 1e9:`) — it was always read as the condition of
+  the same name.
+- **Fix: `wait 5m` waited 5 million seconds**: `5m` / `2min` / `30s` are times in a wait now.
+- **Fix: a `#` inside quotes** (`log "step #1"`) cut the line as if it were a comment.
+- An argument you wrote out stays written when code is shown again, even when it's the default.
+
 ## 2.26.0 — 2026-10-06
 
 - **Garden rules**: what the Auto-gardener does is now algorithmic code, one set per garden profile, edited on the

@@ -111,7 +111,7 @@ CA.UI.StockLog = (() => {
     const sellPct = Math.round((b.sold / maxShares) * 100);
     const net = b.earned - b.spent;
     return (
-      `<div class="cm-tickbar" title="${esc(clock(t))} — bought ${beautify(b.bought)}, sold ${beautify(b.sold)}">` +
+      `<div class="cm-tickbar" data-tip="${esc(clock(t))} — bought ${beautify(b.bought)}, sold ${beautify(b.sold)}">` +
       `<div class="cm-tickbar-time">${clockShort(t)}</div>` +
       `<div class="cm-tickbar-row"><span class="cm-tickbar-fill cm-tickbar-buy" style="width:${buyPct}%"></span></div>` +
       `<div class="cm-tickbar-row"><span class="cm-tickbar-fill cm-tickbar-sell" style="width:${sellPct}%"></span></div>` +
@@ -161,8 +161,8 @@ CA.UI.StockLog = (() => {
       '<div class="cm-tx-empty" data-cm-tx-empty>No trades yet this session.</div>' +
       '</div>' +
       '</div>' +
-      '<div class="cm-tickbars" data-cm-tickbars title="Bought/sold per second, last 5 ticks with activity"></div>' +
-      '<div class="cm-ticker" data-cm-ticker title="Every buy/sell, from the autoclicker or from clicking the Bank\'s own buttons">' +
+      '<div class="cm-tickbars" data-cm-tickbars data-tip="Bought/sold per second, last 5 ticks with activity"></div>' +
+      '<div class="cm-ticker" data-cm-ticker data-tip="Every buy/sell, from the autoclicker or from clicking the Bank\'s own buttons">' +
       '<div class="cm-ticker-track" data-cm-ticker-track></div>' +
       '</div>'
     );

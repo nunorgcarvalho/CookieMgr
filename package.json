@@ -1,6 +1,6 @@
 {
   "name": "cookie-mgr",
-  "version": "2.26.0",
+  "version": "2.27.0",
   "description": "CookieMgr: a Cookie Clicker add-on for automating tasks and visualizing data.",
   "private": true,
   "type": "module",
@@ -20,6 +20,7 @@
   "scripts": {
     "build": "node build.mjs",
     "check": "node build.mjs --check",
+    "test": "node tests/run.mjs",
     "watch": "node build.mjs --watch",
     "serve": "node build.mjs --watch --serve"
   },
@@ -30,5 +31,9 @@
     "autoclicker",
     "bookmarklet",
     "graph"
-  ]
+  ],
+  "devDependencies": {
+    "fake-indexeddb": "^6.2.5",
+    "jsdom": "^24.1.3"
+  }
 }

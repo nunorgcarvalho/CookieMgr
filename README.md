@@ -23,7 +23,7 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 | **Widget** | Something on the game's left panel: a macro's button, the Running now bar, quick stats, events, minigames. |
 
-## Features (v2.26)
+## Features (v2.27)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
 the data pages **Events** and **Graphs**; the minigames **Garden**, **Stock market**, **Pantheon** and **Grimoire**;
@@ -500,14 +500,20 @@ load the game and click the bookmarklet.
 
 ## Development
 
-No dependencies — just Node 18+.
+The bundle has no dependencies; the tests need `npm install` once (jsdom and fake-indexeddb, dev only). Node 18+.
 
 ```sh
 npm run build   # src/ -> dist/CookieMgr.js
 npm run check   # fail if dist/ is out of date (CI runs this)
+npm test        # build, then every test suite (CI runs this too) — npm test -- garden: only those
 npm run watch   # rebuild on every change
 npm run serve   # watch + serve dist/ at http://localhost:8080 for testing
 ```
+
+The tests boot the built bundle inside a fake Cookie Clicker (jsdom) and use it like a player would. **Contract
+tests** check everything registered — every page, widget type, action, condition, value, library entry, option and
+built-in macro — so a new one is covered as soon as it exists; **unit** tests cover the algorithmic language; and
+each release has an **end-to-end** suite (`tests/e2e/vX.Y.Z.test.mjs`). See [tests/README.md](tests/README.md).
 
 With `npm run serve` running, use this dev bookmarklet to test local changes (Chrome may ask to allow access to local
 network devices the first time):
@@ -611,7 +617,7 @@ If you add a file, add it to `MODULES` in `build.mjs` in the right order.
 - **A new page:** `CA.UI.Pages.register({ id, label, icon, order, html, mount, unmount, tick })` from the page's own
   module. It gets a sidebar icon and a panel slot automatically; `icon` is a name from `ui/icons.js`.
 
-CI (`.github/workflows/ci.yml`) fails a push if `dist/CookieMgr.js` does not match `src/`, so remember to build before committing.
+CI (`.github/workflows/ci.yml`) fails a push if `dist/CookieMgr.js` does not match `src/` or a test fails, so build and `npm test` before committing.
 
 ## License
 

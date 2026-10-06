@@ -95,7 +95,7 @@ CA.UI.EventsPage = (() => {
     rows.forEach((r) => {
       const muted = !r.count && !r.cookies;
       h +=
-        `<tr${muted ? ' class="muted"' : ''}><td${r.title ? ` title="${esc(r.title)}"` : ''}>` +
+        `<tr${muted ? ' class="muted"' : ''}><td${r.title ? ` data-tip="${esc(r.title)}"` : ''}>` +
         `<span class="ca-ev-dot" style="color:${r.color}">${CA.UI.Icons.html(r.icon, 13)}</span>${esc(r.label)}</td>` +
         `<td>${r.count == null ? '' : r.count.toLocaleString()}</td>` +
         (r.split
@@ -136,7 +136,7 @@ CA.UI.EventsPage = (() => {
         const t = typeInfo(type);
         const on = !hide.has(type);
         return (
-          `<button type="button" class="ca-chip ca-ev-chip${on ? ' on' : ''}" data-ev-type="${esc(type)}" style="--c:${t.color}" title="Show or hide ${esc(t.name)} events">` +
+          `<button type="button" class="ca-chip ca-ev-chip${on ? ' on' : ''}" data-ev-type="${esc(type)}" style="--c:${t.color}" data-tip="Show or hide ${esc(t.name)} events">` +
           `${CA.UI.Icons.html(t.icon, 12)}${esc(t.name)} <em>${(counts[type] || 0).toLocaleString()}</em></button>`
         );
       })
@@ -198,8 +198,8 @@ CA.UI.EventsPage = (() => {
       '<div class="ca-toolbar">' +
       `<label class="ca-search">${CA.UI.Icons.html('search', 13)}<input type="search" placeholder="Search events…" data-ev-search value="${esc(query)}"></label>` +
       '<div class="ca-chipgroup">' +
-      `<button type="button" class="ca-chip${S().get('eventIncomeOnly') ? ' on' : ''}" data-ev-income-only title="Only events that brought in (or cost) cookies">${CA.UI.Icons.html('dollar', 12)} Income only</button>` +
-      `<button type="button" class="ca-chip" data-ev-csv title="Download the events shown as a CSV file">${CA.UI.Icons.html('download', 12)} CSV</button>` +
+      `<button type="button" class="ca-chip${S().get('eventIncomeOnly') ? ' on' : ''}" data-ev-income-only data-tip="Only events that brought in (or cost) cookies">${CA.UI.Icons.html('dollar', 12)} Income only</button>` +
+      `<button type="button" class="ca-chip" data-ev-csv data-tip="Download the events shown as a CSV file">${CA.UI.Icons.html('download', 12)} CSV</button>` +
       '</div></div>' +
       '<div class="ca-ev-list" data-ev-list></div>' +
       '</div>' +

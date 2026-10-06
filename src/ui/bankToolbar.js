@@ -23,7 +23,6 @@ CA.UI.BankToolbar = (() => {
       case 'sell':
         CA.Util.sound('snd/clickOff2.mp3');
         CA.StockTrader.sellAll();
-        b.title = CA.StockTrader.sellAllTitle();
         break;
       case 'auto':
         CA.Util.sound(CA.StockTrader.isOn() ? 'snd/clickOff2.mp3' : 'snd/clickOn2.mp3');
@@ -52,14 +51,10 @@ CA.UI.BankToolbar = (() => {
       bar = document.createElement('div');
       bar.id = ID;
       bar.innerHTML =
-        `<div class="bankButton bankButtonSell" data-cm-bt="sell">${I('dollar')}Sell all stocks</div>` +
+        `<div class="bankButton bankButtonSell" data-cm-bt="sell" data-tip-live="sellAll">${I('dollar')}Sell all stocks</div>` +
         '<div class="bankButton bankButtonBuy" data-cm-bt="auto"></div>' +
-        `<div class="bankButton cm-bt-open" data-cm-bt="open" title="Open the CookieMgr Stock market page">${I('open')}CookieMgr</div>`;
+        `<div class="bankButton cm-bt-open" data-cm-bt="open" data-tip="Open the CookieMgr Stock market page">${I('open')}CookieMgr</div>`;
       bar.addEventListener('click', onClick);
-      const sell = bar.querySelector('[data-cm-bt="sell"]');
-      sell.addEventListener('mouseenter', () => {
-        sell.title = CA.StockTrader.sellAllTitle();
-      });
       head.insertAdjacentElement('afterend', bar);
     }
     return bar;
@@ -72,10 +67,11 @@ CA.UI.BankToolbar = (() => {
     const auto = bar.querySelector('[data-cm-bt="auto"]');
     auto.innerHTML = `${I('bolt')}Autobuyer: ${on ? 'on' : 'off'}`;
     auto.classList.toggle('bankButtonOff', !on);
-    auto.title = 'Buys fast/slow-rising stocks and sells the rest, every second (same switch as on the CookieMgr page)';
+    auto.dataset.tip = 'Buys fast/slow-rising stocks and sells the rest, every second (same switch as on the CookieMgr page)';
   }
 
   function init() {
+    CA.UI.Tips.provide('sellAll', () => CA.StockTrader.sellAllTitle());
     CA.Settings.defineOption({
       key: 'bankToolbar',
       icon: 'toolbar',

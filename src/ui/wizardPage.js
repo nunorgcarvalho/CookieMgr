@@ -59,7 +59,7 @@ CA.UI.WizardPage = (() => {
             '<div class="ca-spell-meta" data-wiz-meta></div>' +
             '<div class="ca-spell-actions">' +
             C().button(`${I('wizard', 12)} Cast`, `data-ca="macro-run" data-id="${s.id}" data-wiz-cast-btn`, 'ca-btn-small ca-btn-run') +
-            `<button type="button" class="ca-iconbtn ca-fav" data-ca="macro-fav" data-id="${s.id}" data-wiz-fav title="Favourite: its own button on the left panel">${I('starOutline', 14)}</button>` +
+            `<button type="button" class="ca-iconbtn ca-fav" data-ca="macro-fav" data-id="${s.id}" data-wiz-fav data-tip="Favourite: its own button on the left panel">${I('starOutline', 14)}</button>` +
             '</div></div>'
         )
         .join('') +
@@ -229,7 +229,7 @@ CA.UI.WizardPage = (() => {
       bar.id = TOOLBAR_ID;
       bar.innerHTML =
         '<div class="cm-gt-btn" data-cm-gt="auto"></div>' +
-        `<div class="cm-gt-btn cm-gt-open" data-cm-gt="open" title="Open the CookieMgr Grimoire page">${I('open', 12)}CookieMgr</div>`;
+        `<div class="cm-gt-btn cm-gt-open" data-cm-gt="open" data-tip="Open the CookieMgr Grimoire page">${I('open', 12)}CookieMgr</div>`;
       bar.addEventListener('click', (e) => {
         const b = e.target.closest('[data-cm-gt]');
         if (!b) return;
@@ -245,7 +245,7 @@ CA.UI.WizardPage = (() => {
     const auto = bar.querySelector('[data-cm-gt="auto"]');
     auto.innerHTML = `${I('bolt', 12)}Auto FtHoF on Click frenzy: ${on ? 'on' : 'off'}`;
     auto.classList.toggle('on', on);
-    auto.title = 'Casts Force the Hand of Fate as soon as a Click frenzy is running and there’s enough magic (same switch as on the CookieMgr page)';
+    auto.dataset.tip = 'Casts Force the Hand of Fate as soon as a Click frenzy is running and there’s enough magic (same switch as on the CookieMgr page)';
   }
 
   function init() {

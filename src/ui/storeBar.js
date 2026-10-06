@@ -27,12 +27,12 @@ CA.UI.StoreBar = (() => {
     let h = `<div class="ca-sb-group ca-sb-sort${cm ? '' : ' locked'}"><span class="ca-sb-label">${I('sortList', 11)} sort</span>`;
     CA.Shop.SORTS.forEach((s) => {
       const tip = cm ? `${s.name} — ${s.desc}` : `${s.name} — needs Cookie Monster: click to load it`;
-      h += `<button type="button" class="ca-sb-btn${cur === s.id ? ' on' : ''}" data-ss-sort="${s.id}" title="${CA.Util.escapeHtml(tip)}">${I(s.icon, 14)}${cm ? '' : `<span class="ca-sb-lock">${I('plug', 8)}</span>`}</button>`;
+      h += `<button type="button" class="ca-sb-btn${cur === s.id ? ' on' : ''}" data-ss-sort="${s.id}" data-tip="${CA.Util.escapeHtml(tip)}">${I(s.icon, 14)}${cm ? '' : `<span class="ca-sb-lock">${I('plug', 8)}</span>`}</button>`;
     });
     h += '</div>';
     h +=
       `<div class="ca-sb-group"><button type="button" class="ca-sb-btn ca-sb-round${on ? ' on' : ''}${usable ? '' : ' idle'}" data-ss-round ` +
-      `title="${CA.Util.escapeHtml(
+      `data-tip="${CA.Util.escapeHtml(
         `Round to multiples: ${on ? 'on' : 'off'} — with ×10 or ×100, buying stops at the next multiple (37 → 40) and selling at the one below (37 → 30).${usable ? '' : ' Select ×10 or ×100 to use it.'}`
       )}">` +
       `<span class="ca-sb-txt">${selling ? '⌊' : '⌈'}${bulk}${selling ? '⌋' : '⌉'}</span></button></div>`;

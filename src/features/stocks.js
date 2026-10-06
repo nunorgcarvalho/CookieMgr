@@ -251,7 +251,7 @@ CA.Stocks = (() => {
         badge.className = 'cm-stockbadge';
         el.insertBefore(badge, el.firstChild);
       }
-      badge.title = `${info.label}: ${info.hint}`;
+      badge.dataset.tip = `${info.label}: ${info.hint}`;
       badge.innerHTML = `<b>${info.sym}</b>${info.label}`;
     }
   }

@@ -92,9 +92,15 @@ CA.Script = (() => {
         i = end + 1;
         continue;
       }
+      const dur = text.slice(i).match(/^(\d+(?:\.\d+)?)(s|sec|secs|min|mins)(?![A-Za-z_])/i);
+      if (dur) {
+        out.push({ t: 'num', v: Number(dur[1]), base: Number(dur[1]), unit: /^s/i.test(dur[2]) ? 's' : 'min', col: i });
+        i += dur[0].length;
+        continue;
+      }
       const num = text.slice(i).match(/^(\d+(?:\.\d+)?(?:e[+-]?\d+)?)(qa|qi|k|m|b|t)?(?![A-Za-z_])/i);
       if (num) {
-        out.push({ t: 'num', v: Number(num[1]) * (num[2] ? SUFFIX[num[2].toLowerCase()] : 1), col: i });
+        out.push({ t: 'num', v: Number(num[1]) * (num[2] ? SUFFIX[num[2].toLowerCase()] : 1), base: Number(num[1]), sfx: (num[2] || '').toLowerCase(), col: i });
         i += num[0].length;
         continue;
       }
@@ -122,6 +128,19 @@ CA.Script = (() => {
 
   // ---- lines → a tree by indentation --------------------------------------------------------------
 
+  /** The line without its comment (a # outside quotes and everything after it). */
+  function withoutComment(text) {
+    let q = '';
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (q) {
+        if (c === q) q = '';
+      } else if (c === '"' || c === "'") q = c;
+      else if (c === '#') return text.slice(0, i);
+    }
+    return text;
+  }
+
   function lineTree(source) {
     const lines = String(source || '').replace(/\r\n/g, '\n').split('\n');
     const root = { indent: -1, children: [] };
@@ -129,7 +148,7 @@ CA.Script = (() => {
     const errors = [];
     lines.forEach((raw, i) => {
       const text = raw.replace(/\t/g, '  ');
-      const body = text.replace(/#.*$/, '');
+      const body = withoutComment(text);
       if (!body.trim()) return;
       const indent = text.length - text.trimStart().length;
       while (stack.length > 1 && indent <= stack[stack.length - 1].indent) stack.pop();
@@ -261,6 +280,20 @@ CA.Script = (() => {
     }
     throw new Err(`expected something to compare, found “${t.v}”`);
   }
+  /** At an id: is it (with its call, if any) followed by a comparison? — then it's a value. */
+  function comparedAfter(c) {
+    let k = 1;
+    if (c.peek(1) && c.peek(1).t === 'p' && c.peek(1).v === '(') {
+      for (let depth = 0; c.peek(k); k++) {
+        const t = c.peek(k);
+        if (t.t === 'p' && t.v === '(') depth++;
+        else if (t.t === 'p' && t.v === ')' && --depth === 0) break;
+      }
+      k++;
+    }
+    const nx = c.peek(k);
+    return !!nx && nx.t === 'op' && nx.v !== '=';
+  }
   function atom(c) {
     if (c.is('p', '(')) {
       c.next();
@@ -270,7 +303,7 @@ CA.Script = (() => {
     }
     const t = c.peek();
     // a condition call: an id with "(" that is a known condition (and isn't followed by a comparison)
-    if (t && t.t === 'id' && CA.Conditions.get(t.v)) {
+    if (t && t.t === 'id' && CA.Conditions.get(t.v) && !(valueById[t.v] && comparedAfter(c))) {
       c.next();
       let a = { pos: [], named: {} };
       if (c.is('p', '(')) {
@@ -433,9 +466,14 @@ CA.Script = (() => {
         if (!c.done()) throw new Err('something extra at the end of the line');
         return { node: { type: 'wait', cond, line } };
       }
-      const n = c.take('num', undefined, '“until …” or a time').v;
+      const tok = c.take('num', undefined, '“until …” or a time');
+      // 30s / 2min written together; 5m is five minutes here (not five million seconds)
+      if (tok.unit) return { node: { type: 'sleep', secs: tok.unit === 's' ? tok.base : tok.base * 60, line } };
+      if (tok.sfx === 'm' && !c.is('id')) return { node: { type: 'sleep', secs: tok.base * 60, line } };
+      if (tok.sfx) throw new Err(`a time is in seconds or minutes — “${tok.base}${tok.sfx}” isn’t one`);
+      const n = tok.v;
       const unit = c.is('id') ? c.next().v : 'seconds';
-      if (!/^(second|seconds|s|minute|minutes|min|m)$/.test(unit)) throw new Err('a time is in seconds or minutes');
+      if (!/^(second|seconds|s|sec|secs|minute|minutes|min|mins|m)$/.test(unit)) throw new Err('a time is in seconds or minutes');
       return { node: { type: 'sleep', secs: /^m/.test(unit) ? n * 60 : n, line } };
     }
     if (kw === 'stop') {
@@ -535,11 +573,15 @@ CA.Script = (() => {
 
   // ---- blocks → source (for macros made with the v2.22 block editor) -----------------------------
 
+  /** A value as code: bare when it's a plain word (hand → hand), quoted otherwise ("hand of fate", ">="). */
+  const litText = (v) => (typeof v === 'string' && !/^[A-Za-z_][\w.\-']*$/.test(v) ? `"${v}"` : String(v));
   function argText(def, params) {
     const list = (def && def.params) || [];
     const vals = list.map((p) => (params && params[p.key] !== undefined ? params[p.key] : p.default));
-    while (vals.length && list[vals.length - 1] && vals[vals.length - 1] === list[vals.length - 1].default) vals.pop();
-    return vals.map((v) => (typeof v === 'string' && !/^[A-Za-z_][\w.\-']*$/.test(v) ? `"${v}"` : String(v))).join(', ');
+    // trailing defaults are left out — unless they were written out (params has them)
+    const given = (k) => !!params && params[list[k].key] !== undefined;
+    while (vals.length && list[vals.length - 1] && vals[vals.length - 1] === list[vals.length - 1].default && !given(vals.length - 1)) vals.pop();
+    return vals.map(litText).join(', ');
   }
   function condText(c) {
     if (!c) return 'true';
@@ -576,7 +618,7 @@ CA.Script = (() => {
   function library() {
     const items = [];
     const sig = (id, def) => `${id}(${((def && def.params) || []).map((p) => p.key).join(', ')})`;
-    const snippet = (id, def) => `${id}(${argText(def, {}) || ((def && def.params) || []).map((p) => (p.default !== undefined && p.default !== '' ? p.default : p.key)).join(', ')})`;
+    const snippet = (id, def) => `${id}(${argText(def, {}) || ((def && def.params) || []).map((p) => (p.default !== undefined && p.default !== '' ? litText(p.default) : p.key)).join(', ')})`;
     CA.Actions.all().forEach((a) => items.push({ kind: 'action', id: a.id, sig: sig(a.id, a), desc: a.name, group: a.group, icon: a.icon, insert: snippet(a.id, a) }));
     CA.Conditions.all().forEach((c) => items.push({ kind: 'condition', id: c.id, sig: sig(c.id, c), desc: c.name, group: 'Conditions', icon: c.icon, insert: snippet(c.id, c) }));
     VALUES.forEach((v) => items.push({ kind: 'value', id: v.id, sig: `${v.id}(${(v.params || []).join(', ')})`, desc: v.desc, group: 'Values', icon: 'graphs', insert: `${v.id}(${(v.params || []).join(', ')})` }));

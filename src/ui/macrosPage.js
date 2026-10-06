@@ -94,7 +94,7 @@ CA.UI.MacrosPage = (() => {
         // the chosen ones in order (▲ ▼ ×), then the rest to add back
         const chosen = (Array.isArray(cur) ? cur : []).filter((v) => list.some((x) => x.v === v));
         const rest = list.filter((x) => !chosen.includes(x.v));
-        const btn = (op, v, label, title, dis) => `<button type="button" class="ca-iconbtn" data-ca="macro-order" data-id="${esc(m.id)}" data-key="${esc(o.key)}" data-op="${op}" data-v="${esc(v)}" title="${title}"${dis ? ' disabled' : ''}>${label}</button>`;
+        const btn = (op, v, label, title, dis) => `<button type="button" class="ca-iconbtn" data-ca="macro-order" data-id="${esc(m.id)}" data-key="${esc(o.key)}" data-op="${op}" data-v="${esc(v)}" data-tip="${title}"${dis ? ' disabled' : ''}>${label}</button>`;
         out.push({
           label: o.label,
           wide: true,
@@ -219,11 +219,11 @@ CA.UI.MacrosPage = (() => {
       '<div class="ca-macro-status" data-macro-status></div>' +
       '</div>' +
       '<div class="ca-controls">' +
-      `<button type="button" class="ca-iconbtn ca-fav${fav ? ' on' : ''}" data-ca="macro-fav" data-id="${esc(m.id)}" title="${fav ? 'Un-favourite (removes its button from the left panel)' : 'Favourite: gives it its own button on the left panel'}">${I(fav ? 'star' : 'starOutline', 15)}</button>`;
-    if (m.builtin) h += `<button type="button" class="ca-iconbtn" data-ca="macro-dup" data-id="${esc(m.id)}" title="Duplicate into your own editable macro">${I('plus', 14)}</button>`;
+      `<button type="button" class="ca-iconbtn ca-fav${fav ? ' on' : ''}" data-ca="macro-fav" data-id="${esc(m.id)}" data-tip="${fav ? 'Un-favourite (removes its button from the left panel)' : 'Favourite: gives it its own button on the left panel'}">${I(fav ? 'star' : 'starOutline', 15)}</button>`;
+    if (m.builtin) h += `<button type="button" class="ca-iconbtn" data-ca="macro-dup" data-id="${esc(m.id)}" data-tip="Duplicate into your own editable macro">${I('plus', 14)}</button>`;
     else {
-      h += `<button type="button" class="ca-iconbtn" data-ca="macro-edit" data-id="${esc(m.id)}" title="Edit">${I('edit', 14)}</button>`;
-      h += `<button type="button" class="ca-iconbtn" data-ca="macro-dup" data-id="${esc(m.id)}" title="Duplicate">${I('plus', 14)}</button>`;
+      h += `<button type="button" class="ca-iconbtn" data-ca="macro-edit" data-id="${esc(m.id)}" data-tip="Edit">${I('edit', 14)}</button>`;
+      h += `<button type="button" class="ca-iconbtn" data-ca="macro-dup" data-id="${esc(m.id)}" data-tip="Duplicate">${I('plus', 14)}</button>`;
     }
     h += C().hotkey(`macro.${m.id}`);
     h += once
@@ -246,7 +246,7 @@ CA.UI.MacrosPage = (() => {
       `<div class="ca-mtile ca-macro" data-macro-row="${esc(m.id)}">` +
       '<div class="ca-mtile-head">' +
       icon(m) +
-      `<div class="ca-mtile-name"><b>${esc(m.name)}</b><span class="ca-badge ca-badge-${m.mode}">${esc(M().triggerText(m))}</span>${M().isCustomized(m.id) ? '<span class="ca-badge ca-badge-edited" title="Changed from how it comes — Edit → Revert to default to undo">edited</span>' : ''}</div>` +
+      `<div class="ca-mtile-name"><b>${esc(m.name)}</b><span class="ca-badge ca-badge-${m.mode}">${esc(M().triggerText(m))}</span>${M().isCustomized(m.id) ? '<span class="ca-badge ca-badge-edited" data-tip="Changed from how it comes — Edit → Revert to default to undo">edited</span>' : ''}</div>` +
       (once
         ? C().button(`${I('play', 12)} Run`, `data-ca="macro-run" data-id="${esc(m.id)}"`, 'ca-btn-small ca-btn-run')
         : C().toggle(false, `data-ca="macro-toggle" data-id="${esc(m.id)}"${noCM ? ' disabled' : ''}`, m.name)) +
@@ -255,15 +255,15 @@ CA.UI.MacrosPage = (() => {
       (m.desc ? `<div class="ca-mtile-desc">${esc(m.desc)}</div>` : '') +
       (settingsOf(m).length
         ? `<div class="ca-mtile-settings${openSettings.has(m.id) ? ' open' : ''}">` +
-          `<div class="ca-mtile-sum" data-ca="macro-settings" data-id="${esc(m.id)}" title="Change its settings">${I('settings', 11)} <span>${esc(settingsSummary(m))}</span></div>` +
+          `<div class="ca-mtile-sum" data-ca="macro-settings" data-id="${esc(m.id)}" data-tip="Change its settings">${I('settings', 11)} <span>${esc(settingsSummary(m))}</span></div>` +
           optionsHtml(m) +
           '</div>'
         : '') +
-      '<div class="ca-mtile-heat" data-macro-heat title="How busy it has been lately"><i></i></div>' +
+      '<div class="ca-mtile-heat" data-macro-heat data-tip="How busy it has been lately"><i></i></div>' +
       '<div class="ca-macro-status" data-macro-status></div>' +
       '<div class="ca-mtile-foot">' +
-      `<button type="button" class="ca-iconbtn ca-fav${fav ? ' on' : ''}" data-ca="macro-fav" data-id="${esc(m.id)}" title="${fav ? 'Un-favourite (removes its button from the left panel)' : 'Favourite: gives it its own button on the left panel'}">${I(fav ? 'star' : 'starOutline', 14)}</button>` +
-      `<button type="button" class="ca-iconbtn" data-ca="macro-dup" data-id="${esc(m.id)}" title="Duplicate into your own editable macro">${I('plus', 13)}</button>` +
+      `<button type="button" class="ca-iconbtn ca-fav${fav ? ' on' : ''}" data-ca="macro-fav" data-id="${esc(m.id)}" data-tip="${fav ? 'Un-favourite (removes its button from the left panel)' : 'Favourite: gives it its own button on the left panel'}">${I(fav ? 'star' : 'starOutline', 14)}</button>` +
+      `<button type="button" class="ca-iconbtn" data-ca="macro-dup" data-id="${esc(m.id)}" data-tip="Duplicate into your own editable macro">${I('plus', 13)}</button>` +
       C().button(`${I('edit', 11)} Edit`, `data-ca="macro-edit" data-id="${esc(m.id)}"`, 'ca-btn-small') +
       C().hotkey(`macro.${m.id}`) +
       '</div></div>'
@@ -284,7 +284,7 @@ CA.UI.MacrosPage = (() => {
         let h =
           `<div class="ca-status-macro" data-status-macro="${esc(id)}">` +
           `<div class="ca-status-head">${icon(m, true)}<b>${esc(m.name)}</b><span>${esc(M().triggerText(m))} · on for ${up}</span>` +
-          `<button type="button" class="ca-iconbtn" data-ca="macro-toggle" data-id="${esc(id)}" title="Switch off">${I('close', 12)}</button></div>`;
+          `<button type="button" class="ca-iconbtn" data-ca="macro-toggle" data-id="${esc(id)}" data-tip="Switch off">${I('close', 12)}</button></div>`;
         void st;
         void beautify;
         h += stepLines(m);
@@ -371,9 +371,9 @@ CA.UI.MacrosPage = (() => {
 
   const tools = (act, listPath, i, n) =>
     '<span class="ca-ed-tools">' +
-    `<button type="button" class="ca-iconbtn" data-edit-act="${act}-up" data-path="${listPath}" data-val="${i}" title="Move up"${i === 0 ? ' disabled' : ''}>▲</button>` +
-    `<button type="button" class="ca-iconbtn" data-edit-act="${act}-down" data-path="${listPath}" data-val="${i}" title="Move down"${i === n - 1 ? ' disabled' : ''}>▼</button>` +
-    `<button type="button" class="ca-iconbtn" data-edit-act="${act}-del" data-path="${listPath}" data-val="${i}" title="Remove">${I('close', 12)}</button>` +
+    `<button type="button" class="ca-iconbtn" data-edit-act="${act}-up" data-path="${listPath}" data-val="${i}" data-tip="Move up"${i === 0 ? ' disabled' : ''}>▲</button>` +
+    `<button type="button" class="ca-iconbtn" data-edit-act="${act}-down" data-path="${listPath}" data-val="${i}" data-tip="Move down"${i === n - 1 ? ' disabled' : ''}>▼</button>` +
+    `<button type="button" class="ca-iconbtn" data-edit-act="${act}-del" data-path="${listPath}" data-val="${i}" data-tip="Remove">${I('close', 12)}</button>` +
     '</span>';
 
   /** A step: its action and the action's choices. */
@@ -400,7 +400,7 @@ CA.UI.MacrosPage = (() => {
               .join('')}</select>` +
             cond.params.map((p) => field(p, (one.params || {})[p.key], `${listPath}.${j}.params.${p.key}`)).join('') +
             `<label class="ca-field ca-check"><input type="checkbox" data-edit="${listPath}.${j}.not" data-type="bool"${one.not ? ' checked' : ''}><span>not</span></label>` +
-            (list.length > 1 ? `<button type="button" class="ca-iconbtn" data-edit-act="cond-del" data-path="${listPath}" data-val="${j}" title="Remove this condition">${I('close', 12)}</button>` : '') +
+            (list.length > 1 ? `<button type="button" class="ca-iconbtn" data-edit-act="cond-del" data-path="${listPath}" data-val="${j}" data-tip="Remove this condition">${I('close', 12)}</button>` : '') +
             '</div>'
           );
         })
@@ -416,7 +416,7 @@ CA.UI.MacrosPage = (() => {
       '<div class="ca-fb-list">' +
       nodes.map((n, i) => blockHtml(n, `${listPath}.${i}`, listPath, i, nodes.length)).join('') +
       '<div class="ca-fb-add">' +
-      FLOW_BLOCKS.map((b) => `<button type="button" class="ca-chip" data-edit-act="node-add" data-path="${listPath}" data-val="${b.v}" title="${esc(b.hint)}">${I(b.icon, 11)} ${b.label}</button>`).join('') +
+      FLOW_BLOCKS.map((b) => `<button type="button" class="ca-chip" data-edit-act="node-add" data-path="${listPath}" data-val="${b.v}" data-tip="${esc(b.hint)}">${I(b.icon, 11)} ${b.label}</button>`).join('') +
       '</div></div>'
     );
   }
@@ -441,7 +441,7 @@ CA.UI.MacrosPage = (() => {
       (n.branches || []).forEach((b, j) => {
         h +=
           `<div class="ca-fb-branch"><div class="ca-fb-branch-head"><span class="ca-fb-label">branch ${j + 1}</span>` +
-          ((n.branches || []).length > 1 ? `<button type="button" class="ca-iconbtn" data-edit-act="branch-del" data-path="${path}.branches" data-val="${j}" title="Remove this branch">${I('close', 11)}</button>` : '') +
+          ((n.branches || []).length > 1 ? `<button type="button" class="ca-iconbtn" data-edit-act="branch-del" data-path="${path}.branches" data-val="${j}" data-tip="Remove this branch">${I('close', 11)}</button>` : '') +
           `</div>${blocksHtml(b, `${path}.branches.${j}`)}</div>`;
       });
       h += `<button type="button" class="ca-btn ca-btn-small ca-ed-add" data-edit-act="branch-add" data-path="${path}.branches">${I('plus', 11)} Branch</button></div>`;
@@ -490,7 +490,7 @@ CA.UI.MacrosPage = (() => {
       C().button(`${I('save', 13)} Save`, 'data-edit-act="save"', 'ca-btn-on') +
       C().button('Cancel', 'data-edit-act="cancel"') +
       (d.builtinEdit ? C().button(`${I('refresh', 12)} Revert to default`, 'data-edit-act="revert" data-arm-label="Back to the original?"') : '') +
-      (d.id && !d.builtinEdit ? C().button(`${I('trash', 13)}`, 'data-edit-act="delete" data-arm-label="Delete it?" title="Delete this macro"', 'ca-btn-off') : '') +
+      (d.id && !d.builtinEdit ? C().button(`${I('trash', 13)}`, 'data-edit-act="delete" data-arm-label="Delete it?" data-tip="Delete this macro"', 'ca-btn-off') : '') +
       '</div></div>' +
       (draftError ? `<div class="ca-editor-error">${esc(draftError)}</div>` : '') +
       // the editor, with the library always beside it
@@ -539,7 +539,7 @@ CA.UI.MacrosPage = (() => {
     }
     h +=
       (`<div class="ca-ed-sec ca-ed-icons"><div class="ca-ed-sec-head">${I('star', 12)} Icon</div><div class="ca-iconpick">${ICONS.map(
-            (n) => `<button type="button" class="ca-iconbtn${(d.icon || {}).ico === n ? ' on' : ''}" data-edit-act="icon" data-val="${n}" title="${n}">${I(n, 16)}</button>`
+            (n) => `<button type="button" class="ca-iconbtn${(d.icon || {}).ico === n ? ' on' : ''}" data-edit-act="icon" data-val="${n}" data-tip="${n}">${I(n, 16)}</button>`
           ).join('')}</div></div>`) +
       '</div>' +
       libraryHtml() +
@@ -547,15 +547,19 @@ CA.UI.MacrosPage = (() => {
     return h;
   }
 
-  function onEditInput(e) {
+  /**
+   * A macro row's own settings (how often, its actions' choices) — wherever the row is shown (the
+   * Macros, Garden, Grimoire, Stock market pages): ui/menu.js sends every change in the panel here.
+   * Returns true when it was one.
+   */
+  function handleSetting(e) {
     const el = e.target;
-    if (el.matches && (el.matches('[data-code]') || el.matches('[data-lib-search]'))) return; // ui/codeEditor.js
     if (el.dataset && el.dataset.macroFlowopt) {
       if (e.type !== 'change') return;
       CA.Util.sound('snd/tick.mp3');
       M().setFlowOpt(el.dataset.macroFlowopt, el.dataset.key, el.value);
       refreshSummary(el);
-      return;
+      return true;
     }
     if (el.dataset && el.dataset.macroEvery) {
       if (e.type !== 'change') return;
@@ -564,7 +568,7 @@ CA.UI.MacrosPage = (() => {
       if (!(v > 0)) return;
       M().setEvery(el.dataset.macroEvery, el.dataset.everyAs === 'rate' ? 1000 / Math.min(v, 1000 / M().MIN_EVERY) : el.dataset.everyAs === 'secs' ? v * 1000 : v);
       refreshSummary(el);
-      return;
+      return true;
     }
     if (el.dataset && el.dataset.macroParam) {
       if (e.type !== 'change') return;
@@ -578,8 +582,15 @@ CA.UI.MacrosPage = (() => {
       const m = M().get(el.dataset.macroParam);
       const chips = row && row.querySelector('.ca-steps');
       if (chips && m) chips.innerHTML = M().stepsOf(m).map(stepChip).join('<span class="ca-step-arrow">›</span>');
-      return;
+      return true;
     }
+    return false;
+  }
+
+  function onEditInput(e) {
+    const el = e.target;
+    if (el.matches && (el.matches('[data-code]') || el.matches('[data-lib-search]'))) return; // ui/codeEditor.js
+    if (el.dataset && (el.dataset.macroFlowopt || el.dataset.macroEvery || el.dataset.macroParam)) return; // handleSetting (via ui/menu.js)
     if (el.dataset && el.dataset.member && draft) {
       const id = el.dataset.member;
       draft.members = (draft.members || []).filter((x) => x !== id);
@@ -789,7 +800,7 @@ CA.UI.MacrosPage = (() => {
       '<div class="ca-runbar-head">' +
       `<span class="ca-runbar-title">${I('play', 13)} Running</span><span class="ca-pill" data-ca-count></span>` +
       '<div class="ca-runchips" data-macro-runbar></div>' +
-      `<button type="button" class="ca-iconbtn" data-ca="widget-add" data-type="status" title="Put this on the left panel as a status bar">${I('widget', 13)}</button>` +
+      `<button type="button" class="ca-iconbtn" data-ca="widget-add" data-type="status" data-tip="Put this on the left panel as a status bar">${I('widget', 13)}</button>` +
       C().button(`${I('close', 11)} Stop all`, 'data-ca="stop-all"', 'ca-btn-small ca-btn-off') +
       '</div></div>';
     if (draft) h += editorHtml();
@@ -858,8 +869,8 @@ CA.UI.MacrosPage = (() => {
                 if (!m) return '';
                 const lvl = M().activityLevel(rid);
                 return (
-                  `<span class="ca-runchip h${lvl}" data-ca="macro-locate" data-id="${esc(rid)}" title="${esc(m.name)} — click to find it">${icon(m, true)}<b>${esc(m.name)}</b>` +
-                  `<button type="button" class="ca-runchip-x" data-ca="macro-toggle" data-id="${esc(rid)}" title="Stop ${esc(m.name)}">${I('close', 9)}</button></span>`
+                  `<span class="ca-runchip h${lvl}" data-ca="macro-locate" data-id="${esc(rid)}" data-tip="${esc(m.name)} — click to find it">${icon(m, true)}<b>${esc(m.name)}</b>` +
+                  `<button type="button" class="ca-runchip-x" data-ca="macro-toggle" data-id="${esc(rid)}" data-tip="Stop ${esc(m.name)}">${I('close', 9)}</button></span>`
                 );
               })
               .join('')
@@ -1062,5 +1073,5 @@ CA.UI.MacrosPage = (() => {
     CA.Events.on('integrations', () => CA.Settings.get('tab') === 'clickers' && rerender());
   }
 
-  return { init, row, tile, status, sync, handle, icon, edit, run, draft: () => draft };
+  return { init, row, tile, status, sync, handle, handleSetting, icon, edit, run, draft: () => draft };
 })();

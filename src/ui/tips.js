@@ -1,9 +1,10 @@
 // Hover popups, drawn in one floating layer on top of everything (#CookieMgrLayer, a child of
 // <body>), so the game's panels and beams never cover them and card edges never clip them.
 //
-//   simple tips   anything with title="…" inside CookieMgr's elements: on the first hover the
-//                 attribute moves to data-tip (so the browser never shows its own tooltip) and a
-//                 small styled tip appears next to it instead
+//   simple tips   anything with data-tip="…" inside CookieMgr's elements: a small styled tip next
+//                 to it (CookieMgr never emits title="…" — the browser's own tooltips; one that
+//                 slips through is converted on hover). data-tip-live="key" takes its text from
+//                 provide(key, fn(el)) instead, worked out while it shows (live numbers)
 //   rich popups   an element marked data-pop keeps its popup as a hidden child (.ca-gpop /
 //                 .ca-wpop / .ca-orb-pop); on hover a copy of it is shown in the layer, refreshed
 //                 while the mouse stays (the content behind it updates live)
@@ -12,7 +13,7 @@
 CA.UI = CA.UI || {};
 
 CA.UI.Tips = (() => {
-  const ROOTS = '#CookieMgrMenu, #CookieMgrWidgets, #CookieMgrTab, #cm-bank-toolbar, #cm-grimoire-toolbar, #CookieMgrStoreBar';
+  const ROOTS = '#CookieMgrMenu, #CookieMgrWidgets, #CookieMgrTab, #cm-bank-toolbar, #cm-grimoire-toolbar, #CookieMgrStoreBar, .cm-stockbadge';
   const POPS = ':scope > .ca-gpop, :scope > .ca-wpop, :scope > .ca-orb-pop';
   const REFRESH_MS = 400;
   let layer = null;
@@ -20,6 +21,21 @@ CA.UI.Tips = (() => {
   let box = null;
   let current = null; // element whose tip / popup is showing
   let timer = null;
+  const providers = {};
+
+  /** Live tip text for elements marked data-tip-live="key": fn(el) → text. */
+  const provide = (key, fn) => (providers[key] = fn);
+  function textOf(el) {
+    const live = el.dataset.tipLive;
+    if (live && providers[live]) {
+      try {
+        return String(providers[live](el) || '');
+      } catch (e) {
+        return '';
+      }
+    }
+    return el.dataset.tip || '';
+  }
 
   /** The floating layer (created on first use). */
   function getLayer() {
@@ -54,11 +70,15 @@ CA.UI.Tips = (() => {
   }
 
   function showTip(target) {
+    const text = textOf(target);
+    if (!text) return hide();
     if (!tip || !tip.isConnected) tip = float('ca-simple-tip');
     tip.id = 'CookieMgrTip';
-    tip.textContent = target.dataset.tip;
-    tip.style.display = 'block';
-    place(tip, target, true);
+    if (tip.textContent !== text) {
+      tip.textContent = text;
+      tip.style.display = 'block';
+      place(tip, target, true);
+    } else tip.style.display = 'block';
   }
 
   function popOf(target) {
@@ -94,7 +114,7 @@ CA.UI.Tips = (() => {
       timer = setInterval(() => (current && current.isConnected ? showPop(current) : hide()), REFRESH_MS);
       return;
     }
-    const target = t && t.closest('[title], [data-tip]');
+    const target = t && t.closest('[title], [data-tip], [data-tip-live]');
     if (!target || !target.closest(ROOTS)) {
       if (current) hide();
       return;
@@ -109,9 +129,13 @@ CA.UI.Tips = (() => {
     }
     if (target === current) return;
     hide();
-    if (!target.dataset.tip) return;
+    if (!textOf(target)) return;
+    if (!target.hasAttribute('aria-label')) target.setAttribute('aria-label', textOf(target));
     current = target;
+    if (tip) tip.textContent = '';
     showTip(target);
+    // its text can change while it shows (a live number, a re-render): keep it current
+    timer = setInterval(() => (current && current.isConnected ? showTip(current) : hide()), REFRESH_MS);
   }
 
   function init() {
@@ -121,5 +145,5 @@ CA.UI.Tips = (() => {
     addEventListener('scroll', hide, true);
   }
 
-  return { init, hide, float, layer: getLayer };
+  return { init, hide, float, provide, layer: getLayer };
 })();

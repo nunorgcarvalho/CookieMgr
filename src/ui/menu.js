@@ -20,7 +20,7 @@ CA.UI.Menu = (() => {
   // ---- rendering ---------------------------------------------------------------
 
   /** Its own card, apart from the autoclicker row, so it isn't lost among other controls —
-   *  selling everything is a bigger deal than flipping a toggle. The button's title (what the
+   *  selling everything is a bigger deal than flipping a toggle. The button's tip (what the
    *  hover shows) is filled in with a live cookie estimate on mouseenter; see wireSellAll(). */
   function sellAllCard() {
     return (
@@ -61,7 +61,7 @@ CA.UI.Menu = (() => {
 
   /** A compact on/off chip for an option (the All options index). */
   const optionChip = (def) =>
-    `<button type="button" class="ca-chip ca-optchip" data-ca="option" data-key="${def.key}" data-pressed-key="${def.key}" title="${C.esc(def.desc)}">${CA.UI.Icons.html(def.icon || 'settings', 12)} ${C.esc(def.name)}</button>`;
+    `<button type="button" class="ca-chip ca-optchip" data-ca="option" data-key="${def.key}" data-pressed-key="${def.key}" data-tip="${C.esc(def.desc)}">${CA.UI.Icons.html(def.icon || 'settings', 12)} ${C.esc(def.name)}</button>`;
 
   // ---- pages ---------------------------------------------------------------------
   // The current page id is kept in the 'tab' setting (the name predates the page registry;
@@ -365,14 +365,10 @@ CA.UI.Menu = (() => {
     else open(); // Game.ShowMenu -> Game.UpdateMenu -> render()
   }
 
-  /** Fills in the Sell All button's hover title with a live cookie estimate right as the
-   *  pointer enters it, rather than trying to keep a `title` attribute fresh ahead of time. */
+  /** The Sell All button's tip: a live cookie estimate, worked out while it shows (ui/tips.js). */
   function wireSellAll(root) {
     const btn = root.querySelector('[data-ca-sellall]');
-    if (!btn) return;
-    btn.addEventListener('mouseenter', () => {
-      btn.title = CA.StockTrader.sellAllTitle();
-    });
+    if (btn) btn.dataset.tipLive = 'sellAll';
   }
 
   /** Updates the dynamic bits of an already rendered panel (no re-render, keeps scroll). */
@@ -539,6 +535,8 @@ CA.UI.Menu = (() => {
     if (menu) {
       menu.addEventListener('click', onClick);
       menu.addEventListener('change', onHistoryFile);
+      // a macro row's settings, on whichever page shows the row
+      menu.addEventListener('change', (e) => CA.UI.MacrosPage.handleSetting(e));
     }
 
     const refresh = () => {

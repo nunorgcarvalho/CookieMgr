@@ -95,7 +95,7 @@ CA.UI.Plot = (() => {
     return values.map((v) => v.slice(0, v.length - suffix.length)).join(' · ') + suffix;
   }
   const tile = (label, value, sub, title) =>
-    `<div class="ca-stat"${title ? ` title="${esc(title)}"` : ''}><div class="ca-stat-label">${label}</div><div class="ca-stat-value">${value}</div><div class="ca-stat-sub">${sub || '&nbsp;'}</div></div>`;
+    `<div class="ca-stat"${title ? ` data-tip="${esc(title)}"` : ''}><div class="ca-stat-label">${label}</div><div class="ca-stat-value">${value}</div><div class="ca-stat-sub">${sub || '&nbsp;'}</div></div>`;
 
   // ---- the x axis -------------------------------------------------------------------------
 
@@ -424,7 +424,7 @@ CA.UI.Plot = (() => {
     // ---- html ----
 
     function chip(label, attrs, title) {
-      return `<button type="button" class="ca-chip" ${attrs}${title ? ` title="${esc(title)}"` : ''}>${label}</button>`;
+      return `<button type="button" class="ca-chip" ${attrs}${title ? ` data-tip="${esc(title)}"` : ''}>${label}</button>`;
     }
     const setChip = (k, val, label, title) =>
       chip(label, `data-plot-set="${key(k)}" data-val="${esc(String(val))}" data-pressed-key="${key(k)}" data-pressed-val="${esc(String(val))}"`, title);
@@ -438,7 +438,7 @@ CA.UI.Plot = (() => {
         (spec.note ? `<div class="ca-card-note">${spec.note}</div>` : '') +
         (spec.stats ? '<div class="ca-stats" data-plot-stats></div>' : '') +
         '<div class="ca-toolbar">' +
-        `<div class="ca-chipgroup" title="How much history to show">${wins.map((s) => setChip('win', s, windowLabel(s))).join('')}</div>` +
+        `<div class="ca-chipgroup" data-tip="How much history to show">${wins.map((s) => setChip('win', s, windowLabel(s))).join('')}</div>` +
         (spec.toggleGroups || [])
           .map(
             (g) =>
@@ -468,7 +468,7 @@ CA.UI.Plot = (() => {
         '<div class="ca-toolbar ca-toolbar-bottom">';
       if (spec.smooth !== false) {
         h +=
-          '<div class="ca-chipgroup" title="Centered moving average: each point becomes the average of the stretch of time around it">' +
+          '<div class="ca-chipgroup" data-tip="Centered moving average: each point becomes the average of the stretch of time around it">' +
           '<span class="ca-chip-label">Smooth</span>' +
           SMOOTH.map((s) => setChip('smooth', s, SMOOTH_LABELS[s])).join('') +
           '</div>';

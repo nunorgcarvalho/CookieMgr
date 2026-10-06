@@ -45,9 +45,9 @@ CA.UI.CodeEditor = (() => {
     const fk = (it) => `${it.kind}:${it.id}`;
     const row = (it, i) =>
       `<div class="ca-lib-row ca-lib-${it.kind}" data-lib-text="${esc(`${it.sig} ${it.desc} ${it.group}`.toLowerCase())}">` +
-      `<button type="button" class="ca-lib-ins" data-lib-insert="${i}" title="Insert it">${I(it.icon || 'bolt', 12)}<code>${esc(it.sig)}</code></button>` +
+      `<button type="button" class="ca-lib-ins" data-lib-insert="${i}" data-tip="Insert it">${I(it.icon || 'bolt', 12)}<code>${esc(it.sig)}</code></button>` +
       `<span class="ca-lib-desc">${esc(it.desc)}</span>` +
-      `<button type="button" class="ca-iconbtn ca-lib-fav${pins.includes(fk(it)) ? ' on' : ''}" data-lib-fav="${esc(fk(it))}" title="${pins.includes(fk(it)) ? 'Unpin' : 'Pin it at the top'}">${I(pins.includes(fk(it)) ? 'star' : 'starOutline', 11)}</button>` +
+      `<button type="button" class="ca-iconbtn ca-lib-fav${pins.includes(fk(it)) ? ' on' : ''}" data-lib-fav="${esc(fk(it))}" data-tip="${pins.includes(fk(it)) ? 'Unpin' : 'Pin it at the top'}">${I(pins.includes(fk(it)) ? 'star' : 'starOutline', 11)}</button>` +
       '</div>';
     const pinned = libItems.map((it, i) => [it, i]).filter(([it]) => pins.includes(fk(it)));
     const groups = {};
