@@ -105,7 +105,7 @@ CA.UI.GardenPage = (() => {
       `<label class="ca-field"><span>Harvest a mature plant if its chance to die next tick is over</span>${num('gardenThreshold', 0, 100, '% (100 = let it die)')}</label>` +
       `<label class="ca-field"><span>Work in the last</span>${num('gardenLead', 1, 900, 'seconds before each garden tick')}</label>` +
       '</div>' +
-      `<div class="ca-list">${CA.Settings.optionsIn('garden').map(CA.UI.Menu.optionRow).join('')}</div>` +
+      `<div class="ca-optgrid">${CA.Settings.optionsIn('garden').map(CA.UI.Menu.optionTile).join('')}</div>` +
       '<div class="ca-card-note" data-gp-last></div>' +
       '</div>'
     );

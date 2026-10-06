@@ -92,7 +92,7 @@ CA.UI.WizardPage = (() => {
         : '<div class="ca-card-note">A combo casts several spells in one go — one button, one hotkey, or its own button on the left panel. It casts each spell in order, skipping any you can’t afford yet.</div>') +
       '</div>';
     h += plot.html();
-    h += `<div class="ca-card">${C().cardHead('Options', 'settings')}<div class="ca-list">${CA.Settings.optionsIn('grimoire').map(CA.UI.Menu.optionRow).join('')}</div></div>`;
+    h += CA.UI.Menu.optionsCard('Options', 'settings', 'grimoire');
     return h;
   }
 

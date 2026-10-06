@@ -766,7 +766,8 @@ CA.UI.Graphs = (() => {
       ).join('') +
       '</div>' +
       (cur.top ? cur.top() : '') +
-      cur.plots.map((id) => plots[id].html()).join('')
+      cur.plots.map((id) => plots[id].html()).join('') +
+      CA.UI.Menu.optionsCard('Options', 'settings', 'graph')
     );
   }
 

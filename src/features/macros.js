@@ -503,7 +503,7 @@ CA.Macros = (() => {
       key: 'notifications',
       icon: 'bell',
       group: 'macros',
-      name: 'On/off notifications',
+      name: 'Macro on/off notifications',
       desc: 'Shows a small ON/OFF popup whenever a macro is switched.',
       default: true,
     });

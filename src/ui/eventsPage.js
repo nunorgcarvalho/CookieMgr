@@ -202,7 +202,8 @@ CA.UI.EventsPage = (() => {
       `<button type="button" class="ca-chip" data-ev-csv title="Download the events shown as a CSV file">${CA.UI.Icons.html('download', 12)} CSV</button>` +
       '</div></div>' +
       '<div class="ca-ev-list" data-ev-list></div>' +
-      '</div>'
+      '</div>' +
+      CA.UI.Menu.optionsCard('Options', 'settings', 'events')
     );
   }
 

@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 2.15.0 — 2026-10-05
+
+- **Every option has one home:** on the page of the feature it changes, in an Options card at the bottom — no more
+  options shown both on their page and on Settings. Golden cookie notifications moved to Events; graph options to
+  Graphs. Clearer names: "Macro on/off notifications", "Toolbar in the Stock market".
+- **Settings page redone:** an overview on top (recording, macros running, widgets placed, Cookie Monster), the
+  CookieMgr-wide options, and **All options** — every page's options as quick on/off chips, each group titled with a
+  link to its page.
+- **More varied layouts:** options as a grid of tiles; built-in macros as cards (with an activity meter — the same
+  bands as the rings on their buttons); the Widgets page's "Add a widget" as a gallery. Your own macros stay as rows.
+- **Styled hover tips everywhere** in CookieMgr instead of the browser's own tooltips.
+
 ## 2.14.0 — 2026-10-05
 
 - **Sidebar reordered and grouped:** Events, Graphs | Garden, Stock market, Pantheon, Grimoire | Macros, Widgets,

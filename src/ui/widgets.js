@@ -607,22 +607,24 @@ CA.UI.Widgets = (() => {
       '<div class="ca-card">' +
       C.cardHead('Add a widget', 'plus') +
       '<div class="ca-card-note">Widgets sit on the left panel, around the big cookie. Drag them anywhere — framed ones by their title bar, the rest from anywhere — and resize them from their corner. Hover for × and ⚙.</div>' +
-      '<div class="ca-list">' +
-      '<div class="ca-row">' +
-      `<span class="ca-row-ico">${I('star', 16)}</span>` +
-      `<div class="ca-row-text"><div class="ca-row-name">Macro buttons${favs.length ? ` <span class="ca-badge">${favs.length} placed</span>` : ''}</div>` +
-      `<div class="ca-row-desc">★ a macro (or a spell on the ${C.link('Grimoire', 'wizard')} page) and it gets its own button here: click to switch it on/off or run it, hover for its name. Un-star it to take it away.</div></div>` +
-      `<div class="ca-controls">${C.button(`${I('open', 12)} Macros`, 'data-ca="open-macros"', 'ca-btn-small')}</div>` +
+      '<div class="ca-wgallery">' +
+      // a card per kind of widget: picture, name, what it shows, Add / Remove
+      '<div class="ca-wcard">' +
+      `<div class="ca-wcard-ico">${I('star', 26)}</div>` +
+      `<div class="ca-wcard-name">Macro buttons${favs.length ? ` <span class="ca-badge">${favs.length} placed</span>` : ''}</div>` +
+      `<div class="ca-wcard-desc">★ a macro (or a spell on the ${C.link('Grimoire', 'wizard')} page) and it gets its own round button here: click to switch it on/off or run it.</div>` +
+      `<div class="ca-wcard-foot">${C.button(`${I('open', 12)} Macros`, 'data-ca="open-macros"', 'ca-btn-small')}</div>` +
       '</div>';
     types
       .filter((t) => !t.hidden)
       .forEach((t) => {
         const placed = widgets.filter((w) => w.type === t.id).length;
         h +=
-          '<div class="ca-row">' +
-          `<span class="ca-row-ico">${I(t.icon, 16)}</span>` +
-          `<div class="ca-row-text"><div class="ca-row-name">${esc(t.name)}${placed ? ` <span class="ca-badge">${placed} placed</span>` : ''}</div><div class="ca-row-desc">${esc(t.desc)}</div></div>` +
-          '<div class="ca-controls">' +
+          `<div class="ca-wcard${placed ? ' placed' : ''}">` +
+          `<div class="ca-wcard-ico">${I(t.icon, 26)}</div>` +
+          `<div class="ca-wcard-name">${esc(t.name)}${placed ? ` <span class="ca-badge">${placed} placed</span>` : ''}</div>` +
+          `<div class="ca-wcard-desc">${esc(t.desc)}</div>` +
+          '<div class="ca-wcard-foot">' +
           (t.single && placed
             ? C.button('Remove', `data-w-page-remove="${t.id}"`, 'ca-btn-small ca-btn-off')
             : C.button(`${I('plus', 12)} Add`, `data-w-page-add="${t.id}"`, 'ca-btn-small ca-btn-on')) +
@@ -630,7 +632,7 @@ CA.UI.Widgets = (() => {
       });
     h += '</div></div>';
     h +=
-      `<div class="ca-card">${C.cardHead('Options', 'settings')}<div class="ca-list">${S().optionsIn('widgets').map(CA.UI.Menu.optionRow).join('')}` +
+      `<div class="ca-card">${C.cardHead('Options', 'settings')}<div class="ca-optgrid">${S().optionsIn('widgets').map(CA.UI.Menu.optionTile).join('')}</div><div class="ca-list">` +
       '<div class="ca-row ca-row-option">' +
       `<span class="ca-row-ico">${I('trash', 16)}</span>` +
       '<div class="ca-row-text"><div class="ca-row-name">Remove all widgets</div><div class="ca-row-desc">Clears the left panel (and un-stars your macros).</div></div>' +

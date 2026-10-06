@@ -80,7 +80,7 @@ CA.UI.BankToolbar = (() => {
       key: 'bankToolbar',
       icon: 'toolbar',
       group: 'stocks',
-      name: 'Toolbar in the Bank minigame',
+      name: 'Toolbar in the Stock market',
       desc: 'Sell all, the autobuyer switch and a CookieMgr shortcut, right under the stock market header.',
       default: true,
     });

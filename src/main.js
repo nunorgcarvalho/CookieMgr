@@ -59,6 +59,7 @@ const mod = {
     CA.Ascension.init();
     CA.UI.Menu.init();
     CA.UI.Tab.init();
+    CA.UI.Tips.init();
     CA.Update.init();
     CA.CookieMonster.init();
     migrateOldSaveData();

@@ -114,6 +114,35 @@ CA.UI.MacrosPage = (() => {
     return h;
   }
 
+  /**
+   * A built-in macro as a card (the built-in sections lay these out in a grid): picture, name and
+   * trigger, its switch or Run button, what it does, its choices, an activity meter, and ★ /
+   * duplicate / hotkey along the bottom. Same data attributes as a row, so sync() keeps it live.
+   */
+  function tile(m) {
+    const once = m.mode === 'once';
+    const fav = M().isFav(m.id);
+    return (
+      `<div class="ca-mtile ca-macro" data-macro-row="${esc(m.id)}">` +
+      '<div class="ca-mtile-head">' +
+      icon(m) +
+      `<div class="ca-mtile-name"><b>${esc(m.name)}</b><span class="ca-badge ca-badge-${m.mode}">${esc(M().triggerText(m))}</span></div>` +
+      (once
+        ? C().button(`${I('play', 12)} Run`, `data-ca="macro-run" data-id="${esc(m.id)}"`, 'ca-btn-small ca-btn-run')
+        : C().toggle(false, `data-ca="macro-toggle" data-id="${esc(m.id)}"`, m.name)) +
+      '</div>' +
+      (m.desc ? `<div class="ca-mtile-desc">${esc(m.desc)}</div>` : '') +
+      optionsHtml(m) +
+      '<div class="ca-mtile-heat" data-macro-heat title="How busy it has been lately"><i></i></div>' +
+      '<div class="ca-macro-status" data-macro-status></div>' +
+      '<div class="ca-mtile-foot">' +
+      `<button type="button" class="ca-iconbtn ca-fav${fav ? ' on' : ''}" data-ca="macro-fav" data-id="${esc(m.id)}" title="${fav ? 'Un-favourite (removes its button from the left panel)' : 'Favourite: gives it its own button on the left panel'}">${I(fav ? 'star' : 'starOutline', 14)}</button>` +
+      `<button type="button" class="ca-iconbtn" data-ca="macro-dup" data-id="${esc(m.id)}" title="Duplicate into your own editable macro">${I('plus', 13)}</button>` +
+      C().hotkey(`macro.${m.id}`) +
+      '</div></div>'
+    );
+  }
+
   /** Live status of every running macro and its actions — the "Running now" block / widget. */
   function status() {
     const ids = M().runningIds();
@@ -398,7 +427,7 @@ CA.UI.MacrosPage = (() => {
       '<div class="ca-card">' +
       C().cardHead(sec.page ? C().link(sec.title, sec.page) : sec.title, sec.icon, extraHead || '') +
       (extraTop || '') +
-      `<div class="ca-list">${macros.map(row).join('')}</div>` +
+      `<div class="ca-mtiles">${macros.map(tile).join('')}</div>` +
       '</div>'
     );
   }
@@ -441,7 +470,7 @@ CA.UI.MacrosPage = (() => {
         ? `<div class="ca-list">${mine.map(row).join('')}</div>`
         : '<div class="ca-card-note">Chain actions into your own macros: pop everything at once, sell stocks when a value crosses a line, switch other macros on when an effect starts… Built-in macros can be duplicated as a starting point.</div>') +
       '</div>';
-    h += `<div class="ca-card">${C().cardHead('Options', 'settings')}<div class="ca-list">${CA.Settings.optionsIn('macros').map(CA.UI.Menu.optionRow).join('')}</div></div>`;
+    h += CA.UI.Menu.optionsCard('Options', 'settings', 'macros');
     return h;
   }
 
@@ -458,6 +487,12 @@ CA.UI.MacrosPage = (() => {
       if (sw) {
         sw.classList.toggle('on', on);
         sw.setAttribute('aria-checked', String(on));
+      }
+      const heat = r.querySelector('[data-macro-heat]');
+      if (heat) {
+        const lvl = M().activityLevel(id);
+        heat.className = `ca-mtile-heat h${lvl}`;
+        heat.firstChild.style.width = `${(lvl / 5) * 100}%`;
       }
       const st = r.querySelector('[data-macro-status]');
       if (st) {
@@ -612,5 +647,5 @@ CA.UI.MacrosPage = (() => {
     CA.UI.Pages.register({ id: 'clickers', label: 'Macros', icon: 'bolt', order: 70, group: 'custom', html, mount, unmount, tick: () => sync(root) });
   }
 
-  return { init, row, status, sync, handle, icon, edit, run, draft: () => draft };
+  return { init, row, tile, status, sync, handle, icon, edit, run, draft: () => draft };
 })();

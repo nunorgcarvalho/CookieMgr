@@ -48,6 +48,21 @@ CA.UI.Menu = (() => {
     );
   }
 
+  /** An option as a tile (icon, name, what it does, switch) — option cards lay these out in a grid. */
+  function optionTile(def) {
+    return (
+      `<div class="ca-opt" data-option="${def.key}">` +
+      `<span class="ca-opt-ico">${CA.UI.Icons.html(def.icon || 'settings', 15)}</span>` +
+      `<div class="ca-opt-text"><b>${C.esc(def.name)}</b><span>${C.esc(def.desc)}</span></div>` +
+      C.toggle(false, `data-ca="option" data-key="${def.key}"`, def.name) +
+      '</div>'
+    );
+  }
+
+  /** A compact on/off chip for an option (the All options index). */
+  const optionChip = (def) =>
+    `<button type="button" class="ca-chip ca-optchip" data-ca="option" data-key="${def.key}" data-pressed-key="${def.key}" title="${C.esc(def.desc)}">${CA.UI.Icons.html(def.icon || 'settings', 12)} ${C.esc(def.name)}</button>`;
+
   // ---- pages ---------------------------------------------------------------------
   // The current page id is kept in the 'tab' setting (the name predates the page registry;
   // keeping it means existing saves still reopen on the page you last had open).
@@ -75,16 +90,69 @@ CA.UI.Menu = (() => {
 
   const cardHead = C.cardHead;
 
-  function optionsCard(title, icon, group) {
-    return `<div class="ca-card">${cardHead(title, icon)}<div class="ca-list">${CA.Settings.optionsIn(group).map(optionRow).join('')}</div></div>`;
+  /** A page's options card: its options as a grid of tiles (nothing when the group has none). */
+  function optionsCard(title, icon, group, extra = '') {
+    const opts = CA.Settings.optionsIn(group).filter((d) => typeof d.default === 'boolean');
+    if (!opts.length && !extra) return '';
+    return `<div class="ca-card">${cardHead(title, icon)}<div class="ca-optgrid">${opts.map(optionTile).join('')}</div>${extra}</div>`;
+  }
+
+  // Where each page's options live (the All options index on the Settings page links to them).
+  const OPTION_HOMES = [
+    { page: 'events', label: 'Events', icon: 'events', group: 'events' },
+    { page: 'graphs', label: 'Graphs', icon: 'graphs', group: 'graph' },
+    { page: 'garden', label: 'Garden', icon: 'leaf', group: 'garden' },
+    { page: 'stocks', label: 'Stock market', icon: 'stocks', group: 'stocks' },
+    { page: 'wizard', label: 'Grimoire', icon: 'wizard', group: 'grimoire' },
+    { page: 'clickers', label: 'Macros', icon: 'bolt', group: 'macros' },
+    { page: 'widgets', label: 'Widgets', icon: 'widget', group: 'widgets' },
+  ];
+
+  /** Every option of every page, as quick on/off chips under a link to its page. */
+  function indexCard() {
+    const blocks = OPTION_HOMES.map((h) => {
+      const opts = CA.Settings.optionsIn(h.group).filter((d) => typeof d.default === 'boolean');
+      if (!opts.length) return '';
+      return (
+        '<div class="ca-index-block">' +
+        `<div class="ca-index-head">${CA.UI.Icons.html(h.icon, 13)} ${C.link(h.label, h.page)}</div>` +
+        `<div class="ca-index-chips">${opts.map(optionChip).join('')}</div>` +
+        '</div>'
+      );
+    }).join('');
+    return (
+      '<div class="ca-card">' +
+      cardHead('All options', 'filter', '<div class="ca-card-meta"><span class="ca-hint">each lives on its own page — click a title to go there</span></div>') +
+      `<div class="ca-index">${blocks}</div>` +
+      '</div>'
+    );
+  }
+
+  /** At-a-glance tiles at the top of the Settings page. */
+  function overviewCard() {
+    const tile = CA.UI.Plot.fmt.tile;
+    const cm = CA.CookieMonster.isLoaded();
+    const running = CA.Macros.activeCount();
+    const placed = CA.UI.Widgets.list().length;
+    return (
+      '<div class="ca-card ca-overview">' +
+      `<div class="ca-overview-brand"><span class="ca-overview-logo">${C.icon({ icon: CA.ICON })}</span><div><b>CookieMgr</b><span>v${CA.VERSION}</span></div></div>` +
+      '<div class="ca-stats">' +
+      tile('Recording', CA.Settings.get('trackHistory') ? 'on' : 'off', '<span data-ca-history-short></span>') +
+      tile('Macros running', String(running), C.link('Macros', 'clickers')) +
+      tile('Widgets placed', String(placed), C.link('Widgets', 'widgets')) +
+      tile('Cookie Monster', cm ? 'running' : 'not loaded', cm ? '' : 'needed for the store’s building sort') +
+      '</div></div>'
+    );
   }
 
   function settingsPage() {
     return (
+      overviewCard() +
       '<div class="ca-card">' +
       cardHead('General', 'settings') +
+      `<div class="ca-optgrid">${CA.Settings.optionsIn('general').map(optionTile).join('')}</div>` +
       '<div class="ca-list">' +
-      CA.Settings.optionsIn('general').map(optionRow).join('') +
       '<div class="ca-row ca-row-option">' +
       rowIcon('panel') +
       '<div class="ca-row-text"><div class="ca-row-name">Open / close this panel</div>' +
@@ -100,13 +168,9 @@ CA.UI.Menu = (() => {
       '</div>' +
       '</div>' +
       historyCard() +
-      optionsCard('Macros', 'bolt', 'macros') +
-      optionsCard('Graphs', 'graphs', 'graph') +
-      optionsCard('Events', 'events', 'events') +
-      optionsCard('Stock market', 'stocks', 'stocks') +
-      optionsCard('Wizard tower', 'wizard', 'grimoire') +
       optionsCard('Store', 'dollar', 'store') +
       integrationsCard() +
+      indexCard() +
       '<div class="ca-footer">' +
       `<div>CookieMgr v${CA.VERSION} &middot; <a href="https://github.com/nunorgcarvalho/CookieMgr" target="_blank" rel="noopener">GitHub</a></div>` +
       '<div>Settings are stored inside your Cookie Clicker save; recorded history stays in this browser.</div>' +
@@ -329,6 +393,8 @@ CA.UI.Menu = (() => {
 
     const info = root.querySelector('[data-ca-history-info]');
     if (info) info.textContent = historyInfo();
+    const short = root.querySelector('[data-ca-history-short]');
+    if (short) short.textContent = historyInfo().split('.')[0];
 
     root.querySelectorAll('[data-option]').forEach((row) => {
       setSwitch(row.querySelector('.ca-switch'), !!CA.Settings.get(row.dataset.option));
@@ -492,5 +558,5 @@ CA.UI.Menu = (() => {
     });
   }
 
-  return { init, open, close, toggle, isOpen, openPage, render, sync, optionRow, armed, currentTab };
+  return { init, open, close, toggle, isOpen, openPage, render, sync, optionRow, optionTile, optionsCard, armed, currentTab };
 })();

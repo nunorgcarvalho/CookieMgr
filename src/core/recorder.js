@@ -388,7 +388,7 @@ CA.Recorder = (() => {
       icon: 'record',
       group: 'general',
       name: 'Record history',
-      desc: 'Records CpS, cookies, prestige and more over time for the graphs — every second for the last 3 hours of play, coarser further back. Kept in this browser (not in your game save); export it from Settings.',
+      desc: 'Records CpS, cookies, prestige and more over time for the graphs — every second for the last 3 hours of play, coarser further back. Kept in this browser (not in your game save); export it under History data below.',
       default: true,
     });
     load();

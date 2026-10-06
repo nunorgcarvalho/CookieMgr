@@ -23,7 +23,7 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 | **Widget** | Something on the game's left panel: a macro's button, the Running now bar, quick stats, events, minigames. |
 
-## Features (v2.14)
+## Features (v2.15)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
 the data pages **Events** and **Graphs**; the minigames **Garden**, **Stock market**, **Pantheon** and **Grimoire**;
@@ -292,9 +292,12 @@ does; Settings → Store can hide it):
 
 ### Settings
 
-Every row has its icon. Turn every macro off when ascending (default on), on/off notifications, golden cookie notifications
-(a quick popup the moment one is popped), remember which macros were running across reloads, record history, an optional hotkey to open the panel,
-reset hotkeys, checking for updates, stock market indicators, and the History data card (export / import / clear). Under **Integrations**, a **Load now** button loads
+Every option lives on the page of the feature it changes, in an **Options** card at the bottom (macro options on
+Macros, golden cookie notifications on Events, the Grimoire toolbar on Grimoire…). The **Settings** page keeps what's
+CookieMgr-wide: an overview (recording, macros running, widgets placed, Cookie Monster), general options (record
+history, check for updates), the panel hotkey and resetting hotkeys, the History data card (export / import / clear),
+the Store options, and **All options** — every page's options as quick on/off chips, each group titled with a link
+to its page. Under **Integrations**, a **Load now** button loads
 the latest [Cookie Monster](https://github.com/CookieMonsterTeam/CookieMonster) release, and a toggle loads it
 automatically whenever CookieMgr starts (skipped if Cookie Monster is already running). Everything is stored in the normal Cookie Clicker
 save through the official mod API (`Game.registerMod`), so it survives exports and imports. Settings are also
