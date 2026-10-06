@@ -21,7 +21,7 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Event**  | Something that happened in the game (a golden cookie popped, a stock was sold, …).      |
 | **State**  | A value that can be measured over time (cookies in the bank, CpS, …).                   |
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
-| **Widget** | Something on the game's left panel: a macro's button, the Running now bar, quick stats, events. |
+| **Widget** | Something on the game's left panel: a macro's button, the Running now bar, quick stats, events, minigames. |
 
 ## Features (v2.8)
 
@@ -196,7 +196,7 @@ that opens this page (can be turned off in Settings).
 ### Widgets
 
 Things on the game's left panel, around the big cookie (and over it — they sit above its click area, so you can
-always grab them again). Drag them anywhere; hover for ×.
+always grab them again). Drag them anywhere; hover for × and ⚙ (its settings).
 
 - **Macro buttons** — ★ a macro (or a spell) and it gets its own round icon button: click to switch it on/off (it
   glows green while running) or to run it; hover for its name, state and hotkey. Un-star it, or ×, to take it away.
@@ -205,20 +205,25 @@ always grab them again). Drag them anywhere; hover for ×.
 - **Running now** — a slim status bar: an icon per running macro, pulsing while its actions are doing something. Hover
   an icon for a popup of what each action has done; click to open the Macros page. (Add it on the Widgets page or from the
   Running now card.)
-- **Quick stats** — CpS + clicking, actual CpS (last minute), when this run started, upgrades, prestige level (and the
-  most you'd reach by ascending now), achievements, and all-time cookies baked.
-- **Latest events** — the newest entries in the event log, scrollable. Its ⚙ sets how many to keep and which event
-  types to show; add as many as you like (one for golden cookies, one for trades…).
-- **Garden** — how many plants are at each stage of growth (bud, sprout, bloom, mature) and a countdown to the next
-  garden tick. Click it to open the Garden.
-- **Stock market** — how many different stocks you hold, what the last market tick did to the ones you held going into
-  it (in $ and cookies), and a countdown to the next tick. Click it to open the Stock market.
-- **Grimoire** — your magic meter and how long until it's full. Click it to open the Grimoire.
+- **Quick stats** — the numbers you pick in its settings (17 to choose from: CpS, CpS + clicking, actual CpS, clicks
+  per second, bank, run start, upgrades, buildings, prestige level, prestige this run, time to the next level,
+  heavenly chips, achievements, sugar lumps, golden cookies clicked, wrinklers, all-time baked).
+- **Latest events** — the newest entries in the event log, scrollable. Its settings choose how many to keep and which
+  event types to show; add as many as you like (one for golden cookies, one for trades…).
+- **Minigames** — one small round widget each, in its minigame's colours: the ring is a timer, a short label sits
+  under it, hover for details, click to open the minigame. Unlocked ones only (others say "locked").
+  - **Grimoire** — ring = magic; label = time until it's full.
+  - **Garden** — ring and label = the next garden tick; four dots count your plants by stage (bud, sprout, bloom, mature).
+  - **Stock market** — ring and label = the next market tick; after one, the label is what it did to the stocks you
+    held going into it ($; cookies in the popup).
+  - **Pantheon** — your three slotted spirits under a ring counting down to the next worship swap.
 
-The Garden, Stock market and Grimoire widgets are styled in their minigame's colours. Framed boxes (all but the
-buttons and the status bar) are dragged by their title bar and folded with ▾. **Resize** any widget
-from its bottom-right corner: buttons and the status bar scale up or down keeping their shape, framed boxes take any
-width and height. Options: show/hide them all, and lock them so they can't be moved or resized by accident.
+Framed boxes (Quick stats, Latest events) are dragged by their title bar and folded with ▾. **Resize** any widget
+from its bottom-right corner: buttons, round widgets and the status bar scale up or down keeping their shape, framed
+boxes take any width and height.
+
+**Settings:** a widget's ⚙ opens its settings on the Widgets page, which also lists every widget you've placed: text
+size, size (or a title, for framed boxes), and whatever that widget adds — which Quick stats, how many events. Options: show/hide them all, and lock them so they can't be moved or resized by accident.
 Positions are kept relative to the panel with CSS alone, so widgets follow the window (and Cookie Monster's layout
 changes) smoothly instead of jumping when the page loads; positions and sizes are saved with your settings.
 
@@ -367,7 +372,8 @@ src/
     graphs.js        the Graphs page: Cookies / Bank / Prestige tabs and their plot specs
     eventsPage.js    the Events page: income-outside-CpS table and the filterable event log
     macrosPage.js    the Macros page: macro rows, "Running now" status, the macro editor
-    widgets.js       widgets on the left panel (types, dragging, saving) and the Widgets page
+    widgets.js       widgets on the left panel (dragging, sizing, settings, saving) and the Widgets page
+    widgetTypes.js   what each widget shows (macro buttons, status bar, stats, events, minigames)
     wizardPage.js    the Wizard tower page and the toolbar inside the Grimoire
     stockGraph.js    the Stock market page charts: portfolio value / per-stock prices, rolling performance
     stockLog.js      the trade ticker + transaction history table, also on the Stock market page
@@ -400,8 +406,9 @@ If you add a file, add it to `MODULES` in `build.mjs` in the right order.
   `kind` is `gauge` (a level, like CpS), `counter` (a running total) or `flow` (an amount per frame, from `ctx.dt`).
   Read it back with `CA.Recorder.series(id)`.
 - **A new event type:** `CA.EventLog.defineType(type, { name, icon, color, income })`, then `CA.EventLog.add({ type, title, text, cookies, data })`.
-- **A new widget:** `CA.UI.Widgets.defineType({ id, name, icon, desc, width, single, html(instance) })` — it appears on the
-  Widgets page; `html` is re-rendered twice a second.
+- **A new widget:** `CA.UI.Widgets.defineType({ id, name, icon, desc, width, single, bare, resize, settings, html(instance) })`
+  in `ui/widgetTypes.js` — it appears on the Widgets page; `html` is re-rendered twice a second and patched in place.
+  `settings` (`{ key, label, type: 'number' | 'multi', … }`) appear in its settings editor and are saved on the instance.
 - **A new page:** `CA.UI.Pages.register({ id, label, icon, order, html, mount, unmount, tick })` from the page's own
   module. It gets a sidebar icon and a panel slot automatically; `icon` is a name from `ui/icons.js`.
 

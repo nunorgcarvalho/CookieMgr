@@ -56,6 +56,7 @@ const MODULES = [
   'ui/bankToolbar.js',
   'ui/macrosPage.js',
   'ui/widgets.js',
+  'ui/widgetTypes.js',
   'ui/wizardPage.js',
   'ui/menu.js',
   'main.js',

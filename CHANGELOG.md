@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## 2.9.0 — 2026-10-05
+
+- **Round minigame widgets:** the Grimoire, Garden and Stock market widgets are now small round meters instead of
+  boxes — the ring is the timer, a short label sits under it, details pop up on hover, a click opens the minigame:
+  - **Grimoire** — ring = magic; label = time until full.
+  - **Garden** — ring and label = next garden tick; four dots under it count your plants by stage.
+  - **Stock market** — ring and label = next market tick; the label shows what the last tick did to the stocks you held.
+- **New Pantheon widget:** your three slotted spirits under a ring counting down to the next worship swap; click to
+  open the Pantheon.
+- **Widget settings:** every widget has a ⚙ that opens its settings on the Widgets page — text size for all, size for
+  round ones and buttons, a title for framed ones, plus what its type adds. The Widgets page also lists the widgets
+  you've placed, each with its settings.
+- **Quick stats: choose your stats** from 17 (CpS, clicks per second, bank, buildings, prestige this run, time to the
+  next prestige level, heavenly chips, sugar lumps, golden cookies clicked, wrinklers…).
+- **Latest events** settings moved from the widget into the same settings page.
+- Widgets now refresh in place, so a popup you're hovering no longer flickers.
+
 ## 2.8.1 — 2026-10-05
 
 - **Fix: the Quick stats widget couldn't draw** ("Game.UpgradesById.filter is not a function") — the game keeps its upgrades and achievements in objects keyed by id, not arrays.
