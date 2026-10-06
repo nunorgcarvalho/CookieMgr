@@ -18,6 +18,7 @@ CA.UI.MacrosPage = (() => {
     { id: 'autoclickers', title: 'Autoclickers', icon: 'cookie' },
     { id: 'stocks', title: 'Stock market', icon: 'stocks' },
     { id: 'grimoire', title: 'Wizard tower', icon: 'wizard' },
+    { id: 'garden', title: 'Garden', icon: 'leaf' },
     { id: 'upkeep', title: 'Seasons & sugar lumps', icon: 'calendar' },
   ];
   const ICONS = ['bolt', 'cookie', 'star', 'sparkle', 'play', 'clock', 'stocks', 'dollar', 'wizard', 'wrinkler', 'lump', 'trophy', 'graphs', 'tag', 'marker', 'ascend'];

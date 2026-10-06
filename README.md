@@ -23,10 +23,10 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 | **Widget** | Something on the game's left panel: a macro's button, the Running now bar, quick stats, events, minigames. |
 
-## Features (v2.8)
+## Features (v2.11)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
-**Events**, **Graphs**, **Stock market**, **Wizard tower**, **Macros**, **Widgets** and **Settings**. Hovering an icon slides its name out to the left.
+**Events**, **Graphs**, **Stock market**, **Wizard tower**, **Garden**, **Macros**, **Widgets** and **Settings**. Hovering an icon slides its name out to the left.
 Clicking one opens the CookieMgr panel straight to that page (switching pages directly if it's already open on a
 different one); clicking the page that's already showing closes the panel.
 
@@ -200,6 +200,35 @@ Every cast — from CookieMgr or from the Grimoire's own buttons — goes into t
 Inside the Grimoire itself, a small toolbar under its info line has the auto-cast switch and a **CookieMgr** button
 that opens this page (can be turned off in Settings).
 
+### Garden
+
+The **Garden** page shows your plot as it is now: every plant at its growth stage, the chance that a mature plant
+dies of old age on the coming tick (bottom-right of its tile), a red ring on tiles that don't match the active
+profile, and the profile's seed faded in on empty tiles. Hover a tile for its growth, death chance and what the
+profile wants there.
+
+**Profiles** remember the seed on every tile and the soil: plant your garden the way you want it, then **Save
+current garden**. Rename, switch or delete them on the page.
+
+The **Auto-gardener** (a built-in macro — switch it on here or on the Macros page, ★ for its own button on the left
+panel) keeps the garden like the active profile. In the last 15 seconds before each garden tick (adjustable) it:
+
+- pulls out whatever doesn't belong (weeds, mutations, leftovers);
+- harvests a mature plant whose chance of dying on the coming tick is over your threshold (50% by default; 100%
+  lets plants die), and replants it;
+- plants the profile's seed on every empty tile, when you can afford it;
+- switches to the profile's soil when the game allows (soil has a 10-minute cooldown).
+
+Working just before the tick means new plants start growing at once and old ones are picked at the last moment.
+With **Unlock new seeds** on (the default), a seed you haven't unlocked yet is left to grow wherever it appears and
+harvested the moment it's mature, which unlocks it; turned off, it's pulled out like any other mismatch.
+
+**Harvesting vs. letting a plant die:** harvesting a mature plant unlocks its seed if it's new, counts towards the
+harvest achievements, and some plants pay out when harvested (Bakeberry, Chocoroot, Queenbeet…). A plant that dies
+of old age just disappears (on Pebbles soil it has a 35% chance to unlock its seed). The death chance follows the
+game's own rule — each tick a plant ages by a random amount set by its species, the tile's boosts and Supreme
+Intellect, and it dies at 100 — worked out exactly.
+
 ### Widgets
 
 Things on the game's left panel, around the big cookie (and over it — they sit above its click area, so you can
@@ -369,6 +398,7 @@ src/
     cookieMonster.js loads Cookie Monster on request or at start-up
     gameEvents.js    logs wrinkler pops, sugar lumps and achievements as events
     grimoire.js      spells as actions/macros, magic conditions, spell events, the auto-cast macro
+    garden.js        garden profiles, the death-chance maths, the auto-gardener macro
   ui/
     components.js    HTML snippets: switch, hotkey chip, icon, button
     icons.js         the inline-SVG icon set used everywhere
@@ -382,6 +412,7 @@ src/
     widgets.js       widgets on the left panel (dragging, sizing, settings, saving) and the Widgets page
     widgetTypes.js   what each widget shows (macro buttons, status bar, stats, events, minigames)
     wizardPage.js    the Wizard tower page and the toolbar inside the Grimoire
+    gardenPage.js    the Garden page: the plot against the active profile, the auto-gardener, profiles
     stockGraph.js    the Stock market page charts: portfolio value / per-stock prices, rolling performance
     stockLog.js      the trade ticker + transaction history table, also on the Stock market page
     bankToolbar.js   Sell all / autobuyer / CookieMgr buttons inside the Bank minigame

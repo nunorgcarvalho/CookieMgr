@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+## 2.11.0 — 2026-10-05
+
+- **Garden page** (new, under the Wizard tower): your plot as it is now — each plant at its growth stage, the chance
+  a mature plant dies on the coming tick, tiles that don't match your profile ringed in red, the profile's seed faded
+  in on empty tiles; hover a tile for details. Plus the next tick, the soil, and how many plants are mature.
+- **Garden profiles:** save the current garden (the seed on every tile, and the soil) as a profile; rename, switch
+  or delete them.
+- **Auto-gardener** (new built-in macro; ★ it for an on/off button on the left panel). While on, it keeps the garden
+  like the active profile. In the last 15 seconds before each garden tick (adjustable) it:
+  - pulls out plants that don't belong (weeds, mutations, leftovers);
+  - harvests a mature plant when its chance of dying on the coming tick is over your threshold (50% by default;
+    100% lets them die), then replants it;
+  - plants the profile's seed on every empty tile you can afford;
+  - switches to the profile's soil when the game allows it.
+
+  Any time, it harvests a seed you haven't unlocked yet as soon as it's mature, which unlocks it (can be turned off).
+- The death chance comes from the game's own aging rule (including tile boosts and Supreme Intellect), worked out
+  exactly rather than estimated.
+
 ## 2.10.0 — 2026-10-05
 
 - **Season keeper** (new built-in macro): pick a season on its row; while it's on, it buys that season's biscuit as soon

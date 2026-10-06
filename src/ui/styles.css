@@ -2727,3 +2727,193 @@
   background: #1c150d;
   color: #f0e2c0;
 }
+
+/* ---------- v2.11: Garden page ---------- */
+
+#CookieMgrMenu .ca-garden-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+}
+#CookieMgrMenu .ca-gplot {
+  display: grid;
+  grid-template-columns: repeat(6, 40px);
+  grid-auto-rows: 40px;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 6px;
+  background: rgba(40, 26, 12, 0.6);
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.7);
+}
+#CookieMgrMenu .ca-gstats {
+  flex: 1 1 200px;
+}
+#CookieMgrMenu .ca-gtile {
+  position: relative;
+  border-radius: 4px;
+  background: rgba(92, 60, 30, 0.75);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+#CookieMgrMenu .ca-gtile.locked {
+  background: rgba(0, 0, 0, 0.25);
+  box-shadow: none;
+}
+#CookieMgrMenu .ca-gtile.off {
+  box-shadow: inset 0 0 0 2px #e5484d;
+}
+#CookieMgrMenu .ca-gtile:hover {
+  z-index: 5;
+  background: rgba(120, 82, 42, 0.85);
+}
+/* a 48px sprite from gardenPlants.png, shown at 40px */
+#CookieMgrMenu .ca-gs {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 48px;
+  height: 48px;
+  zoom: 0.8333;
+  pointer-events: none;
+}
+#CookieMgrMenu .ca-gs.ghost {
+  opacity: 0.35;
+  filter: grayscale(0.5);
+}
+#CookieMgrMenu .ca-gdecay {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  padding: 0 2px;
+  font: bold 9px/11px Tahoma, Arial, sans-serif;
+  color: #ffe9a8;
+  background: rgba(0, 0, 0, 0.65);
+  border-radius: 3px;
+}
+#CookieMgrMenu .ca-gdecay.hi {
+  color: #ff9a8a;
+}
+#CookieMgrMenu .ca-gnew {
+  position: absolute;
+  left: 1px;
+  top: 1px;
+  color: #ffd36a;
+  filter: drop-shadow(0 0 2px #000);
+}
+/* tile details on hover (same look as the widget popups) */
+#CookieMgrMenu .ca-gpop {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 6px);
+  z-index: 30;
+  display: none;
+  width: 210px;
+  padding: 7px 9px 6px;
+  font-size: 10.5px;
+  line-height: 1.35;
+  text-align: left;
+  color: #e8d7b0;
+  background: linear-gradient(to bottom, rgba(64, 40, 18, 0.98), rgba(24, 15, 7, 0.98));
+  border: 1px solid;
+  border-color: #ece2b6 #875526 #733726 #dfbc9a;
+  border-radius: 7px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.85);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+#CookieMgrMenu .ca-gtile:hover .ca-gpop {
+  display: block;
+}
+#CookieMgrMenu .ca-gpop .ca-wpop-head {
+  display: block;
+  font-size: 12px;
+  color: #fff3cf;
+}
+#CookieMgrMenu .ca-gpop .ca-wpop-row {
+  display: flex;
+  gap: 6px;
+  padding: 2px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+#CookieMgrMenu .ca-gpop .ca-wpop-name {
+  flex: 1;
+  color: #a39477;
+}
+#CookieMgrMenu .ca-gpop .ca-wpop-val {
+  color: #fff3cf;
+  text-align: right;
+}
+
+/* auto-gardener settings */
+#CookieMgrMenu .ca-gsettings {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 4px 8px;
+}
+#CookieMgrMenu .ca-gsettings input[type='number'],
+#CookieMgrMenu .ca-gsettings select,
+#CookieMgrMenu .ca-gsave input,
+#CookieMgrMenu .ca-gprofile input {
+  font: 12px Tahoma, Arial, sans-serif;
+  color: #f0e2c0;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 220, 150, 0.25);
+  border-radius: 4px;
+  padding: 3px 6px;
+}
+#CookieMgrMenu .ca-gsettings input[type='number'] {
+  width: 56px;
+}
+#CookieMgrMenu .ca-gsettings select option {
+  background: #1c150d;
+}
+
+/* profiles */
+#CookieMgrMenu .ca-gsave {
+  display: flex;
+  gap: 6px;
+  padding: 4px 4px 8px;
+}
+#CookieMgrMenu .ca-gsave input {
+  flex: 1;
+  max-width: 220px;
+}
+#CookieMgrMenu .ca-gprofiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+#CookieMgrMenu .ca-gprofile {
+  display: flex;
+  gap: 8px;
+  flex: 1 1 260px;
+  padding: 6px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.25);
+}
+#CookieMgrMenu .ca-gprofile.on {
+  box-shadow: 0 0 0 1px rgba(160, 230, 100, 0.6);
+}
+#CookieMgrMenu .ca-gprofile-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+#CookieMgrMenu .ca-gmini {
+  display: grid;
+  grid-template-columns: repeat(6, 14px);
+  grid-auto-rows: 14px;
+  gap: 1px;
+  flex: none;
+}
+#CookieMgrMenu .ca-gmini span {
+  position: relative;
+  overflow: hidden;
+  border-radius: 2px;
+  background: rgba(92, 60, 30, 0.75);
+}
+#CookieMgrMenu .ca-gmini .ca-gs {
+  zoom: 0.2917;
+}

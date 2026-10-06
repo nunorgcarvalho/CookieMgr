@@ -82,6 +82,7 @@ CA.Settings = (() => {
       if (options.rememberStates) data.running = CA.Macros.runningIds();
     }
     if (CA.UI && CA.UI.Widgets) data.widgets = CA.UI.Widgets.serialize();
+    if (CA.Garden) data.garden = CA.Garden.serialize(); // garden profiles
     return JSON.stringify(data);
   }
 
@@ -163,6 +164,7 @@ CA.Settings = (() => {
     CA.Events.on('hotkeys', persistToLocal);
     CA.Events.on('macros', persistToLocal);
     CA.Events.on('widgets', persistToLocal);
+    CA.Events.on('garden', persistToLocal);
     persistTimer = setInterval(persistToLocal, PERSIST_MS);
     addEventListener('pagehide', persistToLocal);
     addEventListener('beforeunload', persistToLocal);

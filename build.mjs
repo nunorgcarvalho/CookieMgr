@@ -36,6 +36,7 @@ const MODULES = [
   'features/gameActions.js',
   'features/macros.js',
   'features/grimoire.js',
+  'features/garden.js',
   'features/stocks.js',
   'features/gameStates.js',
   'features/stockTrader.js',
@@ -58,6 +59,7 @@ const MODULES = [
   'ui/widgets.js',
   'ui/widgetTypes.js',
   'ui/wizardPage.js',
+  'ui/gardenPage.js',
   'ui/menu.js',
   'main.js',
 ];

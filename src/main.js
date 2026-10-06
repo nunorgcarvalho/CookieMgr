@@ -35,6 +35,7 @@ const mod = {
     CA.GameActions.init(); // actions + conditions, then the macros built from them
     CA.Macros.init();
     CA.Grimoire.init();
+    CA.Garden.init();
     CA.Stocks.init();
     CA.StockLog.init();
     CA.History.init();
@@ -46,6 +47,7 @@ const mod = {
     CA.UI.MacrosPage.init();
     CA.UI.Widgets.init();
     CA.UI.WizardPage.init();
+    CA.UI.GardenPage.init();
     CA.UI.StockGraph.init();
     CA.UI.StockPerf.init();
     CA.UI.StockLog.init();
@@ -83,6 +85,7 @@ const mod = {
     if (!data) return;
     CA.Macros.load(data.macros);
     CA.UI.Widgets.load(data.widgets);
+    CA.Garden.load(data.garden);
     if (!CA.Settings.get('rememberStates')) return;
     if (Array.isArray(data.running)) CA.Macros.restore(data.running);
     else {
