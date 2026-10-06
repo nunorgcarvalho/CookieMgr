@@ -30,6 +30,7 @@ CA.UI.MacrosPage = (() => {
   ];
 
   let root = null;
+  const openSettings = new Set(); // cards whose ⚙ settings are unfolded
   let draft = null; // macro being edited (a copy), or null
   let draftError = '';
   let timer = null;
@@ -61,28 +62,94 @@ CA.UI.MacrosPage = (() => {
     return members.map((x) => `<span class="ca-step ca-step-member">${icon(x, true)}${esc(x.name)}</span>`).join('');
   }
 
-  /** A built-in's choices (its `options`): a dropdown per step param you can pick, right on its row. */
-  function optionsHtml(m) {
-    if (!m.options || !m.options.length) return '';
+  // how often a built-in can run (ms), offered in its settings
+  const EVERY = [50, 100, 200, 250, 500, 1000, 2000, 5000, 10000, 30000, 60000];
+  const everyLabel = (ms) => (ms < 1000 ? `${Math.round(1000 / ms)}× a second` : ms < 60000 ? `every ${ms / 1000}s` : `every ${ms / 60000} min`);
+
+  /** A built-in's settings as [{ label, html, summary }]: how often it runs, then its actions' choices. */
+  function settingsOf(m) {
+    if (!m.builtin) return [];
+    const out = [];
+    if (m.mode === 'repeat' || m.mode === 'when') {
+      const cur = M().everyOf(m);
+      const opts = EVERY.filter((ms) => ms >= M().MIN_EVERY).concat(EVERY.includes(cur) ? [] : [cur]).sort((a, b) => a - b);
+      out.push({
+        label: m.mode === 'when' ? 'Check' : 'Run',
+        summary: everyLabel(cur),
+        html: `<select data-macro-every="${esc(m.id)}">${opts.map((ms) => `<option value="${ms}"${ms === cur ? ' selected' : ''}>${everyLabel(ms)}</option>`).join('')}</select>`,
+      });
+    }
     const steps = M().stepsOf(m);
+    (m.options || []).forEach((o) => {
+      const a = CA.Actions.get(steps[o.step].action);
+      const p = a && a.params.find((x) => x.key === o.key);
+      if (!p) return;
+      const cur = CA.Actions.paramsFor(steps[o.step].action, steps[o.step].params)[o.key];
+      const attrs = `data-macro-param="${esc(m.id)}" data-step="${o.step}" data-key="${esc(o.key)}"`;
+      let html;
+      let summary;
+      if (p.type === 'bool') {
+        html = `<input type="checkbox" ${attrs} data-type="bool"${cur ? ' checked' : ''}>`;
+        summary = cur ? p.label : `no: ${p.label.toLowerCase()}`;
+      } else if (p.type === 'number') {
+        html = `<input type="number" step="any" ${attrs} data-type="number" value="${esc(cur)}"${p.min != null ? ` min="${p.min}"` : ''}>`;
+        summary = `${p.label}: ${cur}`;
+      } else {
+        const list = typeof p.options === 'function' ? p.options() : p.options || [];
+        const sel = list.find((x) => String(x.v) === String(cur));
+        html = `<select ${attrs}>${list.map((x) => `<option value="${esc(x.v)}"${String(x.v) === String(cur) ? ' selected' : ''}>${esc(x.label)}</option>`).join('')}</select>`;
+        summary = sel ? sel.label : String(cur);
+      }
+      out.push({ label: p.label, html, summary, shift: !!(m.shift && m.shift.step === o.step && m.shift.key === o.key) });
+    });
+    return out;
+  }
+
+  /** A built-in's settings as fields (rows show them inline; cards in their ⚙ panel). */
+  function optionsHtml(m) {
+    const set = settingsOf(m);
+    if (!set.length) return '';
     return (
       '<div class="ca-macro-options">' +
-      m.options
-        .map((o) => {
-          const a = CA.Actions.get(steps[o.step].action);
-          const p = a && a.params.find((x) => x.key === o.key);
-          if (!p) return '';
-          const cur = CA.Actions.paramsFor(steps[o.step].action, steps[o.step].params)[o.key];
-          return (
-            `<label class="ca-field"><span>${esc(p.label)}</span>` +
-            `<select data-macro-param="${esc(m.id)}" data-step="${o.step}" data-key="${esc(o.key)}">` +
-            p.options().map((x) => `<option value="${esc(x.v)}"${String(x.v) === String(cur) ? ' selected' : ''}>${esc(x.label)}</option>`).join('') +
-            '</select></label>'
-          );
-        })
-        .join('') +
+      set.map((x) => `<label class="ca-field"><span>${esc(x.label)}</span>${x.html}${x.shift ? '<em class="ca-shift-hint">shift-click its button</em>' : ''}</label>`).join('') +
       '</div>'
     );
+  }
+
+  /** The settings in a few words, for a card with its settings folded away. */
+  const settingsSummary = (m) =>
+    settingsOf(m)
+      .map((x) => x.summary)
+      .join(' · ');
+
+  /** What each step has done, for a macro that's running (on its card / row). */
+  function stepLines(m) {
+    const st = M().status(m.id);
+    const { beautify } = CA.UI.Plot.fmt;
+    return M()
+      .stepsOf(m)
+      .map((step, i) => {
+        const s = (st && st.steps[i]) || {};
+        const a = CA.Actions.get(step.action) || {};
+        const avail = a.available ? a.available() : true;
+        return (
+          `<div class="ca-status-step${s.error ? ' err' : !avail ? ' idle' : s.lastAt && Date.now() - s.lastAt < 3000 ? ' hot' : ''}">` +
+          `${I(a.icon || 'close', 11)}<span class="ca-status-name">${esc(CA.Actions.describe(step))}</span>` +
+          `<span class="ca-status-val">${s.error ? esc(s.error) : !avail ? 'not available' : `${beautify(s.total || 0, 0)}${a.unit ? ' ' + esc(a.unit) : ''} · ${ago(s.lastAt)}`}</span></div>`
+        );
+      })
+      .join('');
+  }
+
+  /** After a settings change: the card's folded summary and its trigger badge. */
+  function refreshSummary(el) {
+    const card = el.closest('[data-macro-row]');
+    const m = card && M().get(card.dataset.macroRow);
+    if (!m) return;
+    const sum = card.querySelector('.ca-mtile-sum span');
+    if (sum) sum.textContent = settingsSummary(m);
+    const badge = card.querySelector('.ca-badge');
+    if (badge) badge.textContent = M().triggerText(m);
   }
 
   /** One macro as a row: picture, name + trigger, steps, status, and its controls. */
@@ -132,7 +199,12 @@ CA.UI.MacrosPage = (() => {
         : C().toggle(false, `data-ca="macro-toggle" data-id="${esc(m.id)}"`, m.name)) +
       '</div>' +
       (m.desc ? `<div class="ca-mtile-desc">${esc(m.desc)}</div>` : '') +
-      optionsHtml(m) +
+      (settingsOf(m).length
+        ? `<div class="ca-mtile-settings${openSettings.has(m.id) ? ' open' : ''}">` +
+          `<div class="ca-mtile-sum" data-ca="macro-settings" data-id="${esc(m.id)}" title="Change its settings">${I('settings', 11)} <span>${esc(settingsSummary(m))}</span></div>` +
+          optionsHtml(m) +
+          '</div>'
+        : '') +
       '<div class="ca-mtile-heat" data-macro-heat title="How busy it has been lately"><i></i></div>' +
       '<div class="ca-macro-status" data-macro-status></div>' +
       '<div class="ca-mtile-foot">' +
@@ -158,15 +230,9 @@ CA.UI.MacrosPage = (() => {
           `<div class="ca-status-macro" data-status-macro="${esc(id)}">` +
           `<div class="ca-status-head">${icon(m, true)}<b>${esc(m.name)}</b><span>${esc(M().triggerText(m))} · on for ${up}</span>` +
           `<button type="button" class="ca-iconbtn" data-ca="macro-toggle" data-id="${esc(id)}" title="Switch off">${I('close', 12)}</button></div>`;
-        M().stepsOf(m).forEach((step, i) => {
-          const s = st.steps[i] || {};
-          const a = CA.Actions.get(step.action) || {};
-          const avail = a.available ? a.available() : true;
-          h +=
-            `<div class="ca-status-step${s.error ? ' err' : !avail ? ' idle' : s.lastAt && Date.now() - s.lastAt < 3000 ? ' hot' : ''}">` +
-            `${I(a.icon || 'close', 12)}<span class="ca-status-name">${esc(CA.Actions.describe(step))}</span>` +
-            `<span class="ca-status-val">${s.error ? esc(s.error) : !avail ? 'not available' : `${beautify(s.total || 0, 0)}${a.unit ? ' ' + esc(a.unit) : ''} · ${ago(s.lastAt)}`}</span></div>`;
-        });
+        void st;
+        void beautify;
+        h += stepLines(m);
         return h + '</div>';
       })
       .join('');
@@ -233,7 +299,6 @@ CA.UI.MacrosPage = (() => {
       h +=
         '<div class="ca-editor-row">' +
         `<label class="ca-field"><span>${d.mode === 'when' ? 'Check every' : 'Every'}</span><input type="number" step="any" min="${M().MIN_EVERY / 1000}" data-edit="everySec" data-type="number" value="${d.every / 1000}"><em>seconds</em></label>` +
-        `<label class="ca-field ca-check"><input type="checkbox" data-edit="inAll" data-type="bool"${d.inAll ? ' checked' : ''}><span>Part of “All autoclickers”</span></label>` +
         '</div>';
     }
     if (d.mode === 'when') {
@@ -310,10 +375,20 @@ CA.UI.MacrosPage = (() => {
 
   function onEditInput(e) {
     const el = e.target;
+    if (el.dataset && el.dataset.macroEvery) {
+      if (e.type !== 'change') return;
+      CA.Util.sound('snd/tick.mp3');
+      M().setEvery(el.dataset.macroEvery, Number(el.value));
+      refreshSummary(el);
+      return;
+    }
     if (el.dataset && el.dataset.macroParam) {
       if (e.type !== 'change') return;
       CA.Util.sound('snd/tick.mp3');
-      M().setParam(el.dataset.macroParam, Number(el.dataset.step), el.dataset.key, el.value);
+      const v = el.dataset.type === 'bool' ? el.checked : el.dataset.type === 'number' ? Number(el.value) : el.value;
+      if (el.dataset.type === 'number' && !Number.isFinite(v)) return;
+      M().setParam(el.dataset.macroParam, Number(el.dataset.step), el.dataset.key, v);
+      refreshSummary(el);
       // the row's step chip says what it does now
       const row = el.closest('[data-macro-row]');
       const m = M().get(el.dataset.macroParam);
@@ -434,33 +509,21 @@ CA.UI.MacrosPage = (() => {
 
   function html() {
     const all = M().list();
+    // what's running, at a glance: a chip per running macro (click to find its card, × to stop it);
+    // each card shows its own details while it runs
     let h =
-      '<div class="ca-card ca-card-status">' +
-      C().cardHead(
-        'Running now',
-        'play',
-        '<div class="ca-card-meta"><span class="ca-pill" data-ca-count></span>' +
-          `<button type="button" class="ca-iconbtn" data-ca="widget-add" data-type="status" title="Pop this out as a status bar on the left panel">${I('widget', 13)}</button></div>`
-      ) +
-      `<div class="ca-status" data-macro-statusblock>${status()}</div>` +
-      '</div>';
+      '<div class="ca-card ca-runbar">' +
+      '<div class="ca-runbar-head">' +
+      `<span class="ca-runbar-title">${I('play', 13)} Running</span><span class="ca-pill" data-ca-count></span>` +
+      '<div class="ca-runchips" data-macro-runbar></div>' +
+      `<button type="button" class="ca-iconbtn" data-ca="widget-add" data-type="status" title="Put this on the left panel as a status bar">${I('widget', 13)}</button>` +
+      C().button(`${I('close', 11)} Stop all`, 'data-ca="stop-all"', 'ca-btn-small ca-btn-off') +
+      '</div></div>';
     if (draft) h += editorHtml();
     SECTIONS.forEach((sec) => {
       const list = all.filter((m) => m.builtin && m.section === sec.id);
       if (!list.length) return;
-      const master =
-        sec.id === 'autoclickers'
-          ? '<div class="ca-row ca-row-master">' +
-            C().icon({ icon: CA.ICON }) +
-            '<div class="ca-row-text"><div class="ca-row-name">All autoclickers</div>' +
-            '<div class="ca-row-desc">The hotkey turns everything on &mdash; or off, if everything is already running.</div></div>' +
-            '<div class="ca-controls">' +
-            C().button('All on', 'data-ca="all-on"', 'ca-btn-on') +
-            C().button('All off', 'data-ca="all-off"', 'ca-btn-off') +
-            C().hotkey('clickers.toggleAll') +
-            '</div></div>'
-          : '';
-      h += sectionCard(sec, list, '', master);
+      h += sectionCard(sec, list, '', '');
     });
     const mine = all.filter((m) => !m.builtin);
     h +=
@@ -498,11 +561,36 @@ CA.UI.MacrosPage = (() => {
       if (st) {
         const s = M().status(id);
         const n = s ? s.steps.reduce((x, y) => x + (y.total || 0), 0) : 0;
-        st.textContent = on ? `Running · ${CA.UI.Plot.fmt.span((Date.now() - M().since(id)) / 1000)}${n ? ` · ${n.toLocaleString()} done` : ''}` : s && s.lastRun ? `Last ran ${ago(s.lastRun)}` : '';
+        if (on && m.mode !== 'group') {
+          // running: what each of its steps has done (morphed, so nothing flickers)
+          CA.UI.Widgets.morph(st, `<div class="ca-status-up">on for ${CA.UI.Plot.fmt.span((Date.now() - M().since(id)) / 1000)}${n ? ` · ${n.toLocaleString()} done` : ''}</div>${stepLines(m)}`);
+        } else st.textContent = on ? `Running · ${CA.UI.Plot.fmt.span((Date.now() - M().since(id)) / 1000)}` : s && s.lastRun ? `Last ran ${ago(s.lastRun)}` : '';
       }
     });
     const block = el.querySelector('[data-macro-statusblock]');
     if (block) block.innerHTML = status();
+    const strip = el.querySelector('[data-macro-runbar]');
+    if (strip) {
+      const ids = M().runningIds();
+      CA.UI.Widgets.morph(
+        strip,
+        ids.length
+          ? ids
+              .map((rid) => {
+                const m = M().get(rid);
+                if (!m) return '';
+                const lvl = M().activityLevel(rid);
+                return (
+                  `<span class="ca-runchip h${lvl}" data-ca="macro-locate" data-id="${esc(rid)}" title="${esc(m.name)} — click to find it">${icon(m, true)}<b>${esc(m.name)}</b>` +
+                  `<button type="button" class="ca-runchip-x" data-ca="macro-toggle" data-id="${esc(rid)}" title="Stop ${esc(m.name)}">${I('close', 9)}</button></span>`
+                );
+              })
+              .join('')
+          : '<span class="ca-runbar-idle">nothing — switch a macro on below, or press its hotkey</span>'
+      );
+    }
+    const stopAll = el.querySelector('[data-ca="stop-all"]');
+    if (stopAll) stopAll.disabled = !M().activeCount();
     const count = el.querySelector('[data-ca-count]');
     if (count) {
       const n = M().activeCount();
@@ -599,6 +687,31 @@ CA.UI.MacrosPage = (() => {
         if (!CA.Settings.get('widgetsShown')) CA.Settings.set('widgetsShown', true);
         const name = (CA.UI.Widgets.types().find((x) => x.id === type) || {}).name || 'Widget';
         CA.Util.notify(name, had ? 'Already on the left panel.' : 'Added to the left panel — drag it wherever you like.', CA.ICON, 2);
+        return true;
+      }
+      case 'stop-all':
+        CA.Util.sound('snd/clickOff2.mp3');
+        M()
+          .runningIds()
+          .forEach((rid) => M().set(rid, false, { silent: true }));
+        return true;
+      case 'macro-settings': {
+        CA.Util.sound('snd/tick.mp3');
+        const box = t.closest('.ca-mtile-settings');
+        const open = !openSettings.has(id);
+        if (open) openSettings.add(id);
+        else openSettings.delete(id);
+        if (box) box.classList.toggle('open', open);
+        return true;
+      }
+      case 'macro-locate': {
+        const card = root && [...root.querySelectorAll('.ca-macro[data-macro-row]')].find((c) => c.dataset.macroRow === id);
+        if (card) {
+          if (card.scrollIntoView) card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          card.classList.remove('ca-flash');
+          void card.offsetWidth;
+          card.classList.add('ca-flash');
+        }
         return true;
       }
       case 'all-on':

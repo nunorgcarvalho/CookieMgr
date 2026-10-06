@@ -101,7 +101,8 @@ CA.Macros = (() => {
       icon: sprite(9, 33),
       mode: 'repeat',
       every: 1000,
-      steps: [{ action: 'stocks.trade' }],
+      steps: [{ action: 'stocks.trade', params: { buy: true } }],
+      shift: { step: 0, key: 'buy', on: 'buys and sells', off: 'only sells what you hold' },
       defaultKey: '',
       section: 'stocks',
     },
@@ -112,6 +113,7 @@ CA.Macros = (() => {
       icon: { ico: 'dollar' },
       mode: 'once',
       steps: [{ action: 'macro.set', params: { macro: 'stockTrader', to: 'off' } }, { action: 'stocks.sellAll' }],
+      noOptions: true,
       defaultKey: '',
       section: 'stocks',
     },
@@ -188,7 +190,12 @@ CA.Macros = (() => {
     }
     ['defaultKey', 'section', 'spell'].forEach((k) => def[k] !== undefined && (m[k] = def[k]));
     // built-ins can let you choose some of their steps' params right on their row (saved in prefs)
-    if (m.builtin && Array.isArray(def.options)) m.options = def.options.filter((o) => m.steps[o.step]);
+    if (m.builtin) {
+      const auto = def.spell || def.noOptions ? [] : [].concat(...m.steps.map((st, i) => ((CA.Actions.get(st.action) || {}).params || []).map((p) => ({ step: i, key: p.key }))));
+      m.options = (Array.isArray(def.options) ? def.options : auto).filter((o) => m.steps[o.step]);
+      // a setting that shift-clicking its left-panel button flips: { step, key, on, off } (labels)
+      if (def.shift) m.shift = def.shift;
+    }
     return m;
   }
 
@@ -307,7 +314,7 @@ CA.Macros = (() => {
   function start(id) {
     const m = byId[id];
     if (!m || m.mode === 'once' || running[id]) return;
-    running[id] = { since: Date.now(), condWas: false, lastFire: 0, timer: setInterval(() => tick(m), m.every) };
+    running[id] = { since: Date.now(), condWas: false, lastFire: 0, timer: setInterval(() => tick(m), everyOf(m)) };
   }
 
   function stop(id) {
@@ -426,6 +433,36 @@ CA.Macros = (() => {
       return Object.keys(own).length ? { ...s, params: { ...s.params, ...own } } : s;
     });
   }
+  /** How often a macro runs (ms): a built-in's interval can be changed in its settings. */
+  const everyOf = (m) => (m.builtin && prefs[m.id] && prefs[m.id].every >= MIN_EVERY ? prefs[m.id].every : m.every);
+  /** Sets a built-in's interval (restarting it if it's running). */
+  function setEvery(id, ms) {
+    const m = byId[id];
+    if (!m || !m.builtin || m.mode === 'once' || m.mode === 'group') return;
+    prefs[id] = { ...(prefs[id] || {}), every: Math.max(MIN_EVERY, Math.round(ms)) };
+    if (running[id]) {
+      stop(id);
+      start(id);
+    }
+    changed(id);
+  }
+  /** Flips a built-in's shift-click setting; returns the new value (or null if it has none). */
+  function shiftToggle(id) {
+    const m = byId[id];
+    if (!m || !m.shift) return null;
+    const step = stepsOf(m)[m.shift.step];
+    const now = CA.Actions.paramsFor(step.action, step.params)[m.shift.key];
+    setParam(id, m.shift.step, m.shift.key, !now);
+    return !now;
+  }
+  /** The current value of a built-in's shift-click setting. */
+  function shiftValue(id) {
+    const m = byId[id];
+    if (!m || !m.shift) return null;
+    const step = stepsOf(m)[m.shift.step];
+    return !!CA.Actions.paramsFor(step.action, step.params)[m.shift.key];
+  }
+
   /** Sets one of a built-in's row choices (one of its `options`). */
   function setParam(id, step, key, value) {
     const m = byId[id];
@@ -447,7 +484,7 @@ CA.Macros = (() => {
     const secs = (ms) => (ms < 1000 ? `${ms / 1000}s` : `${Math.round(ms / 100) / 10}s`);
     if (m.mode === 'once') return 'on demand';
     if (m.mode === 'group') return `group of ${membersOf(m).length}`;
-    if (m.mode === 'repeat') return `every ${secs(m.every)}`;
+    if (m.mode === 'repeat') return `every ${secs(everyOf(m))}`;
     return `${m.when.edge === 'while' ? 'while' : 'when'} ${CA.Conditions.describe(m.when)}`;
   }
 
@@ -481,7 +518,6 @@ CA.Macros = (() => {
 
   function init() {
     BUILTINS.forEach((d) => add({ ...d, builtin: true }));
-    CA.Hotkeys.register({ id: 'clickers.toggleAll', name: 'All autoclickers', group: 'macros', defaultKey: 'KeyA', run: toggleAll });
 
     CA.Settings.defineOption({
       key: 'disableOnAscend',
@@ -544,6 +580,10 @@ CA.Macros = (() => {
     setFav,
     stepsOf,
     setParam,
+    everyOf,
+    setEvery,
+    shiftToggle,
+    shiftValue,
     rate,
     activityLevel,
     triggerText,

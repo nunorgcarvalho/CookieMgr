@@ -16,7 +16,7 @@ CA.StockTrader = (() => {
   const MACRO = 'stockTrader';
 
   /** One trading pass. Returns how many buy/sell orders went through. */
-  function trade() {
+  function trade({ buy = true } = {}) {
     const m = CA.Stocks.minigame();
     if (!m) return 0;
     let n = 0;
@@ -24,6 +24,7 @@ CA.StockTrader = (() => {
     goods.forEach((g) => {
       if (g.stock > 0 && !RISING.includes(g.mode) && m.sellGood(g.id, 10000)) n++;
     });
+    if (!buy) return n;
     RISING.forEach((mode) =>
       goods.forEach((g) => {
         if (g.mode === mode && m.buyGood(g.id, 10000)) n++;

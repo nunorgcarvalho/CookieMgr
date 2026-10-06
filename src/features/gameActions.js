@@ -149,8 +149,11 @@ CA.GameActions = (() => {
       icon: 'stocks',
       group: 'Stock market',
       unit: 'trades',
+      // buy: false → only sells what you hold when it stops rising, never buys
+      params: [{ key: 'buy', label: 'Buy rising stocks', type: 'bool', default: true }],
+      describe: (p) => (p.buy === false ? 'Trade stocks: sell what stops rising (no buying)' : 'Trade stocks: buy rising, sell the rest'),
       available: () => !!CA.Stocks.minigame(),
-      run: () => CA.StockTrader.trade(),
+      run: (p) => CA.StockTrader.trade({ buy: p.buy !== false }),
     });
     A({
       id: 'stocks.sellAll',

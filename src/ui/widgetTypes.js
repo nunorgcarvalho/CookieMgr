@@ -59,6 +59,7 @@ CA.UI.WidgetTypes = (() => {
       `<span class="ca-wb-label ca-wt"><b>${esc(m.name)}</b><em class="${on ? 'on' : ''}">${state}${key ? ` · ${esc(CA.Hotkeys.format(key))}` : ''}</em>` +
       (heat ? `<em>lately ${rateText(rate)}</em>` : '') +
       (spell ? `<em class="${spell === 'can' ? 'on' : 'off'}">${spell === 'can' ? 'enough magic' : 'not enough magic yet'}</em>` : '') +
+      (m.shift ? `<em class="${CA.Macros.shiftValue(m.id) ? '' : 'off'}">${esc(CA.Macros.shiftValue(m.id) ? m.shift.on : m.shift.off)} · shift-click to switch</em>` : '') +
       '</span>'
     );
   }

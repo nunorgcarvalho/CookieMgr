@@ -206,6 +206,7 @@ CA.Grimoire = (() => {
       desc: 'While on: as soon as a Click frenzy is running and there’s enough magic, casts Force the Hand of Fate — its golden cookie can stack another effect on top. Pair it with the Golden cookies macro to pop it.',
       icon: { sprite: [22, 11] },
       mode: 'when',
+      noOptions: true, // it's about this one spell
       every: 250,
       when: {
         all: [

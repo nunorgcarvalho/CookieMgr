@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 2.19.0 — 2026-10-06
+
+- **Settings on every built-in macro:** how often it runs ("20× a second", "every 1s"…) and every choice its actions
+  have — Big cookie animation, sparing shiny wrinklers, the season, ripe/mature lumps… A one-line summary on each card;
+  click it for the settings.
+- **Stock market autobuyer: Buy rising stocks** on/off — off, it only sells what you hold when it stops rising.
+  Shift-click its button on the left panel to switch.
+- **"Running now" merged into the Macros page:** a strip at the top with a chip per running macro (warmer the busier
+  it is; click to find its card, × to stop it) and **Stop all**; a running macro's card shows what each of its steps
+  has done.
+- **"All autoclickers" removed** (the row and its A hotkey) — a group macro does the same, for exactly what you want.
+
 ## 2.18.0 — 2026-10-06
 
 - **Garden effects chart:** what your plants do over time — the game's Garden information figures (CpS,

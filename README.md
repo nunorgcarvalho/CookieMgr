@@ -23,7 +23,7 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 | **Widget** | Something on the game's left panel: a macro's button, the Running now bar, quick stats, events, minigames. |
 
-## Features (v2.18)
+## Features (v2.19)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
 the data pages **Events** and **Graphs**; the minigames **Garden**, **Stock market**, **Pantheon** and **Grimoire**;
@@ -151,20 +151,22 @@ Everything CookieMgr automates is a **macro**: one or more **actions** run in or
 | Wrinklers              | `K`         | Pops wrinklers as soon as they attach                                |
 | Stock market autobuyer | —           | Buys fast/slow-rising stocks, sells the rest, every second           |
 | Sell all stocks        | —           | Once: autobuyer off, then sells every stock                          |
-| All autoclickers       | `A`         | The first six all on, or all off if they're all running              |
 | Cast … (one per spell) | —           | Once: casts that Grimoire spell                                      |
 | Season keeper          | —           | Keeps the season you pick on its row going (buys its biscuit)        |
 | Sugar lump harvester   | —           | Harvests your lump when ripe — or when mature, if you pick that      |
 | FtHoF on Click frenzy  | —           | When a Click frenzy runs and there's magic: Force the Hand of Fate   |
 
-The autobuyer is the same switch as on the Stock market page and in the Bank minigame toolbar, and it isn't part
-of "All autoclickers".
+The autobuyer is the same switch as on the Stock market page and in the Bank minigame toolbar. (A group macro is
+the way to switch several at once.)
 
-Some built-ins have a choice right on their row: how the **Big cookie**'s clicks look (the falling cookie and the
-"+N" number, the cookie only, or nothing — your own clicks are left as the game has them), the **Season keeper**'s season (it buys that season's biscuit as soon
-as you can afford it, switching from any other season, and again whenever it runs out — needs the Season switcher),
-and when the **Sugar lump harvester** picks: **ripe** (always pays) or **mature** (about 3 hours sooner, but with the
-game's 50% chance of getting nothing).
+Every built-in has **settings**: the line under its description sums them up — click it to change them. How often it
+runs ("20× a second", "every 1s"…), and every choice its actions have: how the **Big cookie**'s clicks look (the
+falling cookie and the "+N" number, the cookie only, or nothing — your own clicks are left as the game has them),
+whether **Wrinklers** spares shiny ones, whether the **Stock market autobuyer** may buy (off: it only sells what you
+hold when it stops rising — **shift-click** its button on the left panel to switch), the **Season keeper**'s season
+(it buys that season's biscuit as soon as you can afford it, switching from any other season, and again whenever it
+runs out — needs the Season switcher), and when the **Sugar lump harvester** picks: **ripe** (always pays) or
+**mature** (about 3 hours sooner, but with the game's 50% chance of getting nothing).
 
 **Your macros** — **New macro** opens the editor: name, icon, trigger (with how often, and for "When…" the condition,
 optionally negated), and the steps — pick an action for each, set its options, reorder or remove them. Actions:
@@ -175,8 +177,9 @@ several effects at once, something to pop is on screen, enough magic for a spell
 recorded value (CpS, cookies in bank, prestige, a stock price…) above or below a number — each can be negated, and
 **And…** adds more conditions that must all hold. Your macros are saved with your settings inside the game save.
 
-**Running now** at the top of the page shows every running macro and, for each of its actions, how many things it
-has done and when it last did something (or that it can't run right now).
+**Running** at the top of the page is a strip with a chip per running macro (warmer the busier it is — click one to
+find its card, × to stop it) and **Stop all**. A running macro's card shows, for each of its actions, how many things
+it has done and when it last did something (or that it can't run right now).
 
 **Hotkeys** — every macro can have one; one key can trigger several macros at once (binding a key that's in use shares
 it). Modifiers work (`Shift + G`): click a key chip and press the new key (`Esc` cancels, `Backspace` clears).
@@ -267,7 +270,7 @@ always grab them again). Drag them anywhere; hover for × and ⚙ (its settings)
   the bottom-left), starting a new column to the left when one reaches the CookieMgr sidebar.
 - **Running now** — a slim status bar: an icon per running macro, pulsing while its actions are doing something. Hover
   an icon for a popup of what each action has done; click to open the Macros page. (Add it on the Widgets page or from the
-  Running now card.)
+  Running strip on the Macros page.)
 - **Quick stats** — the numbers you pick in its settings (17 to choose from: CpS, CpS + clicking, actual CpS, clicks
   per second, bank, run start, upgrades, buildings, prestige level, prestige this run, time to the next level,
   heavenly chips, achievements, sugar lumps, golden cookies clicked, wrinklers, all-time baked).
@@ -345,7 +348,7 @@ The **Stock market** tab in the CookieMgr panel has:
 - **Sell all** — its own standalone card at the top of the tab: sells every stock you currently hold and turns the
   autobuyer off first, so it doesn't just buy it all straight back. Hovering it shows the actual number of cookies
   selling everything right now would pay out. (It's the built-in "Sell all stocks" macro, so it can have a hotkey.)
-- **Autobuyer** — the built-in "Stock market autobuyer" macro (own switch and hotkey, not part of "All autoclickers")
+- **Autobuyer** — the built-in "Stock market autobuyer" macro (own switch and hotkey; shift-click its button to let it buy or only sell)
   that, once a second, buys the max it can afford of fast-rising stocks, then slow-rising ones, and sells anything it
   holds that isn't currently rising. That's the entire strategy.
 - The stock chart, defaulting to your **portfolio value** over time (a value line plus a cost-basis line, so the gap
@@ -454,7 +457,7 @@ src/
     plot.js          the plotting engine every chart uses: bucketing, scales, overlays, tooltips, chips
     graphs.js        the Graphs page: Cookies / Bank / Prestige tabs and their plot specs
     eventsPage.js    the Events page: income-outside-CpS table and the filterable event log
-    macrosPage.js    the Macros page: macro rows, "Running now" status, the macro editor
+    macrosPage.js    the Macros page: built-in cards with settings, the running strip, your macros, the editor
     widgets.js       widgets on the left panel (dragging, sizing, settings, saving) and the Widgets page
     widgetTypes.js   what each widget shows (macro buttons, status bar, stats, events, minigames)
     wizardPage.js    the Grimoire page and the toolbar inside the game's Grimoire

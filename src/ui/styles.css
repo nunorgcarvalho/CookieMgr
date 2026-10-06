@@ -3673,3 +3673,175 @@ body.ca-has-storebar #products {
   overflow: visible;
   text-overflow: clip;
 }
+
+/* ---------- v2.19: running strip, built-in settings, live steps on cards ---------- */
+
+/* what's running, one line at the top of the Macros page */
+#CookieMgrMenu .ca-runbar-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 10px;
+}
+#CookieMgrMenu .ca-runbar-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Merriweather', Georgia, serif;
+  font-weight: bold;
+  font-size: 13px;
+  color: #ffeab0;
+}
+#CookieMgrMenu .ca-runchips {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-width: 0;
+}
+#CookieMgrMenu .ca-runbar-idle {
+  font-size: 11px;
+  font-style: italic;
+  color: #93866f;
+}
+#CookieMgrMenu .ca-runchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 3px 2px 4px;
+  border-radius: 12px;
+  font-size: 11px;
+  color: #f3e5c3;
+  background: rgba(77, 255, 94, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(77, 255, 94, 0.45);
+  cursor: pointer;
+}
+#CookieMgrMenu .ca-runchip b {
+  font-weight: normal;
+  white-space: nowrap;
+}
+/* busier: warmer, the same bands as the rings on the left-panel buttons */
+#CookieMgrMenu .ca-runchip.h3 {
+  box-shadow: inset 0 0 0 1px rgba(240, 168, 64, 0.8);
+}
+#CookieMgrMenu .ca-runchip.h4,
+#CookieMgrMenu .ca-runchip.h5 {
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 110, 45, 0.85),
+    0 0 6px rgba(255, 110, 45, 0.35);
+}
+#CookieMgrMenu .ca-runchip .ca-icon,
+#CookieMgrMenu .ca-runchip .ca-icon-ico {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+}
+#CookieMgrMenu .ca-runchip .ca-sprite {
+  transform: scale(0.375);
+}
+#CookieMgrMenu .ca-runchip-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  color: #f0e2c0;
+  background: rgba(0, 0, 0, 0.4);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+#CookieMgrMenu .ca-runchip-x:hover {
+  background: #a8322e;
+}
+
+/* a built-in's settings: a one-line summary, unfolding into its fields */
+#CookieMgrMenu .ca-mtile-sum {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 6px;
+  border-radius: 5px;
+  font-size: 10.5px;
+  color: #c9bba0;
+  background: rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+}
+#CookieMgrMenu .ca-mtile-sum span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#CookieMgrMenu .ca-mtile-sum:hover {
+  color: #fff3cf;
+  background: rgba(255, 220, 150, 0.1);
+}
+#CookieMgrMenu .ca-mtile-settings .ca-macro-options {
+  display: none;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 5px;
+  margin-top: 5px;
+  padding: 6px;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.3);
+}
+#CookieMgrMenu .ca-mtile-settings.open .ca-macro-options {
+  display: flex;
+}
+#CookieMgrMenu .ca-mtile-settings.open .ca-mtile-sum {
+  color: #ffd98a;
+}
+#CookieMgrMenu .ca-mtile-settings .ca-field {
+  justify-content: space-between;
+}
+#CookieMgrMenu .ca-macro-options input[type='number'] {
+  width: 70px;
+  font: 11px Tahoma, Arial, sans-serif;
+  color: #f0e2c0;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 220, 150, 0.25);
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+#CookieMgrMenu .ca-shift-hint {
+  font-style: normal;
+  font-size: 9.5px;
+  color: #93866f;
+}
+/* what a running macro's steps have done, on its card */
+#CookieMgrMenu .ca-mtile .ca-macro-status .ca-status-step,
+#CookieMgrMenu .ca-row .ca-macro-status .ca-status-step {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+#CookieMgrMenu .ca-macro-status .ca-status-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#CookieMgrMenu .ca-macro-status .ca-status-up {
+  font-size: 10px;
+  color: #7dff8a;
+}
+/* "find it": a short glow on the card */
+#CookieMgrMenu .ca-macro.ca-flash {
+  animation: caFlash 1.1s ease-out;
+}
+@keyframes caFlash {
+  0%,
+  30% {
+    box-shadow:
+      inset 0 0 0 2px #ffd36a,
+      0 0 14px rgba(255, 211, 106, 0.6);
+  }
+  100% {
+    box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.1);
+  }
+}

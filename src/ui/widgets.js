@@ -417,6 +417,14 @@ CA.UI.Widgets = (() => {
     if (trig) {
       const m = CA.Macros.get(trig.dataset.wTrigger);
       if (!m) return;
+      // shift-click: flip the macro's shift setting (e.g. the stock autobuyer: buy or only sell)
+      if (e.shiftKey && m.shift) {
+        const v = CA.Macros.shiftToggle(m.id);
+        CA.Util.sound(v ? 'snd/clickOn2.mp3' : 'snd/clickOff2.mp3');
+        CA.Util.notify(m.name, `Now ${v ? m.shift.on : m.shift.off}.`, CA.ICON, 2);
+        tick();
+        return;
+      }
       if (m.mode !== 'once') CA.Util.sound(CA.Macros.isOn(m.id) ? 'snd/clickOff2.mp3' : 'snd/clickOn2.mp3'); // once macros: run() picks the sound
       if (m.mode === 'once') CA.UI.MacrosPage.run(m.id, trig);
       else CA.Macros.trigger(m.id);
