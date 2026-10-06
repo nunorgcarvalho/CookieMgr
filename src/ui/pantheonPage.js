@@ -80,7 +80,7 @@ CA.UI.PantheonPage = (() => {
       const at = M.slot.indexOf(id);
       const [name] = nameParts(g);
       h +=
-        `<div class="ca-god${at >= 0 ? ` in slot-${at}` : ''}">${sprite(g)}<span class="ca-god-name">${esc(name)}</span>` +
+        `<div class="ca-god${at >= 0 ? ` in slot-${at}` : ''}" data-pop>${sprite(g)}<span class="ca-god-name">${esc(name)}</span>` +
         (at >= 0 ? `<span class="ca-god-slot">${SLOTS[at]}</span>` : '') +
         `<span class="ca-gpop"><span class="ca-wpop-head"><b>${esc(g.name)}</b></span>` +
         SLOTS.map((s, i) => `<span class="ca-god-row"><em>${s}</em><span class="ca-god-desc">${effect(g, i)}</span></span>`).join('') +

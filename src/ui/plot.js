@@ -79,6 +79,21 @@ CA.UI.Plot = (() => {
   function row(color, name, value, strong, dash) {
     return `<div class="ca-tip-row${strong ? ' strong' : ''}">${swatch(color, dash)}<b>${esc(name)}</b><span>${esc(value)}</span></div>`;
   }
+  /**
+   * Several figures on one row, separated by a centred dot — with a unit they all share written
+   * once at the end: ["1.2K/s", "3.4M/s"] → "1.2K · 3.4M/s".
+   */
+  function joinFigures(values) {
+    if (values.length < 2) return values.join('');
+    let suffix = values[0];
+    values.forEach((v) => {
+      while (suffix && !v.endsWith(suffix)) suffix = suffix.slice(1);
+    });
+    // the unit starts at a non-alphanumeric character ("/s", "%", " cookies"), not inside "4.5K"
+    while (suffix && /[0-9A-Za-z.]/.test(suffix[0])) suffix = suffix.slice(1);
+    if (!suffix || values.some((v) => v.length === suffix.length)) return values.join(' · ');
+    return values.map((v) => v.slice(0, v.length - suffix.length)).join(' · ') + suffix;
+  }
   const tile = (label, value, sub, title) =>
     `<div class="ca-stat"${title ? ` title="${esc(title)}"` : ''}><div class="ca-stat-label">${label}</div><div class="ca-stat-value">${value}</div><div class="ca-stat-sub">${sub || '&nbsp;'}</div></div>`;
 
@@ -447,7 +462,7 @@ CA.UI.Plot = (() => {
           )
           .join('') +
         '</div>' +
-        `<div class="ca-graph-wrap"><canvas class="ca-graph" style="height:${height}px" data-plot-canvas></canvas><div class="ca-tip" data-plot-tip></div></div>` +
+        `<div class="ca-graph-wrap"><canvas class="ca-graph" style="height:${height}px" data-plot-canvas></canvas></div>` +
         '<div class="ca-toolbar ca-toolbar-bottom">';
       if (spec.smooth !== false) {
         h +=
@@ -1047,7 +1062,7 @@ CA.UI.Plot = (() => {
           if (!r.cells) h += row(r.color, r.name, r.value);
           else if (r.nonzero) {
             const cells = r.cells.sort((a, b) => a.order - b.order);
-            h += row(r.color, `${r.name} (${cells.map((c) => c.label).join(' / ')})`, cells.map((c) => tipFmt(c.v)).join(' / '));
+            h += row(r.color, `${r.name} (${cells.map((c) => c.label).join(' · ')})`, joinFigures(cells.map((c) => tipFmt(c.v))));
           } else return;
           any = true;
         });
@@ -1137,7 +1152,9 @@ CA.UI.Plot = (() => {
       root = pageRoot.querySelector(`[data-plot="${id}"]`);
       if (!root) return;
       canvas = root.querySelector('[data-plot-canvas]');
-      tipEl = root.querySelector('[data-plot-tip]');
+      // the hover box lives in the floating layer (ui/tips.js), above the game's panels
+      tipEl = CA.UI.Tips.float('ca-tip');
+      tipEl.dataset.plotTip = id;
       ctx = canvas.getContext('2d');
       root.addEventListener('click', onClick);
       canvas.addEventListener('mousemove', (e) => {
@@ -1173,6 +1190,7 @@ CA.UI.Plot = (() => {
       if (panCtl) panCtl.detach();
       panCtl = null;
       if (root) root.removeEventListener('click', onClick);
+      if (tipEl) tipEl.remove();
       root = canvas = ctx = tipEl = null;
       hover = null;
       layout = null;
@@ -1228,7 +1246,7 @@ CA.UI.Plot = (() => {
     linePoints,
     smooth,
     axis,
-    fmt: { beautify, signed, short, clock, span, tile, row, swatch, windowLabel },
+    fmt: { beautify, signed, short, clock, span, tile, row, swatch, windowLabel, joinFigures },
     SEC,
     SESSION_START, // "this session" = since CookieMgr was loaded in this tab
   };

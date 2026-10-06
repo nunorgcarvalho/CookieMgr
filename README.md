@@ -233,10 +233,10 @@ panel) keeps the garden like the active profile. In the last 15 seconds before e
 - pulls out whatever doesn't belong (weeds, mutations, leftovers);
 - harvests a mature plant whose chance of dying on the coming tick is over your threshold (50% by default; 100%
   lets plants die), and replants it;
-- plants the profile's seed on every empty tile, when you can afford it;
 - switches to the profile's soil when the game allows (soil has a 10-minute cooldown).
 
-Working just before the tick means new plants start growing at once and old ones are picked at the last moment.
+Empty tiles are planted with the profile's seed straight away, whenever you can afford it, so they start growing
+and working at once; old plants are picked at the last moment before the tick.
 With **Unlock new seeds** on (the default), a seed you haven't unlocked yet is left to grow wherever it appears and
 harvested the moment it's mature, which unlocks it; turned off, it's pulled out like any other mismatch.
 

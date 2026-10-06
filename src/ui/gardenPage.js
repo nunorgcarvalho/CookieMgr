@@ -54,7 +54,7 @@ CA.UI.GardenPage = (() => {
       pop += '<span class="ca-wpop-head"><b>Empty</b></span>';
     }
     if (profile) pop += `<span class="ca-wpop-row"><span class="ca-wpop-name">Profile</span><span class="ca-wpop-val">${t.want ? esc(t.want.name) : 'empty'}</span></span>`;
-    return `<div class="ca-gtile${t.match ? '' : ' off'}">${inner}<span class="ca-wpop ca-gpop">${pop}</span></div>`;
+    return `<div class="ca-gtile${t.match ? '' : ' off'}" data-pop>${inner}<span class="ca-wpop ca-gpop">${pop}</span></div>`;
   }
 
   function plotHtml(v) {

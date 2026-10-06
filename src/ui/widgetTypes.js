@@ -92,7 +92,7 @@ CA.UI.WidgetTypes = (() => {
       const st = CA.Macros.status(id);
       const hot = st && st.steps.some((s) => s.lastAt && Date.now() - s.lastAt < HOT_MS);
       const err = st && st.steps.some((s) => s.error);
-      h += `<span class="ca-wbar-item${hot ? ' hot' : ''}${err ? ' err' : ''}" data-w-open="clickers" aria-label="${esc(m.name)}">${CA.UI.MacrosPage.icon(m, true)}${statusPop(m)}</span>`;
+      h += `<span class="ca-wbar-item${hot ? ' hot' : ''}${err ? ' err' : ''}" data-w-open="clickers" data-pop aria-label="${esc(m.name)}">${CA.UI.MacrosPage.icon(m, true)}${statusPop(m)}</span>`;
     });
     return h;
   }
@@ -191,9 +191,22 @@ CA.UI.WidgetTypes = (() => {
     if (Game.onMenu && typeof Game.ShowMenu === 'function') Game.ShowMenu(Game.onMenu);
     if (!b.onMinigame) b.switchMinigame(1);
     // after the rows are back on screen: the minigame sits at the top of its building's row
+    // scroll only the middle panel's own scroll area (scrollIntoView would also shove the whole
+    // page past the screen's edge), clamped to what it can scroll
     setTimeout(() => {
       const row = document.getElementById(`row${b.id}`);
-      if (row && row.scrollIntoView) row.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      if (!row) return;
+      let box = row.parentElement;
+      while (box && box !== document.body) {
+        const oy = getComputedStyle(box).overflowY;
+        if ((oy === 'auto' || oy === 'scroll') && box.scrollHeight > box.clientHeight) break;
+        box = box.parentElement;
+      }
+      if (!box || box === document.body) return;
+      const max = box.scrollHeight - box.clientHeight;
+      const top = Math.max(0, Math.min(max, box.scrollTop + row.getBoundingClientRect().top - box.getBoundingClientRect().top - 8));
+      if (typeof box.scrollTo === 'function') box.scrollTo({ top, behavior: 'smooth' });
+      else box.scrollTop = top;
     }, 50);
   }
 
@@ -207,7 +220,7 @@ CA.UI.WidgetTypes = (() => {
   function orb({ theme, building, icon, frac, label, extra, pop, mark, ready }) {
     const f = Math.max(0, Math.min(1, Number.isFinite(frac) ? frac : 0));
     return (
-      `<div class="ca-orb ca-orb-${theme}${ready ? ' ready' : ''}" data-w-open-mg="${esc(building)}">` +
+      `<div class="ca-orb ca-orb-${theme}${ready ? ' ready' : ''}" data-w-open-mg="${esc(building)}" data-pop>` +
       '<svg class="ca-orb-ring" viewBox="0 0 44 44" aria-hidden="true">' +
       `<circle class="ca-orb-track" cx="22" cy="22" r="${RING_R}"/>` +
       `<circle class="ca-orb-fill" cx="22" cy="22" r="${RING_R}" stroke-dasharray="${RING_C.toFixed(2)}" stroke-dashoffset="${(RING_C * (1 - f)).toFixed(2)}"/>` +

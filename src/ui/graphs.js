@@ -411,8 +411,8 @@ CA.UI.Graphs = (() => {
       }
       if (!cells.length) return;
       rows.push({
-        label: `${c.name} (${labels.join(' / ')})`,
-        fn: (r) => cells.map((f) => f(r)).join(' / ') + '/s',
+        label: `${c.name} (${labels.join(' · ')})`,
+        fn: (r) => cells.map((f) => f(r)).join(' · ') + '/s',
         color: c.color,
       });
     });

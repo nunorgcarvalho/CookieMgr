@@ -76,7 +76,7 @@ CA.UI.EventsPage = (() => {
     const t = CA.EventLog.types();
     const rows = ['golden', 'wrath', 'reindeer', 'wrinkler', 'lump', 'trade'].map((k) => ({
       key: k,
-      label: k === 'trade' ? 'Stock trades (−bought / +sold)' : (t[k] || {}).name || k,
+      label: k === 'trade' ? 'Stock trades (−bought · +sold)' : (t[k] || {}).name || k,
       split: k === 'trade', // one row, both directions
       icon: (t[k] || {}).icon,
       color: (t[k] || {}).color,
@@ -99,7 +99,7 @@ CA.UI.EventsPage = (() => {
         `<span class="ca-ev-dot" style="color:${r.color}">${CA.UI.Icons.html(r.icon, 13)}</span>${esc(r.label)}</td>` +
         `<td>${r.count == null ? '' : r.count.toLocaleString()}</td>` +
         (r.split
-          ? `<td>${r.count ? `<span class="neg">−${beautify(r.out)}</span> / <span class="pos">+${beautify(r.in)}</span>` : '—'}</td>`
+          ? `<td>${r.count ? `<span class="neg">−${beautify(r.out)}</span> · <span class="pos">+${beautify(r.in)}</span>` : '—'}</td>`
           : `<td class="${r.cookies < 0 ? 'neg' : r.cookies > 0 ? 'pos' : ''}">${r.cookies ? signed(r.cookies) : '—'}</td>`) +
         `<td>${r.count ? beautify(r.cookies / r.count) : ''}</td>` +
         `<td>${baked > 0 && r.cookies ? ((r.cookies / baked) * 100).toFixed(r.cookies / baked < 0.1 ? 2 : 1) + '%' : ''}</td>` +

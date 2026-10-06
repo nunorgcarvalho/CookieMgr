@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 2.17.1 — 2026-10-06
+
+- **Fix: popups no longer go under the game's side beams.** Every hover popup — chart tooltips, garden tiles,
+  spirits, the round widgets, the status bar, simple tips — is now drawn in one floating layer on top of everything.
+- **Chart tooltip rows stay on one line**, and their figures are separated by a centred dot instead of a slash, with a
+  unit they all share written once at the end: "Clicking (raw · boosted)  1.2K · 3.4K/s". Tables use "·" too.
+- **Fix: going to a minigame no longer shoves the screen** — only the middle panel scrolls, and never past its end.
+- **Auto-gardener: empty tiles are replanted straight away** (so the plant starts growing and working at once);
+  pulling out mismatches and saving plants about to die still happen just before the tick.
+
 ## 2.17.0 — 2026-10-06
 
 - **Store toolbar:** the store's sort and rounding switches are now a row of small icon buttons along the bottom of

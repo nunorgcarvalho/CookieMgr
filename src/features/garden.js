@@ -7,9 +7,10 @@
 //       · harvests plants that aren't the profile's seed for their tile (weeds, mutations, leftovers)
 //       · harvests the profile's own mature plants when the chance that they die of old age on the
 //         coming tick is above your threshold (50% by default; 100% = let them die)
-//       · plants the profile's seed on every empty tile, when you can afford it
+//       · replants the tiles it just cleared
 //       · switches the soil to the profile's, when the game lets you (10-minute cooldown)
-//   - any time: harvests a plant whose seed you haven't unlocked yet as soon as it's mature, which
+//   - any time: plants the profile's seed on every empty tile you can afford, and harvests a plant
+//     whose seed you haven't unlocked yet as soon as it's mature, which
 //     unlocks it (if "Unlock new seeds" is on; off, a new seed is a mismatch like any other)
 //
 // Why harvest before a plant dies? A harvest of a mature plant unlocks its seed if it's new, counts
@@ -165,7 +166,8 @@ CA.Garden = (() => {
             if (M.harvest(x, y)) did.saved++;
           } else continue;
         }
-        if (inWindow && want && M.plants[want] && !plantAt(M, x, y) && plant(M, M.plants[want], x, y)) did.planted++;
+        // empty tiles are planted straight away (so the plant starts growing and working at once)
+        if (want && M.plants[want] && !plantAt(M, x, y) && plant(M, M.plants[want], x, y)) did.planted++;
       }
     }
     if (inWindow && p.soil) did.soil = setSoil(M, p.soil);
