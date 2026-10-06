@@ -46,6 +46,7 @@ const MODULES = [
   'features/cookieMonster.js',
   'features/shop.js',
   'features/autoBuy.js',
+  'features/seasons.js',
   'features/gameEvents.js',
   'ui/components.js',
   'ui/tips.js',

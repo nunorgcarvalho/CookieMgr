@@ -118,18 +118,6 @@ CA.Macros = (() => {
       section: 'stocks',
     },
     {
-      id: 'season',
-      name: 'Season keeper',
-      desc: 'Keeps the season you pick going: buys its biscuit as soon as you can afford it, and again whenever the season runs out. Needs the Season switcher.',
-      icon: sprite(16, 6),
-      mode: 'repeat',
-      every: 1000,
-      steps: [{ action: 'season.keep', params: { season: 'christmas' } }],
-      options: [{ step: 0, key: 'season' }],
-      defaultKey: '',
-      section: 'upkeep',
-    },
-    {
       id: 'lumps',
       name: 'Sugar lump harvester',
       desc: 'Harvests your sugar lump when it’s ripe (always pays) — or as soon as it’s mature, a little earlier but with the game’s 50% chance of getting nothing.',
@@ -157,7 +145,7 @@ CA.Macros = (() => {
   // ---- definitions --------------------------------------------------------------------
 
   function clean(def) {
-    const mode = ['repeat', 'when', 'once', 'group'].includes(def.mode) ? def.mode : 'repeat';
+    const mode = ['repeat', 'when', 'once', 'group', 'flow'].includes(def.mode) ? def.mode : 'repeat';
     const m = {
       id: String(def.id),
       name: String(def.name || 'Macro').slice(0, 60),
@@ -174,6 +162,15 @@ CA.Macros = (() => {
     if (mode === 'group') {
       m.steps = [];
       m.members = (Array.isArray(def.members) ? def.members : []).map(String).filter((id) => id !== m.id);
+    }
+    if (mode === 'flow') {
+      m.steps = [];
+      m.flow = cleanFlow(def.flow);
+      // a built-in flow can be built from its settings (makeFlow(options)) instead of being fixed
+      if (def.builtin && typeof def.makeFlow === 'function') {
+        m.makeFlow = def.makeFlow;
+        m.flowOptions = Array.isArray(def.flowOptions) ? def.flowOptions : [];
+      }
     }
     if (mode === 'when') {
       // { all: [{ cond, params, not }, …], edge } — v2.0 saved a single condition at the top level
@@ -251,8 +248,11 @@ CA.Macros = (() => {
   function duplicate(id) {
     const m = byId[id];
     if (!m) return null;
-    const copy = JSON.parse(JSON.stringify({ ...m, steps: stepsOf(m) }));
+    // the copy gets the steps (and a flow's blocks) as they are now, settings applied
+    const copy = JSON.parse(JSON.stringify({ ...m, steps: stepsOf(m), every: everyOf(m), flow: m.mode === 'flow' ? flowOf(m) : m.flow }));
     delete copy.options;
+    delete copy.flowOptions;
+    delete copy.shift;
     delete copy.defaultKey;
     delete copy.section;
     return save({ ...copy, id: null, builtin: false, name: `${m.name} (copy)`.slice(0, 60) });
@@ -294,9 +294,144 @@ CA.Macros = (() => {
     return done;
   }
 
+  // ---- flows --------------------------------------------------------------------------------
+  //
+  // A flow is a list of blocks run in order; each block finishes now or waits for a later pass:
+  //   { type: 'do', action, params }               runs the action once
+  //   { type: 'wait', cond }                       waits until the condition holds
+  //   { type: 'until', cond, body: [...] }         runs body (again each pass) until cond holds
+  //   { type: 'if', cond, then: [...], else: [...] }   picks a branch when it gets there
+  //   { type: 'parallel', branches: [[...], ...] } runs the branches side by side; done when all are
+  //   { type: 'forever', body: [...] }             runs body again and again
+  // (cond is { all: [{ cond, params, not }] }, like a "When…" macro's.) Every pass (the macro's
+  // interval) advances each running branch as far as it can without waiting, but never repeats
+  // a body twice in one pass, so nothing can spin. A flow that reaches its end switches itself off.
+
+  const FLOW_TYPES = ['do', 'wait', 'until', 'if', 'parallel', 'forever'];
+  const MAX_FLOW_DEPTH = 12;
+  function cleanCond(c) {
+    const list = (c && Array.isArray(c.all) ? c.all : []).filter((x) => x && x.cond).map((x) => ({ cond: String(x.cond), params: x.params && typeof x.params === 'object' ? { ...x.params } : {}, not: !!x.not }));
+    return { all: list.length ? list : [{ cond: 'buff', params: {}, not: false }] };
+  }
+  function cleanFlow(list, d = 0) {
+    if (!Array.isArray(list) || d > MAX_FLOW_DEPTH) return [];
+    return list
+      .filter((n) => n && FLOW_TYPES.includes(n.type))
+      .map((n) => {
+        if (n.type === 'do') return { type: 'do', action: String(n.action || 'pop.golden'), params: n.params && typeof n.params === 'object' ? { ...n.params } : {} };
+        if (n.type === 'wait') return { type: 'wait', cond: cleanCond(n.cond) };
+        if (n.type === 'until') return { type: 'until', cond: cleanCond(n.cond), body: cleanFlow(n.body, d + 1) };
+        if (n.type === 'if') return { type: 'if', cond: cleanCond(n.cond), then: cleanFlow(n.then, d + 1), else: cleanFlow(n.else, d + 1) };
+        if (n.type === 'parallel') return { type: 'parallel', branches: (Array.isArray(n.branches) ? n.branches : [[], []]).slice(0, 8).map((b) => cleanFlow(b, d + 1)) };
+        return { type: 'forever', body: cleanFlow(n.body, d + 1) };
+      });
+  }
+
+  /** A built-in flow's settings, with their defaults. */
+  function flowOptsOf(m) {
+    const mine = (prefs[m.id] && prefs[m.id].flow) || {};
+    const out = {};
+    (m.flowOptions || []).forEach((o) => (out[o.key] = mine[o.key] !== undefined ? mine[o.key] : o.default));
+    return out;
+  }
+  /** The blocks a flow runs (a built-in's built from its settings). */
+  const flowOf = (m) => (m.makeFlow ? cleanFlow(m.makeFlow(flowOptsOf(m))) : m.flow || []);
+  /** Sets one of a built-in flow's settings (restarting it if it's running). */
+  function setFlowOpt(id, key, value) {
+    const m = byId[id];
+    if (!m || !m.flowOptions || !m.flowOptions.some((o) => o.key === key)) return;
+    const p = { ...(prefs[id] || {}) };
+    p.flow = { ...(p.flow || {}), [key]: value };
+    prefs[id] = p;
+    if (running[id]) {
+      stop(id);
+      start(id);
+    }
+    changed(id);
+  }
+
+  const flowRuns = {}; // id -> { prog, S (per-block state by path), at: [what it waits on], done, error }
+
+  const describeCond = (c) => CA.Conditions.describe(c);
+  function resetUnder(S, path) {
+    Object.keys(S).forEach((k) => (k === path || k.startsWith(`${path}.`)) && delete S[k]);
+  }
+  function execSeq(F, nodes, path) {
+    const st = F.S[path] || (F.S[path] = { i: 0 });
+    while (st.i < nodes.length) {
+      if (!execNode(F, nodes[st.i], `${path}.${st.i}`)) return false;
+      st.i++;
+    }
+    return true;
+  }
+  function execNode(F, n, path) {
+    switch (n.type) {
+      case 'do': {
+        try {
+          F.done += CA.Actions.run(n.action, n.params) || 0;
+          F.error = '';
+        } catch (e) {
+          F.error = String((e && e.message) || e);
+        }
+        return true;
+      }
+      case 'wait':
+        if (CA.Conditions.test(n.cond)) return true;
+        F.at.push(`waiting for ${describeCond(n.cond)}`);
+        return false;
+      case 'until':
+        if (CA.Conditions.test(n.cond)) return true;
+        F.at.push(`until ${describeCond(n.cond)}`);
+        if (execSeq(F, n.body, `${path}.b`)) resetUnder(F.S, `${path}.b`);
+        return false;
+      case 'if': {
+        const st = F.S[path] || (F.S[path] = { branch: CA.Conditions.test(n.cond) ? 'then' : 'else' });
+        return execSeq(F, n[st.branch] || [], `${path}.${st.branch}`);
+      }
+      case 'parallel': {
+        let all = true;
+        n.branches.forEach((b, i) => {
+          if (!execSeq(F, b, `${path}.p${i}`)) all = false;
+        });
+        return all;
+      }
+      case 'forever':
+      default:
+        if (execSeq(F, n.body || [], `${path}.b`)) resetUnder(F.S, `${path}.b`);
+        F.at.push('repeating');
+        return false;
+    }
+  }
+  function runFlow(m) {
+    const F = flowRuns[m.id];
+    if (!F || ascending() || depth >= MAX_DEPTH) return;
+    F.at = [];
+    const before = F.done;
+    depth++;
+    let finished = false;
+    try {
+      finished = execSeq(F, F.prog, 'r');
+    } finally {
+      depth--;
+    }
+    status[m.id].runs++;
+    status[m.id].lastRun = Date.now();
+    if (F.done > before) bump(m.id, F.done - before);
+    if (finished) {
+      set(m.id, false, { silent: true });
+      if (CA.Settings.get('notifications')) CA.Util.notify(m.name, 'Finished — it got to the end of its flow.', CA.ICON, 3);
+    }
+  }
+  /** Where a running flow is: { at: ['until Christmas is complete', …], done, error }. */
+  const flowStatus = (id) => (flowRuns[id] ? { at: flowRuns[id].at.slice(), done: flowRuns[id].done, error: flowRuns[id].error } : null);
+
   function tick(m) {
     const r = running[m.id];
     if (!r) return;
+    if (m.mode === 'flow') {
+      runFlow(m);
+      return;
+    }
     if (m.mode === 'repeat') {
       runSteps(m);
       return;
@@ -314,6 +449,7 @@ CA.Macros = (() => {
   function start(id) {
     const m = byId[id];
     if (!m || m.mode === 'once' || running[id]) return;
+    if (m.mode === 'flow') flowRuns[id] = { prog: flowOf(m), S: {}, at: [], done: 0, error: '' };
     running[id] = { since: Date.now(), condWas: false, lastFire: 0, timer: setInterval(() => tick(m), everyOf(m)) };
   }
 
@@ -485,6 +621,7 @@ CA.Macros = (() => {
     if (m.mode === 'once') return 'on demand';
     if (m.mode === 'group') return `group of ${membersOf(m).length}`;
     if (m.mode === 'repeat') return `every ${secs(everyOf(m))}`;
+    if (m.mode === 'flow') return `flow · every ${secs(everyOf(m))}`;
     return `${m.when.edge === 'while' ? 'while' : 'when'} ${CA.Conditions.describe(m.when)}`;
   }
 
@@ -584,6 +721,11 @@ CA.Macros = (() => {
     setEvery,
     shiftToggle,
     shiftValue,
+    flowOf,
+    flowOptsOf,
+    setFlowOpt,
+    flowStatus,
+    cleanFlow,
     rate,
     activityLevel,
     triggerText,

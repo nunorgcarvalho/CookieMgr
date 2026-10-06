@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## 2.22.0 — 2026-10-06
+
+- **Flow macros:** a new kind of macro — an agent made of blocks: Do (an action), Wait (until conditions hold), Until
+  (repeat blocks until conditions hold), If (then / else), Parallel (branches side by side) and Forever, nested as
+  deep as you like. Each pass moves every branch on as far as it can; a flow that reaches its end switches itself
+  off, and a running flow's card says what it's waiting for.
+- **SeasonCompletion** (built-in flow, replaces the Season keeper): starts the research — and the Grandmapocalypse —
+  right away, and alongside goes through the seasons in your order, switching on what collects each one's drops,
+  buying them (and upgrading Santa) until the season is complete; on the last season it stays and leaves the
+  Grandmapocalypse (Elder Covenant, keep pledging, or stay). Settings: the season order (default Christmas → Easter →
+  Halloween → Valentine's day → Business day) and how it ends. Duplicate it to edit the flow itself.
+- **New conditions and actions** for flows (and your macros): a season is on / complete, all research bought, the
+  Grandmapocalypse is on; buy a season's drops, upgrade Santa, leave the Grandmapocalypse.
+- **The macro editor, redone:** a header with icon, name, description and Save / Cancel / Delete; the kind of macro as
+  cards; interval presets; numbered step cards; conditions as "when … and …" rows; flows as nested blocks with
+  "+ Do · Wait · Until · If · Parallel · Forever" under every list.
+
 ## 2.21.0 — 2026-10-06
 
 - **Best building** and **Best upgrade** (need Cookie Monster): buy the lowest payback period. Best building buys up to

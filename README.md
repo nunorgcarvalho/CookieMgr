@@ -23,7 +23,7 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 | **Widget** | Something on the game's left panel: a macro's button, the Running now bar, quick stats, events, minigames. |
 
-## Features (v2.21)
+## Features (v2.22)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
 the data pages **Events** and **Graphs**; the minigames **Garden**, **Stock market**, **Pantheon** and **Grimoire**;
@@ -152,7 +152,7 @@ Everything CookieMgr automates is a **macro**: one or more **actions** run in or
 | Stock market autobuyer | —           | Buys fast/slow-rising stocks, sells the rest, every second           |
 | Sell all stocks        | —           | Once: autobuyer off, then sells every stock                          |
 | Cast … (one per spell) | —           | Once: casts that Grimoire spell                                      |
-| Season keeper          | —           | Keeps the season you pick on its row going (buys its biscuit)        |
+| SeasonCompletion       | —           | An agent (flow): research, then every season until complete           |
 | Sugar lump harvester   | —           | Harvests your lump when ripe — or when mature, if you pick that      |
 | FtHoF on Click frenzy  | —           | When a Click frenzy runs and there's magic: Force the Hand of Fate   |
 | Best building          | —           | Buys the lowest-payback building (Cookie Monster)                    |
@@ -168,18 +168,34 @@ Every built-in has **settings**: the line under its description sums them up —
 runs ("20× a second", "every 1s"…), and every choice its actions have: how the **Big cookie**'s clicks look (the
 falling cookie and the "+N" number, the cookie only, or nothing — your own clicks are left as the game has them),
 whether **Wrinklers** spares shiny ones, whether the **Stock market autobuyer** may buy (off: it only sells what you
-hold when it stops rising — **shift-click** its button on the left panel to switch), the **Season keeper**'s season
-(it buys that season's biscuit as soon as you can afford it, switching from any other season, and again whenever it
-runs out — needs the Season switcher), and when the **Sugar lump harvester** picks: **ripe** (always pays) or
+hold when it stops rising — **shift-click** its button on the left panel to switch), and when the **Sugar lump
+harvester** picks: **ripe** (always pays) or
 **mature** (about 3 hours sooner, but with the game's 50% chance of getting nothing).
 
-**Your macros** — **New macro** opens the editor: name, icon, trigger (with how often, and for "When…" the condition,
-optionally negated), and the steps — pick an action for each, set its options, reorder or remove them. Actions:
+**SeasonCompletion** is an agent — a built-in **flow** (below). Switched on, it starts buying the Bingo center's
+research right away (which starts the Grandmapocalypse — Halloween's cookies come from wrinklers), and alongside it
+goes through the seasons in your order: for each, it switches on what collects its drops (reindeer for Christmas,
+golden and wrath cookies for Easter, wrinklers for Halloween), keeps the season on, buys its drops as they show up
+(and upgrades Santa), until the season is complete — every one of its cookies and upgrades owned. On the last
+season it stays, and leaves the Grandmapocalypse (Elder Pledge, then the Elder Covenant — or keeps pledging, or
+stays, as you choose). Its settings: the season order (default Christmas → Easter → Halloween → Valentine's day →
+Business day; reorder, drop or add seasons) and what to do at the end. Duplicate it to change the flow itself.
+
+**Your macros** — **New macro** opens the editor: a header with the icon, name and description (Save, Cancel,
+Delete), the kind of macro as cards — **Repeat**, **When…**, **Once**, **Group**, **Flow** — how often it runs, then
+what it does: numbered step cards (an action each, with its options; ▲ ▼ × to move or remove), a "When…" macro's
+conditions, a group's members, or a flow's blocks. A **flow** is a list of blocks run top to bottom: **Do** (an
+action), **Wait** (until conditions hold), **Until** (repeat some blocks until conditions hold), **If** (then / else),
+**Parallel** (branches side by side; done when all are) and **Forever** — nested as deep as you like. Every pass (its
+interval) moves each branch on as far as it can without waiting; a flow that reaches its end switches itself off,
+and a running flow's card says what it's waiting for. Actions:
 click the big cookie, pop golden / wrath cookies, reindeer, wrinklers (optionally sparing shiny ones), click fortune
-news, trade stocks, sell all stocks, harvest the sugar lump (once ripe, or once mature), keep a season going, cast a spell, switch another macro
+news, trade stocks, sell all stocks, harvest the sugar lump (once ripe, or once mature), keep a season going, buy a season's drops, upgrade Santa,
+leave the Grandmapocalypse, the buying actions, pet the dragon, cast a spell, switch another macro
 on/off/toggle, run another macro. Conditions: an effect is active (Frenzy, Click frenzy, …), any building special,
 several effects at once, something to pop is on screen, enough magic for a spell, magic at a % of the maximum, or any
-recorded value (CpS, cookies in bank, prestige, a stock price…) above or below a number — each can be negated, and
+recorded value (CpS, cookies in bank, prestige, a stock price…) above or below a number, a season being on or
+complete, all research bought, the Grandmapocalypse being on — each can be negated, and
 **And…** adds more conditions that must all hold. Your macros are saved with your settings inside the game save.
 
 **Buying.** **Best building** and **Best upgrade** buy whatever has the lowest payback period (Cookie Monster's PP:
