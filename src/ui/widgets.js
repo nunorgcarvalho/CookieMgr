@@ -432,7 +432,18 @@ CA.UI.Widgets = (() => {
       }
       if (m.mode !== 'once') CA.Util.sound(CA.Macros.isOn(m.id) ? 'snd/clickOff2.mp3' : 'snd/clickOn2.mp3'); // once macros: run() picks the sound
       if (m.mode === 'once') CA.UI.MacrosPage.run(m.id, trig);
-      else CA.Macros.trigger(m.id);
+      else {
+        CA.Macros.trigger(m.id);
+        // switched on but it can't do anything yet (a buyer that can't afford its pick): say so
+        const r = CA.Macros.isOn(m.id) && CA.UI.WidgetTypes.readyState(m);
+        if (r && r.cls === 'cant') {
+          trig.classList.remove('ca-shake');
+          void trig.offsetWidth;
+          trig.classList.add('ca-shake');
+          setTimeout(() => trig.classList.remove('ca-shake'), 500);
+          CA.Util.notify(m.name, `On — but nothing it can do yet: ${esc(r.text)}.`, CA.ICON, 3);
+        }
+      }
       tick();
       return;
     }

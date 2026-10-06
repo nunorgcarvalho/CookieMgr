@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+## 2.21.0 — 2026-10-06
+
+- **Best building** and **Best upgrade** (need Cookie Monster): buy the lowest payback period. Best building buys up to
+  the next multiple of 10 when Round to multiples is on; clicking upgrades (no PP from Cookie Monster) are judged by
+  what they add per click × your clicks per second; with both on, together they buy the lowest PP overall. "Skip
+  what you can't afford" (shift-click the button) buys the best affordable one instead of saving up.
+- **Research**: buys the Bingo center's research as it comes, stopping before the one you pick (One mind by default).
+- **Cheap upgrades**: buys any upgrade costing under 1 second (adjustable) of your unbuffed production.
+- **Pet the dragon**: works out which quarter of the hour drops which dragon upgrade (fixed by your save) and, in a
+  quarter whose drop you're missing, opens the dragon, pets it until it drops and closes it.
+- **Buttons show whether they can act:** the buying macros (and others that can tell) are tinted muted green / red
+  for whether the next purchase is affordable, say what and when on hover, and shake when switched on but stuck.
+- **Cookie Monster macros say they need it:** a warning with "Load it" on their card, and their switch is disabled
+  until it's running.
+
 ## 2.20.0 — 2026-10-06
 
 - **Your widgets is a map now:** a small map of the left panel with every widget where it sits (the big cookie drawn

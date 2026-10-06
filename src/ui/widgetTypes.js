@@ -43,6 +43,26 @@ CA.UI.WidgetTypes = (() => {
     return mg.magic >= cost ? 'can' : 'cant';
   }
 
+  /**
+   * Whether a macro's button could do something right now: { cls: 'can' | 'cant', text } — spells
+   * by magic, others through their first action's ready() (the buying macros: can the next
+   * purchase be afforded). Null when the macro doesn't say.
+   */
+  function readyState(m) {
+    const spell = spellState(m);
+    if (spell) return { cls: spell, text: spell === 'can' ? 'enough magic' : 'not enough magic yet' };
+    const step = CA.Macros.stepsOf(m)[0];
+    const a = step && CA.Actions.get(step.action);
+    if (!a || typeof a.ready !== 'function') return null;
+    let r = null;
+    try {
+      r = a.ready(CA.Actions.paramsFor(step.action, step.params));
+    } catch (e) {
+      r = null;
+    }
+    return r ? { cls: r.ok ? 'can' : 'cant', text: r.text || '' } : null;
+  }
+
   function macroHtml(inst) {
     const m = CA.Macros.get(inst.macro);
     if (!m) return '';
@@ -52,13 +72,13 @@ CA.UI.WidgetTypes = (() => {
     // the ring around the button: thicker and warmer the more it has been doing lately
     const heat = CA.Macros.activityLevel(m.id);
     const rate = CA.Macros.rate(m.id);
-    const spell = spellState(m);
+    const ready = readyState(m);
     return (
-      `<button type="button" class="ca-wb${on ? ' on' : ''}${m.mode === 'once' ? ' once' : ''}${spell ? ` spell-${spell}` : ''}" data-w-trigger="${esc(m.id)}" aria-label="${esc(m.name)}">` +
+      `<button type="button" class="ca-wb${on ? ' on' : ''}${m.mode === 'once' ? ' once' : ''}${ready ? ` spell-${ready.cls}` : ''}" data-w-trigger="${esc(m.id)}" aria-label="${esc(m.name)}">` +
       `<span class="ca-wb-heat h${heat}"></span>${CA.UI.MacrosPage.icon(m, true)}</button>` +
       `<span class="ca-wb-label ca-wt"><b>${esc(m.name)}</b><em class="${on ? 'on' : ''}">${state}${key ? ` · ${esc(CA.Hotkeys.format(key))}` : ''}</em>` +
       (heat ? `<em>lately ${rateText(rate)}</em>` : '') +
-      (spell ? `<em class="${spell === 'can' ? 'on' : 'off'}">${spell === 'can' ? 'enough magic' : 'not enough magic yet'}</em>` : '') +
+      (ready && ready.text ? `<em class="${ready.cls === 'can' ? 'on' : 'off'}">${esc(ready.text)}</em>` : '') +
       (m.shift ? `<em class="${CA.Macros.shiftValue(m.id) ? '' : 'off'}">${esc(CA.Macros.shiftValue(m.id) ? m.shift.on : m.shift.off)} · shift-click to switch</em>` : '') +
       '</span>'
     );
@@ -450,5 +470,5 @@ CA.UI.WidgetTypes = (() => {
     D({ id: 'pantheon', name: 'Pantheon', icon: 'pantheon', desc: 'Your three slotted spirits, and a ring counting down to the next worship swap. Click it to open the Pantheon.', bare: true, single: true, resize: 'scale', html: pantheonHtml });
   }
 
-  return { register, openMinigame, STATS, DEFAULT_STATS };
+  return { register, openMinigame, readyState, STATS, DEFAULT_STATS };
 })();

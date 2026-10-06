@@ -188,7 +188,7 @@ CA.Macros = (() => {
         edge: w.edge === 'while' ? 'while' : 'rise',
       };
     }
-    ['defaultKey', 'section', 'spell'].forEach((k) => def[k] !== undefined && (m[k] = def[k]));
+    ['defaultKey', 'section', 'spell', 'needsCM'].forEach((k) => def[k] !== undefined && (m[k] = def[k]));
     // built-ins can let you choose some of their steps' params right on their row (saved in prefs)
     if (m.builtin) {
       const auto = def.spell || def.noOptions ? [] : [].concat(...m.steps.map((st, i) => ((CA.Actions.get(st.action) || {}).params || []).map((p) => ({ step: i, key: p.key }))));

@@ -19,7 +19,8 @@ CA.UI.MacrosPage = (() => {
     { id: 'stocks', title: 'Stock market', icon: 'stocks', page: 'stocks' },
     { id: 'grimoire', title: 'Grimoire', icon: 'wizard', page: 'wizard' },
     { id: 'garden', title: 'Garden', icon: 'leaf', page: 'garden' },
-    { id: 'upkeep', title: 'Seasons & sugar lumps', icon: 'calendar' },
+    { id: 'buying', title: 'Buying', icon: 'dollar' },
+    { id: 'upkeep', title: 'Seasons, lumps & the dragon', icon: 'calendar' },
   ];
   const ICONS = ['bolt', 'cookie', 'star', 'sparkle', 'play', 'clock', 'stocks', 'dollar', 'wizard', 'wrinkler', 'lump', 'trophy', 'graphs', 'tag', 'marker', 'ascend'];
   const MODES = [
@@ -188,6 +189,7 @@ CA.UI.MacrosPage = (() => {
    */
   function tile(m) {
     const once = m.mode === 'once';
+    const noCM = m.needsCM && !CA.CookieMonster.isLoaded(); // needs Cookie Monster, which isn't running
     const fav = M().isFav(m.id);
     return (
       `<div class="ca-mtile ca-macro" data-macro-row="${esc(m.id)}">` +
@@ -196,8 +198,9 @@ CA.UI.MacrosPage = (() => {
       `<div class="ca-mtile-name"><b>${esc(m.name)}</b><span class="ca-badge ca-badge-${m.mode}">${esc(M().triggerText(m))}</span></div>` +
       (once
         ? C().button(`${I('play', 12)} Run`, `data-ca="macro-run" data-id="${esc(m.id)}"`, 'ca-btn-small ca-btn-run')
-        : C().toggle(false, `data-ca="macro-toggle" data-id="${esc(m.id)}"`, m.name)) +
+        : C().toggle(false, `data-ca="macro-toggle" data-id="${esc(m.id)}"${noCM ? ' disabled' : ''}`, m.name)) +
       '</div>' +
+      (noCM ? `<div class="ca-mtile-warn">${I('plug', 12)} Needs Cookie Monster ${C().button('Load it', 'data-ca="cm-load"', 'ca-btn-small')}</div>` : '') +
       (m.desc ? `<div class="ca-mtile-desc">${esc(m.desc)}</div>` : '') +
       (settingsOf(m).length
         ? `<div class="ca-mtile-settings${openSettings.has(m.id) ? ' open' : ''}">` +
@@ -758,6 +761,8 @@ CA.UI.MacrosPage = (() => {
 
   function init() {
     CA.UI.Pages.register({ id: 'clickers', label: 'Macros', icon: 'bolt', order: 70, group: 'custom', html, mount, unmount, tick: () => sync(root) });
+    // Cookie Monster arriving unlocks the macros that need it
+    CA.Events.on('integrations', () => CA.Settings.get('tab') === 'clickers' && rerender());
   }
 
   return { init, row, tile, status, sync, handle, icon, edit, run, draft: () => draft };

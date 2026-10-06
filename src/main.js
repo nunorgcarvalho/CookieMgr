@@ -38,6 +38,7 @@ const mod = {
     CA.Garden.init();
     CA.GardenHistory.init();
     CA.Shop.init();
+    CA.AutoBuy.init();
     CA.Stocks.init();
     CA.StockLog.init();
     CA.History.init();

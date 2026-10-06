@@ -23,7 +23,7 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 | **Widget** | Something on the game's left panel: a macro's button, the Running now bar, quick stats, events, minigames. |
 
-## Features (v2.20)
+## Features (v2.21)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
 the data pages **Events** and **Graphs**; the minigames **Garden**, **Stock market**, **Pantheon** and **Grimoire**;
@@ -155,6 +155,11 @@ Everything CookieMgr automates is a **macro**: one or more **actions** run in or
 | Season keeper          | —           | Keeps the season you pick on its row going (buys its biscuit)        |
 | Sugar lump harvester   | —           | Harvests your lump when ripe — or when mature, if you pick that      |
 | FtHoF on Click frenzy  | —           | When a Click frenzy runs and there's magic: Force the Hand of Fate   |
+| Best building          | —           | Buys the lowest-payback building (Cookie Monster)                    |
+| Best upgrade           | —           | Buys the lowest-payback upgrade (Cookie Monster)                     |
+| Research               | —           | Buys research as it comes (stops before One mind by default)         |
+| Cheap upgrades         | —           | Buys upgrades costing under 1s (adjustable) of production            |
+| Pet the dragon         | —           | Gets the dragon's four drops, petting only in the right quarter-hour |
 
 The autobuyer is the same switch as on the Stock market page and in the Bank minigame toolbar. (A group macro is
 the way to switch several at once.)
@@ -176,6 +181,23 @@ on/off/toggle, run another macro. Conditions: an effect is active (Frenzy, Click
 several effects at once, something to pop is on screen, enough magic for a spell, magic at a % of the maximum, or any
 recorded value (CpS, cookies in bank, prestige, a stock price…) above or below a number — each can be negated, and
 **And…** adds more conditions that must all hold. Your macros are saved with your settings inside the game save.
+
+**Buying.** **Best building** and **Best upgrade** buy whatever has the lowest payback period (Cookie Monster's PP:
+time to afford it + price ÷ CpS it adds). Best building buys one at a time — or up to the next multiple of 10 when the
+store's Round to multiples is on (ranked by Cookie Monster's ×10 PP). Upgrades Cookie Monster gives no PP (clicking
+upgrades) are judged by what they add per click × your clicks per second. With both on, each buys only when the best
+of the two is its kind, so together they always buy the lowest PP overall. By default they save up for the best; their
+**Skip what you can't afford** setting (shift-click the button) buys the best affordable one instead. Their buttons
+are tinted muted green or red for whether the next purchase is affordable now (hover for what and when), and
+switching one on when it can't buy yet shakes it and says why. They need Cookie Monster: without it their cards say
+so, with a button to load it, and can't be switched on. **Research** buys the Bingo center's research as it appears,
+stopping before the one you pick (One mind by default — it starts the Grandmapocalypse). **Cheap upgrades** buys any
+upgrade costing less than a second (adjustable) of your unbuffed production.
+
+**Pet the dragon** gets the dragon's four drops (Dragon scale, claw, fang, teddy bear): each pet has a 1 in 20 chance,
+and which one drops depends only on the quarter of the hour, in an order fixed by your save. It works that order out,
+and in a quarter whose drop you're missing it opens the dragon, pets it until it drops, and closes it again; its button
+says which drop is due and when the next one comes. Needs dragon level 8 and the "Pet the dragon" upgrade.
 
 **Running** at the top of the page is a strip with a chip per running macro (warmer the busier it is — click one to
 find its card, × to stop it) and **Stop all**. A running macro's card shows, for each of its actions, how many things
