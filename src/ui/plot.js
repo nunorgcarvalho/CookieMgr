@@ -371,7 +371,9 @@ CA.UI.Plot = (() => {
    *   build(v) → { series: [{ key, name, color, type: 'bar'|'line'|'area', dash, width }],
    *                bars: [{ x0, x1, parts: { key: value }, … }], lines: { key: [{ x, v }] },
    *                hlines: [{ v, label, color }], intervals: [{ x0, x1, color, label, tip() }],
-   *                markers: [{ x, color, line, tip() }], empty: 'text', zero: true }
+   *                markers: [{ x, color, line, tip() }], empty: 'text', zero: true,
+   *                xAxis: { x0, x1, labels: [{ x, label }], head(bar, x) } — an x axis in other units
+   *                (e.g. garden ticks) for the bars, lines and markers this build returns }
    *   stats(v, data) → HTML (tiles above the chart), footer(v, data) → HTML (below the legend)
    *   tip(bar, v, data) → extra tooltip HTML for a hovered bar
    *   fmt(value) → string for axis/tooltip values (default: beautify), unit: suffix for the tooltip
@@ -529,8 +531,10 @@ CA.UI.Plot = (() => {
       if (w < 50 || h < 50) return;
       ctx.clearRect(0, 0, w, h);
 
-      const v = viewFor(Math.max(50, w - padL - PAD.r));
+      let v = viewFor(Math.max(50, w - padL - PAD.r));
       const data = spec.build(v) || {};
+      // the build chose its own x axis (still windowed by time; drawn and hovered in its units)
+      if (data.xAxis) v = { ...v, x0: data.xAxis.x0, x1: data.xAxis.x1, W: Math.max(1e-9, data.xAxis.x1 - data.xAxis.x0), active: false, bucket: 1, custom: data.xAxis };
       if (v.smoothMs > 0) smoothData(data, v.smoothMs);
       const prop = !!(spec.stacked && opt('prop'));
       fmt = prop ? pct : baseFmt;
@@ -882,6 +886,24 @@ CA.UI.Plot = (() => {
     }
 
     function drawXAxis(plot, v, xOf) {
+      if (v.custom) {
+        ctx.font = FONT;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        (v.custom.labels || []).forEach((l) => {
+          const px = Math.round(xOf(l.x)) + 0.5;
+          ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+          ctx.beginPath();
+          ctx.moveTo(px, plot.y);
+          ctx.lineTo(px, plot.y + plot.h);
+          ctx.stroke();
+          if (px > plot.x + 16 && px < plot.x + plot.w - 16) {
+            ctx.fillStyle = 'rgba(230,220,200,0.7)';
+            ctx.fillText(l.label, px, plot.y + plot.h + 7);
+          }
+        });
+        return;
+      }
       const steps = NICE_MS.filter((s) => s >= 5 * SEC);
       const stepMs = steps.find((s) => v.W / s <= Math.max(3, Math.floor(plot.w / 78))) || steps[steps.length - 1];
       const long = stepMs >= 6 * 3600 * SEC;
@@ -1023,11 +1045,15 @@ CA.UI.Plot = (() => {
 
     function barTip(x, bar) {
       const { v, data } = layout;
-      const t = bar ? v.tAt(bar.x1) : v.tAt(x);
-      const width = bar ? (bar.x1 - bar.x0) / SEC : 0;
-      const when = bar && width >= 2 ? `${clock(v.tAt(bar.x0), width < 120)} – ${clock(t, width < 120)}` : clock(t, true);
-      const ago = (Date.now() - t) / SEC;
-      let h = `<div class="ca-tip-head">${when}<span>${ago > 1.5 ? span(ago) + ' ago' : 'now'}</span></div>`;
+      let h;
+      if (v.custom) h = `<div class="ca-tip-head">${v.custom.head ? v.custom.head(bar, x) : ''}</div>`;
+      else {
+        const t = bar ? v.tAt(bar.x1) : v.tAt(x);
+        const width = bar ? (bar.x1 - bar.x0) / SEC : 0;
+        const when = bar && width >= 2 ? `${clock(v.tAt(bar.x0), width < 120)} – ${clock(t, width < 120)}` : clock(t, true);
+        const ago = (Date.now() - t) / SEC;
+        h = `<div class="ca-tip-head">${when}<span>${ago > 1.5 ? span(ago) + ' ago' : 'now'}</span></div>`;
+      }
       let any = false;
       const barSeries = (data.series || []).filter((s) => s.type === 'bar');
       let total = 0;

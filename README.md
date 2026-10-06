@@ -23,7 +23,7 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 | **Widget** | Something on the game's left panel: a macro's button, the Running now bar, quick stats, events, minigames. |
 
-## Features (v2.17)
+## Features (v2.18)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
 the data pages **Events** and **Graphs**; the minigames **Garden**, **Stock market**, **Pantheon** and **Grimoire**;
@@ -223,6 +223,13 @@ mature plants at the bottom of each seed's stack — so as a crop grows, its bar
 switches between seed × stage, seeds only, and stages only; like the other charts it has window chips, "% of total",
 a tooltip with one row per seed ("Thumbcorn (bud / … / mature)"), and markers where a new seed was unlocked (also
 in the event log). It's recorded as a snapshot each time the plot changes, kept per save in this browser.
+
+Under it, the **Effects** chart follows what your plants do over time — the figures of the game's Garden information
+(CpS, cookies/click, golden cookie frequency, random drops, upgrade costs…), with soil, growth stage and tile boosts
+included: a line per effect, in %, and tiles for the biggest ones now.
+
+Both charts can use **garden ticks** instead of time for their x axis (**X axis: Time · Garden ticks**): a bar per
+tick, counted back from now, so a 15-minute clay tick and a 3-minute fertilizer tick take the same room.
 
 **Profiles** remember the seed on every tile and the soil: plant your garden the way you want it, then **Save
 current garden**. Rename, switch or delete them on the page.

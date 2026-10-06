@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 2.18.0 — 2026-10-06
+
+- **Garden effects chart:** what your plants do over time — the game's Garden information figures (CpS,
+  cookies/click, golden cookie frequency, random drops, upgrade costs…), soil, growth stages and tile boosts included.
+  A line per effect in %, tiles for the biggest ones now, seed-unlock markers.
+- **Garden ticks as the x axis:** both garden charts can show a bar per garden tick (counted back from now) instead of
+  time, so ticks of different soils take the same room. Garden ticks are now counted and kept with the history.
+- Charts can now have an x axis in other units than time (used by the garden charts).
+
 ## 2.17.1 — 2026-10-06
 
 - **Fix: popups no longer go under the game's side beams.** Every hover popup — chart tooltips, garden tiles,

@@ -1,5 +1,6 @@
 // The Garden page: the auto-gardener and its profiles (features/garden.js).
 //
+//   Effects         the plants' combined effects over time (the game's Garden information figures)
 //   Growth          a stacked bar chart over time: how many of each seed were at each stage (each
 //                   seed its own colour, young stages darker) — features/gardenHistory.js
 //   Garden          your plot as it is now, against the active profile: each tile's plant and growth
@@ -21,6 +22,7 @@ CA.UI.GardenPage = (() => {
   let root = null;
   let timer = null;
   let plot = null;
+  let effectsPlot = null;
 
   const stageOf = (me, age) => (age >= me.mature ? 4 : age >= me.mature * 0.666 ? 3 : age >= me.mature * 0.333 ? 2 : 1);
   const STAGE_NAMES = ['seed', 'bud', 'sprout', 'bloom', 'mature'];
@@ -183,7 +185,7 @@ CA.UI.GardenPage = (() => {
         '<div class="ca-card-note">The Garden opens once you have a level-1 Farm (spend a sugar lump on it). The auto-gardener and its profiles will be here.</div>' +
         '</div>'
       );
-    return `<div class="ca-garden-row">${gardenCard()}${plot.html()}</div>` + gardenerCard() + profilesCard();
+    return `<div class="ca-garden-row">${gardenCard()}${plot.html()}</div>` + effectsPlot.html() + gardenerCard() + profilesCard();
   }
 
   function sync() {
@@ -247,7 +249,10 @@ CA.UI.GardenPage = (() => {
     root.addEventListener('click', onClick);
     root.addEventListener('change', onChange);
     root.addEventListener('input', onChange);
-    if (G().minigame()) plot.mount(el);
+    if (G().minigame()) {
+      plot.mount(el);
+      effectsPlot.mount(el);
+    }
     sync();
     timer = setInterval(sync, SYNC_MS);
   }
@@ -256,6 +261,7 @@ CA.UI.GardenPage = (() => {
     clearInterval(timer);
     timer = null;
     if (plot) plot.unmount();
+    if (effectsPlot) effectsPlot.unmount();
     if (root) {
       root.removeEventListener('click', onClick);
       root.removeEventListener('change', onChange);
@@ -264,36 +270,99 @@ CA.UI.GardenPage = (() => {
     root = null;
   }
 
-  // ---- growth chart ---------------------------------------------------------------------
+  // ---- charts: growth and effects ---------------------------------------------------------
 
   const H = () => CA.GardenHistory;
   const STAGE_COLORS = ['#6b8a52', '#8fc25e', '#b5ec6e', '#eaff8a'];
+  const AXES = [
+    { v: 'time', label: 'Time' },
+    { v: 'ticks', label: 'Garden ticks' },
+  ];
   const plantName = (key) => {
     const M = G().minigame();
     return (M && M.plants && M.plants[key] && M.plants[key].name) || key;
   };
 
-  /**
-   * Bars from the snapshots: each bar shows the garden as it was at the end of its slot (the plot
-   * is a step function — it only changes at ticks, plantings and harvests).
-   */
-  function growthBars(v) {
-    const all = H().list();
-    const k = v.key;
-    const bars = [];
-    if (!all.length) return bars;
-    let i = -1;
-    const start = Math.floor(v.x0 / v.bucket) * v.bucket;
-    for (let x = start; x < v.x1; x += v.bucket) {
-      const end = Math.min(x + v.bucket, v.x1);
-      while (i + 1 < all.length && all[i + 1][k] <= end) i++;
-      if (i < 0) continue;
-      bars.push({ x0: Math.max(x, v.x0), x1: end, c: all[i].c });
-    }
-    return bars;
+  /** Snapshot in force at `x` (along key 't' / 'a'), or null — snapshots are in time order. */
+  function stateAt(all, k, x, from) {
+    let i = from;
+    while (i + 1 < all.length && all[i + 1][k] <= x) i++;
+    return i;
   }
 
-  function createPlot() {
+  /**
+   * The garden over the chart's window as bars, each with the snapshot in force: { x0, x1, c, e }.
+   * Time axis: a bar per slot of the window (the garden as it was at the end of it — it only
+   * changes at ticks, plantings and harvests). Ticks axis: a bar per garden tick, plus the x axis
+   * for it (xAxis — ticks counted back from now).
+   */
+  function stateBars(v) {
+    const all = H().list();
+    const k = v.key;
+    if (!all.length) return { bars: [] };
+    if (v.opt('axis') !== 'ticks') {
+      const bars = [];
+      let i = -1;
+      const start = Math.floor(v.x0 / v.bucket) * v.bucket;
+      for (let x = start; x < v.x1; x += v.bucket) {
+        const end = Math.min(x + v.bucket, v.x1);
+        i = stateAt(all, k, end, i);
+        if (i < 0) continue;
+        bars.push({ x0: Math.max(x, v.x0), x1: end, c: all[i].c, e: all[i].e || {} });
+      }
+      return { bars };
+    }
+    // garden ticks: which ticks fall in the window, and the snapshot in force in each
+    const ticks = H().ticks();
+    const inWin = ticks.filter((t) => t[k] >= v.x0 && t[k] <= v.x1);
+    const firstSample = all.find((s) => s[k] >= v.x0) || all[all.length - 1];
+    const kEnd = v.live ? H().tickNow() : inWin.length ? inWin[inWin.length - 1].k : firstSample.k || 0;
+    const kStart = Math.min(kEnd, inWin.length ? inWin[0].k - 1 : firstSample.k || 0);
+    const bars = [];
+    let i = -1;
+    for (let n = kStart; n <= kEnd; n++) {
+      while (i + 1 < all.length && (all[i + 1].k || 0) <= n) i++;
+      if (i < 0) continue;
+      bars.push({ x0: n, x1: n + 1, c: all[i].c, e: all[i].e || {}, tick: n });
+    }
+    const span = kEnd + 1 - kStart;
+    const step = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000].find((s) => span / s <= 7) || 10000;
+    const labels = [];
+    for (let n = kEnd - Math.floor((kEnd - kStart) / step) * step; n <= kEnd; n += step) labels.push({ x: n + 0.5, label: n === kEnd ? 'now' : `−${kEnd - n}` });
+    const tickTime = (n) => {
+      const t = ticks.find((x) => x.k === n);
+      return t ? ` <span>${CA.UI.Plot.fmt.clock(t.t, true)}</span>` : '';
+    };
+    const xAxis = {
+      x0: kStart,
+      x1: kEnd + 1,
+      labels,
+      head: (bar) => (bar ? `${bar.tick === kEnd ? 'This tick' : `${kEnd - bar.tick} tick${kEnd - bar.tick === 1 ? '' : 's'} ago`}${tickTime(bar.tick)}` : 'Garden ticks'),
+    };
+    // things that happened at a time, placed in the tick they happened in
+    xAxis.at = (t) => {
+      let n = kStart;
+      ticks.forEach((x) => x.t <= t && (n = x.k));
+      return n + 0.5;
+    };
+    return { bars, xAxis };
+  }
+
+  /** Seed-unlock markers, on either axis. */
+  function unlockMarkers(v, xAxis) {
+    return CA.EventLog.list(['garden'])
+      .map((ev) => ({ ev, x: xAxis ? xAxis.at(ev.t) : v.active ? ev.a : ev.t }))
+      .filter((m) => (xAxis ? m.x >= xAxis.x0 && m.x <= xAxis.x1 : m.x >= v.x0 && m.x <= v.x1))
+      .map(({ ev, x }) => ({
+        x,
+        color: '#ffe36a',
+        tip: () => `<div class="ca-tip-head">${esc(ev.title)}<span>${CA.UI.Plot.fmt.clock(ev.t, true)}</span></div>`,
+      }));
+  }
+
+  const axisChoice = { key: 'axis', label: 'X axis', options: AXES, default: 'time' };
+
+  function createPlots() {
     plot = CA.UI.Plot.create({
       id: 'garden',
       title: 'Growth',
@@ -314,13 +383,14 @@ CA.UI.GardenPage = (() => {
           ],
           default: 'both',
         },
+        axisChoice,
       ],
       fmt: (v) => CA.UI.Plot.fmt.beautify(v, 0),
       tipFmt: (v) => String(Math.round(v * 10) / 10),
       totalLabel: 'Plants',
       build(v) {
         const by = v.opt('by') || 'both';
-        const raw = growthBars(v);
+        const { bars: raw, xAxis } = stateBars(v);
         const totals = {}; // seed → plant-slots shown, to put the biggest at the bottom
         raw.forEach((b) => Object.keys(b.c).forEach((kk) => (totals[kk.split(':')[0]] = (totals[kk.split(':')[0]] || 0) + b.c[kk])));
         const seeds = Object.keys(totals).sort((a, b) => totals[b] - totals[a]);
@@ -353,7 +423,7 @@ CA.UI.GardenPage = (() => {
             const p = partOf(kk);
             parts[p] = (parts[p] || 0) + b.c[kk];
           });
-          return { x0: b.x0, x1: b.x1, parts };
+          return { x0: b.x0, x1: b.x1, parts, tick: b.tick };
         });
         const used = new Set([].concat(...bars.map((b) => Object.keys(b.parts))));
         series = series.filter((s) => used.has(s.key));
@@ -364,6 +434,7 @@ CA.UI.GardenPage = (() => {
         return {
           series,
           bars,
+          xAxis,
           legend,
           legendExtra:
             by === 'both'
@@ -373,16 +444,7 @@ CA.UI.GardenPage = (() => {
                   .join(' ') +
                 '</span>'
               : '',
-          markers: CA.EventLog.list(['garden'])
-            .filter((ev) => {
-              const x = v.active ? ev.a : ev.t;
-              return x >= v.x0 && x <= v.x1;
-            })
-            .map((ev) => ({
-              x: v.active ? ev.a : ev.t,
-              color: '#ffe36a',
-              tip: () => `<div class="ca-tip-head">${esc(ev.title)}<span>${CA.UI.Plot.fmt.clock(ev.t, true)}</span></div>`,
-            })),
+          markers: unlockMarkers(v, xAxis),
           empty: 'Recording your garden — the chart fills in as it grows (a snapshot each time the plot changes).',
         };
       },
@@ -403,10 +465,55 @@ CA.UI.GardenPage = (() => {
         );
       },
     });
+
+    const pctFmt = (v) => `${v > 0 ? '+' : v < 0 ? '−' : ''}${Math.abs(v) >= 10 ? Math.round(Math.abs(v)) : Math.round(Math.abs(v) * 10) / 10}%`;
+    effectsPlot = CA.UI.Plot.create({
+      id: 'gardenEffects',
+      settingsOf: 'garden', // same window and x axis as the growth chart
+      title: 'Effects',
+      icon: 'sparkle',
+      note: 'What your plants do, as the game’s Garden information adds it up (soil, growth stage and tile boosts included).',
+      height: 190,
+      windows: [3600, 6 * 3600, 86400, 3 * 86400, 0],
+      window: 6 * 3600,
+      smooth: false,
+      choices: [axisChoice],
+      fmt: pctFmt,
+      tipFmt: (v) => `${v > 0 ? '+' : v < 0 ? '−' : ''}${Math.round(Math.abs(v) * 100) / 100}%`,
+      build(v) {
+        const { bars, xAxis } = stateBars(v);
+        const used = H().EFFECTS.filter((ef) => bars.some((b) => b.e[ef.k]));
+        const lines = {};
+        used.forEach((ef) => {
+          // steps: the value holds from one snapshot to the next
+          lines[ef.k] = [].concat(...bars.map((b) => [{ x: b.x0, v: (b.e[ef.k] || 0) * 100 }, { x: b.x1, v: (b.e[ef.k] || 0) * 100 }]));
+        });
+        return {
+          series: used.map((ef) => ({ key: ef.k, name: ef.rev ? `${ef.n} (lower is better)` : ef.n, color: ef.color, type: 'line', width: 1.8 })),
+          lines,
+          xAxis,
+          markers: unlockMarkers(v, xAxis),
+          zero: true,
+          empty: 'No plant effects in this window — plant something, or wait for the garden to be recorded.',
+        };
+      },
+      stats() {
+        const M = G().minigame();
+        if (!M) return '';
+        const { tile } = CA.UI.Plot.fmt;
+        const e = H().effectsNow(M);
+        const top = H()
+          .EFFECTS.filter((ef) => e[ef.k])
+          .sort((a, b) => Math.abs(e[b.k]) - Math.abs(e[a.k]))
+          .slice(0, 3);
+        if (!top.length) return tile('Effects now', 'none', M.freeze ? 'the garden is frozen' : 'nothing planted gives any');
+        return top.map((ef) => tile(ef.n, pctFmt(e[ef.k] * 100), 'now')).join('');
+      },
+    });
   }
 
   function init() {
-    createPlot();
+    createPlots();
     CA.UI.Pages.register({ id: 'garden', label: 'Garden', icon: 'leaf', order: 30, group: 'minigames', html, mount, unmount, tick: sync });
   }
 

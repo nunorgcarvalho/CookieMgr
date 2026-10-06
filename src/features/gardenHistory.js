@@ -3,9 +3,13 @@
 //
 // The plot only changes at garden ticks (every 3–15 minutes) and when something is planted or
 // harvested, so instead of a column per seed × stage in every recorder frame, this keeps a
-// snapshot each time the plot changes: { t, a, c: { 'bakerWheat:3': 5, … } } (t wall clock,
-// a active time, stages 0 bud … 3 mature). Kept per save in IndexedDB (CA.Store key-value),
-// trimmed to the newest MAX snapshots.
+// snapshot each time the plot (or what it does) changes:
+//   { t, a, k, c: { 'bakerWheat:3': 5, … }, e: { cps: 0.031, … } }
+// t wall clock, a active time, k the garden tick it was taken in, c plants by seed:stage (stages
+// 0 bud … 3 mature), e the garden's effects as fractions (M.effs − 1: the "Garden information"
+// figures; only the ones that aren't zero). Garden ticks are counted too ({ k, t, a } each), so
+// the charts can use ticks as their x axis. Kept per save in IndexedDB (CA.Store key-value),
+// trimmed to the newest MAX entries.
 //
 // It also logs a 'garden' event when a seed gets unlocked (shown as a marker on the chart).
 
@@ -17,7 +21,9 @@ CA.GardenHistory = (() => {
   const STAGES = ['bud', 'sprout', 'bloom', 'mature'];
 
   let samples = [];
+  let ticks = []; // { k, t, a } — one per garden tick seen
   let lastKey = '';
+  let lastStep = 0; // M.nextStep last seen, to spot ticks
   let unlocked = null; // Set of unlocked plant keys, to spot new ones
   let dirty = false;
   let loaded = false;
@@ -105,6 +111,56 @@ CA.GardenHistory = (() => {
     return c;
   }
 
+  /** The effects a garden's plants give now, as the game computes them (M.effs): { key: fraction } for the non-zero ones. */
+  function effectsNow(M) {
+    const out = {};
+    if (M.freeze || !M.effs) return out;
+    Object.keys(M.effs).forEach((k) => {
+      const d = M.effs[k] - 1;
+      if (Math.abs(d) > 1e-9) out[k] = Math.round(d * 1e6) / 1e6;
+    });
+    return out;
+  }
+
+  /** The "Garden information" effects, named as the game names them, each with a chart colour. */
+  const EFFECTS = [
+    { k: 'cps', n: 'CpS', color: '#f5c451' },
+    { k: 'click', n: 'cookies/click', color: '#7fe08b' },
+    { k: 'cursorCps', n: 'cursor CpS', color: '#c9bcff' },
+    { k: 'grandmaCps', n: 'grandma CpS', color: '#d6a2e8' },
+    { k: 'goldenCookieGain', n: 'golden cookie gains', color: '#ffd700' },
+    { k: 'goldenCookieFreq', n: 'golden cookie frequency', color: '#ffb300' },
+    { k: 'goldenCookieDur', n: 'golden cookie duration', color: '#ffe082' },
+    { k: 'goldenCookieEffDur', n: 'golden cookie effect duration', color: '#fff3a0' },
+    { k: 'wrathCookieGain', n: 'wrath cookie gains', color: '#ff5252' },
+    { k: 'wrathCookieFreq', n: 'wrath cookie frequency', color: '#ff8a80' },
+    { k: 'wrathCookieDur', n: 'wrath cookie duration', color: '#e57373' },
+    { k: 'wrathCookieEffDur', n: 'wrath cookie effect duration', color: '#ffab91' },
+    { k: 'reindeerGain', n: 'reindeer gains', color: '#a1887f' },
+    { k: 'reindeerFreq', n: 'reindeer frequency', color: '#bcaaa4' },
+    { k: 'reindeerDur', n: 'reindeer duration', color: '#d7ccc8' },
+    { k: 'itemDrops', n: 'random drops', color: '#4fc3f7' },
+    { k: 'milk', n: 'milk effects', color: '#f5f5f5' },
+    { k: 'wrinklerSpawn', n: 'wrinkler spawn rate', color: '#9e9d24' },
+    { k: 'wrinklerEat', n: 'wrinkler appetite', color: '#cddc39' },
+    { k: 'upgradeCost', n: 'upgrade costs', color: '#ba68c8', rev: true },
+    { k: 'buildingCost', n: 'building costs', color: '#ff7a59', rev: true },
+  ];
+
+  /** Counts a garden tick whenever the next one moves on by more than half a tick. */
+  function checkTick(M) {
+    const next = M.nextStep || 0;
+    if (!next) return;
+    if (lastStep && next - lastStep > (M.stepT || 60) * 500) {
+      const k = (ticks.length ? ticks[ticks.length - 1].k : samples.length ? samples[samples.length - 1].k || 0 : 0) + 1;
+      ticks.push({ k, t: Date.now(), a: activeNow() });
+      if (ticks.length > MAX) ticks.splice(0, ticks.length - MAX);
+      dirty = true;
+    }
+    lastStep = next;
+  }
+  const tickNow = () => (ticks.length ? ticks[ticks.length - 1].k : samples.length ? samples[samples.length - 1].k || 0 : 0);
+
   const activeNow = () => {
     const fr = CA.Recorder.frames();
     const last = fr[fr.length - 1];
@@ -115,11 +171,13 @@ CA.GardenHistory = (() => {
     const M = CA.Garden.minigame();
     if (!M) return;
     checkUnlocks(M);
+    checkTick(M);
     const c = countsNow(M);
-    const key = JSON.stringify(c);
+    const e = effectsNow(M);
+    const key = JSON.stringify([c, e]);
     if (key === lastKey) return;
     lastKey = key;
-    samples.push({ t: Date.now(), a: activeNow(), c });
+    samples.push({ t: Date.now(), a: activeNow(), k: tickNow(), c, e });
     if (samples.length > MAX) samples.splice(0, samples.length - MAX);
     dirty = true;
     CA.Events.emit('gardenHistory');
@@ -140,7 +198,7 @@ CA.GardenHistory = (() => {
   function persist() {
     if (!dirty || !loaded) return Promise.resolve();
     dirty = false;
-    return CA.Store.setKV(KV, samples).catch(() => (dirty = true));
+    return Promise.all([CA.Store.setKV(KV, samples), CA.Store.setKV(`${KV}.ticks`, ticks)]).catch(() => (dirty = true));
   }
 
   /** Snapshots with `key` ('t' or 'a') ≤ x1, plus the one in force at x0. */
@@ -148,10 +206,11 @@ CA.GardenHistory = (() => {
 
   function init() {
     CA.EventLog.defineType('garden', { name: 'Garden', icon: 'leaf', color: '#9fe06a' });
-    CA.Store.getKV(KV)
-      .then((v) => {
+    Promise.all([CA.Store.getKV(KV), CA.Store.getKV(`${KV}.ticks`)])
+      .then(([v, tk]) => {
         if (Array.isArray(v)) samples = v.concat(samples).slice(-MAX);
-        if (samples.length) lastKey = JSON.stringify(samples[samples.length - 1].c);
+        if (Array.isArray(tk)) ticks = tk.concat(ticks).slice(-MAX);
+        if (samples.length) lastKey = JSON.stringify([samples[samples.length - 1].c, samples[samples.length - 1].e || {}]);
       })
       .catch(() => {})
       .finally(() => {
@@ -164,5 +223,5 @@ CA.GardenHistory = (() => {
     setTimeout(sample, 1000);
   }
 
-  return { init, sample, list, colorOf, shade, STAGES, countsNow, flush: () => ((dirty = true), persist()) };
+  return { init, sample, list, ticks: () => ticks, tickNow, colorOf, shade, STAGES, countsNow, effectsNow, EFFECTS, flush: () => ((dirty = true), persist()) };
 })();
