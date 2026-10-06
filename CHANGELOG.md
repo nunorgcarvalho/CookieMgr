@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 2.25.0 — 2026-10-06
+
+- **Every built-in macro can be edited**: Edit on its card opens the full editor; your version replaces it (its card
+  says "edited"), and **Revert to default** brings back the original — changed settings too.
+- **How often a macro runs is a number box** now: times a second for the fast ones — the Big cookie up to 50, the most
+  clicks a second the game counts — or every so many seconds for the rest.
+- **New: Elder Pledge** macro — buys the Elder Pledge whenever the Grandmapocalypse is on and it's for sale.
+- **SeasonCompletion leaves the Grandmapocalypse on its second Christmas visit** (the reindeer cookies don't need
+  wrinklers), keeping the elders pledged from there on.
+
 ## 2.24.1 — 2026-10-06
 
 - **Fix: the screen shifting down** (and not scrolling back): opening widget settings, the macro editor or a

@@ -4994,3 +4994,20 @@ body.ca-has-storebar #products {
   font-weight: normal;
   font-style: normal;
 }
+
+/* ---------- v2.25: edited built-ins, interval boxes ---------- */
+
+#CookieMgrMenu .ca-badge-edited {
+  margin-left: 4px;
+  color: #1c120a;
+  background: #e0b45a;
+}
+#CookieMgrMenu input.ca-every-num {
+  width: 64px;
+  font: 11px Tahoma, Arial, sans-serif;
+  color: #f0e2c0;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 220, 150, 0.25);
+  border-radius: 4px;
+  padding: 2px 5px;
+}

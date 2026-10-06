@@ -23,7 +23,7 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 | **Widget** | Something on the game's left panel: a macro's button, the Running now bar, quick stats, events, minigames. |
 
-## Features (v2.24)
+## Features (v2.25)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
 the data pages **Events** and **Graphs**; the minigames **Garden**, **Stock market**, **Pantheon** and **Grimoire**;
@@ -154,6 +154,7 @@ Everything CookieMgr automates is a **macro**: one or more **actions** run in or
 | Cast … (one per spell) | —           | Once: casts that Grimoire spell                                      |
 | SeasonCompletion       | —           | An algorithmic macro: research, then every season until complete      |
 | Sugar lump harvester   | —           | Harvests your lump when ripe — or when mature, if you pick that      |
+| Elder Pledge           | —           | Buys the Elder Pledge whenever the Grandmapocalypse is on            |
 | FtHoF on Click frenzy  | —           | When a Click frenzy runs and there's magic: Force the Hand of Fate   |
 | Best building          | —           | Buys the lowest-payback building (Cookie Monster)                    |
 | Best upgrade           | —           | Buys the lowest-payback upgrade (Cookie Monster)                     |
@@ -165,7 +166,8 @@ The autobuyer is the same switch as on the Stock market page and in the Bank min
 the way to switch several at once.)
 
 Every built-in has **settings**: the line under its description sums them up — click it to change them. How often it
-runs ("20× a second", "every 1s"…), and every choice its actions have: how the **Big cookie**'s clicks look (the
+runs (a number: times a second for the fast ones — the big cookie up to 50, the most the game counts — or every so
+many seconds), and every choice its actions have: how the **Big cookie**'s clicks look (the
 falling cookie and the "+N" number, the cookie only, or nothing — your own clicks are left as the game has them),
 whether **Wrinklers** waits until a wrinkler has eaten before popping it (only then can it drop Halloween cookies
 and such — **shift-click** its button to pop them at once) and spares shiny ones, whether the **Stock market autobuyer** may buy (off: it only sells what you
@@ -173,14 +175,18 @@ hold when it stops rising — **shift-click** its button on the left panel to sw
 harvester** picks: **ripe** (always pays) or
 **mature** (about 3 hours sooner, but with the game's 50% chance of getting nothing).
 
-**SeasonCompletion** is an **algorithmic macro** (below) — its code is yours to change ("Edit its code" on its card;
-"Reset to default" brings the original back). Switched on, it buys the Bingo center's research right away (which
+**SeasonCompletion** is an **algorithmic macro** (below) — its code is yours to change ("Edit" on its card;
+"Revert to default" brings the original back). Switched on, it buys the Bingo center's research right away (which
 starts the Grandmapocalypse — Halloween's cookies come from wrinklers), and alongside goes through the seasons:
 Christmas first for Santa's upgrades and Santa all the way to Final Claus, then Easter, Halloween and Valentine's day
 each until every one of its cookies is owned (switching on what collects them: golden and wrath cookies for Easter,
-wrinklers for Halloween), then Christmas again for its reindeer cookies, and finally Business day for good, keeping
-the elders pledged. Its card shows the line it's on with the counts it's checking ("owned(christmas, upgrades) = 12 ≥
+wrinklers for Halloween), then Christmas again for its reindeer cookies — leaving the Grandmapocalypse there, as
+those don't need wrinklers — and finally Business day for good, keeping the elders pledged. Its card shows the line it's on with the counts it's checking ("owned(christmas, upgrades) = 12 ≥
 total(christmas, upgrades) = 15 ✗") and the if / elif decisions it took.
+
+**Every built-in can be edited** like your own macros: **Edit** on its card opens the full editor (its steps, kind,
+code…); your version replaces it, its card says "edited", and **Revert to default** (in the editor) brings back the
+original — so do changed settings.
 
 **Your macros** — **New macro** opens the editor: a header with the icon, name and description (Save, Cancel,
 Delete), the kind of macro as cards — **Repeat**, **When…**, **Once**, **Group**, **Algorithmic** — how often it runs,

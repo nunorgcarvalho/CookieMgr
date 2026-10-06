@@ -119,6 +119,17 @@ CA.Macros = (() => {
       section: 'stocks',
     },
     {
+      id: 'elderPledge',
+      name: 'Elder Pledge',
+      desc: 'Keeps the elders pledged: buys the Elder Pledge whenever the Grandmapocalypse is on and it’s for sale (it lasts a while, then wears off).',
+      icon: sprite(9, 9),
+      mode: 'repeat',
+      every: 2000,
+      steps: [{ action: 'grandma.exit', params: { how: 'pledge' } }],
+      defaultKey: '',
+      section: 'upkeep',
+    },
+    {
       id: 'lumps',
       name: 'Sugar lump harvester',
       desc: 'Harvests your sugar lump when it’s ripe (always pays) — or as soon as it’s mature, a little earlier but with the game’s 50% chance of getting nothing.',
@@ -223,11 +234,52 @@ CA.Macros = (() => {
   const newId = () => `m${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`;
 
   /** For features that bring their own built-in macros (e.g. features/grimoire.js). Call during init. */
-  const addBuiltin = (def) => add({ ...def, builtin: true });
+  // Built-ins can be edited like your own macros: your version is kept in prefs[id].custom and
+  // laid over the original (baseDefs) — "Revert to default" just drops it.
+  const baseDefs = {};
+  const CUSTOM_FIELDS = ['name', 'desc', 'icon', 'mode', 'every', 'steps', 'when', 'members', 'source', 'flow'];
+  function applyBuiltin(id) {
+    const base = baseDefs[id];
+    if (!base) return null;
+    const c = prefs[id] && prefs[id].custom;
+    const wasOn = !!running[id];
+    if (wasOn) stop(id);
+    const m = add({ ...base, ...(c || {}), builtin: true });
+    m.customized = !!c;
+    if (wasOn && m.mode !== 'once' && m.mode !== 'group') start(id);
+    return m;
+  }
+  const addBuiltin = (def) => {
+    baseDefs[def.id] = def;
+    return applyBuiltin(def.id);
+  };
+  /** Saves your version of a built-in (its steps, kind, code… as the editor has them). */
+  function customize(id, def) {
+    if (!baseDefs[id]) return null;
+    const custom = {};
+    CUSTOM_FIELDS.forEach((k) => def[k] !== undefined && (custom[k] = JSON.parse(JSON.stringify(def[k]))));
+    // the editor's version already holds the row choices, interval and code: drop the separate ones
+    const fav = prefs[id] && prefs[id].fav;
+    prefs[id] = { custom, ...(fav ? { fav } : {}) };
+    const m = applyBuiltin(id);
+    changed(id);
+    return m;
+  }
+  /** Back to the built-in as it comes (keeping only whether it's a favourite). */
+  function revert(id) {
+    if (!baseDefs[id]) return null;
+    const fav = prefs[id] && prefs[id].fav;
+    prefs[id] = fav ? { fav } : {};
+    const m = applyBuiltin(id);
+    changed(id);
+    return m;
+  }
+  /** Whether a built-in has been changed from how it comes (edited, or its settings changed). */
+  const isCustomized = (id) => !!(baseDefs[id] && prefs[id] && Object.keys(prefs[id]).some((k) => k !== 'fav'));
 
   /** Creates or updates one of your macros; returns it. Built-ins can't be changed. */
   function save(def) {
-    if (def.id && byId[def.id] && byId[def.id].builtin) throw new Error('Built-in macros can’t be edited — duplicate it instead.');
+    if (def.id && byId[def.id] && byId[def.id].builtin) return customize(def.id, def);
     const wasOn = def.id && isOn(def.id);
     if (wasOn) stop(def.id);
     const m = add({ ...def, id: def.id || newId(), builtin: false });
@@ -345,7 +397,7 @@ CA.Macros = (() => {
   }
   /** The blocks a flow runs (a built-in's built from its settings). */
   /** An algorithmic macro's code: yours, or a built-in's (as you edited it, else its default). */
-  const sourceOf = (m) => (m.builtin ? (prefs[m.id] && typeof prefs[m.id].source === 'string' ? prefs[m.id].source : m.defaultSource) : m.source);
+  const sourceOf = (m) => (m.builtin ? (prefs[m.id] && typeof prefs[m.id].source === 'string' ? prefs[m.id].source : typeof m.source === 'string' ? m.source : m.defaultSource) : m.source);
   /** Sets a built-in's code (null: back to its default), restarting it if it's running. */
   function setSource(id, source) {
     const m = byId[id];
@@ -732,6 +784,10 @@ CA.Macros = (() => {
       if (d && d.id && !(byId[d.id] && byId[d.id].builtin)) add({ ...d, builtin: false });
     });
     prefs = data.prefs && typeof data.prefs === 'object' ? { ...data.prefs } : {};
+    // your versions of the built-ins (and back to the originals where you had none)
+    Object.keys(baseDefs).forEach((id) => {
+      if ((prefs[id] && prefs[id].custom) || (byId[id] && byId[id].customized)) applyBuiltin(id);
+    });
     changed(null);
   }
 
@@ -744,7 +800,7 @@ CA.Macros = (() => {
   }
 
   function init() {
-    BUILTINS.forEach((d) => add({ ...d, builtin: true }));
+    BUILTINS.forEach((d) => addBuiltin(d));
 
     CA.Settings.defineOption({
       key: 'disableOnAscend',
@@ -805,6 +861,9 @@ CA.Macros = (() => {
     groupsWith,
     isFav,
     setFav,
+    customize,
+    revert,
+    isCustomized,
     stepsOf,
     setParam,
     everyOf,

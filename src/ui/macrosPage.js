@@ -74,11 +74,15 @@ CA.UI.MacrosPage = (() => {
     const out = [];
     if (m.mode === 'repeat' || m.mode === 'when' || m.mode === 'flow') {
       const cur = M().everyOf(m);
-      const opts = EVERY.filter((ms) => ms >= M().MIN_EVERY).concat(EVERY.includes(cur) ? [] : [cur]).sort((a, b) => a - b);
+      // fast ones (under a second) as "times a second" — up to the game's own limit of 50 clicks a
+      // second (main.js ignores clicks closer than 20 ms); slower ones in seconds
+      const rate = m.every < 1000;
+      const max = 1000 / M().MIN_EVERY;
+      const val = rate ? Math.round((1000 / cur) * 100) / 100 : Math.round((cur / 1000) * 100) / 100;
       out.push({
-        label: m.mode === 'when' ? 'Check' : m.mode === 'flow' ? 'A pass' : 'Run',
+        label: rate ? (m.mode === 'when' ? 'Checks a second' : 'Times a second') : m.mode === 'when' ? 'Check every (s)' : m.mode === 'flow' ? 'A pass every (s)' : 'Every (s)',
         summary: everyLabel(cur),
-        html: `<select data-macro-every="${esc(m.id)}">${opts.map((ms) => `<option value="${ms}"${ms === cur ? ' selected' : ''}>${everyLabel(ms)}</option>`).join('')}</select>`,
+        html: `<input type="number" class="ca-every-num" data-macro-every="${esc(m.id)}" data-every-as="${rate ? 'rate' : 'secs'}" min="${rate ? 0.1 : M().MIN_EVERY / 1000}" ${rate ? `max="${max}"` : ''} step="any" value="${val}">` + (rate ? `<em class="ca-shift-hint">max ${max}</em>` : ''),
       });
     }
     const fo = M().flowOptsOf(m);
@@ -235,7 +239,7 @@ CA.UI.MacrosPage = (() => {
       `<div class="ca-mtile ca-macro" data-macro-row="${esc(m.id)}">` +
       '<div class="ca-mtile-head">' +
       icon(m) +
-      `<div class="ca-mtile-name"><b>${esc(m.name)}</b><span class="ca-badge ca-badge-${m.mode}">${esc(M().triggerText(m))}</span></div>` +
+      `<div class="ca-mtile-name"><b>${esc(m.name)}</b><span class="ca-badge ca-badge-${m.mode}">${esc(M().triggerText(m))}</span>${M().isCustomized(m.id) ? '<span class="ca-badge ca-badge-edited" title="Changed from how it comes — Edit → Revert to default to undo">edited</span>' : ''}</div>` +
       (once
         ? C().button(`${I('play', 12)} Run`, `data-ca="macro-run" data-id="${esc(m.id)}"`, 'ca-btn-small ca-btn-run')
         : C().toggle(false, `data-ca="macro-toggle" data-id="${esc(m.id)}"${noCM ? ' disabled' : ''}`, m.name)) +
@@ -253,7 +257,7 @@ CA.UI.MacrosPage = (() => {
       '<div class="ca-mtile-foot">' +
       `<button type="button" class="ca-iconbtn ca-fav${fav ? ' on' : ''}" data-ca="macro-fav" data-id="${esc(m.id)}" title="${fav ? 'Un-favourite (removes its button from the left panel)' : 'Favourite: gives it its own button on the left panel'}">${I(fav ? 'star' : 'starOutline', 14)}</button>` +
       `<button type="button" class="ca-iconbtn" data-ca="macro-dup" data-id="${esc(m.id)}" title="Duplicate into your own editable macro">${I('plus', 13)}</button>` +
-      (m.mode === 'flow' && typeof m.defaultSource === 'string' ? C().button(`${I('edit', 11)} Edit its code`, `data-ca="macro-code" data-id="${esc(m.id)}"`, 'ca-btn-small') : '') +
+      C().button(`${I('edit', 11)} Edit`, `data-ca="macro-edit" data-id="${esc(m.id)}"`, 'ca-btn-small') +
       C().hotkey(`macro.${m.id}`) +
       '</div></div>'
     );
@@ -692,28 +696,25 @@ CA.UI.MacrosPage = (() => {
       // header: icon, name, description, the buttons
       '<div class="ca-ed-head">' +
       `<span class="ca-ed-icon">${icon({ icon: d.icon })}</span>` +
-      (d.builtinSource
-        ? `<div class="ca-ed-names"><b class="ca-ed-fixed">${esc(d.name)} — its code</b><span class="ca-ed-fixed-sub">a built-in: change it as you like, “Reset to default” brings back the original</span></div>`
-        : '<div class="ca-ed-names">' +
-          `<input type="text" class="ca-ed-name" maxlength="60" data-edit="name" value="${esc(d.name)}" placeholder="${d.id ? 'Name' : 'Name your macro…'}">` +
-          `<input type="text" class="ca-ed-desc" maxlength="300" data-edit="desc" value="${esc(d.desc)}" placeholder="What it does (optional)">` +
-          '</div>') +
+      '<div class="ca-ed-names">' +
+      `<input type="text" class="ca-ed-name" maxlength="60" data-edit="name" value="${esc(d.name)}" placeholder="${d.id ? 'Name' : 'Name your macro…'}">` +
+      `<input type="text" class="ca-ed-desc" maxlength="300" data-edit="desc" value="${esc(d.desc)}" placeholder="What it does (optional)">` +
+      (d.builtinEdit ? '<span class="ca-ed-fixed-sub">a built-in — change anything; “Revert to default” brings back the original</span>' : '') +
+      '</div>' +
       '<div class="ca-ed-actions">' +
       C().button(`${I('save', 13)} Save`, 'data-edit-act="save"', 'ca-btn-on') +
       C().button('Cancel', 'data-edit-act="cancel"') +
-      (d.builtinSource ? C().button(`${I('refresh', 12)} Reset to default`, 'data-edit-act="reset-source" data-arm-label="Back to the original?"') : '') +
-      (d.id && !d.builtinSource ? C().button(`${I('trash', 13)}`, 'data-edit-act="delete" data-arm-label="Delete it?" title="Delete this macro"', 'ca-btn-off') : '') +
+      (d.builtinEdit ? C().button(`${I('refresh', 12)} Revert to default`, 'data-edit-act="revert" data-arm-label="Back to the original?"') : '') +
+      (d.id && !d.builtinEdit ? C().button(`${I('trash', 13)}`, 'data-edit-act="delete" data-arm-label="Delete it?" title="Delete this macro"', 'ca-btn-off') : '') +
       '</div></div>' +
       (draftError ? `<div class="ca-editor-error">${esc(draftError)}</div>` : '') +
       // the editor, with the library always beside it
       '<div class="ca-ed-layout"><div class="ca-editor-body">' +
       // the kind of macro, as cards
-      (d.builtinSource
-        ? ''
-        : `<div class="ca-ed-kinds">${MODES.map(
+      (`<div class="ca-ed-kinds">${MODES.map(
             (x) => `<button type="button" class="ca-ed-kind${x.v === d.mode ? ' on' : ''}" data-edit-act="mode" data-val="${x.v}">${I(x.icon, 16)}<b>${x.label}</b><span>${esc(x.hint)}</span></button>`
           ).join('')}</div>`);
-    if (d.mode !== 'once' && d.mode !== 'group' && !d.builtinSource) {
+    if (d.mode !== 'once' && d.mode !== 'group') {
       const secs = d.every / 1000;
       h +=
         '<div class="ca-ed-row">' +
@@ -752,9 +753,7 @@ CA.UI.MacrosPage = (() => {
         `<button type="button" class="ca-btn ca-btn-small ca-ed-add" data-edit-act="step-add" data-path="steps">${I('plus', 12)} Add step</button></div></div>`;
     }
     h +=
-      (d.builtinSource
-        ? ''
-        : `<div class="ca-ed-sec ca-ed-icons"><div class="ca-ed-sec-head">${I('star', 12)} Icon</div><div class="ca-iconpick">${ICONS.map(
+      (`<div class="ca-ed-sec ca-ed-icons"><div class="ca-ed-sec-head">${I('star', 12)} Icon</div><div class="ca-iconpick">${ICONS.map(
             (n) => `<button type="button" class="ca-iconbtn${(d.icon || {}).ico === n ? ' on' : ''}" data-edit-act="icon" data-val="${n}" title="${n}">${I(n, 16)}</button>`
           ).join('')}</div></div>`) +
       '</div>' +
@@ -783,7 +782,9 @@ CA.UI.MacrosPage = (() => {
     if (el.dataset && el.dataset.macroEvery) {
       if (e.type !== 'change') return;
       CA.Util.sound('snd/tick.mp3');
-      M().setEvery(el.dataset.macroEvery, Number(el.value));
+      const v = Number(el.value);
+      if (!(v > 0)) return;
+      M().setEvery(el.dataset.macroEvery, el.dataset.everyAs === 'rate' ? 1000 / Math.min(v, 1000 / M().MIN_EVERY) : el.dataset.everyAs === 'secs' ? v * 1000 : v);
       refreshSummary(el);
       return;
     }
@@ -907,10 +908,12 @@ CA.UI.MacrosPage = (() => {
       M().remove(d.id);
       draft = null;
       return rerender();
-    } else if (act === 'reset-source') {
+    } else if (act === 'revert') {
       if (!CA.UI.Menu.armed(t)) return;
-      const m = M().get(d.id);
-      if (m) d.source = m.defaultSource;
+      M().revert(d.id);
+      CA.Util.notify(d.name, 'Back to how it comes.', CA.ICON, 2);
+      draft = null;
+      return rerender();
     } else if (act === 'save' && d.mode === 'flow') {
       // an algorithm: it has to read right before it's kept
       const r = CA.Script.compile(d.source || '');
@@ -921,12 +924,6 @@ CA.UI.MacrosPage = (() => {
       if (!r.flow.length) {
         draftError = 'Write at least one line.';
         return renderEditor();
-      }
-      if (d.builtinSource) {
-        M().setSource(d.id, d.source);
-        CA.Util.notify(d.name, 'Its code is saved.', CA.ICON, 2);
-        draft = null;
-        return rerender();
       }
       d.flow = r.flow;
       draftError = validate(d);
@@ -969,17 +966,18 @@ CA.UI.MacrosPage = (() => {
   /** Opens the editor on macro `id`, or a new macro (optionally starting from `preset` fields). */
   function edit(id, preset) {
     const m = id ? M().get(id) : null;
-    if (m && m.builtin && m.mode === 'flow' && typeof m.defaultSource === 'string') {
-      // a built-in algorithm: only its code can change
-      draft = { ...blankDraft(), id: m.id, name: m.name, desc: m.desc, icon: m.icon, mode: 'flow', every: M().everyOf(m), source: M().sourceOf(m), builtinSource: true };
-      if (CA.Settings.get('tab') !== 'clickers' && CA.UI.Menu.isOpen()) CA.Settings.set('tab', 'clickers');
-      draftError = '';
-      rerender();
-      const ed = root && root.querySelector('[data-macro-editor]');
-      if (ed) CA.Util.scrollInPanel(ed);
-      return;
-    }
-    draft = m ? JSON.parse(JSON.stringify(m)) : { ...blankDraft(), ...(preset || {}) };
+    // a built-in: edited as it runs now (its row choices, interval and code included)
+    draft = m
+      ? JSON.parse(
+          JSON.stringify({
+            ...m,
+            steps: M().stepsOf(m),
+            every: M().everyOf(m),
+            source: m.mode === 'flow' ? M().sourceOf(m) : m.source,
+            builtinEdit: !!m.builtin,
+          })
+        )
+      : { ...blankDraft(), ...(preset || {}) };
     if (draft.mode === 'flow' && typeof draft.source !== 'string') draft.source = CA.Script.decompile(draft.flow || []);
     if (!draft.when || !Array.isArray(draft.when.all)) draft.when = blankWhen();
     if (!Array.isArray(draft.members)) draft.members = [];
@@ -1232,10 +1230,6 @@ CA.UI.MacrosPage = (() => {
         rerender();
         return true;
       }
-      case 'macro-code':
-        CA.Util.sound('snd/tick.mp3');
-        edit(id);
-        return true;
       case 'macro-locate': {
         const card = root && [...root.querySelectorAll('.ca-macro[data-macro-row]')].find((c) => c.dataset.macroRow === id);
         if (card) {
