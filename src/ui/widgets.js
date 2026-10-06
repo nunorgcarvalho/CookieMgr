@@ -27,6 +27,8 @@ CA.UI = CA.UI || {};
 CA.UI.Widgets = (() => {
   const TICK_MS = 500;
   const DRAG_PX = 4; // a press that moves less than this is a click, not a drag
+  const HOLD_DELAY_MS = 350; // holding a buying macro's button this long…
+  const HOLD_MS = 80; // …runs it this often until you let go
   const BUTTON_PX = 44; // macro button size incl. spacing, for laying out new ones
   const SCALE_MIN = 0.6;
   const SCALE_MAX = 3;
@@ -35,7 +37,7 @@ CA.UI.Widgets = (() => {
   const MIN_W = 140;
   const MIN_H = 60;
   const SAVED = ['count', 'types', 'stats', 'font', 'title', 'target', 'targetMagic']; // per-widget settings that are saved
-  const TRANSIENT = ['ca-shake']; // classes a refresh leaves alone
+  const TRANSIENT = ['ca-shake', 'ca-holding']; // classes a refresh leaves alone
   const S = () => CA.Settings;
   const I = (n, s) => CA.UI.Icons.html(n, s);
   const esc = (s) => CA.Util.escapeHtml(s);
@@ -346,6 +348,21 @@ CA.UI.Widgets = (() => {
       baseH: el.offsetHeight || 1,
       moved: false,
     };
+    // holding down a buying macro's button buys fast (one run of its steps every HOLD_MS)
+    const m = w.type === 'macro' && !grip ? CA.Macros.get(w.macro) : null;
+    if (m && m.holdRepeat) {
+      const p = press;
+      p.holdStart = setTimeout(() => {
+        p.holding = true;
+        const btn = el.querySelector('[data-w-trigger]');
+        if (btn) btn.classList.add('ca-holding');
+        const once = () => {
+          if (CA.Macros.runOnce(m.id) > 0) CA.Util.sound('snd/buy1.mp3');
+        };
+        once();
+        p.holdTimer = setInterval(once, HOLD_MS);
+      }, HOLD_DELAY_MS);
+    }
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
   }
@@ -357,6 +374,7 @@ CA.UI.Widgets = (() => {
     if (!press.moved) {
       if (Math.abs(dx) < DRAG_PX && Math.abs(dy) < DRAG_PX) return;
       press.moved = true;
+      stopHold(press);
       press.el.classList.add(press.mode === 'resize' ? 'resizing' : 'dragging');
     }
     const { w, el } = press;
@@ -379,18 +397,27 @@ CA.UI.Widgets = (() => {
     moveTo(w, el, press.left, press.top);
   }
 
+  function stopHold(p) {
+    clearTimeout(p.holdStart);
+    clearInterval(p.holdTimer);
+    const btn = p.el.querySelector('[data-w-trigger]');
+    if (btn) btn.classList.remove('ca-holding');
+  }
+
   function onMouseUp() {
     if (!press) return;
     const moved = press.moved;
+    const held = !!press.holding;
+    stopHold(press);
     press.el.classList.remove('dragging', 'resizing');
     press = null;
     window.removeEventListener('mousemove', onMouseMove);
     window.removeEventListener('mouseup', onMouseUp);
-    if (moved) {
-      swallowClick = true; // the click that follows a drag isn't a click
+    if (moved || held) {
+      swallowClick = true; // the click that follows a drag (or a hold) isn't a click
       setTimeout(() => (swallowClick = false), 0);
-      CA.Events.emit('widgets');
     }
+    if (moved) CA.Events.emit('widgets');
   }
 
   function onClick(e) {
@@ -470,6 +497,17 @@ CA.UI.Widgets = (() => {
     editing = id;
     if (CA.UI.Menu.isOpen() && CA.Settings.get('tab') === 'widgets') CA.UI.Menu.render();
     else CA.UI.Menu.openPage('widgets');
+    revealEditor();
+  }
+
+  /** Scrolls the panel to a widget's settings (at the top of the Widgets page) and flashes them. */
+  function revealEditor() {
+    const ed = document.querySelector('#CookieMgrMenu [data-w-editor]');
+    if (!ed) return;
+    if (ed.scrollIntoView) ed.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    ed.classList.remove('ca-reveal');
+    void ed.offsetWidth;
+    ed.classList.add('ca-reveal');
   }
 
   /** Applies one setting change from the editor and redraws the widget. */
@@ -490,8 +528,15 @@ CA.UI.Widgets = (() => {
       `<div class="ca-wf"><span class="ca-wf-label">${label}</span><div class="ca-wf-input">${input}</div>${hint ? `<span class="ca-wf-hint">${hint}</span>` : ''}</div>`;
     const range = (key, min, max, val, type) =>
       `<input type="range" min="${min}" max="${max}" step="5" value="${val}" data-w-opt="${key}" data-type="${type}"><span class="ca-range-val">${val}%</span>`;
-    let look = field('Text size', range('font', FONT_MIN, FONT_MAX, Math.round(fontOf(w) * 100), 'number'));
-    if (t.resize === 'scale') look += field('Size', range('scale', SCALE_MIN * 100, SCALE_MAX * 100, Math.round(scaleOf(w) * 100), 'percent'), 'or drag its corner');
+    // one-click sizes beside each slider
+    const presets = (key, list, cur) =>
+      `<div class="ca-wpresets">${list.map(([v, label]) => `<button type="button" class="ca-chip${Math.round(cur) === v ? ' on' : ''}" data-w-preset="${key}" data-val="${v}">${label}</button>`).join('')}</div>`;
+    const font = Math.round(fontOf(w) * 100);
+    let look = field('Text size', presets('font', [[80, 'S'], [100, 'M'], [130, 'L'], [170, 'XL']], font) + range('font', FONT_MIN, FONT_MAX, font, 'number'));
+    if (t.resize === 'scale') {
+      const sc = Math.round(scaleOf(w) * 100);
+      look += field('Size', presets('scale', [[75, 'S'], [100, 'M'], [150, 'L'], [200, 'XL']], sc) + range('scale', SCALE_MIN * 100, SCALE_MAX * 100, sc, 'percent'), 'or drag its corner');
+    }
     else look += field('Title', `<input type="text" maxlength="40" value="${esc(w.title || '')}" placeholder="${esc(t.name)}" data-w-opt="title" data-type="text">`);
     let shows = '';
     (t.settings || []).forEach((s) => {
@@ -521,8 +566,17 @@ CA.UI.Widgets = (() => {
           '</div></div>';
       }
     });
+    // where it sits: snap to a corner, an edge or the middle of the left panel
+    const spots = [0, 0.5, 1];
+    const at = (v) => spots.reduce((a, b) => (Math.abs(b - v) < Math.abs(a - v) ? b : a));
+    const place =
+      `<div class="ca-wsnap">${[].concat(
+        ...spots.map((y) =>
+          spots.map((x) => `<button type="button" class="ca-wsnap-cell${at(w.x) === x && at(w.y) === y && Math.abs(w.x - x) < 0.02 && Math.abs(w.y - y) < 0.02 ? ' on' : ''}" data-w-snap="${x},${y}" title="Move it here"><i></i></button>`)
+        )
+      ).join('')}</div><span class="ca-wf-hint">snap it to a corner, an edge or the middle — or drag it anywhere</span>`;
     return (
-      `<div class="ca-card ca-weditor" data-w-editor="${esc(w.id)}" data-wlink="${esc(w.id)}">` +
+      `<div class="ca-card ca-weditor ca-wtheme-${esc(w.type)}" data-w-editor="${esc(w.id)}" data-wlink="${esc(w.id)}">` +
       '<div class="ca-weditor-head">' +
       `<span class="ca-weditor-ico">${I(t.icon, 20)}</span>` +
       `<div class="ca-weditor-title"><b>${esc(nameOf(w))}</b><span>${esc(w.type === 'macro' ? 'Macro button' : t.name)} · glowing on the left panel</span></div>` +
@@ -532,6 +586,7 @@ CA.UI.Widgets = (() => {
       '<div class="ca-weditor-body">' +
       `<div class="ca-weditor-sec"><div class="ca-weditor-sec-head">${I('widget', 12)} Look</div>${look}</div>` +
       (shows ? `<div class="ca-weditor-sec"><div class="ca-weditor-sec-head">${I('filter', 12)} Shows</div>${shows}</div>` : '') +
+      `<div class="ca-weditor-sec ca-weditor-place"><div class="ca-weditor-sec-head">${I('grip', 12)} Place</div>${place}</div>` +
       '</div></div>'
     );
   }
@@ -765,6 +820,23 @@ CA.UI.Widgets = (() => {
     setLinked(el ? el.dataset.widget : null);
   }
   function onPageClick(e) {
+    const pre = e.target.closest('[data-w-preset],[data-w-snap]');
+    if (pre) {
+      e.stopPropagation();
+      CA.Util.sound('snd/tick.mp3');
+      const w = get(editing);
+      if (!w) return;
+      if (pre.dataset.wPreset === 'font') w.font = Number(pre.dataset.val);
+      else if (pre.dataset.wPreset === 'scale') w.scale = Number(pre.dataset.val) / 100;
+      else if (pre.dataset.wSnap) {
+        const [x, y] = pre.dataset.wSnap.split(',').map(Number);
+        w.x = x;
+        w.y = y;
+      }
+      changed();
+      CA.UI.Menu.render();
+      return;
+    }
     const t = e.target.closest('[data-w-page-add],[data-w-page-remove],[data-w-page-clear],[data-w-page-edit],[data-w-page-del],[data-w-edit-done]');
     if (!t) return;
     e.stopPropagation();
@@ -774,7 +846,12 @@ CA.UI.Widgets = (() => {
       add(d.wPageAdd);
       if (!S().get('widgetsShown')) S().set('widgetsShown', true);
     } else if ('wPageRemove' in d) widgets.filter((w) => w.type === d.wPageRemove).forEach((w) => remove(w.id));
-    else if ('wPageEdit' in d) editing = d.wPageEdit;
+    else if ('wPageEdit' in d) {
+      editing = d.wPageEdit;
+      CA.UI.Menu.render();
+      revealEditor();
+      return;
+    }
     else if ('wPageDel' in d) remove(d.wPageDel);
     else if ('wEditDone' in d) editing = null;
     else if ('wPageClear' in d) {

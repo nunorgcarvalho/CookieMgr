@@ -325,6 +325,7 @@ CA.AutoBuy = (() => {
       steps: [{ action: 'cm.buyBuilding', params: { skip: false } }],
       shift: { step: 0, key: 'skip', on: 'skips what you can’t afford', off: 'saves up for the best' },
       needsCM: true,
+      holdRepeat: true,
       section: 'buying',
     });
     M.addBuiltin({
@@ -337,6 +338,7 @@ CA.AutoBuy = (() => {
       steps: [{ action: 'cm.buyUpgrade', params: { skip: false } }],
       shift: { step: 0, key: 'skip', on: 'skips what you can’t afford', off: 'saves up for the best' },
       needsCM: true,
+      holdRepeat: true,
       section: 'buying',
     });
     M.addBuiltin({
@@ -347,6 +349,7 @@ CA.AutoBuy = (() => {
       mode: 'repeat',
       every: 2000,
       steps: [{ action: 'buy.research', params: { stopBefore: 'One mind' } }],
+      holdRepeat: true,
       section: 'buying',
     });
     M.addBuiltin({
@@ -357,6 +360,7 @@ CA.AutoBuy = (() => {
       mode: 'repeat',
       every: 1000,
       steps: [{ action: 'buy.cheapUpgrades', params: { secs: 1 } }],
+      holdRepeat: true,
       section: 'buying',
     });
     M.addBuiltin({

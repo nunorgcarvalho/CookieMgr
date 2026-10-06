@@ -4485,3 +4485,131 @@ body.ca-has-storebar #products {
   gap: 3px;
   margin-top: 2px;
 }
+
+/* ---------- v2.23: livelier widget settings, holding a buying button ---------- */
+
+/* the settings box arrives with a glow */
+#CookieMgrMenu .ca-weditor.ca-reveal {
+  animation: caReveal 1.2s ease-out;
+}
+@keyframes caReveal {
+  0%,
+  25% {
+    box-shadow:
+      0 0 0 2px #ffd36a,
+      0 0 26px rgba(255, 211, 106, 0.6);
+  }
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(255, 211, 106, 0.5),
+      0 0 18px rgba(255, 200, 100, 0.15);
+  }
+}
+/* its header in the widget's own colour */
+#CookieMgrMenu .ca-weditor {
+  --wt: #e0b45a;
+}
+#CookieMgrMenu .ca-wtheme-grimoire {
+  --wt: #b48cf0;
+}
+#CookieMgrMenu .ca-wtheme-garden {
+  --wt: #8fd45e;
+}
+#CookieMgrMenu .ca-wtheme-market {
+  --wt: #4fd6e0;
+}
+#CookieMgrMenu .ca-wtheme-pantheon {
+  --wt: #ffd36a;
+}
+#CookieMgrMenu .ca-wtheme-stats {
+  --wt: #6fb3e6;
+}
+#CookieMgrMenu .ca-wtheme-events {
+  --wt: #ff9f43;
+}
+#CookieMgrMenu .ca-wtheme-status {
+  --wt: #7dff8a;
+}
+#CookieMgrMenu .ca-weditor .ca-weditor-head {
+  background:
+    radial-gradient(ellipse at 0% 50%, color-mix(in srgb, var(--wt) 35%, transparent), transparent 70%),
+    linear-gradient(to right, rgba(255, 210, 110, 0.08), transparent);
+  border-bottom-color: color-mix(in srgb, var(--wt) 40%, transparent);
+}
+#CookieMgrMenu .ca-weditor .ca-weditor-ico {
+  color: var(--wt);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--wt) 60%, transparent),
+    0 0 12px color-mix(in srgb, var(--wt) 35%, transparent);
+}
+#CookieMgrMenu .ca-weditor .ca-weditor-sec-head {
+  color: color-mix(in srgb, var(--wt) 70%, #93866f);
+}
+#CookieMgrMenu .ca-weditor .ca-wf-input input[type="range"] {
+  accent-color: var(--wt);
+}
+#CookieMgrMenu .ca-wpresets {
+  display: inline-flex;
+  gap: 2px;
+}
+#CookieMgrMenu .ca-wpresets .ca-chip {
+  min-width: 26px;
+  padding: 1px 5px;
+  font-size: 10px;
+  text-align: center;
+}
+#CookieMgrMenu .ca-wf-input {
+  flex-wrap: wrap;
+}
+/* the place grid: a miniature left panel with nine spots */
+#CookieMgrMenu .ca-wsnap {
+  display: grid;
+  grid-template-columns: repeat(3, 26px);
+  grid-auto-rows: 26px;
+  gap: 3px;
+  padding: 4px;
+  width: max-content;
+  border-radius: 6px;
+  background: linear-gradient(to bottom, #1b2533, #0e131b);
+  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.2);
+}
+#CookieMgrMenu .ca-wsnap-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed rgba(255, 220, 150, 0.18);
+  border-radius: 4px;
+  cursor: pointer;
+}
+#CookieMgrMenu .ca-wsnap-cell i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 220, 150, 0.25);
+}
+#CookieMgrMenu .ca-wsnap-cell:hover i {
+  background: #ffd98a;
+}
+#CookieMgrMenu .ca-wsnap-cell.on {
+  border-style: solid;
+  border-color: var(--wt);
+}
+#CookieMgrMenu .ca-wsnap-cell.on i {
+  width: 12px;
+  height: 12px;
+  background: var(--wt);
+  box-shadow: 0 0 8px var(--wt);
+}
+#CookieMgrMenu .ca-weditor-place .ca-wf-hint {
+  grid-column: auto;
+}
+
+/* holding a buying macro's button: it buys while it glows */
+#CookieMgrWidgets .ca-wb.ca-holding {
+  transform: scale(0.94);
+  box-shadow:
+    0 0 0 3px #ffd36a,
+    0 0 16px rgba(255, 211, 106, 0.8);
+}

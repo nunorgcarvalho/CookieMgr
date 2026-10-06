@@ -99,7 +99,7 @@ CA.Seasons = (() => {
   /** The flow for an order of seasons: research alongside; each season until complete; the last held, then out of the Grandmapocalypse. */
   function makeFlow(opts) {
     const order = (Array.isArray(opts.order) && opts.order.length ? opts.order : DEFAULT_ORDER).filter((s) => SEASONS.some((x) => x.v === s));
-    const exit = opts.exit || 'covenant';
+    const exit = opts.exit || 'pledge';
     const seasonsBranch = [];
     order.forEach((s, i) => {
       (HELPERS[s] || []).forEach((m) => seasonsBranch.push(doIt('macro.set', { macro: m, to: 'on' })));
@@ -209,7 +209,7 @@ CA.Seasons = (() => {
           key: 'exit',
           label: 'At the last season',
           type: 'select',
-          default: 'covenant',
+          default: 'pledge',
           options: () => [
             { v: 'covenant', label: 'leave the Grandmapocalypse for good' },
             { v: 'pledge', label: 'keep the elders pledged' },

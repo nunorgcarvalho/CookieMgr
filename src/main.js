@@ -46,6 +46,7 @@ const mod = {
     CA.GameStates.init();
     CA.Recorder.init();
     CA.GameEvents.init();
+    CA.NotifyTips.init();
     CA.UI.Graphs.init();
     CA.UI.EventsPage.init();
     CA.UI.MacrosPage.init();

@@ -130,11 +130,15 @@ CA.GameActions = (() => {
             { v: 'keep', label: 'Leave them alone' },
           ],
         },
+        // a wrinkler only gives drops (Halloween cookies, ambergris…) once it has eaten something
+        // (main.js: sucked > 0.5) — popping it the moment it latches on gives nothing
+        { key: 'fed', label: 'Wait until it has eaten (so it can drop something)', type: 'bool', default: true },
       ],
-      describe: (p) => (p.shiny === 'keep' ? 'Pop wrinklers (not shiny ones)' : 'Pop wrinklers'),
+      describe: (p) => `Pop wrinklers${p.fed !== false ? ' once fed' : ' at once'}${p.shiny === 'keep' ? ' (not shiny ones)' : ''}`,
       run: (p) => {
         let n = 0;
         (Game.wrinklers || []).forEach((w) => {
+          if (p.fed !== false && !((w.sucked || 0) > 0.5)) return;
           if (w.phase > 0 && w.hp > 0 && !(p.shiny === 'keep' && w.type === 1)) {
             w.hp = 0; // the game pops it on its next frame, paying out as usual
             n++;

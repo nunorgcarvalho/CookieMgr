@@ -23,7 +23,7 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 | **Widget** | Something on the game's left panel: a macro's button, the Running now bar, quick stats, events, minigames. |
 
-## Features (v2.22)
+## Features (v2.23)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
 the data pages **Events** and **Graphs**; the minigames **Garden**, **Stock market**, **Pantheon** and **Grimoire**;
@@ -167,7 +167,8 @@ the way to switch several at once.)
 Every built-in has **settings**: the line under its description sums them up — click it to change them. How often it
 runs ("20× a second", "every 1s"…), and every choice its actions have: how the **Big cookie**'s clicks look (the
 falling cookie and the "+N" number, the cookie only, or nothing — your own clicks are left as the game has them),
-whether **Wrinklers** spares shiny ones, whether the **Stock market autobuyer** may buy (off: it only sells what you
+whether **Wrinklers** waits until a wrinkler has eaten before popping it (only then can it drop Halloween cookies
+and such — **shift-click** its button to pop them at once) and spares shiny ones, whether the **Stock market autobuyer** may buy (off: it only sells what you
 hold when it stops rising — **shift-click** its button on the left panel to switch), and when the **Sugar lump
 harvester** picks: **ripe** (always pays) or
 **mature** (about 3 hours sooner, but with the game's 50% chance of getting nothing).
@@ -177,8 +178,8 @@ research right away (which starts the Grandmapocalypse — Halloween's cookies c
 goes through the seasons in your order: for each, it switches on what collects its drops (reindeer for Christmas,
 golden and wrath cookies for Easter, wrinklers for Halloween), keeps the season on, buys its drops as they show up
 (and upgrades Santa), until the season is complete — every one of its cookies and upgrades owned. On the last
-season it stays, and leaves the Grandmapocalypse (Elder Pledge, then the Elder Covenant — or keeps pledging, or
-stays, as you choose). Its settings: the season order (default Christmas → Easter → Halloween → Valentine's day →
+season it stays, and leaves the Grandmapocalypse (by default it keeps the elders pledged — or takes the Elder
+Covenant, or stays, as you choose). Its settings: the season order (default Christmas → Easter → Halloween → Valentine's day →
 Business day; reorder, drop or add seasons) and what to do at the end. Duplicate it to change the flow itself.
 
 **Your macros** — **New macro** opens the editor: a header with the icon, name and description (Save, Cancel,
@@ -203,7 +204,8 @@ time to afford it + price ÷ CpS it adds). Best building buys one at a time — 
 store's Round to multiples is on (ranked by Cookie Monster's ×10 PP). Upgrades Cookie Monster gives no PP (clicking
 upgrades) are judged by what they add per click × your clicks per second. With both on, each buys only when the best
 of the two is its kind, so together they always buy the lowest PP overall. By default they save up for the best; their
-**Skip what you can't afford** setting (shift-click the button) buys the best affordable one instead. Their buttons
+**Skip what you can't afford** setting (shift-click the button) buys the best affordable one instead. **Hold** a
+buying macro's button (instead of clicking it) and it buys again and again, fast, until you let go. Their buttons
 are tinted muted green or red for whether the next purchase is affordable now (hover for what and when), and
 switching one on when it can't buy yet shakes it and says why. They need Cookie Monster: without it their cards say
 so, with a button to load it, and can't be switched on. **Research** buys the Bingo center's research as it appears,
@@ -327,13 +329,21 @@ Framed boxes (Quick stats, Latest events) are dragged by their title bar and fol
 from its bottom-right corner: buttons, round widgets and the status bar scale up or down keeping their shape, framed
 boxes take any width and height.
 
-**Settings:** a widget's ⚙ opens its settings on the Widgets page — **Look** (text size, and its size or a title) and
+**Settings:** a widget's ⚙ opens its settings on the Widgets page, scrolled into view, in the widget's own colour —
+**Place** (a grid that snaps it to a corner, an edge or the middle of the left panel), **Look** (text size and size,
+with S / M / L / XL presets, or a title) and
 **Shows** (whatever that widget adds: which Quick stats, how many events, the Grimoire's target…). Changes apply at
 once, and the widget glows on the left panel while its settings are open.
 
 **Your widgets** on the Widgets page is a small map of the left panel with every widget where it is (the big cookie
 drawn in for bearings), next to a chip for each. Hover a widget on the map, its chip, or the widget itself on the
 left panel, and all three light up together; click one for its settings, × on a chip to remove it.
+
+### Notifications
+
+Hover a notification about an upgrade or an achievement (unlocked, dropped, found…) for its tooltip — the same one the
+store and the stats menu show. The game only does this for a few of its notifications; CookieMgr adds it to every one
+that names an upgrade or achievement.
 
 ### Store
 

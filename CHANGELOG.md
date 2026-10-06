@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 2.23.0 — 2026-10-06
+
+- **Widget settings come to you:** the ⚙ (or a widget on the Widgets page) scrolls its settings into view with a
+  flash. Livelier too: the header in the widget's own colour, S / M / L / XL presets for text size and size, and a
+  **Place** grid that snaps the widget to a corner, an edge or the middle of the left panel.
+- **Hold a buying macro's button to buy fast** (Best building, Best upgrade, Research, Cheap upgrades): it buys again
+  and again until you let go — without switching the macro on.
+- **Wrinklers: pop once fed** (default) — only a wrinkler that has eaten can drop Halloween cookies and such — or at
+  once; shift-click its button to switch.
+- **Tooltips on notifications** about an upgrade or an achievement: the same tooltip the store and stats menu show.
+- SeasonCompletion now keeps the elders pledged by default at its last season.
+
 ## 2.22.0 — 2026-10-06
 
 - **Flow macros:** a new kind of macro — an agent made of blocks: Do (an action), Wait (until conditions hold), Until
