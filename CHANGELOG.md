@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+## 2.26.0 — 2026-10-06
+
+- **Garden rules**: what the Auto-gardener does is now algorithmic code, one set per garden profile, edited on the
+  Garden page's new **Rules** card (the macros' code editor, with the library beside it). **Save** keeps a profile's
+  own rules, **Revert to default** brings back the default ones; while the gardener runs, the lines it took light up
+  and its decisions show under the code.
+- **The default rules** do what the gardener did before (plant empty tiles at once, unlock new seeds, pull out
+  mismatches and harvest plants about to die in the last seconds before a tick — your old threshold and timing carry
+  over), plus a **soil rule**: fertilizer while more than 0.67 of the planted tiles are still growing, clay once a
+  third of them are mature. Change the numbers or the soils right in the code.
+- **The garden's own words** for rules and any algorithmic macro: `garden.plantEmpty()`, `garden.harvestNew()`,
+  `garden.pullMismatches(keepNew)`, `garden.harvestDying(threshold)`, `garden.harvestMature()`,
+  `garden.soil(type)`; the condition `garden.soilIs(type)`; the values `garden.tickIn()`, `garden.youngShare()`,
+  `garden.matureShare()`, `garden.plants()`, `garden.mature()`, `garden.empty()`, `garden.offProfile()`.
+- The death-chance threshold and "seconds before the tick" fields are gone from the Auto-gardener card — they're
+  numbers in the rules now.
+- Under the hood: the code editor and its library are one shared component (`ui/codeEditor.js`), used by the
+  macro editor and the garden rules.
+
 ## 2.25.0 — 2026-10-06
 
 - **Every built-in macro can be edited**: Edit on its card opens the full editor; your version replaces it (its card

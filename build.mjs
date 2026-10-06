@@ -62,6 +62,7 @@ const MODULES = [
   'ui/stockGraph.js',
   'ui/stockLog.js',
   'ui/bankToolbar.js',
+  'ui/codeEditor.js',
   'ui/macrosPage.js',
   'ui/widgets.js',
   'ui/widgetTypes.js',

@@ -133,48 +133,194 @@ CA.Garden = (() => {
     return true;
   }
 
+  // ---- rules: what the auto-gardener does, written as code (one set per profile) -----------------
+  //
+  // Each profile has rules — algorithmic code (features/script.js) run from the top on every pass
+  // of the auto-gardener — built from the garden's own actions, values and conditions below. A
+  // profile without rules of its own uses the default ones (which carry over the old settings:
+  // seconds before the tick, the death-chance threshold, unlocking new seeds).
+
+  function defaultRules() {
+    const lead = Math.max(1, Number(S().get('gardenLead')) || 15);
+    const thr = Math.max(0, Math.min(100, Number(S().get('gardenThreshold')))) / 100;
+    const lines = [
+      '# These rules run from the top every second while the Auto-gardener is on.',
+      '# Plant the profile\'s seed on every empty tile, right away.',
+      'garden.plantEmpty()',
+    ];
+    if (S().get('gardenUnlockNew') !== false) lines.push("# A seed you haven't unlocked: let it grow, harvest it once it's mature (that unlocks it).", 'garden.harvestNew()');
+    lines.push(
+      `# In the last ${lead} seconds before a garden tick:`,
+      `if garden.tickIn() <= ${lead}:`,
+      "  # pull out what isn't the profile's seed for its tile",
+      `  garden.pullMismatches(${S().get('gardenUnlockNew') !== false ? 'true' : 'false'})`
+    );
+    if (thr < 1) lines.push(`  # harvest mature plants more likely than ${Math.round(thr * 100)}% to die on the tick, then replant`, `  garden.harvestDying(${thr})`, '  garden.plantEmpty()');
+    lines.push(
+      '# Soil: fertilizer while most plants are still growing, clay once a third of them are mature.',
+      'if garden.youngShare() > 0.67:',
+      '  garden.soil(fertilizer)',
+      'else:',
+      '  garden.soil(clay)'
+    );
+    return lines.join('\n') + '\n';
+  }
+  const rulesOf = (p) => (p && typeof p.rules === 'string' ? p.rules : defaultRules());
+  /** Sets a profile's rules (null: back to the default ones). */
+  function setRules(id, src) {
+    const p = profiles.find((x) => x.id === id);
+    if (!p) return;
+    if (src == null) delete p.rules;
+    else p.rules = String(src).slice(0, 20000);
+    changed();
+  }
+  const compiled = new Map(); // source → { flow, errors }
+  function compileRules(src) {
+    if (!compiled.has(src)) {
+      if (compiled.size > 20) compiled.clear();
+      compiled.set(src, CA.Script.compile(src));
+    }
+    return compiled.get(src);
+  }
+
+  // what this pass has done (the actions count into it; the page shows it)
+  let pass = null;
+  const count = (k, n = 1) => pass && (pass[k] = (pass[k] || 0) + n);
+  /** Runs fn(M, profile) on a garden that can be tended, else 0. */
+  function withGarden(fn) {
+    const M = minigame();
+    const p = active();
+    if (!M || !p || M.freeze) return 0;
+    return fn(M, p) || 0;
+  }
+  const tilesOf = (M) => {
+    const out = [];
+    for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) if (unlockedTile(M, x, y)) out.push([x, y]);
+    return out;
+  };
+  const wantAt = (p, x, y) => (p.plot[y] && p.plot[y][x]) || null;
+  const isMature = (M, x, y) => {
+    const me = plantAt(M, x, y);
+    return !!me && M.plot[y][x][1] >= me.mature;
+  };
+
+  const actions = {
+    plantEmpty: () =>
+      withGarden((M, p) => {
+        let n = 0;
+        tilesOf(M).forEach(([x, y]) => {
+          const want = wantAt(p, x, y);
+          if (want && M.plants[want] && !plantAt(M, x, y) && plant(M, M.plants[want], x, y)) n++;
+        });
+        count('planted', n);
+        return n;
+      }),
+    harvestNew: () =>
+      withGarden((M) => {
+        let n = 0;
+        tilesOf(M).forEach(([x, y]) => {
+          const me = plantAt(M, x, y);
+          if (me && !me.unlocked && isMature(M, x, y) && M.harvest(x, y)) n++;
+        });
+        count('unlocked', n);
+        return n;
+      }),
+    pullMismatches: (keepNew) =>
+      withGarden((M, p) => {
+        let n = 0;
+        tilesOf(M).forEach(([x, y]) => {
+          const me = plantAt(M, x, y);
+          if (!me || me.key === wantAt(p, x, y)) return;
+          if (keepNew && !me.unlocked) return; // a new seed: harvestNew's
+          if (M.harvest(x, y)) n++;
+        });
+        count('harvested', n);
+        return n;
+      }),
+    harvestDying: (threshold) =>
+      withGarden((M, p) => {
+        let n = 0;
+        tilesOf(M).forEach(([x, y]) => {
+          const me = plantAt(M, x, y);
+          if (me && me.key === wantAt(p, x, y) && isMature(M, x, y) && decayChance(M, x, y) > threshold && M.harvest(x, y)) n++;
+        });
+        count('saved', n);
+        return n;
+      }),
+    harvestMature: () =>
+      withGarden((M, p) => {
+        let n = 0;
+        tilesOf(M).forEach(([x, y]) => {
+          const me = plantAt(M, x, y);
+          if (me && me.unlocked && me.key === wantAt(p, x, y) && isMature(M, x, y) && M.harvest(x, y)) n++;
+        });
+        count('harvested', n);
+        return n;
+      }),
+    soil: (key) =>
+      withGarden((M, p) => {
+        const k = key === 'profile' ? p.soil : key;
+        if (setSoil(M, k)) {
+          count('soil');
+          return 1;
+        }
+        return 0;
+      }),
+  };
+
+  /** Plants on the plot now: { planted, mature, young, empty, off } (empty: unlocked tiles with nothing). */
+  function census() {
+    const M = minigame();
+    const p = active();
+    const c = { planted: 0, mature: 0, young: 0, empty: 0, off: 0 };
+    if (!M) return c;
+    tilesOf(M).forEach(([x, y]) => {
+      const me = plantAt(M, x, y);
+      if (!me) c.empty++;
+      else {
+        c.planted++;
+        if (isMature(M, x, y)) c.mature++;
+        else c.young++;
+      }
+      if (p && (me ? me.key : null) !== wantAt(p, x, y)) c.off++;
+    });
+    return c;
+  }
+
   /**
-   * One pass of the auto-gardener over the active profile. Returns how many things it did and
-   * logs them by kind in `last` (for the page).
+   * One pass of the auto-gardener: the active profile's rules, from the top. Returns how many
+   * things it did; what it did by kind goes to `last`, and where the rules went to lastPass.
    */
   let last = { at: 0, harvested: 0, planted: 0, saved: 0, unlocked: 0, soil: false };
+  let lastPass = null; // { at, trace, lines, errors, t }
   function tend() {
     const M = minigame();
     const p = active();
     if (!M || !p || M.freeze) return 0;
-    const lead = Math.max(1, Number(S().get('gardenLead')) || 15);
-    const threshold = Math.max(0, Math.min(100, Number(S().get('gardenThreshold')))) / 100;
-    const inWindow = nextTickIn(M) <= lead;
-    const unlockNew = !!S().get('gardenUnlockNew');
-    const did = { harvested: 0, planted: 0, saved: 0, unlocked: 0, soil: false };
-    for (let y = 0; y < SIZE; y++) {
-      for (let x = 0; x < SIZE; x++) {
-        if (!unlockedTile(M, x, y)) continue;
-        const want = (p.plot[y] && p.plot[y][x]) || null;
-        const me = plantAt(M, x, y);
-        if (me) {
-          const mature = M.plot[y][x][1] >= me.mature;
-          if (!me.unlocked && unlockNew) {
-            // a new seed: let it grow, harvest it the moment it can unlock
-            if (mature && M.harvest(x, y)) did.unlocked++;
-            continue;
-          }
-          if (me.key !== want) {
-            if (inWindow && M.harvest(x, y)) did.harvested++;
-            else continue;
-          } else if (mature && threshold < 1 && inWindow && decayChance(M, x, y) > threshold) {
-            if (M.harvest(x, y)) did.saved++;
-          } else continue;
-        }
-        // empty tiles are planted straight away (so the plant starts growing and working at once)
-        if (want && M.plants[want] && !plantAt(M, x, y) && plant(M, M.plants[want], x, y)) did.planted++;
-      }
+    const src = rulesOf(p);
+    const { flow, errors } = compileRules(src);
+    pass = { harvested: 0, planted: 0, saved: 0, unlocked: 0, soil: 0 };
+    let F;
+    try {
+      F = CA.Macros.runPass(flow);
+    } finally {
+      const did = pass;
+      pass = null;
+      const n = did.harvested + did.planted + did.saved + did.unlocked + did.soil;
+      if (n) last = { at: Date.now(), ...did, soil: did.soil > 0 };
     }
-    if (inWindow && p.soil) did.soil = setSoil(M, p.soil);
-    const n = did.harvested + did.planted + did.saved + did.unlocked + (did.soil ? 1 : 0);
-    if (n) last = { at: Date.now(), ...did };
-    return n;
+    lastPass = {
+      t: Date.now(),
+      at: F.at,
+      trace: F.trace,
+      lines: F.trace.map((x) => x.line).filter(Boolean),
+      error: F.error,
+      errors,
+      profile: p.id,
+    };
+    return F.done;
   }
+
 
   /** What the current garden looks like against the active profile, tile by tile (for the page). */
   function view() {
@@ -204,7 +350,7 @@ CA.Garden = (() => {
 
   // ---- save / load ---------------------------------------------------------------------------
 
-  const serialize = () => profiles.map((p) => ({ id: p.id, name: p.name, soil: p.soil, plot: p.plot.map((r) => r.slice()) }));
+  const serialize = () => profiles.map((p) => ({ id: p.id, name: p.name, soil: p.soil, plot: p.plot.map((r) => r.slice()), ...(typeof p.rules === 'string' ? { rules: p.rules } : {}) }));
   function load(data) {
     profiles = (Array.isArray(data) ? data : [])
       .filter((p) => p && p.id && Array.isArray(p.plot))
@@ -213,6 +359,7 @@ CA.Garden = (() => {
         name: String(p.name || 'Garden').slice(0, 40),
         soil: typeof p.soil === 'string' ? p.soil : 'dirt',
         plot: Array.from({ length: SIZE }, (_, y) => Array.from({ length: SIZE }, (_, x) => (p.plot[y] && typeof p.plot[y][x] === 'string' ? p.plot[y][x] : null))),
+        ...(typeof p.rules === 'string' ? { rules: p.rules.slice(0, 20000) } : {}),
       }));
     changed();
   }
@@ -225,15 +372,77 @@ CA.Garden = (() => {
     S().defineOption({ key: 'gardenLead', group: 'garden-hidden', name: 'Seconds before the tick', desc: '', default: 15 });
     S().defineOption({
       key: 'gardenUnlockNew',
-      group: 'garden',
+      group: 'garden-hidden',
       icon: 'leaf',
       name: 'Unlock new seeds',
       desc: 'Lets a seed you haven’t unlocked yet grow wherever it appears, and harvests it the moment it’s mature (which unlocks it) — instead of pulling it out as a mismatch.',
       default: true,
     });
+    // the garden's words, for its rules (and any algorithmic macro)
+    const A = CA.Actions.register;
+    A({ id: 'garden.plantEmpty', name: 'Plant the profile’s seed on every empty tile', icon: 'leaf', group: 'Garden', unit: 'planted', run: () => actions.plantEmpty() });
+    A({ id: 'garden.harvestNew', name: 'Harvest new seeds once mature (unlocks them)', icon: 'leaf', group: 'Garden', unit: 'unlocked', run: () => actions.harvestNew() });
+    A({
+      id: 'garden.pullMismatches',
+      name: 'Pull out what isn’t the profile’s seed',
+      icon: 'leaf',
+      group: 'Garden',
+      unit: 'pulled',
+      params: [{ key: 'keepNew', label: 'Leave seeds you haven’t unlocked', type: 'bool', default: true }],
+      run: (p) => actions.pullMismatches(p.keepNew !== false),
+    });
+    A({
+      id: 'garden.harvestDying',
+      name: 'Harvest mature plants likely to die on the next tick',
+      icon: 'leaf',
+      group: 'Garden',
+      unit: 'harvested',
+      params: [{ key: 'threshold', label: 'Chance to die over', type: 'number', default: 0.5, min: 0 }],
+      run: (p) => actions.harvestDying(Number(p.threshold)),
+    });
+    A({ id: 'garden.harvestMature', name: 'Harvest every mature plant of the profile', icon: 'leaf', group: 'Garden', unit: 'harvested', run: () => actions.harvestMature() });
+    const soils = () => ['dirt', 'fertilizer', 'clay', 'pebbles', 'woodchips', 'profile'].map((v) => ({ v, label: v === 'profile' ? 'the profile’s soil' : v }));
+    A({
+      id: 'garden.soil',
+      name: 'Switch the soil (when the game allows)',
+      icon: 'leaf',
+      group: 'Garden',
+      unit: 'switched',
+      params: [{ key: 'soil', label: 'Soil', type: 'select', default: 'fertilizer', options: soils }],
+      run: (p) => actions.soil(p.soil),
+    });
+    CA.Conditions.register({
+      id: 'garden.soilIs',
+      name: 'The garden’s soil is…',
+      icon: 'leaf',
+      params: [{ key: 'soil', label: 'Soil', type: 'select', default: 'clay', options: soils }],
+      describe: (p) => `the soil is ${p.soil}`,
+      test: (p) => {
+        const M = minigame();
+        const s = M && M.soilsById && M.soilsById[M.soil];
+        return !!s && s.key === (p.soil === 'profile' && active() ? active().soil : p.soil);
+      },
+    });
+    const V = (id, desc, get) => CA.Script.defineValue({ id, desc, get });
+    V('garden.tickIn', 'seconds until the next garden tick', () => {
+      const M = minigame();
+      return M ? Math.round(nextTickIn(M) * 10) / 10 : NaN;
+    });
+    V('garden.youngShare', 'share of the planted tiles not mature yet (0–1)', () => {
+      const c = census();
+      return c.planted ? Math.round((c.young / c.planted) * 1000) / 1000 : 0;
+    });
+    V('garden.matureShare', 'share of the planted tiles that are mature (0–1)', () => {
+      const c = census();
+      return c.planted ? Math.round((c.mature / c.planted) * 1000) / 1000 : 0;
+    });
+    V('garden.plants', 'plants on the plot', () => census().planted);
+    V('garden.mature', 'mature plants on the plot', () => census().mature);
+    V('garden.empty', 'empty tiles', () => census().empty);
+    V('garden.offProfile', 'tiles that aren’t as the profile has them', () => census().off);
     CA.Actions.register({
       id: 'garden.tend',
-      name: 'Tend the garden (active profile)',
+      name: 'Tend the garden (the active profile’s rules)',
       icon: 'leaf',
       group: 'Garden',
       unit: 'done',
@@ -253,5 +462,5 @@ CA.Garden = (() => {
     });
   }
 
-  return { init, minigame, decayChance, snapshot, removeProfile, rename, use, active, profiles: () => profiles.slice(), tend, view, last: () => last, serialize, load, GARDENER, nextTickIn };
+  return { init, minigame, decayChance, snapshot, removeProfile, rename, use, active, profiles: () => profiles.slice(), tend, view, last: () => last, lastPass: () => lastPass, rulesOf, setRules, defaultRules, census, compileRules, serialize, load, GARDENER, nextTickIn };
 })();

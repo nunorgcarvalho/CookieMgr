@@ -49,6 +49,7 @@ const mod = {
     CA.NotifyTips.init();
     CA.UI.Graphs.init();
     CA.UI.EventsPage.init();
+    CA.UI.CodeEditor.init();
     CA.UI.MacrosPage.init();
     CA.UI.Widgets.init();
     CA.UI.WizardPage.init();

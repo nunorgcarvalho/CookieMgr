@@ -5011,3 +5011,23 @@ body.ca-has-storebar #products {
   border-radius: 4px;
   padding: 2px 5px;
 }
+
+/* ---------- v2.26: garden rules ---------- */
+
+#CookieMgrMenu .ca-grules .ca-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+#CookieMgrMenu .ca-grules .ca-ed-layout {
+  margin: 0 -12px -12px;
+}
+#CookieMgrMenu .ca-grules.ca-flash {
+  animation: caFlash 1.1s ease-out;
+}
+#CookieMgrMenu .ca-pill.ca-pill-warn {
+  color: #1c120a;
+  background: #e0b45a;
+  border-color: #e0b45a;
+}

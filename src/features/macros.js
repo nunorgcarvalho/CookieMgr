@@ -461,8 +461,10 @@ CA.Macros = (() => {
     switch (n.type) {
       case 'do': {
         try {
-          F.done += CA.Actions.run(n.action, n.params) || 0;
+          const k = CA.Actions.run(n.action, n.params) || 0;
+          F.done += k;
           F.error = '';
+          if (F.pass && k) trace(F, n, `${n.action}: ${k}`);
         } catch (e) {
           F.error = String((e && e.message) || e);
         }
@@ -554,6 +556,22 @@ CA.Macros = (() => {
       if (CA.Settings.get('notifications')) CA.Util.notify(m.name, 'Finished — it got to the end of its flow.', CA.ICON, 3);
     }
   }
+  /**
+   * Runs compiled code once, from the top, as one pass (rules that are checked every second, like
+   * a garden profile's). Returns { done, at, trace, error } — what it did and where it stopped.
+   */
+  function runPass(prog) {
+    const F = { prog, S: {}, at: [], trace: [], done: 0, error: '', stopped: false, pass: true };
+    if (depth >= MAX_DEPTH) return F;
+    depth++;
+    try {
+      execSeq(F, prog, 'r');
+    } finally {
+      depth--;
+    }
+    return F;
+  }
+
   /** Where a running flow is: { at: ['until Christmas is complete', …], done, error }. */
   const flowStatus = (id) =>
     flowRuns[id]
@@ -876,6 +894,7 @@ CA.Macros = (() => {
     flowOptsOf,
     setFlowOpt,
     flowStatus,
+    runPass,
     cleanFlow,
     rate,
     activityLevel,

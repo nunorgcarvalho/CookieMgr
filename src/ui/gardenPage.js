@@ -6,8 +6,11 @@
 //   Garden          your plot as it is now, against the active profile: each tile's plant and growth
 //                   stage, the profile's seed faded in on empty tiles, a red ring on tiles that don't
 //                   match, and the chance a mature plant dies on the coming tick; hover a tile for details
-//   Auto-gardener   its on/off switch (★ for its button on the left panel), the profile it keeps, the
-//                   death-chance threshold, how many seconds before the tick it works, what it last did
+//   Auto-gardener   its on/off switch (★ for its button on the left panel), the profile it keeps, what
+//                   it last did
+//   Rules           what the auto-gardener does for the active profile, as algorithmic code (the
+//                   macros' language, with the garden's own actions and values) — save, or revert to
+//                   the default rules; while it runs, the lines it took light up with its decisions
 //   Profiles        save the current garden (seeds + soil) as a profile; use, rename or delete them
 
 CA.UI = CA.UI || {};
@@ -23,6 +26,9 @@ CA.UI.GardenPage = (() => {
   let timer = null;
   let plot = null;
   let effectsPlot = null;
+  let unbindCode = null;
+  let draft = null; // { profile, src } — rules being edited, not saved yet
+  let rulesError = '';
 
   const stageOf = (me, age) => (age >= me.mature ? 4 : age >= me.mature * 0.666 ? 3 : age >= me.mature * 0.333 ? 2 : 1);
   const STAGE_NAMES = ['seed', 'bud', 'sprout', 'bloom', 'mature'];
@@ -92,11 +98,8 @@ CA.UI.GardenPage = (() => {
   // ---- auto-gardener -----------------------------------------------------------------------------
 
   function gardenerCard() {
-    const S = CA.Settings;
     const profs = G().profiles();
     const act = G().active();
-    const num = (key, min, max, unit) =>
-      `<input type="number" min="${min}" max="${max}" value="${esc(S.get(key))}" data-gp-num="${key}" data-min="${min}" data-max="${max}"><em>${unit}</em>`;
     return (
       '<div class="ca-card">' +
       C().cardHead('Auto-gardener', 'bolt', `<div class="ca-card-meta"><span class="ca-hint">also on the ${C().link('Macros', 'clickers')} page · ★ for a button on the left panel</span></div>`) +
@@ -107,13 +110,88 @@ CA.UI.GardenPage = (() => {
         ? `<select data-gp-active>${profs.map((p) => `<option value="${esc(p.id)}"${act && act.id === p.id ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select>`
         : '<em>no profile yet — save one below</em>') +
       '</label>' +
-      `<label class="ca-field"><span>Harvest a mature plant if its chance to die next tick is over</span>${num('gardenThreshold', 0, 100, '% (100 = let it die)')}</label>` +
-      `<label class="ca-field"><span>Work in the last</span>${num('gardenLead', 1, 900, 'seconds before each garden tick')}</label>` +
+      (act ? `<span class="ca-hint">what it does: the profile’s <a class="ca-link" data-gp-rules-go>rules</a>${act.rules != null ? ' (edited)' : ''}</span>` : '') +
       '</div>' +
-      `<div class="ca-optgrid">${CA.Settings.optionsIn('garden').map(CA.UI.Menu.optionTile).join('')}</div>` +
       '<div class="ca-card-note" data-gp-last></div>' +
       '</div>'
     );
+  }
+
+  // ---- rules: the active profile's, as code ------------------------------------------------
+
+  const CE = () => CA.UI.CodeEditor;
+  const RULES_HINT = 'run from the top every second while the Auto-gardener is on · Tab indents · click the library to insert';
+  /** The rules shown in the editor: the unsaved draft if it's this profile's, else the saved ones. */
+  const rulesText = (p) => (draft && draft.profile === p.id ? draft.src : G().rulesOf(p));
+
+  function rulesCard() {
+    const p = G().active();
+    if (!p) return '';
+    const edited = p.rules != null;
+    const dirty = !!draft && draft.profile === p.id && draft.src !== G().rulesOf(p);
+    return (
+      '<div class="ca-card ca-editor2 ca-grules" data-gp-rules>' +
+      C().cardHead(
+        `Rules · ${esc(p.name)}`,
+        'edit',
+        '<div class="ca-card-meta">' +
+          (edited ? '<span class="ca-badge ca-badge-edited">edited</span>' : '<span class="ca-pill">default rules</span>') +
+          (dirty ? '<span class="ca-pill ca-pill-warn">unsaved</span>' : '') +
+          C().button(`${I('save', 12)} Save`, 'data-gp-rules-act="save"', `ca-btn-small${dirty ? ' ca-btn-on' : ''}`) +
+          (dirty ? C().button('Discard', 'data-gp-rules-act="discard"', 'ca-btn-small') : '') +
+          (edited ? C().button(`${I('refresh', 12)} Revert to default`, 'data-gp-rules-act="revert" data-arm-label="Back to the default rules?"', 'ca-btn-small') : '') +
+          '</div>'
+      ) +
+      (rulesError ? `<div class="ca-editor-error">${esc(rulesError)}</div>` : '') +
+      '<div class="ca-ed-layout"><div class="ca-editor-body">' +
+      CE().html('garden', rulesText(p), { title: 'What the auto-gardener does', hint: RULES_HINT }) +
+      '</div>' +
+      CE().libraryHtml('garden', { first: ['Garden', 'Values'] }) +
+      '</div></div>'
+    );
+  }
+
+  /** What the last pass did, under the code (and its lines lit in the gutter). */
+  function syncRules() {
+    const p = G().active();
+    const lp = G().lastPass();
+    const on = CA.Macros.isOn(G().GARDENER);
+    const live = on && lp && p && lp.profile === p.id && !(draft && draft.profile === p.id && draft.src !== G().rulesOf(p));
+    CE().setLive(
+      root,
+      'garden',
+      live
+        ? {
+            lines: lp.lines,
+            html:
+              `<div class="ca-code-live-head">${I('play', 11)} last pass · ${CA.UI.Plot.fmt.span(Math.max(0, (Date.now() - lp.t) / 1000))} ago</div>` +
+              (lp.error ? `<div class="ca-code-live-at">${esc(lp.error)}</div>` : '') +
+              lp.at.map((a) => `<div class="ca-code-live-at">${esc(a)}</div>`).join('') +
+              (lp.trace.length ? lp.trace.map((x) => `<div class="ca-code-live-tr">${esc(x.text)}</div>`).join('') : '<div class="ca-code-live-tr">nothing to do</div>'),
+          }
+        : null
+    );
+  }
+
+  function rulesAct(act) {
+    const p = G().active();
+    if (!p) return;
+    rulesError = '';
+    if (act === 'save') {
+      const src = rulesText(p);
+      const { errors } = G().compileRules(src);
+      if (errors.length) {
+        rulesError = `Not saved — line ${errors[0].line}: ${errors[0].message}`;
+        return;
+      }
+      G().setRules(p.id, src.trim() === G().defaultRules().trim() ? null : src);
+      draft = null;
+      CA.Util.notify('Garden rules saved', `“${esc(p.name)}” — the auto-gardener follows them from its next pass.`, CA.ICON, 3);
+    } else if (act === 'discard') draft = null;
+    else if (act === 'revert') {
+      G().setRules(p.id, null);
+      draft = null;
+    }
   }
 
   function lastText() {
@@ -185,7 +263,7 @@ CA.UI.GardenPage = (() => {
         '<div class="ca-card-note">The Garden opens once you have a level-1 Farm (spend a sugar lump on it). The auto-gardener and its profiles will be here.</div>' +
         '</div>'
       );
-    return `<div class="ca-garden-row">${gardenCard()}${plot.html()}</div>` + effectsPlot.html() + gardenerCard() + profilesCard();
+    return `<div class="ca-garden-row">${gardenCard()}${plot.html()}</div>` + effectsPlot.html() + gardenerCard() + rulesCard() + profilesCard();
   }
 
   function sync() {
@@ -200,15 +278,29 @@ CA.UI.GardenPage = (() => {
     if (pill) pill.textContent = v.profile ? `profile: ${v.profile.name}` : 'no profile';
     const last = root.querySelector('[data-gp-last]');
     if (last) last.textContent = lastText();
+    syncRules();
     CA.UI.MacrosPage.sync(root);
   }
 
   function onClick(e) {
-    const t = e.target.closest('[data-gp-save],[data-gp-use],[data-gp-del]');
+    const t = e.target.closest('[data-gp-save],[data-gp-use],[data-gp-del],[data-gp-rules-act],[data-gp-rules-go]');
     if (!t) return;
     e.stopPropagation();
     const d = t.dataset;
-    if ('gpDel' in d) {
+    if ('gpRulesGo' in d) {
+      const card = root.querySelector('[data-gp-rules]');
+      if (card) {
+        CA.Util.scrollInPanel(card, 'start');
+        card.classList.remove('ca-flash');
+        void card.offsetWidth;
+        card.classList.add('ca-flash');
+      }
+      return;
+    }
+    if (d.gpRulesAct) {
+      if (d.gpRulesAct === 'revert' && !CA.UI.Menu.armed(t)) return;
+      rulesAct(d.gpRulesAct);
+    } else if ('gpDel' in d) {
       if (!CA.UI.Menu.armed(t)) return;
       G().removeProfile(d.gpDel);
     } else if ('gpUse' in d) G().use(d.gpUse);
@@ -228,14 +320,7 @@ CA.UI.GardenPage = (() => {
       if (e.type !== 'change') return;
       G().use(el.value);
     }
-    else if (d.gpNum) {
-      const v = Number(el.value);
-      if (!Number.isFinite(v)) return;
-      const clamped = Math.max(Number(d.min), Math.min(Number(d.max), Math.round(v)));
-      CA.Settings.set(d.gpNum, clamped);
-      if (e.type === 'change') el.value = clamped;
-      return;
-    } else if (d.gpRename) {
+    else if (d.gpRename) {
       if (e.type !== 'change') return;
       G().rename(d.gpRename, el.value);
       return;
@@ -249,6 +334,22 @@ CA.UI.GardenPage = (() => {
     root.addEventListener('click', onClick);
     root.addEventListener('change', onChange);
     root.addEventListener('input', onChange);
+    unbindCode = CE().bind(root, {
+      onChange: (key, src) => {
+        const p = G().active();
+        if (key !== 'garden' || !p) return;
+        const was = !!draft && draft.src !== G().rulesOf(p);
+        draft = { profile: p.id, src };
+        // the Save button lights up (and the "unsaved" pill shows) on the first change
+        if (was !== (src !== G().rulesOf(p))) {
+          const card = root.querySelector('[data-gp-rules] .ca-card-head');
+          const tmp = document.createElement('div');
+          tmp.innerHTML = rulesCard();
+          const head = tmp.querySelector('.ca-card-head');
+          if (card && head) card.replaceWith(head);
+        }
+      },
+    });
     if (G().minigame()) {
       plot.mount(el);
       effectsPlot.mount(el);
@@ -267,6 +368,8 @@ CA.UI.GardenPage = (() => {
       root.removeEventListener('change', onChange);
       root.removeEventListener('input', onChange);
     }
+    if (unbindCode) unbindCode();
+    unbindCode = null;
     root = null;
   }
 

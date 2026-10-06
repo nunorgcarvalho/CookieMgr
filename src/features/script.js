@@ -597,5 +597,14 @@ CA.Script = (() => {
     return items;
   }
 
-  return { compile, evaluate, decompile, library, VALUES, KEYWORDS, tokenize };
+  /** Adds a value conditions can compare (e.g. the garden's): { id, desc, params, get(...args) }. */
+  function defineValue(v) {
+    if (valueById[v.id]) return valueById[v.id];
+    VALUES.push(v);
+    valueById[v.id] = v;
+    return v;
+  }
+  const isValue = (id) => !!valueById[id];
+
+  return { compile, evaluate, decompile, library, defineValue, isValue, VALUES, KEYWORDS, tokenize };
 })();

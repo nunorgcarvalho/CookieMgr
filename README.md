@@ -23,7 +23,7 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 | **Widget** | Something on the game's left panel: a macro's button, the Running now bar, quick stats, events, minigames. |
 
-## Features (v2.25)
+## Features (v2.26)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
 the data pages **Events** and **Graphs**; the minigames **Garden**, **Stock market**, **Pantheon** and **Grimoire**;
@@ -311,17 +311,34 @@ tick, counted back from now, so a 15-minute clay tick and a 3-minute fertilizer 
 current garden**. Rename, switch or delete them on the page.
 
 The **Auto-gardener** (a built-in macro — switch it on here or on the Macros page, ★ for its own button on the left
-panel) keeps the garden like the active profile. In the last 15 seconds before each garden tick (adjustable) it:
+panel) keeps the garden like the active profile, following that profile's **rules**: algorithmic code (the same
+language as algorithmic macros, see [Macros](#macros)) run from the top every second. The default rules:
 
-- pulls out whatever doesn't belong (weeds, mutations, leftovers);
-- harvests a mature plant whose chance of dying on the coming tick is over your threshold (50% by default; 100%
-  lets plants die), and replants it;
-- switches to the profile's soil when the game allows (soil has a 10-minute cooldown).
+```
+garden.plantEmpty()              # plant the profile's seed on every empty tile, right away
+garden.harvestNew()              # a seed you haven't unlocked: harvest it once mature (unlocks it)
+if garden.tickIn() <= 15:        # in the last 15 seconds before a garden tick:
+  garden.pullMismatches(true)    #   pull out what doesn't belong (leaving new seeds to grow)
+  garden.harvestDying(0.5)       #   harvest mature plants more than 50% likely to die on the tick…
+  garden.plantEmpty()            #   …and replant them
+if garden.youngShare() > 0.67:   # soil: fertilizer while most plants are still growing,
+  garden.soil(fertilizer)
+else:                            # clay once a third of them are mature
+  garden.soil(clay)
+```
 
-Empty tiles are planted with the profile's seed straight away, whenever you can afford it, so they start growing
-and working at once; old plants are picked at the last moment before the tick.
-With **Unlock new seeds** on (the default), a seed you haven't unlocked yet is left to grow wherever it appears and
-harvested the moment it's mature, which unlocks it; turned off, it's pulled out like any other mismatch.
+So empty tiles start growing and working at once, old plants are picked at the last moment before the tick, and
+the soil follows the garden (soil has a 10-minute cooldown in the game; the rule simply waits for it).
+Edit a profile's rules on the **Rules** card — the library beside the code lists everything you can use, the
+garden's own words first — then **Save**; **Revert to default** brings the default rules back. While the gardener
+runs, the lines it took light up and what it did shows under the code.
+
+The garden's words: actions `garden.plantEmpty()`, `garden.harvestNew()`, `garden.pullMismatches(keepNew)`,
+`garden.harvestDying(threshold)` (0–1), `garden.harvestMature()`, `garden.soil(type)` (dirt, fertilizer, clay,
+pebbles, woodchips, or `profile` for the profile's saved soil); the condition `garden.soilIs(type)`; values
+`garden.tickIn()` (seconds), `garden.youngShare()` / `garden.matureShare()` (0–1 of the planted tiles),
+`garden.plants()`, `garden.mature()`, `garden.empty()`, `garden.offProfile()`. They work in any algorithmic macro
+too.
 
 **Harvesting vs. letting a plant die:** harvesting a mature plant unlocks its seed if it's new, counts towards the
 harvest achievements, and some plants pay out when harvested (Bakeberry, Chocoroot, Queenbeet…). A plant that dies
@@ -529,7 +546,7 @@ src/
     cookieMonster.js loads Cookie Monster on request or at start-up
     gameEvents.js    logs wrinkler pops, sugar lumps and achievements as events
     grimoire.js      spells as actions/macros, magic conditions, spell events, the auto-cast macro
-    garden.js        garden profiles, the death-chance maths, the auto-gardener macro
+    garden.js        garden profiles and their rules, the garden's actions/values, the death-chance maths
     gardenHistory.js snapshots of the garden (seed × stage counts) for the Growth chart; seed unlock events
     shop.js          the building store: Cookie Monster sort, rounding bulk buys up
     autoBuy.js       buying macros (Cookie Monster PP, research, cheap upgrades) and petting the dragon
@@ -550,7 +567,8 @@ src/
     widgetTypes.js   what each widget shows (macro buttons, status bar, stats, events, minigames)
     wizardPage.js    the Grimoire page and the toolbar inside the game's Grimoire
     pantheonPage.js  the Pantheon page
-    gardenPage.js    the Garden page: the plot against the active profile, the auto-gardener, profiles
+    codeEditor.js    the code editor (colouring, line numbers, problems, live lines) and its library
+    gardenPage.js    the Garden page: the plot against the active profile, the auto-gardener, its rules, profiles
     storeBar.js      the store toolbar (building sort, rounding to multiples)
     stockGraph.js    the Stock market page charts: portfolio value / per-stock prices, rolling performance
     stockLog.js      the trade ticker + transaction history table, also on the Stock market page
@@ -578,6 +596,10 @@ If you add a file, add it to `MODULES` in `build.mjs` in the right order.
 - **A new action:** `CA.Actions.register({ id, name, icon, group, unit, params, available, run(params) })` in
   `features/gameActions.js` — it shows up in the macro editor's step picker. `run` returns how many things it did.
 - **A new condition:** `CA.Conditions.register({ id, name, params, test(params), describe(params) })`.
+- **A new value** for algorithmic code (`if garden.youngShare() > 0.67:`): `CA.Script.defineValue({ id, desc, params, get(...args) })`.
+  Actions, conditions and values all show up in the code editor's library.
+- **A code editor** on a page: `CA.UI.CodeEditor.html(key, source)` + `libraryHtml(key)`, then `bind(root, { onChange })`
+  in `mount` (it returns the unbind for `unmount`); `setLive(root, key, { lines, html })` lights up running lines.
 - **A new built-in macro:** add it to `BUILTINS` in `features/macros.js` (`mode`, `every`, `steps`, `defaultKey`, `section`).
 - **A new recorded state:** `CA.States.define({ id, name, unit, group, kind, get })` before `CA.Recorder.init()`;
   `kind` is `gauge` (a level, like CpS), `counter` (a running total) or `flow` (an amount per frame, from `ctx.dt`).
