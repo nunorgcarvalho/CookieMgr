@@ -53,6 +53,7 @@ CA.UI.Icons = (() => {
     marker: '<path d="M12 3l6 9-6 9-6-9z"/>',
     toolbar: '<path d="M3 5h18v6H3zm2 2v2h4V7zm6 0v2h4V7z" fill-rule="evenodd"/><rect x="3" y="14" width="18" height="5" rx="1" opacity=".4"/>',
     plug: '<path d="M8 2h2v5h4V2h2v5h2v4a6 6 0 0 1-5 5.9V22h-2v-5.1A6 6 0 0 1 6 11V7h2z"/>',
+    calendar: '<path d="M7 2h2v2h6V2h2v2h3a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3zM5 9v10h14V9zm2 2h3v3H7z"/>',
     clock: '<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.2"/>' + stroke('M12 7v5l3 3'),
     filter: '<path d="M3 4h18l-7 8.5V20l-4-2v-5.5z"/>',
     sparkle: '<path d="M12 2l2.2 6.8L21 11l-6.8 2.2L12 20l-2.2-6.8L3 11l6.8-2.2z"/>',

@@ -457,11 +457,11 @@ CA.UI.Widgets = (() => {
   function editorHtml(w) {
     const t = typeById[w.type];
     const C = CA.UI.C;
-    const field = (label, input, hint) => `<div class="ca-editor-row"><span class="ca-field-label">${label}</span>${input}${hint ? `<span class="ca-hint">${hint}</span>` : ''}</div>`;
+    const field = (label, input, hint) => `<div class="ca-weditor-row"><span class="ca-field-label">${label}</span>${input}${hint ? `<span class="ca-hint">${hint}</span>` : ''}</div>`;
     let h =
-      `<div class="ca-card ca-editor" data-w-editor="${esc(w.id)}">` +
+      `<div class="ca-card ca-weditor" data-w-editor="${esc(w.id)}">` +
       C.cardHead(`${esc(nameOf(w))} — settings`, t.icon, `<div class="ca-card-meta">${C.button('Done', 'data-w-edit-done', 'ca-btn-small ca-btn-on')}</div>`) +
-      '<div class="ca-editor-body">';
+      '<div class="ca-weditor-body">';
     h += field('Text size', `<input type="range" min="${FONT_MIN}" max="${FONT_MAX}" step="5" value="${Math.round(fontOf(w) * 100)}" data-w-opt="font" data-type="number"><span class="ca-range-val">${Math.round(fontOf(w) * 100)}%</span>`);
     if (t.resize === 'scale') {
       h += field('Size', `<input type="range" min="${SCALE_MIN * 100}" max="${SCALE_MAX * 100}" step="5" value="${Math.round(scaleOf(w) * 100)}" data-w-opt="scale" data-type="percent"><span class="ca-range-val">${Math.round(scaleOf(w) * 100)}%</span>`, 'or drag its corner');
@@ -475,7 +475,7 @@ CA.UI.Widgets = (() => {
       } else if (s.type === 'multi') {
         const chosen = new Set(cur || []);
         h +=
-          `<div class="ca-editor-row"><span class="ca-field-label">${esc(s.label)}</span></div><div class="ca-members">` +
+          `<div class="ca-weditor-row"><span class="ca-field-label">${esc(s.label)}</span></div><div class="ca-members">` +
           s
             .options()
             .map(

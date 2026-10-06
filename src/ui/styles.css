@@ -2667,33 +2667,63 @@
 }
 
 /* the widget settings editor (Widgets page) */
-#CookieMgrMenu .ca-editor-body {
+#CookieMgrMenu .ca-weditor-body {
   display: flex;
   flex-direction: column;
   gap: 6px;
   padding: 4px 2px 2px;
 }
-#CookieMgrMenu .ca-editor-row {
+#CookieMgrMenu .ca-weditor-row {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-#CookieMgrMenu .ca-editor-row .ca-field-label {
+#CookieMgrMenu .ca-weditor-row .ca-field-label {
   flex: 0 0 110px;
 }
-#CookieMgrMenu .ca-editor-row input[type='range'] {
+#CookieMgrMenu .ca-weditor-row input[type='range'] {
   flex: 1;
   max-width: 220px;
 }
-#CookieMgrMenu .ca-editor-row input[type='text'] {
+#CookieMgrMenu .ca-weditor-row input[type='text'] {
   flex: 1;
   max-width: 220px;
 }
-#CookieMgrMenu .ca-editor-row input[type='number'] {
+#CookieMgrMenu .ca-weditor-row input[type='number'] {
   width: 64px;
 }
 #CookieMgrMenu .ca-range-val {
   min-width: 38px;
   color: #c9bba0;
   font-variant-numeric: tabular-nums;
+}
+#CookieMgrMenu .ca-weditor input[type='text'],
+#CookieMgrMenu .ca-weditor input[type='number'] {
+  font: 12px Tahoma, Arial, sans-serif;
+  color: #f0e2c0;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 220, 150, 0.25);
+  border-radius: 4px;
+  padding: 3px 6px;
+}
+
+/* ---------- v2.10: built-in macro choices (season, lump ripeness) ---------- */
+
+#CookieMgrMenu .ca-macro-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 5px;
+}
+#CookieMgrMenu .ca-macro-options select {
+  font: 11px Tahoma, Arial, sans-serif;
+  color: #f0e2c0;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 220, 150, 0.25);
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+#CookieMgrMenu .ca-macro-options select option {
+  background: #1c150d;
+  color: #f0e2c0;
 }

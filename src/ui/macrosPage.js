@@ -18,6 +18,7 @@ CA.UI.MacrosPage = (() => {
     { id: 'autoclickers', title: 'Autoclickers', icon: 'cookie' },
     { id: 'stocks', title: 'Stock market', icon: 'stocks' },
     { id: 'grimoire', title: 'Wizard tower', icon: 'wizard' },
+    { id: 'upkeep', title: 'Seasons & sugar lumps', icon: 'calendar' },
   ];
   const ICONS = ['bolt', 'cookie', 'star', 'sparkle', 'play', 'clock', 'stocks', 'dollar', 'wizard', 'wrinkler', 'lump', 'trophy', 'graphs', 'tag', 'marker', 'ascend'];
   const MODES = [
@@ -59,6 +60,30 @@ CA.UI.MacrosPage = (() => {
     return members.map((x) => `<span class="ca-step ca-step-member">${icon(x, true)}${esc(x.name)}</span>`).join('');
   }
 
+  /** A built-in's choices (its `options`): a dropdown per step param you can pick, right on its row. */
+  function optionsHtml(m) {
+    if (!m.options || !m.options.length) return '';
+    const steps = M().stepsOf(m);
+    return (
+      '<div class="ca-macro-options">' +
+      m.options
+        .map((o) => {
+          const a = CA.Actions.get(steps[o.step].action);
+          const p = a && a.params.find((x) => x.key === o.key);
+          if (!p) return '';
+          const cur = CA.Actions.paramsFor(steps[o.step].action, steps[o.step].params)[o.key];
+          return (
+            `<label class="ca-field"><span>${esc(p.label)}</span>` +
+            `<select data-macro-param="${esc(m.id)}" data-step="${o.step}" data-key="${esc(o.key)}">` +
+            p.options().map((x) => `<option value="${esc(x.v)}"${String(x.v) === String(cur) ? ' selected' : ''}>${esc(x.label)}</option>`).join('') +
+            '</select></label>'
+          );
+        })
+        .join('') +
+      '</div>'
+    );
+  }
+
   /** One macro as a row: picture, name + trigger, steps, status, and its controls. */
   function row(m) {
     const once = m.mode === 'once';
@@ -69,7 +94,8 @@ CA.UI.MacrosPage = (() => {
       '<div class="ca-row-text">' +
       `<div class="ca-row-name">${esc(m.name)} <span class="ca-badge ca-badge-${m.mode}">${esc(M().triggerText(m))}</span></div>` +
       (m.desc ? `<div class="ca-row-desc">${esc(m.desc)}</div>` : '') +
-      `<div class="ca-steps">${m.mode === 'group' ? memberChips(m) : m.steps.map(stepChip).join('<span class="ca-step-arrow">›</span>')}</div>` +
+      `<div class="ca-steps">${m.mode === 'group' ? memberChips(m) : M().stepsOf(m).map(stepChip).join('<span class="ca-step-arrow">›</span>')}</div>` +
+      optionsHtml(m) +
       '<div class="ca-macro-status" data-macro-status></div>' +
       '</div>' +
       '<div class="ca-controls">' +
@@ -102,7 +128,7 @@ CA.UI.MacrosPage = (() => {
           `<div class="ca-status-macro" data-status-macro="${esc(id)}">` +
           `<div class="ca-status-head">${icon(m, true)}<b>${esc(m.name)}</b><span>${esc(M().triggerText(m))} · on for ${up}</span>` +
           `<button type="button" class="ca-iconbtn" data-ca="macro-toggle" data-id="${esc(id)}" title="Switch off">${I('close', 12)}</button></div>`;
-        m.steps.forEach((step, i) => {
+        M().stepsOf(m).forEach((step, i) => {
           const s = st.steps[i] || {};
           const a = CA.Actions.get(step.action) || {};
           const avail = a.available ? a.available() : true;
@@ -254,6 +280,17 @@ CA.UI.MacrosPage = (() => {
 
   function onEditInput(e) {
     const el = e.target;
+    if (el.dataset && el.dataset.macroParam) {
+      if (e.type !== 'change') return;
+      CA.Util.sound('snd/tick.mp3');
+      M().setParam(el.dataset.macroParam, Number(el.dataset.step), el.dataset.key, el.value);
+      // the row's step chip says what it does now
+      const row = el.closest('[data-macro-row]');
+      const m = M().get(el.dataset.macroParam);
+      const chips = row && row.querySelector('.ca-steps');
+      if (chips && m) chips.innerHTML = M().stepsOf(m).map(stepChip).join('<span class="ca-step-arrow">›</span>');
+      return;
+    }
     if (el.dataset && el.dataset.member && draft) {
       const id = el.dataset.member;
       draft.members = (draft.members || []).filter((x) => x !== id);

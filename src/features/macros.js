@@ -115,6 +115,31 @@ CA.Macros = (() => {
       defaultKey: '',
       section: 'stocks',
     },
+    {
+      id: 'season',
+      name: 'Season keeper',
+      desc: 'Keeps the season you pick going: buys its biscuit as soon as you can afford it, and again whenever the season runs out. Needs the Season switcher.',
+      icon: sprite(16, 6),
+      mode: 'repeat',
+      every: 1000,
+      steps: [{ action: 'season.keep', params: { season: 'christmas' } }],
+      options: [{ step: 0, key: 'season' }],
+      defaultKey: '',
+      section: 'upkeep',
+    },
+    {
+      id: 'lumps',
+      name: 'Sugar lump harvester',
+      desc: 'Harvests your sugar lump when it’s ripe (always pays) — or as soon as it’s mature, a little earlier but with the game’s 50% chance of getting nothing.',
+      icon: sprite(29, 14),
+      mode: 'repeat',
+      every: 1000,
+      steps: [{ action: 'lump.harvest', params: { when: 'ripe' } }],
+      options: [{ step: 0, key: 'when' }],
+      defaultKey: '',
+      keepOnAscend: true,
+      section: 'upkeep',
+    },
   ];
 
   const macros = []; // builtins first, then yours, in order
@@ -159,6 +184,8 @@ CA.Macros = (() => {
       };
     }
     ['defaultKey', 'keepOnAscend', 'section', 'spell'].forEach((k) => def[k] !== undefined && (m[k] = def[k]));
+    // built-ins can let you choose some of their steps' params right on their row (saved in prefs)
+    if (m.builtin && Array.isArray(def.options)) m.options = def.options.filter((o) => m.steps[o.step]);
     return m;
   }
 
@@ -214,7 +241,8 @@ CA.Macros = (() => {
   function duplicate(id) {
     const m = byId[id];
     if (!m) return null;
-    const copy = JSON.parse(JSON.stringify(m));
+    const copy = JSON.parse(JSON.stringify({ ...m, steps: stepsOf(m) }));
+    delete copy.options;
     delete copy.defaultKey;
     delete copy.section;
     delete copy.keepOnAscend;
@@ -231,7 +259,7 @@ CA.Macros = (() => {
     let done = 0;
     depth++;
     try {
-      m.steps.forEach((step, i) => {
+      stepsOf(m).forEach((step, i) => {
         const s = st.steps[i];
         try {
           const n = CA.Actions.run(step.action, step.params);
@@ -365,6 +393,25 @@ CA.Macros = (() => {
   const runningIds = () => Object.keys(running);
   const statusOf = (id) => status[id] || null;
   const since = (id) => (running[id] ? running[id].since : 0);
+  /** A macro's steps with the choices you made on a built-in's row applied. */
+  function stepsOf(m) {
+    const chosen = (prefs[m.id] && prefs[m.id].params) || {};
+    if (!m.options || !m.options.length) return m.steps;
+    return m.steps.map((s, i) => {
+      const own = {};
+      m.options.forEach((o) => o.step === i && chosen[`${i}.${o.key}`] !== undefined && (own[o.key] = chosen[`${i}.${o.key}`]));
+      return Object.keys(own).length ? { ...s, params: { ...s.params, ...own } } : s;
+    });
+  }
+  /** Sets one of a built-in's row choices (one of its `options`). */
+  function setParam(id, step, key, value) {
+    const m = byId[id];
+    if (!m || !(m.options || []).some((o) => o.step === step && o.key === key)) return;
+    const p = { ...(prefs[id] || {}) };
+    p.params = { ...(p.params || {}), [`${step}.${key}`]: value };
+    prefs[id] = p;
+    changed(id);
+  }
   const isFav = (id) => !!(prefs[id] && prefs[id].fav);
   function setFav(id, on) {
     if (!byId[id]) return;
@@ -472,6 +519,8 @@ CA.Macros = (() => {
     groupsWith,
     isFav,
     setFav,
+    stepsOf,
+    setParam,
     triggerText,
     serialize,
     load,

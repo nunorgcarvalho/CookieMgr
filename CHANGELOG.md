@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 2.10.0 — 2026-10-05
+
+- **Season keeper** (new built-in macro): pick a season on its row; while it's on, it buys that season's biscuit as soon
+  as you can afford it — switching from another season if one is running — and buys it again whenever the season
+  runs out. Needs the Season switcher heavenly upgrade.
+- **Sugar lump harvester** (new built-in macro): harvests your lump when it's **ripe** (always pays) or, if you pick
+  **mature** on its row, as soon as it matures (about 3 hours sooner, but the game's 50% chance of getting nothing).
+  The "Harvest the sugar lump" action in your own macros has the same choice.
+- Built-in macros can now have choices right on their row (saved with your settings; a duplicate keeps them).
+- Fix: v2.9's widget settings styles spilled over into the macro editor's layout.
+
 ## 2.9.0 — 2026-10-05
 
 - **Round minigame widgets:** the Grimoire, Garden and Stock market widgets are now small round meters instead of

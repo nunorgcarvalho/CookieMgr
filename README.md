@@ -150,15 +150,22 @@ Everything CookieMgr automates is a **macro**: one or more **actions** run in or
 | Sell all stocks        | —           | Once: autobuyer off, then sells every stock                          |
 | All autoclickers       | `A`         | The first six all on, or all off if they're all running              |
 | Cast … (one per spell) | —           | Once: casts that Grimoire spell                                      |
+| Season keeper          | —           | Keeps the season you pick on its row going (buys its biscuit)        |
+| Sugar lump harvester   | —           | Harvests your lump when ripe — or when mature, if you pick that      |
 | FtHoF on Click frenzy  | —           | When a Click frenzy runs and there's magic: Force the Hand of Fate   |
 
 The autobuyer is the same switch as on the Stock market page and in the Bank minigame toolbar, and it isn't part
 of "All autoclickers".
 
+Some built-ins have a choice right on their row: the **Season keeper**'s season (it buys that season's biscuit as soon
+as you can afford it, switching from any other season, and again whenever it runs out — needs the Season switcher),
+and when the **Sugar lump harvester** picks: **ripe** (always pays) or **mature** (about 3 hours sooner, but with the
+game's 50% chance of getting nothing).
+
 **Your macros** — **New macro** opens the editor: name, icon, trigger (with how often, and for "When…" the condition,
 optionally negated), and the steps — pick an action for each, set its options, reorder or remove them. Actions:
 click the big cookie, pop golden / wrath cookies, reindeer, wrinklers (optionally sparing shiny ones), click fortune
-news, trade stocks, sell all stocks, harvest the sugar lump once ripe, cast a spell, switch another macro
+news, trade stocks, sell all stocks, harvest the sugar lump (once ripe, or once mature), keep a season going, cast a spell, switch another macro
 on/off/toggle, run another macro. Conditions: an effect is active (Frenzy, Click frenzy, …), any building special,
 several effects at once, something to pop is on screen, enough magic for a spell, magic at a % of the maximum, or any
 recorded value (CpS, cookies in bank, prestige, a stock price…) above or below a number — each can be negated, and

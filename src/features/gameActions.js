@@ -138,16 +138,52 @@ CA.GameActions = (() => {
     });
     A({
       id: 'lump.harvest',
-      name: 'Harvest the sugar lump once ripe',
+      name: 'Harvest the sugar lump',
       icon: 'lump',
       group: 'Other',
       unit: 'harvested',
+      // ripe: always pays out. mature (an hour or so sooner): the game gives a 50% chance of nothing
+      params: [
+        {
+          key: 'when',
+          label: 'Harvest when',
+          type: 'select',
+          default: 'ripe',
+          options: () => [
+            { v: 'ripe', label: 'ripe (always pays)' },
+            { v: 'mature', label: 'mature (50% chance)' },
+          ],
+        },
+      ],
+      describe: (p) => `Harvest the sugar lump once ${p.when === 'mature' ? 'mature (50%)' : 'ripe'}`,
       available: () => typeof Game.canLumps === 'function' && Game.canLumps(),
-      run: () => {
-        // only when ripe: harvesting a mature-but-unripe lump can give nothing
-        if (!Game.lumpT || Date.now() - Game.lumpT < Game.lumpRipeAge) return 0;
+      run: (p) => {
+        const age = Date.now() - (Game.lumpT || Date.now());
+        if (!Game.lumpT || age < (p.when === 'mature' ? Game.lumpMatureAge : Game.lumpRipeAge)) return 0;
         Game.clickLump();
         return 1;
+      },
+    });
+    const SEASONS = () =>
+      Object.keys(Game.seasons || {}).map((k) => ({ v: k, label: Game.seasons[k].name }));
+    A({
+      id: 'season.keep',
+      name: 'Keep a season going',
+      icon: 'calendar',
+      group: 'Other',
+      unit: 'switched',
+      params: [{ key: 'season', label: 'Season', type: 'select', default: 'christmas', options: SEASONS }],
+      describe: (p) => `Keep ${(Game.seasons && Game.seasons[p.season] && Game.seasons[p.season].name) || 'a season'} going`,
+      // the season switcher (a heavenly upgrade) puts the seasons' biscuits in the store
+      available: () => typeof Game.Has === 'function' && Game.Has('Season switcher'),
+      run: (p) => {
+        const s = Game.seasons && Game.seasons[p.season];
+        if (!s || Game.season === p.season) return 0;
+        const up = Game.Upgrades[s.trigger];
+        // the game unlocks it again (bought = 0) when a season ends or another starts
+        if (!up || !up.unlocked || up.bought || !up.canBuy()) return 0;
+        up.buy();
+        return Game.season === p.season ? 1 : 0;
       },
     });
     const macroOptions = (pred) => () => CA.Macros.list().filter(pred).map((m) => ({ v: m.id, label: m.name }));

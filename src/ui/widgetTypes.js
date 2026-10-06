@@ -43,7 +43,7 @@ CA.UI.WidgetTypes = (() => {
       '<span class="ca-wpop ca-wt">' +
       `<span class="ca-wpop-head">${CA.UI.MacrosPage.icon(m, true)}<b>${esc(m.name)}</b></span>` +
       `<span class="ca-wpop-sub">${esc(CA.Macros.triggerText(m))} · on for ${span((Date.now() - CA.Macros.since(m.id)) / 1000)}</span>`;
-    m.steps.forEach((step, i) => {
+    CA.Macros.stepsOf(m).forEach((step, i) => {
       const s = (st && st.steps[i]) || {};
       const a = CA.Actions.get(step.action) || {};
       const hot = s.lastAt && Date.now() - s.lastAt < HOT_MS;
