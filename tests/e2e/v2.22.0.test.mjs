@@ -67,7 +67,8 @@ assert(!log.includes('f'), 'parallel waits for every branch');
 flags.z = true;
 await passes(m.id, 3);
 assert(log.includes('e') && log.filter((t) => t === 'f').length >= 2 && M.isOn(m.id), 'then forever: every pass, never finishes');
-assert(M.flowStatus(m.id).at.includes('repeating'), 'status: repeating');
+// v2.28: blocks run as their code (written out once), so the status names the line
+assert(M.flowStatus(m.id).at.some((x) => /repeating$/.test(x)), `status: repeating (${M.flowStatus(m.id).at})`);
 M.set(m.id, false, { silent: true });
 
 

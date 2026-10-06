@@ -38,7 +38,8 @@ CA.Util = {
    */
   notify(title, desc, icon, quick = 2) {
     try {
-      Game.Notify(title, desc || '', icon || CA.ICON, quick, 1);
+      // the game shows the title as HTML: titles are plain text (macro names…), so escape them; desc may hold markup
+      Game.Notify(CA.Util.escapeHtml(String(title)), desc || '', icon || CA.ICON, quick, 1);
     } catch (e) {
       console.log(`[CookieMgr] ${title}: ${desc}`);
     }

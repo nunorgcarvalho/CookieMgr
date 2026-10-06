@@ -23,7 +23,7 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 | **Widget** | Something on the game's left panel: a macro's button, the Running now bar, quick stats, events, minigames. |
 
-## Features (v2.27)
+## Features (v2.28)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
 the data pages **Events** and **Graphs**; the minigames **Garden**, **Stock market**, **Pantheon** and **Grimoire**;
@@ -533,7 +533,7 @@ src/
     events.js        tiny pub/sub bus ('macros', 'settings', 'hotkeys', 'ascend', 'history', …)
     actions.js       registry of actions (single things CookieMgr can do in the game)
     conditions.js    registry of conditions "when" macros wait for
-    settings.js      options + hotkey bindings, save/load (JSON inside the game save)
+    settings.js      options, hotkey bindings and the save: sections features register, guarded loading, the local mirror
     store.js         IndexedDB storage for everything recorded, per save (never localStorage)
     states.js        registry of states: id, name, unit, kind (gauge / counter / flow), getter
     recorder.js      samples every state each second into frames; tiers, compaction, export/import
@@ -593,6 +593,9 @@ If you add a file, add it to `MODULES` in `build.mjs` in the right order.
 
 ### Adding things
 
+- **A new part of the save:** `CA.Settings.registerSection(key, { serialize, load(data, whole), event })` in the feature's
+  `init()` — it's saved with the game, mirrored locally whenever `event` fires, and loaded on its own (a section that
+  can't be read keeps a copy and doesn't stop the others).
 - **A new setting:** call `CA.Settings.defineOption({ key, group, icon, name, desc, default })` in a feature's `init()`, and read
   it with `CA.Settings.get(key)`. Options in the `general` group appear on the Settings page, `macros` ones on the Macros page too.
   `icon` is a name from `ui/icons.js`, shown at the start of the row.

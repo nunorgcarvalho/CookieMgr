@@ -367,6 +367,7 @@ CA.Garden = (() => {
   const GARDENER = 'gardener';
 
   function init() {
+    CA.Settings.registerSection('garden', { serialize, load, event: 'garden' });
     S().defineOption({ key: 'gardenProfile', group: 'garden-hidden', name: 'Active garden profile', desc: '', default: '' });
     S().defineOption({ key: 'gardenThreshold', group: 'garden-hidden', name: 'Harvest before dying at', desc: '', default: 50 });
     S().defineOption({ key: 'gardenLead', group: 'garden-hidden', name: 'Seconds before the tick', desc: '', default: 15 });

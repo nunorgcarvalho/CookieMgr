@@ -30,44 +30,34 @@ const mod = {
   init() {
     const hadLegacy = removeLegacyBookmarklet();
 
-    // data backbone first: the event log and states must exist before the recorder's first tick
-    CA.EventLog.init();
-    CA.GameActions.init(); // actions + conditions, then the macros built from them
-    CA.Macros.init();
-    CA.Grimoire.init();
-    CA.Garden.init();
-    CA.GardenHistory.init();
-    CA.Shop.init();
-    CA.AutoBuy.init();
-    CA.Seasons.init();
-    CA.Stocks.init();
-    CA.StockLog.init();
-    CA.History.init();
-    CA.GameStates.init();
-    CA.Recorder.init();
-    CA.GameEvents.init();
-    CA.NotifyTips.init();
-    CA.UI.Graphs.init();
-    CA.UI.EventsPage.init();
-    CA.UI.CodeEditor.init();
-    CA.UI.MacrosPage.init();
-    CA.UI.Widgets.init();
-    CA.UI.WizardPage.init();
-    CA.UI.GardenPage.init();
-    CA.UI.PantheonPage.init();
-    CA.UI.StoreBar.init();
-    CA.UI.StockGraph.init();
-    CA.UI.StockPerf.init();
-    CA.UI.StockLog.init();
-    CA.UI.BankToolbar.init();
-    CA.Hotkeys.init();
-    CA.Ascension.init();
-    CA.UI.Menu.init();
-    CA.UI.Tab.init();
-    CA.UI.Tips.init();
+    // data backbone first: the event log and states must exist before the recorder's first tick;
+    // actions + conditions before the macros built from them. One module failing to start is
+    // logged and the rest still start.
+    const failed = [];
+    [
+      CA.EventLog, CA.GameActions, CA.Macros, CA.Grimoire, CA.Garden, CA.GardenHistory, CA.Shop, CA.AutoBuy, CA.Seasons,
+      CA.Stocks, CA.StockLog, CA.History, CA.GameStates, CA.Recorder, CA.GameEvents, CA.NotifyTips,
+      CA.UI.Graphs, CA.UI.EventsPage, CA.UI.CodeEditor, CA.UI.MacrosPage, CA.UI.Widgets, CA.UI.WizardPage, CA.UI.GardenPage,
+      CA.UI.PantheonPage, CA.UI.StoreBar, CA.UI.StockGraph, CA.UI.StockPerf, CA.UI.StockLog, CA.UI.BankToolbar,
+      CA.Hotkeys, CA.Ascension, CA.UI.Menu, CA.UI.Tab, CA.UI.Tips,
+    ].forEach((m, i) => {
+      try {
+        m.init();
+      } catch (e) {
+        failed.push(i);
+        console.error('[CookieMgr] a module failed to start', e);
+      }
+    });
+    CA.Macros.ready(); // every action is registered now
     setInterval(() => CA.Util.unshift(), 2000); // see CA.Util.unshift
-    CA.Update.init();
-    CA.CookieMonster.init();
+    [CA.Update, CA.CookieMonster].forEach((m) => {
+      try {
+        m.init();
+      } catch (e) {
+        failed.push(m);
+        console.error('[CookieMgr] a module failed to start', e);
+      }
+    });
     migrateOldSaveData();
     CA.Settings.startAutoPersist();
 
@@ -79,6 +69,7 @@ const mod = {
       CA.ICON,
       4
     );
+    if (failed.length) CA.Util.notify('CookieMgr', `${failed.length} part${failed.length === 1 ? '' : 's'} of CookieMgr couldn’t start (see the browser console) — the rest works.`, CA.ICON, 6);
   },
 
   save() {
@@ -87,23 +78,7 @@ const mod = {
 
   load(str) {
     loaded = true;
-    // Prefer our own localStorage mirror when we have one — it's updated the moment anything
-    // changes, while the game's save can be up to 60s stale or skipped by a quick reload.
-    // Read it first: deserializing re-mirrors the current, not-yet-restored state over it.
-    const local = CA.Settings.localPayload();
-    const data = (local && CA.Settings.deserialize(local)) || CA.Settings.deserialize(str);
-    if (!data) return;
-    CA.Macros.load(data.macros);
-    CA.UI.Widgets.load(data.widgets);
-    CA.Garden.load(data.garden);
-    if (!CA.Settings.get('rememberStates')) return;
-    if (Array.isArray(data.running)) CA.Macros.restore(data.running);
-    else {
-      // saved by v1.x: { clickers: { bigCookie: true, … }, stockTrader: true }
-      const ids = Object.keys(data.clickers || {}).filter((id) => data.clickers[id] === true);
-      if (data.stockTrader === true) ids.push('stockTrader');
-      CA.Macros.restore(ids);
-    }
+    CA.Settings.load(str); // core/settings.js: options, hotkeys, then every registered section
   },
 };
 

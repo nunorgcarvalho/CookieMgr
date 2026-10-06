@@ -97,39 +97,8 @@ CA.Seasons = (() => {
 
   // ---- the SeasonCompletion flow ------------------------------------------------------------
 
-  // what to switch on in each season so its drops get collected
-  const HELPERS = { christmas: ['reindeer'], halloween: ['wrinklers'], easter: ['golden', 'wrath'], valentines: [] };
-  const DEFAULT_ORDER = ['christmas', 'easter', 'halloween', 'valentines', 'fools'];
-
   /** SeasonCompletion's code (an algorithmic macro — features/script.js). */
   const DEFAULT_SOURCE = "# SeasonCompletion — every season's cookies and upgrades, one season after another.\n# The research starts right away, alongside: One mind starts the Grandmapocalypse,\n# and Halloween's cookies come from popping wrinklers.\nparallel:\n  branch research:\n    repeat until researchOwned() >= 9:\n      buy.research(none)\n  branch seasons:\n    # Christmas, first visit: Santa's upgrades, and Santa all the way to Final Claus\n    # (its reindeer cookies wait for a second visit, near the end)\n    switch on reindeer\n    repeat until owned(christmas, upgrades) >= total(christmas, upgrades) and santaLevel() >= 14:\n      season.keep(christmas)\n      season.buyDrops(christmas, upgrades)\n      santa.upgrade()\n    for season in [easter, halloween, valentines]:\n      if season == easter:\n        # eggs drop from golden and wrath cookies\n        switch on golden\n        switch on wrath\n      elif season == halloween:\n        # Halloween cookies drop from wrinklers that have eaten\n        switch on wrinklers\n      repeat until owned(season, all) >= total(season, all):\n        season.keep(season)\n        season.buyDrops(season, all)\n    # Christmas again, for the reindeer cookies — they don't need wrinklers, so the\n    # Grandmapocalypse can end here\n    repeat until owned(christmas, cookies) >= total(christmas, cookies):\n      season.keep(christmas)\n      season.buyDrops(christmas, cookies)\n      grandma.exit(pledge)\n    # and Business day for good, with the elders kept pledged\n    forever:\n      season.keep(fools)\n      grandma.exit(pledge)\n";
-
-  const cond = (id, params) => ({ all: [{ cond: id, params, not: false }] });
-  const doIt = (action, params) => ({ type: 'do', action, params });
-
-  /** The flow for an order of seasons: research alongside; each season until complete; the last held, then out of the Grandmapocalypse. */
-  function makeFlow(opts) {
-    const order = (Array.isArray(opts.order) && opts.order.length ? opts.order : DEFAULT_ORDER).filter((s) => SEASONS.some((x) => x.v === s));
-    const exit = opts.exit || 'pledge';
-    const seasonsBranch = [];
-    order.forEach((s, i) => {
-      (HELPERS[s] || []).forEach((m) => seasonsBranch.push(doIt('macro.set', { macro: m, to: 'on' })));
-      if (i < order.length - 1) {
-        const body = [doIt('season.keep', { season: s }), doIt('season.buyDrops', { season: s })];
-        if (s === 'christmas') body.push(doIt('santa.upgrade', {}));
-        seasonsBranch.push({ type: 'until', cond: cond('season.complete', { season: s }), body });
-      } else {
-        // the last season: stay there for good, and leave the Grandmapocalypse
-        seasonsBranch.push({ type: 'forever', body: [doIt('season.keep', { season: s }), doIt('season.buyDrops', { season: s }), doIt('grandma.exit', { how: exit })] });
-      }
-    });
-    return [
-      {
-        type: 'parallel',
-        branches: [[{ type: 'until', cond: cond('research.done', {}), body: [doIt('buy.research', { stopBefore: 'none' })] }], seasonsBranch],
-      },
-    ];
-  }
 
   function init() {
     const A = CA.Actions.register;
@@ -232,5 +201,5 @@ CA.Seasons = (() => {
     });
   }
 
-  return { init, SEASONS, dropsOf, complete, progress, makeFlow, DEFAULT_ORDER, DEFAULT_SOURCE };
+  return { init, SEASONS, dropsOf, complete, progress, DEFAULT_SOURCE };
 })();

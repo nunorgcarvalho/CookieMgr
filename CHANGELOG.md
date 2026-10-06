@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+## 2.28.0 — 2026-10-06
+
+- **Safer saves.** Each part of CookieMgr's save (your macros, widgets, garden profiles…) now loads on its own: if one
+  can't be read, the rest still load, and a copy of what couldn't be read is kept in the browser (you're told).
+  Before, one such error could leave the others at their defaults and the local copy then overwrote them.
+- **Imports and other devices' saves now apply.** The local copy (which survives a quick refresh) is used only on
+  start-up, only for the same bakery, and only when it isn't older than the game's save — so importing a save, or a
+  cloud save from another machine, brings its CookieMgr settings along.
+- **Settings of pages you haven't opened yet** keep their saved values (they were reset when defined late).
+- **Algorithmic macros with a problem in their code won't start** (instead of running with lines quietly missing):
+  you're told which line, and its card shows it. One that hits an error while running stops and says why, instead
+  of failing every pass.
+- **Elder Pledge's "how" choice** is there from the start (it only appeared after editing the macro).
+- **Garden history is kept per save**, like the rest of the history (importing another save no longer mixes them).
+- **Fix:** a problem while logging a stock trade could break the Bank's buy/sell buttons; the dragon's drop order
+  could leave the game's random numbers seeded; macro names with markup in notification titles.
+- Under the hood: features register their own parts of the save (`CA.Settings.registerSection`); start-up carries
+  on past a module that fails; v2.22's flow blocks and old code settings are converted to code when loaded and the
+  old block editor, flow settings and "All autoclickers" leftovers are gone.
+
 ## 2.27.0 — 2026-10-06
 
 - **Tests in the repo**: `npm test` builds and runs every suite in parallel (about half a minute), and CI runs them

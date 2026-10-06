@@ -181,8 +181,11 @@ CA.AutoBuy = (() => {
     if (order && orderSeed === Game.seed) return order;
     if (typeof Math.seedrandom !== 'function' || typeof shuffle !== 'function') return null;
     Math.seedrandom(`${Game.seed}/dragonTime`);
-    order = shuffle(DROPS.slice());
-    Math.seedrandom();
+    try {
+      order = shuffle(DROPS.slice());
+    } finally {
+      Math.seedrandom();
+    }
     orderSeed = Game.seed;
     return order;
   }

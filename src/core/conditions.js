@@ -55,7 +55,12 @@ CA.Conditions = (() => {
   function describeOne(one) {
     const c = one && byId[one.cond];
     if (!c) return 'unknown condition';
-    const text = c.describe ? c.describe(paramsFor(one.cond, one.params)) : c.name;
+    let text = c.name;
+    try {
+      if (c.describe) text = c.describe(paramsFor(one.cond, one.params));
+    } catch (e) {
+      /* its name, then */
+    }
     return one.not ? `not ${text}` : text;
   }
 

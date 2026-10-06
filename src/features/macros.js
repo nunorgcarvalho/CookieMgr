@@ -168,7 +168,6 @@ CA.Macros = (() => {
       steps: (Array.isArray(def.steps) ? def.steps : [])
         .filter((s) => s && typeof s.action === 'string')
         .map((s) => ({ action: s.action, params: s.params && typeof s.params === 'object' ? { ...s.params } : {} })),
-      inAll: !!def.inAll,
       builtin: !!def.builtin,
     };
     if (mode === 'group') {
@@ -177,15 +176,11 @@ CA.Macros = (() => {
     }
     if (mode === 'flow') {
       m.steps = [];
-      m.flow = cleanFlow(def.flow);
-      // an algorithmic macro: its code (features/script.js compiles it when it starts)
+      // an algorithmic macro: its code (features/script.js compiles it when it starts) — v2.22
+      // saved blocks instead, written out as code here
       if (typeof def.source === 'string') m.source = def.source.slice(0, 50000);
+      else if (Array.isArray(def.flow) && def.flow.length) m.source = CA.Script.decompile(cleanFlow(def.flow));
       if (def.builtin && typeof def.defaultSource === 'string') m.defaultSource = def.defaultSource;
-      // a built-in flow can be built from its settings (makeFlow(options)) instead of being fixed
-      if (def.builtin && typeof def.makeFlow === 'function') {
-        m.makeFlow = def.makeFlow;
-        m.flowOptions = Array.isArray(def.flowOptions) ? def.flowOptions : [];
-      }
     }
     if (mode === 'when') {
       // { all: [{ cond, params, not }, …], edge } — v2.0 saved a single condition at the top level
@@ -201,7 +196,9 @@ CA.Macros = (() => {
       };
     }
     ['defaultKey', 'section', 'spell', 'needsCM', 'holdRepeat'].forEach((k) => def[k] !== undefined && (m[k] = def[k]));
-    // built-ins can let you choose some of their steps' params right on their row (saved in prefs)
+    // built-ins can let you choose some of their steps' params right on their row (saved in prefs);
+    // by default every param of their actions — worked out after every feature has registered its
+    // actions (ready()), since a built-in can use an action registered after it
     if (m.builtin) {
       const auto = def.spell || def.noOptions ? [] : [].concat(...m.steps.map((st, i) => ((CA.Actions.get(st.action) || {}).params || []).map((p) => ({ step: i, key: p.key }))));
       m.options = (Array.isArray(def.options) ? def.options : auto).filter((o) => m.steps[o.step]);
@@ -237,7 +234,7 @@ CA.Macros = (() => {
   // Built-ins can be edited like your own macros: your version is kept in prefs[id].custom and
   // laid over the original (baseDefs) — "Revert to default" just drops it.
   const baseDefs = {};
-  const CUSTOM_FIELDS = ['name', 'desc', 'icon', 'mode', 'every', 'steps', 'when', 'members', 'source', 'flow'];
+  const CUSTOM_FIELDS = ['name', 'desc', 'icon', 'mode', 'every', 'steps', 'when', 'members', 'source'];
   function applyBuiltin(id) {
     const base = baseDefs[id];
     if (!base) return null;
@@ -296,6 +293,9 @@ CA.Macros = (() => {
     delete byId[id];
     delete status[id];
     delete prefs[id];
+    delete flowRuns[id];
+    delete activity[id];
+    delete problems[id];
     CA.Hotkeys.unregister(`macro.${id}`);
     changed(id);
     return true;
@@ -305,10 +305,9 @@ CA.Macros = (() => {
     const m = byId[id];
     if (!m) return null;
     // the copy gets the steps (and a flow's blocks) as they are now, settings applied
-    const copy = JSON.parse(JSON.stringify({ ...m, steps: stepsOf(m), every: everyOf(m), flow: m.mode === 'flow' ? flowOf(m) : m.flow, source: m.mode === 'flow' ? sourceOf(m) : undefined }));
+    const copy = JSON.parse(JSON.stringify({ ...m, steps: stepsOf(m), every: everyOf(m), source: m.mode === 'flow' ? sourceOf(m) : undefined }));
     delete copy.defaultSource;
     delete copy.options;
-    delete copy.flowOptions;
     delete copy.shift;
     delete copy.defaultKey;
     delete copy.section;
@@ -388,49 +387,15 @@ CA.Macros = (() => {
       });
   }
 
-  /** A built-in flow's settings, with their defaults. */
-  function flowOptsOf(m) {
-    const mine = (prefs[m.id] && prefs[m.id].flow) || {};
-    const out = {};
-    (m.flowOptions || []).forEach((o) => (out[o.key] = mine[o.key] !== undefined ? mine[o.key] : o.default));
-    return out;
-  }
-  /** The blocks a flow runs (a built-in's built from its settings). */
   /** An algorithmic macro's code: yours, or a built-in's (as you edited it, else its default). */
-  const sourceOf = (m) => (m.builtin ? (prefs[m.id] && typeof prefs[m.id].source === 'string' ? prefs[m.id].source : typeof m.source === 'string' ? m.source : m.defaultSource) : m.source);
-  /** Sets a built-in's code (null: back to its default), restarting it if it's running. */
-  function setSource(id, source) {
-    const m = byId[id];
-    if (!m || !m.builtin || typeof m.defaultSource !== 'string') return;
-    const p = { ...(prefs[id] || {}) };
-    if (source == null || source === m.defaultSource) delete p.source;
-    else p.source = String(source).slice(0, 50000);
-    prefs[id] = p;
-    if (running[id]) {
-      stop(id);
-      start(id);
-    }
-    changed(id);
-  }
-  /** The blocks a flow runs (compiled from its code when it has some; lines kept for its status). */
-  function flowOf(m) {
-    const src = sourceOf(m);
-    if (typeof src === 'string' && CA.Script) return CA.Script.compile(src).flow;
-    return m.makeFlow ? cleanFlow(m.makeFlow(flowOptsOf(m))) : m.flow || [];
-  }
-  /** Sets one of a built-in flow's settings (restarting it if it's running). */
-  function setFlowOpt(id, key, value) {
-    const m = byId[id];
-    if (!m || !m.flowOptions || !m.flowOptions.some((o) => o.key === key)) return;
-    const p = { ...(prefs[id] || {}) };
-    p.flow = { ...(p.flow || {}), [key]: value };
-    prefs[id] = p;
-    if (running[id]) {
-      stop(id);
-      start(id);
-    }
-    changed(id);
-  }
+  const sourceOf = (m) => (typeof m.source === 'string' ? m.source : (m.builtin && m.defaultSource) || '');
+  /** Its code compiled: { flow, errors } (lines kept, for its status). */
+  const compiledOf = (m) => CA.Script.compile(sourceOf(m));
+  /** The blocks a flow runs. */
+  const flowOf = (m) => compiledOf(m).flow;
+  /** Why a macro couldn't start or stopped by itself (code with a problem), else ''. */
+  const problems = {};
+  const problemOf = (id) => problems[id] || '';
 
   const flowRuns = {}; // id -> { prog, S (per-block state by path), at: [what it waits on], done, error }
 
@@ -543,14 +508,25 @@ CA.Macros = (() => {
     const before = F.done;
     depth++;
     let finished = false;
+    let failed = false;
     try {
       finished = execSeq(F, F.prog, 'r') || F.stopped;
+    } catch (e) {
+      failed = true;
+      F.error = String((e && e.message) || e);
+      console.error(`[CookieMgr] macro "${m.name}" stopped`, e);
     } finally {
       depth--;
     }
     status[m.id].runs++;
     status[m.id].lastRun = Date.now();
     if (F.done > before) bump(m.id, F.done - before);
+    if (failed) {
+      problems[m.id] = F.error;
+      set(m.id, false, { silent: true });
+      CA.Util.notify(m.name, `Stopped — ${CA.Util.escapeHtml(F.error)}`, CA.ICON, 5);
+      return;
+    }
     if (finished) {
       set(m.id, false, { silent: true });
       if (CA.Settings.get('notifications')) CA.Util.notify(m.name, 'Finished — it got to the end of its flow.', CA.ICON, 3);
@@ -606,11 +582,21 @@ CA.Macros = (() => {
     }
   }
 
+  /** Starts a macro's timer; false when it can't run (code with a problem: problemOf(id) says why). */
   function start(id) {
     const m = byId[id];
-    if (!m || m.mode === 'once' || running[id]) return;
-    if (m.mode === 'flow') flowRuns[id] = { prog: flowOf(m), S: {}, at: [], trace: [], done: 0, error: '', stopped: false };
+    if (!m || m.mode === 'once' || running[id]) return false;
+    if (m.mode === 'flow') {
+      const { flow, errors } = compiledOf(m);
+      if (errors.length) {
+        problems[id] = `line ${errors[0].line}: ${errors[0].message}`;
+        return false;
+      }
+      flowRuns[id] = { prog: flow, S: {}, at: [], trace: [], done: 0, error: '', stopped: false };
+    }
+    delete problems[id];
     running[id] = { since: Date.now(), condWas: false, lastFire: 0, timer: setInterval(() => tick(m), everyOf(m)) };
+    return true;
   }
 
   function stop(id) {
@@ -647,8 +633,12 @@ CA.Macros = (() => {
       return;
     }
     if (isOn(id) === on) return;
-    if (on) start(id);
-    else stop(id);
+    if (on && !start(id)) {
+      CA.Util.notify(m.name, `Can’t start — ${CA.Util.escapeHtml(problems[id] || 'its code has a problem')}. Edit it to fix that.`, CA.ICON, 5);
+      changed(id);
+      return;
+    }
+    if (!on) stop(id);
     if (!silent) announce(m, on);
     changed(id);
   }
@@ -671,17 +661,6 @@ CA.Macros = (() => {
     if (m.mode === 'once') runOnce(id);
     else toggle(id);
   }
-
-  // ---- "All autoclickers" -------------------------------------------------------------------
-
-  const inAll = () => macros.filter((m) => m.inAll && m.mode !== 'once');
-  const allOn = () => inAll().every((m) => isOn(m.id));
-  function setAll(on, { silent = false } = {}) {
-    inAll().forEach((m) => set(m.id, on, { silent: true }));
-    if (!silent && CA.Settings.get('notifications')) CA.Util.notify('All autoclickers', on ? '<b style="color:#8f8">ON</b>' : '<b style="color:#f88">OFF</b>', CA.ICON, 2);
-  }
-  /** Same as v0.1: if anything is off, turn everything on; otherwise turn all off. */
-  const toggleAll = () => setAll(!allOn());
 
   // ---- queries --------------------------------------------------------------------------------
 
@@ -802,6 +781,15 @@ CA.Macros = (() => {
       if (d && d.id && !(byId[d.id] && byId[d.id].builtin)) add({ ...d, builtin: false });
     });
     prefs = data.prefs && typeof data.prefs === 'object' ? { ...data.prefs } : {};
+    // before v2.28: a built-in's edited code in prefs.source, and v2.22's flow settings in prefs.flow
+    Object.keys(prefs).forEach((id) => {
+      const p = prefs[id];
+      if (!p || typeof p !== 'object') return delete prefs[id];
+      if (typeof p.source === 'string') p.custom = { ...(p.custom || {}), source: p.source };
+      delete p.source;
+      delete p.flow;
+      if (p.custom && typeof p.custom === 'object') delete p.custom.flow;
+    });
     // your versions of the built-ins (and back to the originals where you had none)
     Object.keys(baseDefs).forEach((id) => {
       if ((prefs[id] && prefs[id].custom) || (byId[id] && byId[id].customized)) applyBuiltin(id);
@@ -809,16 +797,33 @@ CA.Macros = (() => {
     changed(null);
   }
 
-  /** Groups that `id` is a member of (so the UI can refresh them too). */
-  const groupsWith = (id) => macros.filter((m) => m.mode === 'group' && m.members.includes(id));
-
   /** Turns on the macros that were running when the game was saved (rememberStates). */
   function restore(ids) {
     (ids || []).forEach((id) => set(id, true, { silent: true }));
   }
 
+  /** Once every feature has started: built-ins' row choices can use any action now. */
+  function ready() {
+    Object.keys(baseDefs).forEach((id) => {
+      const m = byId[id];
+      if (m && !(baseDefs[id].options || baseDefs[id].spell || baseDefs[id].noOptions)) applyBuiltin(id);
+    });
+  }
+
   function init() {
     BUILTINS.forEach((d) => addBuiltin(d));
+    CA.Settings.registerSection('macros', { serialize, load, event: 'macros' });
+    // which were running (when "Remember on/off states" is on) — v1.x saved { clickers: { id: true }, stockTrader }
+    CA.Settings.registerSection('running', {
+      serialize: () => (CA.Settings.get('rememberStates') ? runningIds() : undefined),
+      load(ids, whole) {
+        if (!CA.Settings.get('rememberStates')) return;
+        if (Array.isArray(ids)) return restore(ids);
+        const legacy = Object.keys((whole && whole.clickers) || {}).filter((id) => whole.clickers[id] === true);
+        if (whole && whole.stockTrader === true) legacy.push('stockTrader');
+        restore(legacy);
+      },
+    });
 
     CA.Settings.defineOption({
       key: 'disableOnAscend',
@@ -856,6 +861,7 @@ CA.Macros = (() => {
 
   return {
     init,
+    ready,
     list,
     get,
     addBuiltin,
@@ -868,15 +874,10 @@ CA.Macros = (() => {
     runOnce,
     isOn,
     since,
-    setAll,
-    toggleAll,
-    allOn,
-    inAll,
     activeCount,
     runningIds,
     status: statusOf,
     membersOf,
-    groupsWith,
     isFav,
     setFav,
     customize,
@@ -889,13 +890,11 @@ CA.Macros = (() => {
     shiftToggle,
     shiftValue,
     flowOf,
+    compiledOf,
+    problemOf,
     sourceOf,
-    setSource,
-    flowOptsOf,
-    setFlowOpt,
     flowStatus,
     runPass,
-    cleanFlow,
     rate,
     activityLevel,
     triggerText,

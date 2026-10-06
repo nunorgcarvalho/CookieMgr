@@ -1,6 +1,13 @@
-// Persistent settings: options (booleans for now) and hotkey bindings.
-// Saved inside the regular Cookie Clicker save through the mod API (see main.js),
-// so they follow exports/imports and cloud saves like any other game data.
+// CookieMgr's save: options, hotkey bindings, and the sections features register (your macros,
+// widgets, garden profiles… — registerSection). Saved inside the regular Cookie Clicker save
+// through the mod API (see main.js), so it follows exports/imports and cloud saves like any other
+// game data, and mirrored to localStorage so a quick refresh never loses a change.
+//
+//   CA.Settings.registerSection('garden', { serialize: () => data, load(data, whole), event: 'garden' })
+//
+// Loading is careful: nothing is mirrored while a save is being read, each section loads on its
+// own (one that fails keeps a copy of what it couldn't read and the rest load as usual), and
+// options defined later (by a page that defines them lazily) still get their saved values.
 
 CA.Settings = (() => {
   const SAVE_VERSION = 1;
@@ -8,12 +15,13 @@ CA.Settings = (() => {
   const optionDefs = []; // { key, name, desc, group, default }
   const options = {};
   let hotkeyOverrides = {}; // actionId -> combo ('' = explicitly unbound)
+  let savedOptions = {}; // the options of the save last loaded, for options defined after it
 
   // ---- options ---------------------------------------------------------------
 
   function defineOption(def) {
     optionDefs.push(def);
-    if (!(def.key in options)) options[def.key] = def.default;
+    if (!(def.key in options)) options[def.key] = typeof savedOptions[def.key] === typeof def.default ? savedOptions[def.key] : def.default;
     return def;
   }
 
@@ -77,30 +85,46 @@ CA.Settings = (() => {
 
   // ---- save / load -------------------------------------------------------------
 
+  const sections = []; // { key, serialize, load, event }
+  let loading = false;
+  let loadedOnce = false;
+
+  /** A part of the save that a feature owns: serialize() → JSON-able data, load(data, whole). */
+  function registerSection(key, s) {
+    if (sections.some((x) => x.key === key)) throw new Error(`Save section "${key}" already registered`);
+    sections.push({ key, ...s });
+    if (s.event && persisting) CA.Events.on(s.event, persistToLocal);
+  }
+
   function serialize() {
-    const data = { v: SAVE_VERSION, options: { ...options }, hotkeys: { ...hotkeyOverrides } };
-    if (CA.Macros) {
-      data.macros = CA.Macros.serialize(); // your own macros + per-macro preferences
-      if (options.rememberStates) data.running = CA.Macros.runningIds();
-    }
-    if (CA.UI && CA.UI.Widgets) data.widgets = CA.UI.Widgets.serialize();
-    if (CA.Garden) data.garden = CA.Garden.serialize(); // garden profiles
+    // options not defined (yet) this session keep their saved values
+    const data = { v: SAVE_VERSION, savedAt: Date.now(), options: { ...savedOptions, ...options }, hotkeys: { ...hotkeyOverrides } };
+    sections.forEach((s) => {
+      try {
+        const v = s.serialize();
+        if (v !== undefined) data[s.key] = v;
+      } catch (e) {
+        CA.Util.log(`Could not save “${s.key}”.`, e);
+      }
+    });
     return JSON.stringify(data);
   }
 
-  /** @returns {object|null} the parsed save (so callers can read extra fields such as clickers) */
-  function deserialize(str) {
-    if (!str) return null;
-    let data;
+  const parse = (str) => {
+    if (!str || typeof str !== 'string') return null;
     try {
-      data = JSON.parse(str);
+      const d = JSON.parse(str);
+      return d && typeof d === 'object' && !Array.isArray(d) ? d : null;
     } catch (e) {
       CA.Util.log('Could not read saved settings, using defaults.', e);
       return null;
     }
-    if (!data || typeof data !== 'object') return null;
+  };
 
-    if (data.options && typeof data.options === 'object') {
+  /** Options and hotkeys from parsed save data. */
+  function applyBasics(data) {
+    if (data.options && typeof data.options === 'object' && !Array.isArray(data.options)) {
+      savedOptions = { ...data.options };
       optionDefs.forEach((d) => {
         if (typeof data.options[d.key] === typeof d.default) options[d.key] = data.options[d.key];
       });
@@ -111,8 +135,51 @@ CA.Settings = (() => {
         if (typeof data.hotkeys[id] === 'string') hotkeyOverrides[migrateHotkeyId(id)] = data.hotkeys[id];
       });
     }
+  }
+
+  /** Data a section couldn't read: kept in localStorage (never thrown away), and you're told. */
+  const UNREADABLE_KEY = 'CookieMgr.unreadable';
+  function keepUnreadable(key, value, err) {
+    CA.Util.log(`Could not load your saved “${key}”.`, err);
+    try {
+      const all = JSON.parse(localStorage.getItem(UNREADABLE_KEY) || '{}');
+      all[key] = { at: Date.now(), version: CA.VERSION, error: String((err && err.message) || err), data: value };
+      localStorage.setItem(UNREADABLE_KEY, JSON.stringify(all));
+    } catch (e) {
+      /* storage blocked: the log line is all we can do */
+    }
+    CA.Util.notify('CookieMgr', `Part of your saved settings (“${CA.Util.escapeHtml(key)}”) couldn’t be read, so it starts fresh. A copy is kept in this browser (localStorage “${UNREADABLE_KEY}”).`, CA.ICON, 8);
+  }
+
+  /**
+   * Loads CookieMgr's part of a game save (`str`, may be empty). On the first load of a session the
+   * local mirror is used instead when it's the same bakery's and not older — the game only saves
+   * once a minute; a later load (an import, another save) always takes the game's.
+   * @returns {object|null} the data that was loaded
+   */
+  function load(str) {
+    const game = parse(str);
+    const local = loadedOnce ? null : localMirror();
+    loadedOnce = true;
+    let data = game;
+    if (local && local.data && (!local.saveId || local.saveId === CA.Store.saveId()) && (!game || !game.savedAt || (local.data.savedAt || local.savedAt || 0) >= game.savedAt)) data = local.data;
+    if (!data) return null;
+    loading = true;
+    try {
+      applyBasics(data);
+      sections.forEach((s) => {
+        try {
+          s.load(data[s.key], data);
+        } catch (e) {
+          keepUnreadable(s.key, data[s.key], e);
+        }
+      });
+    } finally {
+      loading = false;
+    }
     CA.Events.emit('settings', null);
     CA.Events.emit('hotkeys', null);
+    persistToLocal();
     return data;
   }
 
@@ -126,48 +193,35 @@ CA.Settings = (() => {
 
   const STORE_KEY = 'CookieMgr.settings.v1';
   const PERSIST_MS = 30000;
-  let persistTimer = null;
+  let persisting = false;
 
   function persistToLocal() {
+    if (loading || !loadedOnce) return; // never mirror a half-loaded (or not yet loaded) state
     try {
-      localStorage.setItem(STORE_KEY, JSON.stringify({ v: 1, savedAt: Date.now(), payload: serialize() }));
+      localStorage.setItem(STORE_KEY, JSON.stringify({ v: 1, savedAt: Date.now(), saveId: CA.Store.saveId(), payload: serialize() }));
     } catch (e) {
       /* storage full/blocked (private mode, quota, ...) — this is a convenience mirror, never fatal */
     }
   }
 
-  /** The mirrored payload string, or null. Read it *before* deserialize()ing anything: that
-   *  emits 'settings', which re-mirrors the current (not yet restored) state over it. */
-  function localPayload() {
-    let raw;
+  /** The mirror: { data (parsed), savedAt, saveId } or null. */
+  function localMirror() {
+    let wrap;
     try {
-      raw = localStorage.getItem(STORE_KEY);
+      wrap = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
     } catch (e) {
       return null;
     }
-    if (!raw) return null;
-    let data;
-    try {
-      data = JSON.parse(raw);
-    } catch (e) {
-      return null;
-    }
-    return data && typeof data.payload === 'string' ? data.payload : null;
-  }
-
-  /** @returns {object|null} same shape as deserialize()'s return, or null if nothing local */
-  function restoreFromLocal() {
-    const payload = localPayload();
-    return payload ? deserialize(payload) : null;
+    if (!wrap || typeof wrap.payload !== 'string') return null;
+    return { data: parse(wrap.payload), savedAt: wrap.savedAt || 0, saveId: wrap.saveId || null };
   }
 
   function startAutoPersist() {
+    persisting = true;
     CA.Events.on('settings', persistToLocal);
     CA.Events.on('hotkeys', persistToLocal);
-    CA.Events.on('macros', persistToLocal);
-    CA.Events.on('widgets', persistToLocal);
-    CA.Events.on('garden', persistToLocal);
-    persistTimer = setInterval(persistToLocal, PERSIST_MS);
+    sections.forEach((s) => s.event && CA.Events.on(s.event, persistToLocal));
+    setInterval(persistToLocal, PERSIST_MS);
     addEventListener('pagehide', persistToLocal);
     addEventListener('beforeunload', persistToLocal);
   }
@@ -182,10 +236,9 @@ CA.Settings = (() => {
     setHotkey,
     targetsForCombo,
     resetHotkeys,
+    registerSection,
     serialize,
-    deserialize,
-    restoreFromLocal,
-    localPayload,
+    load,
     startAutoPersist,
   };
 })();

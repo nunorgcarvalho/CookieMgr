@@ -5031,3 +5031,10 @@ body.ca-has-storebar #products {
   background: #e0b45a;
   border-color: #e0b45a;
 }
+
+/* ---------- v2.28: an algorithm that can't run ---------- */
+
+#CookieMgrMenu .ca-step.ca-step-problem {
+  color: #ffb3a8;
+  background: rgba(160, 40, 30, 0.35);
+}

@@ -865,6 +865,7 @@ CA.UI.Widgets = (() => {
   }
 
   function init() {
+    CA.Settings.registerSection('widgets', { serialize, load, event: 'widgets' });
     CA.UI.WidgetTypes.register();
     S().defineOption({ key: 'widgetsShown', group: 'widgets', icon: 'widget', name: 'Show widgets', desc: 'Show your widgets on the left panel (they stay saved while hidden).', default: true });
     S().defineOption({ key: 'widgetsLocked', group: 'widgets', icon: 'grip', name: 'Lock widgets', desc: 'Stop widgets from being dragged around by accident (buttons still work).', default: false });

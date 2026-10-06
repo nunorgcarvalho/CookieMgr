@@ -1,9 +1,9 @@
-// The Macros page (formerly Autoclickers): every macro (features/macros.js) as a row with its
-// trigger, steps, hotkey, favourite star and switch; a live "Running now" status of every active
-// macro's actions; and an editor for building your own macros out of actions.
+// The Macros page: every macro (features/macros.js) as a card or row with its trigger, steps,
+// hotkey, favourite star, switch and settings; a strip of what's running; and the editor for
+// building your own macros (or changing a built-in) out of actions, conditions and code.
 //
-// The status block (status()) and macro rows (row()) are also used elsewhere: rows on the
-// Stock market page, the status block as a widget (ui/widgets.js).
+// Macro rows (row()) are also used on the Stock market, Garden and Grimoire pages; their settings
+// are handled wherever they are (handleSetting, via ui/menu.js).
 
 CA.UI = CA.UI || {};
 
@@ -58,6 +58,14 @@ CA.UI.MacrosPage = (() => {
     return `<span class="ca-step">${I(a ? a.icon : 'close', 12)}${esc(CA.Actions.describe(step))}</span>`;
   }
 
+  /** An algorithm's step chip: how long its code is — or what's wrong with it. */
+  function codeChip(m) {
+    const problem = M().problemOf(m.id);
+    if (problem) return `<span class="ca-step ca-step-problem">${I('close', 12)}${esc(problem)}</span>`;
+    const n = M().sourceOf(m).split('\n').filter((l) => l.trim() && !/^\s*#/.test(l)).length;
+    return `<span class="ca-step">${I('edit', 12)}code · ${n} line${n === 1 ? '' : 's'}</span>`;
+  }
+
   function memberChips(m) {
     const members = M().membersOf(m);
     if (!members.length) return '<span class="ca-step">no members</span>';
@@ -85,36 +93,6 @@ CA.UI.MacrosPage = (() => {
         html: `<input type="number" class="ca-every-num" data-macro-every="${esc(m.id)}" data-every-as="${rate ? 'rate' : 'secs'}" min="${rate ? 0.1 : M().MIN_EVERY / 1000}" ${rate ? `max="${max}"` : ''} step="any" value="${val}">` + (rate ? `<em class="ca-shift-hint">max ${max}</em>` : ''),
       });
     }
-    const fo = M().flowOptsOf(m);
-    (m.flowOptions || []).forEach((o) => {
-      const cur = fo[o.key];
-      const list = typeof o.options === 'function' ? o.options() : o.options || [];
-      const name = (v) => (list.find((x) => x.v === v) || { label: v }).label;
-      if (o.type === 'order') {
-        // the chosen ones in order (▲ ▼ ×), then the rest to add back
-        const chosen = (Array.isArray(cur) ? cur : []).filter((v) => list.some((x) => x.v === v));
-        const rest = list.filter((x) => !chosen.includes(x.v));
-        const btn = (op, v, label, title, dis) => `<button type="button" class="ca-iconbtn" data-ca="macro-order" data-id="${esc(m.id)}" data-key="${esc(o.key)}" data-op="${op}" data-v="${esc(v)}" data-tip="${title}"${dis ? ' disabled' : ''}>${label}</button>`;
-        out.push({
-          label: o.label,
-          wide: true,
-          summary: chosen.map(name).join(' → '),
-          html:
-            '<div class="ca-order">' +
-            chosen
-              .map((v, i) => `<div class="ca-order-item"><span class="ca-order-n">${i + 1}</span><span class="ca-order-name">${esc(name(v))}${i === chosen.length - 1 ? ' <em>kept</em>' : ''}</span>${btn('up', v, '▲', 'Earlier', i === 0)}${btn('down', v, '▼', 'Later', i === chosen.length - 1)}${btn('del', v, I('close', 10), 'Leave it out', chosen.length < 2)}</div>`)
-              .join('') +
-            (rest.length ? `<div class="ca-order-rest">${rest.map((x) => `<button type="button" class="ca-chip" data-ca="macro-order" data-id="${esc(m.id)}" data-key="${esc(o.key)}" data-op="add" data-v="${esc(x.v)}">${I('plus', 10)} ${esc(x.label)}</button>`).join('')}</div>` : '') +
-            '</div>',
-        });
-      } else {
-        out.push({
-          label: o.label,
-          summary: name(cur),
-          html: `<select data-macro-flowopt="${esc(m.id)}" data-key="${esc(o.key)}">${list.map((x) => `<option value="${esc(x.v)}"${x.v === cur ? ' selected' : ''}>${esc(x.label)}</option>`).join('')}</select>`,
-        });
-      }
-    });
     const steps = M().stepsOf(m);
     (m.options || []).forEach((o) => {
       const a = CA.Actions.get(steps[o.step].action);
@@ -214,7 +192,7 @@ CA.UI.MacrosPage = (() => {
       '<div class="ca-row-text">' +
       `<div class="ca-row-name">${esc(m.name)} <span class="ca-badge ca-badge-${m.mode}">${esc(M().triggerText(m))}</span></div>` +
       (m.desc ? `<div class="ca-row-desc">${esc(m.desc)}</div>` : '') +
-      `<div class="ca-steps">${m.mode === 'group' ? memberChips(m) : m.mode === 'flow' ? `<span class="ca-step">${I('widget', 12)}${M().flowOf(m).length} block${M().flowOf(m).length === 1 ? '' : 's'}</span>` : M().stepsOf(m).map(stepChip).join('<span class="ca-step-arrow">›</span>')}</div>` +
+      `<div class="ca-steps">${m.mode === 'group' ? memberChips(m) : m.mode === 'flow' ? codeChip(m) : M().stepsOf(m).map(stepChip).join('<span class="ca-step-arrow">›</span>')}</div>` +
       optionsHtml(m) +
       '<div class="ca-macro-status" data-macro-status></div>' +
       '</div>' +
@@ -270,60 +248,18 @@ CA.UI.MacrosPage = (() => {
     );
   }
 
-  /** Live status of every running macro and its actions — the "Running now" block / widget. */
-  function status() {
-    const ids = M().runningIds();
-    if (!ids.length) return '<div class="ca-status-empty">Nothing running. Switch a macro on below, or press its hotkey.</div>';
-    const { span, beautify } = CA.UI.Plot.fmt;
-    return ids
-      .map((id) => {
-        const m = M().get(id);
-        if (!m) return '';
-        const st = M().status(id);
-        const up = span((Date.now() - M().since(id)) / 1000);
-        let h =
-          `<div class="ca-status-macro" data-status-macro="${esc(id)}">` +
-          `<div class="ca-status-head">${icon(m, true)}<b>${esc(m.name)}</b><span>${esc(M().triggerText(m))} · on for ${up}</span>` +
-          `<button type="button" class="ca-iconbtn" data-ca="macro-toggle" data-id="${esc(id)}" data-tip="Switch off">${I('close', 12)}</button></div>`;
-        void st;
-        void beautify;
-        h += stepLines(m);
-        return h + '</div>';
-      })
-      .join('');
-  }
-
   // ---- the editor ----------------------------------------------------------------------------
   //
   // A header (the icon, name and description, Save / Cancel / Delete), the kind of macro as five
   // cards, how often it runs, then what it does: numbered step cards, the conditions of a "When…"
-  // macro, a group's members, or a flow's blocks — nested cards, each with its type, what it
-  // does, and ▲ ▼ × to move or remove it; "+ Do · Wait · Until · If · Parallel · Forever" under
-  // every list adds one. Inputs carry data-edit="path.in.draft"; buttons data-edit-act + data-path.
+  // macro, a group's members, or an algorithm's code (ui/codeEditor.js) with the library beside
+  // it. Inputs carry data-edit="path.in.draft"; buttons data-edit-act + data-path.
 
   function blankDraft() {
-    return { id: null, name: '', desc: '', icon: { ico: 'bolt' }, mode: 'repeat', every: 1000, steps: [{ action: 'pop.golden', params: {} }], members: [], when: blankWhen(), flow: [] };
+    return { id: null, name: '', desc: '', icon: { ico: 'bolt' }, mode: 'repeat', every: 1000, steps: [{ action: 'pop.golden', params: {} }], members: [], when: blankWhen(), source: '' };
   }
   const blankCond = () => ({ cond: 'buff', params: {}, not: false });
   const blankWhen = () => ({ all: [blankCond()], edge: 'rise' });
-  const FLOW_BLOCKS = [
-    { v: 'do', label: 'Do', icon: 'bolt', hint: 'run an action' },
-    { v: 'wait', label: 'Wait', icon: 'clock', hint: 'until something holds' },
-    { v: 'until', label: 'Until', icon: 'refresh', hint: 'repeat steps until something holds' },
-    { v: 'if', label: 'If', icon: 'filter', hint: 'one way or the other' },
-    { v: 'parallel', label: 'Parallel', icon: 'widget', hint: 'branches side by side' },
-    { v: 'forever', label: 'Forever', icon: 'refresh', hint: 'repeat steps for good' },
-  ];
-  function blankNode(type) {
-    const doNode = () => ({ type: 'do', action: 'pop.golden', params: {} });
-    if (type === 'wait') return { type, cond: { all: [blankCond()] } };
-    if (type === 'until') return { type, cond: { all: [blankCond()] }, body: [doNode()] };
-    if (type === 'if') return { type, cond: { all: [blankCond()] }, then: [doNode()], else: [] };
-    if (type === 'parallel') return { type, branches: [[doNode()], [doNode()]] };
-    if (type === 'forever') return { type, body: [doNode()] };
-    return doNode();
-  }
-
   function getPath(obj, path) {
     return path.split('.').reduce((o, k) => (o == null ? o : o[/^\d+$/.test(k) ? Number(k) : k]), obj);
   }
@@ -408,45 +344,6 @@ CA.UI.MacrosPage = (() => {
       `<button type="button" class="ca-btn ca-btn-small ca-ed-add" data-edit-act="cond-add" data-path="${listPath}">${I('plus', 11)} And…</button>` +
       '</div>'
     );
-  }
-
-  /** A list of flow blocks, with the "+ block" bar under it. */
-  function blocksHtml(nodes, listPath) {
-    return (
-      '<div class="ca-fb-list">' +
-      nodes.map((n, i) => blockHtml(n, `${listPath}.${i}`, listPath, i, nodes.length)).join('') +
-      '<div class="ca-fb-add">' +
-      FLOW_BLOCKS.map((b) => `<button type="button" class="ca-chip" data-edit-act="node-add" data-path="${listPath}" data-val="${b.v}" data-tip="${esc(b.hint)}">${I(b.icon, 11)} ${b.label}</button>`).join('') +
-      '</div></div>'
-    );
-  }
-
-  function blockHtml(n, path, listPath, i, count) {
-    const kind = FLOW_BLOCKS.find((b) => b.v === n.type) || FLOW_BLOCKS[0];
-    let h =
-      `<div class="ca-fb ca-fb-${n.type}">` +
-      '<div class="ca-fb-head">' +
-      `<span class="ca-fb-kind">${I(kind.icon, 12)}<select data-edit="${path}.type" data-structural>${FLOW_BLOCKS.map((b) => `<option value="${b.v}"${b.v === n.type ? ' selected' : ''}>${b.label}</option>`).join('')}</select></span>` +
-      (n.type === 'do' ? `<div class="ca-ed-step-body">${stepBody(n, path)}</div>` : `<span class="ca-fb-hint">${esc(kind.hint)}</span>`) +
-      tools('node', listPath, i, count) +
-      '</div>';
-    if (n.type === 'wait' || n.type === 'until' || n.type === 'if') h += condsHtml(`${path}.cond.all`, (n.cond && n.cond.all) || []);
-    if (n.type === 'until' || n.type === 'forever') h += `<div class="ca-fb-sub"><span class="ca-fb-label">${n.type === 'until' ? 'each pass, until then' : 'each pass'}</span>${blocksHtml(n.body || [], `${path}.body`)}</div>`;
-    if (n.type === 'if') {
-      h += `<div class="ca-fb-sub"><span class="ca-fb-label">then</span>${blocksHtml(n.then || [], `${path}.then`)}</div>`;
-      h += `<div class="ca-fb-sub ca-fb-else"><span class="ca-fb-label">else</span>${blocksHtml(n.else || [], `${path}.else`)}</div>`;
-    }
-    if (n.type === 'parallel') {
-      h += '<div class="ca-fb-branches">';
-      (n.branches || []).forEach((b, j) => {
-        h +=
-          `<div class="ca-fb-branch"><div class="ca-fb-branch-head"><span class="ca-fb-label">branch ${j + 1}</span>` +
-          ((n.branches || []).length > 1 ? `<button type="button" class="ca-iconbtn" data-edit-act="branch-del" data-path="${path}.branches" data-val="${j}" data-tip="Remove this branch">${I('close', 11)}</button>` : '') +
-          `</div>${blocksHtml(b, `${path}.branches.${j}`)}</div>`;
-      });
-      h += `<button type="button" class="ca-btn ca-btn-small ca-ed-add" data-edit-act="branch-add" data-path="${path}.branches">${I('plus', 11)} Branch</button></div>`;
-    }
-    return h + '</div>';
   }
 
   // ---- algorithmic macros: the code editor and the library (ui/codeEditor.js) ---------------
@@ -554,13 +451,6 @@ CA.UI.MacrosPage = (() => {
    */
   function handleSetting(e) {
     const el = e.target;
-    if (el.dataset && el.dataset.macroFlowopt) {
-      if (e.type !== 'change') return;
-      CA.Util.sound('snd/tick.mp3');
-      M().setFlowOpt(el.dataset.macroFlowopt, el.dataset.key, el.value);
-      refreshSummary(el);
-      return true;
-    }
     if (el.dataset && el.dataset.macroEvery) {
       if (e.type !== 'change') return;
       CA.Util.sound('snd/tick.mp3');
@@ -590,7 +480,7 @@ CA.UI.MacrosPage = (() => {
   function onEditInput(e) {
     const el = e.target;
     if (el.matches && (el.matches('[data-code]') || el.matches('[data-lib-search]'))) return; // ui/codeEditor.js
-    if (el.dataset && (el.dataset.macroFlowopt || el.dataset.macroEvery || el.dataset.macroParam)) return; // handleSetting (via ui/menu.js)
+    if (el.dataset && (el.dataset.macroEvery || el.dataset.macroParam)) return; // handleSetting (via ui/menu.js)
     if (el.dataset && el.dataset.member && draft) {
       const id = el.dataset.member;
       draft.members = (draft.members || []).filter((x) => x !== id);
@@ -608,20 +498,17 @@ CA.UI.MacrosPage = (() => {
     }
     const path = el.dataset.edit;
     if ('structural' in el.dataset) {
-      // a block of another type: a fresh one; another action / condition: its own defaults
-      if (/\.type$/.test(path)) setPath(draft, path.slice(0, -5), blankNode(v));
-      else {
-        setPath(draft, path, v);
-        if (/\.action$/.test(path)) setPath(draft, path.replace(/action$/, 'params'), {});
-        if (/\.cond$/.test(path)) setPath(draft, path.replace(/cond$/, 'params'), {});
-      }
+      // another action / condition: its own defaults
+      setPath(draft, path, v);
+      if (/\.action$/.test(path)) setPath(draft, path.replace(/action$/, 'params'), {});
+      if (/\.cond$/.test(path)) setPath(draft, path.replace(/cond$/, 'params'), {});
       renderEditor();
       return;
     }
     setPath(draft, path, v);
   }
 
-  /** Every "do" block of a flow (to check and fill them in), however deep. */
+  /** Every "do" block of compiled code (to check them), however deep. */
   function flowDos(nodes, out = []) {
     (nodes || []).forEach((n) => {
       if (n.type === 'do') out.push(n);
@@ -632,24 +519,12 @@ CA.UI.MacrosPage = (() => {
     });
     return out;
   }
-  function flowConds(nodes, out = []) {
-    (nodes || []).forEach((n) => {
-      if (n.cond && Array.isArray(n.cond.all)) out.push(...n.cond.all);
-      flowConds(n.body, out);
-      flowConds(n.then, out);
-      flowConds(n.else, out);
-      (n.branches || []).forEach((b) => flowConds(b, out));
-    });
-    return out;
-  }
-
   function validate(d) {
     if (!d.name.trim()) return 'Give it a name.';
     if (d.mode === 'group') return d.members && d.members.length ? '' : 'Tick at least one macro for the group.';
-    if (d.mode === 'flow' && !d.flow.length) return 'Add at least one block.';
     if (d.mode !== 'flow' && !d.steps.length) return 'Add at least one step.';
     if (d.mode !== 'once' && !(d.every >= M().MIN_EVERY)) return `Run it at most every ${M().MIN_EVERY / 1000}s.`;
-    const steps = d.mode === 'flow' ? flowDos(d.flow) : d.steps;
+    const steps = d.mode === 'flow' ? flowDos(CA.Script.compile(d.source || '').flow) : d.steps;
     const self = steps.find((s) => (s.action === 'macro.run' || s.action === 'macro.set') && d.id && s.params.macro === d.id);
     if (self) return 'A macro can’t switch or run itself.';
     const missing = steps.find((s) => (s.action === 'macro.run' || s.action === 'macro.set') && !s.params.macro);
@@ -671,8 +546,8 @@ CA.UI.MacrosPage = (() => {
       if (d.mode === 'when' && !(d.when && d.when.all && d.when.all.length)) d.when = blankWhen();
       if (d.mode === 'when' && d.every >= 1000) d.every = 250;
       // an algorithm starts as the steps it had, written out (and steps from an algorithm's top lines)
-      if (d.mode === 'flow' && typeof d.source !== 'string') {
-        d.source = CA.Script.decompile(d.flow && d.flow.length ? d.flow : d.steps.map((x) => ({ type: 'do', action: x.action, params: { ...x.params } })));
+      if (d.mode === 'flow' && !(d.source || '').trim()) {
+        d.source = CA.Script.decompile(d.steps.map((x) => ({ type: 'do', action: x.action, params: { ...x.params } })));
       }
       if (was === 'flow' && d.mode !== 'flow' && d.mode !== 'group') {
         const dos = CA.Script.compile(d.source || '').flow.filter((n) => n.type === 'do').map((n) => ({ action: n.action, params: { ...n.params } }));
@@ -683,11 +558,8 @@ CA.UI.MacrosPage = (() => {
       else if (act.endsWith('-down') && i < list.length - 1) swap(list, i, i + 1);
       else if (act.endsWith('-del')) list.splice(i, 1);
     } else if (act === 'step-add' && list) list.push({ action: 'pop.golden', params: {} });
-    else if (act === 'node-add' && list) list.push(blankNode(t.dataset.val));
     else if (act === 'cond-add' && list) list.push(blankCond());
     else if (act === 'cond-del' && list) list.splice(i, 1);
-    else if (act === 'branch-add' && list) list.push([blankNode('do')]);
-    else if (act === 'branch-del' && list && list.length > 1) list.splice(i, 1);
     else if (act === 'cancel') {
       draft = null;
       draftError = '';
@@ -714,7 +586,6 @@ CA.UI.MacrosPage = (() => {
         draftError = 'Write at least one line.';
         return renderEditor();
       }
-      d.flow = r.flow;
       draftError = validate(d);
       if (draftError) return renderEditor();
       try {
@@ -729,10 +600,6 @@ CA.UI.MacrosPage = (() => {
       // fill in each param's default so the saved macro is explicit
       d.steps.forEach((x) => (x.params = CA.Actions.paramsFor(x.action, x.params)));
       if (d.mode === 'when') d.when.all.forEach((c) => (c.params = CA.Conditions.paramsFor(c.cond, c.params)));
-      if (d.mode === 'flow') {
-        flowDos(d.flow).forEach((x) => (x.params = CA.Actions.paramsFor(x.action, x.params)));
-        flowConds(d.flow).forEach((c) => (c.params = CA.Conditions.paramsFor(c.cond, c.params)));
-      }
       draftError = validate(d);
       if (draftError) return renderEditor();
       try {
@@ -767,11 +634,10 @@ CA.UI.MacrosPage = (() => {
           })
         )
       : { ...blankDraft(), ...(preset || {}) };
-    if (draft.mode === 'flow' && typeof draft.source !== 'string') draft.source = CA.Script.decompile(draft.flow || []);
+    if (typeof draft.source !== 'string') draft.source = '';
     if (!draft.when || !Array.isArray(draft.when.all)) draft.when = blankWhen();
     if (!Array.isArray(draft.members)) draft.members = [];
     if (!draft.steps.length) draft.steps = [{ action: 'pop.golden', params: {} }]; // a group switched to another mode
-    if (!Array.isArray(draft.flow)) draft.flow = [];
     if (CA.Settings.get('tab') !== 'clickers' && CA.UI.Menu.isOpen()) CA.Settings.set('tab', 'clickers');
     draftError = '';
     rerender();
@@ -851,8 +717,6 @@ CA.UI.MacrosPage = (() => {
         } else st.textContent = on ? `Running · ${CA.UI.Plot.fmt.span((Date.now() - M().since(id)) / 1000)}` : s && s.lastRun ? `Last ran ${ago(s.lastRun)}` : '';
       }
     });
-    const block = el.querySelector('[data-macro-statusblock]');
-    if (block) block.innerHTML = status();
     if (draft && draft.id && el.querySelector('[data-macro-editor] [data-code-ed]')) {
       const f = M().isOn(draft.id) ? M().flowStatus(draft.id) : null;
       CE().setLive(el, 'macro', f ? { lines: f.lines, html: liveHtml(f) } : null);
@@ -885,10 +749,6 @@ CA.UI.MacrosPage = (() => {
       count.textContent = n ? `${n} running` : 'all off';
       count.classList.toggle('on', n > 0);
     }
-    const allOn = el.querySelector('[data-ca="all-on"]');
-    if (allOn) allOn.disabled = M().allOn();
-    const allOff = el.querySelector('[data-ca="all-off"]');
-    if (allOff) allOff.disabled = !M().inAll().some((m) => M().isOn(m.id));
   }
 
   /**
@@ -992,23 +852,6 @@ CA.UI.MacrosPage = (() => {
         if (box) box.classList.toggle('open', open);
         return true;
       }
-      case 'macro-order': {
-        CA.Util.sound('snd/tick.mp3');
-        const m = M().get(id);
-        const key = t.dataset.key;
-        const v = t.dataset.v;
-        const cur = (M().flowOptsOf(m)[key] || []).slice();
-        const i = cur.indexOf(v);
-        const op = t.dataset.op;
-        if (op === 'up' && i > 0) [cur[i - 1], cur[i]] = [cur[i], cur[i - 1]];
-        else if (op === 'down' && i >= 0 && i < cur.length - 1) [cur[i + 1], cur[i]] = [cur[i], cur[i + 1]];
-        else if (op === 'del' && i >= 0 && cur.length > 1) cur.splice(i, 1);
-        else if (op === 'add' && i < 0) cur.push(v);
-        M().setFlowOpt(id, key, cur);
-        openSettings.add(id);
-        rerender();
-        return true;
-      }
       case 'macro-locate': {
         const card = root && [...root.querySelectorAll('.ca-macro[data-macro-row]')].find((c) => c.dataset.macroRow === id);
         if (card) {
@@ -1019,14 +862,6 @@ CA.UI.MacrosPage = (() => {
         }
         return true;
       }
-      case 'all-on':
-        CA.Util.sound('snd/clickOn2.mp3');
-        M().setAll(true);
-        return true;
-      case 'all-off':
-        CA.Util.sound('snd/clickOff2.mp3');
-        M().setAll(false);
-        return true;
       default:
         return false;
     }
@@ -1073,5 +908,5 @@ CA.UI.MacrosPage = (() => {
     CA.Events.on('integrations', () => CA.Settings.get('tab') === 'clickers' && rerender());
   }
 
-  return { init, row, tile, status, sync, handle, handleSetting, icon, edit, run, draft: () => draft };
+  return { init, row, tile, sync, handle, handleSetting, icon, edit, run, draft: () => draft };
 })();

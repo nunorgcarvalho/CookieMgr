@@ -27,6 +27,8 @@ CA.GardenHistory = (() => {
   let unlocked = null; // Set of unlocked plant keys, to spot new ones
   let dirty = false;
   let loaded = false;
+  let saveId = null; // whose history this is (CA.Store.saveId())
+  const keyOf = (s) => `${KV}.${s}`;
 
   /** Each seed's colour, picked to match its sprite. Unknown seeds get a stable hashed hue. */
   const COLORS = {
@@ -198,7 +200,36 @@ CA.GardenHistory = (() => {
   function persist() {
     if (!dirty || !loaded) return Promise.resolve();
     dirty = false;
-    return Promise.all([CA.Store.setKV(KV, samples), CA.Store.setKV(`${KV}.ticks`, ticks)]).catch(() => (dirty = true));
+    const k = keyOf(saveId);
+    return Promise.all([CA.Store.setKV(k, samples), CA.Store.setKV(`${k}.ticks`, ticks)]).catch(() => (dirty = true));
+  }
+
+  /** Reads this save's history (what's been sampled since start-up is kept, after it). */
+  function open() {
+    const s = CA.Store.saveId();
+    saveId = s;
+    loaded = false;
+    const k = keyOf(s);
+    return Promise.all([CA.Store.getKV(k), CA.Store.getKV(`${k}.ticks`), CA.Store.getKV(KV), CA.Store.getKV(`${KV}.ticks`)])
+      .then(([v, tk, oldV, oldTk]) => {
+        if (s !== saveId) return;
+        // before v2.28 there was one history for every save: the first save to open takes it
+        if (!Array.isArray(v) && Array.isArray(oldV)) {
+          v = oldV;
+          tk = oldTk;
+          CA.Store.setKV(KV, null);
+          CA.Store.setKV(`${KV}.ticks`, null);
+        }
+        if (Array.isArray(v)) samples = v.concat(samples).slice(-MAX);
+        if (Array.isArray(tk)) ticks = tk.concat(ticks).slice(-MAX);
+        if (samples.length) lastKey = JSON.stringify([samples[samples.length - 1].c, samples[samples.length - 1].e || {}]);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (s !== saveId) return;
+        loaded = true;
+        dirty = dirty || samples.length > 0;
+      });
   }
 
   /** Snapshots with `key` ('t' or 'a') ≤ x1, plus the one in force at x0. */
@@ -206,17 +237,17 @@ CA.GardenHistory = (() => {
 
   function init() {
     CA.EventLog.defineType('garden', { name: 'Garden', icon: 'leaf', color: '#9fe06a' });
-    Promise.all([CA.Store.getKV(KV), CA.Store.getKV(`${KV}.ticks`)])
-      .then(([v, tk]) => {
-        if (Array.isArray(v)) samples = v.concat(samples).slice(-MAX);
-        if (Array.isArray(tk)) ticks = tk.concat(ticks).slice(-MAX);
-        if (samples.length) lastKey = JSON.stringify([samples[samples.length - 1].c, samples[samples.length - 1].e || {}]);
-      })
-      .catch(() => {})
-      .finally(() => {
-        loaded = true;
-        dirty = dirty || samples.length > 0;
-      });
+    open();
+    // a different save was loaded (an import, a hard reset): keep the old one's, switch to its own
+    CA.Events.on('history', (why) => {
+      if (why !== 'load' || CA.Store.saveId() === saveId) return;
+      persist();
+      samples = [];
+      ticks = [];
+      lastKey = '';
+      unlocked = null;
+      open();
+    });
     setInterval(sample, SAMPLE_MS);
     setInterval(persist, SAVE_MS);
     addEventListener('pagehide', persist);

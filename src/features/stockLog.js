@@ -25,8 +25,12 @@ CA.StockLog = (() => {
       const beforeCookies = Game.cookies;
       const ok = origBuy.call(this, id, n);
       if (ok && good) {
-        const shares = good.stock - beforeStock;
-        if (shares > 0) record('buy', good, shares, beforeCookies - Game.cookies);
+        try {
+          const shares = good.stock - beforeStock;
+          if (shares > 0) record('buy', good, shares, beforeCookies - Game.cookies);
+        } catch (e) {
+          console.error('[CookieMgr] logging a trade failed', e);
+        }
       }
       return ok;
     };
@@ -37,8 +41,12 @@ CA.StockLog = (() => {
       const beforeCookies = Game.cookies;
       const ok = origSell.call(this, id, n);
       if (ok && good) {
-        const shares = beforeStock - good.stock;
-        if (shares > 0) record('sell', good, shares, Game.cookies - beforeCookies);
+        try {
+          const shares = beforeStock - good.stock;
+          if (shares > 0) record('sell', good, shares, Game.cookies - beforeCookies);
+        } catch (e) {
+          console.error('[CookieMgr] logging a trade failed', e);
+        }
       }
       return ok;
     };
