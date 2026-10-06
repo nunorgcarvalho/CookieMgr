@@ -64,7 +64,7 @@ const MODULES = [
   'ui/wizardPage.js',
   'ui/gardenPage.js',
   'ui/pantheonPage.js',
-  'ui/storeSwitch.js',
+  'ui/storeBar.js',
   'ui/menu.js',
   'main.js',
 ];

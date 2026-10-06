@@ -7,10 +7,12 @@
 // 2 payback period of the selected bulk amount, 3 price until the building's next achievement.
 // We offer 2 (best buy for 1 / 10 / 100), 3 and 0. Without Cookie Monster the switch is disabled.
 //
-// **Round up** — with buy ×10 or ×100 selected, a click buys only what it takes to reach the next
-// multiple: 37 owned, ×10 → buys 3 (to 40); 40 owned → buys 10. It wraps each building's buy()
-// (the store calls it with no amount; anything passing an explicit amount is left alone) and
-// getSumPrice(), which the store uses for the price it shows.
+// **Round to multiples** — with ×10 or ×100 selected, a click stops at a multiple of it:
+//   buying, the next one up: 37 owned, ×10 → buys 3 (to 40); 40 owned → buys 10
+//   selling, the next one down: 37 owned, ×10 → sells 7 (to 30); 40 owned → sells 10
+// It wraps each building's buy() (the store calls it with no amount) and sell() (the store's sell
+// mode calls it with exactly Game.buyBulk), and the two price functions the store shows prices with
+// (getSumPrice, getReverseSumPrice). Explicit amounts from anything else are left alone.
 
 CA.Shop = (() => {
   const SORTS = [
@@ -49,10 +51,13 @@ CA.Shop = (() => {
   // ---- round up ---------------------------------------------------------------------------
 
   const roundUp = () => !!CA.Settings.get('roundUpBulk');
-  /** How many a store click buys now: the bulk amount, or what's left to the next multiple of it. */
+  /** How many a store click buys (or sells) now: the bulk amount, or what it takes to reach a multiple of it. */
   function amountFor(b, bulk = Game.buyBulk) {
-    if (!roundUp() || Game.buyMode !== 1 || (bulk !== 10 && bulk !== 100)) return bulk;
-    return bulk - ((b.amount || 0) % bulk);
+    if (!roundUp() || (bulk !== 10 && bulk !== 100)) return bulk;
+    const over = (b.amount || 0) % bulk;
+    if (Game.buyMode === 1) return bulk - over;
+    if (Game.buyMode === -1) return over || bulk;
+    return bulk;
   }
 
   function wrap(b) {
@@ -64,7 +69,19 @@ CA.Shop = (() => {
     if (typeof b.getSumPrice === 'function') {
       const sum = b.getSumPrice;
       b.getSumPrice = function (amount) {
-        return sum.call(this, amount === Game.buyBulk ? amountFor(this, amount) : amount);
+        return sum.call(this, amount === Game.buyBulk && Game.buyMode === 1 ? amountFor(this, amount) : amount);
+      };
+    }
+    if (typeof b.sell === 'function') {
+      const sell = b.sell;
+      b.sell = function (amount, bypass) {
+        return sell.call(this, amount === Game.buyBulk && Game.buyMode === -1 ? amountFor(this, amount) : amount, bypass);
+      };
+    }
+    if (typeof b.getReverseSumPrice === 'function') {
+      const rev = b.getReverseSumPrice;
+      b.getReverseSumPrice = function (amount) {
+        return rev.call(this, amount === Game.buyBulk && Game.buyMode === -1 ? amountFor(this, amount) : amount);
       };
     }
     wrapped.add(b);
@@ -83,16 +100,16 @@ CA.Shop = (() => {
       key: 'roundUpBulk',
       group: 'store',
       icon: 'plus',
-      name: 'Round bulk buys up',
-      desc: 'With ×10 or ×100 selected, buy only what it takes to reach the next multiple (37 → 40, not 47). Also on the store’s side switch.',
+      name: 'Round to multiples',
+      desc: 'With ×10 or ×100 selected, buying stops at the next multiple (37 → 40, not 47) and selling at the one below (37 → 30). Also on the store toolbar.',
       default: false,
     });
     CA.Settings.defineOption({
       key: 'storeSwitch',
       group: 'store',
       icon: 'toolbar',
-      name: 'Store side switch',
-      desc: 'Shows the building sort and round-up switches on the left edge of the store, next to the buildings.',
+      name: 'Store toolbar',
+      desc: 'A small toolbar along the bottom of the store: building sort (with Cookie Monster) and rounding to multiples.',
       default: true,
     });
     Object.values(Game.Objects || {}).forEach(wrap);

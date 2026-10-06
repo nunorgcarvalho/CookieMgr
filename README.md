@@ -23,7 +23,7 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 | **Widget** | Something on the game's left panel: a macro's button, the Running now bar, quick stats, events, minigames. |
 
-## Features (v2.16)
+## Features (v2.17)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
 the data pages **Events** and **Graphs**; the minigames **Garden**, **Stock market**, **Pantheon** and **Grimoire**;
@@ -286,16 +286,16 @@ changes) smoothly instead of jumping when the page loads; positions and sizes ar
 
 ### Store
 
-A small switch sticks out of the left edge of the store, level with the building list (hover a button for what it
-does; Settings → Store can hide it):
+A small toolbar runs along the bottom of the store, over the building rows (hover a button for what it does;
+Settings → Store can hide it). The building list gets a little extra room so its last row still scrolls clear of it.
 
-- **Building sort** — best buy first (Cookie Monster's payback period for the amount you're buying: ×1, ×10 or
-  ×100), next achievement first (cheapest to reach a building's next count achievement), or the game's own order.
-  It flips Cookie Monster's own sort setting, so it **needs Cookie Monster**: without it the buttons are locked, and
-  clicking one loads Cookie Monster.
-- **Round up** (⌈10⌉) — with ×10 or ×100 selected, a click buys only what it takes to reach the next multiple: 37
-  owned and ×10 buys 3 (to 40); on a multiple it buys the full 10. The store's price follows (Cookie Monster's own
-  price display shows the full bulk).
+- **Sort** — best buy first (Cookie Monster's payback period for the amount you're buying: ×1, ×10 or ×100), next
+  achievement first (cheapest to reach a building's next count achievement), or the game's own order. It flips Cookie
+  Monster's own sort setting, so it **needs Cookie Monster**: without it the buttons are locked, and clicking one
+  loads Cookie Monster.
+- **Round to multiples** (⌈10⌉ when buying, ⌊10⌋ when selling) — with ×10 or ×100 selected, buying stops at the next
+  multiple (37 owned, ×10 buys 3, to 40) and selling at the one below (37 owned, ×10 sells 7, to 30); on a multiple
+  it's the full 10. The store's price follows (Cookie Monster's own price display shows the full bulk).
 
 ### Settings
 
@@ -453,7 +453,7 @@ src/
     wizardPage.js    the Grimoire page and the toolbar inside the game's Grimoire
     pantheonPage.js  the Pantheon page
     gardenPage.js    the Garden page: the plot against the active profile, the auto-gardener, profiles
-    storeSwitch.js   the store side switch (building sort, round up)
+    storeBar.js      the store toolbar (building sort, rounding to multiples)
     stockGraph.js    the Stock market page charts: portfolio value / per-stock prices, rolling performance
     stockLog.js      the trade ticker + transaction history table, also on the Stock market page
     bankToolbar.js   Sell all / autobuyer / CookieMgr buttons inside the Bank minigame

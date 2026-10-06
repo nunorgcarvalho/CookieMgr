@@ -8,7 +8,7 @@
 CA.UI = CA.UI || {};
 
 CA.UI.Tips = (() => {
-  const ROOTS = '#CookieMgrMenu, #CookieMgrWidgets, #CookieMgrTab, #CookieMgrStoreSwitch, #cm-bank-toolbar, #cm-grimoire-toolbar, #CookieMgrStoreBar';
+  const ROOTS = '#CookieMgrMenu, #CookieMgrWidgets, #CookieMgrTab, #cm-bank-toolbar, #cm-grimoire-toolbar, #CookieMgrStoreBar';
   let tip = null;
   let current = null;
 

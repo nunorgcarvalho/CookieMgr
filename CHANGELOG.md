@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 2.17.0 — 2026-10-06
+
+- **Store toolbar:** the store's sort and rounding switches are now a row of small icon buttons along the bottom of
+  the store, stretching across it, instead of tabs sticking out of its side. The building list gets room so its last
+  row still scrolls clear.
+- **Round to multiples works for selling too:** with ×10 or ×100, selling stops at the multiple below (37 → 30), as
+  buying stops at the one above (37 → 40). The store's sell price follows. (Renamed from "Round bulk buys up".)
+
 ## 2.16.0 — 2026-10-05
 
 - **Garden growth chart**, beside the plot on the Garden page: stacked bars over time of how many of each seed were
