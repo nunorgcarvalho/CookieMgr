@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 2.8.1 — 2026-10-05
+
+- **Fix: the Quick stats widget couldn't draw** ("Game.UpgradesById.filter is not a function") — the game keeps its upgrades and achievements in objects keyed by id, not arrays.
+
 ## 2.8.0 — 2026-10-02
 
 - **Feedback when a spell needs more magic:** cast buttons stay clickable (dimmed) when you can't afford the spell;

@@ -122,15 +122,16 @@ CA.UI.Widgets = (() => {
     );
   }
 
-  // totals counted with the game's own rules (the same ones behind UpgradesOwned / AchievementsOwned)
+  // totals counted with the game's own rules (the same ones behind UpgradesOwned / AchievementsOwned);
+  // UpgradesById / AchievementsById are plain objects keyed by id, not arrays
   let upTotal = 0;
   let achTotal = 0;
   function upgradesTotal() {
-    if (!upTotal && Game.UpgradesById && Game.CountsAsUpgradeOwned) upTotal = Game.UpgradesById.filter((u) => u && Game.CountsAsUpgradeOwned(u.pool)).length;
+    if (!upTotal && Game.UpgradesById && Game.CountsAsUpgradeOwned) upTotal = Object.values(Game.UpgradesById).filter((u) => u && Game.CountsAsUpgradeOwned(u.pool)).length;
     return upTotal;
   }
   function achievementsTotal() {
-    if (!achTotal && Game.AchievementsById && Game.CountsAsAchievementOwned) achTotal = Game.AchievementsById.filter((a) => a && Game.CountsAsAchievementOwned(a.pool)).length;
+    if (!achTotal && Game.AchievementsById && Game.CountsAsAchievementOwned) achTotal = Object.values(Game.AchievementsById).filter((a) => a && Game.CountsAsAchievementOwned(a.pool)).length;
     return achTotal;
   }
 
