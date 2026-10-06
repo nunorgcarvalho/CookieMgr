@@ -81,4 +81,52 @@ CA.Util = {
     ctx.font = prevFont;
     return max;
   },
+
+  /**
+   * Scrolls `el` into view inside its own scroll area only (the CookieMgr panel, the middle
+   * panel's building list…). Element.scrollIntoView also scrolls every ancestor — including the
+   * game's overflow-hidden containers, which you then can't scroll back: the whole screen shifts.
+   * block: 'start' | 'nearest'.
+   */
+  scrollInPanel(el, block = 'nearest', offset = 8) {
+    if (!el || !el.getBoundingClientRect) return;
+    let box = el.parentElement;
+    while (box && box !== document.body && box !== document.documentElement) {
+      const oy = getComputedStyle(box).overflowY;
+      if ((oy === 'auto' || oy === 'scroll') && box.scrollHeight > box.clientHeight) break;
+      box = box.parentElement;
+    }
+    if (!box || box === document.body || box === document.documentElement) return;
+    const r = el.getBoundingClientRect();
+    const b = box.getBoundingClientRect();
+    let top = box.scrollTop;
+    if (block === 'start') top += r.top - b.top - offset;
+    else if (r.top < b.top) top += r.top - b.top - offset;
+    else if (r.bottom > b.bottom) top += Math.min(r.bottom - b.bottom + offset, r.top - b.top - offset);
+    else return;
+    top = Math.max(0, Math.min(box.scrollHeight - box.clientHeight, top));
+    if (typeof box.scrollTo === 'function') box.scrollTo({ top, behavior: 'smooth' });
+    else box.scrollTop = top;
+  },
+
+  /**
+   * Puts the game's fixed containers back at scroll 0. They're overflow: hidden, so if anything
+   * (a focus, an old scrollIntoView) ever scrolls them, the screen stays shifted with no way to
+   * scroll back. Runs every couple of seconds; does nothing when nothing moved.
+   */
+  unshift() {
+    ['game', 'sectionLeft', 'sectionMiddle', 'sectionRight', 'wrapper'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el && (el.scrollTop || el.scrollLeft)) {
+        el.scrollTop = 0;
+        el.scrollLeft = 0;
+      }
+    });
+    [document.documentElement, document.body].forEach((el) => {
+      if (el && (el.scrollTop || el.scrollLeft)) {
+        el.scrollTop = 0;
+        el.scrollLeft = 0;
+      }
+    });
+  },
 };

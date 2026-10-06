@@ -610,7 +610,7 @@ CA.UI.MacrosPage = (() => {
       caret = lineEnd + 1 + indent.length + body.length;
     }
     ta.value = next;
-    ta.focus();
+    ta.focus({ preventScroll: true });
     if (ta.setSelectionRange) ta.setSelectionRange(caret, caret);
     refreshCode(ta);
   }
@@ -976,7 +976,7 @@ CA.UI.MacrosPage = (() => {
       draftError = '';
       rerender();
       const ed = root && root.querySelector('[data-macro-editor]');
-      if (ed && ed.scrollIntoView) ed.scrollIntoView({ block: 'nearest' });
+      if (ed) CA.Util.scrollInPanel(ed);
       return;
     }
     draft = m ? JSON.parse(JSON.stringify(m)) : { ...blankDraft(), ...(preset || {}) };
@@ -989,7 +989,7 @@ CA.UI.MacrosPage = (() => {
     draftError = '';
     rerender();
     const el = root && root.querySelector('[data-macro-editor]');
-    if (el && el.scrollIntoView) el.scrollIntoView({ block: 'nearest' });
+    if (el) CA.Util.scrollInPanel(el);
   }
 
   // ---- page ------------------------------------------------------------------------------
@@ -1239,7 +1239,7 @@ CA.UI.MacrosPage = (() => {
       case 'macro-locate': {
         const card = root && [...root.querySelectorAll('.ca-macro[data-macro-row]')].find((c) => c.dataset.macroRow === id);
         if (card) {
-          if (card.scrollIntoView) card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          CA.Util.scrollInPanel(card);
           card.classList.remove('ca-flash');
           void card.offsetWidth;
           card.classList.add('ca-flash');
@@ -1270,7 +1270,7 @@ CA.UI.MacrosPage = (() => {
       const n = Number(go.dataset.codeGoto);
       if (ta && n > 0) {
         const pos = ta.value.split('\n').slice(0, n - 1).join('\n').length + (n > 1 ? 1 : 0);
-        ta.focus();
+        ta.focus({ preventScroll: true });
         if (ta.setSelectionRange) ta.setSelectionRange(pos, pos);
       }
       return;

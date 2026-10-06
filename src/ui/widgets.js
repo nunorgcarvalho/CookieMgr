@@ -504,7 +504,7 @@ CA.UI.Widgets = (() => {
   function revealEditor() {
     const ed = document.querySelector('#CookieMgrMenu [data-w-editor]');
     if (!ed) return;
-    if (ed.scrollIntoView) ed.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    CA.Util.scrollInPanel(ed, 'start');
     ed.classList.remove('ca-reveal');
     void ed.offsetWidth;
     ed.classList.add('ca-reveal');

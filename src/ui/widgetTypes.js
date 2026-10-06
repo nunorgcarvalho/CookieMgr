@@ -214,21 +214,7 @@ CA.UI.WidgetTypes = (() => {
     // after the rows are back on screen: the minigame sits at the top of its building's row
     // scroll only the middle panel's own scroll area (scrollIntoView would also shove the whole
     // page past the screen's edge), clamped to what it can scroll
-    setTimeout(() => {
-      const row = document.getElementById(`row${b.id}`);
-      if (!row) return;
-      let box = row.parentElement;
-      while (box && box !== document.body) {
-        const oy = getComputedStyle(box).overflowY;
-        if ((oy === 'auto' || oy === 'scroll') && box.scrollHeight > box.clientHeight) break;
-        box = box.parentElement;
-      }
-      if (!box || box === document.body) return;
-      const max = box.scrollHeight - box.clientHeight;
-      const top = Math.max(0, Math.min(max, box.scrollTop + row.getBoundingClientRect().top - box.getBoundingClientRect().top - 8));
-      if (typeof box.scrollTo === 'function') box.scrollTo({ top, behavior: 'smooth' });
-      else box.scrollTop = top;
-    }, 50);
+    setTimeout(() => CA.Util.scrollInPanel(document.getElementById(`row${b.id}`), 'start'), 50);
   }
 
   const RING_R = 19;

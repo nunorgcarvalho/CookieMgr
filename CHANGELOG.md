@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 2.24.1 — 2026-10-06
+
+- **Fix: the screen shifting down** (and not scrolling back): opening widget settings, the macro editor or a
+  card's chip used the browser's scrollIntoView, which also scrolls the game's own fixed containers. Everything now
+  scrolls only the panel it's in, and CookieMgr puts the game's containers back if anything ever moves them — which
+  also repairs a screen that's already shifted.
+- **Fix: see-through widget popups** (minigame widgets, the status bar, garden tiles): their background didn't make
+  it into the floating layer.
+- **Fix: the code editor's cursor not lining up** with the text: the coloured copy behind the text and the text you
+  type no longer scroll separately — only the editor's box scrolls, with the line numbers pinned beside it.
+
 ## 2.24.0 — 2026-10-06
 
 - **Algorithmic macros** (replacing v2.22's flow blocks): written like pseudo-code, indented like Python — actions,

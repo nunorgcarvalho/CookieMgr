@@ -64,6 +64,7 @@ const mod = {
     CA.UI.Menu.init();
     CA.UI.Tab.init();
     CA.UI.Tips.init();
+    setInterval(() => CA.Util.unshift(), 2000); // see CA.Util.unshift
     CA.Update.init();
     CA.CookieMonster.init();
     migrateOldSaveData();

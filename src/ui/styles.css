@@ -2163,7 +2163,8 @@
 }
 
 /* styled popup over a status-bar icon */
-#CookieMgrWidgets .ca-wpop {
+#CookieMgrWidgets .ca-wpop,
+#CookieMgrLayer .ca-wpop {
   position: absolute;
   left: 50%;
   bottom: calc(100% + 10px);
@@ -2673,7 +2674,8 @@
   box-shadow: inset 0 0 0 3px rgba(255, 210, 110, 0.4);
 }
 /* hover details */
-#CookieMgrWidgets .ca-orb-pop {
+#CookieMgrWidgets .ca-orb-pop,
+#CookieMgrLayer .ca-orb-pop {
   width: 190px;
   left: 50%;
   transform: translateX(-50%);
@@ -2825,7 +2827,8 @@
   filter: drop-shadow(0 0 2px #000);
 }
 /* tile details on hover (same look as the widget popups) */
-#CookieMgrMenu .ca-gpop {
+#CookieMgrMenu .ca-gpop,
+#CookieMgrLayer .ca-gpop {
   position: absolute;
   left: 50%;
   bottom: calc(100% + 6px);
@@ -3215,7 +3218,8 @@ body.ca-has-storebar #products {
   zoom: 0.8;
 }
 /* worship swaps */
-#CookieMgrMenu .ca-pips {
+#CookieMgrMenu .ca-pips,
+#CookieMgrLayer .ca-pips {
   display: inline-flex;
   gap: 3px;
   vertical-align: middle;
@@ -4931,4 +4935,62 @@ body.ca-has-storebar #products {
 }
 #CookieMgrMenu .ca-lib-fav.on {
   color: #ffd36a;
+}
+
+/* ---------- v2.24.1: the code editor's caret lines up with the text ---------- */
+/* Only the outer box scrolls: the highlighted copy sizes it, the textarea lies exactly on top of
+   that copy and never scrolls on its own, so the two can't drift apart. Same font everywhere, no
+   bold or italic (their widths can differ). */
+#CookieMgrMenu .ca-code {
+  height: auto;
+  max-height: 380px;
+  min-height: 220px;
+  overflow: auto;
+  align-items: flex-start;
+}
+#CookieMgrMenu .ca-code-gutter {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  align-self: stretch;
+  overflow: visible;
+}
+#CookieMgrMenu .ca-code-box {
+  position: relative;
+  flex: 1 0 auto;
+  min-width: 0;
+}
+#CookieMgrMenu .ca-code-hl {
+  position: relative;
+  inset: auto;
+  min-height: 200px;
+  overflow: visible;
+  padding-bottom: 26px;
+}
+#CookieMgrMenu .ca-editor2 textarea.ca-code-ta {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  padding-bottom: 26px;
+}
+#CookieMgrMenu .ca-code-hl,
+#CookieMgrMenu .ca-editor2 textarea.ca-code-ta {
+  font: var(--code-font);
+  font-weight: normal;
+  font-style: normal;
+  letter-spacing: 0;
+  word-spacing: 0;
+  font-variant-ligatures: none;
+  font-kerning: none;
+  text-transform: none;
+  text-indent: 0;
+  text-shadow: none;
+  box-shadow: none;
+}
+#CookieMgrMenu .ca-code-hl .hk,
+#CookieMgrMenu .ca-code-hl .hc {
+  font-weight: normal;
+  font-style: normal;
 }
