@@ -37,7 +37,6 @@ CA.UI.Widgets = (() => {
   const MIN_W = 140;
   const MIN_H = 60;
   const SAVED = ['count', 'types', 'stats', 'font', 'title', 'target', 'targetMagic']; // per-widget settings that are saved
-  const TRANSIENT = ['ca-shake', 'ca-holding']; // classes a refresh leaves alone
   const S = () => CA.Settings;
   const I = (n, s) => CA.UI.Icons.html(n, s);
   const esc = (s) => CA.Util.escapeHtml(s);
@@ -267,46 +266,6 @@ CA.UI.Widgets = (() => {
     });
   }
 
-  /**
-   * Makes `target`'s children match `html` while keeping every node that's still the same kind of
-   * node — only text and attributes change — so hover states and open popups survive an update.
-   */
-  function morph(target, html) {
-    const tpl = document.createElement('template');
-    tpl.innerHTML = html;
-    morphChildren(target, tpl.content);
-  }
-  function morphChildren(target, source) {
-    const a = target.childNodes;
-    const b = source.childNodes;
-    for (let i = 0; i < b.length; i++) {
-      const want = b[i];
-      const have = a[i];
-      if (!have) {
-        target.appendChild(want.cloneNode(true));
-        continue;
-      }
-      if (have.nodeType !== want.nodeType || have.nodeName !== want.nodeName) {
-        target.replaceChild(want.cloneNode(true), have);
-        continue;
-      }
-      if (want.nodeType === 3) {
-        if (have.nodeValue !== want.nodeValue) have.nodeValue = want.nodeValue;
-        continue;
-      }
-      if (want.nodeType !== 1) continue;
-      for (const attr of [...have.attributes]) if (!want.hasAttribute(attr.name)) have.removeAttribute(attr.name);
-      for (const attr of [...want.attributes]) {
-        let v = attr.value;
-        // keep feedback a click added (a shake) until its own timer takes it away
-        if (attr.name === 'class') TRANSIENT.forEach((c) => have.classList.contains(c) && !want.classList.contains(c) && (v += ` ${c}`));
-        if (have.getAttribute(attr.name) !== v) have.setAttribute(attr.name, v);
-      }
-      morphChildren(have, want);
-    }
-    while (a.length > b.length) target.removeChild(target.lastChild);
-  }
-
   /** Refreshes each widget's content in place (positions untouched). */
   function tick() {
     if (!layer || !layer.isConnected) return render();
@@ -315,7 +274,7 @@ CA.UI.Widgets = (() => {
       if (w.collapsed) return;
       const body = layer.querySelector(`[data-widget="${w.id}"] [data-w-body]`);
       const t = typeById[w.type];
-      if (body && t) morph(body, safeHtml(t, w));
+      if (body && t) CA.UI.Dom.morph(body, safeHtml(t, w));
     });
   }
 
@@ -464,10 +423,7 @@ CA.UI.Widgets = (() => {
         // switched on but it can't do anything yet (a buyer that can't afford its pick): say so
         const r = CA.Macros.isOn(m.id) && CA.UI.WidgetTypes.readyState(m);
         if (r && r.cls === 'cant') {
-          trig.classList.remove('ca-shake');
-          void trig.offsetWidth;
-          trig.classList.add('ca-shake');
-          setTimeout(() => trig.classList.remove('ca-shake'), 500);
+          CA.UI.Dom.replay(trig, 'ca-shake', 500);
           CA.Util.notify(m.name, `On — but nothing it can do yet: ${esc(r.text)}.`, CA.ICON, 3);
         }
       }
@@ -505,9 +461,7 @@ CA.UI.Widgets = (() => {
     const ed = document.querySelector('#CookieMgrMenu [data-w-editor]');
     if (!ed) return;
     CA.Util.scrollInPanel(ed, 'start');
-    ed.classList.remove('ca-reveal');
-    void ed.offsetWidth;
-    ed.classList.add('ca-reveal');
+    CA.UI.Dom.replay(ed, 'ca-reveal');
   }
 
   /** Applies one setting change from the editor and redraws the widget. */
@@ -673,7 +627,7 @@ CA.UI.Widgets = (() => {
   function syncPage() {
     if (!pageRoot || !pageRoot.isConnected) return;
     const map = pageRoot.querySelector('[data-w-map]');
-    if (map) morph(map, mapHtml());
+    if (map) CA.UI.Dom.morph(map, mapHtml());
   }
 
   function onEditorInput(e) {
@@ -734,7 +688,8 @@ CA.UI.Widgets = (() => {
     widgets = data
       .filter((w) => ok(w) && typeById[w.type])
       .map((w) => {
-        const out = { id: String(w.id || newId()), type: w.type, x: w.x, y: w.y, collapsed: !!w.collapsed };
+        // ids go into attributes and selectors: only plain ones are kept
+        const out = { id: /^[\w-]{1,40}$/.test(String(w.id)) ? String(w.id) : newId(), type: w.type, x: w.x, y: w.y, collapsed: !!w.collapsed };
         if (w.macro) out.macro = String(w.macro);
         if (Number.isFinite(w.scale)) out.scale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, w.scale));
         if (Number.isFinite(w.w)) out.w = Math.max(MIN_W, w.w);
@@ -855,7 +810,7 @@ CA.UI.Widgets = (() => {
     else if ('wPageDel' in d) remove(d.wPageDel);
     else if ('wEditDone' in d) editing = null;
     else if ('wPageClear' in d) {
-      if (!CA.UI.Menu.armed(t)) return;
+      if (!CA.UI.Dom.armed(t)) return;
       widgets = widgets.filter((w) => w.type === 'macro');
       widgets.forEach((w) => CA.Macros.setFav(w.macro, false));
       editing = null;
@@ -908,5 +863,5 @@ CA.UI.Widgets = (() => {
     render();
   }
 
-  return { init, defineType, types: () => types.slice(), add, remove, list, get, has, serialize, load, render, tick, reconcile, openSettings, editing: () => editing, morph };
+  return { init, defineType, types: () => types.slice(), add, remove, list, get, has, serialize, load, render, tick, reconcile, openSettings, editing: () => editing };
 })();

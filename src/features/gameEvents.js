@@ -18,7 +18,7 @@ CA.GameEvents = (() => {
   let lastPopped = null;
   let seen = []; // per wrinkler slot: { phase, sucked, type }
 
-  const has = (name) => typeof Game.Has === 'function' && Game.Has(name);
+  const has = (name) => CA.Util.has(name);
 
   /** The multiplier main.js applies to a popped wrinkler's sucked cookies. */
   function popBonus(type) {

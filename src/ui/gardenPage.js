@@ -23,10 +23,9 @@ CA.UI.GardenPage = (() => {
   const SYNC_MS = 500;
 
   let root = null;
-  let timer = null;
+  let life = null; // the mounted page (CA.UI.Pages.scope)
   let plot = null;
   let effectsPlot = null;
-  let unbindCode = null;
   let draft = null; // { profile, src } — rules being edited, not saved yet
   let rulesError = '';
 
@@ -271,9 +270,9 @@ CA.UI.GardenPage = (() => {
     const v = G().view();
     if (!v) return;
     const plot = root.querySelector('[data-gp-plot]');
-    if (plot) CA.UI.Widgets.morph(plot, plotHtml(v));
+    if (plot) CA.UI.Dom.morph(plot, plotHtml(v));
     const stats = root.querySelector('[data-gp-stats]');
-    if (stats) CA.UI.Widgets.morph(stats, statsHtml(v));
+    if (stats) CA.UI.Dom.morph(stats, statsHtml(v));
     const pill = root.querySelector('[data-gp-profile]');
     if (pill) pill.textContent = v.profile ? `profile: ${v.profile.name}` : 'no profile';
     const last = root.querySelector('[data-gp-last]');
@@ -291,17 +290,15 @@ CA.UI.GardenPage = (() => {
       const card = root.querySelector('[data-gp-rules]');
       if (card) {
         CA.Util.scrollInPanel(card, 'start');
-        card.classList.remove('ca-flash');
-        void card.offsetWidth;
-        card.classList.add('ca-flash');
+        CA.UI.Dom.replay(card, 'ca-flash');
       }
       return;
     }
     if (d.gpRulesAct) {
-      if (d.gpRulesAct === 'revert' && !CA.UI.Menu.armed(t)) return;
+      if (d.gpRulesAct === 'revert' && !CA.UI.Dom.armed(t)) return;
       rulesAct(d.gpRulesAct);
     } else if ('gpDel' in d) {
-      if (!CA.UI.Menu.armed(t)) return;
+      if (!CA.UI.Dom.armed(t)) return;
       G().removeProfile(d.gpDel);
     } else if ('gpUse' in d) G().use(d.gpUse);
     else if ('gpSave' in d) {
@@ -331,10 +328,9 @@ CA.UI.GardenPage = (() => {
   function mount(el) {
     unmount();
     root = el;
-    root.addEventListener('click', onClick);
-    root.addEventListener('change', onChange);
-    root.addEventListener('input', onChange);
-    unbindCode = CE().bind(root, {
+    life = CA.UI.Pages.scope(el).on('click', onClick).on('change', onChange);
+    life.add(
+      CE().bind(root, {
       onChange: (key, src) => {
         const p = G().active();
         if (key !== 'garden' || !p) return;
@@ -349,27 +345,16 @@ CA.UI.GardenPage = (() => {
           if (card && head) card.replaceWith(head);
         }
       },
-    });
-    if (G().minigame()) {
-      plot.mount(el);
-      effectsPlot.mount(el);
-    }
+      })
+    );
+    if (G().minigame()) life.child(plot).child(effectsPlot);
     sync();
-    timer = setInterval(sync, SYNC_MS);
+    life.every(SYNC_MS, sync);
   }
 
   function unmount() {
-    clearInterval(timer);
-    timer = null;
-    if (plot) plot.unmount();
-    if (effectsPlot) effectsPlot.unmount();
-    if (root) {
-      root.removeEventListener('click', onClick);
-      root.removeEventListener('change', onChange);
-      root.removeEventListener('input', onChange);
-    }
-    if (unbindCode) unbindCode();
-    unbindCode = null;
+    if (life) life.close();
+    life = null;
     root = null;
   }
 

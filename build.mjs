@@ -22,6 +22,7 @@ const VERSION_OUT = path.join(ROOT, 'dist', 'version.txt'); // tiny file CA.Upda
 // Load order matters: later modules may reference earlier ones at load time.
 const MODULES = [
   'core/util.js',
+  'core/format.js',
   'core/events.js',
   'core/actions.js',
   'core/conditions.js',
@@ -51,6 +52,7 @@ const MODULES = [
   'features/gameEvents.js',
   'features/notifyTips.js',
   'ui/components.js',
+  'ui/dom.js',
   'ui/tips.js',
   'ui/icons.js',
   'ui/pages.js',

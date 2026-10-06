@@ -35,7 +35,6 @@ const { window: w, Game } = g;
 fakeLayout(w);
 const CA = w.CookieMgr;
 const doc = w.document;
-const $$ = (s) => [...doc.querySelectorAll(s)];
 await sleep(300);
 CA.UI.Widgets.render();
 
@@ -134,7 +133,7 @@ const out2 = MA([0, 1, 2], [1, 3, 1], [10, 0, 10], 5);
 assert(Math.abs(out2[1] - 4) < 1e-9, 'weighted by seconds covered');
 
 // all charts: Smooth chooser instead of bar widths
-const loop = setInterval(() => {
+setInterval(() => {
   Game.cookies += 100;
   Game.cookiesEarned += 100;
 }, 100);

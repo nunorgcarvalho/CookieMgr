@@ -17,7 +17,7 @@ CA.UI.StockLog = (() => {
   const MAX_TICK_BARS = 5;
 
   let root = null;
-  let timer = null;
+  let life = null; // mounted (CA.UI.Pages.scope)
   let lastCount = -1;
 
   const beautify = (v, floats) => (typeof Beautify === 'function' ? Beautify(v, floats == null ? 1 : floats) : Math.round(v).toString());
@@ -221,13 +221,13 @@ CA.UI.StockLog = (() => {
     unmount();
     root = el;
     lastCount = -1;
-    timer = setInterval(tick, TICK_MS);
+    life = CA.UI.Pages.scope(el).every(TICK_MS, tick);
     tick();
   }
 
   function unmount() {
-    clearInterval(timer);
-    timer = null;
+    if (life) life.close();
+    life = null;
     root = null;
   }
 

@@ -13,9 +13,11 @@ CA.Ascension = (() => {
     CA.Events.emit('ascend');
   }
 
+  /** Whether an ascension is under way (the screen, or its animation). */
+  const inProgress = () => !!(Game.OnAscend || Game.AscendTimer > 0);
+
   function watchdog() {
-    const inAscension = Game.OnAscend || Game.AscendTimer > 0;
-    if (inAscension) fire();
+    if (inProgress()) fire();
     else ascending = false;
   }
 
@@ -28,5 +30,5 @@ CA.Ascension = (() => {
     setInterval(watchdog, 500);
   }
 
-  return { init };
+  return { inProgress, init };
 })();

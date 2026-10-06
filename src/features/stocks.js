@@ -44,8 +44,7 @@ CA.Stocks = (() => {
 
 
   const minigame = () => {
-    const bank = typeof Game !== 'undefined' && Game.Objects && Game.Objects.Bank;
-    const m = bank && bank.minigame;
+    const m = CA.Util.minigame('Bank');
     return m && m.goodsById ? m : null;
   };
 

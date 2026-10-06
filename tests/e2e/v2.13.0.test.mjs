@@ -1,7 +1,7 @@
 // v2.13.0: every macro off on ascend, click animation choice, activity rings, spell readiness
 // tint, Grimoire countdown target, the gardener's icon.
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
-import { boot, sleep, makeAssert, click } from '../harness/game.mjs';
+import { boot, sleep, makeAssert } from '../harness/game.mjs';
 
 const { assert, done } = makeAssert();
 const g = boot({ idb: { factory: new IDBFactory(), IDBKeyRange } });

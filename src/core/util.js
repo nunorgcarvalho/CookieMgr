@@ -16,6 +16,17 @@ CA.Util = {
     return base + path;
   },
 
+  /** Whether you own upgrade `name` (false before the game is ready). */
+  has(name) {
+    return typeof Game !== 'undefined' && typeof Game.Has === 'function' && !!Game.Has(name);
+  },
+
+  /** A building's minigame once it's open (Farm, Bank, Temple, Wizard tower), else null. */
+  minigame(building) {
+    const b = typeof Game !== 'undefined' && Game.Objects && Game.Objects[building];
+    return (b && b.minigame) || null;
+  },
+
   escapeHtml(str) {
     return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   },

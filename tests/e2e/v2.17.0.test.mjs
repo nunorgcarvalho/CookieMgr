@@ -1,6 +1,6 @@
 // v2.17.0: the store toolbar along the bottom of the store; rounding to multiples for selling too.
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
-import { boot, sleep, makeAssert, click } from '../harness/game.mjs';
+import { boot, sleep, makeAssert } from '../harness/game.mjs';
 
 const { assert, done } = makeAssert();
 const g = boot({ idb: { factory: new IDBFactory(), IDBKeyRange } });

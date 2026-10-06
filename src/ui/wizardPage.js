@@ -24,7 +24,7 @@ CA.UI.WizardPage = (() => {
   const SYNC_MS = 500;
 
   let root = null;
-  let timer = null;
+  let life = null; // the mounted page (CA.UI.Pages.scope)
   let plot = null;
 
   const usesSpells = (m) => m.steps.some((s) => s.action === 'spell.cast');
@@ -159,17 +159,14 @@ CA.UI.WizardPage = (() => {
   function mount(el) {
     unmount();
     root = el;
-    root.addEventListener('click', onClick);
-    plot.mount(el);
+    life = CA.UI.Pages.scope(el).on('click', onClick).child(plot);
     sync();
-    timer = setInterval(sync, SYNC_MS);
+    life.every(SYNC_MS, sync);
   }
 
   function unmount() {
-    clearInterval(timer);
-    timer = null;
-    if (plot) plot.unmount();
-    if (root) root.removeEventListener('click', onClick);
+    if (life) life.close();
+    life = null;
     root = null;
   }
 

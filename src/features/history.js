@@ -58,7 +58,7 @@ CA.History = (() => {
       .replace(/\s+/g, ' ')
       .trim();
 
-  const inAscension = () => Game.OnAscend || Game.AscendTimer > 0;
+  const inAscension = () => CA.Ascension.inProgress();
 
   // ---- buff intervals --------------------------------------------------------------
 

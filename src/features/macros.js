@@ -316,7 +316,7 @@ CA.Macros = (() => {
 
   // ---- running ----------------------------------------------------------------------------
 
-  const ascending = () => Game.OnAscend || Game.AscendTimer > 0;
+  const ascending = () => CA.Ascension.inProgress();
 
   function runSteps(m) {
     if (ascending() || depth >= MAX_DEPTH) return 0;

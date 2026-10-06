@@ -10,7 +10,7 @@ import { makeGarden } from '../harness/gardenStub.mjs';
 const { assert, done } = makeAssert();
 const idb = () => ({ factory: new IDBFactory(), IDBKeyRange });
 const g = boot({ idb: idb() });
-const { window: w, Game, calls } = g;
+const { window: w, calls } = g;
 const CA = w.CookieMgr;
 await sleep(400);
 const M = CA.Macros;

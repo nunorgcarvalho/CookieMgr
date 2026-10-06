@@ -262,8 +262,7 @@ CA.GameStates = (() => {
       group: 'magic',
       kind: 'gauge',
       get: () => {
-        const tower = Game.Objects && Game.Objects['Wizard tower'];
-        const m = tower && tower.minigame;
+        const m = CA.Util.minigame('Wizard tower');
         return m && Number.isFinite(m.magic) ? m.magic : undefined;
       },
     });
@@ -273,8 +272,7 @@ CA.GameStates = (() => {
       group: 'magic',
       kind: 'gauge',
       get: () => {
-        const tower = Game.Objects && Game.Objects['Wizard tower'];
-        const m = tower && tower.minigame;
+        const m = CA.Util.minigame('Wizard tower');
         return m && Number.isFinite(m.magicM) ? m.magicM : undefined;
       },
     });

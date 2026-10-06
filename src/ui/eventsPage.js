@@ -285,20 +285,19 @@ CA.UI.EventsPage = (() => {
     if (list) list.innerHTML = listHtml();
   }
 
+  let life = null; // the mounted page (CA.UI.Pages.scope)
+
   function mount(el) {
     unmount();
     root = el;
-    root.addEventListener('click', onClick);
-    root.addEventListener('input', onInput);
+    life = CA.UI.Pages.scope(el).on('click', onClick).on('input', onInput);
     shown = PAGE_ROWS;
     render();
   }
 
   function unmount() {
-    if (root) {
-      root.removeEventListener('click', onClick);
-      root.removeEventListener('input', onInput);
-    }
+    if (life) life.close();
+    life = null;
     clearTimeout(pending);
     pending = null;
     root = null;
@@ -313,7 +312,6 @@ CA.UI.EventsPage = (() => {
       label: 'Events',
       icon: 'events',
       order: 5, // top of the sidebar
-      group: 'data',
       group: 'data',
       html,
       mount,

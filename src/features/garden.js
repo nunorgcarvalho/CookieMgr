@@ -26,8 +26,7 @@ CA.Garden = (() => {
   const S = () => CA.Settings;
 
   function minigame() {
-    const farm = Game.Objects && Game.Objects.Farm;
-    const M = farm && farm.minigame;
+    const M = CA.Util.minigame('Farm');
     return M && M.plot && M.plantsById ? M : null;
   }
 

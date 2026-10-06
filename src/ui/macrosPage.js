@@ -35,7 +35,7 @@ CA.UI.MacrosPage = (() => {
   const openSettings = new Set(); // cards whose ⚙ settings are unfolded
   let draft = null; // macro being edited (a copy), or null
   let draftError = '';
-  let timer = null;
+  let life = null; // the mounted page (CA.UI.Pages.scope)
 
   // ---- pieces shared with other pages ----------------------------------------------------
 
@@ -72,8 +72,6 @@ CA.UI.MacrosPage = (() => {
     return members.map((x) => `<span class="ca-step ca-step-member">${icon(x, true)}${esc(x.name)}</span>`).join('');
   }
 
-  // how often a built-in can run (ms), offered in its settings
-  const EVERY = [50, 100, 200, 250, 500, 1000, 2000, 5000, 10000, 30000, 60000];
   const everyLabel = (ms) => (ms < 1000 ? `${Math.round(1000 / ms)}× a second` : ms < 60000 ? `every ${ms / 1000}s` : `every ${ms / 60000} min`);
 
   /** A built-in's settings as [{ label, html, summary }]: how often it runs, then its actions' choices. */
@@ -365,14 +363,12 @@ CA.UI.MacrosPage = (() => {
     } else CA.Util.notify('Library', 'That one is for algorithmic macros — switch the kind to Algorithmic to write with it.', CA.ICON, 3);
     return true;
   }
-  let unbindCode = null;
 
   // how often presets for the interval row
   const EVERY_PRESETS = [100, 250, 1000, 5000, 30000];
 
   function editorHtml() {
     const d = draft;
-    const mode = MODES.find((x) => x.v === d.mode) || MODES[0];
     let h =
       '<div class="ca-card ca-editor ca-editor2" data-macro-editor>' +
       // header: icon, name, description, the buttons
@@ -402,7 +398,7 @@ CA.UI.MacrosPage = (() => {
         '<div class="ca-ed-row">' +
         `<span class="ca-ed-label">${I('clock', 12)} ${d.mode === 'when' ? 'Check every' : d.mode === 'flow' ? 'A pass every' : 'Every'}</span>` +
         `<input type="number" class="ca-ed-secs" step="any" min="${M().MIN_EVERY / 1000}" data-edit="everySec" data-type="number" value="${secs}"><em>seconds</em>` +
-        `<span class="ca-chipgroup">${EVERY_PRESETS.map((ms) => `<button type="button" class="ca-chip${ms === d.every ? ' on' : ''}" data-edit-act="every" data-val="${ms}">${ms < 1000 ? `${ms / 1000}s` : `${ms / 1000}s`}</button>`).join('')}</span>` +
+        `<span class="ca-chipgroup">${EVERY_PRESETS.map((ms) => `<button type="button" class="ca-chip${ms === d.every ? ' on' : ''}" data-edit-act="every" data-val="${ms}">${ms / 1000}s</button>`).join('')}</span>` +
         '</div>';
     }
     if (d.mode === 'when') {
@@ -565,12 +561,12 @@ CA.UI.MacrosPage = (() => {
       draftError = '';
       return rerender();
     } else if (act === 'delete') {
-      if (!CA.UI.Menu.armed(t)) return;
+      if (!CA.UI.Dom.armed(t)) return;
       M().remove(d.id);
       draft = null;
       return rerender();
     } else if (act === 'revert') {
-      if (!CA.UI.Menu.armed(t)) return;
+      if (!CA.UI.Dom.armed(t)) return;
       M().revert(d.id);
       CA.Util.notify(d.name, 'Back to how it comes.', CA.ICON, 2);
       draft = null;
@@ -713,7 +709,7 @@ CA.UI.MacrosPage = (() => {
         const n = s ? s.steps.reduce((x, y) => x + (y.total || 0), 0) : 0;
         if (on && m.mode !== 'group') {
           // running: what each of its steps has done (morphed, so nothing flickers)
-          CA.UI.Widgets.morph(st, `<div class="ca-status-up">on for ${CA.UI.Plot.fmt.span((Date.now() - M().since(id)) / 1000)}${n ? ` · ${n.toLocaleString()} done` : ''}</div>${stepLines(m)}`);
+          CA.UI.Dom.morph(st, `<div class="ca-status-up">on for ${CA.UI.Plot.fmt.span((Date.now() - M().since(id)) / 1000)}${n ? ` · ${n.toLocaleString()} done` : ''}</div>${stepLines(m)}`);
         } else st.textContent = on ? `Running · ${CA.UI.Plot.fmt.span((Date.now() - M().since(id)) / 1000)}` : s && s.lastRun ? `Last ran ${ago(s.lastRun)}` : '';
       }
     });
@@ -724,7 +720,7 @@ CA.UI.MacrosPage = (() => {
     const strip = el.querySelector('[data-macro-runbar]');
     if (strip) {
       const ids = M().runningIds();
-      CA.UI.Widgets.morph(
+      CA.UI.Dom.morph(
         strip,
         ids.length
           ? ids
@@ -766,12 +762,7 @@ CA.UI.MacrosPage = (() => {
       return n;
     }
     CA.Util.sound('snd/spellFail.mp3');
-    if (el && el.classList) {
-      el.classList.remove('ca-shake');
-      void el.offsetWidth; // restart the animation
-      el.classList.add('ca-shake');
-      setTimeout(() => el.classList.remove('ca-shake'), 500);
-    }
+    CA.UI.Dom.replay(el, 'ca-shake', 500);
     const mg = CA.Grimoire.magicNow();
     if (!mg) {
       CA.Util.notify(m.name, 'The Grimoire isn’t open yet (Wizard tower level 1).', [22, 11], 3);
@@ -856,9 +847,7 @@ CA.UI.MacrosPage = (() => {
         const card = root && [...root.querySelectorAll('.ca-macro[data-macro-row]')].find((c) => c.dataset.macroRow === id);
         if (card) {
           CA.Util.scrollInPanel(card);
-          card.classList.remove('ca-flash');
-          void card.offsetWidth;
-          card.classList.add('ca-flash');
+          CA.UI.Dom.replay(card, 'ca-flash');
         }
         return true;
       }
@@ -878,27 +867,20 @@ CA.UI.MacrosPage = (() => {
   function mount(el) {
     unmount();
     root = el;
-    root.addEventListener('click', onRootClick);
-    root.addEventListener('change', onEditInput);
-    root.addEventListener('input', onEditInput);
-    unbindCode = CE().bind(root, {
-      onChange: (key, src) => key === 'macro' && draft && (draft.source = src),
-      onPick,
-    });
+    life = CA.UI.Pages.scope(el).on('click', onRootClick).on('change', onEditInput).on('input', onEditInput);
+    life.add(
+      CE().bind(root, {
+        onChange: (key, src) => key === 'macro' && draft && (draft.source = src),
+        onPick,
+      })
+    );
     sync(root);
-    timer = setInterval(() => root && root.isConnected && sync(root), STATUS_MS);
+    life.every(STATUS_MS, () => sync(root));
   }
 
   function unmount() {
-    clearInterval(timer);
-    timer = null;
-    if (root) {
-      root.removeEventListener('click', onRootClick);
-      root.removeEventListener('change', onEditInput);
-      root.removeEventListener('input', onEditInput);
-      if (unbindCode) unbindCode();
-      unbindCode = null;
-    }
+    if (life) life.close();
+    life = null;
     root = null;
   }
 

@@ -40,7 +40,7 @@ CA.Seasons = (() => {
     if (s === 'valentines') return (Game.heartDrops || []).slice();
     return [];
   }
-  const has = (n) => typeof Game.Has === 'function' && Game.Has(n);
+  const has = (n) => CA.Util.has(n);
 
   function complete(s, part = 'all') {
     if (s === 'christmas' && part !== 'cookies' && (Game.santaLevel || 0) < 14) return false;

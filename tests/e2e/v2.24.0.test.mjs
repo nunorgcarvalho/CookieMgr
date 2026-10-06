@@ -73,7 +73,6 @@ assert(mine && mine.mode === 'flow' && /parallel:/.test(mine.source), 'saved, wi
 // running it: lines, decisions
 log.length = 0;
 Game.cookies = 2500;
-M.setEvery = M.setEvery; // (own macros keep their interval)
 mine.every = 100;
 M.set(mine.id, true, { silent: true });
 await sleep(450);

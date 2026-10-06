@@ -19,5 +19,7 @@ jobs:
         run: npm run check
       - name: Bundle parses
         run: node --check dist/CookieMgr.js
+      - name: Lint
+        run: npm run lint
       - name: Tests (contract, unit, end-to-end in jsdom)
         run: npm test -- --no-build

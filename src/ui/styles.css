@@ -181,14 +181,6 @@
   padding: 0 16px 120px;
   color: #ddd;
 }
-#CookieMgrMenu .ca-tagline {
-  text-align: center;
-  margin: -6px 0 14px;
-  font-size: 12px;
-  font-style: italic;
-  color: #b9ab93;
-  text-shadow: 0 1px 1px #000;
-}
 
 /* Cards */
 #CookieMgrMenu .ca-card {
@@ -286,11 +278,6 @@
 #CookieMgrMenu .ca-row.on {
   background: linear-gradient(to right, rgba(255, 210, 90, 0.12), rgba(255, 210, 90, 0) 65%);
 }
-#CookieMgrMenu .ca-row-master {
-  background: rgba(0, 0, 0, 0.22);
-  border-top: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
 #CookieMgrMenu .ca-row-option {
   padding-top: 10px;
   padding-bottom: 10px;
@@ -342,8 +329,7 @@
     transform 0.25s;
   filter: grayscale(0.55) brightness(0.8);
 }
-#CookieMgrMenu .ca-row.on .ca-icon,
-#CookieMgrMenu .ca-row-master .ca-icon {
+#CookieMgrMenu .ca-row.on .ca-icon {
   filter: drop-shadow(0 0 6px rgba(255, 220, 120, 0.75));
 }
 #CookieMgrMenu .ca-row.on .ca-icon {
@@ -634,9 +620,6 @@
   border-radius: 3px;
   box-shadow: 0 1px 0 #140d08;
 }
-#CookieMgrMenu .ca-footer-actions {
-  margin-top: 8px;
-}
 
 #CookieMgrMenu .ca-page {
   animation: caFade 0.18s ease-out;
@@ -803,9 +786,6 @@
   height: 300px;
   cursor: crosshair;
 }
-#CookieMgrMenu canvas.ca-graph.ca-graph-small {
-  height: 160px;
-}
 #CookieMgrMenu .ca-tip,
 #CookieMgrLayer .ca-tip {
   display: none;
@@ -870,12 +850,6 @@
 #CookieMgrLayer .ca-tip-row.strong span {
   color: #fff3cf;
   font-weight: bold;
-}
-#CookieMgrMenu .ca-tip-sep,
-#CookieMgrLayer .ca-tip-sep {
-  height: 1px;
-  margin: 5px 0;
-  background: rgba(255, 255, 255, 0.14);
 }
 #CookieMgrMenu .ca-tip-note,
 #CookieMgrLayer .ca-tip-note {
@@ -1286,16 +1260,6 @@
   width: 20px;
   height: 20px;
 }
-#CookieMgrMenu .ca-status-head .ca-icon {
-  flex: 0 0 20px;
-  width: 20px;
-  height: 20px;
-}
-#CookieMgrMenu .ca-status-head .ca-img,
-#CookieMgrMenu .ca-status-head .ca-sprite {
-  transform: scale(0.42);
-  transform-origin: center;
-}
 #CookieMgrMenu .ca-badge {
   display: inline-block;
   margin-left: 6px;
@@ -1392,33 +1356,6 @@
 }
 
 /* status block ("Running now", also a widget) */
-#CookieMgrMenu .ca-status {
-  padding: 4px 12px 10px;
-}
-.ca-status-empty {
-  padding: 6px 2px;
-  font-size: 11px;
-  color: #93866f;
-}
-.ca-status-macro {
-  padding: 5px 0 6px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-.ca-status-macro:last-child {
-  border-bottom: none;
-}
-.ca-status-head {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 12px;
-  color: #f0e2c0;
-}
-.ca-status-head > span:not(.ca-icon) {
-  flex: 1;
-  font-size: 10px;
-  color: #93866f;
-}
 .ca-status-step {
   display: flex;
   align-items: center;
@@ -1462,31 +1399,12 @@
 #CookieMgrMenu .ca-editor-body {
   padding: 4px 14px 12px;
 }
-#CookieMgrMenu .ca-editor-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
-  margin: 6px 0;
-}
-#CookieMgrMenu .ca-editor-block {
-  margin: 8px 0;
-  padding: 4px 10px;
-  border-left: 2px solid rgba(120, 190, 255, 0.5);
-  background: rgba(120, 190, 255, 0.05);
-}
 #CookieMgrMenu .ca-field {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   font-size: 11px;
   color: #b9ab93;
-}
-#CookieMgrMenu .ca-field.ca-grow {
-  flex: 1 1 200px;
-}
-#CookieMgrMenu .ca-field.ca-grow input {
-  flex: 1;
 }
 #CookieMgrMenu .ca-field em {
   font-style: normal;
@@ -1530,25 +1448,6 @@
   flex-wrap: wrap;
   gap: 4px;
 }
-#CookieMgrMenu .ca-editor-steps {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  margin: 4px 0 8px;
-}
-#CookieMgrMenu .ca-editor-step {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 10px;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 6px 8px;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 220, 150, 0.12);
-}
 #CookieMgrMenu .ca-step-n {
   display: inline-flex;
   align-items: center;
@@ -1563,11 +1462,6 @@
   background: #ffd98a;
   border-radius: 50%;
 }
-#CookieMgrMenu .ca-step-tools {
-  margin-left: auto;
-  display: inline-flex;
-  gap: 3px;
-}
 #CookieMgrMenu .ca-editor-error {
   margin: 6px 0;
   padding: 5px 9px;
@@ -1576,11 +1470,6 @@
   background: rgba(229, 72, 77, 0.18);
   border: 1px solid rgba(229, 72, 77, 0.5);
   border-radius: 5px;
-}
-#CookieMgrMenu .ca-editor-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
 }
 
 /* ---------- Widgets (left panel) ---------- */
@@ -1923,15 +1812,6 @@
   background: radial-gradient(circle at 35% 30%, rgba(255, 230, 170, 0.22), rgba(0, 0, 0, 0.3));
 }
 /* status block inside a widget */
-#CookieMgrWidgets .ca-status-head .ca-icon,
-#CookieMgrWidgets .ca-status-head .ca-icon-ico {
-  flex: 0 0 18px;
-  width: 18px;
-  height: 18px;
-}
-#CookieMgrWidgets .ca-status-head .ca-sprite {
-  transform: scale(0.38);
-}
 #CookieMgrWidgets .ca-status-step {
   margin-left: 24px;
 }
@@ -2016,9 +1896,6 @@
 }
 #CookieMgrWidgets .ca-ev-cookies.neg {
   color: #ff9a8a;
-}
-#CookieMgrMenu .ca-status-head .ca-icon {
-  filter: none;
 }
 #CookieMgrMenu .ca-card-meta .ca-iconbtn {
   margin-left: 4px;
@@ -2107,9 +1984,6 @@
   display: flex;
   gap: 5px;
   align-items: center;
-}
-#CookieMgrMenu .ca-cond + .ca-cond .ca-field-label {
-  color: #9fd3ff;
 }
 
 /* toolbar inside the Grimoire */
@@ -2698,25 +2572,6 @@
   flex-direction: column;
   gap: 6px;
   padding: 4px 2px 2px;
-}
-#CookieMgrMenu .ca-weditor-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-#CookieMgrMenu .ca-weditor-row .ca-field-label {
-  flex: 0 0 110px;
-}
-#CookieMgrMenu .ca-weditor-row input[type='range'] {
-  flex: 1;
-  max-width: 220px;
-}
-#CookieMgrMenu .ca-weditor-row input[type='text'] {
-  flex: 1;
-  max-width: 220px;
-}
-#CookieMgrMenu .ca-weditor-row input[type='number'] {
-  width: 64px;
 }
 #CookieMgrMenu .ca-range-val {
   min-width: 38px;
@@ -4352,142 +4207,10 @@ body.ca-has-storebar #products {
   overflow-y: auto;
 }
 
-/* flow blocks: nested cards, a coloured rail per kind */
-#CookieMgrMenu .ca-fb-list {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-#CookieMgrMenu .ca-fb {
-  --rail: #e0b45a;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding: 6px 8px;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.25);
-  box-shadow: inset 3px 0 0 var(--rail);
-}
-#CookieMgrMenu .ca-fb-wait {
-  --rail: #6fb3e6;
-}
-#CookieMgrMenu .ca-fb-until,
-#CookieMgrMenu .ca-fb-forever {
-  --rail: #b48cf0;
-}
-#CookieMgrMenu .ca-fb-if {
-  --rail: #7fe08b;
-}
-#CookieMgrMenu .ca-fb-parallel {
-  --rail: #ff9f43;
-}
-#CookieMgrMenu .ca-fb-head {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-#CookieMgrMenu .ca-fb-kind {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--rail);
-}
-#CookieMgrMenu .ca-fb-kind select {
-  font-weight: bold;
-}
-#CookieMgrMenu .ca-fb-hint {
-  font-size: 10px;
-  font-style: italic;
-  color: #93866f;
-}
-#CookieMgrMenu .ca-fb-sub {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding-left: 12px;
-  border-left: 1px dashed rgba(255, 220, 150, 0.2);
-}
-#CookieMgrMenu .ca-fb-label {
-  font-size: 9.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #93866f;
-}
-#CookieMgrMenu .ca-fb-branches {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: flex-start;
-}
-#CookieMgrMenu .ca-fb-branch {
-  flex: 1 1 240px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 5px 6px;
-  border-radius: 6px;
-  background: rgba(255, 159, 67, 0.06);
-  box-shadow: inset 0 0 0 1px rgba(255, 159, 67, 0.25);
-}
-#CookieMgrMenu .ca-fb-branch-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-#CookieMgrMenu .ca-fb-add {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px;
-  opacity: 0.75;
-}
-#CookieMgrMenu .ca-fb-add:hover {
-  opacity: 1;
-}
-#CookieMgrMenu .ca-fb-add .ca-chip {
-  font-size: 10px;
-  padding: 1px 6px;
-}
-
 /* SeasonCompletion: its season order */
 #CookieMgrMenu .ca-field.ca-field-wide {
   flex-direction: column;
   align-items: stretch;
-}
-#CookieMgrMenu .ca-order {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-#CookieMgrMenu .ca-order-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 4px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.04);
-}
-#CookieMgrMenu .ca-order-n {
-  width: 16px;
-  font-size: 10px;
-  text-align: center;
-  color: #93866f;
-}
-#CookieMgrMenu .ca-order-name {
-  flex: 1;
-  font-size: 11px;
-  color: #f3e5c3;
-}
-#CookieMgrMenu .ca-order-name em {
-  font-style: normal;
-  font-size: 9.5px;
-  color: #ffd36a;
-}
-#CookieMgrMenu .ca-order-rest {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px;
-  margin-top: 2px;
 }
 
 /* ---------- v2.23: livelier widget settings, holding a buying button ---------- */
@@ -4629,11 +4352,6 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-ed-layout > .ca-editor-body {
   flex: 1 1 420px;
   min-width: 0;
-}
-#CookieMgrMenu .ca-ed-fixed {
-  display: block;
-  font: bold 15px 'Merriweather', Georgia, serif;
-  color: #ffeab0;
 }
 #CookieMgrMenu .ca-ed-fixed-sub {
   font-size: 10.5px;

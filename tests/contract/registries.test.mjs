@@ -162,6 +162,41 @@ every('page opens, renders and refreshes', pages, (p) => {
 await sleep(700); // their timers run once or twice
 assert(g.errors.length === k0, `pages without page errors ${errorsSince(k0)}`);
 
+// leaving a page undoes what it set up: its intervals and its listeners on the page element
+{
+  const live = new Set();
+  const [si, ci] = [w.setInterval, w.clearInterval];
+  w.setInterval = (...a) => {
+    const id = si.apply(w, a);
+    live.add(id);
+    return id;
+  };
+  w.clearInterval = (id) => (live.delete(id), ci.call(w, id));
+  const listeners = new Map(); // element → count of listeners added and not removed
+  const [ael, rel] = [w.EventTarget.prototype.addEventListener, w.EventTarget.prototype.removeEventListener];
+  w.EventTarget.prototype.addEventListener = function (...a) {
+    if (this.matches && this.matches('[data-page]')) listeners.set(this, (listeners.get(this) || 0) + 1);
+    return ael.apply(this, a);
+  };
+  w.EventTarget.prototype.removeEventListener = function (...a) {
+    if (listeners.has(this)) listeners.set(this, listeners.get(this) - 1);
+    return rel.apply(this, a);
+  };
+  every('page cleans up when you leave it', pages.filter((p) => p.id !== 'settings'), (p) => {
+    CA.UI.Menu.openPage('settings');
+    live.clear();
+    listeners.clear();
+    CA.UI.Menu.openPage(p.id);
+    CA.UI.Menu.openPage('settings');
+    const leftOn = [...listeners.values()].reduce((a, b) => a + Math.max(0, b), 0);
+    return !live.size && !leftOn ? true : `${live.size} interval(s), ${leftOn} listener(s) left running`;
+  });
+  w.setInterval = si;
+  w.clearInterval = ci;
+  w.EventTarget.prototype.addEventListener = ael;
+  w.EventTarget.prototype.removeEventListener = rel;
+}
+
 // ---- widget types ---------------------------------------------------------------------------
 const types = CA.UI.Widgets.types();
 every('widget type is well-formed', types, (t) => (t.name && icon(t.icon) && typeof t.html === 'function') || 'name/icon/html');

@@ -42,7 +42,7 @@ CA.Recorder = (() => {
   const dirty = new Set();
   let toDelete = [];
 
-  const inAscension = () => Game.OnAscend || Game.AscendTimer > 0;
+  const inAscension = () => CA.Ascension.inProgress();
 
   // ---- frames ----------------------------------------------------------------------------
 
@@ -398,7 +398,40 @@ CA.Recorder = (() => {
     addEventListener('pagehide', flush);
   }
 
+  /** dt-weighted averages of the newest `seconds` of active play (live, independent of the view). */
+  function recent(seconds) {
+    const frames = all;
+    const from = active - seconds * 1000;
+    // each value averaged over the seconds it was actually measured (the first frame after a
+    // gap has no clicking / baked figures — it mustn't count as a second of zero)
+    const sum = { cps: 0, click: 0, clickRaw: 0, base: 0, clickRate: 0 };
+    const secs = { cps: 0, click: 0, clickRaw: 0, base: 0, clickRate: 0 };
+    let earned = 0;
+    let earnedSecs = 0;
+    let total = 0;
+    for (let i = frames.length - 1; i >= 0 && frames[i].a > from; i--) {
+      const f = frames[i];
+      const dt = f.dt || 0;
+      total += dt;
+      Object.keys(sum).forEach((k) => {
+        // frames from before v2.4 have no clickRaw: use clicking as it was
+        const v = k === 'clickRaw' && !Number.isFinite(f.clickRaw) ? f.click : f[k];
+        if (!Number.isFinite(v)) return;
+        sum[k] += v * dt;
+        secs[k] += dt;
+      });
+      if (Number.isFinite(f.earned)) {
+        earned += f.earned;
+        earnedSecs += dt;
+      }
+    }
+    if (!total) return null;
+    const per = (k) => (secs[k] ? sum[k] / secs[k] : 0);
+    return { cps: per('cps'), click: per('click'), clickRaw: per('clickRaw'), base: per('base'), clickRate: secs.clickRate ? per('clickRate') : NaN, actual: earnedSecs ? earned / earnedSecs : 0, secs: total };
+  }
+
   return {
+    recent,
     init,
     frames,
     series,

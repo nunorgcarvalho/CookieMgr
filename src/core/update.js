@@ -10,7 +10,6 @@ CA.Update = (() => {
   const CHECK_MS = 15 * 60 * 1000;
   const FIRST_CHECK_MS = 30000;
 
-  let timer = null;
   let notifiedVersion = null;
 
   /** True if `a` (e.g. "0.4.0") is a newer semver-ish version than `b`. */
@@ -55,7 +54,7 @@ CA.Update = (() => {
       default: true,
     });
     setTimeout(check, FIRST_CHECK_MS);
-    timer = setInterval(check, CHECK_MS);
+    setInterval(check, CHECK_MS);
   }
 
   return { init };

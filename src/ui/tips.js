@@ -90,6 +90,10 @@ CA.UI.Tips = (() => {
     if (!src) return hide();
     if (!box || !box.isConnected) box = float('ca-float');
     box.innerHTML = src.outerHTML;
+    // a widget's text size (its --wfs zoom) applied to its popups too, out here in the layer
+    const w = target.closest('[data-widget]');
+    const size = w && w.style.getPropertyValue('--wfs');
+    box.style.zoom = size && (src.classList.contains('ca-wt') || target.closest('.ca-wt')) ? size : '';
     box.style.display = 'block';
     place(box, target, false);
   }

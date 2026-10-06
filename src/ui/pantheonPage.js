@@ -17,7 +17,7 @@ CA.UI.PantheonPage = (() => {
   const SLOTS = ['Diamond', 'Ruby', 'Jade'];
   const SYNC_MS = 1000;
   let root = null;
-  let timer = null;
+  let life = null; // the mounted page (CA.UI.Pages.scope)
 
   function minigame() {
     const t = Game.Objects && Game.Objects.Temple;
@@ -106,18 +106,18 @@ CA.UI.PantheonPage = (() => {
     if (!root || !root.isConnected) return;
     const M = minigame();
     const el = M && root.querySelector('[data-pan-worship]');
-    if (el) CA.UI.Widgets.morph(el, worshipHtml(M));
+    if (el) CA.UI.Dom.morph(el, worshipHtml(M));
   }
 
   function mount(el) {
     unmount();
     root = el;
     sync();
-    timer = setInterval(sync, SYNC_MS);
+    life = CA.UI.Pages.scope(el).every(SYNC_MS, sync);
   }
   function unmount() {
-    clearInterval(timer);
-    timer = null;
+    if (life) life.close();
+    life = null;
     root = null;
   }
 

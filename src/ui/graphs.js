@@ -133,37 +133,7 @@ CA.UI.Graphs = (() => {
     ],
   };
 
-  /** dt-weighted averages of the newest `seconds` of active play (live, independent of the view). */
-  function recent(seconds) {
-    const frames = CA.Recorder.frames();
-    const from = CA.Recorder.activeNow() - seconds * SEC;
-    // each value averaged over the seconds it was actually measured (the first frame after a
-    // gap has no clicking / baked figures — it mustn't count as a second of zero)
-    const sum = { cps: 0, click: 0, clickRaw: 0, base: 0, clickRate: 0 };
-    const secs = { cps: 0, click: 0, clickRaw: 0, base: 0, clickRate: 0 };
-    let earned = 0;
-    let earnedSecs = 0;
-    let total = 0;
-    for (let i = frames.length - 1; i >= 0 && frames[i].a > from; i--) {
-      const f = frames[i];
-      const dt = f.dt || 0;
-      total += dt;
-      Object.keys(sum).forEach((k) => {
-        // frames from before v2.4 have no clickRaw: use clicking as it was
-        const v = k === 'clickRaw' && !Number.isFinite(f.clickRaw) ? f.click : f[k];
-        if (!Number.isFinite(v)) return;
-        sum[k] += v * dt;
-        secs[k] += dt;
-      });
-      if (Number.isFinite(f.earned)) {
-        earned += f.earned;
-        earnedSecs += dt;
-      }
-    }
-    if (!total) return null;
-    const per = (k) => (secs[k] ? sum[k] / secs[k] : 0);
-    return { cps: per('cps'), click: per('click'), clickRaw: per('clickRaw'), base: per('base'), clickRate: secs.clickRate ? per('clickRate') : NaN, actual: earnedSecs ? earned / earnedSecs : 0, secs: total };
-  }
+  const recent = (seconds) => CA.Recorder.recent(seconds); // core/recorder.js
 
   // ---- Cookies tab --------------------------------------------------------------------------
 
@@ -749,6 +719,7 @@ CA.UI.Graphs = (() => {
 
   const plots = {};
   let mountedRoot = null;
+  let life = null; // the mounted page (CA.UI.Pages.scope)
 
   const currentTab = () => {
     const t = S().get('graphTab');
@@ -783,20 +754,15 @@ CA.UI.Graphs = (() => {
   function mount(root) {
     unmount();
     mountedRoot = root;
-    root.addEventListener('click', onClick);
-    root.addEventListener('input', onTargetInput);
-    root.addEventListener('change', onTargetInput);
+    life = CA.UI.Pages.scope(root).on('click', onClick).on('input', onTargetInput).on('change', onTargetInput);
     currentTab().plots.forEach((id) => plots[id].mount(root));
     refreshTarget();
   }
 
   function unmount() {
     TABS.forEach((t) => t.plots.forEach((id) => plots[id] && plots[id].unmount()));
-    if (mountedRoot) {
-      mountedRoot.removeEventListener('click', onClick);
-      mountedRoot.removeEventListener('input', onTargetInput);
-      mountedRoot.removeEventListener('change', onTargetInput);
-    }
+    if (life) life.close();
+    life = null;
     mountedRoot = null;
   }
 

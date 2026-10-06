@@ -5,6 +5,7 @@ npm install          # once: jsdom + fake-indexeddb (dev only — nothing ships 
 npm test             # build, then run every suite (a few at a time)
 npm test -- garden   # only files whose path contains "garden" (any number of words)
 npm test -- --verbose
+npm run lint         # ESLint over src/ and tests/
 ```
 
 CI runs the same on every push (`.github/workflows/ci.yml`).
@@ -49,6 +50,8 @@ test what's recorded), `withPantheon`, `withGrimoire`, `localStorageSeed`, `full
   entry compiles, every built-in macro's code compiles and decompiles, the save round-trips, no
   native `title` tooltips. A new action, page, widget, value or built-in macro is covered by these
   the moment it's registered — no test to write for the basics.
+- **`contract/source.test.mjs`** — reads the source: core/ and features/ never use the UI, every file is in the
+  build, no native `title` tooltips or `scrollIntoView`, and every CSS class is still produced by some code.
 - **`unit/`** — fast, table-driven checks of pure logic (the algorithmic language).
 - **`e2e/vX.Y.Z.test.mjs`** — one per release: what that release added or changed, end to end. The
   CHANGELOG entry of the same version says what each one is about.

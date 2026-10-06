@@ -5,7 +5,7 @@ import { boot, sleep, makeAssert, click } from '../harness/game.mjs';
 
 const { assert, done } = makeAssert();
 const g = boot({ idb: { factory: new IDBFactory(), IDBKeyRange } });
-const { window: w, Game } = g;
+const { window: w } = g;
 const CA = w.CookieMgr;
 const doc = w.document;
 await sleep(400);
@@ -77,7 +77,7 @@ const old = M.save({ name: 'Blocks', mode: 'flow', every: 100, flow: [{ type: 'u
 CA.UI.Menu.openPage('clickers');
 CA.UI.MacrosPage.edit(old.id);
 const ta = doc.querySelector('[data-macro-editor] [data-code]');
-assert(ta && /repeat until t\.flag\((x)?\):\n  t\.log\((a)?\)/.test(ta.value) && ta.value.includes('parallel:\n  branch:'), `its blocks, written out as code (${ta && JSON.stringify(ta.value)})`);
+assert(ta && /repeat until t\.flag\((x)?\):\n {2}t\.log\((a)?\)/.test(ta.value) && ta.value.includes('parallel:\n  branch:'), `its blocks, written out as code (${ta && JSON.stringify(ta.value)})`);
 click(w, doc.querySelector('[data-macro-editor] [data-edit-act="save"]'));
 const saved = M.get(old.id);
 assert(typeof saved.source === 'string' && M.flowOf(saved)[1].type === 'parallel', 'saved as code, running the same');

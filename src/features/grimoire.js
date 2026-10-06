@@ -35,8 +35,7 @@ CA.Grimoire = (() => {
   const AUTO_ID = 'fthofOnClickFrenzy';
 
   function minigame() {
-    const tower = typeof Game !== 'undefined' && Game.Objects && Game.Objects['Wizard tower'];
-    const m = tower && tower.minigame;
+    const m = CA.Util.minigame('Wizard tower');
     return m && m.spells && typeof m.castSpell === 'function' ? m : null;
   }
 

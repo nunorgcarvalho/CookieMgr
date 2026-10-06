@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+## 2.29.0 — 2026-10-06
+
+- **Fix: a widget's text size now applies to its hover popups** too (they lost it when popups moved to the
+  floating layer).
+- **Fix: widgets saved with an unusual id** could break their own controls; such ids are replaced when loaded.
+- Under the hood (no visible change otherwise):
+  - Pages set themselves up through one helper (`CA.UI.Pages.scope`) that undoes everything when you leave the page
+    — listeners, timers, charts, the code editor — and a contract test checks that every page leaves nothing
+    running. The Stock market page is assembled from its parts.
+  - Numbers and times are formatted in core (`CA.Format`), and recent averages come from the recorder: features
+    no longer reach into the UI. `morph`, `replay` and two-click buttons live in `ui/dom.js`; the game lookups
+    (`CA.Util.has`, `CA.Util.minigame`, `CA.Ascension.inProgress`) exist once.
+  - 55 unused CSS rules removed (the old flow-block editor, the old status block, …); a test keeps it that way.
+  - ESLint (`npm run lint`), run by CI along with the tests; a source test enforces the layers and house rules.
+
 ## 2.28.0 — 2026-10-06
 
 - **Safer saves.** Each part of CookieMgr's save (your macros, widgets, garden profiles…) now loads on its own: if one

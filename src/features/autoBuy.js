@@ -38,7 +38,7 @@ CA.AutoBuy = (() => {
 
   const priceOf = (u) => (typeof u.getPrice === 'function' ? u.getPrice() : u.basePrice || u.price || 0);
   const clicksPerSec = () => {
-    const r = CA.UI.Graphs && CA.UI.Graphs.recent ? CA.UI.Graphs.recent(60) : null;
+    const r = CA.Recorder.recent(60);
     return r && Number.isFinite(r.clickRate) ? r.clickRate : 0;
   };
 
@@ -141,7 +141,7 @@ CA.AutoBuy = (() => {
     const pick = best([kind], skip);
     if (!pick) return { ok: false, text: skip ? 'nothing affordable' : 'nothing to buy' };
     const ok = pick.price <= Game.cookies;
-    const { span } = CA.UI.Plot.fmt;
+    const { span } = CA.Format;
     const wait = !ok && Game.cookiesPs > 0 ? ` — in ${span((pick.price - Game.cookies) / Game.cookiesPs)}` : '';
     return { ok, text: `next: ${pick.label}${pick.estimated ? ' (PP from your clicking)' : ''}${wait}` };
   }
@@ -312,7 +312,7 @@ CA.AutoBuy = (() => {
         if (!s.length) return { ok: true, text: 'all four drops found' };
         const now = s.find((x) => x.now);
         const next = s.slice().sort((a, b) => a.inSec - b.inSec)[0];
-        return { ok: !!now, text: now ? `${now.name} drops this quarter-hour` : `${next.name} in ${CA.UI.Plot.fmt.span(next.inSec)}` };
+        return { ok: !!now, text: now ? `${now.name} drops this quarter-hour` : `${next.name} in ${CA.Format.span(next.inSec)}` };
       },
       run: () => pet(),
     });

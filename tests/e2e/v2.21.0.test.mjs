@@ -85,7 +85,7 @@ const AB = CA.AutoBuy;
 assert(AB.best(['building'], false).name === 'Grandma', 'best building: lowest PP');
 assert(AB.best(['upgrade'], false).name === 'Kitten helpers', 'best upgrade: lowest PP (Plastic mouse has none and no clicking yet)');
 // clicking: 10 clicks/s → Plastic mouse adds 10 × 1%×1000 = 100 cookies/s for 5000: PP 50
-CA.UI.Graphs.recent = () => ({ clickRate: 10, actual: 1000 });
+CA.Recorder.recent = () => ({ clickRate: 10, actual: 1000 }); // v2.29: recent averages live in the Recorder
 const pm = AB.candidates(['upgrade']).find((c) => c.name === 'Plastic mouse');
 assert(pm && pm.estimated && Math.abs(pm.pp - 50) < 1e-9, `clicking upgrade priced by clicks/s (PP ${pm && pm.pp})`);
 assert(!plastic.bought, 'estimating doesn’t buy it');

@@ -233,28 +233,7 @@ CA.UI.Menu = (() => {
     );
   }
 
-  /** Destructive buttons take two clicks: the first arms them (and relabels them) for a few seconds. */
-  function armed(btn) {
-    if (btn.dataset.armed) {
-      clearTimeout(Number(btn.dataset.armed));
-      delete btn.dataset.armed;
-      btn.innerHTML = btn.dataset.idleHtml;
-      btn.classList.remove('ca-armed');
-      return true;
-    }
-    btn.dataset.idleHtml = btn.innerHTML;
-    btn.textContent = btn.dataset.armLabel;
-    btn.classList.add('ca-armed');
-    btn.dataset.armed = String(
-      setTimeout(() => {
-        if (!btn.dataset.armed) return;
-        delete btn.dataset.armed;
-        btn.innerHTML = btn.dataset.idleHtml;
-        btn.classList.remove('ca-armed');
-      }, 4000)
-    );
-    return false;
-  }
+  const armed = (btn) => CA.UI.Dom.armed(btn); // ui/dom.js
 
   function onHistoryFile(e) {
     const input = e.target;
@@ -295,7 +274,6 @@ CA.UI.Menu = (() => {
     icon: 'graphs',
     order: 20,
     group: 'data',
-    group: 'data',
     html: () => CA.UI.Graphs.html(),
     mount: (root) => CA.UI.Graphs.mount(root),
     unmount: () => CA.UI.Graphs.unmount(),
@@ -307,24 +285,8 @@ CA.UI.Menu = (() => {
     icon: 'stocks',
     order: 40,
     group: 'minigames',
-    group: 'minigames',
     html: () => stocksPage(),
-    mount: (root) => {
-      CA.UI.StockGraph.mount(root);
-      CA.UI.StockPerf.mount(root);
-      CA.UI.StockLog.mount(root);
-      wireSellAll(root);
-    },
-    unmount: () => {
-      CA.UI.StockGraph.unmount();
-      CA.UI.StockPerf.unmount();
-      CA.UI.StockLog.unmount();
-    },
-    tick: () => {
-      CA.UI.StockGraph.tick();
-      CA.UI.StockPerf.tick();
-      CA.UI.StockLog.tick();
-    },
+    parts: [CA.UI.StockGraph, CA.UI.StockPerf, CA.UI.StockLog, { mount: wireSellAll, unmount() {}, tick() {} }],
   });
   CA.UI.Pages.register({ id: 'settings', label: 'Settings', icon: 'settings', order: 90, group: 'custom', html: () => settingsPage() });
 
@@ -556,5 +518,5 @@ CA.UI.Menu = (() => {
     });
   }
 
-  return { init, open, close, toggle, isOpen, openPage, render, sync, optionRow, optionTile, optionsCard, armed, currentTab };
+  return { init, open, close, toggle, isOpen, openPage, render, sync, optionRow, optionTile, optionsCard, currentTab };
 })();

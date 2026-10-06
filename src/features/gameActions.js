@@ -337,7 +337,7 @@ CA.GameActions = (() => {
       describe: (p) => {
         const d = CA.States.get(p.state);
         const op = (OPS.find((o) => o.v === p.op) || OPS[0]).label;
-        return `${d ? d.name : p.state} ${op} ${CA.UI.Plot.fmt.beautify(p.value)}`;
+        return `${d ? d.name : p.state} ${op} ${CA.Format.beautify(p.value)}`;
       },
       test: (p) => {
         const v = CA.States.value(p.state);

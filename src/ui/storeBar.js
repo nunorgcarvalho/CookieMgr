@@ -54,7 +54,7 @@ CA.UI.StoreBar = (() => {
       host.appendChild(el);
     }
     document.body.classList.add('ca-has-storebar');
-    CA.UI.Widgets.morph(el, html());
+    CA.UI.Dom.morph(el, html());
     place();
   }
 

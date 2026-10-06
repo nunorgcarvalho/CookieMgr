@@ -277,7 +277,6 @@ CA.UI.CodeEditor = (() => {
           const tmp = document.createElement('div');
           tmp.innerHTML = libraryHtml(key, { first: (lib.dataset.first || '').split('|').filter(Boolean) });
           const next = tmp.firstChild;
-          next.dataset.first = lib.dataset.first || '';
           lib.replaceWith(next);
           const s = next.querySelector('[data-lib-search]');
           if (s && q) {
@@ -328,7 +327,7 @@ CA.UI.CodeEditor = (() => {
     const lines = (live && live.lines) || [];
     ed.querySelectorAll('[data-code-gutter] span').forEach((sp, i) => sp.classList.toggle('run', lines.includes(i + 1)));
     const box = ed.querySelector('[data-code-live]');
-    if (box) CA.UI.Widgets.morph(box, (live && live.html) || '');
+    if (box) CA.UI.Dom.morph(box, (live && live.html) || '');
   }
 
   function init() {

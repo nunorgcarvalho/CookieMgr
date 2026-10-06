@@ -30,12 +30,12 @@ CA.Script = (() => {
 
   // ---- values: numbers a condition can compare -------------------------------------------------
 
-  const has = (n) => typeof Game.Has === 'function' && Game.Has(n);
+  const has = (n) => CA.Util.has(n);
   const VALUES = [
     { id: 'cookies', desc: 'cookies in the bank', get: () => Game.cookies || 0 },
     { id: 'cps', desc: 'cookies per second (as the game shows it)', get: () => Game.cookiesPs || 0 },
     { id: 'rawCps', desc: 'cookies per second without effects', get: () => Game.cookiesPsRaw || Game.unbuffedCps || 0 },
-    { id: 'magic', desc: 'Grimoire magic', get: () => ((Game.Objects && Game.Objects['Wizard tower'] && Game.Objects['Wizard tower'].minigame) || {}).magic || 0 },
+    { id: 'magic', desc: 'Grimoire magic', get: () => (CA.Util.minigame('Wizard tower') || {}).magic || 0 },
     { id: 'lumps', desc: 'sugar lumps', get: () => Game.lumps || 0 },
     { id: 'santaLevel', desc: 'Santa’s level (14 = Final Claus)', get: () => Game.santaLevel || 0 },
     { id: 'elderWrath', desc: 'the Grandmapocalypse’s stage (0 none … 3 angered)', get: () => Game.elderWrath || 0 },
@@ -526,7 +526,7 @@ CA.Script = (() => {
 
   // ---- evaluating conditions (with an explanation) ---------------------------------------------
 
-  const fmtNum = (v) => (CA.UI && CA.UI.Plot ? CA.UI.Plot.fmt.beautify(v, Number.isInteger(v) ? 0 : 2) : String(v));
+  const fmtNum = (v) => CA.Format.beautify(v, Number.isInteger(v) ? 0 : 2);
   function valueOf(o) {
     if (o.v === 'lit') return o.x;
     const def = valueById[o.id];

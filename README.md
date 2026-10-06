@@ -23,7 +23,7 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 | **Widget** | Something on the game's left panel: a macro's button, the Running now bar, quick stats, events, minigames. |
 
-## Features (v2.28)
+## Features (v2.29)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
 the data pages **Events** and **Graphs**; the minigames **Garden**, **Stock market**, **Pantheon** and **Grimoire**;
@@ -500,12 +500,13 @@ load the game and click the bookmarklet.
 
 ## Development
 
-The bundle has no dependencies; the tests need `npm install` once (jsdom and fake-indexeddb, dev only). Node 18+.
+The bundle has no dependencies; the tests and the linter need `npm install` once (dev only). Node 18+.
 
 ```sh
 npm run build   # src/ -> dist/CookieMgr.js
 npm run check   # fail if dist/ is out of date (CI runs this)
 npm test        # build, then every test suite (CI runs this too) — npm test -- garden: only those
+npm run lint    # ESLint (CI runs this too)
 npm run watch   # rebuild on every change
 npm run serve   # watch + serve dist/ at http://localhost:8080 for testing
 ```
@@ -529,7 +530,8 @@ Reload the game page between loads — the mod refuses to register twice.
 ```text
 src/
   core/
-    util.js          helpers: notifications, sounds, CSS injection, function wrapping
+    util.js          helpers: notifications, sounds, CSS injection, function wrapping, the game's minigames / upgrades
+    format.js        numbers and times as CookieMgr writes them (beautify, span, clock…) — features and pages alike
     events.js        tiny pub/sub bus ('macros', 'settings', 'hotkeys', 'ascend', 'history', …)
     actions.js       registry of actions (single things CookieMgr can do in the game)
     conditions.js    registry of conditions "when" macros wait for
@@ -561,8 +563,9 @@ src/
     notifyTips.js    tooltips on the game's notifications about upgrades and achievements
   ui/
     components.js    HTML snippets: switch, hotkey chip, icon, button
+    dom.js           DOM helpers: morph (patch in place), replay (restart an animation), armed (two-click buttons)
     icons.js         the inline-SVG icon set used everywhere
-    pages.js         page registry — the sidebar and the panel both read it
+    pages.js         page registry — the sidebar and the panel both read it; scope(): a page's mounted state
     chart.js         shared chart core: canvas sizing, axis padding, nice scales, scroll/live view
     tab.js           the sidebar of page icons on the left beam
     plot.js          the plotting engine every chart uses: bucketing, scales, overlays, tooltips, chips
@@ -617,8 +620,13 @@ If you add a file, add it to `MODULES` in `build.mjs` in the right order.
 - **A new widget:** `CA.UI.Widgets.defineType({ id, name, icon, desc, width, single, bare, resize, settings, html(instance) })`
   in `ui/widgetTypes.js` — it appears on the Widgets page; `html` is re-rendered twice a second and patched in place.
   `settings` (`{ key, label, type: 'number' | 'multi', … }`) appear in its settings editor and are saved on the instance.
-- **A new page:** `CA.UI.Pages.register({ id, label, icon, order, html, mount, unmount, tick })` from the page's own
-  module. It gets a sidebar icon and a panel slot automatically; `icon` is a name from `ui/icons.js`.
+- **A new page:** `CA.UI.Pages.register({ id, label, icon, order, html, mount, unmount, tick })` (or `parts: [a, b]` for a
+  page made of components with their own mount/unmount/tick) from the page's own
+  module. It gets a sidebar icon and a panel slot automatically; `icon` is a name from `ui/icons.js`. In `mount(el)`,
+  set things up through `CA.UI.Pages.scope(el)` (`.on(type, fn)`, `.every(ms, fn)`, `.child(chart)`, `.add(unbind)`) and
+  call its `close()` in `unmount` — the contract tests check that leaving a page leaves nothing running.
+- **Layers:** `core/` and `features/` never use `CA.UI` (formatting is `CA.Format`); `core/` doesn't use features. The
+  source contract test checks it, along with no `title=` tooltips, no `scrollIntoView`, and no unused CSS.
 
 CI (`.github/workflows/ci.yml`) fails a push if `dist/CookieMgr.js` does not match `src/` or a test fails, so build and `npm test` before committing.
 

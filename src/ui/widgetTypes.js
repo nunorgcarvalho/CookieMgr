@@ -145,8 +145,8 @@ CA.UI.WidgetTypes = (() => {
   const STATS = [
     { id: 'cpsClick', label: 'CpS + clicking', value: () => { const f = lastFrame(); return f ? perS((f.cps || 0) + (f.click || 0)) : '—'; } },
     { id: 'cps', label: 'CpS', value: () => perS(Game.cookiesPs) },
-    { id: 'actual', label: 'Actual CpS', value: () => { const r = CA.UI.Graphs.recent(60); return r ? `${perS(r.actual)} <em>last min</em>` : '—'; } },
-    { id: 'clickRate', label: 'Clicks / second', value: () => { const r = CA.UI.Graphs.recent(10); return r && Number.isFinite(r.clickRate) ? r.clickRate.toFixed(1) : '—'; } },
+    { id: 'actual', label: 'Actual CpS', value: () => { const r = CA.Recorder.recent(60); return r ? `${perS(r.actual)} <em>last min</em>` : '—'; } },
+    { id: 'clickRate', label: 'Clicks / second', value: () => { const r = CA.Recorder.recent(10); return r && Number.isFinite(r.clickRate) ? r.clickRate.toFixed(1) : '—'; } },
     { id: 'bank', label: 'Bank', value: () => F().beautify(Game.cookies || 0) },
     { id: 'runStarted', label: 'Run started', value: () => (Game.startDate ? `${F().span((Date.now() - Game.startDate) / 1000)} <em>ago</em>` : '—') },
     { id: 'upgrades', label: 'Upgrades', value: () => count(Game.UpgradesOwned, upgradesTotal()) },
@@ -159,7 +159,7 @@ CA.UI.WidgetTypes = (() => {
       value: () => {
         const lvl = Math.floor(Game.HowMuchPrestige(allTime()));
         const need = typeof Game.HowManyCookiesReset === 'function' ? Game.HowManyCookiesReset(lvl + 1) - allTime() : NaN;
-        const r = CA.UI.Graphs.recent(60);
+        const r = CA.Recorder.recent(60);
         return r && r.actual > 0 && need > 0 ? F().span(need / r.actual) : '—';
       },
     },
