@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 2.29.1 — 2026-10-06
+
+- **Faster Grimoire page and widgets**: the time until a spell is affordable (and until magic is full) is worked out
+  from the game's refill formula instead of simulated frame by frame — up to millions of steps per spell, twice a
+  second. A test checks it against the game's formula.
+- **Fix: switching saves (an import) could lose the buff/effect log** of the save you left, or file it under the new
+  one.
+- `npm test` says so once when the bundle doesn't parse.
+
 ## 2.29.0 — 2026-10-06
 
 - **Fix: a widget's text size now applies to its hover popups** too (they lost it when popups moved to the

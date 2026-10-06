@@ -259,7 +259,7 @@ CA.History = (() => {
   // ---- persistence -------------------------------------------------------------------
 
   function persist() {
-    if (!dirty || loadedFor !== CA.Store.saveId()) return Promise.resolve();
+    if (!dirty || !loadedFor) return Promise.resolve();
     dirty = false;
     // ref points at a live game buff object — not storable
     return CA.Store.setKV(
@@ -271,17 +271,23 @@ CA.History = (() => {
 
   let loadedFor = null;
 
+  /** Reads this save's buff log — after writing what the previous save had pending, under its own id. */
   function load() {
+    const s = CA.Store.saveId();
+    const before = persist();
+    loadedFor = null; // nothing is written while the new save's log is being read
     Object.keys(open).forEach((k) => delete open[k]);
-    loadedFor = CA.Store.saveId();
-    return CA.Store.getKV('buffs').then((stored) => {
+    const since = (intervals = []); // effects seen while reading: kept after the stored ones
+    return before.then(() => CA.Store.getKV('buffs')).then((stored) => {
+      if (CA.Store.saveId() !== s) return;
+      loadedFor = s;
       intervals = (Array.isArray(stored) ? stored : []).map((iv) => {
         // An interval still "open" as of the last save can't be trusted to still be running
         // (there's no live Game.buffs reference for it any more): close it where we last saw it.
         // If the buff really is still active, the next tick opens a fresh interval for it.
         if (iv.end == null) iv.end = iv.projEnd ? Math.min(iv.projEnd, Date.now()) : iv.start;
         return iv;
-      });
+      }).concat(since);
       CA.Events.emit('history', 'buffs');
     });
   }

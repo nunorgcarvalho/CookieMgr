@@ -52,6 +52,12 @@ if (!args.includes('--no-build')) {
     process.exit(1);
   }
 }
+// a bundle that doesn't parse fails every test the same way: say so once
+const parse = spawnSync(process.execPath, ['--check', path.join(ROOT, 'dist', 'CookieMgr.js')], { encoding: 'utf8' });
+if (parse.status !== 0) {
+  console.error(`dist/CookieMgr.js does not parse:\n${parse.stderr}`);
+  process.exit(1);
+}
 
 const color = process.stdout.isTTY ? (c, s) => `\x1b[${c}m${s}\x1b[0m` : (_c, s) => s;
 const results = [];

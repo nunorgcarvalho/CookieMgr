@@ -55,20 +55,32 @@ CA.Grimoire = (() => {
     return m && sp && typeof m.getFailChance === 'function' ? m.getFailChance(sp) : null;
   };
 
-  /** Seconds until magic reaches `target`, following the game's own refill formula. */
+  /**
+   * Seconds until magic reaches `target`, following the game's own refill formula — worked out,
+   * not simulated: every frame the game adds 0.002 × max(0.002, √(magic ÷ M)), M = max(maximum, 100).
+   * Below the floor (magic < 0.000004 M) that's a constant 0.000004 a frame; above it √magic grows
+   * by 0.001 ÷ √M a frame.
+   */
   function secondsUntil(target) {
     const m = minigame();
     if (!m) return Infinity;
-    let magic = m.magic;
-    const max = m.magicM;
+    return refillSeconds(m.magic, m.magicM, target);
+  }
+  function refillSeconds(magic, max, target) {
     if (magic >= target) return 0;
     if (target > max) return Infinity;
-    let s = 0;
-    while (magic < target && s < 86400) {
-      for (let f = 0; f < FPS && magic < target; f++) magic += Math.max(0.002, Math.pow(magic / Math.max(max, 100), 0.5)) * 0.002;
-      s++;
+    const M = Math.max(max, 100);
+    const floor = 0.000004 * M;
+    let frames = 0;
+    let from = Math.max(0, magic);
+    if (from < floor) {
+      const to = Math.min(target, floor);
+      frames += (to - from) / 0.000004;
+      from = to;
     }
-    return magic >= target ? s : Infinity;
+    if (from < target) frames += ((Math.sqrt(target) - Math.sqrt(from)) * Math.sqrt(M)) / 0.001;
+    const s = Math.ceil(frames / FPS - 1e-9);
+    return s <= 86400 ? s : Infinity;
   }
 
   /** Live info about every spell for the Wizard tower page. */
@@ -227,5 +239,5 @@ CA.Grimoire = (() => {
     watch();
   }
 
-  return { init, minigame, spells, magicNow, secondsUntil, SPELLS, AUTO_ID };
+  return { init, minigame, spells, magicNow, secondsUntil, refillSeconds, SPELLS, AUTO_ID };
 })();
