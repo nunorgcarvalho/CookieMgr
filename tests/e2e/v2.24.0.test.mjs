@@ -38,7 +38,8 @@ const setVal = (sel, v) => {
 setVal('[data-edit="name"]', 'Seq');
 click(w, ed().querySelector('[data-edit-act="mode"][data-val="flow"]'));
 const ta = () => ed().querySelector('[data-code]');
-assert(ta() && /^pop\.golden\(\)/.test(ta().value) && /Algorithmic/.test(ed().querySelector('.ca-ed-kind.on').textContent), `Algorithmic: the steps it had, as code (${ta() && ta().value})`);
+// v2.31: what the Repeat macro ran — its steps, every pass (forever:)
+assert(ta() && /^forever:\n {2}pop\.golden\(\)/.test(ta().value) && /Algorithmic/.test(ed().querySelector('.ca-ed-kind.on').textContent), `Algorithmic: the steps it had, as code (${ta() && ta().value})`);
 setVal('[data-code]', 'while cookies() < 5000:\n  t.log(a)\nnope()\n');
 assert(/1 problem/.test(ed().querySelector('[data-code-status]').textContent) && ed().querySelector('[data-code-gutter] span.err'), 'problems listed as you type, the line marked');
 assert(ed().querySelector('[data-code-hl] .hk') && ed().querySelector('[data-code-hl] .hv') && ed().querySelector('[data-code-hl] .hn'), 'keywords, values and numbers coloured');

@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 2.31.0 — 2026-10-08
+
+- **The stock autobuyer hires stockbrokers** whenever it can afford one and the market has room (each makes buying
+  goods 5% cheaper) — before it buys stocks. A choice on its row turns it off; only selling hires none. Also an action
+  of its own: `stocks.hireBrokers()`.
+- **Every macro is algorithmic code now.** Repeat, When… and Once macros are shortcuts that write it: they run on the
+  same engine as algorithmic macros, and the editor shows what one amounts to under **As code** — with **Carry on as
+  code** to continue it as an algorithm. Switching a macro to Algorithmic writes out everything it did, a When…'s
+  conditions included. Nothing changes in how they look or run.
+- **Lookup in the library**: a tab listing the names that go inside the parentheses — spells, effects, macros,
+  seasons, buildings, soils… — with where each list is used; click a name to write it where the cursor is.
+- Fix: code written back out (`not (a and b)`, `(a or b) and c`) keeps the parentheses it needs.
+
 ## 2.30.0 — 2026-10-08
 
 - **Force the Hand of Fate on combos** (was "on Click frenzy"): now an algorithmic macro that casts as soon as two

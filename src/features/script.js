@@ -583,11 +583,13 @@ CA.Script = (() => {
     while (vals.length && list[vals.length - 1] && vals[vals.length - 1] === list[vals.length - 1].default && !given(vals.length - 1)) vals.pop();
     return vals.map(litText).join(', ');
   }
-  function condText(c) {
+  /** A condition as code; `within` (and / or / not) is what it sits in, for the parentheses it needs. */
+  function condText(c, within) {
     if (!c) return 'true';
-    if (c.all) return c.all.map((x) => `${x.not ? 'not ' : ''}${x.cond}(${argText(CA.Conditions.get(x.cond), x.params)})`).join(' and ');
-    if (c.t === 'and' || c.t === 'or') return `${condText(c.a)} ${c.t} ${condText(c.b)}`;
-    if (c.t === 'not') return `not ${condText(c.a)}`;
+    const wrap = (s, t) => (within === 'not' || (within === 'and' && t === 'or') ? `(${s})` : s);
+    if (c.all) return wrap(c.all.map((x) => `${x.not ? 'not ' : ''}${x.cond}(${argText(CA.Conditions.get(x.cond), x.params)})`).join(' and '), c.all.length > 1 ? 'and' : '');
+    if (c.t === 'and' || c.t === 'or') return wrap(`${condText(c.a, c.t)} ${c.t} ${condText(c.b, c.t)}`, c.t);
+    if (c.t === 'not') return `not ${condText(c.a, 'not')}`;
     if (c.t === 'cond') return `${c.id}(${argText(CA.Conditions.get(c.id), c.params)})`;
     const op = (o) => (o.v === 'lit' ? String(o.x) : `${o.id}(${o.args.join(', ')})`);
     return `${op(c.l)} ${c.op} ${op(c.r)}`;
@@ -639,6 +641,55 @@ CA.Script = (() => {
     return items;
   }
 
+  // ---- the Lookup: the names that go inside ( ) — spells, effects, macros, seasons, buildings… ----
+
+  const lookupsExtra = [];
+  /** A list of names for the Lookup that no action's or condition's choice already gives: { name, uses, items() → [{ v, label }] }. */
+  const defineLookup = (l) => lookupsExtra.push(l);
+  /**
+   * Every list of names you can write inside ( ), grouped: [{ name, uses: ['spell.cast(spell)', …],
+   * items: [{ v, label, code }] }] — from the choices of every action and condition (one list per kind
+   * of choice: "Spell", "Effect", "Macro"…) and the ones defined with defineLookup (buildings…).
+   */
+  function lookups() {
+    const by = {};
+    const group = (name) => by[name] || (by[name] = { name, uses: new Set(), items: new Map() });
+    const add = (g, list) =>
+      (list || []).forEach((o) => {
+        if (!o || o.v == null || o.v === '' || g.items.has(String(o.v))) return;
+        g.items.set(String(o.v), { v: o.v, label: String(o.label != null ? o.label : o.v), code: litText(o.v) });
+      });
+    [...CA.Actions.all(), ...CA.Conditions.all()].forEach((d) =>
+      (d.params || []).forEach((p) => {
+        if (p.type !== 'select') return;
+        let opts;
+        try {
+          opts = typeof p.options === 'function' ? p.options() : p.options;
+        } catch (e) {
+          return;
+        }
+        const g = group(p.label);
+        g.uses.add(`${d.id}(${p.key})`);
+        add(g, opts);
+      })
+    );
+    lookupsExtra.forEach((l) => {
+      const g = group(l.name);
+      (l.uses || []).forEach((u) => g.uses.add(u));
+      try {
+        add(g, l.items());
+      } catch (e) {
+        /* not available yet */
+      }
+    });
+    return Object.values(by)
+      .filter((g) => g.items.size)
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((g) => ({ name: g.name, uses: [...g.uses], items: [...g.items.values()] }));
+  }
+  // the values' own names
+  defineLookup({ name: 'Building', uses: ['building(name)'], items: () => Object.keys((typeof Game !== 'undefined' && Game.Objects) || {}).map((n) => ({ v: n, label: n })) });
+
   /** Adds a value conditions can compare (e.g. the garden's): { id, desc, params, get(...args) }. */
   function defineValue(v) {
     if (valueById[v.id]) return valueById[v.id];
@@ -648,5 +699,5 @@ CA.Script = (() => {
   }
   const isValue = (id) => !!valueById[id];
 
-  return { compile, evaluate, decompile, library, defineValue, isValue, VALUES, KEYWORDS, tokenize };
+  return { compile, evaluate, decompile, library, lookups, defineLookup, litText, defineValue, isValue, VALUES, KEYWORDS, tokenize };
 })();

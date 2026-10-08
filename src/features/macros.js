@@ -98,7 +98,7 @@ CA.Macros = (() => {
     {
       id: 'stockTrader',
       name: 'Stock market autobuyer',
-      desc: 'Once a second: buys the max it can afford of fast-rising stocks, then slow-rising ones, and sells anything it holds that isn’t rising.',
+      desc: 'Once a second: hires the stockbrokers it can afford (each makes buying cheaper), buys the max it can afford of fast-rising stocks, then slow-rising ones, and sells anything it holds that isn’t rising.',
       icon: sprite(9, 33),
       mode: 'repeat',
       every: 1000,
@@ -145,7 +145,7 @@ CA.Macros = (() => {
 
   const macros = []; // builtins first, then yours, in order
   const byId = {};
-  const running = {}; // id -> { timer, since, condWas, lastFire }
+  const running = {}; // id -> { timer, since }
   const status = {}; // id -> { runs, lastRun, steps: [{ total, runs, last, lastAt, error }] }
   let prefs = {}; // id -> { fav }
   let depth = 0;
@@ -318,37 +318,42 @@ CA.Macros = (() => {
 
   const ascending = () => CA.Ascension.inProgress();
 
-  function runSteps(m) {
-    if (ascending() || depth >= MAX_DEPTH) return 0;
-    const st = status[m.id];
-    let done = 0;
-    depth++;
-    try {
-      stepsOf(m).forEach((step, i) => {
-        const s = st.steps[i];
-        try {
-          const n = CA.Actions.run(step.action, step.params);
-          s.runs++;
-          s.last = n;
-          if (n > 0) {
-            s.total += n;
-            s.lastAt = Date.now();
-          }
-          s.error = '';
-          done += n;
-        } catch (e) {
-          s.error = String((e && e.message) || e);
-          console.error(`[CookieMgr] macro "${m.name}" step ${i + 1} failed`, e);
-        }
-      });
-    } finally {
-      depth--;
-    }
-    st.runs++;
-    st.lastRun = Date.now();
-    if (done > 0) bump(m.id, done);
-    return done;
+  // ---- every macro is code ----------------------------------------------------------------------
+  //
+  // Whatever its kind, a macro runs as algorithmic code (the flow engine below). An Algorithmic
+  // macro is its code; the other kinds are shortcuts for the common shapes, built from their settings:
+  //   Repeat           forever: <steps>                       (every pass)
+  //   When… (rise)     forever: wait until <c> · <steps> · wait until not <c>   (once each time it happens)
+  //   When… (while)    forever: if <c>: <steps>               (every pass while it holds)
+  //   Once             <steps>                                (one pass, when you run it)
+  // Their "do" blocks carry their step's number, so each step still counts what it did (the cards).
+  // A Group isn't code: it switches its members.
+
+  /** A "When…" macro's conditions as code's condition tree: c1 and not c2 and … */
+  function condTree(when) {
+    const one = (c) => {
+      const x = { t: 'cond', id: c.cond, params: { ...(c.params || {}) } };
+      return c.not ? { t: 'not', a: x } : x;
+    };
+    return ((when && when.all) || []).map(one).reduce((a, b) => (a ? { t: 'and', a, b } : b), null) || { t: 'cmp', op: '<', l: { v: 'lit', x: 1 }, r: { v: 'lit', x: 0 } };
   }
+  /** The code a Repeat / When… / Once macro amounts to, from its { mode, steps, when }. */
+  function programFrom(def) {
+    const steps = (def.steps || []).map((s, i) => ({ type: 'do', action: s.action, params: { ...(s.params || {}) }, step: i }));
+    if (def.mode === 'repeat') return [{ type: 'forever', body: steps }];
+    if (def.mode === 'when') {
+      const cond = condTree(def.when);
+      if (def.when && def.when.edge === 'while') return [{ type: 'forever', body: [{ type: 'if', cond, then: steps, else: [] }] }];
+      return [{ type: 'forever', body: [{ type: 'wait', cond }, ...steps, { type: 'wait', cond: { t: 'not', a: cond } }] }];
+    }
+    return steps; // once (a group has none)
+  }
+  /** What a macro runs: an algorithm's compiled code, or what its settings amount to (its choices applied). */
+  const programOf = (m) => (m.mode === 'flow' ? compiledOf(m).flow : m.mode === 'group' ? [] : programFrom({ mode: m.mode, steps: stepsOf(m), when: m.when }));
+  /** Any macro as code — an algorithm's own, or what a Repeat / When… / Once macro's settings write out. */
+  const codeOf = (m) => (m.mode === 'flow' ? sourceOf(m) : m.mode === 'group' ? '' : CA.Script.decompile(programOf(m)));
+  /** The same for a macro being edited ({ mode, steps, when }). */
+  const codeFor = (def) => (def.mode === 'group' ? '' : CA.Script.decompile(programFrom(def)));
 
   // ---- flows --------------------------------------------------------------------------------
   //
@@ -425,13 +430,24 @@ CA.Macros = (() => {
   function execNode(F, n, path) {
     switch (n.type) {
       case 'do': {
+        const s = n.step != null && F.steps ? F.steps[n.step] : null; // a shortcut macro's step: its counts
         try {
           const k = CA.Actions.run(n.action, n.params) || 0;
           F.done += k;
           F.error = '';
           if (F.pass && k) trace(F, n, `${n.action}: ${k}`);
+          if (s) {
+            s.runs++;
+            s.last = k;
+            if (k > 0) {
+              s.total += k;
+              s.lastAt = Date.now();
+            }
+            s.error = '';
+          }
         } catch (e) {
           F.error = String((e && e.message) || e);
+          if (s) s.error = F.error;
         }
         return true;
       }
@@ -536,8 +552,8 @@ CA.Macros = (() => {
    * Runs compiled code once, from the top, as one pass (rules that are checked every second, like
    * a garden profile's). Returns { done, at, trace, error } — what it did and where it stopped.
    */
-  function runPass(prog) {
-    const F = { prog, S: {}, at: [], trace: [], done: 0, error: '', stopped: false, pass: true };
+  function runPass(prog, steps) {
+    const F = { prog, S: {}, at: [], trace: [], done: 0, error: '', stopped: false, pass: true, steps };
     if (depth >= MAX_DEPTH) return F;
     depth++;
     try {
@@ -562,40 +578,25 @@ CA.Macros = (() => {
       : null;
 
   function tick(m) {
-    const r = running[m.id];
-    if (!r) return;
-    if (m.mode === 'flow') {
-      runFlow(m);
-      return;
-    }
-    if (m.mode === 'repeat') {
-      runSteps(m);
-      return;
-    }
-    // when
-    const now = CA.Conditions.test(m.when);
-    const fire = now && (m.when.edge === 'while' || !r.condWas);
-    r.condWas = now;
-    if (fire) {
-      r.lastFire = Date.now();
-      runSteps(m);
-    }
+    if (running[m.id]) runFlow(m);
   }
 
   /** Starts a macro's timer; false when it can't run (code with a problem: problemOf(id) says why). */
   function start(id) {
     const m = byId[id];
     if (!m || m.mode === 'once' || running[id]) return false;
+    let prog;
     if (m.mode === 'flow') {
       const { flow, errors } = compiledOf(m);
       if (errors.length) {
         problems[id] = `line ${errors[0].line}: ${errors[0].message}`;
         return false;
       }
-      flowRuns[id] = { prog: flow, S: {}, at: [], trace: [], done: 0, error: '', stopped: false };
-    }
+      prog = flow;
+    } else prog = programOf(m);
+    flowRuns[id] = { prog, S: {}, at: [], trace: [], done: 0, error: '', stopped: false, steps: status[id].steps };
     delete problems[id];
-    running[id] = { since: Date.now(), condWas: false, lastFire: 0, timer: setInterval(() => tick(m), everyOf(m)) };
+    running[id] = { since: Date.now(), timer: setInterval(() => tick(m), everyOf(m)) };
     return true;
   }
 
@@ -648,10 +649,15 @@ CA.Macros = (() => {
   /** Runs a macro's steps one time right now (any mode). Returns how many things it did. */
   function runOnce(id) {
     const m = byId[id];
-    if (!m) return 0;
-    const n = runSteps(m);
+    if (!m || m.mode === 'group' || ascending()) return 0;
+    // its steps once (an algorithm: one pass of its code)
+    const prog = m.mode === 'flow' ? compiledOf(m).flow : programFrom({ mode: 'once', steps: stepsOf(m) });
+    const F = runPass(prog, status[id].steps);
+    status[id].runs++;
+    status[id].lastRun = Date.now();
+    if (F.done > 0) bump(id, F.done);
     changed(id);
-    return n;
+    return F.done;
   }
 
   /** What a hotkey or shortcut button does: once macros run, the others switch on/off. */
@@ -745,6 +751,7 @@ CA.Macros = (() => {
     const p = { ...(prefs[id] || {}) };
     p.params = { ...(p.params || {}), [`${step}.${key}`]: value };
     prefs[id] = p;
+    if (running[id] && flowRuns[id] && m.mode !== 'flow') flowRuns[id].prog = programOf(m);
     changed(id);
   }
   const isFav = (id) => !!(prefs[id] && prefs[id].fav);
@@ -891,6 +898,9 @@ CA.Macros = (() => {
     shiftValue,
     flowOf,
     compiledOf,
+    programOf,
+    codeOf,
+    codeFor,
     problemOf,
     sourceOf,
     flowStatus,

@@ -16,10 +16,10 @@ CA.StockTrader = (() => {
   const MACRO = 'stockTrader';
 
   /** One trading pass. Returns how many buy/sell orders went through. */
-  function trade({ buy = true } = {}) {
+  function trade({ buy = true, brokers = true } = {}) {
     const m = CA.Stocks.minigame();
     if (!m) return 0;
-    let n = 0;
+    let n = buy && brokers ? hireBrokers() : 0; // first: each broker cuts the overhead on what's bought next
     const goods = m.goodsById.filter((g) => g.active !== false);
     goods.forEach((g) => {
       if (g.stock > 0 && !RISING.includes(g.mode) && m.sellGood(g.id, 10000)) n++;
@@ -30,6 +30,28 @@ CA.StockTrader = (() => {
         if (g.mode === mode && m.buyGood(g.id, 10000)) n++;
       })
     );
+    return n;
+  }
+
+  /**
+   * Hires stockbrokers while there's room for one and you can afford it (minigameMarket.js: at most
+   * the highest grandma count this run ÷ 10 + the grandma level; each costs 20 minutes of raw CpS and
+   * cuts the overhead on buying goods by 5%). Through the Bank's own Hire button when it's there.
+   */
+  function hireBrokers() {
+    const m = CA.Stocks.minigame();
+    if (!m || typeof m.getMaxBrokers !== 'function' || typeof m.getBrokerPrice !== 'function') return 0;
+    let n = 0;
+    while (n < 100 && m.brokers < m.getMaxBrokers() && Game.cookies >= m.getBrokerPrice()) {
+      const before = m.brokers;
+      const btn = document.getElementById('bankBrokersBuy');
+      if (btn) btn.click();
+      if (m.brokers === before) {
+        Game.Spend(m.getBrokerPrice());
+        m.brokers += 1;
+      }
+      n++;
+    }
     return n;
   }
 
@@ -72,5 +94,5 @@ CA.StockTrader = (() => {
     return cookies > 0 ? `Sells for ~${beautify(cookies)} cookies right now` : 'Nothing to sell right now';
   }
 
-  return { trade, sellEverything, set, toggle, isOn, sellAll, previewSellAllCookies, sellAllTitle };
+  return { trade, hireBrokers, sellEverything, set, toggle, isOn, sellAll, previewSellAllCookies, sellAllTitle };
 })();

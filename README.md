@@ -23,7 +23,7 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 | **Widget** | Something on the game's left panel: a macro's button, the Running now bar, quick stats, events, minigames. |
 
-## Features (v2.30)
+## Features (v2.31)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
 the data pages **Events** and **Graphs**; the minigames **Garden**, **Stock market**, **Pantheon** and **Grimoire**;
@@ -149,7 +149,7 @@ Everything CookieMgr automates is a **macro**: one or more **actions** run in or
 | Reindeer               | `R`         | Pops reindeer                                                        |
 | Fortune news           | `F`         | Clicks fortunes in the news ticker                                   |
 | Wrinklers              | `K`         | Pops wrinklers as soon as they attach                                |
-| Stock market autobuyer | —           | Buys fast/slow-rising stocks, sells the rest, every second           |
+| Stock market autobuyer | —           | Hires brokers, buys fast/slow-rising stocks, sells the rest, every second |
 | Sell all stocks        | —           | Once: autobuyer off, then sells every stock                          |
 | Cast … (one per spell) | —           | Once: casts that Grimoire spell                                      |
 | SeasonCompletion       | —           | An algorithmic macro: research, then every season until complete      |
@@ -193,7 +193,28 @@ Delete), the kind of macro as cards — **Repeat**, **When…**, **Once**, **Gro
 then what it does: numbered step cards (an action each, with its options; ▲ ▼ × to move or remove), a "When…"
 macro's conditions, a group's members, or an algorithm's code. Beside it, always, the **library**: every action,
 condition, value and keyword, searchable — click one to insert it (into the code where the cursor is, or as a new
-step), ★ to pin it at the top.
+step), ★ to pin it at the top. Its **Lookup** tab lists the names that go inside the parentheses — spells, effects,
+macros, seasons, buildings, soils… — each with where it's used; click one to write it where the cursor is.
+
+**Every macro is algorithmic code underneath.** Repeat, When… and Once are shortcuts for the common shapes, and the
+editor shows what one amounts to under **As code**:
+
+```
+forever:                          # Repeat: its steps, every pass
+  pop.golden()
+
+forever:                          # When… "once each time it happens"
+  wait until buff(Frenzy)
+  pop.golden()
+  wait until not buff(Frenzy)
+
+forever:                          # When… "on every check while it holds"
+  if buff(Frenzy):
+    pop.golden()
+```
+
+**Carry on as code** turns it into an Algorithmic macro from there (so does picking the Algorithmic card). Groups are
+the one kind that isn't code: they switch their members.
 
 **Algorithmic macros** are written like pseudo-code, indented like Python:
 
@@ -452,8 +473,10 @@ The **Stock market** tab in the CookieMgr panel has:
   autobuyer off first, so it doesn't just buy it all straight back. Hovering it shows the actual number of cookies
   selling everything right now would pay out. (It's the built-in "Sell all stocks" macro, so it can have a hotkey.)
 - **Autobuyer** — the built-in "Stock market autobuyer" macro (own switch and hotkey; shift-click its button to let it buy or only sell)
-  that, once a second, buys the max it can afford of fast-rising stocks, then slow-rising ones, and sells anything it
-  holds that isn't currently rising. That's the entire strategy.
+  that, once a second, hires the stockbrokers it can afford (each makes buying goods 5% cheaper; the game allows your
+  highest grandma count ÷ 10 + the grandma level), buys the max it can afford of fast-rising stocks, then slow-rising
+  ones, and sells anything it holds that isn't currently rising. That's the entire strategy. Its **Hire stockbrokers**
+  choice turns the hiring off; only selling (shift-click) hires none either.
 - The stock chart, defaulting to your **portfolio value** over time (a value line plus a cost-basis line, so the gap
   between them is your unrealized gain) with stat tiles for Value, Equity (cookies if sold now), Unrealized, Realized
   and Total gain — switch to

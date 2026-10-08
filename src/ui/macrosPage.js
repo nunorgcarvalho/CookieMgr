@@ -367,6 +367,23 @@ CA.UI.MacrosPage = (() => {
   // how often presets for the interval row
   const EVERY_PRESETS = [100, 250, 1000, 5000, 30000];
 
+  /** Every macro is code underneath: what this one's settings write out, and a way to carry on in code. */
+  function asCodeHtml(d) {
+    return (
+      `<details class="ca-ed-sec ca-ed-ascode"${asCodeOpen ? ' open' : ''} data-ascode>` +
+      `<summary class="ca-ed-sec-head">${I('edit', 12)} As code <span class="ca-hint">what it runs — every macro is algorithmic code underneath; these settings are a shortcut for it</span></summary>` +
+      `<pre class="ca-code-hl ca-ascode-pre" data-ascode-pre>${CE().view(M().codeFor(d)).hl}</pre>` +
+      `<button type="button" class="ca-btn ca-btn-small" data-edit-act="to-code">${I('edit', 12)} Carry on as code</button>` +
+      '</details>'
+    );
+  }
+  let asCodeOpen = false;
+  /** After a change in the form: the code view follows. */
+  function refreshAsCode() {
+    const pre = root && root.querySelector('[data-macro-editor] [data-ascode-pre]');
+    if (pre && draft) pre.innerHTML = CE().view(M().codeFor(draft)).hl;
+  }
+
   function editorHtml() {
     const d = draft;
     let h =
@@ -428,7 +445,8 @@ CA.UI.MacrosPage = (() => {
       h +=
         `<div class="ca-ed-sec"><div class="ca-ed-sec-head">${I('bolt', 12)} Steps <span class="ca-hint">run in order, every time it ${d.mode === 'once' ? 'runs' : 'fires'}</span></div><div class="ca-ed-steps">` +
         d.steps.map((s, i) => `<div class="ca-ed-step"><span class="ca-step-n">${i + 1}</span><div class="ca-ed-step-body">${stepBody(s, `steps.${i}`)}</div>${tools('step', 'steps', i, d.steps.length)}</div>`).join('') +
-        `<button type="button" class="ca-btn ca-btn-small ca-ed-add" data-edit-act="step-add" data-path="steps">${I('plus', 12)} Add step</button></div></div>`;
+        `<button type="button" class="ca-btn ca-btn-small ca-ed-add" data-edit-act="step-add" data-path="steps">${I('plus', 12)} Add step</button></div></div>` +
+        asCodeHtml(d);
     }
     h +=
       (`<div class="ca-ed-sec ca-ed-icons"><div class="ca-ed-sec-head">${I('star', 12)} Icon</div><div class="ca-iconpick">${ICONS.map(
@@ -502,6 +520,7 @@ CA.UI.MacrosPage = (() => {
       return;
     }
     setPath(draft, path, v);
+    refreshAsCode();
   }
 
   /** Every "do" block of compiled code (to check them), however deep. */
@@ -542,9 +561,8 @@ CA.UI.MacrosPage = (() => {
       if (d.mode === 'when' && !(d.when && d.when.all && d.when.all.length)) d.when = blankWhen();
       if (d.mode === 'when' && d.every >= 1000) d.every = 250;
       // an algorithm starts as the steps it had, written out (and steps from an algorithm's top lines)
-      if (d.mode === 'flow' && !(d.source || '').trim()) {
-        d.source = CA.Script.decompile(d.steps.map((x) => ({ type: 'do', action: x.action, params: { ...x.params } })));
-      }
+      // an algorithm starts as what the macro ran: its steps — and a When…'s conditions — written out
+      if (d.mode === 'flow' && !(d.source || '').trim()) d.source = M().codeFor({ ...d, mode: was === 'group' ? 'once' : was });
       if (was === 'flow' && d.mode !== 'flow' && d.mode !== 'group') {
         const dos = CA.Script.compile(d.source || '').flow.filter((n) => n.type === 'do').map((n) => ({ action: n.action, params: { ...n.params } }));
         if (dos.length) d.steps = dos;
@@ -556,7 +574,10 @@ CA.UI.MacrosPage = (() => {
     } else if (act === 'step-add' && list) list.push({ action: 'pop.golden', params: {} });
     else if (act === 'cond-add' && list) list.push(blankCond());
     else if (act === 'cond-del' && list) list.splice(i, 1);
-    else if (act === 'cancel') {
+    else if (act === 'to-code') {
+      d.source = M().codeFor(d);
+      d.mode = 'flow';
+    } else if (act === 'cancel') {
       draft = null;
       draftError = '';
       return rerender();
@@ -856,6 +877,10 @@ CA.UI.MacrosPage = (() => {
     }
   }
 
+  function onToggle(e) {
+    if (e.target.matches && e.target.matches('[data-ascode]')) asCodeOpen = e.target.open;
+  }
+
   function onRootClick(e) {
     const t = e.target.closest('[data-edit-act]');
     if (!t || !draft) return;
@@ -867,7 +892,7 @@ CA.UI.MacrosPage = (() => {
   function mount(el) {
     unmount();
     root = el;
-    life = CA.UI.Pages.scope(el).on('click', onRootClick).on('change', onEditInput).on('input', onEditInput);
+    life = CA.UI.Pages.scope(el).on('click', onRootClick).on('change', onEditInput).on('input', onEditInput).on('toggle', onToggle, true);
     life.add(
       CE().bind(root, {
         onChange: (key, src) => key === 'macro' && draft && (draft.source = src),

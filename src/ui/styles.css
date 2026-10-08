@@ -4756,3 +4756,45 @@ body.ca-has-storebar #products {
   color: #ffb3a8;
   background: rgba(160, 40, 30, 0.35);
 }
+
+/* ---------- v2.31: every macro as code; the library's Lookup ---------- */
+
+#CookieMgrMenu .ca-ed-ascode summary {
+  cursor: pointer;
+  list-style: none;
+}
+#CookieMgrMenu .ca-ed-ascode summary::-webkit-details-marker {
+  display: none;
+}
+#CookieMgrMenu .ca-ed-ascode[open] summary {
+  margin-bottom: 6px;
+}
+#CookieMgrMenu .ca-ascode-pre {
+  position: static;
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  max-height: 260px;
+  overflow: auto;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.35);
+  pointer-events: auto;
+}
+#CookieMgrMenu .ca-lib-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 5px 8px;
+  border-bottom: 1px solid rgba(255, 220, 150, 0.1);
+}
+#CookieMgrMenu .ca-ed-lib [hidden] {
+  display: none !important;
+}
+#CookieMgrMenu .ca-lib-uses {
+  margin-left: 4px;
+  font: 9.5px Consolas, Menlo, monospace;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #7d7262;
+}
+#CookieMgrMenu .ca-lib-lit .ca-lib-ins code {
+  color: #ffd98a;
+}

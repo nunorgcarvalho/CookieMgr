@@ -142,6 +142,8 @@ const ROUND = [
   'if cps() > 1:\n  stop\nelse:\n  log "y"',
   'forever:\n  pop.golden()\n  wait 5 seconds',
 ];
+// parentheses where the words need them (v2.31: code written out from "When…" macros)
+ROUND.push('wait until not (buff(Frenzy) and lumps() > 1)', 'if (buff(Frenzy) or lumps() > 1) and cps() > 0:\n  stop', 'wait until not buff(Frenzy) and lumps() > 1');
 ROUND.forEach((src) => {
   const a = S.compile(src);
   const back = S.decompile(a.flow);

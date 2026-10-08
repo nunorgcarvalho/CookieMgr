@@ -131,6 +131,14 @@ every('built-in macro is well-formed', builtins, (m) => {
   return true;
 });
 every('algorithmic built-in compiles and round-trips', builtins.filter((m) => m.mode === 'flow'), (m) => roundTrip(CA.Macros.sourceOf(m.id)));
+// every macro is code: what a Repeat / When… / Once macro's code view says is exactly what it runs
+every('built-in’s code view compiles to what it runs', builtins.filter((m) => m.mode !== 'group' && m.mode !== 'flow'), (m) => {
+  const code = CA.Macros.codeOf(m);
+  const r = CA.Script.compile(code);
+  if (r.errors.length) return `line ${r.errors[0].line}: ${r.errors[0].message}\n${code}`;
+  const norm = (x) => JSON.stringify(strip(JSON.parse(JSON.stringify(x, (k, v) => (k === 'step' ? undefined : v)))));
+  return norm(r.flow) === norm(CA.Macros.programOf(m)) ? true : `runs something else than its code says:\n${code}`;
+});
 every('garden profile’s default rules round-trip', [{ id: 'default rules' }], () => roundTrip(CA.Garden.defaultRules()));
 k0 = g.errors.length;
 every('repeat / once built-in runs once without throwing', builtins.filter((m) => m.mode === 'repeat' || m.mode === 'once'), (m) => {

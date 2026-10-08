@@ -154,10 +154,22 @@ CA.GameActions = (() => {
       group: 'Stock market',
       unit: 'trades',
       // buy: false → only sells what you hold when it stops rising, never buys
-      params: [{ key: 'buy', label: 'Buy rising stocks', type: 'bool', default: true }],
-      describe: (p) => (p.buy === false ? 'Trade stocks: sell what stops rising (no buying)' : 'Trade stocks: buy rising, sell the rest'),
+      params: [
+        { key: 'buy', label: 'Buy rising stocks', type: 'bool', default: true },
+        { key: 'brokers', label: 'Hire stockbrokers when affordable', type: 'bool', default: true },
+      ],
+      describe: (p) => (p.buy === false ? 'Trade stocks: sell what stops rising (no buying)' : `Trade stocks: buy rising, sell the rest${p.brokers === false ? '' : ', hire brokers'}`),
       available: () => !!CA.Stocks.minigame(),
-      run: (p) => CA.StockTrader.trade({ buy: p.buy !== false }),
+      run: (p) => CA.StockTrader.trade({ buy: p.buy !== false, brokers: p.brokers !== false }),
+    });
+    A({
+      id: 'stocks.hireBrokers',
+      name: 'Hire stockbrokers you can afford',
+      icon: 'stocks',
+      group: 'Stock market',
+      unit: 'hired',
+      available: () => !!CA.Stocks.minigame(),
+      run: () => CA.StockTrader.hireBrokers(),
     });
     A({
       id: 'stocks.sellAll',

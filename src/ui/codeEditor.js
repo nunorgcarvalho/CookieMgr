@@ -39,6 +39,30 @@ CA.UI.CodeEditor = (() => {
     CA.Settings.set(LIB_FAVS, list.join('\n'));
   }
 
+  let lookItems = []; // the Lookup's names, by index (data-lib-lit)
+  /** The Lookup tab: every list of names that go inside ( ), click one to write it where the cursor is. */
+  function lookupHtml() {
+    lookItems = [];
+    return CA.Script.lookups()
+      .map(
+        (g) =>
+          `<div class="ca-lib-group ca-lib-look"><div class="ca-lib-ghead">${esc(g.name)} <span class="ca-lib-uses">${esc(g.uses.slice(0, 3).join(' · '))}${g.uses.length > 3 ? ' …' : ''}</span></div>` +
+          g.items
+            .map((it) => {
+              lookItems.push(it);
+              return (
+                `<div class="ca-lib-row ca-lib-lit" data-lib-text="${esc(`${it.code} ${it.label} ${g.name}`.toLowerCase())}">` +
+                `<button type="button" class="ca-lib-ins" data-lib-lit="${lookItems.length - 1}"><code>${esc(it.code)}</code></button>` +
+                (it.label !== String(it.v) ? `<span class="ca-lib-desc">${esc(it.label)}</span>` : '') +
+                '</div>'
+              );
+            })
+            .join('') +
+          '</div>'
+      )
+      .join('');
+  }
+
   function libraryHtml(key, opts = {}) {
     libItems = CA.Script.library();
     const pins = favs();
@@ -62,8 +86,13 @@ CA.UI.CodeEditor = (() => {
     const names = Object.keys(groups).sort((a, b) => rank(a) - rank(b));
     return (
       `<aside class="ca-ed-lib" data-ed-lib="${esc(key)}" data-first="${esc(first.join('|'))}">` +
-      `<div class="ca-lib-head">${I('search', 12)}<input type="search" placeholder="Actions, conditions, values…" data-lib-search></div>` +
-      '<div class="ca-lib-body">' +
+      `<div class="ca-lib-head">${I('search', 12)}<input type="search" placeholder="Actions, conditions, values, names…" data-lib-search></div>` +
+      '<div class="ca-lib-tabs">' +
+      `<button type="button" class="ca-chip on" data-lib-tab="words">${I('bolt', 11)} Library</button>` +
+      `<button type="button" class="ca-chip" data-lib-tab="lookup" data-tip="The names that go inside ( ): spells, effects, macros, seasons, buildings…">${I('search', 11)} Lookup</button>` +
+      '</div>' +
+      `<div class="ca-lib-body ca-lib-lookup" data-lib-pane="lookup" hidden>${lookupHtml()}</div>` +
+      '<div class="ca-lib-body" data-lib-pane="words">' +
       `<div class="ca-lib-group ca-lib-pinned"><div class="ca-lib-ghead">${I('star', 11)} Pinned</div>${
         pinned.length ? pinned.map(([it, i]) => row(it, i)).join('') : '<div class="ca-lib-empty">★ an item to keep it here</div>'
       }</div>` +
@@ -195,6 +224,17 @@ CA.UI.CodeEditor = (() => {
     refresh(ta);
   }
 
+  /** Puts `text` right where the cursor is (a name inside parentheses), replacing a selection. */
+  function insertInline(ta, text) {
+    const v = ta.value;
+    const a = ta.selectionStart != null ? ta.selectionStart : v.length;
+    const b = ta.selectionEnd != null ? ta.selectionEnd : a;
+    ta.value = v.slice(0, a) + text + v.slice(b);
+    ta.focus({ preventScroll: true });
+    if (ta.setSelectionRange) ta.setSelectionRange(a + text.length, a + text.length);
+    refresh(ta);
+  }
+
   /** Tab / Shift+Tab indent, Enter keeps the indentation (one deeper after a “:”). Returns whether it changed the code. */
   function onKey(e) {
     const ta = e.target;
@@ -285,6 +325,24 @@ CA.UI.CodeEditor = (() => {
           }
           return;
         }
+        const tab = t.closest('[data-lib-tab]');
+        if (tab) {
+          e.stopPropagation();
+          lib.querySelectorAll('[data-lib-tab]').forEach((b) => b.classList.toggle('on', b === tab));
+          lib.querySelectorAll('[data-lib-pane]').forEach((p) => (p.hidden = p.dataset.libPane !== tab.dataset.libTab));
+          return;
+        }
+        const lit = t.closest('[data-lib-lit]');
+        if (lit) {
+          e.stopPropagation();
+          const it = lookItems[Number(lit.dataset.libLit)];
+          const ta = codeFor(root, key);
+          if (!it || !ta) return;
+          CA.Util.sound('snd/tick.mp3');
+          insertInline(ta, it.code);
+          changed(ta);
+          return;
+        }
         const ins = t.closest('[data-lib-insert]');
         if (!ins) return;
         e.stopPropagation();
@@ -334,5 +392,5 @@ CA.UI.CodeEditor = (() => {
     CA.Settings.defineOption({ key: LIB_FAVS, group: 'ui', name: 'Pinned library items', desc: '', default: '' });
   }
 
-  return { init, html, libraryHtml, bind, setLive, insert, refresh, view, highlightLine };
+  return { init, html, libraryHtml, bind, setLive, insert, insertInline, refresh, view, highlightLine };
 })();

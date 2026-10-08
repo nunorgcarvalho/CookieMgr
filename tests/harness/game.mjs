@@ -73,6 +73,9 @@ export function boot({ save = null, localStorageSeed = {}, withGrimoire = true, 
     secondsPerTick: 60,
     // like minigameMarket.js: cost = price × cookiesPsRawHighest × broker overhead (1 + 20% × 0.95^brokers)
     brokers: 0,
+    // like minigameMarket.js: at most the highest grandma count / 10 + the grandma level; 20 min of raw CpS each
+    getMaxBrokers: () => Math.ceil((Game.Objects.Grandma.highest || 0) / 10 + (Game.Objects.Grandma.level || 0)),
+    getBrokerPrice: () => Game.cookiesPsRawHighest * 60 * 20,
     buyGood(id, n) {
       const g = goods[id];
       const cost = g.val * Game.cookiesPsRawHighest * (1 + 0.01 * (20 * Math.pow(0.95, M.brokers)));
@@ -131,6 +134,7 @@ export function boot({ save = null, localStorageSeed = {}, withGrimoire = true, 
         if (Game.cookies < price) break;
         Game.cookies -= price;
         b.amount++;
+        b.highest = Math.max(b.highest || 0, b.amount);
       }
     };
     b.sell = function (n = 1) {
@@ -280,6 +284,9 @@ export function boot({ save = null, localStorageSeed = {}, withGrimoire = true, 
       calls.notify.push({ title, desc });
     },
     Popup() {},
+    Spend(n) {
+      Game.cookies -= n;
+    },
     Win(what) {
       const a = Game.Achievements[what];
       if (a && !a.won) a.won = 1;
