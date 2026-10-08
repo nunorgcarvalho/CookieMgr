@@ -110,12 +110,28 @@ export function boot({ save = null, localStorageSeed = {}, withGrimoire = true, 
     slot: [0, 2, -1],
     swaps: 1,
     swapT: Date.now() - 3600 * 1000,
-    godsById: [
-      { name: 'Holobore, Spirit of Asceticism', icon: [21, 18] },
-      { name: 'Vomitrax, Spirit of Decadence', icon: [22, 18] },
-      { name: 'Godzamok, Spirit of Ruin', icon: [23, 18] },
-    ],
+    gods: {
+      asceticism: { id: 0, slot: 0, name: 'Holobore, Spirit of Asceticism', icon: [21, 18] },
+      decadence: { id: 1, slot: -1, name: 'Vomitrax, Spirit of Decadence', icon: [22, 18] },
+      ruin: { id: 2, slot: 1, name: 'Godzamok, Spirit of Ruin', icon: [23, 18] },
+    },
+    // as in minigamePantheon.js
+    useSwap(n) {
+      P.swapT = Date.now();
+      P.swaps -= n;
+      if (P.swaps < 0) P.swaps = 0;
+    },
+    slotGod(god, slot) {
+      if (slot == god.slot) return false;
+      if (slot != -1 && P.slot[slot] != -1) {
+        P.godsById[P.slot[slot]].slot = god.slot; // swap
+        if (god.slot != -1) P.slot[god.slot] = P.slot[slot];
+      } else if (god.slot != -1) P.slot[god.slot] = -1;
+      if (slot != -1) P.slot[slot] = god.id;
+      god.slot = slot;
+    },
   };
+  P.godsById = Object.values(P.gods);
   // like minigameGarden.js: M.plot[y][x] = [plant id + 1, age]; stages at ⅓, ⅔, 1 × mature
   const garden = {
     plot: [

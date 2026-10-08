@@ -37,6 +37,7 @@ const MODULES = [
   'features/gameActions.js',
   'features/macros.js',
   'features/grimoire.js',
+  'features/pantheon.js',
   'features/garden.js',
   'features/gardenHistory.js',
   'features/stocks.js',

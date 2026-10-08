@@ -35,7 +35,7 @@ const mod = {
     // logged and the rest still start.
     const failed = [];
     [
-      CA.EventLog, CA.GameActions, CA.Macros, CA.Grimoire, CA.Garden, CA.GardenHistory, CA.Shop, CA.AutoBuy, CA.Seasons,
+      CA.EventLog, CA.GameActions, CA.Macros, CA.Grimoire, CA.Pantheon, CA.Garden, CA.GardenHistory, CA.Shop, CA.AutoBuy, CA.Seasons,
       CA.Stocks, CA.StockLog, CA.History, CA.GameStates, CA.Recorder, CA.GameEvents, CA.NotifyTips,
       CA.UI.Graphs, CA.UI.EventsPage, CA.UI.CodeEditor, CA.UI.MacrosPage, CA.UI.Widgets, CA.UI.WizardPage, CA.UI.GardenPage,
       CA.UI.PantheonPage, CA.UI.StoreBar, CA.UI.StockGraph, CA.UI.StockPerf, CA.UI.StockLog, CA.UI.BankToolbar,
