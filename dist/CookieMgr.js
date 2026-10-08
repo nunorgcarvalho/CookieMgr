@@ -2433,8 +2433,11 @@ CA.Macros = (() => {
   const flowRuns = {}; // id -> { prog, S (per-block state by path), at: [what it waits on], done, error }
 
   /** { ok, text } for a block's condition — the text says what it saw. */
-  const check = (c) => (CA.Script ? CA.Script.evaluate(c) : { ok: CA.Conditions.test(c), text: CA.Conditions.describe(c) });
+  const check = (F, c) => CA.Script.evaluate(c, F.vars);
   const at = (F, n, text) => F.at.push(n.line ? `line ${n.line}: ${text}` : text);
+  const EACH_MAX = 10000; // items a live list's loop goes through
+  const logText = (v) => (v === undefined ? '(not set)' : Array.isArray(v) ? `[${v.join(', ')}]` : typeof v === 'number' ? CA.Format.beautify(v, Number.isInteger(v) ? 0 : 2) : String(v));
+
   /** A line in the flow's trace (the decisions it took), newest last, the last TRACE_MAX kept. */
   const TRACE_MAX = 40;
   function trace(F, n, text) {
@@ -2460,7 +2463,7 @@ CA.Macros = (() => {
       case 'do': {
         const s = n.step != null && F.steps ? F.steps[n.step] : null; // a shortcut macro's step: its counts
         try {
-          const k = CA.Actions.run(n.action, n.params) || 0;
+          const k = CA.Actions.run(n.action, CA.Script.resolve(n.params, F.vars)) || 0;
           F.done += k;
           F.error = '';
           if (F.pass && k) trace(F, n, `${n.action}: ${k}`);
@@ -2480,7 +2483,7 @@ CA.Macros = (() => {
         return true;
       }
       case 'wait': {
-        const r = check(n.cond);
+        const r = check(F, n.cond);
         if (r.ok) {
           trace(F, n, `waited until ${r.text}`);
           return true;
@@ -2495,7 +2498,7 @@ CA.Macros = (() => {
         return false;
       }
       case 'until': {
-        const r = check(n.cond);
+        const r = check(F, n.cond);
         if (r.ok) {
           trace(F, n, `done: ${r.text}`);
           return true;
@@ -2517,7 +2520,7 @@ CA.Macros = (() => {
       case 'if': {
         let st = F.S[path];
         if (!st) {
-          const r = check(n.cond);
+          const r = check(F, n.cond);
           st = F.S[path] = { branch: r.ok ? 'then' : 'else' };
           trace(F, n, `if ${r.text} → ${r.ok ? 'yes' : n.else && n.else.length ? 'no: else' : 'no: skipped'}`);
         }
@@ -2528,8 +2531,29 @@ CA.Macros = (() => {
         F.stopped = true;
         return false;
       case 'log':
-        trace(F, n, n.text);
+        trace(F, n, n.e ? logText(CA.Script.value(n.e, F.vars)) : n.text);
         return true;
+      case 'set':
+        F.vars[n.name] = n.cond ? check(F, n.cond).ok : CA.Script.value(n.e, F.vars);
+        return true;
+      case 'each': {
+        // a live list: the items it has when the loop starts; as many as finish this pass
+        let st = F.S[path];
+        if (!st) {
+          const list = CA.Script.value(n.list, F.vars);
+          st = F.S[path] = { items: Array.isArray(list) ? list.slice(0, EACH_MAX) : [], k: 0 };
+        }
+        while (st.k < st.items.length) {
+          F.vars[n.name] = st.items[st.k];
+          if (!execSeq(F, n.body, `${path}.b`) || F.stopped) {
+            at(F, n, `${n.name} = ${logText(st.items[st.k])} (${st.k + 1} of ${st.items.length})`);
+            return false;
+          }
+          resetUnder(F.S, `${path}.b`);
+          st.k++;
+        }
+        return true;
+      }
       case 'parallel': {
         let all = true;
         n.branches.forEach((b, i) => {
@@ -2580,8 +2604,8 @@ CA.Macros = (() => {
    * Runs compiled code once, from the top, as one pass (rules that are checked every second, like
    * a garden profile's). Returns { done, at, trace, error } — what it did and where it stopped.
    */
-  function runPass(prog, steps) {
-    const F = { prog, S: {}, at: [], trace: [], done: 0, error: '', stopped: false, pass: true, steps };
+  function runPass(prog, steps, vars) {
+    const F = { prog, S: {}, at: [], trace: [], done: 0, error: '', stopped: false, pass: true, steps, vars: { ...(vars || {}) } };
     if (depth >= MAX_DEPTH) return F;
     depth++;
     try {
@@ -2622,7 +2646,7 @@ CA.Macros = (() => {
       }
       prog = flow;
     } else prog = programOf(m);
-    flowRuns[id] = { prog, S: {}, at: [], trace: [], done: 0, error: '', stopped: false, steps: status[id].steps };
+    flowRuns[id] = { prog, S: {}, at: [], trace: [], done: 0, error: '', stopped: false, steps: status[id].steps, vars: {} };
     delete problems[id];
     running[id] = { since: Date.now(), timer: setInterval(() => tick(m), everyOf(m)) };
     return true;
@@ -5845,19 +5869,23 @@ CA.Seasons = (() => {
 //   forever:                          the block again and again
 //   if <condition>:  elif …:  else:
 //   for season in [easter, halloween]:   the block once per item, with `season` standing for it
+//   for good in stocks():             the block for each item of a live list (as far as it gets this pass)
+//   target = cookies() * 0.1          a variable: a number, text, or a condition's yes / no
+//   def sell(good):                   a named block, called like an action: sell(good)
 //   parallel:                         branches side by side (each one a `branch [name]:` block)
 //   stop                              end the macro here
-//   log "text"                        write to its trace
+//   log "text"                        write to its trace (or log <a value>)
 //
 // Conditions: condition calls (season.complete(christmas), buff(Frenzy)), comparisons of values
-// (owned(christmas, upgrades) >= total(christmas, upgrades), cookies() > 1e12, season == easter),
-// joined with and / or / not and brackets. Numbers can be written 1e12, 25K, 2.5M, 3B, 1T…
+// (owned(christmas, upgrades) >= total(christmas, upgrades), cookies() > 0.1 * cps() * 60,
+// season == easter), a variable on its own, joined with and / or / not and brackets. Values add up
+// with + - * / %. Numbers can be written 1e12, 25K, 2.5M, 3B, 1T…
 // Values: see VALUES below (and any recorded state: state(cookies)).
 //
 // Every block keeps the line it came from, so a running macro can show where it is.
 
 CA.Script = (() => {
-  const KEYWORDS = ['if', 'elif', 'else', 'for', 'in', 'repeat', 'until', 'while', 'times', 'forever', 'parallel', 'branch', 'wait', 'seconds', 'second', 'minutes', 'minute', 'stop', 'log', 'switch', 'on', 'off', 'and', 'or', 'not'];
+  const KEYWORDS = ['if', 'elif', 'else', 'for', 'in', 'repeat', 'until', 'while', 'times', 'forever', 'parallel', 'branch', 'wait', 'seconds', 'second', 'minutes', 'minute', 'stop', 'log', 'switch', 'on', 'off', 'and', 'or', 'not', 'def'];
   const SUFFIX = { k: 1e3, m: 1e6, b: 1e9, t: 1e12, qa: 1e15, qi: 1e18 };
 
   // ---- values: numbers a condition can compare -------------------------------------------------
@@ -5901,6 +5929,10 @@ CA.Script = (() => {
       },
     },
   ];
+  VALUES.push(
+    { id: 'count', desc: 'how many items a list has', params: ['list'], get: (list) => (Array.isArray(list) ? list.length : 0) },
+    { id: 'buildings', desc: 'a list: every building’s name', list: true, get: () => Object.keys((Game && Game.Objects) || {}) }
+  );
   const valueById = {};
   VALUES.forEach((v) => (valueById[v.id] = v));
 
@@ -5942,7 +5974,7 @@ CA.Script = (() => {
         i += id[0].length;
         continue;
       }
-      const op = text.slice(i).match(/^(>=|<=|==|!=|>|<|=)/);
+      const op = text.slice(i).match(/^(>=|<=|==|!=|>|<|=|\+|-|\*|\/|%)/);
       if (op) {
         out.push({ t: 'op', v: op[0], col: i });
         i += op[0].length;
@@ -6000,6 +6032,19 @@ CA.Script = (() => {
   }
 
   // ---- parsing statements and expressions -----------------------------------------------------------
+  //
+  // Expressions (values): numbers, "text", true / false, names (a variable — or a word standing for
+  // itself: easter), value calls (cookies(), stock.price(good)), + - * / %, unary minus, brackets.
+  // Conditions: comparisons of expressions, condition calls, a variable on its own (true / non-zero),
+  // joined with and / or / not and brackets.
+  //
+  //   values      { v: 'lit', x } · { v: 'var', name } · { v: 'fn', id, args: [value…] }
+  //               { v: 'bin', op, a, b } · { v: 'neg', a }
+  //   conditions  { t: 'cmp', op, l, r } · { t: 'cond', id, params } · { t: 'val', e }
+  //               { t: 'and' | 'or', a, b } · { t: 'not', a }
+  //
+  // An action's or condition's option can be an expression too — { $e: value }, worked out when the
+  // line runs (resolve()): stock.buy(good), garden.harvest(tile).
 
   class Err extends Error {
     constructor(message) {
@@ -6007,6 +6052,12 @@ CA.Script = (() => {
       this.script = true;
     }
   }
+
+  // what the source being compiled names: its variables (anything assigned, a for over a live list,
+  // a named block's options, a macro's inputs) and its named blocks (def)
+  const freshCtx = (vars) => ({ vars: new Set(vars || []), defs: {}, depth: 0 });
+  let ctx = freshCtx();
+  const CMP = ['>=', '<=', '==', '!=', '>', '<'];
 
   /** A cursor over one line's tokens, with the loop variables in scope substituted. */
   function cursor(tokens, scope) {
@@ -6022,8 +6073,15 @@ CA.Script = (() => {
         return toks[i++];
       },
       rest: () => toks.slice(i),
+      mark: () => i,
+      reset: (m) => {
+        i = m;
+      },
     };
   }
+  const isVar = (t) => !!t && t.t === 'id' && !t.sub && ctx.vars.has(t.v);
+  /** A name the language already uses (so it can't be a variable or a named block). */
+  const taken = (name) => KEYWORDS.includes(name) || name === 'true' || name === 'false' || !!CA.Actions.get(name) || !!CA.Conditions.get(name) || !!valueById[name];
 
   /** "(a, b=c)" → { pos: [...], named: {...} } (the opening "(" already taken). */
   function args(c) {
@@ -6037,8 +6095,8 @@ CA.Script = (() => {
       if (c.is('id') && c.peek(1) && c.peek(1).t === 'op' && c.peek(1).v === '=') {
         const k = c.next().v;
         c.next();
-        named[k] = literal(c);
-      } else pos.push(literal(c));
+        named[k] = arg(c);
+      } else pos.push(arg(c));
       if (c.is('p', ',')) {
         c.next();
         continue;
@@ -6046,6 +6104,14 @@ CA.Script = (() => {
       c.take('p', ')', '“)”');
       return { pos, named };
     }
+  }
+  /** One option: a plain literal (5, "hand of fate", easter, true) — or an expression, worked out when the line runs. */
+  function arg(c) {
+    const t = c.peek();
+    const nx = c.peek(1);
+    const alone = !!nx && nx.t === 'p' && (nx.v === ',' || nx.v === ')');
+    if (t && alone && (t.t === 'num' || t.t === 'str' || (t.t === 'id' && !isVar(t)))) return literal(c);
+    return { $e: sum(c) };
   }
   function literal(c) {
     const t = c.next();
@@ -6070,7 +6136,62 @@ CA.Script = (() => {
     return params;
   }
 
-  // expressions: or > and > not > comparison / call
+  // values: sum > term > unary > primary
+  function sum(c) {
+    let a = term(c);
+    while (c.is('op', '+') || c.is('op', '-')) {
+      const op = c.next().v;
+      a = { v: 'bin', op, a, b: term(c) };
+    }
+    return a;
+  }
+  function term(c) {
+    let a = unary(c);
+    while (c.is('op', '*') || c.is('op', '/') || c.is('op', '%')) {
+      const op = c.next().v;
+      a = { v: 'bin', op, a, b: unary(c) };
+    }
+    return a;
+  }
+  function unary(c) {
+    if (c.is('op', '-')) {
+      c.next();
+      if (c.is('num')) return { v: 'lit', x: -c.next().v }; // -5 is a number
+      return { v: 'neg', a: unary(c) };
+    }
+    return primary(c);
+  }
+  function primary(c) {
+    if (c.is('p', '(')) {
+      c.next();
+      const e = sum(c);
+      c.take('p', ')', '“)”');
+      return e;
+    }
+    return operand(c);
+  }
+  function operand(c) {
+    const t = c.peek();
+    if (!t) throw new Err('expected something to compare');
+    if (t.t === 'num' || t.t === 'str') return { v: 'lit', x: c.next().v };
+    if (t.t === 'id') {
+      c.next();
+      if (c.is('p', '(')) {
+        c.next();
+        const a = args(c);
+        const def = valueById[t.v];
+        if (!def) throw new Err(`“${t.v}” isn’t a value (values: ${VALUES.map((v) => v.id).join(', ')})`);
+        return { v: 'fn', id: t.v, args: a.pos.concat(Object.values(a.named)).map((x) => (x && x.$e ? x.$e : { v: 'lit', x })) };
+      }
+      if (isVar(t)) return { v: 'var', name: t.v };
+      if (t.v === 'true' || t.v === 'false') return { v: 'lit', x: t.v === 'true' };
+      if (valueById[t.v] && !t.sub) return { v: 'fn', id: t.v, args: [] };
+      return { v: 'lit', x: t.v };
+    }
+    throw new Err(`expected something to compare, found “${t.v}”`);
+  }
+
+  // conditions: or > and > not > comparison / call / a value on its own
   function expr(c) {
     let a = andExpr(c);
     while (c.is('id', 'or')) {
@@ -6094,24 +6215,6 @@ CA.Script = (() => {
     }
     return atom(c);
   }
-  function operand(c) {
-    const t = c.peek();
-    if (!t) throw new Err('expected something to compare');
-    if (t.t === 'num' || t.t === 'str') return { v: 'lit', x: c.next().v };
-    if (t.t === 'id') {
-      c.next();
-      if (c.is('p', '(')) {
-        c.next();
-        const a = args(c);
-        const def = valueById[t.v];
-        if (!def) throw new Err(`“${t.v}” isn’t a value (values: ${VALUES.map((v) => v.id).join(', ')})`);
-        return { v: 'fn', id: t.v, args: a.pos.concat(Object.values(a.named)) };
-      }
-      if (valueById[t.v] && !t.sub) return { v: 'fn', id: t.v, args: [] };
-      return { v: 'lit', x: t.v };
-    }
-    throw new Err(`expected something to compare, found “${t.v}”`);
-  }
   /** At an id: is it (with its call, if any) followed by a comparison? — then it's a value. */
   function comparedAfter(c) {
     let k = 1;
@@ -6128,14 +6231,22 @@ CA.Script = (() => {
   }
   function atom(c) {
     if (c.is('p', '(')) {
-      c.next();
-      const e = expr(c);
-      c.take('p', ')', '“)”');
-      return e;
+      // conditions in brackets — or a sum in brackets that's then compared: (a + b) > c
+      const m = c.mark();
+      try {
+        c.next();
+        const e = expr(c);
+        c.take('p', ')', '“)”');
+        const nx = c.peek();
+        if (!nx || nx.t !== 'op' || nx.v === '=') return e;
+      } catch (err) {
+        if (!err.script) throw err;
+      }
+      c.reset(m);
     }
     const t = c.peek();
-    // a condition call: an id with "(" that is a known condition (and isn't followed by a comparison)
-    if (t && t.t === 'id' && CA.Conditions.get(t.v) && !(valueById[t.v] && comparedAfter(c))) {
+    // a condition call: an id that is a known condition (and isn't followed by a comparison)
+    if (t && t.t === 'id' && !isVar(t) && CA.Conditions.get(t.v) && !(valueById[t.v] && comparedAfter(c))) {
       c.next();
       let a = { pos: [], named: {} };
       if (c.is('p', '(')) {
@@ -6145,11 +6256,28 @@ CA.Script = (() => {
       const def = CA.Conditions.get(t.v);
       return { t: 'cond', id: t.v, params: bind(def, a, t.v) };
     }
-    const l = operand(c);
+    const l = sum(c);
     const op = c.peek();
-    if (!op || op.t !== 'op' || op.v === '=') throw new Err(`“${t ? t.v : ''}” isn’t a condition — compare it with >=, <=, >, <, == or !=`);
-    c.next();
-    return { t: 'cmp', op: op.v, l, r: operand(c) };
+    if (op && op.t === 'op' && CMP.includes(op.v)) {
+      c.next();
+      return { t: 'cmp', op: op.v, l, r: sum(c) };
+    }
+    return { t: 'val', e: l }; // a value on its own: only a variable or true / false can be a condition (checkCond)
+  }
+  /** Throws when a condition is a value on its own that can't be one ("cookies()" — compare it). */
+  function checkCond(e) {
+    if (!e) return;
+    if (e.t === 'and' || e.t === 'or') {
+      checkCond(e.a);
+      checkCond(e.b);
+    } else if (e.t === 'not') checkCond(e.a);
+    else if (e.t === 'val' && !(e.e.v === 'var' || (e.e.v === 'lit' && typeof e.e.x === 'boolean')))
+      throw new Err(`“${exprText(e.e)}” isn’t a condition — compare it with >=, <=, >, <, == or !=`);
+  }
+  function condition(c) {
+    const e = expr(c);
+    checkCond(e);
+    return e;
   }
 
   /** The blocks for a list of lines (siblings), with `scope` (loop variables). */
@@ -6184,9 +6312,45 @@ CA.Script = (() => {
     const sub = (s) => block(ln.children, s || scope, errors);
     if (t.t !== 'id') throw new Err(`a line should start with an action or a keyword, not “${t.v}”`);
     const kw = t.v;
+    // name = …: a variable (a number, text, or a condition's yes / no)
+    if (c.peek(1) && c.peek(1).t === 'op' && c.peek(1).v === '=') {
+      if (taken(kw) || ctx.defs[kw]) throw new Err(`“${kw}” is already a word of the language — pick another name`);
+      c.next();
+      c.next();
+      const e = expr(c);
+      if (!c.done()) throw new Err('something extra at the end of the line');
+      if (e.t === 'val') return { node: { type: 'set', name: kw, e: e.e, line } };
+      checkCond(e);
+      return { node: { type: 'set', name: kw, cond: e, line } };
+    }
+    if (kw === 'def') {
+      if (ln.bad || (ctx.defs[ln.tokens[1] && ln.tokens[1].v] || {}).ln === ln) return null; // compiled where it's called
+      throw new Err('a named block (def) goes at the top level, not inside another block');
+    }
+    // a named block: its lines, here, with its options set
+    if (ctx.defs[kw]) {
+      const d = ctx.defs[kw];
+      c.next();
+      let ar = { pos: [], named: {} };
+      if (c.is('p', '(')) {
+        c.next();
+        ar = args(c);
+      }
+      if (!c.done()) throw new Err('something extra at the end of the line');
+      if (Object.keys(ar.named).length) throw new Err(`${kw}(…) takes its options in order`);
+      if (ar.pos.length !== d.params.length) throw new Err(`${kw} takes ${d.params.length || 'no'} option${d.params.length === 1 ? '' : 's'}${d.params.length ? `: ${d.params.join(', ')}` : ''}`);
+      if (ctx.depth >= 8) throw new Err(`${kw} calls itself (or blocks call each other) too deeply`);
+      ctx.depth++;
+      try {
+        const sets = d.params.map((p, i) => ({ type: 'set', name: p, e: ar.pos[i] && ar.pos[i].$e ? ar.pos[i].$e : { v: 'lit', x: ar.pos[i] }, line }));
+        return { node: [...sets, ...block(d.ln.children, scope, errors)] };
+      } finally {
+        ctx.depth--;
+      }
+    }
     if (kw === 'if') {
       c.next();
-      const cond = expr(c);
+      const cond = condition(c);
       endColon(c);
       needBlock(ln, 'if');
       // elif / else chain
@@ -6198,7 +6362,7 @@ CA.Script = (() => {
         const nc = cursor(nx.tokens, scope);
         if (nc.is('id', 'elif')) {
           nc.next();
-          const cond2 = expr(nc);
+          const cond2 = condition(nc);
           endColon(nc);
           needBlock(nx, 'elif');
           const n2 = { type: 'if', cond: cond2, then: block(nx.children, scope, errors), else: [], line: nx.line };
@@ -6221,7 +6385,7 @@ CA.Script = (() => {
       c.next();
       if (c.is('id', 'until')) {
         c.next();
-        const cond = expr(c);
+        const cond = condition(c);
         endColon(c);
         needBlock(ln, 'repeat until');
         return { node: { type: 'until', cond, body: sub(), line } };
@@ -6234,7 +6398,7 @@ CA.Script = (() => {
     }
     if (kw === 'while') {
       c.next();
-      const cond = expr(c);
+      const cond = condition(c);
       endColon(c);
       needBlock(ln, 'while');
       return { node: { type: 'until', cond: { t: 'not', a: cond }, body: sub(), line } };
@@ -6249,6 +6413,13 @@ CA.Script = (() => {
       c.next();
       const name = c.take('id', undefined, 'a name for each item').v;
       c.take('id', 'in', '“in”');
+      // over a live list (stocks(), garden.tiles()…): the items it has when the loop starts
+      if (!c.is('p', '[')) {
+        const list = sum(c);
+        endColon(c);
+        needBlock(ln, 'for');
+        return { node: { type: 'each', name, list, body: sub(), line } };
+      }
       c.take('p', '[', '“[”');
       const items = [];
       while (!c.is('p', ']')) {
@@ -6294,7 +6465,7 @@ CA.Script = (() => {
       c.next();
       if (c.is('id', 'until')) {
         c.next();
-        const cond = expr(c);
+        const cond = condition(c);
         if (!c.done()) throw new Err('something extra at the end of the line');
         return { node: { type: 'wait', cond, line } };
       }
@@ -6314,8 +6485,12 @@ CA.Script = (() => {
     }
     if (kw === 'log') {
       c.next();
-      const v = c.next();
-      return { node: { type: 'log', text: v ? String(v.v) : '', line } };
+      if (c.done()) return { node: { type: 'log', text: '', line } };
+      // log "text" — or log <a value>, written out when it runs
+      const e = sum(c);
+      if (!c.done()) throw new Err('something extra at the end of the line');
+      if (e.v === 'lit') return { node: { type: 'log', text: String(e.x), line } };
+      return { node: { type: 'log', e, line } };
     }
     if (kw === 'switch') {
       c.next();
@@ -6343,77 +6518,174 @@ CA.Script = (() => {
     return { node: { type: 'do', action: kw, params: bind(a, ar, kw), line } };
   }
 
-  /** Source → { flow: blocks, errors: [{ line, message }] }. */
-  function compile(source) {
+  /** Before compiling: the named blocks (top level only) and every name that's a variable. */
+  function prescan(root, errors) {
+    root.children.forEach((ln) => {
+      const t = ln.tokens;
+      if (!(t[0] && t[0].t === 'id' && t[0].v === 'def')) return;
+      try {
+        const c = cursor(t, {});
+        c.next();
+        const name = c.take('id', undefined, 'a name for the block').v;
+        if (taken(name)) throw new Err(`“${name}” is already a word of the language — pick another name`);
+        if (ctx.defs[name]) throw new Err(`there are two blocks named “${name}”`);
+        const params = [];
+        if (c.is('p', '(')) {
+          c.next();
+          while (!c.is('p', ')')) {
+            params.push(c.take('id', undefined, 'an option name').v);
+            if (c.is('p', ',')) c.next();
+            else if (!c.is('p', ')')) throw new Err('options are separated by commas');
+          }
+          c.next();
+        }
+        endColon(c);
+        needBlock(ln, 'def');
+        ctx.defs[name] = { params, ln };
+        params.forEach((p) => ctx.vars.add(p));
+      } catch (e) {
+        if (!e.script) throw e;
+        ln.bad = true;
+        errors.push({ line: ln.line, message: e.message });
+      }
+    });
+    const walk = (ln) => {
+      const t = ln.tokens;
+      if (t[0] && t[0].t === 'id' && t[1] && t[1].t === 'op' && t[1].v === '=') ctx.vars.add(t[0].v);
+      if (t[0] && t[0].t === 'id' && t[0].v === 'for' && t[1] && t[2] && t[2].v === 'in' && t[3] && !(t[3].t === 'p' && t[3].v === '[')) ctx.vars.add(t[1].v);
+      ln.children.forEach(walk);
+    };
+    root.children.forEach(walk);
+  }
+
+  /** Source → { flow: blocks, errors: [{ line, message }] }. opts.vars: names that are variables from the start (a macro's inputs). */
+  function compile(source, opts = {}) {
     const { root, errors } = lineTree(source);
     let flow = [];
+    ctx = freshCtx(opts.vars);
     try {
+      prescan(root, errors);
       flow = block(root.children, {}, errors);
     } catch (e) {
       errors.push({ line: 0, message: String(e.message || e) });
+    } finally {
+      ctx = freshCtx();
     }
-    errors.sort((x, y) => x.line - y.line);
-    return { flow, errors };
+    const seen = new Set();
+    const unique = errors.filter((e) => {
+      const k = `${e.line}|${e.message}`;
+      return !seen.has(k) && seen.add(k);
+    });
+    unique.sort((x, y) => x.line - y.line);
+    return { flow, errors: unique };
   }
 
-  // ---- evaluating conditions (with an explanation) ---------------------------------------------
+  // ---- evaluating values and conditions (with an explanation) -------------------------------------
 
   const fmtNum = (v) => CA.Format.beautify(v, Number.isInteger(v) ? 0 : 2);
-  function valueOf(o) {
+  const num = (v) => (typeof v === 'boolean' ? (v ? 1 : 0) : Number(v));
+  /** A value's value now; `env`: the variables of the run. */
+  function valueOf(o, env) {
+    if (!o) return NaN;
     if (o.v === 'lit') return o.x;
+    if (o.v === 'var') return env && Object.prototype.hasOwnProperty.call(env, o.name) ? env[o.name] : undefined;
+    if (o.v === 'neg') return -num(valueOf(o.a, env));
+    if (o.v === 'bin') {
+      const a = valueOf(o.a, env);
+      const b = valueOf(o.b, env);
+      if (o.op === '+') return typeof a === 'string' || typeof b === 'string' ? `${a}${b}` : num(a) + num(b);
+      if (o.op === '-') return num(a) - num(b);
+      if (o.op === '*') return num(a) * num(b);
+      if (o.op === '/') return num(a) / num(b);
+      return num(a) % num(b);
+    }
     const def = valueById[o.id];
     try {
-      return def ? def.get(...o.args) : NaN;
+      return def ? def.get(...(o.args || []).map((x) => valueOf(x, env))) : NaN;
     } catch (e) {
       return NaN;
     }
   }
-  const showOperand = (o, v) => (o.v === 'lit' ? String(o.x) : `${o.id}(${o.args.join(', ')}) = ${typeof v === 'number' ? fmtNum(v) : v}`);
+  /** An action's / condition's params with their expressions worked out. */
+  function resolve(params, env) {
+    if (!params) return params;
+    let out = null;
+    Object.keys(params).forEach((k) => {
+      const v = params[k];
+      if (v && typeof v === 'object' && v.$e) {
+        out = out || { ...params };
+        out[k] = valueOf(v.$e, env);
+      }
+    });
+    return out || params;
+  }
+  const showVal = (v) => (v === undefined ? '(not set)' : Array.isArray(v) ? `[${v.length} item${v.length === 1 ? '' : 's'}]` : typeof v === 'number' ? fmtNum(v) : String(v));
+  const shown = (o, v) => (o.v === 'lit' ? exprText(o) : `${exprText(o)} = ${showVal(v)}`);
+  const truthy = (v) => !!v && !(typeof v === 'number' && !Number.isFinite(v)) && !(Array.isArray(v) && !v.length);
 
   /** Evaluates a condition: { ok, text } — text with the values it saw ("owned(christmas, upgrades) = 12 ≥ 15 ✗"). */
-  function evaluate(e) {
+  function evaluate(e, env) {
     if (!e) return { ok: false, text: '?' };
     if (e.all) return { ok: CA.Conditions.test(e), text: CA.Conditions.describe(e) }; // blocks from before v2.24
     if (e.t === 'and' || e.t === 'or') {
-      const a = evaluate(e.a);
+      const a = evaluate(e.a, env);
       // short-circuit like the words say
       if (e.t === 'and' && !a.ok) return { ok: false, text: `${a.text} and …` };
       if (e.t === 'or' && a.ok) return { ok: true, text: `${a.text} or …` };
-      const b = evaluate(e.b);
+      const b = evaluate(e.b, env);
       return { ok: e.t === 'and' ? a.ok && b.ok : a.ok || b.ok, text: `${a.text} ${e.t} ${b.text}` };
     }
     if (e.t === 'not') {
-      const a = evaluate(e.a);
+      const a = evaluate(e.a, env);
       return { ok: !a.ok, text: `not (${a.text})` };
     }
     if (e.t === 'cond') {
-      const ok = CA.Conditions.test({ all: [{ cond: e.id, params: e.params, not: false }] });
-      return { ok, text: `${CA.Conditions.describe({ all: [{ cond: e.id, params: e.params, not: false }] })} ${ok ? '✓' : '✗'}` };
+      const one = { all: [{ cond: e.id, params: resolve(e.params, env), not: false }] };
+      const ok = CA.Conditions.test(one);
+      return { ok, text: `${CA.Conditions.describe(one)} ${ok ? '✓' : '✗'}` };
     }
-    const l = valueOf(e.l);
-    const r = valueOf(e.r);
+    if (e.t === 'val') {
+      const v = valueOf(e.e, env);
+      const ok = truthy(v);
+      return { ok, text: `${shown(e.e, v)} ${ok ? '✓' : '✗'}` };
+    }
+    const l = valueOf(e.l, env);
+    const r = valueOf(e.r, env);
     let ok = false;
-    const nl = Number(l);
-    const nr = Number(r);
+    const nl = num(l);
+    const nr = num(r);
     const numeric = Number.isFinite(nl) && Number.isFinite(nr) && typeof l !== 'string' && typeof r !== 'string';
     if (e.op === '==') ok = numeric ? nl === nr : String(l) === String(r);
     else if (e.op === '!=') ok = numeric ? nl !== nr : String(l) !== String(r);
     else if (numeric) ok = e.op === '>=' ? nl >= nr : e.op === '<=' ? nl <= nr : e.op === '>' ? nl > nr : nl < nr;
     const sym = { '>=': '≥', '<=': '≤', '==': '=', '!=': '≠', '>': '>', '<': '<' }[e.op];
-    return { ok, text: `${showOperand(e.l, l)} ${sym} ${showOperand(e.r, r)} ${ok ? '✓' : '✗'}` };
+    return { ok, text: `${shown(e.l, l)} ${sym} ${shown(e.r, r)} ${ok ? '✓' : '✗'}` };
   }
 
-  // ---- blocks → source (for macros made with the v2.22 block editor) -----------------------------
+  // ---- blocks → source (the code a shortcut macro amounts to; v2.22's blocks) -----------------------
 
   /** A value as code: bare when it's a plain word (hand → hand), quoted otherwise ("hand of fate", ">="). */
   const litText = (v) => (typeof v === 'string' && !/^[A-Za-z_][\w.\-']*$/.test(v) ? `"${v}"` : String(v));
+  const PREC = { '+': 1, '-': 1, '*': 2, '/': 2, '%': 2 };
+  /** A value node as code, with the brackets it needs where it sits. */
+  function exprText(o, outer = 0, right = false) {
+    if (!o) return '?';
+    if (o.v === 'lit') return litText(o.x);
+    if (o.v === 'var') return o.name;
+    if (o.v === 'fn') return `${o.id}(${(o.args || []).map((a) => exprText(a)).join(', ')})`;
+    if (o.v === 'neg') return `-${exprText(o.a, 3)}`;
+    const p = PREC[o.op] || 1;
+    const s = `${exprText(o.a, p)} ${o.op} ${exprText(o.b, p, true)}`;
+    return p < outer || (right && p === outer) ? `(${s})` : s;
+  }
+  const paramText = (v) => (v && typeof v === 'object' && v.$e ? exprText(v.$e) : litText(v));
   function argText(def, params) {
     const list = (def && def.params) || [];
     const vals = list.map((p) => (params && params[p.key] !== undefined ? params[p.key] : p.default));
     // trailing defaults are left out — unless they were written out (params has them)
     const given = (k) => !!params && params[list[k].key] !== undefined;
     while (vals.length && list[vals.length - 1] && vals[vals.length - 1] === list[vals.length - 1].default && !given(vals.length - 1)) vals.pop();
-    return vals.map(litText).join(', ');
+    return vals.map(paramText).join(', ');
   }
   /** A condition as code; `within` (and / or / not) is what it sits in, for the parentheses it needs. */
   function condText(c, within) {
@@ -6423,8 +6695,8 @@ CA.Script = (() => {
     if (c.t === 'and' || c.t === 'or') return wrap(`${condText(c.a, c.t)} ${c.t} ${condText(c.b, c.t)}`, c.t);
     if (c.t === 'not') return `not ${condText(c.a, 'not')}`;
     if (c.t === 'cond') return `${c.id}(${argText(CA.Conditions.get(c.id), c.params)})`;
-    const op = (o) => (o.v === 'lit' ? String(o.x) : `${o.id}(${o.args.join(', ')})`);
-    return `${op(c.l)} ${c.op} ${op(c.r)}`;
+    if (c.t === 'val') return exprText(c.e);
+    return `${exprText(c.l)} ${c.op} ${exprText(c.r)}`;
   }
   function decompile(nodes, depth = 0) {
     const pad = '  '.repeat(depth);
@@ -6436,8 +6708,10 @@ CA.Script = (() => {
         if (n.type === 'until') return `${pad}repeat until ${condText(n.cond)}:\n${decompile(n.body, depth + 1) || `${pad}  log "…"`}`;
         if (n.type === 'times') return `${pad}repeat ${n.n} times:\n${decompile(n.body, depth + 1)}`;
         if (n.type === 'forever') return `${pad}forever:\n${decompile(n.body, depth + 1)}`;
+        if (n.type === 'each') return `${pad}for ${n.name} in ${exprText(n.list)}:\n${decompile(n.body, depth + 1)}`;
+        if (n.type === 'set') return `${pad}${n.name} = ${n.cond ? condText(n.cond) : exprText(n.e)}`;
         if (n.type === 'stop') return `${pad}stop`;
-        if (n.type === 'log') return `${pad}log "${n.text}"`;
+        if (n.type === 'log') return n.e ? `${pad}log ${exprText(n.e)}` : `${pad}log "${n.text}"`;
         if (n.type === 'if') return `${pad}if ${condText(n.cond)}:\n${decompile(n.then, depth + 1)}${n.else && n.else.length ? `\n${pad}else:\n${decompile(n.else, depth + 1)}` : ''}`;
         if (n.type === 'parallel') return `${pad}parallel:\n${(n.branches || []).map((b, i) => `${pad}  branch${n.labels && n.labels[i] ? ` ${n.labels[i]}` : ''}:\n${decompile(b, depth + 2)}`).join('\n')}`;
         return '';
@@ -6461,6 +6735,9 @@ CA.Script = (() => {
       ['while …:', 'run the block each pass while something holds', 'while buff(Frenzy):\n  '],
       ['if … / elif … / else:', 'one way or another', 'if cookies() > 1e12:\n  \nelse:\n  '],
       ['for … in [ … ]:', 'the block once per item', 'for season in [easter, halloween]:\n  '],
+      ['for … in list():', 'the block for each item of a live list', 'for b in buildings():\n  '],
+      ['name = …', 'a variable: a number, text, or yes / no', 'target = cookies() * 0.1'],
+      ['def name(…):', 'a named block, called like an action', 'def name(x):\n  '],
       ['repeat N times:', 'the block N times', 'repeat 5 times:\n  '],
       ['forever:', 'the block again and again', 'forever:\n  '],
       ['parallel:', 'branches side by side', 'parallel:\n  branch a:\n    \n  branch b:\n    '],
@@ -6468,7 +6745,7 @@ CA.Script = (() => {
       ['wait N seconds', 'pause', 'wait 30 seconds'],
       ['switch on / off …', 'switch another macro', 'switch on golden'],
       ['stop', 'end the macro here', 'stop'],
-      ['log "…"', 'write to its trace', 'log "here"'],
+      ['log …', 'write to its trace (text, or a value)', 'log "here"'],
     ].forEach(([s, d, ins]) => items.push({ kind: 'keyword', id: s, sig: s, desc: d, group: 'Keywords', icon: 'edit', insert: ins }));
     return items;
   }
@@ -6531,7 +6808,7 @@ CA.Script = (() => {
   }
   const isValue = (id) => !!valueById[id];
 
-  return { compile, evaluate, decompile, library, lookups, defineLookup, litText, defineValue, isValue, VALUES, KEYWORDS, tokenize };
+  return { compile, evaluate, value: valueOf, resolve, exprText, decompile, library, lookups, defineLookup, litText, defineValue, isValue, VALUES, KEYWORDS, tokenize };
 })();
 
 // ---- src/features/gameEvents.js --------------------------------------
@@ -10570,7 +10847,7 @@ CA.UI.CodeEditor = (() => {
   // ---- the code ---------------------------------------------------------------------------
 
   // syntax colouring (one line at a time)
-  const KW = new Set(['if', 'elif', 'else', 'for', 'in', 'repeat', 'until', 'while', 'times', 'forever', 'parallel', 'branch', 'wait', 'seconds', 'second', 'minutes', 'minute', 'stop', 'log', 'switch', 'on', 'off', 'and', 'or', 'not', 'true', 'false']);
+  const KW = new Set(['if', 'elif', 'else', 'for', 'in', 'def', 'repeat', 'until', 'while', 'times', 'forever', 'parallel', 'branch', 'wait', 'seconds', 'second', 'minutes', 'minute', 'stop', 'log', 'switch', 'on', 'off', 'and', 'or', 'not', 'true', 'false']);
   function highlightLine(line) {
     let out = '';
     let i = 0;

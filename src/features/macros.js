@@ -405,8 +405,11 @@ CA.Macros = (() => {
   const flowRuns = {}; // id -> { prog, S (per-block state by path), at: [what it waits on], done, error }
 
   /** { ok, text } for a block's condition — the text says what it saw. */
-  const check = (c) => (CA.Script ? CA.Script.evaluate(c) : { ok: CA.Conditions.test(c), text: CA.Conditions.describe(c) });
+  const check = (F, c) => CA.Script.evaluate(c, F.vars);
   const at = (F, n, text) => F.at.push(n.line ? `line ${n.line}: ${text}` : text);
+  const EACH_MAX = 10000; // items a live list's loop goes through
+  const logText = (v) => (v === undefined ? '(not set)' : Array.isArray(v) ? `[${v.join(', ')}]` : typeof v === 'number' ? CA.Format.beautify(v, Number.isInteger(v) ? 0 : 2) : String(v));
+
   /** A line in the flow's trace (the decisions it took), newest last, the last TRACE_MAX kept. */
   const TRACE_MAX = 40;
   function trace(F, n, text) {
@@ -432,7 +435,7 @@ CA.Macros = (() => {
       case 'do': {
         const s = n.step != null && F.steps ? F.steps[n.step] : null; // a shortcut macro's step: its counts
         try {
-          const k = CA.Actions.run(n.action, n.params) || 0;
+          const k = CA.Actions.run(n.action, CA.Script.resolve(n.params, F.vars)) || 0;
           F.done += k;
           F.error = '';
           if (F.pass && k) trace(F, n, `${n.action}: ${k}`);
@@ -452,7 +455,7 @@ CA.Macros = (() => {
         return true;
       }
       case 'wait': {
-        const r = check(n.cond);
+        const r = check(F, n.cond);
         if (r.ok) {
           trace(F, n, `waited until ${r.text}`);
           return true;
@@ -467,7 +470,7 @@ CA.Macros = (() => {
         return false;
       }
       case 'until': {
-        const r = check(n.cond);
+        const r = check(F, n.cond);
         if (r.ok) {
           trace(F, n, `done: ${r.text}`);
           return true;
@@ -489,7 +492,7 @@ CA.Macros = (() => {
       case 'if': {
         let st = F.S[path];
         if (!st) {
-          const r = check(n.cond);
+          const r = check(F, n.cond);
           st = F.S[path] = { branch: r.ok ? 'then' : 'else' };
           trace(F, n, `if ${r.text} → ${r.ok ? 'yes' : n.else && n.else.length ? 'no: else' : 'no: skipped'}`);
         }
@@ -500,8 +503,29 @@ CA.Macros = (() => {
         F.stopped = true;
         return false;
       case 'log':
-        trace(F, n, n.text);
+        trace(F, n, n.e ? logText(CA.Script.value(n.e, F.vars)) : n.text);
         return true;
+      case 'set':
+        F.vars[n.name] = n.cond ? check(F, n.cond).ok : CA.Script.value(n.e, F.vars);
+        return true;
+      case 'each': {
+        // a live list: the items it has when the loop starts; as many as finish this pass
+        let st = F.S[path];
+        if (!st) {
+          const list = CA.Script.value(n.list, F.vars);
+          st = F.S[path] = { items: Array.isArray(list) ? list.slice(0, EACH_MAX) : [], k: 0 };
+        }
+        while (st.k < st.items.length) {
+          F.vars[n.name] = st.items[st.k];
+          if (!execSeq(F, n.body, `${path}.b`) || F.stopped) {
+            at(F, n, `${n.name} = ${logText(st.items[st.k])} (${st.k + 1} of ${st.items.length})`);
+            return false;
+          }
+          resetUnder(F.S, `${path}.b`);
+          st.k++;
+        }
+        return true;
+      }
       case 'parallel': {
         let all = true;
         n.branches.forEach((b, i) => {
@@ -552,8 +576,8 @@ CA.Macros = (() => {
    * Runs compiled code once, from the top, as one pass (rules that are checked every second, like
    * a garden profile's). Returns { done, at, trace, error } — what it did and where it stopped.
    */
-  function runPass(prog, steps) {
-    const F = { prog, S: {}, at: [], trace: [], done: 0, error: '', stopped: false, pass: true, steps };
+  function runPass(prog, steps, vars) {
+    const F = { prog, S: {}, at: [], trace: [], done: 0, error: '', stopped: false, pass: true, steps, vars: { ...(vars || {}) } };
     if (depth >= MAX_DEPTH) return F;
     depth++;
     try {
@@ -594,7 +618,7 @@ CA.Macros = (() => {
       }
       prog = flow;
     } else prog = programOf(m);
-    flowRuns[id] = { prog, S: {}, at: [], trace: [], done: 0, error: '', stopped: false, steps: status[id].steps };
+    flowRuns[id] = { prog, S: {}, at: [], trace: [], done: 0, error: '', stopped: false, steps: status[id].steps, vars: {} };
     delete problems[id];
     running[id] = { since: Date.now(), timer: setInterval(() => tick(m), everyOf(m)) };
     return true;

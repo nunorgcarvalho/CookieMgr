@@ -104,7 +104,7 @@ CA.UI.CodeEditor = (() => {
   // ---- the code ---------------------------------------------------------------------------
 
   // syntax colouring (one line at a time)
-  const KW = new Set(['if', 'elif', 'else', 'for', 'in', 'repeat', 'until', 'while', 'times', 'forever', 'parallel', 'branch', 'wait', 'seconds', 'second', 'minutes', 'minute', 'stop', 'log', 'switch', 'on', 'off', 'and', 'or', 'not', 'true', 'false']);
+  const KW = new Set(['if', 'elif', 'else', 'for', 'in', 'def', 'repeat', 'until', 'while', 'times', 'forever', 'parallel', 'branch', 'wait', 'seconds', 'second', 'minutes', 'minute', 'stop', 'log', 'switch', 'on', 'off', 'and', 'or', 'not', 'true', 'false']);
   function highlightLine(line) {
     let out = '';
     let i = 0;
