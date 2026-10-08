@@ -48,7 +48,7 @@ assert(CA.Settings.optionsIn('stocks').find((d) => d.key === 'bankToolbar').name
 CA.UI.Menu.openPage('clickers');
 const mp = page('clickers');
 assert(mp.querySelectorAll('.ca-mtile').length >= 10 && mp.querySelector('.ca-mtile[data-macro-row="bigCookie"]'), 'built-in macros as cards');
-assert(mp.querySelector('.ca-mtile[data-macro-row="lumps"] select[data-macro-param]'), 'cards keep their choices');
+assert(mp.querySelector('.ca-mtile[data-macro-row="lumps"] select[data-macro-param], .ca-mtile[data-macro-row="lumps"] select[data-macro-input]'), 'cards keep their choices'); // v3: an input of its code
 CA.Macros.set('golden', true);
 CA.UI.MacrosPage.sync(mp);
 const gtile = mp.querySelector('.ca-mtile[data-macro-row="golden"]');

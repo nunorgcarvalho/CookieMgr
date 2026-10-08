@@ -64,7 +64,16 @@ CA.AutoBuy = (() => {
   }
 
   /** Every building and upgrade the two Cookie Monster buyers could pick: { kind, name, price, pp, buy() }. */
+  let memo = null; // { key, list } — the same list within one pass of a macro (worked out three times in one)
   function candidates(kinds) {
+    const pass = CA.Macros.passKey();
+    if (pass == null) return candidatesNow(kinds);
+    const key = `${pass}|${kinds.join(',')}|${CA.Shop.roundUp()}|${Game.cookies}`;
+    if (memo && memo.key === key) return memo.list;
+    memo = { key, list: candidatesNow(kinds) };
+    return memo.list;
+  }
+  function candidatesNow(kinds) {
     const data = cm();
     if (!cmReady()) return [];
     const out = [];
@@ -233,9 +242,71 @@ CA.AutoBuy = (() => {
     return got;
   }
 
+  // ---- building blocks -----------------------------------------------------------------------
+  //
+  //   cm.best(kind, skip)     the lowest payback period of building / upgrade / all ("": nothing);
+  //                           skip: only what you can afford now. Its result names a thing to buy:
+  //   cm.kind(thing) · cm.price(thing) · cm.pp(thing) · cm.buy(thing)
+  //   upgrades()              a list: the store's upgrades, cheapest first
+  //   upgrade.price(u) · upgrade.owned(name) · buy.upgrade(u)
+  //   research.next(stopBefore)  the next research to buy ("": none — or only what's at / after stopBefore)
+  //   dragon.canPet() · dragon.dropNow() (this quarter-hour's drop, if you're missing it) · dragon.pet()
+
+  const KINDS = { building: ['building'], upgrade: ['upgrade'], all: ['building', 'upgrade'] };
+  const thingKey = (c) => `${c.kind}:${c.name}`;
+  const thingOf = (k) => (k ? candidates(['building', 'upgrade']).find((c) => thingKey(c) === String(k)) || null : null);
+  const upgradeNamed = (n) => (Game.UpgradesInStore || []).find((u) => u && u.name === n) || (Game.UpgradesByName && Game.UpgradesByName[n]) || (Game.Upgrades && Game.Upgrades[n]) || null;
+  function blocks() {
+    const V = (id, desc, get, more) => CA.Script.defineValue({ id, desc, get, ...(more || {}) });
+    V('cm.best', 'the lowest payback period (Cookie Monster) of a kind: building, upgrade or all ("": none)', (kind, skip) => {
+      const b = best(KINDS[kind] || KINDS.all, !!skip && skip !== 'false');
+      return b ? thingKey(b) : '';
+    }, { params: ['kind', 'skip'] });
+    V('cm.kind', 'what a thing to buy is: "building" or "upgrade"', (k) => String(k || '').split(':')[0], { params: ['thing'] });
+    V('cm.price', 'cookies a thing to buy costs', (k) => (thingOf(k) || { price: NaN }).price, { params: ['thing'] });
+    V('cm.pp', 'a thing’s payback period (Cookie Monster)', (k) => (thingOf(k) || { pp: NaN }).pp, { params: ['thing'] });
+    V('upgrades', 'a list: the upgrades in the store, cheapest first', () => storeUpgrades().map((u) => ({ u, price: priceOf(u) })).sort((a, b) => a.price - b.price).map((x) => x.u.name), { list: true });
+    V('upgrade.price', 'an upgrade’s price', (n) => {
+      const u = upgradeNamed(n);
+      return u ? priceOf(u) : NaN;
+    }, { params: ['upgrade'] });
+    V('upgrade.owned', 'whether you own an upgrade', (n) => has(n), { params: ['upgrade'], bool: true });
+    V('research.next', 'the next research to buy, stopping before stopBefore ("": none)', (stop) => (researchPick(stop) || {}).name || '', { params: ['stopBefore'] });
+    V('dragon.canPet', 'whether you can pet the dragon (level 8, “Pet the dragon”)', () => canPet(), { bool: true });
+    V('dragon.dropNow', 'this quarter-hour’s dragon drop, if you’re missing it ("": none)', () => (petSchedule().find((x) => x.now) || {}).name || '');
+    const A = CA.Actions.register;
+    A({
+      id: 'cm.buy',
+      name: 'Buy a building or upgrade (from cm.best)',
+      icon: 'building',
+      group: 'Buying',
+      unit: 'bought',
+      params: [{ key: 'thing', label: 'Thing', type: 'select', default: '', options: () => candidates(['building', 'upgrade']).map((c) => ({ v: thingKey(c), label: c.label })) }],
+      run: (p) => {
+        const c = thingOf(p.thing);
+        memo = null;
+        return c && c.price <= Game.cookies && c.buy() > 0 ? 1 : 0;
+      },
+    });
+    A({
+      id: 'buy.upgrade',
+      name: 'Buy an upgrade',
+      icon: 'upgrade',
+      group: 'Buying',
+      unit: 'bought',
+      params: [{ key: 'upgrade', label: 'Upgrade', type: 'select', default: '', options: () => storeUpgrades(null).concat(storeUpgrades(['tech'])).map((u) => ({ v: u.name, label: u.dname || u.name })) }],
+      run: (p) => {
+        const u = upgradeNamed(p.upgrade);
+        memo = null;
+        return u ? buyUpgrade(u) : 0;
+      },
+    });
+  }
+
   // ---- actions and built-in macros -----------------------------------------------------------
 
   function init() {
+    blocks();
     const A = CA.Actions.register;
     const skipParam = { key: 'skip', label: 'Skip what you can’t afford yet', type: 'bool', default: false };
     A({
@@ -318,15 +389,18 @@ CA.AutoBuy = (() => {
     });
 
     const M = CA.Macros;
+    const skipInput = { key: 'skip', label: 'Skip what you can’t afford yet', type: 'bool', default: false };
     M.addBuiltin({
       id: 'cmBuildings',
       name: 'Best building',
       desc: 'Buys the building with the lowest payback period (Cookie Monster) — 10 at a time to the next multiple when the store’s Round to multiples is on. With Best upgrade also on, buys only when a building beats every upgrade.',
       icon: { ico: 'building' },
-      mode: 'repeat',
+      mode: 'flow',
       every: 500,
-      steps: [{ action: 'cm.buyBuilding', params: { skip: false } }],
-      shift: { step: 0, key: 'skip', on: 'skips what you can’t afford', off: 'saves up for the best' },
+      defaultSource: "# Buy the building with the lowest payback period (Cookie Monster) — judged against the upgrades\n# too when Best upgrade is on, so together they always buy the best of both. skip: only what\n# you can afford now (otherwise it saves up for the best). Shift-click its button flips skip.\nforever:\n  if macro.isOn(cmUpgrades):\n    pick = cm.best(all, skip)\n  else:\n    pick = cm.best(building, skip)\n  if pick != \"\" and cm.kind(pick) == \"building\" and cm.price(pick) <= cookies():\n    cm.buy(pick)\n",
+      inputs: [skipInput],
+      shift: { input: 'skip', on: 'skips what you can’t afford', off: 'saves up for the best' },
+      readiness: (ins) => readiness('building', ins.skip),
       needsCM: true,
       holdRepeat: true,
       section: 'buying',
@@ -336,10 +410,12 @@ CA.AutoBuy = (() => {
       name: 'Best upgrade',
       desc: 'Buys the upgrade with the lowest payback period (Cookie Monster); clicking upgrades are judged by your clicks per second. With Best building also on, buys only when an upgrade beats every building.',
       icon: { ico: 'upgrade' },
-      mode: 'repeat',
+      mode: 'flow',
       every: 500,
-      steps: [{ action: 'cm.buyUpgrade', params: { skip: false } }],
-      shift: { step: 0, key: 'skip', on: 'skips what you can’t afford', off: 'saves up for the best' },
+      defaultSource: "# Buy the upgrade with the lowest payback period (Cookie Monster; clicking upgrades are judged by\n# your clicks per second) — against the buildings too when Best building is on. skip: only what\n# you can afford now. Shift-click its button flips skip.\nforever:\n  if macro.isOn(cmBuildings):\n    pick = cm.best(all, skip)\n  else:\n    pick = cm.best(upgrade, skip)\n  if pick != \"\" and cm.kind(pick) == \"upgrade\" and cm.price(pick) <= cookies():\n    cm.buy(pick)\n",
+      inputs: [skipInput],
+      shift: { input: 'skip', on: 'skips what you can’t afford', off: 'saves up for the best' },
+      readiness: (ins) => readiness('upgrade', ins.skip),
       needsCM: true,
       holdRepeat: true,
       section: 'buying',
@@ -349,9 +425,11 @@ CA.AutoBuy = (() => {
       name: 'Research',
       desc: 'Buys the Bingo center’s research as soon as it shows up — stopping before One mind by default, so it never starts the Grandmapocalypse unless you say so.',
       icon: { sprite: [11, 9] },
-      mode: 'repeat',
+      mode: 'flow',
       every: 2000,
-      steps: [{ action: 'buy.research', params: { stopBefore: 'One mind' } }],
+      defaultSource: "# Buy the Bingo center's research as it shows up — stopping before stopBefore (One mind starts\n# the Grandmapocalypse; \"none\": buy it all).\nforever:\n  r = research.next(stopBefore)\n  if r != \"\" and upgrade.price(r) <= cookies():\n    buy.upgrade(r)\n",
+      inputs: [{ key: 'stopBefore', label: 'Stop before', type: 'select', default: 'One mind', options: () => CA.Actions.get('buy.research').params[0].options() }],
+      readiness: (ins) => CA.Actions.get('buy.research').ready({ stopBefore: ins.stopBefore }),
       holdRepeat: true,
       section: 'buying',
     });
@@ -360,9 +438,11 @@ CA.AutoBuy = (() => {
       name: 'Cheap upgrades',
       desc: 'Buys any upgrade costing less than a second (or however many you set) of your unbuffed production — the small stuff, without thinking about it.',
       icon: { ico: 'dollar' },
-      mode: 'repeat',
+      mode: 'flow',
       every: 1000,
-      steps: [{ action: 'buy.cheapUpgrades', params: { secs: 1 } }],
+      defaultSource: "# Buy every upgrade costing less than secs seconds of your unbuffed production — cheapest first.\nforever:\n  for u in upgrades():\n    if upgrade.price(u) <= rawCps() * secs:\n      buy.upgrade(u)\n",
+      inputs: [{ key: 'secs', label: 'Costing less than (seconds of production)', type: 'number', default: 1, min: 0 }],
+      readiness: (ins) => CA.Actions.get('buy.cheapUpgrades').ready({ secs: ins.secs }),
       holdRepeat: true,
       section: 'buying',
     });
@@ -371,9 +451,10 @@ CA.AutoBuy = (() => {
       name: 'Pet the dragon',
       desc: 'Gets the dragon’s four drops: works out which quarter of the hour gives which, and in a quarter whose drop you’re missing opens the dragon, pets it until it drops, and closes it. Needs dragon level 8 and the “Pet the dragon” upgrade.',
       icon: { sprite: [30, 12] },
-      mode: 'repeat',
+      mode: 'flow',
       every: 30000,
-      steps: [{ action: 'dragon.pet' }],
+      defaultSource: "# Get the dragon's four drops: in a quarter of the hour whose drop you're missing, pet it until it\n# drops (dragon level 8 and the \"Pet the dragon\" upgrade).\nforever:\n  if dragon.canPet() and dragon.dropNow() != \"\":\n    dragon.pet()\n",
+      readiness: () => CA.Actions.get('dragon.pet').ready({}),
       section: 'upkeep',
     });
   }

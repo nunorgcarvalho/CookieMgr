@@ -814,9 +814,11 @@ CA.Script = (() => {
   /** A value node as code, with the brackets it needs where it sits. */
   function exprText(o, outer = 0, right = false) {
     if (!o) return '?';
-    if (o.v === 'lit') return litText(o.x);
+    // a word that's also a value's name, a keyword or true / false stays quoted ("building" is text; building would be the value)
+    if (o.v === 'lit') return typeof o.x === 'string' && (valueById[o.x] || KEYWORDS.includes(o.x) || o.x === 'true' || o.x === 'false') ? `"${o.x}"` : litText(o.x);
     if (o.v === 'var') return o.name;
-    if (o.v === 'fn') return `${o.id}(${(o.args || []).map((a) => exprText(a)).join(', ')})`;
+    // inside a call's brackets a word is always text: no quotes needed there
+    if (o.v === 'fn') return `${o.id}(${(o.args || []).map((a) => (a.v === 'lit' ? litText(a.x) : exprText(a))).join(', ')})`;
     if (o.v === 'neg') return `-${exprText(o.a, 3)}`;
     const p = PREC[o.op] || 1;
     const s = `${exprText(o.a, p)} ${o.op} ${exprText(o.b, p, true)}`;

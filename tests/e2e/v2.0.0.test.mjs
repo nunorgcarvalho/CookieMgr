@@ -53,7 +53,8 @@ let popped = 0;
 Game.shimmers.push({ type: 'golden', wrath: 0, pop() { popped++; Game.shimmers.splice(Game.shimmers.indexOf(this), 1); } });
 CA.Macros.set('golden', true);
 await sleep(250);
-assert(popped === 1 && CA.Macros.status('golden').steps[0].total === 1, 'pop golden action');
+// v3: the Golden cookies macro is code (shimmer blocks) — what it did is its run's count
+assert(popped === 1 && CA.Macros.flowStatus('golden').done === 1, 'pops the golden cookie');
 
 // ---- All autoclickers: removed in v2.19 (group macros do it)
 assert(!CA.Hotkeys.get('clickers.toggleAll'), 'no All autoclickers hotkey (v2.19)');
@@ -148,7 +149,7 @@ ed = pg().querySelector('[data-macro-editor]');
 assert(ed && pg().querySelector('[data-edit="name"]').value === 'Wrath cookies (copy)', 'duplicate opens an editable copy');
 click(w, pg().querySelector('[data-edit-act="cancel"]'));
 const copy = CA.Macros.list().find((m) => m.name === 'Wrath cookies (copy)');
-assert(copy && !copy.builtin && copy.steps[0].action === 'pop.wrath', 'copy saved as your own');
+assert(copy && !copy.builtin && copy.mode === 'flow' && /shimmer\.pop\(s\)/.test(copy.source), 'copy saved as your own (v3: its code)');
 // v2.25: built-ins can be edited (your version over the original), never removed
 const ed2 = CA.Macros.save({ ...CA.Macros.get('golden'), name: 'Mine now' });
 assert(ed2 && ed2.builtin && ed2.name === 'Mine now' && !CA.Macros.remove('golden'), 'built-ins can be edited, not removed');

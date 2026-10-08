@@ -39,9 +39,9 @@ CA.Macros = (() => {
       name: 'Golden cookies',
       desc: 'Pops golden cookies the moment they appear.',
       icon: sprite(10, 14, 'img/goldCookie.png'),
-      mode: 'repeat',
+      mode: 'flow',
       every: 100,
-      steps: [{ action: 'pop.golden' }],
+      defaultSource: "# Pop every golden cookie (not wrath cookies: that’s its own macro) on screen.\nforever:\n  for s in shimmers():\n    if shimmer.type(s) == \"golden\" and not shimmer.isWrath(s):\n      shimmer.pop(s)\n",
       defaultKey: 'KeyG',
       inAll: true,
       section: 'autoclickers',
@@ -51,9 +51,9 @@ CA.Macros = (() => {
       name: 'Wrath cookies',
       desc: 'Pops red wrath cookies too (they can be good or bad).',
       icon: sprite(15, 5, 'img/wrathCookie.png'),
-      mode: 'repeat',
+      mode: 'flow',
       every: 100,
-      steps: [{ action: 'pop.wrath' }],
+      defaultSource: "# Pop every wrath cookie on screen.\nforever:\n  for s in shimmers():\n    if shimmer.type(s) == \"golden\" and shimmer.isWrath(s):\n      shimmer.pop(s)\n",
       defaultKey: 'KeyW',
       inAll: true,
       section: 'autoclickers',
@@ -63,9 +63,9 @@ CA.Macros = (() => {
       name: 'Reindeer',
       desc: 'Pops reindeer during the Christmas season.',
       icon: sprite(12, 9, 'img/frostedReindeer.png'),
-      mode: 'repeat',
+      mode: 'flow',
       every: 100,
-      steps: [{ action: 'pop.reindeer' }],
+      defaultSource: "# Pop every reindeer on screen.\nforever:\n  for s in shimmers():\n    if shimmer.type(s) == \"reindeer\":\n      shimmer.pop(s)\n",
       defaultKey: 'KeyR',
       inAll: true,
       section: 'autoclickers',
@@ -87,10 +87,14 @@ CA.Macros = (() => {
       name: 'Wrinklers',
       desc: 'Pops wrinklers once they’ve eaten something (so they can drop Halloween cookies and such) — or the moment they latch on. Shift-click its button to switch.',
       icon: sprite(19, 8),
-      mode: 'repeat',
+      mode: 'flow',
       every: 100,
-      steps: [{ action: 'pop.wrinklers', params: { fed: true } }],
-      shift: { step: 0, key: 'fed', on: 'pops them once they’ve eaten (drops count)', off: 'pops them at once' },
+      defaultSource: "# Pop the wrinklers — once they've eaten something (so they can drop Halloween cookies and such),\n# or at once when fed is off; shiny ones too unless shiny says to leave them alone.\n# (Its choices are on its card; shift-click its button flips fed.)\nforever:\n  for w in wrinklers():\n    if (wrinkler.isFed(w) or not fed) and (shiny == \"pop\" or not wrinkler.isShiny(w)):\n      wrinkler.pop(w)\n",
+      inputs: [
+        { key: 'shiny', label: 'Shiny wrinklers', type: 'select', default: 'pop', options: [{ v: 'pop', label: 'Pop them too' }, { v: 'keep', label: 'Leave them alone' }] },
+        { key: 'fed', label: 'Wait until it has eaten (so it can drop something)', type: 'bool', default: true },
+      ],
+      shift: { input: 'fed', on: 'pops them once they’ve eaten (drops count)', off: 'pops them at once' },
       defaultKey: 'KeyK',
       inAll: true,
       section: 'autoclickers',
@@ -138,10 +142,10 @@ CA.Macros = (() => {
       name: 'Sugar lump harvester',
       desc: 'Harvests your sugar lump when it’s ripe (always pays) — or as soon as it’s mature, a little earlier but with the game’s 50% chance of getting nothing.',
       icon: sprite(29, 14),
-      mode: 'repeat',
+      mode: 'flow',
       every: 1000,
-      steps: [{ action: 'lump.harvest', params: { when: 'ripe' } }],
-      options: [{ step: 0, key: 'when' }],
+      defaultSource: "# Harvest the sugar lump when it's ripe (always pays) — or as soon as it's mature when \"when\"\n# says so (a little earlier, but with the game's 50% chance of getting nothing).\nforever:\n  if lump.isRipe() or (when == \"mature\" and lump.isMature()):\n    lump.pick()\n",
+      inputs: [{ key: 'when', label: 'Harvest when', type: 'select', default: 'ripe', options: [{ v: 'ripe', label: 'ripe (always pays)' }, { v: 'mature', label: 'mature (50% chance)' }] }],
       defaultKey: '',
       section: 'upkeep',
     },
@@ -191,7 +195,7 @@ CA.Macros = (() => {
       if (def.pass) m.pass = true;
       // a built-in whose code comes from elsewhere (the active garden profile's rules), that only
       // runs when it can (ready), reports each pass (afterPass), and is edited on its own page (editAt)
-      if (def.builtin) ['sourceFrom', 'ready', 'afterPass'].forEach((k) => typeof def[k] === 'function' && (m[k] = def[k]));
+      if (def.builtin) ['sourceFrom', 'ready', 'afterPass', 'readiness'].forEach((k) => typeof def[k] === 'function' && (m[k] = def[k]));
       if (def.builtin && def.editAt) m.editAt = def.editAt;
     }
     if (mode === 'when') {
@@ -605,6 +609,7 @@ CA.Macros = (() => {
 
   function runFlow(m) {
     if (m.pass) return runFresh(m);
+    passNo++;
     const F = flowRuns[m.id];
     if (!F || ascending() || depth >= MAX_DEPTH) return;
     F.at = [];
@@ -639,7 +644,11 @@ CA.Macros = (() => {
    * Runs compiled code once, from the top, as one pass (rules that are checked every second, like
    * a garden profile's). Returns { done, at, trace, error } — what it did and where it stopped.
    */
+  // passes, numbered: a feature can keep something for the length of one pass (passKey(); null outside one)
+  let passNo = 0;
+  const passKey = () => (depth > 0 ? passNo : null);
   function runPass(prog, steps, vars) {
+    passNo++;
     const F = { prog, S: {}, at: [], trace: [], done: 0, error: '', stopped: false, pass: true, steps, vars: { ...(vars || {}) } };
     if (depth >= MAX_DEPTH) return F;
     depth++;
@@ -994,6 +1003,7 @@ CA.Macros = (() => {
     shiftValue,
     flowOf,
     compiledOf,
+    passKey,
     inputsOf,
     setInput,
     programOf,

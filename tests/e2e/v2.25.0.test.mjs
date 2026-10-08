@@ -32,29 +32,29 @@ assert(M.everyOf(M.get('bigCookie')) === 20, 'capped at the game’s 50 a second
 const gbox = card('cmBuildings').querySelector('input[data-macro-every]');
 assert(gbox.dataset.everyAs === 'rate' && card('stockTrader').querySelector('input[data-macro-every]').dataset.everyAs === 'secs', 'slower macros in seconds');
 
-// ---- editing a built-in
-click(w, card('golden').querySelector('[data-ca="macro-edit"]'));
+// ---- editing a built-in (v3: Golden cookies is code now — a shortcut macro with steps: Fortune news)
+click(w, card('fortune').querySelector('[data-ca="macro-edit"]'));
 assert(ed() && ed().querySelector('[data-edit-act="revert"]') && !ed().querySelector('[data-edit-act="delete"]') && ed().querySelector('.ca-ed-kinds'), 'Edit on a built-in: the full editor, Revert to default (no Delete)');
 setVal('[data-edit="name"]', 'Goldies');
 click(w, ed().querySelector('[data-edit-act="step-add"]'));
 setVal('[data-edit="steps.1.action"]', 'pop.wrath');
 click(w, ed().querySelector('[data-edit-act="save"]'));
-let m = M.get('golden');
+let m = M.get('fortune');
 assert(m.builtin && m.name === 'Goldies' && m.steps.length === 2 && m.steps[1].action === 'pop.wrath', 'saved: your version of it');
-assert(M.isCustomized('golden') && card('golden').querySelector('.ca-badge-edited'), 'its card says “edited”');
+assert(M.isCustomized('fortune') && card('fortune').querySelector('.ca-badge-edited'), 'its card says “edited”');
 // kept across a reload
 Game.WriteSave();
 const saved = Game.modSaveData.CookieMgr;
 const g2 = boot({ idb: { factory: new IDBFactory(), IDBKeyRange }, save: saved });
 await sleep(400);
-const m2 = g2.window.CookieMgr.Macros.get('golden');
+const m2 = g2.window.CookieMgr.Macros.get('fortune');
 assert(m2.name === 'Goldies' && m2.steps.length === 2 && g2.window.CookieMgr.Macros.get('bigCookie') && g2.window.CookieMgr.Macros.everyOf(g2.window.CookieMgr.Macros.get('bigCookie')) === 20, 'your version restored after a reload');
 // revert
-click(w, card('golden').querySelector('[data-ca="macro-edit"]'));
+click(w, card('fortune').querySelector('[data-ca="macro-edit"]'));
 click(w, ed().querySelector('[data-edit-act="revert"]'));
 click(w, ed().querySelector('[data-edit-act="revert"]'));
-m = M.get('golden');
-assert(m.name === 'Golden cookies' && m.steps.length === 1 && !M.isCustomized('golden') && !ed(), 'Revert to default: back to how it comes');
+m = M.get('fortune');
+assert(m.name === 'Fortune news' && m.steps.length === 1 && !M.isCustomized('fortune') && !ed(), 'Revert to default: back to how it comes');
 // favourites survive edits and reverts
 M.setFav('golden', true);
 M.customize('golden', { ...M.get('golden'), name: 'G' });

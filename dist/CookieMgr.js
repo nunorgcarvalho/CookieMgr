@@ -1668,6 +1668,84 @@ CA.GameActions = (() => {
     return list.length;
   };
 
+  // ---- building blocks: shimmers, wrinklers, the sugar lump, macros -----------------------------
+  //
+  //   shimmers() · shimmer.type(s) ("golden", "reindeer") · shimmer.isWrath(s) · shimmer.life(s) · shimmer.pop(s)
+  //   wrinklers() · wrinkler.isShiny(w) · wrinkler.isFed(w) · wrinkler.sucked(w) · wrinkler.pop(w)
+  //   lump.isRipe() · lump.isMature() · lump.pick()
+  //   macro.isOn(id)
+
+  // a shimmer's key: the game's own id (shimmers come and go, so not their place in the list)
+  const shimmerIds = new WeakMap();
+  let shimmerN = 0;
+  const shimmerKey = (s) => (s.id != null ? s.id : shimmerIds.get(s) || (shimmerIds.set(s, `s${++shimmerN}`), shimmerIds.get(s)));
+  const shimmerOf = (k) => (Game.shimmers || []).find((s) => String(shimmerKey(s)) === String(k)) || null;
+  // a wrinkler's key: its id (its slot), or its place in the list when it has none
+  const wrinklerKey = (w, i) => (w.id != null ? w.id : i);
+  const wrinklerOf = (k) => (Game.wrinklers || []).find((w, i) => String(wrinklerKey(w, i)) === String(k) && w.phase > 0 && w.hp > 0) || null;
+  const lumpAge = () => (Game.lumpT ? Date.now() - Game.lumpT : -1);
+
+  function blocks() {
+    const V = (id, desc, get, more) => CA.Script.defineValue({ id, desc, get, ...(more || {}) });
+    V('shimmers', 'a list: the golden cookies and reindeer on screen', () => (Game.shimmers || []).map(shimmerKey), { list: true });
+    V('shimmer.type', 'a shimmer’s kind: "golden" or "reindeer"', (k) => (shimmerOf(k) || {}).type || '', { params: ['shimmer'] });
+    V('shimmer.isWrath', 'whether a golden cookie is a wrath cookie', (k) => !!(shimmerOf(k) || {}).wrath, { params: ['shimmer'], bool: true });
+    V('shimmer.life', 'seconds a shimmer has left on screen', (k) => {
+      const s = shimmerOf(k);
+      return s && Number.isFinite(s.life) ? s.life / (Game.fps || 30) : NaN;
+    }, { params: ['shimmer'] });
+    V('wrinklers', 'a list: the wrinklers on the big cookie', () => (Game.wrinklers || []).map((w, i) => (w.phase > 0 && w.hp > 0 ? wrinklerKey(w, i) : null)).filter((k) => k != null), { list: true });
+    V('wrinkler.isShiny', 'whether a wrinkler is shiny', (k) => (wrinklerOf(k) || {}).type === 1, { params: ['wrinkler'], bool: true });
+    // a wrinkler only gives drops once it has eaten something (main.js: sucked > 0.5)
+    V('wrinkler.isFed', 'whether a wrinkler has eaten (so popping it can drop something)', (k) => ((wrinklerOf(k) || {}).sucked || 0) > 0.5, { params: ['wrinkler'], bool: true });
+    V('wrinkler.sucked', 'cookies a wrinkler has eaten', (k) => (wrinklerOf(k) || {}).sucked || 0, { params: ['wrinkler'] });
+    V('lump.isRipe', 'whether the sugar lump is ripe (harvesting always pays)', () => lumpAge() >= 0 && lumpAge() >= Game.lumpRipeAge, { bool: true });
+    V('lump.isMature', 'whether the sugar lump is mature (harvesting: a 50% chance)', () => lumpAge() >= 0 && lumpAge() >= Game.lumpMatureAge, { bool: true });
+    V('macro.isOn', 'whether a macro is on', (id) => CA.Macros.isOn(id), { params: ['macro'], bool: true });
+    const A = CA.Actions.register;
+    A({
+      id: 'shimmer.pop',
+      name: 'Pop a shimmer',
+      icon: 'cookie',
+      group: 'Shimmers',
+      unit: 'popped',
+      params: [{ key: 'shimmer', label: 'Shimmer', type: 'select', default: '', options: () => (Game.shimmers || []).map((s) => ({ v: shimmerKey(s), label: `${s.type}${s.wrath ? ' (wrath)' : ''}` })) }],
+      run: (p) => {
+        const s = shimmerOf(p.shimmer);
+        if (!s) return 0;
+        s.pop();
+        return 1;
+      },
+    });
+    A({
+      id: 'wrinkler.pop',
+      name: 'Pop a wrinkler',
+      icon: 'wrinkler',
+      group: 'Shimmers',
+      unit: 'popped',
+      params: [{ key: 'wrinkler', label: 'Wrinkler', type: 'select', default: '', options: () => (Game.wrinklers || []).filter((w) => w.phase > 0).map((w) => ({ v: w.id, label: `#${w.id}${w.type === 1 ? ' (shiny)' : ''}` })) }],
+      run: (p) => {
+        const w = wrinklerOf(p.wrinkler);
+        if (!w) return 0;
+        w.hp = 0; // the game pops it on its next frame, paying out as usual
+        return 1;
+      },
+    });
+    A({
+      id: 'lump.pick',
+      name: 'Harvest the sugar lump now',
+      icon: 'lump',
+      group: 'Other',
+      unit: 'harvested',
+      available: () => typeof Game.canLumps === 'function' && Game.canLumps(),
+      run: () => {
+        if (!Game.lumpT) return 0;
+        Game.clickLump();
+        return 1;
+      },
+    });
+  }
+
   // Effect names as the game keys them in Game.buffs (the common golden-cookie ones).
   const BUFFS = [
     'Frenzy',
@@ -2018,6 +2096,7 @@ CA.GameActions = (() => {
   }
 
   function init() {
+    blocks();
     registerActions();
     registerConditions();
   }
@@ -2067,9 +2146,9 @@ CA.Macros = (() => {
       name: 'Golden cookies',
       desc: 'Pops golden cookies the moment they appear.',
       icon: sprite(10, 14, 'img/goldCookie.png'),
-      mode: 'repeat',
+      mode: 'flow',
       every: 100,
-      steps: [{ action: 'pop.golden' }],
+      defaultSource: "# Pop every golden cookie (not wrath cookies: that’s its own macro) on screen.\nforever:\n  for s in shimmers():\n    if shimmer.type(s) == \"golden\" and not shimmer.isWrath(s):\n      shimmer.pop(s)\n",
       defaultKey: 'KeyG',
       inAll: true,
       section: 'autoclickers',
@@ -2079,9 +2158,9 @@ CA.Macros = (() => {
       name: 'Wrath cookies',
       desc: 'Pops red wrath cookies too (they can be good or bad).',
       icon: sprite(15, 5, 'img/wrathCookie.png'),
-      mode: 'repeat',
+      mode: 'flow',
       every: 100,
-      steps: [{ action: 'pop.wrath' }],
+      defaultSource: "# Pop every wrath cookie on screen.\nforever:\n  for s in shimmers():\n    if shimmer.type(s) == \"golden\" and shimmer.isWrath(s):\n      shimmer.pop(s)\n",
       defaultKey: 'KeyW',
       inAll: true,
       section: 'autoclickers',
@@ -2091,9 +2170,9 @@ CA.Macros = (() => {
       name: 'Reindeer',
       desc: 'Pops reindeer during the Christmas season.',
       icon: sprite(12, 9, 'img/frostedReindeer.png'),
-      mode: 'repeat',
+      mode: 'flow',
       every: 100,
-      steps: [{ action: 'pop.reindeer' }],
+      defaultSource: "# Pop every reindeer on screen.\nforever:\n  for s in shimmers():\n    if shimmer.type(s) == \"reindeer\":\n      shimmer.pop(s)\n",
       defaultKey: 'KeyR',
       inAll: true,
       section: 'autoclickers',
@@ -2115,10 +2194,14 @@ CA.Macros = (() => {
       name: 'Wrinklers',
       desc: 'Pops wrinklers once they’ve eaten something (so they can drop Halloween cookies and such) — or the moment they latch on. Shift-click its button to switch.',
       icon: sprite(19, 8),
-      mode: 'repeat',
+      mode: 'flow',
       every: 100,
-      steps: [{ action: 'pop.wrinklers', params: { fed: true } }],
-      shift: { step: 0, key: 'fed', on: 'pops them once they’ve eaten (drops count)', off: 'pops them at once' },
+      defaultSource: "# Pop the wrinklers — once they've eaten something (so they can drop Halloween cookies and such),\n# or at once when fed is off; shiny ones too unless shiny says to leave them alone.\n# (Its choices are on its card; shift-click its button flips fed.)\nforever:\n  for w in wrinklers():\n    if (wrinkler.isFed(w) or not fed) and (shiny == \"pop\" or not wrinkler.isShiny(w)):\n      wrinkler.pop(w)\n",
+      inputs: [
+        { key: 'shiny', label: 'Shiny wrinklers', type: 'select', default: 'pop', options: [{ v: 'pop', label: 'Pop them too' }, { v: 'keep', label: 'Leave them alone' }] },
+        { key: 'fed', label: 'Wait until it has eaten (so it can drop something)', type: 'bool', default: true },
+      ],
+      shift: { input: 'fed', on: 'pops them once they’ve eaten (drops count)', off: 'pops them at once' },
       defaultKey: 'KeyK',
       inAll: true,
       section: 'autoclickers',
@@ -2166,10 +2249,10 @@ CA.Macros = (() => {
       name: 'Sugar lump harvester',
       desc: 'Harvests your sugar lump when it’s ripe (always pays) — or as soon as it’s mature, a little earlier but with the game’s 50% chance of getting nothing.',
       icon: sprite(29, 14),
-      mode: 'repeat',
+      mode: 'flow',
       every: 1000,
-      steps: [{ action: 'lump.harvest', params: { when: 'ripe' } }],
-      options: [{ step: 0, key: 'when' }],
+      defaultSource: "# Harvest the sugar lump when it's ripe (always pays) — or as soon as it's mature when \"when\"\n# says so (a little earlier, but with the game's 50% chance of getting nothing).\nforever:\n  if lump.isRipe() or (when == \"mature\" and lump.isMature()):\n    lump.pick()\n",
+      inputs: [{ key: 'when', label: 'Harvest when', type: 'select', default: 'ripe', options: [{ v: 'ripe', label: 'ripe (always pays)' }, { v: 'mature', label: 'mature (50% chance)' }] }],
       defaultKey: '',
       section: 'upkeep',
     },
@@ -2219,7 +2302,7 @@ CA.Macros = (() => {
       if (def.pass) m.pass = true;
       // a built-in whose code comes from elsewhere (the active garden profile's rules), that only
       // runs when it can (ready), reports each pass (afterPass), and is edited on its own page (editAt)
-      if (def.builtin) ['sourceFrom', 'ready', 'afterPass'].forEach((k) => typeof def[k] === 'function' && (m[k] = def[k]));
+      if (def.builtin) ['sourceFrom', 'ready', 'afterPass', 'readiness'].forEach((k) => typeof def[k] === 'function' && (m[k] = def[k]));
       if (def.builtin && def.editAt) m.editAt = def.editAt;
     }
     if (mode === 'when') {
@@ -2633,6 +2716,7 @@ CA.Macros = (() => {
 
   function runFlow(m) {
     if (m.pass) return runFresh(m);
+    passNo++;
     const F = flowRuns[m.id];
     if (!F || ascending() || depth >= MAX_DEPTH) return;
     F.at = [];
@@ -2667,7 +2751,11 @@ CA.Macros = (() => {
    * Runs compiled code once, from the top, as one pass (rules that are checked every second, like
    * a garden profile's). Returns { done, at, trace, error } — what it did and where it stopped.
    */
+  // passes, numbered: a feature can keep something for the length of one pass (passKey(); null outside one)
+  let passNo = 0;
+  const passKey = () => (depth > 0 ? passNo : null);
   function runPass(prog, steps, vars) {
+    passNo++;
     const F = { prog, S: {}, at: [], trace: [], done: 0, error: '', stopped: false, pass: true, steps, vars: { ...(vars || {}) } };
     if (depth >= MAX_DEPTH) return F;
     depth++;
@@ -3022,6 +3110,7 @@ CA.Macros = (() => {
     shiftValue,
     flowOf,
     compiledOf,
+    passKey,
     inputsOf,
     setInput,
     programOf,
@@ -5591,7 +5680,16 @@ CA.AutoBuy = (() => {
   }
 
   /** Every building and upgrade the two Cookie Monster buyers could pick: { kind, name, price, pp, buy() }. */
+  let memo = null; // { key, list } — the same list within one pass of a macro (worked out three times in one)
   function candidates(kinds) {
+    const pass = CA.Macros.passKey();
+    if (pass == null) return candidatesNow(kinds);
+    const key = `${pass}|${kinds.join(',')}|${CA.Shop.roundUp()}|${Game.cookies}`;
+    if (memo && memo.key === key) return memo.list;
+    memo = { key, list: candidatesNow(kinds) };
+    return memo.list;
+  }
+  function candidatesNow(kinds) {
     const data = cm();
     if (!cmReady()) return [];
     const out = [];
@@ -5760,9 +5858,71 @@ CA.AutoBuy = (() => {
     return got;
   }
 
+  // ---- building blocks -----------------------------------------------------------------------
+  //
+  //   cm.best(kind, skip)     the lowest payback period of building / upgrade / all ("": nothing);
+  //                           skip: only what you can afford now. Its result names a thing to buy:
+  //   cm.kind(thing) · cm.price(thing) · cm.pp(thing) · cm.buy(thing)
+  //   upgrades()              a list: the store's upgrades, cheapest first
+  //   upgrade.price(u) · upgrade.owned(name) · buy.upgrade(u)
+  //   research.next(stopBefore)  the next research to buy ("": none — or only what's at / after stopBefore)
+  //   dragon.canPet() · dragon.dropNow() (this quarter-hour's drop, if you're missing it) · dragon.pet()
+
+  const KINDS = { building: ['building'], upgrade: ['upgrade'], all: ['building', 'upgrade'] };
+  const thingKey = (c) => `${c.kind}:${c.name}`;
+  const thingOf = (k) => (k ? candidates(['building', 'upgrade']).find((c) => thingKey(c) === String(k)) || null : null);
+  const upgradeNamed = (n) => (Game.UpgradesInStore || []).find((u) => u && u.name === n) || (Game.UpgradesByName && Game.UpgradesByName[n]) || (Game.Upgrades && Game.Upgrades[n]) || null;
+  function blocks() {
+    const V = (id, desc, get, more) => CA.Script.defineValue({ id, desc, get, ...(more || {}) });
+    V('cm.best', 'the lowest payback period (Cookie Monster) of a kind: building, upgrade or all ("": none)', (kind, skip) => {
+      const b = best(KINDS[kind] || KINDS.all, !!skip && skip !== 'false');
+      return b ? thingKey(b) : '';
+    }, { params: ['kind', 'skip'] });
+    V('cm.kind', 'what a thing to buy is: "building" or "upgrade"', (k) => String(k || '').split(':')[0], { params: ['thing'] });
+    V('cm.price', 'cookies a thing to buy costs', (k) => (thingOf(k) || { price: NaN }).price, { params: ['thing'] });
+    V('cm.pp', 'a thing’s payback period (Cookie Monster)', (k) => (thingOf(k) || { pp: NaN }).pp, { params: ['thing'] });
+    V('upgrades', 'a list: the upgrades in the store, cheapest first', () => storeUpgrades().map((u) => ({ u, price: priceOf(u) })).sort((a, b) => a.price - b.price).map((x) => x.u.name), { list: true });
+    V('upgrade.price', 'an upgrade’s price', (n) => {
+      const u = upgradeNamed(n);
+      return u ? priceOf(u) : NaN;
+    }, { params: ['upgrade'] });
+    V('upgrade.owned', 'whether you own an upgrade', (n) => has(n), { params: ['upgrade'], bool: true });
+    V('research.next', 'the next research to buy, stopping before stopBefore ("": none)', (stop) => (researchPick(stop) || {}).name || '', { params: ['stopBefore'] });
+    V('dragon.canPet', 'whether you can pet the dragon (level 8, “Pet the dragon”)', () => canPet(), { bool: true });
+    V('dragon.dropNow', 'this quarter-hour’s dragon drop, if you’re missing it ("": none)', () => (petSchedule().find((x) => x.now) || {}).name || '');
+    const A = CA.Actions.register;
+    A({
+      id: 'cm.buy',
+      name: 'Buy a building or upgrade (from cm.best)',
+      icon: 'building',
+      group: 'Buying',
+      unit: 'bought',
+      params: [{ key: 'thing', label: 'Thing', type: 'select', default: '', options: () => candidates(['building', 'upgrade']).map((c) => ({ v: thingKey(c), label: c.label })) }],
+      run: (p) => {
+        const c = thingOf(p.thing);
+        memo = null;
+        return c && c.price <= Game.cookies && c.buy() > 0 ? 1 : 0;
+      },
+    });
+    A({
+      id: 'buy.upgrade',
+      name: 'Buy an upgrade',
+      icon: 'upgrade',
+      group: 'Buying',
+      unit: 'bought',
+      params: [{ key: 'upgrade', label: 'Upgrade', type: 'select', default: '', options: () => storeUpgrades(null).concat(storeUpgrades(['tech'])).map((u) => ({ v: u.name, label: u.dname || u.name })) }],
+      run: (p) => {
+        const u = upgradeNamed(p.upgrade);
+        memo = null;
+        return u ? buyUpgrade(u) : 0;
+      },
+    });
+  }
+
   // ---- actions and built-in macros -----------------------------------------------------------
 
   function init() {
+    blocks();
     const A = CA.Actions.register;
     const skipParam = { key: 'skip', label: 'Skip what you can’t afford yet', type: 'bool', default: false };
     A({
@@ -5845,15 +6005,18 @@ CA.AutoBuy = (() => {
     });
 
     const M = CA.Macros;
+    const skipInput = { key: 'skip', label: 'Skip what you can’t afford yet', type: 'bool', default: false };
     M.addBuiltin({
       id: 'cmBuildings',
       name: 'Best building',
       desc: 'Buys the building with the lowest payback period (Cookie Monster) — 10 at a time to the next multiple when the store’s Round to multiples is on. With Best upgrade also on, buys only when a building beats every upgrade.',
       icon: { ico: 'building' },
-      mode: 'repeat',
+      mode: 'flow',
       every: 500,
-      steps: [{ action: 'cm.buyBuilding', params: { skip: false } }],
-      shift: { step: 0, key: 'skip', on: 'skips what you can’t afford', off: 'saves up for the best' },
+      defaultSource: "# Buy the building with the lowest payback period (Cookie Monster) — judged against the upgrades\n# too when Best upgrade is on, so together they always buy the best of both. skip: only what\n# you can afford now (otherwise it saves up for the best). Shift-click its button flips skip.\nforever:\n  if macro.isOn(cmUpgrades):\n    pick = cm.best(all, skip)\n  else:\n    pick = cm.best(building, skip)\n  if pick != \"\" and cm.kind(pick) == \"building\" and cm.price(pick) <= cookies():\n    cm.buy(pick)\n",
+      inputs: [skipInput],
+      shift: { input: 'skip', on: 'skips what you can’t afford', off: 'saves up for the best' },
+      readiness: (ins) => readiness('building', ins.skip),
       needsCM: true,
       holdRepeat: true,
       section: 'buying',
@@ -5863,10 +6026,12 @@ CA.AutoBuy = (() => {
       name: 'Best upgrade',
       desc: 'Buys the upgrade with the lowest payback period (Cookie Monster); clicking upgrades are judged by your clicks per second. With Best building also on, buys only when an upgrade beats every building.',
       icon: { ico: 'upgrade' },
-      mode: 'repeat',
+      mode: 'flow',
       every: 500,
-      steps: [{ action: 'cm.buyUpgrade', params: { skip: false } }],
-      shift: { step: 0, key: 'skip', on: 'skips what you can’t afford', off: 'saves up for the best' },
+      defaultSource: "# Buy the upgrade with the lowest payback period (Cookie Monster; clicking upgrades are judged by\n# your clicks per second) — against the buildings too when Best building is on. skip: only what\n# you can afford now. Shift-click its button flips skip.\nforever:\n  if macro.isOn(cmBuildings):\n    pick = cm.best(all, skip)\n  else:\n    pick = cm.best(upgrade, skip)\n  if pick != \"\" and cm.kind(pick) == \"upgrade\" and cm.price(pick) <= cookies():\n    cm.buy(pick)\n",
+      inputs: [skipInput],
+      shift: { input: 'skip', on: 'skips what you can’t afford', off: 'saves up for the best' },
+      readiness: (ins) => readiness('upgrade', ins.skip),
       needsCM: true,
       holdRepeat: true,
       section: 'buying',
@@ -5876,9 +6041,11 @@ CA.AutoBuy = (() => {
       name: 'Research',
       desc: 'Buys the Bingo center’s research as soon as it shows up — stopping before One mind by default, so it never starts the Grandmapocalypse unless you say so.',
       icon: { sprite: [11, 9] },
-      mode: 'repeat',
+      mode: 'flow',
       every: 2000,
-      steps: [{ action: 'buy.research', params: { stopBefore: 'One mind' } }],
+      defaultSource: "# Buy the Bingo center's research as it shows up — stopping before stopBefore (One mind starts\n# the Grandmapocalypse; \"none\": buy it all).\nforever:\n  r = research.next(stopBefore)\n  if r != \"\" and upgrade.price(r) <= cookies():\n    buy.upgrade(r)\n",
+      inputs: [{ key: 'stopBefore', label: 'Stop before', type: 'select', default: 'One mind', options: () => CA.Actions.get('buy.research').params[0].options() }],
+      readiness: (ins) => CA.Actions.get('buy.research').ready({ stopBefore: ins.stopBefore }),
       holdRepeat: true,
       section: 'buying',
     });
@@ -5887,9 +6054,11 @@ CA.AutoBuy = (() => {
       name: 'Cheap upgrades',
       desc: 'Buys any upgrade costing less than a second (or however many you set) of your unbuffed production — the small stuff, without thinking about it.',
       icon: { ico: 'dollar' },
-      mode: 'repeat',
+      mode: 'flow',
       every: 1000,
-      steps: [{ action: 'buy.cheapUpgrades', params: { secs: 1 } }],
+      defaultSource: "# Buy every upgrade costing less than secs seconds of your unbuffed production — cheapest first.\nforever:\n  for u in upgrades():\n    if upgrade.price(u) <= rawCps() * secs:\n      buy.upgrade(u)\n",
+      inputs: [{ key: 'secs', label: 'Costing less than (seconds of production)', type: 'number', default: 1, min: 0 }],
+      readiness: (ins) => CA.Actions.get('buy.cheapUpgrades').ready({ secs: ins.secs }),
       holdRepeat: true,
       section: 'buying',
     });
@@ -5898,9 +6067,10 @@ CA.AutoBuy = (() => {
       name: 'Pet the dragon',
       desc: 'Gets the dragon’s four drops: works out which quarter of the hour gives which, and in a quarter whose drop you’re missing opens the dragon, pets it until it drops, and closes it. Needs dragon level 8 and the “Pet the dragon” upgrade.',
       icon: { sprite: [30, 12] },
-      mode: 'repeat',
+      mode: 'flow',
       every: 30000,
-      steps: [{ action: 'dragon.pet' }],
+      defaultSource: "# Get the dragon's four drops: in a quarter of the hour whose drop you're missing, pet it until it\n# drops (dragon level 8 and the \"Pet the dragon\" upgrade).\nforever:\n  if dragon.canPet() and dragon.dropNow() != \"\":\n    dragon.pet()\n",
+      readiness: () => CA.Actions.get('dragon.pet').ready({}),
       section: 'upkeep',
     });
   }
@@ -6932,9 +7102,11 @@ CA.Script = (() => {
   /** A value node as code, with the brackets it needs where it sits. */
   function exprText(o, outer = 0, right = false) {
     if (!o) return '?';
-    if (o.v === 'lit') return litText(o.x);
+    // a word that's also a value's name, a keyword or true / false stays quoted ("building" is text; building would be the value)
+    if (o.v === 'lit') return typeof o.x === 'string' && (valueById[o.x] || KEYWORDS.includes(o.x) || o.x === 'true' || o.x === 'false') ? `"${o.x}"` : litText(o.x);
     if (o.v === 'var') return o.name;
-    if (o.v === 'fn') return `${o.id}(${(o.args || []).map((a) => exprText(a)).join(', ')})`;
+    // inside a call's brackets a word is always text: no quotes needed there
+    if (o.v === 'fn') return `${o.id}(${(o.args || []).map((a) => (a.v === 'lit' ? litText(a.x) : exprText(a))).join(', ')})`;
     if (o.v === 'neg') return `-${exprText(o.a, 3)}`;
     const p = PREC[o.op] || 1;
     const s = `${exprText(o.a, p)} ${o.op} ${exprText(o.b, p, true)}`;
@@ -13270,10 +13442,19 @@ CA.UI.WidgetTypes = (() => {
   function readyState(m) {
     const spell = spellState(m);
     if (spell) return { cls: spell, text: spell === 'can' ? 'enough magic' : 'not enough magic yet' };
+    let r = null;
+    if (m.readiness) {
+      // a built-in written as code: its own (with its inputs)
+      try {
+        r = m.readiness(CA.Macros.inputsOf(m));
+      } catch (e) {
+        r = null;
+      }
+      return r ? { cls: r.ok ? 'can' : 'cant', text: r.text || '' } : null;
+    }
     const step = CA.Macros.stepsOf(m)[0];
     const a = step && CA.Actions.get(step.action);
     if (!a || typeof a.ready !== 'function') return null;
-    let r = null;
     try {
       r = a.ready(CA.Actions.paramsFor(step.action, step.params));
     } catch (e) {

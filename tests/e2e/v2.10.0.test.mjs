@@ -67,7 +67,7 @@ await sleep(400);
 CA.UI.Menu.openPage('clickers');
 const row = (id) => doc.querySelector(`[data-macro-row="${id}"]`);
 assert(/Seasons, lumps & the dragon/.test(doc.querySelector('[data-page="clickers"]').textContent), 'a Seasons & sugar lumps section');
-const sel = (id) => row(id).querySelector('select[data-macro-param]');
+const sel = (id) => row(id).querySelector('select[data-macro-param], select[data-macro-input]'); // v3: an input of its code
 assert(!row('season'), 'the Season keeper is gone (SeasonCompletion replaces it, v2.22)');
 assert(row('lumps') && sel('lumps').value === 'ripe', 'Lump harvester: ripe by default');
 
@@ -104,15 +104,16 @@ assert(CA.Actions.describe({ action: 'lump.harvest', params: { when: 'mature' } 
 sel('lumps').value = 'mature';
 sel('lumps').dispatchEvent(new w.Event('change', { bubbles: true }));
 const copy = CA.Macros.duplicate('lumps');
-assert(copy && copy.steps[0].params.when === 'mature' && !copy.options, 'duplicate takes the chosen setting');
+// v3: the harvester is code with an input — a copy sets it first thing in its code
+assert(copy && /^when = mature\n/.test(CA.Macros.sourceOf(copy)) && !copy.inputs, 'duplicate takes the chosen setting');
 Game.WriteSave();
 const saved = Game.modSaveData.CookieMgr;
-assert(JSON.parse(saved).macros.prefs.lumps.params['0.when'] === 'mature', 'choice saved');
+assert(JSON.parse(saved).macros.prefs.lumps.inputs.when === 'mature', 'choice saved');
 const g2 = boot({ idb: { factory: new IDBFactory(), IDBKeyRange }, save: saved });
 stubGame(g2.Game);
 await sleep(400);
 const CA2 = g2.window.CookieMgr;
-assert(CA2.Macros.stepsOf(CA2.Macros.get('lumps'))[0].params.when === 'mature', 'choice restored');
+assert(CA2.Macros.inputsOf(CA2.Macros.get('lumps')).when === 'mature', 'choice restored'); // v3: an input
 CA2.UI.Menu.openPage('clickers');
 assert(g2.window.document.querySelector('[data-macro-row="lumps"] select[data-key="when"]').value === 'mature', 'and shown on its card');
 

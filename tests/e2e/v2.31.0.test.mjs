@@ -86,10 +86,11 @@ M.set(rep.id, false, { silent: true });
 assert(st.total >= 3 && st.lastAt > 0 && live && live.done >= 3, `its step counts (${st.total}) and live status (${live && live.done})`);
 assert(M.runOnce(rep.id) === 1, 'running a Repeat macro by hand: its steps once');
 // a row choice changed while it runs applies at once
-M.set('lumps', true, { silent: true });
-M.setParam('lumps', 0, 'when', 'mature');
-assert(/mature/.test(JSON.stringify(M.programOf(M.get('lumps')))) && /lump\.harvest\(mature\)/.test(M.codeOf(M.get('lumps'))), 'a row choice: the code follows');
-M.set('lumps', false, { silent: true });
+// (v3: the big cookie — the lump harvester is code with inputs now; this one is still a shortcut with a step option)
+M.set('bigCookie', true, { silent: true });
+M.setParam('bigCookie', 0, 'anim', 'none');
+assert(/"none"/.test(JSON.stringify(M.programOf(M.get('bigCookie')))) && /click\.bigCookie\(none\)/.test(M.codeOf(M.get('bigCookie'))), 'a row choice: the code follows');
+M.set('bigCookie', false, { silent: true });
 
 // ---- the editor: "As code", "Carry on as code"
 CA.UI.Menu.openPage('clickers');

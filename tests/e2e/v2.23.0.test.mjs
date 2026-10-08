@@ -60,12 +60,8 @@ Game.cookies = 1e9;
 CA.Macros.setFav('cheapUpgrades', true);
 CA.UI.Widgets.tick();
 // cheap upgrades buys everything under 1s in one run: make it one per run to see the repeat
-CA.Actions.get('buy.cheapUpgrades').run = (p) => {
-  const u = Game.UpgradesInStore[0];
-  if (!u) return 0;
-  u.buy();
-  return 1;
-};
+// (v3: it's code — your version of it)
+CA.Macros.customize('cheapUpgrades', { ...CA.Macros.get('cheapUpgrades'), source: 'for u in upgrades():\n  buy.upgrade(u)\n  stop\n' });
 const cbtn = () => W().querySelector('[data-w-trigger="cheapUpgrades"]');
 cbtn().dispatchEvent(new w.MouseEvent('mousedown', { bubbles: true, button: 0, clientX: 5, clientY: 5 }));
 await sleep(200);

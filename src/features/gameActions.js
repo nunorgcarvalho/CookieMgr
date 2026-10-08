@@ -9,6 +9,84 @@ CA.GameActions = (() => {
     return list.length;
   };
 
+  // ---- building blocks: shimmers, wrinklers, the sugar lump, macros -----------------------------
+  //
+  //   shimmers() · shimmer.type(s) ("golden", "reindeer") · shimmer.isWrath(s) · shimmer.life(s) · shimmer.pop(s)
+  //   wrinklers() · wrinkler.isShiny(w) · wrinkler.isFed(w) · wrinkler.sucked(w) · wrinkler.pop(w)
+  //   lump.isRipe() · lump.isMature() · lump.pick()
+  //   macro.isOn(id)
+
+  // a shimmer's key: the game's own id (shimmers come and go, so not their place in the list)
+  const shimmerIds = new WeakMap();
+  let shimmerN = 0;
+  const shimmerKey = (s) => (s.id != null ? s.id : shimmerIds.get(s) || (shimmerIds.set(s, `s${++shimmerN}`), shimmerIds.get(s)));
+  const shimmerOf = (k) => (Game.shimmers || []).find((s) => String(shimmerKey(s)) === String(k)) || null;
+  // a wrinkler's key: its id (its slot), or its place in the list when it has none
+  const wrinklerKey = (w, i) => (w.id != null ? w.id : i);
+  const wrinklerOf = (k) => (Game.wrinklers || []).find((w, i) => String(wrinklerKey(w, i)) === String(k) && w.phase > 0 && w.hp > 0) || null;
+  const lumpAge = () => (Game.lumpT ? Date.now() - Game.lumpT : -1);
+
+  function blocks() {
+    const V = (id, desc, get, more) => CA.Script.defineValue({ id, desc, get, ...(more || {}) });
+    V('shimmers', 'a list: the golden cookies and reindeer on screen', () => (Game.shimmers || []).map(shimmerKey), { list: true });
+    V('shimmer.type', 'a shimmer’s kind: "golden" or "reindeer"', (k) => (shimmerOf(k) || {}).type || '', { params: ['shimmer'] });
+    V('shimmer.isWrath', 'whether a golden cookie is a wrath cookie', (k) => !!(shimmerOf(k) || {}).wrath, { params: ['shimmer'], bool: true });
+    V('shimmer.life', 'seconds a shimmer has left on screen', (k) => {
+      const s = shimmerOf(k);
+      return s && Number.isFinite(s.life) ? s.life / (Game.fps || 30) : NaN;
+    }, { params: ['shimmer'] });
+    V('wrinklers', 'a list: the wrinklers on the big cookie', () => (Game.wrinklers || []).map((w, i) => (w.phase > 0 && w.hp > 0 ? wrinklerKey(w, i) : null)).filter((k) => k != null), { list: true });
+    V('wrinkler.isShiny', 'whether a wrinkler is shiny', (k) => (wrinklerOf(k) || {}).type === 1, { params: ['wrinkler'], bool: true });
+    // a wrinkler only gives drops once it has eaten something (main.js: sucked > 0.5)
+    V('wrinkler.isFed', 'whether a wrinkler has eaten (so popping it can drop something)', (k) => ((wrinklerOf(k) || {}).sucked || 0) > 0.5, { params: ['wrinkler'], bool: true });
+    V('wrinkler.sucked', 'cookies a wrinkler has eaten', (k) => (wrinklerOf(k) || {}).sucked || 0, { params: ['wrinkler'] });
+    V('lump.isRipe', 'whether the sugar lump is ripe (harvesting always pays)', () => lumpAge() >= 0 && lumpAge() >= Game.lumpRipeAge, { bool: true });
+    V('lump.isMature', 'whether the sugar lump is mature (harvesting: a 50% chance)', () => lumpAge() >= 0 && lumpAge() >= Game.lumpMatureAge, { bool: true });
+    V('macro.isOn', 'whether a macro is on', (id) => CA.Macros.isOn(id), { params: ['macro'], bool: true });
+    const A = CA.Actions.register;
+    A({
+      id: 'shimmer.pop',
+      name: 'Pop a shimmer',
+      icon: 'cookie',
+      group: 'Shimmers',
+      unit: 'popped',
+      params: [{ key: 'shimmer', label: 'Shimmer', type: 'select', default: '', options: () => (Game.shimmers || []).map((s) => ({ v: shimmerKey(s), label: `${s.type}${s.wrath ? ' (wrath)' : ''}` })) }],
+      run: (p) => {
+        const s = shimmerOf(p.shimmer);
+        if (!s) return 0;
+        s.pop();
+        return 1;
+      },
+    });
+    A({
+      id: 'wrinkler.pop',
+      name: 'Pop a wrinkler',
+      icon: 'wrinkler',
+      group: 'Shimmers',
+      unit: 'popped',
+      params: [{ key: 'wrinkler', label: 'Wrinkler', type: 'select', default: '', options: () => (Game.wrinklers || []).filter((w) => w.phase > 0).map((w) => ({ v: w.id, label: `#${w.id}${w.type === 1 ? ' (shiny)' : ''}` })) }],
+      run: (p) => {
+        const w = wrinklerOf(p.wrinkler);
+        if (!w) return 0;
+        w.hp = 0; // the game pops it on its next frame, paying out as usual
+        return 1;
+      },
+    });
+    A({
+      id: 'lump.pick',
+      name: 'Harvest the sugar lump now',
+      icon: 'lump',
+      group: 'Other',
+      unit: 'harvested',
+      available: () => typeof Game.canLumps === 'function' && Game.canLumps(),
+      run: () => {
+        if (!Game.lumpT) return 0;
+        Game.clickLump();
+        return 1;
+      },
+    });
+  }
+
   // Effect names as the game keys them in Game.buffs (the common golden-cookie ones).
   const BUFFS = [
     'Frenzy',
@@ -359,6 +437,7 @@ CA.GameActions = (() => {
   }
 
   function init() {
+    blocks();
     registerActions();
     registerConditions();
   }

@@ -51,10 +51,19 @@ CA.UI.WidgetTypes = (() => {
   function readyState(m) {
     const spell = spellState(m);
     if (spell) return { cls: spell, text: spell === 'can' ? 'enough magic' : 'not enough magic yet' };
+    let r = null;
+    if (m.readiness) {
+      // a built-in written as code: its own (with its inputs)
+      try {
+        r = m.readiness(CA.Macros.inputsOf(m));
+      } catch (e) {
+        r = null;
+      }
+      return r ? { cls: r.ok ? 'can' : 'cant', text: r.text || '' } : null;
+    }
     const step = CA.Macros.stepsOf(m)[0];
     const a = step && CA.Actions.get(step.action);
     if (!a || typeof a.ready !== 'function') return null;
-    let r = null;
     try {
       r = a.ready(CA.Actions.paramsFor(step.action, step.params));
     } catch (e) {

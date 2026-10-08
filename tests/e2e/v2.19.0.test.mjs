@@ -26,7 +26,8 @@ CA.Macros.set('wrinklers', true, { silent: true });
 CA.UI.MacrosPage.sync(page());
 const chips = () => [...page().querySelectorAll('[data-macro-runbar] .ca-runchip')].map((c) => c.dataset.id);
 assert(chips().join() === 'golden,wrinklers', `a chip per running macro (${chips()})`);
-assert(/Pop golden cookies/.test(card('golden').querySelector('[data-macro-status]').textContent) && /on for/.test(card('golden').querySelector('[data-macro-status]').textContent), 'a running card shows what its steps did');
+// v3: Golden cookies is code — its card shows what it has done
+assert(/things done/.test(card('golden').querySelector('[data-macro-status]').textContent) && /on for/.test(card('golden').querySelector('[data-macro-status]').textContent), 'a running card shows what it did');
 click(w, page().querySelector('.ca-runchip[data-id="wrinklers"] .ca-runchip-x'));
 assert(!CA.Macros.isOn('wrinklers'), 'the chip’s × stops it');
 click(w, page().querySelector('.ca-runchip[data-id="golden"]'));

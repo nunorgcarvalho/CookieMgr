@@ -143,7 +143,7 @@ Game.UpgradesInStore.push(upgrade('Cheap one', 800), upgrade('Pricey one', 1500)
 Game.cookies = 1e6;
 CA.Macros.runOnce('cheapUpgrades');
 assert(!names().includes('Cheap one') && names().includes('Pricey one'), 'under 1s of production (1000): bought; over: not');
-CA.Macros.setParam('cheapUpgrades', 0, 'secs', 2);
+CA.Macros.setInput('cheapUpgrades', 'secs', 2); // v3: an input of its code
 CA.Macros.runOnce('cheapUpgrades');
 assert(!names().includes('Pricey one'), '2s: that one too');
 
