@@ -25,10 +25,10 @@ Game.cookies = 1e8;
 M.runOnce('stockTrader');
 assert(bank.brokers === 4, `never more than the market allows (${bank.brokers} of ${bank.getMaxBrokers()})`);
 grandma.highest = 60; // room for 7
-M.setParam('stockTrader', 0, 'brokers', false);
+M.setInput('stockTrader', 'brokers', false); // v3: an input of the autobuyer's code (was a step's option)
 M.runOnce('stockTrader');
 assert(bank.brokers === 4, 'its “Hire stockbrokers” choice off: none');
-M.setParam('stockTrader', 0, 'brokers', true);
+M.setInput('stockTrader', 'brokers', true);
 M.shiftToggle('stockTrader'); // only sells
 M.runOnce('stockTrader');
 assert(bank.brokers === 4, 'only selling (shift-click): no brokers either');

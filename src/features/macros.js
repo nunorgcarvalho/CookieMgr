@@ -100,10 +100,14 @@ CA.Macros = (() => {
       name: 'Stock market autobuyer',
       desc: 'Once a second: hires the stockbrokers it can afford (each makes buying cheaper), buys the max it can afford of fast-rising stocks, then slow-rising ones, and sells anything it holds that isn’t rising.',
       icon: sprite(9, 33),
-      mode: 'repeat',
+      mode: 'flow',
       every: 1000,
-      steps: [{ action: 'stocks.trade', params: { buy: true } }],
-      shift: { step: 0, key: 'buy', on: 'buys and sells', off: 'only sells what you hold' },
+      defaultSource: () => CA.StockTrader.SOURCE,
+      inputs: [
+        { key: 'buy', label: 'Buy rising stocks', type: 'bool', default: true },
+        { key: 'brokers', label: 'Hire stockbrokers when affordable', type: 'bool', default: true },
+      ],
+      shift: { input: 'buy', on: 'buys and sells', off: 'only sells what you hold' },
       defaultKey: '',
       section: 'stocks',
     },
@@ -180,7 +184,9 @@ CA.Macros = (() => {
       // saved blocks instead, written out as code here
       if (typeof def.source === 'string') m.source = def.source.slice(0, 50000);
       else if (Array.isArray(def.flow) && def.flow.length) m.source = CA.Script.decompile(cleanFlow(def.flow));
-      if (def.builtin && typeof def.defaultSource === 'string') m.defaultSource = def.defaultSource;
+      if (def.builtin && (typeof def.defaultSource === 'string' || typeof def.defaultSource === 'function')) m.defaultSource = typeof def.defaultSource === 'function' ? def.defaultSource() : def.defaultSource;
+      // a built-in's inputs: its settings (on its card), variables in its code
+      if (def.builtin && Array.isArray(def.inputs)) m.inputs = def.inputs.map((i) => ({ ...i }));
     }
     if (mode === 'when') {
       // { all: [{ cond, params, not }, …], edge } — v2.0 saved a single condition at the top level
@@ -257,7 +263,8 @@ CA.Macros = (() => {
     CUSTOM_FIELDS.forEach((k) => def[k] !== undefined && (custom[k] = JSON.parse(JSON.stringify(def[k]))));
     // the editor's version already holds the row choices, interval and code: drop the separate ones
     const fav = prefs[id] && prefs[id].fav;
-    prefs[id] = { custom, ...(fav ? { fav } : {}) };
+    const inputs = prefs[id] && prefs[id].inputs;
+    prefs[id] = { custom, ...(fav ? { fav } : {}), ...(inputs ? { inputs } : {}) };
     const m = applyBuiltin(id);
     changed(id);
     return m;
@@ -305,8 +312,11 @@ CA.Macros = (() => {
     const m = byId[id];
     if (!m) return null;
     // the copy gets the steps (and a flow's blocks) as they are now, settings applied
-    const copy = JSON.parse(JSON.stringify({ ...m, steps: stepsOf(m), every: everyOf(m), source: m.mode === 'flow' ? sourceOf(m) : undefined }));
+    const ins = inputsOf(m);
+    const lead = Object.keys(ins).map((k) => `${k} = ${CA.Script.litText(ins[k])}\n`).join('');
+    const copy = JSON.parse(JSON.stringify({ ...m, steps: stepsOf(m), every: everyOf(m), source: m.mode === 'flow' ? lead + sourceOf(m) : undefined }));
     delete copy.defaultSource;
+    delete copy.inputs;
     delete copy.options;
     delete copy.shift;
     delete copy.defaultKey;
@@ -395,7 +405,24 @@ CA.Macros = (() => {
   /** An algorithmic macro's code: yours, or a built-in's (as you edited it, else its default). */
   const sourceOf = (m) => (typeof m.source === 'string' ? m.source : (m.builtin && m.defaultSource) || '');
   /** Its code compiled: { flow, errors } (lines kept, for its status). */
-  const compiledOf = (m) => CA.Script.compile(sourceOf(m));
+  const compiledOf = (m) => CA.Script.compile(sourceOf(m), { vars: (m.inputs || []).map((i) => i.key) });
+  /** An algorithmic built-in's inputs (its settings — variables in its code), with your choices. */
+  function inputsOf(m) {
+    const mine = (m && prefs[m.id] && prefs[m.id].inputs) || {};
+    const out = {};
+    ((m && m.inputs) || []).forEach((i) => (out[i.key] = mine[i.key] !== undefined ? mine[i.key] : i.default));
+    return out;
+  }
+  /** Sets one of its inputs — a running one sees it on its next pass. */
+  function setInput(id, key, value) {
+    const m = byId[id];
+    if (!m || !(m.inputs || []).some((i) => i.key === key)) return;
+    const p = { ...(prefs[id] || {}) };
+    p.inputs = { ...(p.inputs || {}), [key]: value };
+    prefs[id] = p;
+    if (running[id] && flowRuns[id]) flowRuns[id].vars[key] = value;
+    changed(id);
+  }
   /** The blocks a flow runs. */
   const flowOf = (m) => compiledOf(m).flow;
   /** Why a macro couldn't start or stopped by itself (code with a problem), else ''. */
@@ -618,7 +645,7 @@ CA.Macros = (() => {
       }
       prog = flow;
     } else prog = programOf(m);
-    flowRuns[id] = { prog, S: {}, at: [], trace: [], done: 0, error: '', stopped: false, steps: status[id].steps, vars: {} };
+    flowRuns[id] = { prog, S: {}, at: [], trace: [], done: 0, error: '', stopped: false, steps: status[id].steps, vars: inputsOf(m) };
     delete problems[id];
     running[id] = { since: Date.now(), timer: setInterval(() => tick(m), everyOf(m)) };
     return true;
@@ -676,7 +703,7 @@ CA.Macros = (() => {
     if (!m || m.mode === 'group' || ascending()) return 0;
     // its steps once (an algorithm: one pass of its code)
     const prog = m.mode === 'flow' ? compiledOf(m).flow : programFrom({ mode: 'once', steps: stepsOf(m) });
-    const F = runPass(prog, status[id].steps);
+    const F = runPass(prog, status[id].steps, inputsOf(m));
     status[id].runs++;
     status[id].lastRun = Date.now();
     if (F.done > 0) bump(id, F.done);
@@ -755,15 +782,16 @@ CA.Macros = (() => {
   function shiftToggle(id) {
     const m = byId[id];
     if (!m || !m.shift) return null;
-    const step = stepsOf(m)[m.shift.step];
-    const now = CA.Actions.paramsFor(step.action, step.params)[m.shift.key];
-    setParam(id, m.shift.step, m.shift.key, !now);
+    const now = shiftValue(id);
+    if (m.shift.input) setInput(id, m.shift.input, !now);
+    else setParam(id, m.shift.step, m.shift.key, !now);
     return !now;
   }
   /** The current value of a built-in's shift-click setting. */
   function shiftValue(id) {
     const m = byId[id];
     if (!m || !m.shift) return null;
+    if (m.shift.input) return !!inputsOf(m)[m.shift.input];
     const step = stepsOf(m)[m.shift.step];
     return !!CA.Actions.paramsFor(step.action, step.params)[m.shift.key];
   }
@@ -820,6 +848,13 @@ CA.Macros = (() => {
       delete p.source;
       delete p.flow;
       if (p.custom && typeof p.custom === 'object') delete p.custom.flow;
+      const base = baseDefs[id];
+      if (base && Array.isArray(base.inputs) && p.params && typeof p.params === 'object') {
+        Object.keys(p.params).forEach((k) => {
+          const key = k.split('.')[1];
+          if (base.inputs.some((i) => i.key === key) && !(p.inputs && key in p.inputs)) p.inputs = { ...(p.inputs || {}), [key]: p.params[k] };
+        });
+      }
     });
     // your versions of the built-ins (and back to the originals where you had none)
     Object.keys(baseDefs).forEach((id) => {
@@ -922,6 +957,8 @@ CA.Macros = (() => {
     shiftValue,
     flowOf,
     compiledOf,
+    inputsOf,
+    setInput,
     programOf,
     codeOf,
     codeFor,

@@ -16,6 +16,33 @@ CA.StockTrader = (() => {
   const MACRO = 'stockTrader';
 
   /** One trading pass. Returns how many buy/sell orders went through. */
+  /**
+   * The Stock market autobuyer's code (its default — yours to change): the same strategy as trade()
+   * below, written with the market's building blocks. Its inputs `buy` and `brokers` are the
+   * choices on its card.
+   */
+  const SOURCE = `# The stock market autobuyer, once a second: hire the stockbrokers you can afford
+# (each makes buying 5% cheaper), sell what stopped rising, then buy what's rising.
+# buy and brokers are its choices (on its card; shift-click its button flips buy).
+# Stock modes: 0 stable · 1 slow rise · 2 slow fall · 3 fast rise · 4 fast fall · 5 chaotic
+forever:
+  if buy and brokers:
+    stocks.hireBrokers()
+  # sell anything held that isn't rising
+  for good in stocks():
+    if stock.held(good) > 0 and stock.mode(good) != 1 and stock.mode(good) != 3:
+      stock.sell(good)
+  if buy:
+    # buy the max you can afford: fast risers first, then slow risers
+    for good in stocks():
+      if stock.mode(good) == 3:
+        stock.buy(good)
+    for good in stocks():
+      if stock.mode(good) == 1:
+        stock.buy(good)
+`;
+
+  /** The same strategy in JavaScript (the stocks.trade action) — the reference the code is tested against. */
   function trade({ buy = true, brokers = true } = {}) {
     const m = CA.Stocks.minigame();
     if (!m) return 0;
@@ -94,5 +121,5 @@ CA.StockTrader = (() => {
     return cookies > 0 ? `Sells for ~${beautify(cookies)} cookies right now` : 'Nothing to sell right now';
   }
 
-  return { trade, hireBrokers, sellEverything, set, toggle, isOn, sellAll, previewSellAllCookies, sellAllTitle };
+  return { SOURCE, trade, hireBrokers, sellEverything, set, toggle, isOn, sellAll, previewSellAllCookies, sellAllTitle };
 })();

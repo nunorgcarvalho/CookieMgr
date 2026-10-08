@@ -37,6 +37,7 @@ export function boot({ save = null, localStorageSeed = {}, withGrimoire = true, 
   const goods = ['Cereals', 'Chocolate', 'Butter', 'Sugar', 'Nuts'].map((name, id) => ({
     id,
     name,
+    symbol: ['CRL', 'CHC', 'BTR', 'SUG', 'NUT'][id], // as in minigameMarket.js
     val: 10 + id * 5,
     stock: 0,
     mode: id % 6,

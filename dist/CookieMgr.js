@@ -2128,10 +2128,14 @@ CA.Macros = (() => {
       name: 'Stock market autobuyer',
       desc: 'Once a second: hires the stockbrokers it can afford (each makes buying cheaper), buys the max it can afford of fast-rising stocks, then slow-rising ones, and sells anything it holds that isn’t rising.',
       icon: sprite(9, 33),
-      mode: 'repeat',
+      mode: 'flow',
       every: 1000,
-      steps: [{ action: 'stocks.trade', params: { buy: true } }],
-      shift: { step: 0, key: 'buy', on: 'buys and sells', off: 'only sells what you hold' },
+      defaultSource: () => CA.StockTrader.SOURCE,
+      inputs: [
+        { key: 'buy', label: 'Buy rising stocks', type: 'bool', default: true },
+        { key: 'brokers', label: 'Hire stockbrokers when affordable', type: 'bool', default: true },
+      ],
+      shift: { input: 'buy', on: 'buys and sells', off: 'only sells what you hold' },
       defaultKey: '',
       section: 'stocks',
     },
@@ -2208,7 +2212,9 @@ CA.Macros = (() => {
       // saved blocks instead, written out as code here
       if (typeof def.source === 'string') m.source = def.source.slice(0, 50000);
       else if (Array.isArray(def.flow) && def.flow.length) m.source = CA.Script.decompile(cleanFlow(def.flow));
-      if (def.builtin && typeof def.defaultSource === 'string') m.defaultSource = def.defaultSource;
+      if (def.builtin && (typeof def.defaultSource === 'string' || typeof def.defaultSource === 'function')) m.defaultSource = typeof def.defaultSource === 'function' ? def.defaultSource() : def.defaultSource;
+      // a built-in's inputs: its settings (on its card), variables in its code
+      if (def.builtin && Array.isArray(def.inputs)) m.inputs = def.inputs.map((i) => ({ ...i }));
     }
     if (mode === 'when') {
       // { all: [{ cond, params, not }, …], edge } — v2.0 saved a single condition at the top level
@@ -2285,7 +2291,8 @@ CA.Macros = (() => {
     CUSTOM_FIELDS.forEach((k) => def[k] !== undefined && (custom[k] = JSON.parse(JSON.stringify(def[k]))));
     // the editor's version already holds the row choices, interval and code: drop the separate ones
     const fav = prefs[id] && prefs[id].fav;
-    prefs[id] = { custom, ...(fav ? { fav } : {}) };
+    const inputs = prefs[id] && prefs[id].inputs;
+    prefs[id] = { custom, ...(fav ? { fav } : {}), ...(inputs ? { inputs } : {}) };
     const m = applyBuiltin(id);
     changed(id);
     return m;
@@ -2333,8 +2340,11 @@ CA.Macros = (() => {
     const m = byId[id];
     if (!m) return null;
     // the copy gets the steps (and a flow's blocks) as they are now, settings applied
-    const copy = JSON.parse(JSON.stringify({ ...m, steps: stepsOf(m), every: everyOf(m), source: m.mode === 'flow' ? sourceOf(m) : undefined }));
+    const ins = inputsOf(m);
+    const lead = Object.keys(ins).map((k) => `${k} = ${CA.Script.litText(ins[k])}\n`).join('');
+    const copy = JSON.parse(JSON.stringify({ ...m, steps: stepsOf(m), every: everyOf(m), source: m.mode === 'flow' ? lead + sourceOf(m) : undefined }));
     delete copy.defaultSource;
+    delete copy.inputs;
     delete copy.options;
     delete copy.shift;
     delete copy.defaultKey;
@@ -2423,7 +2433,24 @@ CA.Macros = (() => {
   /** An algorithmic macro's code: yours, or a built-in's (as you edited it, else its default). */
   const sourceOf = (m) => (typeof m.source === 'string' ? m.source : (m.builtin && m.defaultSource) || '');
   /** Its code compiled: { flow, errors } (lines kept, for its status). */
-  const compiledOf = (m) => CA.Script.compile(sourceOf(m));
+  const compiledOf = (m) => CA.Script.compile(sourceOf(m), { vars: (m.inputs || []).map((i) => i.key) });
+  /** An algorithmic built-in's inputs (its settings — variables in its code), with your choices. */
+  function inputsOf(m) {
+    const mine = (m && prefs[m.id] && prefs[m.id].inputs) || {};
+    const out = {};
+    ((m && m.inputs) || []).forEach((i) => (out[i.key] = mine[i.key] !== undefined ? mine[i.key] : i.default));
+    return out;
+  }
+  /** Sets one of its inputs — a running one sees it on its next pass. */
+  function setInput(id, key, value) {
+    const m = byId[id];
+    if (!m || !(m.inputs || []).some((i) => i.key === key)) return;
+    const p = { ...(prefs[id] || {}) };
+    p.inputs = { ...(p.inputs || {}), [key]: value };
+    prefs[id] = p;
+    if (running[id] && flowRuns[id]) flowRuns[id].vars[key] = value;
+    changed(id);
+  }
   /** The blocks a flow runs. */
   const flowOf = (m) => compiledOf(m).flow;
   /** Why a macro couldn't start or stopped by itself (code with a problem), else ''. */
@@ -2646,7 +2673,7 @@ CA.Macros = (() => {
       }
       prog = flow;
     } else prog = programOf(m);
-    flowRuns[id] = { prog, S: {}, at: [], trace: [], done: 0, error: '', stopped: false, steps: status[id].steps, vars: {} };
+    flowRuns[id] = { prog, S: {}, at: [], trace: [], done: 0, error: '', stopped: false, steps: status[id].steps, vars: inputsOf(m) };
     delete problems[id];
     running[id] = { since: Date.now(), timer: setInterval(() => tick(m), everyOf(m)) };
     return true;
@@ -2704,7 +2731,7 @@ CA.Macros = (() => {
     if (!m || m.mode === 'group' || ascending()) return 0;
     // its steps once (an algorithm: one pass of its code)
     const prog = m.mode === 'flow' ? compiledOf(m).flow : programFrom({ mode: 'once', steps: stepsOf(m) });
-    const F = runPass(prog, status[id].steps);
+    const F = runPass(prog, status[id].steps, inputsOf(m));
     status[id].runs++;
     status[id].lastRun = Date.now();
     if (F.done > 0) bump(id, F.done);
@@ -2783,15 +2810,16 @@ CA.Macros = (() => {
   function shiftToggle(id) {
     const m = byId[id];
     if (!m || !m.shift) return null;
-    const step = stepsOf(m)[m.shift.step];
-    const now = CA.Actions.paramsFor(step.action, step.params)[m.shift.key];
-    setParam(id, m.shift.step, m.shift.key, !now);
+    const now = shiftValue(id);
+    if (m.shift.input) setInput(id, m.shift.input, !now);
+    else setParam(id, m.shift.step, m.shift.key, !now);
     return !now;
   }
   /** The current value of a built-in's shift-click setting. */
   function shiftValue(id) {
     const m = byId[id];
     if (!m || !m.shift) return null;
+    if (m.shift.input) return !!inputsOf(m)[m.shift.input];
     const step = stepsOf(m)[m.shift.step];
     return !!CA.Actions.paramsFor(step.action, step.params)[m.shift.key];
   }
@@ -2848,6 +2876,13 @@ CA.Macros = (() => {
       delete p.source;
       delete p.flow;
       if (p.custom && typeof p.custom === 'object') delete p.custom.flow;
+      const base = baseDefs[id];
+      if (base && Array.isArray(base.inputs) && p.params && typeof p.params === 'object') {
+        Object.keys(p.params).forEach((k) => {
+          const key = k.split('.')[1];
+          if (base.inputs.some((i) => i.key === key) && !(p.inputs && key in p.inputs)) p.inputs = { ...(p.inputs || {}), [key]: p.params[k] };
+        });
+      }
     });
     // your versions of the built-ins (and back to the originals where you had none)
     Object.keys(baseDefs).forEach((id) => {
@@ -2950,6 +2985,8 @@ CA.Macros = (() => {
     shiftValue,
     flowOf,
     compiledOf,
+    inputsOf,
+    setInput,
     programOf,
     codeOf,
     codeFor,
@@ -4215,7 +4252,95 @@ CA.Stocks = (() => {
     });
   }
 
+  // ---- building blocks for algorithmic macros ------------------------------------------------
+  //
+  //   stocks()                 a list: every stock on the market (its symbol: CRL, CHC…)
+  //   stock.mode(good)         0 stable · 1 slow rise · 2 slow fall · 3 fast rise · 4 fast fall · 5 chaotic
+  //   stock.price(good)        its value ($), stock.resting(good) the value it drifts back to
+  //   stock.held(good)         how many you hold, stock.max(good) how many you can, stock.room(good) the difference
+  //   stock.delta(good)        its last change (%), stock.cost(good) cookies for one share (overhead included)
+  //   stock.brokers() · stock.maxBrokers() · stock.brokerPrice()
+  //   stock.buy(good, n) · stock.sell(good, n)      n: how many (leave it out for as many as possible / all)
+  // A good is named by its symbol (CRL), its building (Farm) or its number (0).
+
+  const ALL = 10000; // the market's own "as many as possible"
+  /** A good from a name: its symbol, its building, its name, or its number. */
+  function goodOf(key) {
+    const m = minigame();
+    if (!m || key == null) return null;
+    const k = String(key).toLowerCase();
+    return (
+      m.goodsById.find((g) => String(g.id) === k || (g.symbol && g.symbol.toLowerCase() === k) || (g.building && g.building.name && g.building.name.toLowerCase() === k) || (g.name && g.name.toLowerCase() === k)) || null
+    );
+  }
+  const keyOf = (g) => g.symbol || String(g.id);
+  const maxOf = (m, g) => (typeof m.getGoodMaxStock === 'function' ? m.getGoodMaxStock(g) : Infinity);
+  const overhead = (m) => 1 + 0.01 * (20 * Math.pow(0.95, m.brokers || 0));
+
+  function blocks() {
+    const V = (id, desc, get, params) => CA.Script.defineValue({ id, desc, params, get });
+    const on = (fn) => (key) => {
+      const m = minigame();
+      const g = m && goodOf(key);
+      return g ? fn(m, g) : NaN;
+    };
+    V('stocks', 'a list: every stock on the market (its symbol)', () => {
+      const m = minigame();
+      return m ? m.goodsById.filter((g) => g.active !== false).map(keyOf) : [];
+    });
+    CA.Script.VALUES.find((v) => v.id === 'stocks').list = true;
+    V('stock.mode', 'a stock’s trend: 0 stable, 1 slow rise, 2 slow fall, 3 fast rise, 4 fast fall, 5 chaotic', on((m, g) => g.mode), ['good']);
+    V('stock.price', 'a stock’s value ($)', on((m, g) => g.val), ['good']);
+    V('stock.resting', 'the value a stock drifts back to ($)', on((m, g) => (typeof m.getRestingVal === 'function' ? m.getRestingVal(g.id) : NaN)), ['good']);
+    V('stock.held', 'how many of a stock you hold', on((m, g) => g.stock), ['good']);
+    V('stock.max', 'how many of a stock your offices can hold', on((m, g) => maxOf(m, g)), ['good']);
+    V('stock.room', 'how many more of a stock you could hold', on((m, g) => Math.max(0, maxOf(m, g) - g.stock)), ['good']);
+    V('stock.delta', 'a stock’s last change (%)', on((m, g) => (typeof m.goodDelta === 'function' ? m.goodDelta(g.id) : NaN)), ['good']);
+    V('stock.cost', 'cookies for one share of a stock, with the overhead', on((m, g) => g.val * (Game.cookiesPsRawHighest || 0) * overhead(m)), ['good']);
+    V('stock.brokers', 'how many stockbrokers you have', () => (minigame() || {}).brokers || 0);
+    V('stock.maxBrokers', 'how many stockbrokers you may have', () => {
+      const m = minigame();
+      return m && typeof m.getMaxBrokers === 'function' ? m.getMaxBrokers() : 0;
+    });
+    V('stock.brokerPrice', 'cookies for the next stockbroker', () => {
+      const m = minigame();
+      return m && typeof m.getBrokerPrice === 'function' ? m.getBrokerPrice() : NaN;
+    });
+    const goodParam = { key: 'good', label: 'Stock', type: 'select', default: '', options: () => ((minigame() || {}).goodsById || []).map((g) => ({ v: keyOf(g), label: `${keyOf(g)} — ${g.name || g.building.name}` })) };
+    const nParam = (label) => ({ key: 'n', label, type: 'number', default: ALL, min: 1 });
+    CA.Actions.register({
+      id: 'stock.buy',
+      name: 'Buy a stock',
+      icon: 'stocks',
+      group: 'Stock market',
+      unit: 'trades',
+      params: [goodParam, nParam('How many (10000: as many as possible)')],
+      available: () => !!minigame(),
+      run: (p) => {
+        const m = minigame();
+        const g = goodOf(p.good);
+        return g && m.buyGood(g.id, Math.max(1, Math.floor(Number(p.n) || ALL))) ? 1 : 0;
+      },
+    });
+    CA.Actions.register({
+      id: 'stock.sell',
+      name: 'Sell a stock',
+      icon: 'dollar',
+      group: 'Stock market',
+      unit: 'trades',
+      params: [goodParam, nParam('How many (10000: all of it)')],
+      available: () => !!minigame(),
+      run: (p) => {
+        const m = minigame();
+        const g = goodOf(p.good);
+        return g && g.stock > 0 && m.sellGood(g.id, Math.max(1, Math.floor(Number(p.n) || ALL))) ? 1 : 0;
+      },
+    });
+    CA.Script.defineLookup({ name: 'Stock mode', uses: ['stock.mode(good)'], items: () => MODES.map((x, i) => ({ v: i, label: x.label })) });
+  }
+
   function init() {
+    blocks();
     CA.Settings.defineOption({
       key: 'stockIndicators',
       icon: 'tag',
@@ -4254,7 +4379,7 @@ CA.Stocks = (() => {
     refresh();
   }
 
-  return { init, refresh, MODES, list, portfolioNow, minigame, lastTick: () => lastTick, nextTickIn, sample };
+  return { init, refresh, MODES, list, portfolioNow, minigame, goodOf, lastTick: () => lastTick, nextTickIn, sample };
 })();
 
 // ---- src/features/gameStates.js --------------------------------------
@@ -4560,6 +4685,33 @@ CA.StockTrader = (() => {
   const MACRO = 'stockTrader';
 
   /** One trading pass. Returns how many buy/sell orders went through. */
+  /**
+   * The Stock market autobuyer's code (its default — yours to change): the same strategy as trade()
+   * below, written with the market's building blocks. Its inputs `buy` and `brokers` are the
+   * choices on its card.
+   */
+  const SOURCE = `# The stock market autobuyer, once a second: hire the stockbrokers you can afford
+# (each makes buying 5% cheaper), sell what stopped rising, then buy what's rising.
+# buy and brokers are its choices (on its card; shift-click its button flips buy).
+# Stock modes: 0 stable · 1 slow rise · 2 slow fall · 3 fast rise · 4 fast fall · 5 chaotic
+forever:
+  if buy and brokers:
+    stocks.hireBrokers()
+  # sell anything held that isn't rising
+  for good in stocks():
+    if stock.held(good) > 0 and stock.mode(good) != 1 and stock.mode(good) != 3:
+      stock.sell(good)
+  if buy:
+    # buy the max you can afford: fast risers first, then slow risers
+    for good in stocks():
+      if stock.mode(good) == 3:
+        stock.buy(good)
+    for good in stocks():
+      if stock.mode(good) == 1:
+        stock.buy(good)
+`;
+
+  /** The same strategy in JavaScript (the stocks.trade action) — the reference the code is tested against. */
   function trade({ buy = true, brokers = true } = {}) {
     const m = CA.Stocks.minigame();
     if (!m) return 0;
@@ -4638,7 +4790,7 @@ CA.StockTrader = (() => {
     return cookies > 0 ? `Sells for ~${beautify(cookies)} cookies right now` : 'Nothing to sell right now';
   }
 
-  return { trade, hireBrokers, sellEverything, set, toggle, isOn, sellAll, previewSellAllCookies, sellAllTitle };
+  return { SOURCE, trade, hireBrokers, sellEverything, set, toggle, isOn, sellAll, previewSellAllCookies, sellAllTitle };
 })();
 
 // ---- src/features/stockLog.js ----------------------------------------
@@ -10875,9 +11027,9 @@ CA.UI.CodeEditor = (() => {
     return out;
   }
 
-  function view(src) {
+  function view(src, vars) {
     const lines = String(src || '').split('\n');
-    const { errors } = CA.Script.compile(src);
+    const { errors } = CA.Script.compile(src, { vars });
     const bad = new Set(errors.map((e) => e.line));
     return {
       gutter: lines.map((_, i) => `<span class="${bad.has(i + 1) ? 'err' : ''}">${i + 1}</span>`).join(''),
@@ -10911,9 +11063,10 @@ CA.UI.CodeEditor = (() => {
   ].join('\n');
 
   function html(key, source, opts = {}) {
-    const v = view(source);
+    const vars = opts.vars || [];
+    const v = view(source, vars);
     return (
-      `<div class="ca-ed-sec ca-ed-code" data-code-ed="${esc(key)}"><div class="ca-ed-sec-head">${I('edit', 12)} ${esc(opts.title || 'Algorithm')} <span class="ca-hint">${esc(
+      `<div class="ca-ed-sec ca-ed-code" data-code-ed="${esc(key)}"${vars.length ? ` data-code-vars="${esc(vars.join(','))}"` : ''}><div class="ca-ed-sec-head">${I('edit', 12)} ${esc(opts.title || 'Algorithm')} <span class="ca-hint">${esc(
         opts.hint || 'indent a block under a line ending in “:” · Tab indents · click the library to insert'
       )}</span></div>` +
       '<div class="ca-code">' +
@@ -10933,7 +11086,7 @@ CA.UI.CodeEditor = (() => {
   function refresh(ta) {
     const ed = editorOf(ta);
     if (!ed) return;
-    const v = view(ta.value);
+    const v = view(ta.value, (ed.dataset.codeVars || '').split(',').filter(Boolean));
     const hl = ed.querySelector('[data-code-hl]');
     if (hl) hl.innerHTML = v.hl;
     const gut = ed.querySelector('[data-code-gutter]');
@@ -11215,7 +11368,19 @@ CA.UI.MacrosPage = (() => {
 
   const everyLabel = (ms) => (ms < 1000 ? `${Math.round(1000 / ms)}× a second` : ms < 60000 ? `every ${ms / 1000}s` : `every ${ms / 60000} min`);
 
-  /** A built-in's settings as [{ label, html, summary }]: how often it runs, then its actions' choices. */
+  /** One choice on a card (an input, or an action's option): its field and how it reads in the summary. */
+  function choiceField(p, cur, attrs) {
+    if (p.type === 'bool') return { html: `<input type="checkbox" ${attrs} data-type="bool"${cur ? ' checked' : ''}>`, summary: cur ? p.label : `no: ${p.label.toLowerCase()}` };
+    if (p.type === 'number') return { html: `<input type="number" step="any" ${attrs} data-type="number" value="${esc(cur)}"${p.min != null ? ` min="${p.min}"` : ''}>`, summary: `${p.label}: ${cur}` };
+    const list = typeof p.options === 'function' ? p.options() : p.options || [];
+    const sel = list.find((x) => String(x.v) === String(cur));
+    return {
+      html: `<select ${attrs}>${list.map((x) => `<option value="${esc(x.v)}"${String(x.v) === String(cur) ? ' selected' : ''}>${esc(x.label)}</option>`).join('')}</select>`,
+      summary: sel ? sel.label : String(cur),
+    };
+  }
+
+  /** A built-in's settings as [{ label, html, summary }]: how often it runs, its inputs, then its actions' choices. */
   function settingsOf(m) {
     if (!m.builtin) return [];
     const out = [];
@@ -11232,28 +11397,19 @@ CA.UI.MacrosPage = (() => {
         html: `<input type="number" class="ca-every-num" data-macro-every="${esc(m.id)}" data-every-as="${rate ? 'rate' : 'secs'}" min="${rate ? 0.1 : M().MIN_EVERY / 1000}" ${rate ? `max="${max}"` : ''} step="any" value="${val}">` + (rate ? `<em class="ca-shift-hint">max ${max}</em>` : ''),
       });
     }
+    const ins = M().inputsOf(m);
+    (m.inputs || []).forEach((p) => {
+      const f = choiceField(p, ins[p.key], `data-macro-input="${esc(m.id)}" data-key="${esc(p.key)}"`);
+      out.push({ label: p.label, html: f.html, summary: f.summary, shift: !!(m.shift && m.shift.input === p.key) });
+    });
     const steps = M().stepsOf(m);
     (m.options || []).forEach((o) => {
       const a = CA.Actions.get(steps[o.step].action);
       const p = a && a.params.find((x) => x.key === o.key);
       if (!p) return;
       const cur = CA.Actions.paramsFor(steps[o.step].action, steps[o.step].params)[o.key];
-      const attrs = `data-macro-param="${esc(m.id)}" data-step="${o.step}" data-key="${esc(o.key)}"`;
-      let html;
-      let summary;
-      if (p.type === 'bool') {
-        html = `<input type="checkbox" ${attrs} data-type="bool"${cur ? ' checked' : ''}>`;
-        summary = cur ? p.label : `no: ${p.label.toLowerCase()}`;
-      } else if (p.type === 'number') {
-        html = `<input type="number" step="any" ${attrs} data-type="number" value="${esc(cur)}"${p.min != null ? ` min="${p.min}"` : ''}>`;
-        summary = `${p.label}: ${cur}`;
-      } else {
-        const list = typeof p.options === 'function' ? p.options() : p.options || [];
-        const sel = list.find((x) => String(x.v) === String(cur));
-        html = `<select ${attrs}>${list.map((x) => `<option value="${esc(x.v)}"${String(x.v) === String(cur) ? ' selected' : ''}>${esc(x.label)}</option>`).join('')}</select>`;
-        summary = sel ? sel.label : String(cur);
-      }
-      out.push({ label: p.label, html, summary, shift: !!(m.shift && m.shift.step === o.step && m.shift.key === o.key) });
+      const f = choiceField(p, cur, `data-macro-param="${esc(m.id)}" data-step="${o.step}" data-key="${esc(o.key)}"`);
+      out.push({ label: p.label, html: f.html, summary: f.summary, shift: !!(m.shift && m.shift.step === o.step && m.shift.key === o.key) });
     });
     return out;
   }
@@ -11488,7 +11644,8 @@ CA.UI.MacrosPage = (() => {
   // ---- algorithmic macros: the code editor and the library (ui/codeEditor.js) ---------------
 
   const CE = () => CA.UI.CodeEditor;
-  const codeHtml = (d) => CE().html('macro', d.source);
+  const inputKeys = (d) => (d.inputs || []).map((i) => i.key);
+  const codeHtml = (d) => CE().html('macro', d.source, { vars: inputKeys(d) });
   const libraryHtml = () => CE().libraryHtml('macro');
 
   /** A library click while the macro isn't algorithmic: add the action as a step, or the condition. */
@@ -11615,6 +11772,15 @@ CA.UI.MacrosPage = (() => {
       refreshSummary(el);
       return true;
     }
+    if (el.dataset && el.dataset.macroInput) {
+      if (e.type !== 'change') return;
+      CA.Util.sound('snd/tick.mp3');
+      const v = el.dataset.type === 'bool' ? el.checked : el.dataset.type === 'number' ? Number(el.value) : el.value;
+      if (el.dataset.type === 'number' && !Number.isFinite(v)) return;
+      M().setInput(el.dataset.macroInput, el.dataset.key, v);
+      refreshSummary(el);
+      return true;
+    }
     if (el.dataset && el.dataset.macroParam) {
       if (e.type !== 'change') return;
       CA.Util.sound('snd/tick.mp3');
@@ -11635,7 +11801,7 @@ CA.UI.MacrosPage = (() => {
   function onEditInput(e) {
     const el = e.target;
     if (el.matches && (el.matches('[data-code]') || el.matches('[data-lib-search]'))) return; // ui/codeEditor.js
-    if (el.dataset && (el.dataset.macroEvery || el.dataset.macroParam)) return; // handleSetting (via ui/menu.js)
+    if (el.dataset && (el.dataset.macroEvery || el.dataset.macroParam || el.dataset.macroInput)) return; // handleSetting (via ui/menu.js)
     if (el.dataset && el.dataset.member && draft) {
       const id = el.dataset.member;
       draft.members = (draft.members || []).filter((x) => x !== id);
@@ -11680,7 +11846,7 @@ CA.UI.MacrosPage = (() => {
     if (d.mode === 'group') return d.members && d.members.length ? '' : 'Tick at least one macro for the group.';
     if (d.mode !== 'flow' && !d.steps.length) return 'Add at least one step.';
     if (d.mode !== 'once' && !(d.every >= M().MIN_EVERY)) return `Run it at most every ${M().MIN_EVERY / 1000}s.`;
-    const steps = d.mode === 'flow' ? flowDos(CA.Script.compile(d.source || '').flow) : d.steps;
+    const steps = d.mode === 'flow' ? flowDos(CA.Script.compile(d.source || '', { vars: inputKeys(d) }).flow) : d.steps;
     const self = steps.find((s) => (s.action === 'macro.run' || s.action === 'macro.set') && d.id && s.params.macro === d.id);
     if (self) return 'A macro can’t switch or run itself.';
     const missing = steps.find((s) => (s.action === 'macro.run' || s.action === 'macro.set') && !s.params.macro);
@@ -11735,7 +11901,7 @@ CA.UI.MacrosPage = (() => {
       return rerender();
     } else if (act === 'save' && d.mode === 'flow') {
       // an algorithm: it has to read right before it's kept
-      const r = CA.Script.compile(d.source || '');
+      const r = CA.Script.compile(d.source || '', { vars: inputKeys(d) });
       if (r.errors.length) {
         draftError = `Line ${r.errors[0].line}: ${r.errors[0].message}${r.errors.length > 1 ? ` (and ${r.errors.length - 1} more)` : ''}`;
         return renderEditor();

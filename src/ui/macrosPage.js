@@ -74,7 +74,19 @@ CA.UI.MacrosPage = (() => {
 
   const everyLabel = (ms) => (ms < 1000 ? `${Math.round(1000 / ms)}× a second` : ms < 60000 ? `every ${ms / 1000}s` : `every ${ms / 60000} min`);
 
-  /** A built-in's settings as [{ label, html, summary }]: how often it runs, then its actions' choices. */
+  /** One choice on a card (an input, or an action's option): its field and how it reads in the summary. */
+  function choiceField(p, cur, attrs) {
+    if (p.type === 'bool') return { html: `<input type="checkbox" ${attrs} data-type="bool"${cur ? ' checked' : ''}>`, summary: cur ? p.label : `no: ${p.label.toLowerCase()}` };
+    if (p.type === 'number') return { html: `<input type="number" step="any" ${attrs} data-type="number" value="${esc(cur)}"${p.min != null ? ` min="${p.min}"` : ''}>`, summary: `${p.label}: ${cur}` };
+    const list = typeof p.options === 'function' ? p.options() : p.options || [];
+    const sel = list.find((x) => String(x.v) === String(cur));
+    return {
+      html: `<select ${attrs}>${list.map((x) => `<option value="${esc(x.v)}"${String(x.v) === String(cur) ? ' selected' : ''}>${esc(x.label)}</option>`).join('')}</select>`,
+      summary: sel ? sel.label : String(cur),
+    };
+  }
+
+  /** A built-in's settings as [{ label, html, summary }]: how often it runs, its inputs, then its actions' choices. */
   function settingsOf(m) {
     if (!m.builtin) return [];
     const out = [];
@@ -91,28 +103,19 @@ CA.UI.MacrosPage = (() => {
         html: `<input type="number" class="ca-every-num" data-macro-every="${esc(m.id)}" data-every-as="${rate ? 'rate' : 'secs'}" min="${rate ? 0.1 : M().MIN_EVERY / 1000}" ${rate ? `max="${max}"` : ''} step="any" value="${val}">` + (rate ? `<em class="ca-shift-hint">max ${max}</em>` : ''),
       });
     }
+    const ins = M().inputsOf(m);
+    (m.inputs || []).forEach((p) => {
+      const f = choiceField(p, ins[p.key], `data-macro-input="${esc(m.id)}" data-key="${esc(p.key)}"`);
+      out.push({ label: p.label, html: f.html, summary: f.summary, shift: !!(m.shift && m.shift.input === p.key) });
+    });
     const steps = M().stepsOf(m);
     (m.options || []).forEach((o) => {
       const a = CA.Actions.get(steps[o.step].action);
       const p = a && a.params.find((x) => x.key === o.key);
       if (!p) return;
       const cur = CA.Actions.paramsFor(steps[o.step].action, steps[o.step].params)[o.key];
-      const attrs = `data-macro-param="${esc(m.id)}" data-step="${o.step}" data-key="${esc(o.key)}"`;
-      let html;
-      let summary;
-      if (p.type === 'bool') {
-        html = `<input type="checkbox" ${attrs} data-type="bool"${cur ? ' checked' : ''}>`;
-        summary = cur ? p.label : `no: ${p.label.toLowerCase()}`;
-      } else if (p.type === 'number') {
-        html = `<input type="number" step="any" ${attrs} data-type="number" value="${esc(cur)}"${p.min != null ? ` min="${p.min}"` : ''}>`;
-        summary = `${p.label}: ${cur}`;
-      } else {
-        const list = typeof p.options === 'function' ? p.options() : p.options || [];
-        const sel = list.find((x) => String(x.v) === String(cur));
-        html = `<select ${attrs}>${list.map((x) => `<option value="${esc(x.v)}"${String(x.v) === String(cur) ? ' selected' : ''}>${esc(x.label)}</option>`).join('')}</select>`;
-        summary = sel ? sel.label : String(cur);
-      }
-      out.push({ label: p.label, html, summary, shift: !!(m.shift && m.shift.step === o.step && m.shift.key === o.key) });
+      const f = choiceField(p, cur, `data-macro-param="${esc(m.id)}" data-step="${o.step}" data-key="${esc(o.key)}"`);
+      out.push({ label: p.label, html: f.html, summary: f.summary, shift: !!(m.shift && m.shift.step === o.step && m.shift.key === o.key) });
     });
     return out;
   }
@@ -347,7 +350,8 @@ CA.UI.MacrosPage = (() => {
   // ---- algorithmic macros: the code editor and the library (ui/codeEditor.js) ---------------
 
   const CE = () => CA.UI.CodeEditor;
-  const codeHtml = (d) => CE().html('macro', d.source);
+  const inputKeys = (d) => (d.inputs || []).map((i) => i.key);
+  const codeHtml = (d) => CE().html('macro', d.source, { vars: inputKeys(d) });
   const libraryHtml = () => CE().libraryHtml('macro');
 
   /** A library click while the macro isn't algorithmic: add the action as a step, or the condition. */
@@ -474,6 +478,15 @@ CA.UI.MacrosPage = (() => {
       refreshSummary(el);
       return true;
     }
+    if (el.dataset && el.dataset.macroInput) {
+      if (e.type !== 'change') return;
+      CA.Util.sound('snd/tick.mp3');
+      const v = el.dataset.type === 'bool' ? el.checked : el.dataset.type === 'number' ? Number(el.value) : el.value;
+      if (el.dataset.type === 'number' && !Number.isFinite(v)) return;
+      M().setInput(el.dataset.macroInput, el.dataset.key, v);
+      refreshSummary(el);
+      return true;
+    }
     if (el.dataset && el.dataset.macroParam) {
       if (e.type !== 'change') return;
       CA.Util.sound('snd/tick.mp3');
@@ -494,7 +507,7 @@ CA.UI.MacrosPage = (() => {
   function onEditInput(e) {
     const el = e.target;
     if (el.matches && (el.matches('[data-code]') || el.matches('[data-lib-search]'))) return; // ui/codeEditor.js
-    if (el.dataset && (el.dataset.macroEvery || el.dataset.macroParam)) return; // handleSetting (via ui/menu.js)
+    if (el.dataset && (el.dataset.macroEvery || el.dataset.macroParam || el.dataset.macroInput)) return; // handleSetting (via ui/menu.js)
     if (el.dataset && el.dataset.member && draft) {
       const id = el.dataset.member;
       draft.members = (draft.members || []).filter((x) => x !== id);
@@ -539,7 +552,7 @@ CA.UI.MacrosPage = (() => {
     if (d.mode === 'group') return d.members && d.members.length ? '' : 'Tick at least one macro for the group.';
     if (d.mode !== 'flow' && !d.steps.length) return 'Add at least one step.';
     if (d.mode !== 'once' && !(d.every >= M().MIN_EVERY)) return `Run it at most every ${M().MIN_EVERY / 1000}s.`;
-    const steps = d.mode === 'flow' ? flowDos(CA.Script.compile(d.source || '').flow) : d.steps;
+    const steps = d.mode === 'flow' ? flowDos(CA.Script.compile(d.source || '', { vars: inputKeys(d) }).flow) : d.steps;
     const self = steps.find((s) => (s.action === 'macro.run' || s.action === 'macro.set') && d.id && s.params.macro === d.id);
     if (self) return 'A macro can’t switch or run itself.';
     const missing = steps.find((s) => (s.action === 'macro.run' || s.action === 'macro.set') && !s.params.macro);
@@ -594,7 +607,7 @@ CA.UI.MacrosPage = (() => {
       return rerender();
     } else if (act === 'save' && d.mode === 'flow') {
       // an algorithm: it has to read right before it's kept
-      const r = CA.Script.compile(d.source || '');
+      const r = CA.Script.compile(d.source || '', { vars: inputKeys(d) });
       if (r.errors.length) {
         draftError = `Line ${r.errors[0].line}: ${r.errors[0].message}${r.errors.length > 1 ? ` (and ${r.errors.length - 1} more)` : ''}`;
         return renderEditor();

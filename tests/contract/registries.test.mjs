@@ -109,11 +109,11 @@ const strip = (x) =>
       return v;
     })
   );
-const roundTrip = (src) => {
-  const a = CA.Script.compile(src);
+const roundTrip = (src, vars) => {
+  const a = CA.Script.compile(src, { vars });
   if (a.errors.length) return `compile: line ${a.errors[0].line} ${a.errors[0].message}`;
   const back = CA.Script.decompile(a.flow);
-  const b = CA.Script.compile(back);
+  const b = CA.Script.compile(back, { vars });
   if (b.errors.length) return `recompile: line ${b.errors[0].line} ${b.errors[0].message}\n${back}`;
   return JSON.stringify(strip(a.flow)) === JSON.stringify(strip(b.flow)) ? true : `decompiled code compiles differently:\n${back}`;
 };
@@ -130,7 +130,7 @@ every('built-in macro is well-formed', builtins, (m) => {
   for (const id of m.members || []) if (!CA.Macros.get(id)) return `unknown member ${id}`;
   return true;
 });
-every('algorithmic built-in compiles and round-trips', builtins.filter((m) => m.mode === 'flow'), (m) => roundTrip(CA.Macros.sourceOf(m.id)));
+every('algorithmic built-in compiles and round-trips', builtins.filter((m) => m.mode === 'flow'), (m) => roundTrip(CA.Macros.sourceOf(m), (m.inputs || []).map((i) => i.key)));
 // every macro is code: what a Repeat / When… / Once macro's code view says is exactly what it runs
 every('built-in’s code view compiles to what it runs', builtins.filter((m) => m.mode !== 'group' && m.mode !== 'flow'), (m) => {
   const code = CA.Macros.codeOf(m);

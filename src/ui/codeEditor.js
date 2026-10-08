@@ -132,9 +132,9 @@ CA.UI.CodeEditor = (() => {
     return out;
   }
 
-  function view(src) {
+  function view(src, vars) {
     const lines = String(src || '').split('\n');
-    const { errors } = CA.Script.compile(src);
+    const { errors } = CA.Script.compile(src, { vars });
     const bad = new Set(errors.map((e) => e.line));
     return {
       gutter: lines.map((_, i) => `<span class="${bad.has(i + 1) ? 'err' : ''}">${i + 1}</span>`).join(''),
@@ -168,9 +168,10 @@ CA.UI.CodeEditor = (() => {
   ].join('\n');
 
   function html(key, source, opts = {}) {
-    const v = view(source);
+    const vars = opts.vars || [];
+    const v = view(source, vars);
     return (
-      `<div class="ca-ed-sec ca-ed-code" data-code-ed="${esc(key)}"><div class="ca-ed-sec-head">${I('edit', 12)} ${esc(opts.title || 'Algorithm')} <span class="ca-hint">${esc(
+      `<div class="ca-ed-sec ca-ed-code" data-code-ed="${esc(key)}"${vars.length ? ` data-code-vars="${esc(vars.join(','))}"` : ''}><div class="ca-ed-sec-head">${I('edit', 12)} ${esc(opts.title || 'Algorithm')} <span class="ca-hint">${esc(
         opts.hint || 'indent a block under a line ending in “:” · Tab indents · click the library to insert'
       )}</span></div>` +
       '<div class="ca-code">' +
@@ -190,7 +191,7 @@ CA.UI.CodeEditor = (() => {
   function refresh(ta) {
     const ed = editorOf(ta);
     if (!ed) return;
-    const v = view(ta.value);
+    const v = view(ta.value, (ed.dataset.codeVars || '').split(',').filter(Boolean));
     const hl = ed.querySelector('[data-code-hl]');
     if (hl) hl.innerHTML = v.hl;
     const gut = ed.querySelector('[data-code-gutter]');
