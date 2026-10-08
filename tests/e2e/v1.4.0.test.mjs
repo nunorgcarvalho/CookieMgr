@@ -1,6 +1,6 @@
 // v1.4.0: the data backbone — IndexedDB store, states, recorder, event log.
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
-import { boot, sleep, makeAssert, click } from '../harness/game.mjs';
+import { boot, sleep, waitFor, makeAssert, click } from '../harness/game.mjs';
 
 const { assert, done } = makeAssert();
 const browser = { factory: new IDBFactory(), IDBKeyRange };
@@ -97,7 +97,7 @@ const b = boot({ idb: browser });
 const CB = b.window.CookieMgr;
 b.goods[0].stock = 5;
 b.goods[1].stock = 2;
-await sleep(400);
+await waitFor(() => CB.Recorder.isReady() && CB.Recorder.frames().length >= before.frames && CB.EventLog.list().length === before.events && CB.StockLog.list().length === 2);
 assert(CB.Recorder.isReady(), 'recorder loaded');
 assert(CB.Recorder.frames().length >= before.frames, `frames survive a reload (${CB.Recorder.frames().length} >= ${before.frames})`);
 assert(CB.EventLog.list().length === before.events, `events survive a reload (${CB.EventLog.list().length})`);

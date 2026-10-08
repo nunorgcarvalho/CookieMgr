@@ -54,7 +54,11 @@ test what's recorded), `withPantheon`, `withGrimoire`, `localStorageSeed`, `full
   build, no native `title` tooltips or `scrollIntoView`, and every CSS class is still produced by some code.
 - **`unit/`** — fast, table-driven checks of pure logic (the algorithmic language).
 - **`e2e/vX.Y.Z.test.mjs`** — one per release: what that release added or changed, end to end. The
-  CHANGELOG entry of the same version says what each one is about.
+  CHANGELOG entry of the same version says what each one is about. v3.0.0 has several
+  (`v3.0.0-stocks`, `-garden`, `-builtins`, `-pantheon`).
+- **Side by side** — when code replaces JavaScript (the built-ins in v3), a test runs the old and the new on hundreds
+  of random states and requires the same outcome (`v3.0.0-stocks`: the autobuyer on 400 random markets;
+  `v3.0.0-builtins`: every converted built-in; `v3.0.0-garden`: per-tile rules against the whole-plot actions).
 
 ## Adding a feature
 

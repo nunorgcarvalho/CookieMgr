@@ -351,6 +351,26 @@ export function boot({ save = null, localStorageSeed = {}, withGrimoire = true, 
 
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/**
+ * Waits until fn() is true (checking every `step` ms), at most `ms`; returns whether it became true.
+ * For anything asynchronous (IndexedDB reads, macros stepping through passes): a fixed sleep is
+ * outrun by a busy machine — CI, or the suites running side by side.
+ */
+export async function waitFor(fn, ms = 4000, step = 25) {
+  const t0 = Date.now();
+  for (;;) {
+    let ok = false;
+    try {
+      ok = !!fn();
+    } catch (e) {
+      ok = false;
+    }
+    if (ok) return true;
+    if (Date.now() - t0 >= ms) return false;
+    await sleep(step);
+  }
+}
+
 export function makeAssert() {
   let failed = 0;
   const assert = (cond, msg) => {

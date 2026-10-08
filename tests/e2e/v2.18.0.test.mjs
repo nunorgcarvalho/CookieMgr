@@ -1,7 +1,7 @@
 // v2.18.0: Garden effects chart (the Garden information figures over time) and an x axis in garden
 // ticks for both garden charts.
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
-import { boot, sleep, makeAssert } from '../harness/game.mjs';
+import { boot, sleep, waitFor, makeAssert } from '../harness/game.mjs';
 import { makeGarden } from '../harness/gardenStub.mjs';
 
 const { assert, done } = makeAssert();
@@ -79,7 +79,7 @@ const n = H.ticks().length;
 await H.flush();
 const g2 = boot({ idb: browser });
 makeGarden(g2.Game);
-await sleep(600);
+await waitFor(() => g2.window.CookieMgr.GardenHistory.ticks().length === n);
 assert(g2.window.CookieMgr.GardenHistory.ticks().length === n && g2.window.CookieMgr.GardenHistory.tickNow() === 4, 'ticks restored');
 
 assert(g.errors.length + g2.errors.length === 0, 'no runtime errors' + (g.errors.length ? `: ${g.errors.slice(0, 3).join(' | ')}` : ''));

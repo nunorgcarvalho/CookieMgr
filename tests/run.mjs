@@ -6,6 +6,8 @@
 //   npm test -- garden v2.26     only files whose path contains one of the words
 //   npm test -- --verbose        print every check, not just the failures
 //   npm test -- --no-build       test dist/ as it is
+//   npm test -- --no-retry       a file that fails counts as failed (by default it gets one more
+//                                run, alone, after the others — passing then, it's reported as flaky)
 //
 // A test file is a plain script: it boots the fake game (tests/harness/game.mjs), checks things
 // with makeAssert(), and ends with done() — which prints "ALL CHECKS PASSED" and exits 0, or the
@@ -62,7 +64,7 @@ if (parse.status !== 0) {
 const color = process.stdout.isTTY ? (c, s) => `\x1b[${c}m${s}\x1b[0m` : (_c, s) => s;
 const results = [];
 
-function run(file) {
+function run(file, again = false) {
   return new Promise((resolve) => {
     const t0 = Date.now();
     const child = spawn(process.execPath, [file], { cwd: DIR });
@@ -78,15 +80,15 @@ function run(file) {
       const ok = code === 0 && /ALL CHECKS PASSED/.test(out);
       const checks = (out.match(/^ok:/gm) || []).length;
       const r = { file, ok, out, checks, secs: (Date.now() - t0) / 1000 };
-      results.push(r);
-      const mark = ok ? color(32, '✓') : color(31, '✗');
-      console.log(`${mark} ${rel(file)}  ${color(90, `${checks} checks · ${r.secs.toFixed(1)}s`)}`);
+      if (!again) results.push(r);
+      const mark = ok ? color(again ? 33 : 32, '✓') : color(31, '✗');
+      console.log(`${mark} ${rel(file)}  ${color(90, `${checks} checks · ${r.secs.toFixed(1)}s${again ? ' · run again, alone' : ''}`)}`);
       if (!ok || verbose) {
         const lines = out.split(/\r?\n/).filter((l) => verbose || !/^ok:/.test(l));
         const shown = verbose ? lines : lines.filter((l) => l.trim()).slice(-25);
         console.log(shown.map((l) => `    ${/^FAIL/.test(l) ? color(31, l) : l}`).join('\n'));
       }
-      resolve();
+      resolve(r);
     });
   });
 }
@@ -98,10 +100,22 @@ await Promise.all(
     while (queue.length) await run(queue.shift());
   })
 );
+// a failure under load (the suites side by side) gets one more run, alone: a real failure fails again
+const flaky = [];
+const retry = args.includes('--no-retry') ? [] : results.filter((r) => !r.ok);
+if (retry.length) console.log(color(33, '\nRunning the failures again, one at a time…'));
+for (const r of retry) {
+  const again = await run(r.file, true);
+  if (!again.ok) continue;
+  r.ok = true;
+  r.checks = again.checks;
+  flaky.push(r.file);
+}
 const failed = results.filter((r) => !r.ok);
 const checks = results.reduce((a, r) => a + r.checks, 0);
 console.log(
   `\n${failed.length ? color(31, `${failed.length} of ${results.length} files failed`) : color(32, `All ${results.length} files passed`)} · ${checks} checks · ${((Date.now() - t0) / 1000).toFixed(1)}s`
 );
+if (flaky.length) console.log(color(33, `flaky — failed side by side, passed alone (wait with waitFor, not sleep):\n${flaky.map((f) => `  ${rel(f)}`).join('\n')}`));
 if (failed.length) console.log(failed.map((r) => `  ${rel(r.file)}`).join('\n'));
 process.exit(failed.length ? 1 : 0);

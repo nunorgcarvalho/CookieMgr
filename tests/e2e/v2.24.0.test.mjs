@@ -1,7 +1,7 @@
 // v2.24.0: algorithmic macros — the language, the code editor with its library, SeasonCompletion as
 // code (Christmas twice), running status with lines and decisions.
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
-import { boot, sleep, makeAssert, click } from '../harness/game.mjs';
+import { boot, sleep, waitFor, makeAssert, click } from '../harness/game.mjs';
 
 const { assert, done } = makeAssert();
 const g = boot({ idb: { factory: new IDBFactory(), IDBKeyRange } });
@@ -156,7 +156,7 @@ await sleep(400);
 assert(Game.season === 'christmas' && Game.Upgrades['Santa gift'].bought && !Game.Upgrades['Reindeer cookie'].bought, 'Christmas first: its upgrades, not yet the reindeer cookies');
 let st = M.flowStatus('seasonCompletion');
 assert(st.at.some((a) => /owned\(christmas, upgrades\) = 2 ≥ total\(christmas, upgrades\) = 2 ✓ and santaLevel\(\) = \d+ ≥ 14 ✗/.test(a)), `shows the counts it checks (${st.at.join(' | ')})`);
-await sleep(2200);
+await waitFor(() => seen.join() === 'christmas,easter,halloween,valentines,christmas,fools' && Game.Upgrades['Elder Pledge'].bought, 6000);
 st = M.flowStatus('seasonCompletion');
 assert(seen.join() === 'christmas,easter,halloween,valentines,christmas,fools', `then Easter, Halloween, Valentine’s day, Christmas again, Business day (${seen})`);
 assert(Game.Upgrades['Reindeer cookie'].bought && Game.santaLevel >= 14, 'the reindeer cookies on the second visit; Santa to Final Claus on the first');

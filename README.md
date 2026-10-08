@@ -23,7 +23,7 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 | **Widget** | Something on the game's left panel: a macro's button, the Running now bar, quick stats, events, minigames. |
 
-## Features (v2.31)
+## Features (v3.0)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
 the data pages **Events** and **Graphs**; the minigames **Garden**, **Stock market**, **Pantheon** and **Grimoire**;
@@ -131,7 +131,9 @@ wrath cookies, reindeer, ascensions and stock trades.
 
 ![Macros page](docs/autoclickers.png)
 
-Everything CookieMgr automates is a **macro**: one or more **actions** run in order, on a trigger —
+Everything CookieMgr automates is a **macro**, and every macro is **algorithmic code** running on one engine — the
+built-ins, the Auto-gardener, the stock autobuyer and your own. For the common shapes there are shortcuts that write
+the code for you: one or more **actions** run in order, on a trigger —
 
 - **Repeat** — while it's on, every so often (the autoclickers: every 0.05–0.1 s);
 - **When…** — while it's on, it watches a **condition** and runs when it happens (or on every check while it holds);
@@ -139,7 +141,8 @@ Everything CookieMgr automates is a **macro**: one or more **actions** run in or
 - **Group** — a switch for several macros at once: on turns all its members on, off turns them all off (it shows as
   on while all of them are). Handy for your own set of autoclickers under one button or hotkey.
 
-**Built-in macros** (can't be removed or edited — duplicate one to make your own version):
+**Built-in macros** (can't be removed; **Edit** any of them — most are code you can read and change, and Revert to
+default brings the original back):
 
 | Macro                  | Default key | What it does                                                         |
 | ---------------------- | ----------- | -------------------------------------------------------------------- |
@@ -164,6 +167,15 @@ Everything CookieMgr automates is a **macro**: one or more **actions** run in or
 
 The autobuyer is the same switch as on the Stock market page and in the Bank minigame toolbar. (A group macro is
 the way to switch several at once.)
+
+Every built-in that makes a decision is **code over building blocks** (below): Golden cookies, Wrath cookies,
+Reindeer, Wrinklers, the Sugar lump harvester, the Stock market autobuyer, Best building, Best upgrade, Research, Cheap
+upgrades, Pet the dragon, FtHoF on combos, SeasonCompletion and the Auto-gardener (whose code is the active garden
+profile's rules). The Big cookie, Fortune news, Elder Pledge, Sell all and the spell casts have nothing to decide and
+stay shortcuts. A built-in's **inputs** — the choices on its card (the Wrinklers' "shiny" and "fed", the autobuyer's
+"buy" and "brokers", Best building's "skip", …) — are variables in its code; shift-click flips one, and changing one
+while it runs applies on its next pass. Each was checked against the JavaScript it replaced, on random states: the
+same things popped, bought and traded.
 
 Every built-in has **settings**: the line under its description sums them up — click it to change them. How often it
 runs (a number: times a second for the fast ones — the big cookie up to 50, the most the game counts — or every so
@@ -240,7 +252,46 @@ Lines: an action with its options (`pop.golden()`, `season.keep(christmas)` or `
 `forever:`, `if …: / elif …: / else:`, `for x in [a, b]:`, `parallel:` with `branch:` blocks, `stop`, `log "…"` and
 `# comments`. Conditions join with `and` / `or` / `not` and brackets, and compare **values** — `cookies()`, `cps()`,
 `magic()`, `owned(season, part)`, `total(season, part)`, `santaLevel()`, `building(Farm)`, `state(…)` and more —
-with `>= <= > < == !=`; numbers can be written 1e12, 25K, 2.5M, 3B. The editor colours the code, numbers the lines,
+with `>= <= > < == !=`; numbers can be written 1e12, 25K, 2.5M, 3B.
+
+Values add up: `+ - * / %` and brackets (`cookies() > 0.1 * cps() * 60`, `(a + b) / 2`). **Variables** remember a
+number, text or a condition's yes / no — `target = cookies() * 0.1`, `ready = buff(Frenzy) and magic() > 50` — and a
+variable (or a yes / no value like `garden.isMature(tile)`) can be a condition on its own: `if ready:`. **Live lists**
+loop over what's there now: `for good in stocks():`, `for tile in garden.tiles():` — as many items as finish in one
+pass (a body that waits picks up from that item on the next). Options can be anything you can compute:
+`stock.buy(good, 10)`, `garden.plant(tile, garden.wantAt(tile))`. **Named blocks** keep long code readable:
+
+```
+def sellIfFalling(good):
+  if stock.held(good) > 0 and stock.mode(good) == 4:
+    stock.sell(good)
+
+forever:
+  for good in stocks():
+    sellIfFalling(good)
+```
+
+`log <a value>` writes it to the macro's trace (`log stock.price(CRL)`).
+
+**Building blocks** — the game, piece by piece, for your own code (every one is in the library, with its Lookup):
+
+- **Stock market** — `stocks()` (a list), `stock.mode / price / resting / held / max / room / delta / cost(good)`,
+  `stock.brokers()`, `stock.maxBrokers()`, `stock.brokerPrice()`; `stock.buy(good, n)`, `stock.sell(good, n)`,
+  `stocks.hireBrokers()`. A stock is its symbol (CRL), its building (Farm) or its number; modes: 0 stable, 1 slow rise,
+  2 slow fall, 3 fast rise, 4 fast fall, 5 chaotic.
+- **Garden** — `garden.tiles()` (tiles are `"x,y"`), `garden.plantAt / wantAt / age / decay(tile)`,
+  `garden.isMature / isNew / isEmpty / isOff(tile)`, `garden.seeds()`, `garden.seedCost(seed)`; `garden.harvest(tile)`,
+  `garden.plant(tile, seed)` — and the whole-plot ones the default rules use (`garden.plantEmpty()`…).
+- **Shimmers & wrinklers** — `shimmers()`, `shimmer.type / isWrath / life(s)`, `shimmer.pop(s)`; `wrinklers()`,
+  `wrinkler.isShiny / isFed / sucked(w)`, `wrinkler.pop(w)`.
+- **Sugar lump** — `lump.isRipe()`, `lump.isMature()`, `lump.pick()`.
+- **Buying** — `cm.best(kind, skip)` (the lowest Cookie Monster PP of building / upgrade / all), `cm.kind / price /
+  pp(thing)`, `cm.buy(thing)`; `upgrades()`, `upgrade.price(u)`, `upgrade.owned(name)`, `buy.upgrade(u)`;
+  `research.next(stopBefore)`.
+- **The dragon** — `dragon.canPet()`, `dragon.dropNow()`, `dragon.pet()`.
+- **Pantheon** — `pantheon.gods()`, `pantheon.god(slot)`, `pantheon.slotOf(god)`, `pantheon.isSlotted(god)`,
+  `pantheon.swaps()`; `pantheon.slot(god, slot)` (diamond, ruby, jade, or none).
+- **Macros** — `macro.isOn(id)`, `switch on / off …`. The editor colours the code, numbers the lines,
 lists any problems as you type (click one to jump to it), indents for you (Tab, and Enter after a `:`), and while
 the macro runs lights up the lines it's on and shows what it's checking. Every pass (its interval) moves each branch
 on as far as it can without waiting; reaching the end (or `stop`) switches it off. Actions:
@@ -285,6 +336,16 @@ it). Modifiers work (`Shift + G`): click a key chip and press the new key (`Esc`
 The **Pantheon** page (Temple minigame) shows your three slots — Diamond, Ruby, Jade — with the spirit in each and what
 it does in that slot (the game's own text), your worship swaps (left, next one back, refill times: 1 h / 4 h / 16 h
 with 2 / 1 / 0 swaps left), and every spirit, with the slotted ones marked; hover one for what it does in each slot.
+
+Macros can work the Pantheon too: `pantheon.slot(god, slot)` is the same as dragging a spirit there in the Temple —
+it uses a swap (and only works while you have one), swaps places with whoever was in the slot, and `none` puts a
+spirit back in the roster for free. For example, Godzamok in the diamond slot whenever a Frenzy starts:
+
+```
+forever:
+  if buff(Frenzy) and pantheon.god(diamond) != "ruin" and pantheon.swaps() > 0:
+    pantheon.slot(ruin, diamond)
+```
 
 ### Grimoire
 
@@ -362,6 +423,20 @@ pebbles, woodchips, or `profile` for the profile's saved soil); the condition `g
 `garden.tickIn()` (seconds), `garden.youngShare()` / `garden.matureShare()` (0–1 of the planted tiles),
 `garden.plants()`, `garden.mature()`, `garden.empty()`, `garden.offProfile()`. They work in any algorithmic macro
 too.
+
+Rules can also go **tile by tile** (see the building blocks under [Macros](#macros)) — for example, harvest what's
+mature and replant it, but leave the bakeberries to grow:
+
+```
+for tile in garden.tiles():
+  if garden.isMature(tile) and garden.plantAt(tile) != "bakeberry":
+    garden.harvest(tile)
+  if garden.isEmpty(tile) and garden.wantAt(tile) != "":
+    garden.plant(tile, garden.wantAt(tile))
+```
+
+The Auto-gardener *is* its profile's rules: on the Macros page, its card shows the lines it took on its last pass,
+and **Edit** brings you here. Rules that can't run stop it and say which line.
 
 **Harvesting vs. letting a plant die:** harvesting a mature plant unlocks its seed if it's new, counts towards the
 harvest achievements, and some plants pay out when harvested (Bakeberry, Chocoroot, Queenbeet…). A plant that dies
@@ -472,7 +547,8 @@ The **Stock market** tab in the CookieMgr panel has:
 - **Sell all** — its own standalone card at the top of the tab: sells every stock you currently hold and turns the
   autobuyer off first, so it doesn't just buy it all straight back. Hovering it shows the actual number of cookies
   selling everything right now would pay out. (It's the built-in "Sell all stocks" macro, so it can have a hotkey.)
-- **Autobuyer** — the built-in "Stock market autobuyer" macro (own switch and hotkey; shift-click its button to let it buy or only sell)
+- **Autobuyer** — the built-in "Stock market autobuyer" macro, an algorithmic one (its code is the strategy below, written
+  with the stock building blocks — Edit on its card to change it; own switch and hotkey; shift-click its button to let it buy or only sell)
   that, once a second, hires the stockbrokers it can afford (each makes buying goods 5% cheaper; the game allows your
   highest grandma count ÷ 10 + the grandma level), buys the max it can afford of fast-rising stocks, then slow-rising
   ones, and sells anything it holds that isn't currently rising. That's the entire strategy. Its **Hire stockbrokers**
@@ -579,7 +655,8 @@ src/
     cookieMonster.js loads Cookie Monster on request or at start-up
     gameEvents.js    logs wrinkler pops, sugar lumps and achievements as events
     grimoire.js      spells as actions/macros, magic conditions, spell events, the auto-cast macro
-    garden.js        garden profiles and their rules, the garden's actions/values, the death-chance maths
+    garden.js        garden profiles and their rules (the Auto-gardener's code), the garden's building blocks
+    pantheon.js      the Pantheon's building blocks: which spirit is where, slotting them
     gardenHistory.js snapshots of the garden (seed × stage counts) for the Growth chart; seed unlock events
     shop.js          the building store: Cookie Monster sort, rounding bulk buys up
     autoBuy.js       buying macros (Cookie Monster PP, research, cheap upgrades) and petting the dragon
@@ -633,11 +710,21 @@ If you add a file, add it to `MODULES` in `build.mjs` in the right order.
 - **A new action:** `CA.Actions.register({ id, name, icon, group, unit, params, available, run(params) })` in
   `features/gameActions.js` — it shows up in the macro editor's step picker. `run` returns how many things it did.
 - **A new condition:** `CA.Conditions.register({ id, name, params, test(params), describe(params) })`.
-- **A new value** for algorithmic code (`if garden.youngShare() > 0.67:`): `CA.Script.defineValue({ id, desc, params, get(...args) })`.
-  Actions, conditions and values all show up in the code editor's library.
+- **A new value** for algorithmic code (`if garden.youngShare() > 0.67:`): `CA.Script.defineValue({ id, desc, params, get(...args) })`
+  — `list: true` for a list a `for` can loop over, `bool: true` for a yes / no that can stand alone as a condition.
+  Actions, conditions and values all show up in the code editor's library; a select option's choices show up in its
+  Lookup (`CA.Script.defineLookup({ name, uses, items() })` for other lists of names).
+- **A building block** is a value or an action like those: game mechanics stay in JavaScript, verified against the
+  game's own source; decisions go in code.
 - **A code editor** on a page: `CA.UI.CodeEditor.html(key, source)` + `libraryHtml(key)`, then `bind(root, { onChange })`
   in `mount` (it returns the unbind for `unmount`); `setLive(root, key, { lines, html })` lights up running lines.
-- **A new built-in macro:** add it to `BUILTINS` in `features/macros.js` (`mode`, `every`, `steps`, `defaultKey`, `section`).
+- **A new built-in macro:** `CA.Macros.addBuiltin({ id, name, desc, icon, mode, every, … })` from the feature's `init()`
+  (or `BUILTINS` in `features/macros.js`). One with a decision is `mode: 'flow'` with `defaultSource` (its code), and
+  `inputs: [{ key, label, type: 'bool' | 'number' | 'select', default, options }]` (its card's choices — variables in
+  its code), `shift: { input, on, off }` (what shift-clicking its button flips), `readiness(inputs)` (its button's
+  "next: …"). `pass: true` runs it from the top every pass (rules); `sourceFrom`, `ready`, `afterPass` and `editAt` let
+  a feature own its code (the Auto-gardener's is the active garden profile's rules). When it replaces JavaScript, add a
+  side-by-side test: the old code and the new on random states, the same outcome (`tests/e2e/v3.0.0-builtins.test.mjs`).
 - **A new recorded state:** `CA.States.define({ id, name, unit, group, kind, get })` before `CA.Recorder.init()`;
   `kind` is `gauge` (a level, like CpS), `counter` (a running total) or `flow` (an amount per frame, from `ctx.dt`).
   Read it back with `CA.Recorder.series(id)`.
