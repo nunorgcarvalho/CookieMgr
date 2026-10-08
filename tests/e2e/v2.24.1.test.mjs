@@ -24,6 +24,7 @@ assert(intoView === 0, `nothing uses scrollIntoView (${intoView})`);
 
 // a shifted container is put back
 const game = doc.getElementById('game');
+game.style.overflow = 'hidden'; // as in the game's style.css (v2.30: only such containers are put back)
 Object.defineProperty(game, 'scrollTop', { value: 120, writable: true, configurable: true });
 CA.Util.unshift();
 assert(game.scrollTop === 0, 'unshift: the game’s container back at the top');

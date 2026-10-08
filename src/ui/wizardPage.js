@@ -4,7 +4,7 @@
 //   Grimoire       magic meter (now / max, refill per second, time to full), spells cast
 //   Spells         every spell: cost, backfire chance, Cast button (or how long until it's
 //                  affordable), ★ for its own button on the left panel — each is a built-in macro
-//   Auto-cast      the hardcoded "Force the Hand of Fate on Click frenzy" macro, and any of your
+//   Auto-cast      the built-in "Force the Hand of Fate on combos" macro, and any of your
 //                  own repeat/when macros that cast spells
 //   Spell combos   your "once" macros that cast spells — New combo starts one in the editor
 //   Magic          magic over time, with every cast marked
@@ -240,9 +240,9 @@ CA.UI.WizardPage = (() => {
     }
     const on = CA.Macros.isOn(G().AUTO_ID);
     const auto = bar.querySelector('[data-cm-gt="auto"]');
-    auto.innerHTML = `${I('bolt', 12)}Auto FtHoF on Click frenzy: ${on ? 'on' : 'off'}`;
+    auto.innerHTML = `${I('bolt', 12)}Auto FtHoF on combos: ${on ? 'on' : 'off'}`;
     auto.classList.toggle('on', on);
-    auto.dataset.tip = 'Casts Force the Hand of Fate as soon as a Click frenzy is running and there’s enough magic (same switch as on the CookieMgr page)';
+    auto.dataset.tip = 'Casts Force the Hand of Fate as soon as two effects line up (Frenzy, Click frenzy, Dragonflight, building specials) and there’s enough magic — same switch as on the CookieMgr page';
   }
 
   function init() {

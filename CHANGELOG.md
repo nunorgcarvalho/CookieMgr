@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 2.30.0 — 2026-10-08
+
+- **Force the Hand of Fate on combos** (was "on Click frenzy"): now an algorithmic macro that casts as soon as two
+  effects line up and there's enough magic — Frenzy + Dragonflight, Frenzy + Click frenzy, Frenzy + a building
+  special, a building special + Dragonflight, a building special + Click frenzy. Its code can be edited (and reverted)
+  like any built-in's.
+- **Store sorts in the order Default, Bulk PP, Achievement**, named so.
+- **Fix: scrolling down the buildings jumped back to the top** after a moment. The guard against a shifted screen
+  (v2.24.1) also reset the store's own scroll; it now only touches containers the game doesn't let scroll.
+
 ## 2.29.1 — 2026-10-06
 
 - **Faster Grimoire page and widgets**: the time until a spell is affordable (and until magic is full) is worked out

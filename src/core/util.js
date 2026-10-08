@@ -127,18 +127,23 @@ CA.Util = {
    * scroll back. Runs every couple of seconds; does nothing when nothing moved.
    */
   unshift() {
-    ['game', 'sectionLeft', 'sectionMiddle', 'sectionRight', 'wrapper'].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el && (el.scrollTop || el.scrollLeft)) {
-        el.scrollTop = 0;
-        el.scrollLeft = 0;
+    // only what the game keeps from scrolling (overflow hidden): the store (#sectionRight) and the
+    // menu scroll on purpose, and must keep their place
+    const fixed = (el, axis) => {
+      try {
+        const cs = getComputedStyle(el);
+        return (cs[axis] || cs.overflow || '').startsWith('hidden');
+      } catch (e) {
+        return false;
       }
-    });
-    [document.documentElement, document.body].forEach((el) => {
-      if (el && (el.scrollTop || el.scrollLeft)) {
-        el.scrollTop = 0;
-        el.scrollLeft = 0;
-      }
-    });
+    };
+    ['game', 'sectionLeft', 'sectionMiddle', 'sectionRight', 'wrapper']
+      .map((id) => document.getElementById(id))
+      .concat([document.documentElement, document.body])
+      .forEach((el) => {
+        if (!el) return;
+        if (el.scrollTop && fixed(el, 'overflowY')) el.scrollTop = 0;
+        if (el.scrollLeft && fixed(el, 'overflowX')) el.scrollLeft = 0;
+      });
   },
 };

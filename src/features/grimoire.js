@@ -4,7 +4,7 @@
 //   conditions  spellAffordable {spell}        there's enough magic for that spell right now
 //               magicPct {op, value}           magic as a % of the maximum
 //   macros      one built-in "Cast …" macro per spell (buttons, hotkeys, shortcut widgets), and the
-//               hardcoded, non-removable "Force the Hand of Fate on Click frenzy"
+//               built-in "Force the Hand of Fate on combos" (algorithmic: COMBO_SOURCE)
 //   events      'spell' — every cast (yours, a macro's, or the Grimoire's own buttons), and whether
 //               it backfired
 //
@@ -32,7 +32,20 @@ CA.Grimoire = (() => {
   ];
   const byKey = {};
   SPELLS.forEach((s) => (byKey[s.key] = s));
-  const AUTO_ID = 'fthofOnClickFrenzy';
+  const AUTO_ID = 'fthofOnClickFrenzy'; // its id from when it cast on Click frenzy alone (kept: saves use it)
+
+  /** The auto-cast's code: Force the Hand of Fate when two effects line up. */
+  const COMBO_SOURCE = `# Force the Hand of Fate when two effects line up — its golden cookie can stack a third on top.
+# The combos: Frenzy + Dragonflight, Frenzy + Click frenzy, Frenzy + a building special,
+# a building special + Dragonflight, a building special + Click frenzy.
+# Pair it with the Golden cookies macro, so the cookie it brings gets popped.
+forever:
+  if spellAffordable("hand of fate"):
+    if buff(Frenzy) and (buff(Dragonflight) or buff("Click frenzy") or buildingSpecial()):
+      spell.cast("hand of fate")
+    elif buildingSpecial() and (buff(Dragonflight) or buff("Click frenzy")):
+      spell.cast("hand of fate")
+`;
 
   function minigame() {
     const m = CA.Util.minigame('Wizard tower');
@@ -213,20 +226,12 @@ CA.Grimoire = (() => {
     );
     CA.Macros.addBuiltin({
       id: AUTO_ID,
-      name: 'Force the Hand of Fate on Click frenzy',
-      desc: 'While on: as soon as a Click frenzy is running and there’s enough magic, casts Force the Hand of Fate — its golden cookie can stack another effect on top. Pair it with the Golden cookies macro to pop it.',
+      name: 'Force the Hand of Fate on combos',
+      desc: 'While on: casts Force the Hand of Fate as soon as two effects line up and there’s enough magic — Frenzy with Dragonflight, Click frenzy or a building special, or a building special with Dragonflight or Click frenzy — so its golden cookie can stack a third. Pair it with the Golden cookies macro to pop it. Its code is yours to change.',
       icon: { sprite: [22, 11] },
-      mode: 'when',
-      noOptions: true, // it's about this one spell
+      mode: 'flow',
       every: 250,
-      when: {
-        all: [
-          { cond: 'buff', params: { name: 'Click frenzy' } },
-          { cond: 'spellAffordable', params: { spell: 'hand of fate' } },
-        ],
-        edge: 'rise',
-      },
-      steps: [{ action: 'spell.cast', params: { spell: 'hand of fate' } }],
+      defaultSource: COMBO_SOURCE,
       defaultKey: '',
       section: 'grimoire',
     });
@@ -239,5 +244,5 @@ CA.Grimoire = (() => {
     watch();
   }
 
-  return { init, minigame, spells, magicNow, secondsUntil, refillSeconds, SPELLS, AUTO_ID };
+  return { init, minigame, spells, magicNow, secondsUntil, refillSeconds, SPELLS, AUTO_ID, COMBO_SOURCE };
 })();

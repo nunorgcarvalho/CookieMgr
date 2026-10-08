@@ -16,9 +16,9 @@
 
 CA.Shop = (() => {
   const SORTS = [
-    { v: 2, id: 'value', name: 'Best buy first', icon: 'dollar', desc: 'Cookie Monster’s order: shortest payback period for the amount you’re buying (×1, ×10 or ×100) first.' },
-    { v: 3, id: 'achievement', name: 'Next achievement first', icon: 'trophy', desc: 'Cookie Monster’s order: cheapest to reach the next building-count achievement first.' },
-    { v: 0, id: 'default', name: 'Game order', icon: 'sortList', desc: 'The game’s own order: Cursor, Grandma, Farm…' },
+    { v: 0, id: 'default', name: 'Default', icon: 'sortList', desc: 'The game’s own order: Cursor, Grandma, Farm…' },
+    { v: 2, id: 'value', name: 'Bulk PP', icon: 'dollar', desc: 'Cookie Monster’s order: shortest payback period (PP) for the amount you’re buying (×1, ×10 or ×100) first.' },
+    { v: 3, id: 'achievement', name: 'Achievement', icon: 'trophy', desc: 'Cookie Monster’s order: cheapest to reach the next building-count achievement first.' },
   ];
   const wrapped = new WeakSet();
 

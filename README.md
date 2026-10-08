@@ -23,7 +23,7 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 | **Widget** | Something on the game's left panel: a macro's button, the Running now bar, quick stats, events, minigames. |
 
-## Features (v2.29)
+## Features (v2.30)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
 the data pages **Events** and **Graphs**; the minigames **Garden**, **Stock market**, **Pantheon** and **Grimoire**;
@@ -155,7 +155,7 @@ Everything CookieMgr automates is a **macro**: one or more **actions** run in or
 | SeasonCompletion       | —           | An algorithmic macro: research, then every season until complete      |
 | Sugar lump harvester   | —           | Harvests your lump when ripe — or when mature, if you pick that      |
 | Elder Pledge           | —           | Buys the Elder Pledge whenever the Grandmapocalypse is on            |
-| FtHoF on Click frenzy  | —           | When a Click frenzy runs and there's magic: Force the Hand of Fate   |
+| FtHoF on combos        | —           | An algorithmic macro: Force the Hand of Fate when two effects line up |
 | Best building          | —           | Buys the lowest-payback building (Cookie Monster)                    |
 | Best upgrade           | —           | Buys the lowest-payback upgrade (Cookie Monster)                     |
 | Research               | —           | Buys research as it comes (stops before One mind by default)         |
@@ -274,10 +274,12 @@ The **Grimoire** page (Wizard tower minigame) is the Grimoire, CookieMgr-style:
   afford it, from the game's own refill formula) and a ★ for its own button on the left panel. Each spell is a built-in
   "Cast …" macro, so it can have a hotkey too. A spell you can't afford yet stays clickable but dimmed: clicking it
   shakes the button and tells you its cost, your magic, and when it'll be ready (the same on its left-panel button).
-- **Auto-cast** — the built-in, non-removable **Force the Hand of Fate on Click frenzy**: while it's on, as soon as a
-  Click frenzy is running *and* there's enough magic, it casts Force the Hand of Fate (so a frenzy that starts when
-  you're short of magic still gets its cast once the magic is there). Pair it with the Golden cookies macro to pop the
-  cookie it summons. Your own repeat/when macros that cast spells are listed here too.
+- **Auto-cast** — the built-in **Force the Hand of Fate on combos**, an algorithmic macro: while it's on, as soon as
+  two effects line up *and* there's enough magic, it casts Force the Hand of Fate, so its golden cookie can stack a third.
+  The combos: Frenzy + Dragonflight, Frenzy + Click frenzy, Frenzy + a building special, a building special +
+  Dragonflight, a building special + Click frenzy (a combo that starts when you're short of magic still gets its cast
+  once the magic is there). Its code is yours to change (Edit on its card; Revert to default brings these back). Pair
+  it with the Golden cookies macro to pop the cookie it summons. Your own macros that cast spells are listed here too.
 - **Spell combos** — **New combo** starts a "once" macro that casts several spells in order (Force the Hand of Fate,
   then Stretch Time, by default); combos get a Run button, a hotkey and a ★ like any macro.
 - **Magic** — a chart of magic over time with every cast marked (red if it backfired).
@@ -400,8 +402,8 @@ that names an upgrade or achievement.
 A small toolbar runs along the bottom of the store, over the building rows (hover a button for what it does;
 Settings → Store can hide it). The building list gets a little extra room so its last row still scrolls clear of it.
 
-- **Sort** — best buy first (Cookie Monster's payback period for the amount you're buying: ×1, ×10 or ×100), next
-  achievement first (cheapest to reach a building's next count achievement), or the game's own order. It flips Cookie
+- **Sort** — **Default** (the game's own order), **Bulk PP** (Cookie Monster's payback period for the amount you're
+  buying: ×1, ×10 or ×100, best first) or **Achievement** (cheapest to reach a building's next count achievement). It flips Cookie
   Monster's own sort setting, so it **needs Cookie Monster**: without it the buttons are locked, and clicking one
   loads Cookie Monster.
 - **Round to multiples** (⌈10⌉ when buying, ⌊10⌋ when selling) — with ×10 or ×100 selected, buying stops at the next

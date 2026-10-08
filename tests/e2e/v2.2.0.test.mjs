@@ -16,9 +16,9 @@ assert(items.join() === 'events,graphs,garden,stocks,pantheon,wizard,clickers,wi
 const spellMacros = CA.Grimoire.SPELLS.map((s) => CA.Macros.get(s.id));
 assert(spellMacros.length === 9 && spellMacros.every((m) => m && m.builtin && m.mode === 'once' && m.section === 'grimoire'), 'a built-in "Cast …" macro per spell');
 const auto = CA.Macros.get('fthofOnClickFrenzy');
-assert(auto && auto.builtin && auto.mode === 'when' && auto.when.all.length === 2, 'hardcoded FtHoF-on-Click-frenzy macro (two AND-ed conditions)');
+// v2.30: an algorithmic macro casting on combos (tests/e2e/v2.30.0.test.mjs), no longer a "When…" on Click frenzy
+assert(auto && auto.builtin && auto.mode === 'flow', 'built-in auto-FtHoF macro');
 assert(!CA.Macros.remove('fthofOnClickFrenzy') && CA.Macros.get('fthofOnClickFrenzy'), 'and it can’t be removed');
-assert(/when Click frenzy is active and there's magic for Force the Hand of Fate/.test(CA.Macros.triggerText(auto)), `trigger text (${CA.Macros.triggerText(auto)})`);
 
 // ---- Wizard tower page
 CA.UI.Menu.openPage('wizard');
@@ -48,24 +48,21 @@ G.forceFail = false;
 const ev2 = CA.EventLog.list(['spell']);
 assert(ev2.length === 2 && ev2[1].title === 'Conjure Baked Goods backfired' && ev2[1].data.backfired, 'Grimoire’s own casts logged, backfire spotted');
 
-// ---- auto FtHoF on Click frenzy
+// ---- auto FtHoF (v2.30: on combos — see v2.30.0.test.mjs)
 calls.spells.length = 0;
 G.magic = 100;
 CA.Macros.set('fthofOnClickFrenzy', true);
 await sleep(400);
-assert(calls.spells.length === 0, 'no Click frenzy, no cast');
+assert(calls.spells.length === 0, 'no combo, no cast');
+G.magic = 10; // not enough magic when the combo starts…
+Game.buffs.Frenzy = { name: 'Frenzy', time: 300, maxTime: 300, multCpS: 7 };
 Game.buffs['Click frenzy'] = { name: 'Click frenzy', time: 300, maxTime: 300, multClick: 777 };
 await sleep(400);
-assert(calls.spells.join() === 'Force the Hand of Fate', `casts FtHoF once when Click frenzy starts (${calls.spells})`);
-delete Game.buffs['Click frenzy'];
-await sleep(300);
-G.magic = 10; // not enough magic when the next frenzy starts…
-Game.buffs['Click frenzy'] = { name: 'Click frenzy', time: 300, maxTime: 300, multClick: 777 };
+assert(calls.spells.length === 0, 'not enough magic: waits');
+G.magic = 100; // …and casts as soon as there is, during the same combo
 await sleep(400);
-assert(calls.spells.length === 1, 'not enough magic: waits');
-G.magic = 100; // …and casts as soon as there is, during the same frenzy
-await sleep(400);
-assert(calls.spells.length === 2, 'casts once the magic is there');
+assert(calls.spells.join() === 'Force the Hand of Fate', `casts once the magic is there (${calls.spells})`);
+delete Game.buffs.Frenzy;
 delete Game.buffs['Click frenzy'];
 CA.Macros.set('fthofOnClickFrenzy', false);
 
