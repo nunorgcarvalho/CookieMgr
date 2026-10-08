@@ -2,6 +2,45 @@
 
 ## Unreleased
 
+## 3.0.0 — 2026-10-08
+
+**Everything runs on one flexible substrate: algorithmic macros.** Every built-in that makes a decision is now code you
+can read, change and revert — built from small, tested building blocks for each part of the game — and the language
+grew what real strategies need. The pages and buttons look and work as before.
+
+- **The language**: arithmetic (`+ - * / %`, brackets: `cookies() > 0.1 * cps() * 60`); **variables**
+  (`target = cookies() * 0.1`, `ready = buff(Frenzy) and magic() > 50`, then `if ready:`); **loops over live lists**
+  (`for good in stocks():`, `for tile in garden.tiles():` — as far as they get each pass, resuming mid-list after a
+  wait); **options computed when a line runs** (`stock.buy(good, 10)`); **named blocks** (`def sell(good):` … `sell(x)`);
+  `log <any value>`; yes / no values (`garden.isMature(tile)`) as conditions on their own.
+- **Building blocks**, all in the library with their Lookup:
+  - stock market — `stocks()`, `stock.mode / price / held / room / max / delta / cost / resting(good)`,
+    `stock.buy / sell(good, n)`, brokers;
+  - garden, tile by tile — `garden.tiles()`, `garden.plantAt / wantAt / age / decay / isMature / isNew / isEmpty /
+    isOff(tile)`, `garden.harvest(tile)`, `garden.plant(tile, seed)`, `garden.seeds()`;
+  - shimmers and wrinklers — `shimmers()`, `shimmer.pop(s)`, `wrinklers()`, `wrinkler.isFed / isShiny(w)`, `wrinkler.pop(w)`;
+  - sugar lump — `lump.isRipe() / isMature() / pick()`;
+  - buying — `cm.best(kind, skip)`, `cm.buy(thing)`, `upgrades()`, `buy.upgrade(u)`, `research.next(stopBefore)`;
+  - the dragon — `dragon.canPet() / dropNow() / pet()`;
+  - **the Pantheon** (new) — `pantheon.god(slot)`, `pantheon.slotOf(god)`, `pantheon.swaps()`, and
+    `pantheon.slot(god, slot)`, the same as dragging a spirit in the Temple: automations that weren't possible before;
+  - macros — `macro.isOn(id)`.
+- **The built-ins as code**: the Stock market autobuyer, Golden cookies, Wrath cookies, Reindeer, Wrinklers, the Sugar
+  lump harvester, Best building, Best upgrade, Research, Cheap upgrades and Pet the dragon are default code over the
+  blocks (Edit on a card to read or change it; Revert to default). Their choices are **inputs** — variables in their
+  code, still on their cards, shift-click still flipping one, your old choices carried over. Each was checked side by
+  side against the JavaScript it replaced, on hundreds of random states: the same trades, pops and purchases.
+- **The Auto-gardener is its garden profile's rules**: the active profile's code runs directly, from the top every
+  second; a profile switched or rules saved apply on the next pass, rules that can't run stop it with the line, and
+  its Edit opens the Garden page's Rules card.
+- Shortcut macros (Repeat, When…, Once) are unchanged; the Big cookie, Fortune news, Elder Pledge, Sell all and the
+  spells stay shortcuts — there's nothing for them to decide.
+- Fixes along the way: code written back out keeps text quoted where a bare word would read as a value; the Cookie
+  Monster buyers' candidate list is no longer reused across passes.
+- Tests: a unit suite for the new language, side-by-side tests for every converted built-in (stocks on 400 random
+  markets, per-tile garden rules on 120 random gardens), the Pantheon, and `waitFor` instead of fixed sleeps where
+  timing matters; the runner gives a failure one more run alone and reports it as flaky if it passes then.
+
 ## 2.31.0 — 2026-10-08
 
 - **The stock autobuyer hires stockbrokers** whenever it can afford one and the market has room (each makes buying
