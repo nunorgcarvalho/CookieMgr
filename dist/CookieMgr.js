@@ -2215,6 +2215,12 @@ CA.Macros = (() => {
       if (def.builtin && (typeof def.defaultSource === 'string' || typeof def.defaultSource === 'function')) m.defaultSource = typeof def.defaultSource === 'function' ? def.defaultSource() : def.defaultSource;
       // a built-in's inputs: its settings (on its card), variables in its code
       if (def.builtin && Array.isArray(def.inputs)) m.inputs = def.inputs.map((i) => ({ ...i }));
+      // from the top on every pass (a wait only ends that pass) — rules, like a garden profile's
+      if (def.pass) m.pass = true;
+      // a built-in whose code comes from elsewhere (the active garden profile's rules), that only
+      // runs when it can (ready), reports each pass (afterPass), and is edited on its own page (editAt)
+      if (def.builtin) ['sourceFrom', 'ready', 'afterPass'].forEach((k) => typeof def[k] === 'function' && (m[k] = def[k]));
+      if (def.builtin && def.editAt) m.editAt = def.editAt;
     }
     if (mode === 'when') {
       // { all: [{ cond, params, not }, …], edge } — v2.0 saved a single condition at the top level
@@ -2431,9 +2437,19 @@ CA.Macros = (() => {
   }
 
   /** An algorithmic macro's code: yours, or a built-in's (as you edited it, else its default). */
-  const sourceOf = (m) => (typeof m.source === 'string' ? m.source : (m.builtin && m.defaultSource) || '');
+  const sourceOf = (m) => (m.sourceFrom ? String(m.sourceFrom() || '') : typeof m.source === 'string' ? m.source : (m.builtin && m.defaultSource) || '');
   /** Its code compiled: { flow, errors } (lines kept, for its status). */
-  const compiledOf = (m) => CA.Script.compile(sourceOf(m), { vars: (m.inputs || []).map((i) => i.key) });
+  const compileCache = new Map(); // vars | source → { flow, errors }
+  function compiledOf(m) {
+    const vars = (m.inputs || []).map((i) => i.key);
+    const src = sourceOf(m);
+    const key = `${vars.join(',')}|${src}`;
+    if (!compileCache.has(key)) {
+      if (compileCache.size > 60) compileCache.clear();
+      compileCache.set(key, CA.Script.compile(src, { vars }));
+    }
+    return compileCache.get(key);
+  }
   /** An algorithmic built-in's inputs (its settings — variables in its code), with your choices. */
   function inputsOf(m) {
     const mine = (m && prefs[m.id] && prefs[m.id].inputs) || {};
@@ -2596,7 +2612,27 @@ CA.Macros = (() => {
         return false;
     }
   }
+  /** A pass-by-pass macro's tick: its code from the top, fresh (its last pass stays for its status). */
+  function runFresh(m) {
+    if (ascending() || depth >= MAX_DEPTH || (m.ready && !m.ready())) return;
+    const { flow, errors } = compiledOf(m);
+    if (errors.length) {
+      problems[m.id] = `line ${errors[0].line}: ${errors[0].message}`;
+      set(m.id, false, { silent: true });
+      CA.Util.notify(m.name, `Stopped — ${CA.Util.escapeHtml(problems[m.id])}`, CA.ICON, 5);
+      return;
+    }
+    const F = runPass(flow, status[m.id].steps, inputsOf(m));
+    F.t = Date.now();
+    flowRuns[m.id] = F;
+    status[m.id].runs++;
+    status[m.id].lastRun = F.t;
+    if (F.done > 0) bump(m.id, F.done);
+    if (m.afterPass) m.afterPass(F);
+  }
+
   function runFlow(m) {
+    if (m.pass) return runFresh(m);
     const F = flowRuns[m.id];
     if (!F || ascending() || depth >= MAX_DEPTH) return;
     F.at = [];
@@ -2649,7 +2685,8 @@ CA.Macros = (() => {
       ? {
           at: flowRuns[id].at.slice(),
           // the lines it's on right now (for the editor's gutter)
-          lines: flowRuns[id].at.map((a) => Number((a.match(/^line (\d+):/) || [])[1])).filter(Boolean),
+          lines: flowRuns[id].pass ? flowRuns[id].trace.map((x) => x.line).filter(Boolean) : flowRuns[id].at.map((a) => Number((a.match(/^line (\d+):/) || [])[1])).filter(Boolean),
+          t: flowRuns[id].t || 0,
           trace: flowRuns[id].trace.slice(),
           done: flowRuns[id].done,
           error: flowRuns[id].error,
@@ -3439,9 +3476,15 @@ CA.Garden = (() => {
     return compiled.get(src);
   }
 
-  // what this pass has done (the actions count into it; the page shows it)
-  let pass = null;
-  const count = (k, n = 1) => pass && (pass[k] = (pass[k] || 0) + n);
+  // what the auto-gardener's latest pass did, by kind (the actions count into it; the page shows it)
+  let acc = null;
+  function count(k, n = 1) {
+    if (!n) return;
+    const now = Date.now();
+    if (!acc || now - acc.t > 300) acc = { t: now, harvested: 0, planted: 0, saved: 0, unlocked: 0, soil: 0 };
+    acc[k] += n;
+    last = { at: now, harvested: acc.harvested, planted: acc.planted, saved: acc.saved, unlocked: acc.unlocked, soil: acc.soil > 0 };
+  }
   /** Runs fn(M, profile) on a garden that can be tended, else 0. */
   function withGarden(fn) {
     const M = minigame();
@@ -3543,37 +3586,25 @@ CA.Garden = (() => {
     return c;
   }
 
-  /**
-   * One pass of the auto-gardener: the active profile's rules, from the top. Returns how many
-   * things it did; what it did by kind goes to `last`, and where the rules went to lastPass.
-   */
+  // The Auto-gardener is a built-in algorithmic macro whose code is the active profile's rules
+  // (sourceFrom), run from the top every second (pass) while there's a garden to tend (ready).
+  // tend() is the same pass by hand — the garden.tend action.
   let last = { at: 0, harvested: 0, planted: 0, saved: 0, unlocked: 0, soil: false };
-  let lastPass = null; // { at, trace, lines, errors, t }
-  function tend() {
+  let lastPass = null; // { t, at, trace, lines, error, errors, profile }
+  const canTend = () => {
     const M = minigame();
+    return !!M && !!active() && !M.freeze;
+  };
+  /** After each pass (the gardener's, or tend()'s): where the rules went, for the page. */
+  function recordPass(F, errors) {
     const p = active();
-    if (!M || !p || M.freeze) return 0;
-    const src = rulesOf(p);
-    const { flow, errors } = compileRules(src);
-    pass = { harvested: 0, planted: 0, saved: 0, unlocked: 0, soil: 0 };
-    let F;
-    try {
-      F = CA.Macros.runPass(flow);
-    } finally {
-      const did = pass;
-      pass = null;
-      const n = did.harvested + did.planted + did.saved + did.unlocked + did.soil;
-      if (n) last = { at: Date.now(), ...did, soil: did.soil > 0 };
-    }
-    lastPass = {
-      t: Date.now(),
-      at: F.at,
-      trace: F.trace,
-      lines: F.trace.map((x) => x.line).filter(Boolean),
-      error: F.error,
-      errors,
-      profile: p.id,
-    };
+    lastPass = { t: Date.now(), at: F.at, trace: F.trace, lines: F.trace.map((x) => x.line).filter(Boolean), error: F.error, errors: errors || [], profile: p && p.id };
+  }
+  function tend() {
+    if (!canTend()) return 0;
+    const { flow, errors } = compileRules(rulesOf(active()));
+    const F = CA.Macros.runPass(flow);
+    recordPass(F, errors);
     return F.done;
   }
 
@@ -3697,6 +3728,81 @@ CA.Garden = (() => {
     V('garden.mature', 'mature plants on the plot', () => census().mature);
     V('garden.empty', 'empty tiles', () => census().empty);
     V('garden.offProfile', 'tiles that aren’t as the profile has them', () => census().off);
+
+    // tile by tile: a tile is named "x,y" (garden.tiles() lists the ones you can use)
+    const at = (fn, none) => (tile) => {
+      const M = minigame();
+      const [x, y] = String(tile).split(',').map(Number);
+      return M && Number.isInteger(x) && Number.isInteger(y) && unlockedTile(M, x, y) ? fn(M, x, y) : none;
+    };
+    const T = (id, desc, get, bool) => CA.Script.defineValue({ id, desc, params: ['tile'], get, bool });
+    const tileOptions = () => {
+      const M = minigame();
+      return M ? tilesOf(M).map(([x, y]) => ({ v: `${x},${y}`, label: `${x},${y}${plantAt(M, x, y) ? ` — ${plantAt(M, x, y).name}` : ''}` })) : [];
+    };
+    CA.Script.defineValue({
+      id: 'garden.tiles',
+      desc: 'a list: every tile you can plant on ("x,y")',
+      list: true,
+      get: () => {
+        const M = minigame();
+        return M ? tilesOf(M).map(([x, y]) => `${x},${y}`) : [];
+      },
+    });
+    T('garden.plantAt', 'what grows on a tile (its seed, or "" when empty)', at((M, x, y) => (plantAt(M, x, y) || {}).key || '', ''));
+    T('garden.wantAt', 'the active profile’s seed for a tile (or "")', at((M, x, y) => (active() && wantAt(active(), x, y)) || '', ''));
+    T('garden.age', 'how far a tile’s plant has grown (its age; 0 when empty)', at((M, x, y) => (plantAt(M, x, y) ? M.plot[y][x][1] : 0), 0));
+    T('garden.decay', 'the chance a tile’s plant dies on the next tick (0–1)', at((M, x, y) => (isMature(M, x, y) ? decayChance(M, x, y) : 0), 0));
+    T('garden.isMature', 'whether a tile’s plant is mature', at((M, x, y) => isMature(M, x, y), false), true);
+    T('garden.isNew', 'whether a tile’s plant is a seed you haven’t unlocked yet', at((M, x, y) => !!plantAt(M, x, y) && !plantAt(M, x, y).unlocked, false), true);
+    T('garden.isEmpty', 'whether a tile has nothing growing', at((M, x, y) => !plantAt(M, x, y), false), true);
+    T('garden.isOff', 'whether a tile isn’t as the active profile has it', at((M, x, y) => ((plantAt(M, x, y) || {}).key || null) !== ((active() && wantAt(active(), x, y)) || null), false), true);
+    CA.Script.defineValue({
+      id: 'garden.seeds',
+      desc: 'a list: every seed you’ve unlocked',
+      list: true,
+      get: () => Object.keys((minigame() || {}).plants || {}).filter((k) => minigame().plants[k].unlocked),
+    });
+    CA.Script.defineValue({ id: 'garden.seedCost', desc: 'cookies to plant a seed', params: ['seed'], get: (seed) => {
+      const M = minigame();
+      const me = M && M.plants[seed];
+      return me && typeof M.getCost === 'function' ? M.getCost(me) : NaN;
+    } });
+    const seedOptions = () => Object.keys((minigame() || {}).plants || {}).map((k) => ({ v: k, label: minigame().plants[k].name }));
+    A({
+      id: 'garden.harvest',
+      name: 'Harvest a tile',
+      icon: 'leaf',
+      group: 'Garden',
+      unit: 'harvested',
+      params: [{ key: 'tile', label: 'Tile', type: 'select', default: '', options: tileOptions }],
+      run: (p) =>
+        withGarden((M) => {
+          const [x, y] = String(p.tile).split(',').map(Number);
+          if (!Number.isInteger(x) || !Number.isInteger(y) || !plantAt(M, x, y) || !M.harvest(x, y)) return 0;
+          count('harvested');
+          return 1;
+        }),
+    });
+    A({
+      id: 'garden.plant',
+      name: 'Plant a seed on a tile',
+      icon: 'leaf',
+      group: 'Garden',
+      unit: 'planted',
+      params: [
+        { key: 'tile', label: 'Tile', type: 'select', default: '', options: tileOptions },
+        { key: 'seed', label: 'Seed', type: 'select', default: 'bakerWheat', options: seedOptions },
+      ],
+      run: (p) =>
+        withGarden((M) => {
+          const [x, y] = String(p.tile).split(',').map(Number);
+          const me = M.plants[p.seed];
+          if (!me || !Number.isInteger(x) || !Number.isInteger(y) || !unlockedTile(M, x, y) || plantAt(M, x, y) || !plant(M, me, x, y)) return 0;
+          count('planted');
+          return 1;
+        }),
+    });
     CA.Actions.register({
       id: 'garden.tend',
       name: 'Tend the garden (the active profile’s rules)',
@@ -3709,11 +3815,15 @@ CA.Garden = (() => {
     CA.Macros.addBuiltin({
       id: GARDENER,
       name: 'Auto-gardener',
-      desc: 'Keeps your garden like the active profile on the Garden page: replants, pulls out what doesn’t belong, saves plants about to die and unlocks new seeds.',
+      desc: 'Keeps your garden like the active profile on the Garden page, following that profile’s rules (algorithmic code, run from the top every second — edit them on the Garden page): replants, pulls out what doesn’t belong, saves plants about to die, unlocks new seeds, picks the soil.',
       icon: { sprite: [4, 0], sheet: 'img/gardenPlants.png' }, // mature Baker's wheat
-      mode: 'repeat',
+      mode: 'flow',
+      pass: true,
       every: 1000,
-      steps: [{ action: 'garden.tend' }],
+      sourceFrom: () => (active() ? rulesOf(active()) : ''),
+      ready: canTend,
+      afterPass: (F) => recordPass(F),
+      editAt: 'garden',
       defaultKey: '',
       section: 'garden',
     });
@@ -6423,7 +6533,7 @@ CA.Script = (() => {
       checkCond(e.a);
       checkCond(e.b);
     } else if (e.t === 'not') checkCond(e.a);
-    else if (e.t === 'val' && !(e.e.v === 'var' || (e.e.v === 'lit' && typeof e.e.x === 'boolean')))
+    else if (e.t === 'val' && !(e.e.v === 'var' || (e.e.v === 'lit' && typeof e.e.x === 'boolean') || (e.e.v === 'fn' && valueById[e.e.id] && valueById[e.e.id].bool)))
       throw new Err(`“${exprText(e.e)}” isn’t a condition — compare it with >=, <=, >, <, == or !=`);
   }
   function condition(c) {
@@ -12138,10 +12248,22 @@ CA.UI.MacrosPage = (() => {
         if (copy) edit(copy.id);
         return true;
       }
-      case 'macro-edit':
+      case 'macro-edit': {
         CA.Util.sound('snd/tick.mp3');
+        const m = M().get(id);
+        // a built-in edited on its own page (the Auto-gardener: the Garden page's Rules card)
+        if (m && m.editAt) {
+          CA.UI.Menu.openPage(m.editAt);
+          const card = document.querySelector(`#CookieMgrMenu [data-edits="${id}"]`);
+          if (card) {
+            CA.Util.scrollInPanel(card, 'start');
+            CA.UI.Dom.replay(card, 'ca-flash');
+          }
+          return true;
+        }
         edit(id);
         return true;
+      }
       case 'macro-new':
         CA.Util.sound('snd/tick.mp3');
         edit(null);
@@ -13955,7 +14077,7 @@ CA.UI.GardenPage = (() => {
     const edited = p.rules != null;
     const dirty = !!draft && draft.profile === p.id && draft.src !== G().rulesOf(p);
     return (
-      '<div class="ca-card ca-editor2 ca-grules" data-gp-rules>' +
+      `<div class="ca-card ca-editor2 ca-grules" data-gp-rules data-edits="${G().GARDENER}">` +
       C().cardHead(
         `Rules · ${esc(p.name)}`,
         'edit',

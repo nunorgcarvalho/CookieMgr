@@ -844,10 +844,22 @@ CA.UI.MacrosPage = (() => {
         if (copy) edit(copy.id);
         return true;
       }
-      case 'macro-edit':
+      case 'macro-edit': {
         CA.Util.sound('snd/tick.mp3');
+        const m = M().get(id);
+        // a built-in edited on its own page (the Auto-gardener: the Garden page's Rules card)
+        if (m && m.editAt) {
+          CA.UI.Menu.openPage(m.editAt);
+          const card = document.querySelector(`#CookieMgrMenu [data-edits="${id}"]`);
+          if (card) {
+            CA.Util.scrollInPanel(card, 'start');
+            CA.UI.Dom.replay(card, 'ca-flash');
+          }
+          return true;
+        }
         edit(id);
         return true;
+      }
       case 'macro-new':
         CA.Util.sound('snd/tick.mp3');
         edit(null);

@@ -129,7 +129,7 @@ CA.UI.GardenPage = (() => {
     const edited = p.rules != null;
     const dirty = !!draft && draft.profile === p.id && draft.src !== G().rulesOf(p);
     return (
-      '<div class="ca-card ca-editor2 ca-grules" data-gp-rules>' +
+      `<div class="ca-card ca-editor2 ca-grules" data-gp-rules data-edits="${G().GARDENER}">` +
       C().cardHead(
         `Rules · ${esc(p.name)}`,
         'edit',

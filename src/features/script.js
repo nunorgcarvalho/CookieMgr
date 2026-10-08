@@ -415,7 +415,7 @@ CA.Script = (() => {
       checkCond(e.a);
       checkCond(e.b);
     } else if (e.t === 'not') checkCond(e.a);
-    else if (e.t === 'val' && !(e.e.v === 'var' || (e.e.v === 'lit' && typeof e.e.x === 'boolean')))
+    else if (e.t === 'val' && !(e.e.v === 'var' || (e.e.v === 'lit' && typeof e.e.x === 'boolean') || (e.e.v === 'fn' && valueById[e.e.id] && valueById[e.e.id].bool)))
       throw new Err(`“${exprText(e.e)}” isn’t a condition — compare it with >=, <=, >, <, == or !=`);
   }
   function condition(c) {

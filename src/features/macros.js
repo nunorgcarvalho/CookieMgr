@@ -187,6 +187,12 @@ CA.Macros = (() => {
       if (def.builtin && (typeof def.defaultSource === 'string' || typeof def.defaultSource === 'function')) m.defaultSource = typeof def.defaultSource === 'function' ? def.defaultSource() : def.defaultSource;
       // a built-in's inputs: its settings (on its card), variables in its code
       if (def.builtin && Array.isArray(def.inputs)) m.inputs = def.inputs.map((i) => ({ ...i }));
+      // from the top on every pass (a wait only ends that pass) — rules, like a garden profile's
+      if (def.pass) m.pass = true;
+      // a built-in whose code comes from elsewhere (the active garden profile's rules), that only
+      // runs when it can (ready), reports each pass (afterPass), and is edited on its own page (editAt)
+      if (def.builtin) ['sourceFrom', 'ready', 'afterPass'].forEach((k) => typeof def[k] === 'function' && (m[k] = def[k]));
+      if (def.builtin && def.editAt) m.editAt = def.editAt;
     }
     if (mode === 'when') {
       // { all: [{ cond, params, not }, …], edge } — v2.0 saved a single condition at the top level
@@ -403,9 +409,19 @@ CA.Macros = (() => {
   }
 
   /** An algorithmic macro's code: yours, or a built-in's (as you edited it, else its default). */
-  const sourceOf = (m) => (typeof m.source === 'string' ? m.source : (m.builtin && m.defaultSource) || '');
+  const sourceOf = (m) => (m.sourceFrom ? String(m.sourceFrom() || '') : typeof m.source === 'string' ? m.source : (m.builtin && m.defaultSource) || '');
   /** Its code compiled: { flow, errors } (lines kept, for its status). */
-  const compiledOf = (m) => CA.Script.compile(sourceOf(m), { vars: (m.inputs || []).map((i) => i.key) });
+  const compileCache = new Map(); // vars | source → { flow, errors }
+  function compiledOf(m) {
+    const vars = (m.inputs || []).map((i) => i.key);
+    const src = sourceOf(m);
+    const key = `${vars.join(',')}|${src}`;
+    if (!compileCache.has(key)) {
+      if (compileCache.size > 60) compileCache.clear();
+      compileCache.set(key, CA.Script.compile(src, { vars }));
+    }
+    return compileCache.get(key);
+  }
   /** An algorithmic built-in's inputs (its settings — variables in its code), with your choices. */
   function inputsOf(m) {
     const mine = (m && prefs[m.id] && prefs[m.id].inputs) || {};
@@ -568,7 +584,27 @@ CA.Macros = (() => {
         return false;
     }
   }
+  /** A pass-by-pass macro's tick: its code from the top, fresh (its last pass stays for its status). */
+  function runFresh(m) {
+    if (ascending() || depth >= MAX_DEPTH || (m.ready && !m.ready())) return;
+    const { flow, errors } = compiledOf(m);
+    if (errors.length) {
+      problems[m.id] = `line ${errors[0].line}: ${errors[0].message}`;
+      set(m.id, false, { silent: true });
+      CA.Util.notify(m.name, `Stopped — ${CA.Util.escapeHtml(problems[m.id])}`, CA.ICON, 5);
+      return;
+    }
+    const F = runPass(flow, status[m.id].steps, inputsOf(m));
+    F.t = Date.now();
+    flowRuns[m.id] = F;
+    status[m.id].runs++;
+    status[m.id].lastRun = F.t;
+    if (F.done > 0) bump(m.id, F.done);
+    if (m.afterPass) m.afterPass(F);
+  }
+
   function runFlow(m) {
+    if (m.pass) return runFresh(m);
     const F = flowRuns[m.id];
     if (!F || ascending() || depth >= MAX_DEPTH) return;
     F.at = [];
@@ -621,7 +657,8 @@ CA.Macros = (() => {
       ? {
           at: flowRuns[id].at.slice(),
           // the lines it's on right now (for the editor's gutter)
-          lines: flowRuns[id].at.map((a) => Number((a.match(/^line (\d+):/) || [])[1])).filter(Boolean),
+          lines: flowRuns[id].pass ? flowRuns[id].trace.map((x) => x.line).filter(Boolean) : flowRuns[id].at.map((a) => Number((a.match(/^line (\d+):/) || [])[1])).filter(Boolean),
+          t: flowRuns[id].t || 0,
           trace: flowRuns[id].trace.slice(),
           done: flowRuns[id].done,
           error: flowRuns[id].error,
