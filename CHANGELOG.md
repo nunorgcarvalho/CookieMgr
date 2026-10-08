@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 3.1.0 — 2026-10-08
+
+- **Zoom into a chart by dragging across it**: pick a stretch of the x axis and the chart shows just that (a shaded
+  band and its length while you drag; Esc lets go). Zooms stack — **Zoom out** (or a double-click) steps back one,
+  and choosing a window clears it; a stretch that reaches now stays live. Every chart has it, the garden charts on
+  their "garden ticks" axis too.
+- **Looking back is now a shift-drag** (scrolling sideways still works).
+
 ## 3.0.0 — 2026-10-08
 
 **Everything runs on one flexible substrate: algorithmic macros.** Every built-in that makes a decision is now code you

@@ -23,7 +23,7 @@ The same words mean the same things everywhere in the add-on and this README:
 | **Frame**  | One recorded sample of every state at a moment (or, for older history, a merged span).   |
 | **Widget** | Something on the game's left panel: a macro's button, the Running now bar, quick stats, events, minigames. |
 
-## Features (v3.0)
+## Features (v3.1)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
 the data pages **Events** and **Graphs**; the minigames **Garden**, **Stock market**, **Pantheon** and **Grimoire**;
@@ -53,7 +53,10 @@ The Graphs page has two tabs — **Cookies** and **Prestige** — of charts draw
   count; they're trimmed at the bottom.
 - **% of total** on stacked bar charts: each bar becomes the shares of its total instead of amounts.
 - **Axes always fit what's shown:** hiding something (gains, losses, a line) rescales the chart right away.
-- **Scrollable:** drag (or scroll sideways) to look back; **Pause** / **Jump to live**. Every choice is remembered.
+- **Zoom:** drag across a chart to zoom into that stretch of its x axis (a band shows what you're picking; Esc lets
+  go). Zooms stack: **Zoom out** or a double-click steps back, and picking a window clears it. A stretch that reaches
+  now keeps following now. It works on every chart, the garden's "garden ticks" axis included.
+- **Scrollable:** shift-drag (or scroll sideways) to look back; **Pause** / **Jump to live**. Every choice is remembered.
 - **Effect shading** behind the chart for every golden-cookie effect (Frenzy, Click frenzy, Elder frenzy, Dragonflight,
   Clot, …), stacked in lanes (each with the effect's own icon) when they overlap, and **event markers** for golden/wrath cookies, reindeer, stock trades
   and ascensions. Hover anything for details.
@@ -557,7 +560,7 @@ The **Stock market** tab in the CookieMgr panel has:
   between them is your unrealized gain) with stat tiles for Value, Equity (cookies if sold now), Unrealized, Realized
   and Total gain — switch to
   "Per stock" for the individual price lines instead. Cost basis is tracked from whenever the mod is loaded, so it
-  only knows about trades made since then. Same controls as the Graphs page (window, active time, drag, pause).
+  only knows about trades made since then. Same controls as the Graphs page (window, active time, drag to zoom, shift-drag to look back, pause).
 - **Portfolio performance** — the portfolio's return as a percentage of the cookies invested, over a rolling window
   (1m, 5m, 15m or 1h): green bars above zero while your holdings gain, red below while they lose. Standardized by the
   money at stake, so it reads the same for a tiny and a huge portfolio. Tiles: now, best, worst, and the share of time

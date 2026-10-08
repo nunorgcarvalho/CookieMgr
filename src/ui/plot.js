@@ -381,9 +381,15 @@ CA.UI.Plot = (() => {
     let padL = 54;
     let layout = null;
     let lastData = null;
+    // zooming: a drag across the chart picks a stretch of its x axis to show (shift-drag pans)
+    let sel = null; // { a, b } canvas x of the stretch being picked
+    let zoomW = null; // the zoomed window (ms of the axis), else the window chosen with the chips
+    const zooms = []; // what each zoom replaced, to step back out: { zoomW, end }
+    const MIN_ZOOM = 5 * SEC;
 
     const opt = (k) => S().get(key(k));
     function windowMs(ax) {
+      if (zoomW) return zoomW;
       const s = opt('win');
       if (s > 0) return s * SEC;
       const min = ax.min;
@@ -448,7 +454,11 @@ CA.UI.Plot = (() => {
       (spec.toggles || []).forEach((t) => (h += boolChip(t.setting || key(t.key), t.label, t.title)));
       h += boolChip('graphActiveTime', `${CA.UI.Icons.html('clock', 12)} Active time`, 'Leave out time the game wasn’t running (closed, asleep, background tab) — the window then covers that much actual play');
       h += '</div>';
-      h += `<div class="ca-chipgroup">${chip('', 'data-plot-pause', 'Drag the chart (or scroll it sideways) to look further back')}</div>`;
+      h +=
+        '<div class="ca-chipgroup">' +
+        chip(`${CA.UI.Icons.html('search', 12)} Zoom out`, 'data-plot-unzoom hidden', 'Back to how it was before the last zoom (or double-click the chart)') +
+        chip('', 'data-plot-pause', 'Drag across the chart to zoom into that stretch · shift-drag (or scroll sideways) to look further back · double-click to zoom out') +
+        '</div>';
       h += '</div>';
       h += '<div class="ca-legend" data-plot-legend></div>';
       if (spec.footer) h += '<div data-plot-footer></div>';
@@ -840,9 +850,10 @@ CA.UI.Plot = (() => {
 
       layout = { plot, xOf, yOf, v, data, bars, laneRects, evRects, gapRects, hoverIv: null, hoverBar: null, chartH, byKey };
 
-      const dragging = panCtl && panCtl.isDragging();
+      const dragging = (panCtl && panCtl.isDragging()) || !!sel;
       if (!dragging && hover && hover.x >= plot.x && hover.x <= plot.x + plot.w && hover.y >= 0 && hover.y <= h) drawHover(w, h);
       else if (tipEl) tipEl.style.display = 'none';
+      if (sel) drawSelection(plot);
 
       if (!bars.length && !Object.keys(lines).some((k) => lines[k].length)) {
         ctx.fillStyle = 'rgba(230,220,200,0.6)';
@@ -852,6 +863,74 @@ CA.UI.Plot = (() => {
         const msg = !S().get('trackHistory') ? 'History recording is off (Settings)' : data.empty || 'Collecting data…';
         ctx.fillText(msg, plot.x + plot.w / 2, plot.y + plot.h / 2);
       }
+    }
+
+    /** The stretch being picked: a shaded band, and how long it is. */
+    function drawSelection(plot) {
+      const a = Math.max(plot.x, Math.min(sel.a, sel.b));
+      const b = Math.min(plot.x + plot.w, Math.max(sel.a, sel.b));
+      if (b - a < 1) return;
+      ctx.fillStyle = 'rgba(255, 211, 106, 0.16)';
+      ctx.fillRect(a, plot.y, b - a, plot.h);
+      ctx.strokeStyle = 'rgba(255, 211, 106, 0.8)';
+      ctx.lineWidth = 1;
+      [a, b].forEach((x) => {
+        ctx.beginPath();
+        ctx.moveTo(Math.round(x) + 0.5, plot.y);
+        ctx.lineTo(Math.round(x) + 0.5, plot.y + plot.h);
+        ctx.stroke();
+      });
+      const r = rangeOf(a, b);
+      if (r) {
+        ctx.font = FONT;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillStyle = 'rgba(255, 225, 150, 0.95)';
+        ctx.fillText(span((r.x1 - r.x0) / SEC), (a + b) / 2, plot.y + 4);
+      }
+    }
+
+    /** Canvas x → the view's x (time, or active time); null where a chart's own axis can't say (no timeAt). */
+    function rangeOf(pxA, pxB) {
+      if (!layout) return null;
+      const { plot, v } = layout;
+      const at = (px) => v.x0 + ((Math.max(plot.x, Math.min(plot.x + plot.w, px)) - plot.x) / plot.w) * v.W;
+      let x0 = at(pxA);
+      let x1 = at(pxB);
+      if (v.custom) {
+        if (typeof v.custom.timeAt !== 'function') return null;
+        x0 = v.custom.timeAt(x0);
+        x1 = v.custom.timeAt(x1);
+        if (!Number.isFinite(x0) || !Number.isFinite(x1)) return null;
+      }
+      return x1 > x0 ? { x0, x1 } : null;
+    }
+
+    /** Shows just that stretch (at least MIN_ZOOM); one that reaches now keeps following now. */
+    function zoomTo(pxA, pxB) {
+      const r = rangeOf(Math.min(pxA, pxB), Math.max(pxA, pxB));
+      if (!r) return false;
+      const ax = axis();
+      zooms.push({ zoomW, end: view.isLive() ? null : view.getEnd(ax.now) });
+      zoomW = Math.max(MIN_ZOOM, r.x1 - r.x0);
+      // a stretch that ends within a bar of now: zoomed, but still live
+      const nearNow = r.x1 >= ax.now - Math.max(2 * SEC, (layout.v.bucket || 0) * 1.5);
+      if (nearNow) view.resume();
+      else view.freeze(Math.max(r.x1, (ax.min == null ? r.x1 : ax.min + zoomW)));
+      return true;
+    }
+    /** One zoom back (none: nothing to do). */
+    function zoomOut() {
+      const z = zooms.pop();
+      if (!z) return false;
+      zoomW = z.zoomW;
+      if (z.end == null) view.resume();
+      else view.freeze(z.end);
+      return true;
+    }
+    function clearZoom() {
+      zooms.length = 0;
+      zoomW = null;
     }
 
     function drawXAxis(plot, v, xOf) {
@@ -1090,9 +1169,11 @@ CA.UI.Plot = (() => {
       if (!root) return;
       const live = root.querySelector('[data-plot-live]');
       if (live) {
-        live.textContent = view.isLive() ? 'Live' : 'Paused';
+        live.textContent = `${zoomW ? `Zoomed · ${span(zoomW / SEC)} · ` : ''}${view.isLive() ? 'Live' : 'Paused'}`;
         live.classList.toggle('paused', !view.isLive());
       }
+      const unzoom = root.querySelector('[data-plot-unzoom]');
+      if (unzoom) unzoom.hidden = !zooms.length;
       const pause = root.querySelector('[data-plot-pause]');
       if (pause) pause.textContent = view.isLive() ? 'Pause' : 'Jump to live';
       if (!lastData) return;
@@ -1124,7 +1205,8 @@ CA.UI.Plot = (() => {
       const set = e.target.closest('[data-plot-set]');
       const tog = e.target.closest('[data-plot-toggle]');
       const pause = e.target.closest('[data-plot-pause]');
-      if (!set && !tog && !pause) return;
+      const unzoom = e.target.closest('[data-plot-unzoom]');
+      if (!set && !tog && !pause && !unzoom) return;
       e.stopPropagation();
       if (e.target.blur) e.target.blur();
       CA.Util.sound('snd/tick.mp3');
@@ -1133,9 +1215,14 @@ CA.UI.Plot = (() => {
         const cur = S().get(k);
         const raw = set.dataset.val;
         S().set(k, typeof cur === 'number' ? Number(raw) : raw);
-        if (k === key('win')) view.resume();
+        if (k === key('win')) {
+          clearZoom();
+          view.resume();
+        }
       } else if (tog) {
         S().set(tog.dataset.plotToggle, !S().get(tog.dataset.plotToggle));
+      } else if (unzoom) {
+        zoomOut();
       } else {
         setPaused(view.isLive());
       }
@@ -1174,16 +1261,64 @@ CA.UI.Plot = (() => {
           const ax = axis();
           return { windowMs: windowMs(ax), plotWidthPx: (layout && layout.plot.w) || canvas.clientWidth, liveNow: ax.now, minT: ax.min };
         },
-        draw
+        draw,
+        { panWhen: (e) => e.shiftKey, cursor: 'crosshair' }
       );
+      // drag across it: pick a stretch to zoom into (Esc lets go of it); double-click: back out
+      const xIn = (e) => e.clientX - canvas.getBoundingClientRect().left;
+      const onDown = (e) => {
+        if (e.button !== 0 || e.shiftKey || !layout) return;
+        const x = xIn(e);
+        if (x < layout.plot.x || x > layout.plot.x + layout.plot.w) return;
+        e.preventDefault();
+        sel = { a: x, b: x };
+      };
+      const onMove = (e) => {
+        if (!sel) return;
+        sel.b = xIn(e);
+        draw();
+      };
+      const onUp = () => {
+        if (!sel) return;
+        const { a, b } = sel;
+        sel = null;
+        if (Math.abs(b - a) >= 6 && zoomTo(a, b)) tick();
+        else draw();
+      };
+      const onKey = (e) => {
+        if (e.key === 'Escape' && sel) {
+          sel = null;
+          draw();
+        }
+      };
+      const onDbl = (e) => {
+        e.preventDefault();
+        if (zoomOut()) tick();
+      };
+      canvas.addEventListener('mousedown', onDown);
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+      window.addEventListener('keydown', onKey);
+      canvas.addEventListener('dblclick', onDbl);
+      offZoom = () => {
+        canvas.removeEventListener('mousedown', onDown);
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onUp);
+        window.removeEventListener('keydown', onKey);
+        canvas.removeEventListener('dblclick', onDbl);
+      };
       tick();
     }
+    let offZoom = null;
 
     function unmount() {
       if (observer) observer.disconnect();
       observer = null;
       if (panCtl) panCtl.detach();
       panCtl = null;
+      if (offZoom) offZoom();
+      offZoom = null;
+      sel = null;
       if (root) root.removeEventListener('click', onClick);
       if (tipEl) tipEl.remove();
       root = canvas = ctx = tipEl = null;
@@ -1198,6 +1333,11 @@ CA.UI.Plot = (() => {
     }
 
     const inst = {
+      /** Zoom into canvas x a..b (as a drag across the chart does); zoomOut() steps back. For tests and code. */
+      zoomTo: (a, b) => zoomTo(a, b) && (tick(), true),
+      zoomOut: () => zoomOut() && (tick(), true),
+      zoomed: () => (zoomW ? { windowMs: zoomW, depth: zooms.length } : null),
+      layout: () => layout,
       id,
       spec,
       html,

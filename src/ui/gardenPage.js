@@ -427,6 +427,19 @@ CA.UI.GardenPage = (() => {
       labels,
       head: (bar) => (bar ? `${bar.tick === kEnd ? 'This tick' : `${kEnd - bar.tick} tick${kEnd - bar.tick === 1 ? '' : 's'} ago`}${tickTime(bar.tick)}` : 'Garden ticks'),
     };
+    // a position on this axis back to the view's time (zooming into a stretch of ticks)
+    const tickAt = (n) => {
+      const x = ticks.find((tt) => tt.k === n);
+      return x ? x[k] : null;
+    };
+    xAxis.timeAt = (x) => {
+      const n = Math.floor(x);
+      const a = tickAt(n);
+      const b = n + 1 > kEnd ? v.x1 : tickAt(n + 1);
+      const from = a == null ? v.x0 : a;
+      const to = b == null ? v.x1 : b;
+      return from + (to - from) * (x - n);
+    };
     // things that happened at a time, placed in the tick they happened in
     xAxis.at = (t) => {
       let n = kStart;

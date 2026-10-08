@@ -129,12 +129,14 @@ CA.UI.Chart = (() => {
      * plain vertical wheel is left alone so the page still scrolls normally) on `canvas`.
      * `getPanCtx()` supplies `{ windowMs, plotWidthPx, liveNow, minT }` fresh on every event,
      * since those change as the window/data do. `onChange()` runs after every pan step (redraw).
-     * Returns `{ detach, isDragging }`.
+     * `opts.panWhen(e)`: which presses start a pan (default: all) — a chart that zooms on a plain
+     * drag pans on a shift-drag. Returns `{ detach, isDragging }`.
      */
-    function attachPan(canvas, getPanCtx, onChange) {
+    function attachPan(canvas, getPanCtx, onChange, opts = {}) {
       let dragging = false;
       let lastX = 0;
       const onDown = (e) => {
+        if (opts.panWhen && !opts.panWhen(e)) return;
         dragging = true;
         lastX = e.clientX;
         canvas.style.cursor = 'grabbing';
@@ -151,7 +153,7 @@ CA.UI.Chart = (() => {
       const onUp = () => {
         if (!dragging) return;
         dragging = false;
-        canvas.style.cursor = 'grab';
+        canvas.style.cursor = opts.cursor || 'grab';
       };
       const onWheel = (e) => {
         const horiz = Math.abs(e.deltaX) > Math.abs(e.deltaY);
@@ -165,7 +167,7 @@ CA.UI.Chart = (() => {
       window.addEventListener('mousemove', onMove);
       window.addEventListener('mouseup', onUp);
       canvas.addEventListener('wheel', onWheel, { passive: false });
-      canvas.style.cursor = 'grab';
+      canvas.style.cursor = opts.cursor || 'grab';
       const detach = () => {
         canvas.removeEventListener('mousedown', onDown);
         window.removeEventListener('mousemove', onMove);
