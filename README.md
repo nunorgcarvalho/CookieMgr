@@ -1,7 +1,5 @@
 # CookieMgr
 
-_(Previously called Cookie Agent.)_
-
 A [Cookie Clicker](https://orteil.dashnet.org/cookieclicker/) add-on for automating tasks and visualizing data.
 It loads like [Cookie Monster](https://github.com/CookieMonsterTeam/CookieMonster): a one-line bookmarklet pulls the
 latest build from GitHub Pages, so pushing to this repo updates everyone's add-on.
@@ -402,17 +400,23 @@ panel) keeps the garden like the active profile, following that profile's **rule
 language as algorithmic macros, see [Macros](#macros)) run from the top every second. The default rules:
 
 ```
+fertilizerAbove = 0.67           # your numbers, at the top: fertilizer while more than this share is growing,
+tickWindow = 15                  #   the last seconds before a tick, when old plants are dealt with,
+dyingOver = 0.5                  #   and how likely to die a mature plant has to be to get harvested
 garden.plantEmpty()              # plant the profile's seed on every empty tile, right away
 garden.harvestNew()              # a seed you haven't unlocked: harvest it once mature (unlocks it)
-if garden.tickIn() <= 15:        # in the last 15 seconds before a garden tick:
+if garden.youngShare() > fertilizerAbove:   # soil first — its effects count the whole time:
+  garden.soil(fertilizer)        #   fertilizer while most plants are still growing,
+else:
+  garden.soil(clay)              #   clay once enough of them are mature
+if garden.tickIn() <= tickWindow:  # in the last seconds before a garden tick:
   garden.pullMismatches(true)    #   pull out what doesn't belong (leaving new seeds to grow)
-  garden.harvestDying(0.5)       #   harvest mature plants more than 50% likely to die on the tick…
+  garden.harvestDying(dyingOver) #   harvest mature plants likely to die on the tick…
   garden.plantEmpty()            #   …and replant them
-if garden.youngShare() > 0.67:   # soil: fertilizer while most plants are still growing,
-  garden.soil(fertilizer)
-else:                            # clay once a third of them are mature
-  garden.soil(clay)
 ```
+
+Change a number at the top and the rules follow (your old "harvest before dying at" and "seconds before the tick"
+settings fill in `dyingOver` and `tickWindow`).
 
 So empty tiles start growing and working at once, old plants are picked at the last moment before the tick, and
 the soil follows the garden (soil has a 10-minute cooldown in the game; the rule simply waits for it).

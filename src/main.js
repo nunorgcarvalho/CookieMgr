@@ -15,15 +15,6 @@ function removeLegacyBookmarklet() {
   return true;
 }
 
-// Settings saved before the rename live under the old mod id — carry them over once.
-function migrateOldSaveData() {
-  const OLD_ID = 'CookieAgent';
-  const old = Game.modSaveData && Game.modSaveData[OLD_ID];
-  if (!old) return;
-  if (!Game.modSaveData[CA.ID]) mod.load(old);
-  delete Game.modSaveData[OLD_ID];
-}
-
 let loaded = false;
 
 const mod = {
@@ -58,7 +49,6 @@ const mod = {
         console.error('[CookieMgr] a module failed to start', e);
       }
     });
-    migrateOldSaveData();
     CA.Settings.startAutoPersist();
 
     CA.Util.notify(

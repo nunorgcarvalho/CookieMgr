@@ -163,11 +163,8 @@ CA.GardenHistory = (() => {
   }
   const tickNow = () => (ticks.length ? ticks[ticks.length - 1].k : samples.length ? samples[samples.length - 1].k || 0 : 0);
 
-  const activeNow = () => {
-    const fr = CA.Recorder.frames();
-    const last = fr[fr.length - 1];
-    return last ? last.a + (Date.now() - last.t) : Date.now();
-  };
+  // the recorder's active time now (kept on snapshots for reference; the charts place them by t)
+  const activeNow = () => CA.Recorder.activeAt(Date.now());
 
   function sample() {
     const M = CA.Garden.minigame();

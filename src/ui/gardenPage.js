@@ -371,12 +371,19 @@ CA.UI.GardenPage = (() => {
     return (M && M.plants && M.plants[key] && M.plants[key].name) || key;
   };
 
-  /** Snapshot in force at `x` (along key 't' / 'a'), or null — snapshots are in time order. */
-  function stateAt(all, k, x, from) {
+  /** Index of the snapshot in force at `x` (positions in time order), from `from` on; -1 before the first. */
+  function stateAt(pos, x, from) {
     let i = from;
-    while (i + 1 < all.length && all[i + 1][k] <= x) i++;
+    while (i + 1 < pos.length && pos[i + 1] <= x) i++;
     return i;
   }
+  /**
+   * Where things that happened at wall-clock time t sit on the chart's x axis: t itself, or with
+   * "Active time" on, the recorder's active time then (the clock every chart uses). The garden's
+   * own snapshots also carry an active-time stamp, but it was worked out on the side and can be
+   * far off — before the recorder loaded, or across time the game was closed — so it isn't used.
+   */
+  const placeOf = (v) => (v.active && typeof v.xAt === 'function' ? (t) => v.xAt(t) : (t) => t);
 
   /**
    * The garden over the chart's window as bars, each with the snapshot in force: { x0, x1, c, e }.
@@ -386,15 +393,16 @@ CA.UI.GardenPage = (() => {
    */
   function stateBars(v) {
     const all = H().list();
-    const k = v.key;
     if (!all.length) return { bars: [] };
+    const place = placeOf(v);
+    const pos = all.map((s) => place(s.t));
     if (v.opt('axis') !== 'ticks') {
       const bars = [];
       let i = -1;
       const start = Math.floor(v.x0 / v.bucket) * v.bucket;
       for (let x = start; x < v.x1; x += v.bucket) {
         const end = Math.min(x + v.bucket, v.x1);
-        i = stateAt(all, k, end, i);
+        i = stateAt(pos, end, i);
         if (i < 0) continue;
         bars.push({ x0: Math.max(x, v.x0), x1: end, c: all[i].c, e: all[i].e || {} });
       }
@@ -402,8 +410,8 @@ CA.UI.GardenPage = (() => {
     }
     // garden ticks: which ticks fall in the window, and the snapshot in force in each
     const ticks = H().ticks();
-    const inWin = ticks.filter((t) => t[k] >= v.x0 && t[k] <= v.x1);
-    const firstSample = all.find((s) => s[k] >= v.x0) || all[all.length - 1];
+    const inWin = ticks.filter((t) => place(t.t) >= v.x0 && place(t.t) <= v.x1);
+    const firstSample = all.find((s, j) => pos[j] >= v.x0) || all[all.length - 1];
     const kEnd = v.live ? H().tickNow() : inWin.length ? inWin[inWin.length - 1].k : firstSample.k || 0;
     const kStart = Math.min(kEnd, inWin.length ? inWin[0].k - 1 : firstSample.k || 0);
     const bars = [];
@@ -430,7 +438,7 @@ CA.UI.GardenPage = (() => {
     // a position on this axis back to the view's time (zooming into a stretch of ticks)
     const tickAt = (n) => {
       const x = ticks.find((tt) => tt.k === n);
-      return x ? x[k] : null;
+      return x ? place(x.t) : null;
     };
     xAxis.timeAt = (x) => {
       const n = Math.floor(x);

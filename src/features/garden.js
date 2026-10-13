@@ -144,27 +144,44 @@ CA.Garden = (() => {
     const thr = Math.max(0, Math.min(100, Number(S().get('gardenThreshold')))) / 100;
     const lines = [
       '# These rules run from the top every second while the Auto-gardener is on.',
-      '# Plant the profile\'s seed on every empty tile, right away.',
-      'garden.plantEmpty()',
+      '# Your numbers (used below):',
+      `${FERTILIZER_VAR} = 0.67   # fertilizer while more than this share of the planted tiles is still growing, else clay`,
+      `tickWindow = ${lead}   # the last seconds before a garden tick, when old plants are dealt with`,
     ];
+    if (thr < 1) lines.push(`dyingOver = ${thr}   # harvest mature plants more likely than this to die on the tick (0–1)`);
+    lines.push('# Plant the profile\'s seed on every empty tile, right away.', 'garden.plantEmpty()');
     if (S().get('gardenUnlockNew') !== false) lines.push("# A seed you haven't unlocked: let it grow, harvest it once it's mature (that unlocks it).", 'garden.harvestNew()');
     lines.push(
-      `# In the last ${lead} seconds before a garden tick:`,
-      `if garden.tickIn() <= ${lead}:`,
+      '# Soil, first: its effects count the whole time, not just at the tick.',
+      `if garden.youngShare() > ${FERTILIZER_VAR}:`,
+      '  garden.soil(fertilizer)',
+      'else:',
+      '  garden.soil(clay)',
+      '# In the last tickWindow seconds before a garden tick:',
+      'if garden.tickIn() <= tickWindow:',
       "  # pull out what isn't the profile's seed for its tile",
       `  garden.pullMismatches(${S().get('gardenUnlockNew') !== false ? 'true' : 'false'})`
     );
-    if (thr < 1) lines.push(`  # harvest mature plants more likely than ${Math.round(thr * 100)}% to die on the tick, then replant`, `  garden.harvestDying(${thr})`, '  garden.plantEmpty()');
-    lines.push(
-      '# Soil: fertilizer while most plants are still growing, clay once a third of them are mature.',
-      'if garden.youngShare() > 0.67:',
-      '  garden.soil(fertilizer)',
-      'else:',
-      '  garden.soil(clay)'
-    );
+    if (thr < 1) lines.push('  # harvest mature plants likely to die on the tick, then replant', '  garden.harvestDying(dyingOver)', '  garden.plantEmpty()');
     return lines.join('\n') + '\n';
   }
   const rulesOf = (p) => (p && typeof p.rules === 'string' ? p.rules : defaultRules());
+  const FERTILIZER_VAR = 'fertilizerAbove';
+  /**
+   * Rules saved before v3.1.1 had the soil threshold written into their if (if garden.youngShare() > 0.67:):
+   * it becomes a variable at the top, like the default rules have it — the rest of the code as it was.
+   */
+  function liftSoilThreshold(src) {
+    const re = /^([ \t]*)if garden\.youngShare\(\) > ([0-9.]+)[ \t]*:[ \t]*$/gm;
+    const found = [...src.matchAll(re)];
+    if (found.length !== 1 || new RegExp(`\\b${FERTILIZER_VAR}\\b`).test(src)) return src;
+    const value = found[0][2];
+    const lines = src.replace(re, `$1if garden.youngShare() > ${FERTILIZER_VAR}:`).split('\n');
+    // under the rules' heading comment (the comments after it belong to the lines they describe)
+    const at = /^\s*#/.test(lines[0] || '') ? 1 : 0;
+    lines.splice(at, 0, `${FERTILIZER_VAR} = ${value}   # fertilizer while more than this share of the planted tiles is still growing, else clay`);
+    return lines.join('\n');
+  }
   /** Sets a profile's rules (null: back to the default ones). */
   function setRules(id, src) {
     const p = profiles.find((x) => x.id === id);
@@ -352,7 +369,7 @@ CA.Garden = (() => {
         name: String(p.name || 'Garden').slice(0, 40),
         soil: typeof p.soil === 'string' ? p.soil : 'dirt',
         plot: Array.from({ length: SIZE }, (_, y) => Array.from({ length: SIZE }, (_, x) => (p.plot[y] && typeof p.plot[y][x] === 'string' ? p.plot[y][x] : null))),
-        ...(typeof p.rules === 'string' ? { rules: p.rules.slice(0, 20000) } : {}),
+        ...(typeof p.rules === 'string' ? { rules: liftSoilThreshold(p.rules.slice(0, 20000)) } : {}),
       }));
     changed();
   }

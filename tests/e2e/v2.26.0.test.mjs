@@ -30,12 +30,12 @@ assert(p1 && G.active() === p1 && p1.rules === undefined, 'a new profile uses th
 // ---- the default rules
 const def = G.defaultRules();
 assert(G.compileRules(def).errors.length === 0, `default rules compile (${JSON.stringify(G.compileRules(def).errors)})`);
-assert(/garden\.plantEmpty\(\)/.test(def) && /garden\.harvestNew\(\)/.test(def) && /garden\.tickIn\(\) <= 15/.test(def) && /garden\.harvestDying\(0\.5\)/.test(def), 'default rules: plant, unlock new seeds, the 15s window, the 50% threshold');
-assert(/if garden\.youngShare\(\) > 0\.67:\n\s+garden\.soil\(fertilizer\)\nelse:\n\s+garden\.soil\(clay\)/.test(def), 'default soil rule: fertilizer while > 0.67 is young, else clay');
+assert(/garden\.plantEmpty\(\)/.test(def) && /garden\.harvestNew\(\)/.test(def) && /tickWindow = 15\b/.test(def) && /garden\.tickIn\(\) <= tickWindow/.test(def) && /dyingOver = 0\.5\b/.test(def) && /garden\.harvestDying\(dyingOver\)/.test(def), 'default rules: plant, unlock new seeds, the 15s window, the 50% threshold (v3.1.1: as variables at the top)');
+assert(/fertilizerAbove = 0\.67\b/.test(def) && /if garden\.youngShare\(\) > fertilizerAbove:\n\s+garden\.soil\(fertilizer\)\nelse:\n\s+garden\.soil\(clay\)/.test(def), 'default soil rule: fertilizer while > 0.67 is young, else clay');
 CA.Settings.set('gardenLead', 30);
 CA.Settings.set('gardenThreshold', 80);
 CA.Settings.set('gardenUnlockNew', false);
-assert(/tickIn\(\) <= 30/.test(G.defaultRules()) && /harvestDying\(0\.8\)/.test(G.defaultRules()) && !/harvestNew/.test(G.defaultRules()) && /pullMismatches\(false\)/.test(G.defaultRules()), 'the old settings carry into the default rules');
+assert(/tickWindow = 30\b/.test(G.defaultRules()) && /dyingOver = 0\.8\b/.test(G.defaultRules()) && !/harvestNew/.test(G.defaultRules()) && /pullMismatches\(false\)/.test(G.defaultRules()), 'the old settings carry into the default rules');
 CA.Settings.set('gardenThreshold', 100);
 assert(!/harvestDying/.test(G.defaultRules()), '100% threshold: no harvesting before death');
 CA.Settings.set('gardenLead', 15);
@@ -74,7 +74,7 @@ assert(M.soil === 1, '75% young again: fertilizer');
 const lp = G.lastPass();
 assert(lp && lp.profile === p1.id && lp.errors.length === 0, 'lastPass recorded');
 const lineOf = (re) => G.rulesOf(p1).split('\n').findIndex((l) => re.test(l)) + 1;
-assert(lp.lines.includes(lineOf(/^if garden\.youngShare/)) && lp.trace.some((t) => /youngShare\(\) = 0\.75 > 0\.67 ✓ → yes/.test(t.text)), `trace: the soil if, taken (${lp.trace.map((t) => t.text).join(' | ')})`);
+assert(lp.lines.includes(lineOf(/^if garden\.youngShare/)) && lp.trace.some((t) => /youngShare\(\) = 0\.75 > fertilizerAbove = 0\.67 ✓ → yes/.test(t.text)), `trace: the soil if, taken (${lp.trace.map((t) => t.text).join(' | ')})`);
 assert(lp.trace.some((t) => /garden\.soil: 1/.test(t.text)), 'trace: the actions that did something');
 assert(!lp.trace.some((t) => /plantEmpty/.test(t.text)), 'actions with nothing to do are left out');
 
@@ -118,22 +118,22 @@ click(w, page().querySelector('[data-gp-rules-go]'));
 assert(card().classList.contains('ca-flash'), 'the rules link finds the card');
 
 // typing: unsaved
-ta().value = G.defaultRules().replace('> 0.67', '> 0.5');
+ta().value = G.defaultRules().replace('fertilizerAbove = 0.67', 'fertilizerAbove = 0.5');
 ta().dispatchEvent(new w.Event('input', { bubbles: true }));
 assert(/unsaved/.test(card().querySelector('.ca-card-head').textContent) && card().querySelector('[data-gp-rules-act="save"]').classList.contains('ca-btn-on'), 'an edit: “unsaved”, Save lights up');
 CA.UI.GardenPage.sync();
-assert(ta().value.includes('> 0.5'), 'the draft survives the page’s refresh');
+assert(ta().value.includes('= 0.5'), 'the draft survives the page’s refresh');
 CA.UI.Menu.render();
-assert(ta().value.includes('> 0.5'), '…and a re-render');
+assert(ta().value.includes('= 0.5'), '…and a re-render');
 click(w, card().querySelector('[data-gp-rules-act="save"]'));
-assert(/> 0\.5/.test(G.active().rules || '') && card().querySelector('.ca-badge-edited') && card().querySelector('[data-gp-rules-act="revert"]'), 'Save: the profile’s rules; “edited” and Revert');
+assert(/= 0\.5/.test(G.active().rules || '') && card().querySelector('.ca-badge-edited') && card().querySelector('[data-gp-rules-act="revert"]'), 'Save: the profile’s rules; “edited” and Revert');
 assert(/\(edited\)/.test(page().querySelector('[data-gp-rules-go]').parentNode.textContent), 'the Auto-gardener card says so');
 
 // an error: not saved
 ta().value = 'garden.soil(fertilizer)\nwait until\n';
 ta().dispatchEvent(new w.Event('input', { bubbles: true }));
 click(w, card().querySelector('[data-gp-rules-act="save"]'));
-assert(/> 0\.5/.test(G.active().rules) && /Not saved — line 2/.test(card().textContent), `a broken rule isn’t saved (${(card().querySelector('.ca-editor-error') || {}).textContent})`);
+assert(/= 0\.5/.test(G.active().rules) && /Not saved — line 2/.test(card().textContent), `a broken rule isn’t saved (${(card().querySelector('.ca-editor-error') || {}).textContent})`);
 click(w, card().querySelector('[data-gp-rules-act="discard"]'));
 assert(ta().value === G.active().rules && !/unsaved/.test(card().textContent), 'Discard: back to the saved rules');
 

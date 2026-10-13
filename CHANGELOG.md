@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 3.1.1 — 2026-10-12
+
+- **Fix: the garden charts' Time view with "Active time" on** could show the wrong garden for a time — not lining up
+  with the Garden ticks view. Snapshots carried an active-time stamp worked out on the side, which was far off when
+  taken before the history recorder had loaded or after the game had been closed. They're placed by when they
+  happened now (the same clock every chart uses), which also fixes history already saved.
+- **The default garden rules keep their numbers in variables at the top** — `fertilizerAbove = 0.67`,
+  `tickWindow = 15`, `dyingOver = 0.5` — and switch the soil first (its effects count the whole time, not only at the
+  tick). Saved rules with the threshold written into `if garden.youngShare() > 0.67:` get it lifted into a
+  `fertilizerAbove` variable at the top the same way; nothing else in them changes.
+- Removed the leftovers of the add-on's old name (and the one-time move of settings saved under it).
+
 ## 3.1.0 — 2026-10-08
 
 - **Zoom into a chart by dragging across it**: pick a stretch of the x axis and the chart shows just that (a shaded
@@ -762,7 +774,7 @@ grew what real strategies need. The pages and buttons look and work as before.
 
 ## 0.2.0 — 2026-09-29
 
-First version as a proper add-on (was a single-line bookmarklet). Renamed from Cookie Agent to CookieMgr.
+First version as a proper add-on (was a single-line bookmarklet).
 
 - Loads through the official mod API; settings saved inside the game save.
 - Side tab on the left beam opens the CookieMgr panel in the game's menu area.
