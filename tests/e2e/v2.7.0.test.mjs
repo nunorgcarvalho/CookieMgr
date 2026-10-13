@@ -97,7 +97,8 @@ assert(/Equity/.test(doc.querySelector('[data-plot="stocks"] [data-plot-stats]')
 CA.UI.Menu.openPage('events');
 const tradeRow = [...doc.querySelectorAll('[data-ev-income] tbody tr')].find((tr) => /Stock trades/.test(tr.textContent));
 assert(/−bought · \+sold/.test(tradeRow.textContent) && tradeRow.querySelector('span.neg') && tradeRow.querySelector('span.pos'), 'income table: stock trades as −bought · +sold');
-assert([...doc.querySelectorAll('[data-ev-list] .ca-ev-cookies')].some((el) => /\+6,?000\/s CpS|\+6K\/s CpS|\/s CpS/.test(el.textContent)), 'effect pop shows its CpS gain in the log');
+// v3.1.2: the effect and its multiplier, not the CpS it adds
+assert([...doc.querySelectorAll('[data-ev-list] .ca-ev-cookies')].some((el) => el.textContent === 'Frenzy ×7' && el.classList.contains('pos')), 'effect pop shows the effect and its multiplier in the log');
 
 // ---- quick stats
 CA.UI.Widgets.add('stats');

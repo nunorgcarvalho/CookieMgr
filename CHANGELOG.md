@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 3.1.2 — 2026-10-12
+
+- **Events log: a golden cookie that gives an effect shows the effect and its multiplier** — "Frenzy ×7", "Clot ×0.5",
+  "Click frenzy ×777 clicks" — instead of the CpS it added. Earlier events show it the same way.
+
 ## 3.1.1 — 2026-10-12
 
 - **Fix: the garden charts' Time view with "Active time" on** could show the wrong garden for a time — not lining up

@@ -144,14 +144,30 @@ CA.UI.EventsPage = (() => {
   }
 
   /** What an event did, for its right-hand column: cookies gained/lost, or — for a golden cookie
-   *  that granted an effect instead of a drop (Frenzy, Clot…) — the CpS it added or took away. */
+   *  that granted an effect instead of a drop — the effect and what it multiplies: "Frenzy ×7",
+   *  "Clot ×0.5", "Click frenzy ×777 clicks". */
   function effectOf(e) {
-    const { signed, beautify } = F();
+    const { signed } = F();
     const c = e.cookies || 0;
     if (Math.abs(c) >= 1) return { cls: c < 0 ? 'neg' : 'pos', text: signed(c) };
-    const g = e.data && e.data.cpsGain;
-    if (Number.isFinite(g) && Math.abs(g) >= 1) return { cls: g < 0 ? 'neg' : 'pos', text: `${g < 0 ? '−' : '+'}${beautify(Math.abs(g))}/s CpS` };
-    return { cls: '', text: '' };
+    const effects = (e.data && e.data.effects) || [];
+    if (!effects.length) return { cls: '', text: '' };
+    const times = (m) => `×${Math.round(m * 100) / 100}`;
+    let product = 1;
+    const text = effects
+      .map((ef) => {
+        if (Number.isFinite(ef.multCps) && ef.multCps !== 1) {
+          product *= ef.multCps;
+          return `${ef.name} ${times(ef.multCps)}`;
+        }
+        if (Number.isFinite(ef.multClick) && ef.multClick !== 1) {
+          product *= ef.multClick;
+          return `${ef.name} ${times(ef.multClick)} clicks`;
+        }
+        return ef.name;
+      })
+      .join(' · ');
+    return { cls: product > 1 ? 'pos' : product < 1 ? 'neg' : '', text };
   }
 
   function rowHtml(e) {

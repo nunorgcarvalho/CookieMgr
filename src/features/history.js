@@ -201,7 +201,7 @@ CA.History = (() => {
           // a chain) hit their cap of a share of the bank instead — then CpS didn't matter.
           const bankCapped = cookies >= 0.149 * before;
           const boost = cookies > 0 && cpsBefore > unbuffed && !bankCapped ? cookies * (1 - unbuffed / cpsBefore) : 0;
-          // effect-only pops (Frenzy…): the CpS they add, for event lists
+          // effect-only pops (Frenzy…): the CpS they add (kept in the event; the log shows the effect and its multiplier)
           const mult = effects.reduce((m, ef) => m * ef.multCps, 1);
           const cpsGain = mult !== 1 ? cpsBefore * (mult - 1) : 0;
           addEvent({ type, title, text, cookies, data: { effects, boost, cpsGain } });
