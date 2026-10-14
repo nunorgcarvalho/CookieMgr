@@ -2923,20 +2923,98 @@
 #CookieMgrMenu .ca-gcell:disabled {
   cursor: default;
 }
-#CookieMgrMenu .ca-gseeds {
+/* the Seeds slot: a tab per letter, and the seeds to pick from, as the game shows them */
+#CookieMgrMenu .ca-gseed-tabs {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 4px;
 }
-#CookieMgrMenu .ca-gseed-row {
-  display: flex;
+#CookieMgrMenu .ca-gseed-tab {
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
+  padding: 3px 8px 3px 4px;
+  font: 12px Tahoma, Arial, sans-serif;
+  color: #e8dcc0;
+  cursor: pointer;
+  border: 1px solid rgba(255, 220, 150, 0.18);
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.3);
+}
+#CookieMgrMenu .ca-gseed-tab.on {
+  border-color: rgba(160, 230, 100, 0.85);
+  background: rgba(60, 90, 30, 0.4);
+}
+#CookieMgrMenu .ca-gseed-tab.locked span:last-child,
+#CookieMgrMenu .ca-gseed-opt.locked span {
+  color: rgba(232, 220, 192, 0.5);
 }
 #CookieMgrMenu .ca-gseed-sprite {
   display: inline-block;
   width: 20px;
   height: 20px;
+}
+#CookieMgrMenu .ca-gseed-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.2);
+}
+#CookieMgrMenu .ca-gseed-pickhead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 12px;
+}
+#CookieMgrMenu .ca-gseed-pickhead label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: rgba(232, 220, 192, 0.75);
+  cursor: pointer;
+}
+#CookieMgrMenu .ca-gseed-opts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  gap: 4px;
+}
+#CookieMgrMenu .ca-gseed-opt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 2px;
+  font: 11px Tahoma, Arial, sans-serif;
+  line-height: 1.15;
+  text-align: center;
+  color: #f0e2c0;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: rgba(92, 60, 30, 0.45);
+}
+#CookieMgrMenu .ca-gseed-opt:hover {
+  border-color: rgba(255, 220, 150, 0.45);
+}
+#CookieMgrMenu .ca-gseed-opt.on {
+  border-color: #9fe06a;
+  background: rgba(60, 90, 30, 0.55);
+  box-shadow: 0 0 0 1px #9fe06a;
+}
+#CookieMgrMenu .ca-gseed-opt .ca-gs {
+  zoom: 0.75;
+}
+#CookieMgrMenu .ca-gseed-opt.locked .ca-gs {
+  filter: grayscale(0.8) brightness(0.7);
+}
+#CookieMgrMenu .ca-gseed-none {
+  justify-content: center;
+  color: rgba(232, 220, 192, 0.6);
 }
 #CookieMgrMenu .ca-gmini {
   display: grid;

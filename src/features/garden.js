@@ -115,24 +115,43 @@ CA.Garden = (() => {
     current = M ? plantedNow(M) : null;
     changed();
   }
-  /** Notes your clicks on the garden's tiles (once per garden), for the Current garden. */
+  /**
+   * Notes what you do by hand on the garden (once per garden; checked every second, so it's on
+   * from the start): a click on a tile (planting, harvesting) and the game's Harvest all button.
+   */
   function watchClicks(M) {
     if (!M || M.__caWatched || typeof M.clickTile !== 'function') return;
     M.__caWatched = true;
+    const note = (x, y) => {
+      if (!current) current = plantedNow(M);
+      const me = plantAt(M, x, y);
+      current[y][x] = keeps(me) ? me.key : null;
+    };
     const orig = M.clickTile;
     M.clickTile = function (x, y) {
       const out = orig.apply(this, arguments);
       try {
-        if (current && current[y] && L().picked('template') === CURRENT) {
-          const me = plantAt(M, x, y);
-          current[y][x] = keeps(me) ? me.key : null;
-          changed();
-        }
+        note(x, y);
+        changed();
       } catch (e) {
         /* the game's click went through; the memory just isn't updated */
       }
       return out;
     };
+    if (typeof M.harvestAll === 'function') {
+      const all = M.harvestAll;
+      M.harvestAll = function () {
+        const had = tilesOf(M).filter(([x, y]) => plantAt(M, x, y));
+        const out = all.apply(this, arguments);
+        try {
+          had.forEach(([x, y]) => !plantAt(M, x, y) && note(x, y));
+          changed();
+        } catch (e) {
+          /* as above */
+        }
+        return out;
+      };
+    }
   }
   /** The Current garden's memory (taken now if there's none yet). */
   function currentPlot() {
@@ -451,6 +470,8 @@ CA.Garden = (() => {
   function init() {
     CA.Settings.registerSection('garden', { serialize, load, event: 'garden' });
     L().defineOptions();
+    // what you do by hand on the garden, noted from the moment it's there (the Current garden)
+    setInterval(() => watchClicks(minigame()), 1000);
     S().defineOption({ key: 'gardenThreshold', group: 'garden-hidden', name: 'Harvest before dying at', desc: '', default: 50 });
     S().defineOption({ key: 'gardenLead', group: 'garden-hidden', name: 'Seconds before the tick', desc: '', default: 15 });
     S().defineOption({

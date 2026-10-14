@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 3.3.1 — 2026-10-14
+
+- **The Seeds slot picks seeds by their icons**: a tab per letter of the template (its seed's icon and name), and
+  under it the seeds as the game shows them, with their effects on hover — the ones you've unlocked, or every one
+  with a toggle. Picking a seed on *As planted* makes a seed set of yours with it.
+- **Fix: the Current garden / As planted didn't follow your changes.** Your clicks on the garden were only noted
+  while the Current garden template was picked, and only once something had asked for it; the page also didn't show
+  changes until it was redrawn. Now every click on a tile (and the game's Harvest all) is noted from the start,
+  whatever is picked, and the slots update as it happens. **Take it again** on a live template or seed set takes the
+  garden afresh.
+
 ## 3.3.0 — 2026-10-14
 
 - **The auto-gardener is four layers, and profiles that combine them.** Each layer is picked on its own, has

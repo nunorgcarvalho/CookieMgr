@@ -110,6 +110,8 @@ CA.UI.GardenPage = (() => {
   const letterColor = (l) => LETTER_COLORS[(l.charCodeAt(0) - 65) % LETTER_COLORS.length];
   let slot = 'gardener'; // the slot shown in detail
   let brush = 'A'; // the template's brush ('' rubs out)
+  let seedLetter = 'A'; // the Seeds slot's letter being picked for
+  let showLocked = false; // the Seeds slot: seeds you haven't unlocked too
 
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
   /** What the detail shows for a layer's item: the unsaved draft if it's this one's, else its saved data. */
@@ -210,6 +212,7 @@ CA.UI.GardenPage = (() => {
       (it.live ? '<span class="ca-pill">live</span>' : it.builtin ? (it.edited ? '<span class="ca-badge ca-badge-edited">edited</span>' : '<span class="ca-pill">built-in</span>') : '<span class="ca-pill">yours</span>') +
       (dirty ? '<span class="ca-pill ca-pill-warn">unsaved</span>' : '') +
       '<span class="ca-controls">' +
+      (it.live ? C().button(`${I('refresh', 12)} Take it again`, 'data-gp-act="recapture"', 'ca-btn-small') : '') +
       (it.live ? '' : C().button(`${I('save', 12)} Save`, 'data-gp-act="save"', `ca-btn-small${dirty ? ' ca-btn-on' : ''}`)) +
       (dirty ? C().button('Discard', 'data-gp-act="discard"', 'ca-btn-small') : '') +
       C().button(`${I('plus', 12)} Save as new`, 'data-gp-act="new"', 'ca-btn-small') +
@@ -267,34 +270,63 @@ CA.UI.GardenPage = (() => {
     );
   }
 
-  /** The seeds: which seed each letter is. */
+  /** A plant's effects, as the game words them (its effsStr, as text), for a tip. */
+  const effectsCache = {};
+  function effectsOf(me) {
+    if (!(me.key in effectsCache)) {
+      const d = document.createElement('div');
+      d.innerHTML = me.effsStr || '';
+      effectsCache[me.key] = d.textContent.replace(/•/g, ' · ').replace(/\s+/g, ' ').replace(/^ · /, '').trim();
+    }
+    return effectsCache[me.key];
+  }
+
+  /**
+   * The seeds: a tab per letter of the template (its seed's icon and name), and under the chosen
+   * one the seeds to pick from, as the game shows them — the ones you've unlocked, or every one
+   * with the toggle. A pick on a live set (As planted) makes a seed set of yours with it.
+   */
   function seedsBody(it) {
     const map = dataOf('seeds', it).map;
     const M = G().minigame();
-    const plants = M ? Object.keys(M.plants).map((k) => M.plants[k]) : [];
+    const plants = M ? M.plantsById || Object.keys(M.plants).map((k) => M.plants[k]) : [];
     const ls = lettersNow(map);
-    if (!ls.length) return '<div class="ca-hint">The template has no letters — nothing to plant.</div>';
+    if (!ls.length) return '<div class="ca-hint">The template has no letters — nothing to plant. Paint some in the Template slot.</div>';
+    if (!ls.includes(seedLetter)) seedLetter = ls[0];
+    const tabs = ls
+      .map((l) => {
+        const me = plantOf(map[l]);
+        return (
+          `<button type="button" class="ca-gseed-tab${l === seedLetter ? ' on' : ''}${me && !me.unlocked ? ' locked' : ''}" data-gp-letter="${l}">` +
+          chip(l) +
+          `<span class="ca-gseed-sprite">${me ? sprite(me, 4) : ''}</span>` +
+          `<span>${map[l] ? esc(seedName(map[l])) : '<em>nothing</em>'}</span>` +
+          '</button>'
+        );
+      })
+      .join('');
+    const locked = plants.filter((p) => !p.unlocked);
+    const shown = plants.filter((p) => p.unlocked || showLocked || p.key === map[seedLetter]);
+    const opt = (me) =>
+      `<button type="button" class="ca-gseed-opt${me.key === map[seedLetter] ? ' on' : ''}${me.unlocked ? '' : ' locked'}" data-gp-seedpick="${esc(me.key)}" data-tip="${esc(
+        `${me.name}${me.unlocked ? '' : ' (not unlocked yet: can’t be planted)'}${effectsOf(me) ? ` — ${effectsOf(me)}` : ''}`
+      )}">` +
+      sprite(me, 4) +
+      `<span>${esc(me.name)}</span>` +
+      '</button>';
     return (
-      '<div class="ca-gseeds">' +
-      ls
-        .map((l) => {
-          const me = plantOf(map[l]);
-          const opts =
-            '<option value="">— nothing —</option>' +
-            `<optgroup label="Unlocked">${plants.filter((p) => p.unlocked).map((p) => `<option value="${esc(p.key)}"${p.key === map[l] ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</optgroup>` +
-            `<optgroup label="Not unlocked yet">${plants.filter((p) => !p.unlocked).map((p) => `<option value="${esc(p.key)}"${p.key === map[l] ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</optgroup>`;
-          return (
-            '<div class="ca-gseed-row">' +
-            chip(l) +
-            `<span class="ca-gseed-sprite">${me ? sprite(me, 4) : ''}</span>` +
-            (it.live ? `<span>${esc(seedName(map[l]))}</span>` : `<select data-gp-seed="${l}">${opts}</select>`) +
-            (me && !me.unlocked ? '<span class="ca-pill ca-pill-warn">not unlocked: can’t be planted</span>' : '') +
-            '</div>'
-          );
-        })
-        .join('') +
+      `<div class="ca-gseed-tabs">${tabs}</div>` +
+      '<div class="ca-gseed-pick">' +
+      '<div class="ca-gseed-pickhead">' +
+      `<span>${chip(seedLetter)} is…</span>` +
+      (locked.length ? `<label class="ca-check"><input type="checkbox" data-gp-showlocked${showLocked ? ' checked' : ''}> show the ${locked.length} you haven’t unlocked</label>` : '') +
       '</div>' +
-      (it.live ? '<div class="ca-hint">The seeds of the Current garden. <b>Save as new</b> keeps them as a seed set of yours.</div>' : '')
+      '<div class="ca-gseed-opts">' +
+      `<button type="button" class="ca-gseed-opt ca-gseed-none${map[seedLetter] ? '' : ' on'}" data-gp-seedpick="">${I('close', 14)}<span>nothing</span></button>` +
+      shown.map(opt).join('') +
+      '</div>' +
+      '</div>' +
+      (it.live ? '<div class="ca-hint">The seeds of the Current garden, live. Picking a seed here makes a seed set of yours with it.</div>' : '')
     );
   }
 
@@ -317,7 +349,7 @@ CA.UI.GardenPage = (() => {
       C().cardHead('Auto-gardener', 'bolt', `<div class="ca-card-meta"><span class="ca-hint">also on the ${C().link('Macros', 'clickers')} page · ★ for a button on the left panel</span></div>`) +
       `<div class="ca-list">${CA.UI.MacrosPage.row(CA.Macros.get(G().GARDENER))}</div>` +
       profileBar() +
-      `<div class="ca-gslots">${SLOTS.map(slotHtml).join('')}</div>` +
+      `<div class="ca-gslots" data-gp-slots>${SLOTS.map(slotHtml).join('')}</div>` +
       detailHtml() +
       '<div class="ca-card-note" data-gp-last></div>' +
       '</div>'
@@ -371,7 +403,8 @@ CA.UI.GardenPage = (() => {
       draft = null;
       L().pick(layer, id);
       CA.Util.notify(`${noun[0].toUpperCase()}${noun.slice(1)} saved`, `“${esc(L().get(layer, id).name)}” — yours to change.`, CA.ICON, 3);
-    } else if (act === 'discard') draft = null;
+    } else if (act === 'recapture') G().captureCurrent();
+    else if (act === 'discard') draft = null;
     else if (act === 'revert') {
       L().set(layer, it.id, null);
       draft = null;
@@ -432,6 +465,24 @@ CA.UI.GardenPage = (() => {
     return `<div class="ca-garden-row">${gardenCard()}${plot.html()}</div>` + effectsPlot.html() + gardenerCard();
   }
 
+  let liveSig = ''; // the Current garden as last shown (the slots follow it while the page is open)
+  /** The Current garden changed (your clicks, Take it again): the slots, and a live item's detail, show it. */
+  function syncLive() {
+    const sig = JSON.stringify(G().currentPlot());
+    if (sig === liveSig) return;
+    const first = !liveSig;
+    liveSig = sig;
+    if (first) return;
+    const slots = root.querySelector('[data-gp-slots]');
+    if (slots) CA.UI.Dom.morph(slots, SLOTS.map(slotHtml).join(''));
+    const detail = root.querySelector('[data-gp-detail]');
+    if (detail && (slot === 'template' || slot === 'seeds') && pickedItem(slot).live) {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = detailHtml();
+      detail.replaceWith(tmp.firstChild);
+    }
+  }
+
   function sync() {
     if (!root || !root.isConnected) return;
     const v = G().view();
@@ -444,12 +495,25 @@ CA.UI.GardenPage = (() => {
     if (pill) pill.textContent = `layout: ${v.profile.name}`;
     const last = root.querySelector('[data-gp-last]');
     if (last) last.textContent = lastText();
+    syncLive();
     syncRules();
     CA.UI.MacrosPage.sync(root);
   }
 
+  /** A seed picked for the chosen letter (on a live set: a seed set of yours with it, picked). */
+  function pickSeed(key) {
+    const it = pickedItem('seeds');
+    const map = { ...dataOf('seeds', it).map };
+    if (key) map[seedLetter] = key;
+    else delete map[seedLetter];
+    if (it.live) {
+      L().pick('seeds', L().add('seeds', `${it.name} (copy)`, { map }));
+      draft = null;
+    } else draft = { layer: 'seeds', id: it.id, data: { map } };
+  }
+
   function onClick(e) {
-    const t = e.target.closest('[data-gp-slot],[data-gp-act],[data-gp-pact],[data-gp-cell],[data-gp-brush],[data-gp-tact]');
+    const t = e.target.closest('[data-gp-slot],[data-gp-act],[data-gp-pact],[data-gp-cell],[data-gp-brush],[data-gp-tact],[data-gp-letter],[data-gp-seedpick]');
     if (!t || !root.contains(t)) return;
     e.stopPropagation();
     const d = t.dataset;
@@ -465,6 +529,8 @@ CA.UI.GardenPage = (() => {
     } else if (d.gpCell) templateAct(d.gpCell);
     else if ('gpBrush' in d) brush = d.gpBrush;
     else if (d.gpTact) templateAct(null, d.gpTact);
+    else if (d.gpLetter) seedLetter = d.gpLetter;
+    else if ('gpSeedpick' in d) pickSeed(d.gpSeedpick);
     CA.Util.sound('snd/tick.mp3');
     CA.UI.Menu.render();
   }
@@ -479,19 +545,15 @@ CA.UI.GardenPage = (() => {
       rulesError = '';
     } else if (d.gpIname) {
       L().rename(d.gpIname, L().picked(d.gpIname), el.value);
-    } else if (d.gpSeed) {
-      const it = pickedItem('seeds');
-      const map = { ...dataOf('seeds', it).map };
-      if (el.value) map[d.gpSeed] = el.value;
-      else delete map[d.gpSeed];
-      draft = { layer: 'seeds', id: it.id, data: { map } };
-    } else return;
+    } else if ('gpShowlocked' in d) showLocked = el.checked;
+    else return;
     CA.UI.Menu.render();
   }
 
   function mount(el) {
     unmount();
     root = el;
+    liveSig = '';
     life = CA.UI.Pages.scope(el).on('click', onClick).on('change', onChange);
     life.add(
       CE().bind(root, {

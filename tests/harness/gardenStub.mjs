@@ -73,6 +73,10 @@ export function makeGarden(Game) {
         Game.Spend(this.getCost(me));
       }
     },
+    // the game's Harvest all button
+    harvestAll() {
+      for (let y = 0; y < 6; y++) for (let x = 0; x < 6; x++) if (this.plot[y][x][0] > 0) this.harvest(x, y);
+    },
     computeStepT() {
       this.stepT = this.soilsById[this.soil].tick * 60;
     },

@@ -417,9 +417,12 @@ detail, pick another, or edit it:
 - **Template**: a 6×6 grid — choose a letter (or *empty*) and click cells to paint; **Clear** and **Fill**. A
   template sits on your plot from its top-left unlocked tile, so one made for the full 6×6 garden fits a smaller one
   by its top-left part (cells off your plot are dimmed). The **Current garden** is live: whatever is planted, kept as
-  it is — it replants a plant that dies, follows what you plant or harvest by hand, and ignores weeds and mutations
-  that spring up.
-- **Seeds**: a seed for every letter of the template (seeds you haven't unlocked are marked: they can't be planted).
+  it is — it replants a plant that dies, follows what you plant or harvest by hand (a click on a tile, or the
+  game's Harvest all — whichever template is picked, and shown on the page as it happens), and ignores weeds and
+  mutations that spring up. **Take it again** takes the garden afresh.
+- **Seeds**: a tab for every letter of the template, with its seed's icon and name; under the chosen letter, the
+  seeds to pick from as the game shows them (hover one for its effects) — the ones you've unlocked, or every one with
+  the toggle (those can't be planted until you unlock them). A pick on the live *As planted* makes a seed set of yours.
 
 Every built-in can be edited — **Save**, and **Revert to default** brings it back — and **Save as new** makes one of
 your own to rename or delete. The Auto-gardener's card on the Macros page has the same five choices (profile, and the

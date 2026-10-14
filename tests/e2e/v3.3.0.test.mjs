@@ -117,15 +117,22 @@ assert(/unsaved/.test(q('[data-gp-dhead]').textContent) && q('[data-gp-cell="0,0
 click(w, q('[data-gp-act="new"]'));
 const myT = LY.picked('template');
 assert(!LY.get('template', myT).builtin && LY.get('template', myT).data.plot[0][0] === 'C' && !LY.get('template', 'checker').edited, 'Save as new: a template of yours, picked; the built-in unchanged');
-// the seeds slot: a seed for every letter of the template
+// the seeds slot: a tab per letter of the template, and the seeds to pick from (icons and names)
 click(w, q('[data-gp-slot="seeds"]'));
 const pickS = q('[data-gp-pick="seeds"]');
 pickS.value = 'to-cronerice';
 pickS.dispatchEvent(new w.Event('change', { bubbles: true }));
-assert(['A', 'B', 'C'].every((l) => q(`[data-gp-seed="${l}"]`)), 'Seeds: a row per letter (A, B, and the new C)');
-const selC = q('[data-gp-seed="C"]');
-selC.value = 'bakeberry';
-selC.dispatchEvent(new w.Event('change', { bubbles: true }));
+assert([...card().querySelectorAll('[data-gp-letter]')].map((b) => b.dataset.gpLetter).join() === 'A,B,C', 'Seeds: a tab per letter of the template (A, B, and the new C)');
+assert(/Baker’s wheat|Baker's wheat/.test(q('[data-gp-letter="A"]').textContent) && q('[data-gp-letter="A"] .ca-gs'), 'each tab: its seed’s icon and name');
+click(w, q('[data-gp-letter="C"]'));
+const opts = () => [...card().querySelectorAll('[data-gp-seedpick]')].map((b) => b.dataset.gpSeedpick);
+assert(q('[data-gp-letter="C"].on') && opts().includes('bakeberry') && opts().includes('') && !opts().includes('goldenClover') && q('[data-gp-seedpick="bakeberry"] .ca-gs') && /Bakeberry/.test(q('[data-gp-seedpick="bakeberry"]').textContent), 'C’s picker: the unlocked seeds as icons with names (and “nothing”); locked ones hidden');
+const tog = q('[data-gp-showlocked]');
+tog.checked = true;
+tog.dispatchEvent(new w.Event('change', { bubbles: true }));
+assert(opts().includes('goldenClover') && q('[data-gp-seedpick="goldenClover"]').classList.contains('locked') && /not unlocked/.test(q('[data-gp-seedpick="goldenClover"]').dataset.tip), 'the toggle: locked seeds too, marked');
+click(w, q('[data-gp-seedpick="bakeberry"]'));
+assert(q('[data-gp-seedpick="bakeberry"].on') && /Bakeberry/.test(q('[data-gp-letter="C"]').textContent) && /unsaved/.test(q('[data-gp-dhead]').textContent), 'a pick: the letter’s tab shows it (unsaved)');
 click(w, q('[data-gp-act="save"]'));
 assert(LY.get('seeds', 'to-cronerice').edited && LY.get('seeds', 'to-cronerice').data.map.C === 'bakeberry', 'Save: a built-in seed set, edited');
 assert(q('[data-gp-act="revert"]'), 'Revert offered');
