@@ -2803,6 +2803,17 @@
 #CookieMgrMenu .ca-gmini .ca-gs {
   zoom: 0.2917;
 }
+/* the Current garden, not picked: a leaf where its plot would be */
+#CookieMgrMenu .ca-gmini.ca-gmini-live {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 89px;
+  height: 89px;
+  border-radius: 4px;
+  background: rgba(92, 60, 30, 0.45);
+  color: #9fe06a;
+}
 
 /* ---------- v2.17: store toolbar (along the bottom of the store) ---------- */
 

@@ -18,6 +18,7 @@ export function makeGarden(Game) {
     dirt: { name: 'Dirt', tick: 5, req: 0 },
     fertilizer: { name: 'Fertilizer', tick: 3, req: 50 },
     clay: { name: 'Clay', tick: 15, req: 100 },
+    woodchips: { name: 'Wood chips', tick: 5, req: 300 },
   };
   const soilsById = [];
   Object.keys(soils).forEach((k, i) => {
@@ -61,6 +62,16 @@ export function makeGarden(Game) {
       this.harvestLog.push(`${me.key}@${x},${y}${tile[1] >= me.mature ? ' mature' : ''}`);
       this.plot[y][x] = [0, 0];
       return true;
+    },
+    // a click on a tile, as the game's: harvests what's there, else plants the selected seed
+    seedSelected: -1,
+    clickTile(x, y) {
+      if (this.harvest(x, y)) return;
+      const me = this.plantsById[this.seedSelected];
+      if (me && me.unlocked && this.canPlant(me)) {
+        this.plot[y][x] = [me.id + 1, 0];
+        Game.Spend(this.getCost(me));
+      }
     },
     computeStepT() {
       this.stepT = this.soilsById[this.soil].tick * 60;

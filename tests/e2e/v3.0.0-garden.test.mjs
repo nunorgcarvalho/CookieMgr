@@ -90,14 +90,15 @@ M.set('gardener', true, { silent: true });
 await sleep(1150);
 assert(Mg.plot[2][2][1] === 0 && at(2, 2) === 'bakerWheat' && at(3, 3) === 'thumbcorn', 'running: follows the rules (harvested the mature wheat and replanted, planted the empty tile)');
 assert(G.lastPass() && G.lastPass().lines.length > 0 && M.flowStatus('gardener').lines.length > 0, 'its last pass: the lines it took (the Garden page, the card)');
-// another profile: its rules, from the next pass
+// another gardener (v3.2: picked apart from the profile): its code, from the next pass
 const p2 = G.snapshot('Second');
 G.use(p2.id);
-G.setRules(p2.id, 'log "second profile"\n');
+const logger = G.newGardener('Logger', 'log "second gardener"\n');
+G.useGardener(logger);
 await sleep(1100);
-assert(M.flowStatus('gardener').trace.some((t) => /second profile/.test(t.text)), 'switching profile: the gardener follows its rules');
+assert(M.flowStatus('gardener').trace.some((t) => /second gardener/.test(t.text)), 'switching gardener: the Auto-gardener follows its code');
 // a wait only ends that pass: the next one starts from the top again
-G.setRules(p2.id, 'log "top"\nwait until lumps() > 999\nlog "never"\n');
+G.setRules(logger, 'log "top"\nwait until lumps() > 999\nlog "never"\n');
 await sleep(2200);
 const fs = M.flowStatus('gardener');
 assert(fs.trace.some((t) => /top/.test(t.text)) && !fs.trace.some((t) => /never/.test(t.text)) && M.isOn('gardener'), 'a wait ends the pass; it keeps running');
@@ -108,10 +109,10 @@ await sleep(1100);
 assert(M.status('gardener').runs === runs, 'a frozen garden: no passes');
 Mg.freeze = 0;
 // rules that can't run: it stops and says why
-G.setRules(p2.id, 'garden.plantEmpty(\n');
+G.setRules(logger, 'garden.plantEmpty(\n');
 await sleep(1100);
 assert(!M.isOn('gardener') && /line 1/.test(M.problemOf('gardener')), `broken rules: stopped, with the reason (${M.problemOf('gardener')})`);
-G.setRules(p2.id, null);
+G.setRules(logger, 'log "fixed"\n');
 assert(M.set('gardener', true, { silent: true }) === undefined && M.isOn('gardener'), 'fixed: runs again');
 M.set('gardener', false, { silent: true });
 
@@ -121,6 +122,7 @@ click(w, doc.querySelector('[data-page="clickers"] [data-ca="macro-edit"][data-i
 assert(CA.Settings.get('tab') === 'garden' && doc.querySelector('[data-gp-rules]').classList.contains('ca-flash') && !doc.querySelector('[data-macro-editor]'), 'Edit on the Auto-gardener opens its Rules card');
 // tend(): the same pass by hand
 G.use(p1.id);
+G.useGardener('effects');
 set(1, 2, null);
 assert(G.tend() >= 1 && at(1, 2) === 'bakerWheat', 'garden.tend(): a pass of the active rules, by hand');
 

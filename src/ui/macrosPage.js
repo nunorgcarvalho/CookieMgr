@@ -484,7 +484,11 @@ CA.UI.MacrosPage = (() => {
       const v = el.dataset.type === 'bool' ? el.checked : el.dataset.type === 'number' ? Number(el.value) : el.value;
       if (el.dataset.type === 'number' && !Number.isFinite(v)) return;
       M().setInput(el.dataset.macroInput, el.dataset.key, v);
-      refreshSummary(el);
+      // a setting kept elsewhere (the Auto-gardener's layout and gardener): the page shows it too
+      const m = M().get(el.dataset.macroInput);
+      const inp = m && (m.inputs || []).find((i) => i.key === el.dataset.key);
+      if (inp && typeof inp.set === 'function') CA.UI.Menu.render();
+      else refreshSummary(el);
       return true;
     }
     if (el.dataset && el.dataset.macroParam) {

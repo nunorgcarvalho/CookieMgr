@@ -35,7 +35,7 @@ assert(/fertilizerAbove = 0\.67\b/.test(def) && /if garden\.youngShare\(\) > fer
 CA.Settings.set('gardenLead', 30);
 CA.Settings.set('gardenThreshold', 80);
 CA.Settings.set('gardenUnlockNew', false);
-assert(/tickWindow = 30\b/.test(G.defaultRules()) && /dyingOver = 0\.8\b/.test(G.defaultRules()) && !/harvestNew/.test(G.defaultRules()) && /pullMismatches\(false\)/.test(G.defaultRules()), 'the old settings carry into the default rules');
+assert(/tickWindow = 30\b/.test(G.defaultRules()) && /dyingOver = 0\.8\b/.test(G.defaultRules()) && /unlockNewSeeds = false\b/.test(G.defaultRules()), 'the old settings carry into the default rules (v3.2: unlockNewSeeds a variable)');
 CA.Settings.set('gardenThreshold', 100);
 assert(!/harvestDying/.test(G.defaultRules()), '100% threshold: no harvesting before death');
 CA.Settings.set('gardenLead', 15);
@@ -78,25 +78,28 @@ assert(lp.lines.includes(lineOf(/^if garden\.youngShare/)) && lp.trace.some((t) 
 assert(lp.trace.some((t) => /garden\.soil: 1/.test(t.text)), 'trace: the actions that did something');
 assert(!lp.trace.some((t) => /plantEmpty/.test(t.text)), 'actions with nothing to do are left out');
 
-// ---- a profile's own rules
+// ---- your own code (v3.2: a gardener's, not a profile's)
 set(4, 2, 'bakerWheat', 40); // 3 mature wheat now: 1,2,4
-G.setRules(p1.id, '# harvest everything that is mature, replant\ngarden.harvestMature()\ngarden.plantEmpty()\n');
-assert(G.active().rules && /harvestMature/.test(G.rulesOf(G.active())), 'setRules: the profile has its own');
+const mine = G.newGardener('Harvest all', '# harvest everything that is mature, replant\ngarden.harvestMature()\ngarden.plantEmpty()\n');
+G.useGardener(mine);
+assert(G.activeGardener().id === mine && /harvestMature/.test(G.rulesOf()), 'a gardener of your own, in use');
 M.harvestLog.length = 0;
 const n = G.tend();
 assert(M.harvestLog.filter((h) => / mature$/.test(h)).length === 3 && at(1, 2) === 'bakerWheat' && M.plot[2][1][1] === 0 && n === 6, `custom rules: harvested 3 mature, replanted them (n=${n}, ${M.harvestLog})`);
 assert(G.last().harvested === 3 && G.last().planted === 3, 'last: what it did, by kind');
-// a second profile keeps the default rules
+// another profile: the gardener stays (the two are picked separately)
 const p2 = G.snapshot('Second');
-assert(p2.rules === undefined && G.rulesOf(p2) === G.defaultRules(), 'another profile: default rules');
+G.use(p2.id);
+assert(G.activeGardener().id === mine, 'another profile: the same gardener');
 G.use(p1.id);
+G.useGardener('effects');
 
 // rules with an error: the rest still runs; flagged in lastPass
-G.setRules(p1.id, 'garden.plantEmpty(\nbogus line here\n');
+G.setRules('effects', 'garden.plantEmpty(\nbogus line here\n');
 G.tend();
 assert(G.lastPass().errors.length > 0, 'a broken rule is reported (lastPass.errors)');
-G.setRules(p1.id, null);
-assert(G.active().rules === undefined, 'setRules(null): back to the default');
+G.setRules('effects', null);
+assert(!G.activeGardener().edited && G.rulesOf() === G.defaultRules(), 'setRules(null): back to the default');
 
 // a frozen garden: hands off
 M.freeze = 1;
@@ -109,8 +112,8 @@ CA.UI.Menu.openPage('garden');
 CA.UI.GardenPage.sync();
 const card = () => page().querySelector('[data-gp-rules]');
 const ta = () => card().querySelector('[data-code-ed="garden"] textarea[data-code]');
-assert(card() && /Wheat & corn/.test(card().querySelector('.ca-card-title').textContent), 'a Rules card for the active profile');
-assert(ta() && ta().value === G.defaultRules() && /default rules/.test(card().textContent), 'its code: the default rules');
+assert(card() && /Gardener · Effect maximizer/.test(card().querySelector('.ca-card-title').textContent), 'a card for the active gardener (v3.2)');
+assert(ta() && ta().value === G.defaultRules() && /built-in/.test(card().textContent), 'its code: the default rules');
 assert(card().querySelector('[data-ed-lib="garden"]') && /garden\.plantEmpty/.test(card().querySelector('[data-ed-lib="garden"]').textContent) && /garden\.youngShare/.test(card().querySelector('[data-ed-lib="garden"]').textContent), 'the library beside it, with the garden’s words');
 assert(!card().querySelector('[data-gp-rules-act="revert"]'), 'no Revert while default');
 // the link from the Auto-gardener card
@@ -126,16 +129,16 @@ assert(ta().value.includes('= 0.5'), 'the draft survives the page’s refresh');
 CA.UI.Menu.render();
 assert(ta().value.includes('= 0.5'), '…and a re-render');
 click(w, card().querySelector('[data-gp-rules-act="save"]'));
-assert(/= 0\.5/.test(G.active().rules || '') && card().querySelector('.ca-badge-edited') && card().querySelector('[data-gp-rules-act="revert"]'), 'Save: the profile’s rules; “edited” and Revert');
-assert(/\(edited\)/.test(page().querySelector('[data-gp-rules-go]').parentNode.textContent), 'the Auto-gardener card says so');
+assert(/= 0\.5/.test(G.rulesOf()) && G.activeGardener().edited && card().querySelector('.ca-badge-edited') && card().querySelector('[data-gp-rules-act="revert"]'), 'Save: the profile’s rules; “edited” and Revert');
+assert(/Effect maximizer \(edited\)/.test(page().querySelector('[data-gp-gardener]').textContent), 'the Auto-gardener card says so');
 
 // an error: not saved
 ta().value = 'garden.soil(fertilizer)\nwait until\n';
 ta().dispatchEvent(new w.Event('input', { bubbles: true }));
 click(w, card().querySelector('[data-gp-rules-act="save"]'));
-assert(/= 0\.5/.test(G.active().rules) && /Not saved — line 2/.test(card().textContent), `a broken rule isn’t saved (${(card().querySelector('.ca-editor-error') || {}).textContent})`);
+assert(/= 0\.5/.test(G.rulesOf()) && /Not saved — line 2/.test(card().textContent), `a broken rule isn’t saved (${(card().querySelector('.ca-editor-error') || {}).textContent})`);
 click(w, card().querySelector('[data-gp-rules-act="discard"]'));
-assert(ta().value === G.active().rules && !/unsaved/.test(card().textContent), 'Discard: back to the saved rules');
+assert(ta().value === G.rulesOf() && !/unsaved/.test(card().textContent), 'Discard: back to the saved rules');
 
 // the library inserts into the garden's code
 ta().value = '';
@@ -158,25 +161,26 @@ assert(!card().querySelector('[data-code-live]').textContent && !card().querySel
 
 // saving the default text again = default
 click(w, card().querySelector('[data-gp-rules-act="revert"]'));
-assert(G.active().rules != null, 'Revert asks first');
+assert(G.activeGardener().edited, 'Revert asks first');
 click(w, card().querySelector('[data-gp-rules-act="revert"]'));
-assert(G.active().rules === undefined && ta().value === G.defaultRules() && !card().querySelector('.ca-badge-edited'), 'then reverts to the default rules');
+assert(!G.activeGardener().edited && ta().value === G.defaultRules() && !card().querySelector('.ca-badge-edited'), 'then reverts to the default rules');
 ta().value = G.defaultRules();
 ta().dispatchEvent(new w.Event('input', { bubbles: true }));
 click(w, card().querySelector('[data-gp-rules-act="save"]'));
-assert(G.active().rules === undefined, 'saving the default text keeps it default (follows the settings)');
+assert(!G.activeGardener().edited, 'saving the default text keeps it default (follows the settings)');
 
 // ---- saved and restored
-G.setRules(p1.id, 'garden.plantEmpty()\n');
+G.setRules('weeds', 'garden.plantEmpty()\n');
 Game.WriteSave();
 const saved = Game.modSaveData.CookieMgr;
 const data = JSON.parse(saved);
-assert(data.garden.find((p) => p.id === p1.id).rules === 'garden.plantEmpty()\n' && !('rules' in data.garden.find((p) => p.id === p2.id)), 'rules saved (only where a profile has its own)');
+const ids = data.garden.gardeners.map((x) => x.id).join();
+assert(ids === `${mine},weeds` && data.garden.gardeners[1].rules === 'garden.plantEmpty()\n' && data.garden.profiles.every((p) => !('rules' in p)), `code saved: yours, and built-ins only when edited (${ids})`);
 const g2 = boot({ idb: { factory: new IDBFactory(), IDBKeyRange }, save: saved });
 makeGarden(g2.Game);
 await sleep(400);
 const G2 = g2.window.CookieMgr.Garden;
-assert(G2.profiles().find((p) => p.id === p1.id).rules === 'garden.plantEmpty()\n' && G2.profiles().find((p) => p.id === p2.id).rules === undefined, 'restored');
+assert(G2.gardenerRules('weeds') === 'garden.plantEmpty()\n' && G2.gardener('weeds').edited && !G2.gardener('effects').edited && G2.gardener(mine).name === 'Harvest all', 'restored');
 
 assert(g.errors.length + g2.errors.length === 0, 'no runtime errors' + (g.errors.length ? `: ${g.errors.slice(0, 3).join(' | ')}` : ''));
 done();

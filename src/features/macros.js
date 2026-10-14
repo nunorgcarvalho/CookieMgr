@@ -193,7 +193,7 @@ CA.Macros = (() => {
       if (def.builtin && Array.isArray(def.inputs)) m.inputs = def.inputs.map((i) => ({ ...i }));
       // from the top on every pass (a wait only ends that pass) — rules, like a garden profile's
       if (def.pass) m.pass = true;
-      // a built-in whose code comes from elsewhere (the active garden profile's rules), that only
+      // a built-in whose code comes from elsewhere (the active gardener's code), that only
       // runs when it can (ready), reports each pass (afterPass), and is edited on its own page (editAt)
       if (def.builtin) ['sourceFrom', 'ready', 'afterPass', 'readiness'].forEach((k) => typeof def[k] === 'function' && (m[k] = def[k]));
       if (def.builtin && def.editAt) m.editAt = def.editAt;
@@ -430,13 +430,21 @@ CA.Macros = (() => {
   function inputsOf(m) {
     const mine = (m && prefs[m.id] && prefs[m.id].inputs) || {};
     const out = {};
-    ((m && m.inputs) || []).forEach((i) => (out[i.key] = mine[i.key] !== undefined ? mine[i.key] : i.default));
+    // an input with get/set is a setting kept elsewhere (the Auto-gardener's layout and gardener)
+    ((m && m.inputs) || []).forEach((i) => (out[i.key] = typeof i.get === 'function' ? i.get() : mine[i.key] !== undefined ? mine[i.key] : i.default));
     return out;
   }
   /** Sets one of its inputs — a running one sees it on its next pass. */
   function setInput(id, key, value) {
     const m = byId[id];
-    if (!m || !(m.inputs || []).some((i) => i.key === key)) return;
+    const inp = m && (m.inputs || []).find((i) => i.key === key);
+    if (!inp) return;
+    if (typeof inp.set === 'function') {
+      inp.set(value);
+      if (running[id] && flowRuns[id]) flowRuns[id].vars[key] = value;
+      changed(id);
+      return;
+    }
     const p = { ...(prefs[id] || {}) };
     p.inputs = { ...(p.inputs || {}), [key]: value };
     prefs[id] = p;

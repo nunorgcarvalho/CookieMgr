@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+## 3.2.0 — 2026-10-14
+
+- **The auto-gardener comes in two layers, picked separately**: the **layout** (which seed goes on which tile — a
+  garden profile) and the **gardener** (what it does — algorithmic code). Pick both on the Auto-gardener's card on
+  the Garden page, or on its card on the Macros page.
+- **Three built-in gardeners**, each editable and revertable:
+  - **Effect maximizer** — what the auto-gardener did before: fertilizer while plants grow, clay once they're mature;
+    replants plants about to die. It now only clears the tiles the layout has a seed for, and leaves tiles the
+    layout keeps empty alone.
+  - **Weed collector** — keeps the garden bare on fertilizer for weeds and fungi; harvests old meddleweed (for brown
+    mold and crumbspore) and new seeds once mature, clears the rest.
+  - **Mutation tracker** — grows the layout's parents, then wood chips for mutations; clears seeds you already have
+    from the other tiles at once, keeps new ones (and copies of ones unlocked in the last hour) until they're mature.
+- **Gardeners of your own**: **Save as new** on the Gardener card makes one from the code in the editor; rename or
+  delete it there.
+- **The Current garden** layout keeps whatever is planted, without saving a profile: it replants plants that die,
+  follows what you plant or harvest by hand, and ignores weeds and mutations that spring up. It's the layout when
+  you haven't picked one.
+- New garden values: `garden.layoutYoungShare()`, `garden.isUnlocked(seed)`, `garden.unlockedAgo(seed)`,
+  `garden.soilAvailable(soil)`.
+- Rules you had written for a profile become a gardener of yours ("*profile* rules"), in use if that profile was.
+
 ## 3.1.2 — 2026-10-12
 
 - **Events log: a golden cookie that gives an effect shows the effect and its multiplier** — "Frenzy ×7", "Clot ×0.5",

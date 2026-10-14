@@ -171,8 +171,8 @@ the way to switch several at once.)
 
 Every built-in that makes a decision is **code over building blocks** (below): Golden cookies, Wrath cookies,
 Reindeer, Wrinklers, the Sugar lump harvester, the Stock market autobuyer, Best building, Best upgrade, Research, Cheap
-upgrades, Pet the dragon, FtHoF on combos, SeasonCompletion and the Auto-gardener (whose code is the active garden
-profile's rules). The Big cookie, Fortune news, Elder Pledge, Sell all and the spell casts have nothing to decide and
+upgrades, Pet the dragon, FtHoF on combos, SeasonCompletion and the Auto-gardener (whose code is the gardener you
+pick, its layout an input beside it). The Big cookie, Fortune news, Elder Pledge, Sell all and the spell casts have nothing to decide and
 stay shortcuts. A built-in's **inputs** — the choices on its card (the Wrinklers' "shiny" and "fed", the autobuyer's
 "buy" and "brokers", Best building's "skip", …) — are variables in its code; shift-click flips one, and changing one
 while it runs applies on its next pass. Each was checked against the JavaScript it replaced, on random states: the
@@ -392,44 +392,74 @@ included: a line per effect, in %, and tiles for the biggest ones now.
 Both charts can use **garden ticks** instead of time for their x axis (**X axis: Time · Garden ticks**): a bar per
 tick, counted back from now, so a 15-minute clay tick and a 3-minute fertilizer tick take the same room.
 
-**Profiles** remember the seed on every tile and the soil: plant your garden the way you want it, then **Save
-current garden**. Rename, switch or delete them on the page.
-
 The **Auto-gardener** (a built-in macro — switch it on here or on the Macros page, ★ for its own button on the left
-panel) keeps the garden like the active profile, following that profile's **rules**: algorithmic code (the same
-language as algorithmic macros, see [Macros](#macros)) run from the top every second. The default rules:
+panel) works in two layers that you pick separately, on its card here and on the Macros page:
+
+- the **layout** — which seed goes on which tile: one of your **profiles**, or the **Current garden**
+- the **gardener** — what it does: algorithmic code (the same language as algorithmic macros, see
+  [Macros](#macros)) run from the top every second, tending towards the layout
+
+**Profiles** remember the seed on every tile and the soil: plant your garden the way you want it, then **Save
+current garden**. Rename, switch or delete them on the page. The **Current garden** (first in the list, and the
+layout when you haven't picked one) keeps whatever is planted, without saving anything: it takes the garden as it
+is when you pick it (**Take it again** refreshes it), replants a plant that dies, and follows what you plant or
+harvest by hand — but not a weed or mutation that springs up on its own.
+
+Three gardeners are built in:
+
+- **Effect maximizer** (the default) — keeps the layout planted and its plants' effects as high as they go:
+  fertilizer while most plants are growing, clay (effects ×1.25) once enough are mature; in the last seconds before
+  a tick it clears the layout's tiles of what doesn't belong and replants mature plants likely to die on the tick.
+  It plants only where the layout has a seed and leaves the tiles the layout keeps empty alone. A seed you haven't
+  unlocked is left to grow and harvested once mature (that unlocks it).
+- **Weed collector** — keeps the garden bare on fertilizer (the most weeds), so meddleweed and fungi spring up.
+  Meddleweed is left to grow old, then harvested — the older it is, the likelier it leaves brown mold or crumbspore
+  behind; anything you haven't unlocked grows until it's mature and is harvested; everything else is cleared. It
+  plants nothing.
+- **Mutation tracker** — grows the layout's plants (the parents) on fertilizer, then switches to wood chips (three
+  times the mutation chances; needs 300 farms) once they're mature. On every other tile, a seed you have already is
+  cleared at once (so the tile can mutate again); a new one is kept — every copy of it — and harvested once mature.
+  Seeds unlocked in the last `keepRecentMinutes` (60) count as new, so a fresh find's other copies grow on too.
+
+The Effect maximizer's code:
 
 ```
 fertilizerAbove = 0.67           # your numbers, at the top: fertilizer while more than this share is growing,
 tickWindow = 15                  #   the last seconds before a tick, when old plants are dealt with,
-dyingOver = 0.5                  #   and how likely to die a mature plant has to be to get harvested
-garden.plantEmpty()              # plant the profile's seed on every empty tile, right away
-garden.harvestNew()              # a seed you haven't unlocked: harvest it once mature (unlocks it)
+dyingOver = 0.5                  #   how likely to die a mature plant has to be to get harvested,
+unlockNewSeeds = true            #   and whether new seeds are left to grow and unlocked
+garden.plantEmpty()              # plant the layout's seed on every empty tile it has one for, right away
+if unlockNewSeeds:
+  garden.harvestNew()            # a seed you haven't unlocked: harvest it once mature (unlocks it)
 if garden.youngShare() > fertilizerAbove:   # soil first — its effects count the whole time:
   garden.soil(fertilizer)        #   fertilizer while most plants are still growing,
 else:
   garden.soil(clay)              #   clay once enough of them are mature
 if garden.tickIn() <= tickWindow:  # in the last seconds before a garden tick:
-  garden.pullMismatches(true)    #   pull out what doesn't belong (leaving new seeds to grow)
+  for tile in garden.tiles():    #   clear the layout's tiles of what doesn't belong
+    if garden.wantAt(tile) != "" and garden.isOff(tile) and not garden.isEmpty(tile) and not (unlockNewSeeds and garden.isNew(tile)):
+      garden.harvest(tile)
   garden.harvestDying(dyingOver) #   harvest mature plants likely to die on the tick…
   garden.plantEmpty()            #   …and replant them
 ```
 
-Change a number at the top and the rules follow (your old "harvest before dying at" and "seconds before the tick"
-settings fill in `dyingOver` and `tickWindow`).
+Change a number at the top and the gardener follows (your old "harvest before dying at" and "seconds before the
+tick" settings fill in `dyingOver` and `tickWindow`). Soil has a 10-minute cooldown in the game; the rule simply waits
+for it.
 
-So empty tiles start growing and working at once, old plants are picked at the last moment before the tick, and
-the soil follows the garden (soil has a 10-minute cooldown in the game; the rule simply waits for it).
-Edit a profile's rules on the **Rules** card — the library beside the code lists everything you can use, the
-garden's own words first — then **Save**; **Revert to default** brings the default rules back. While the gardener
-runs, the lines it took light up and what it did shows under the code.
+Edit the active gardener on the **Gardener** card under the Auto-gardener — the library beside the code lists
+everything you can use, the garden's own words first — then **Save**; **Revert to default** brings a built-in's code
+back. **Save as new** makes a gardener of your own from the code in the editor (rename or delete yours on the same
+card). While the gardener runs, the lines it took light up and what it did shows under the code. Rules you had
+written for a profile before v3.2 became a gardener of yours ("*profile* rules"), in use if that profile was.
 
 The garden's words: actions `garden.plantEmpty()`, `garden.harvestNew()`, `garden.pullMismatches(keepNew)`,
 `garden.harvestDying(threshold)` (0–1), `garden.harvestMature()`, `garden.soil(type)` (dirt, fertilizer, clay,
 pebbles, woodchips, or `profile` for the profile's saved soil); the condition `garden.soilIs(type)`; values
 `garden.tickIn()` (seconds), `garden.youngShare()` / `garden.matureShare()` (0–1 of the planted tiles),
-`garden.plants()`, `garden.mature()`, `garden.empty()`, `garden.offProfile()`. They work in any algorithmic macro
-too.
+`garden.plants()`, `garden.mature()`, `garden.empty()`, `garden.offProfile()`, `garden.layoutYoungShare()` (0–1 of
+the layout's own plants), `garden.isUnlocked(seed)`, `garden.unlockedAgo(seed)` (seconds),
+`garden.soilAvailable(soil)`. They work in any algorithmic macro too.
 
 Rules can also go **tile by tile** (see the building blocks under [Macros](#macros)) — for example, harvest what's
 mature and replant it, but leave the bakeberries to grow:
@@ -442,7 +472,7 @@ for tile in garden.tiles():
     garden.plant(tile, garden.wantAt(tile))
 ```
 
-The Auto-gardener *is* its profile's rules: on the Macros page, its card shows the lines it took on its last pass,
+The Auto-gardener *is* the gardener you pick: on the Macros page, its card shows the lines it took on its last pass,
 and **Edit** brings you here. Rules that can't run stop it and say which line.
 
 **Harvesting vs. letting a plant die:** harvesting a mature plant unlocks its seed if it's new, counts towards the
@@ -686,7 +716,7 @@ src/
     wizardPage.js    the Grimoire page and the toolbar inside the game's Grimoire
     pantheonPage.js  the Pantheon page
     codeEditor.js    the code editor (colouring, line numbers, problems, live lines) and its library
-    gardenPage.js    the Garden page: the plot against the active profile, the auto-gardener, its rules, profiles
+    gardenPage.js    the Garden page: the plot against the active profile, the auto-gardener (layout + gardener), the gardener's code, profiles
     storeBar.js      the store toolbar (building sort, rounding to multiples)
     stockGraph.js    the Stock market page charts: portfolio value / per-stock prices, rolling performance
     stockLog.js      the trade ticker + transaction history table, also on the Stock market page
@@ -730,7 +760,7 @@ If you add a file, add it to `MODULES` in `build.mjs` in the right order.
   `inputs: [{ key, label, type: 'bool' | 'number' | 'select', default, options }]` (its card's choices — variables in
   its code), `shift: { input, on, off }` (what shift-clicking its button flips), `readiness(inputs)` (its button's
   "next: …"). `pass: true` runs it from the top every pass (rules); `sourceFrom`, `ready`, `afterPass` and `editAt` let
-  a feature own its code (the Auto-gardener's is the active garden profile's rules). When it replaces JavaScript, add a
+  a feature own its code (the Auto-gardener's is the active gardener's). When it replaces JavaScript, add a
   side-by-side test: the old code and the new on random states, the same outcome (`tests/e2e/v3.0.0-builtins.test.mjs`).
 - **A new recorded state:** `CA.States.define({ id, name, unit, group, kind, get })` before `CA.Recorder.init()`;
   `kind` is `gauge` (a level, like CpS), `counter` (a running total) or `flow` (an amount per frame, from `ctx.dt`).

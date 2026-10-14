@@ -61,7 +61,7 @@ GM.nextSoil = 0;
 GM.soil = 0;
 G.tend();
 assert(GM.soil === 1, 'all growing, over 0.67: fertilizer');
-G.setRules(p1.id, def.replace('fertilizerAbove = 0.67', 'fertilizerAbove = 1.5'));
+G.setGardenerRules('effects', def.replace('fertilizerAbove = 0.67', 'fertilizerAbove = 1.5'));
 GM.nextSoil = 0;
 G.tend();
 assert(GM.soil === 2, 'fertilizerAbove = 1.5 (never): clay');
@@ -85,26 +85,31 @@ if garden.tickIn() <= 15:
   garden.harvestDying(0.5)
   garden.plantEmpty()
 `;
-G.setRules(p1.id, yours);
+// as v3.1 saved them: the profiles, each with its own rules (v3.2: they become gardeners of yours)
 const other = G.snapshot('Other');
-G.setRules(other.id, 'garden.plantEmpty()\n');
 const save = JSON.parse(CA.Settings.serialize());
+const legacy = (p, rules) => ({ id: p.id, name: p.name, soil: p.soil, plot: p.plot, rules });
+save.garden = [legacy(p1, yours), legacy(other, 'garden.plantEmpty()\n')];
+save.options.gardenProfile = p1.id;
 const g2 = boot({ idb: { factory: new IDBFactory(), IDBKeyRange }, save: JSON.stringify(save) });
 makeGarden(g2.Game);
 await sleep(400);
 const G2 = g2.window.CookieMgr.Garden;
-const r = G2.profiles().find((p) => p.name === 'Rules').rules;
+const mine = (GG, name) => GG.gardeners().find((x) => x.name === name);
+const r = G2.gardenerRules(mine(G2, 'Rules rules').id);
 const lines = r.split('\n');
 assert(/^fertilizerAbove = 0\.67\b/.test(lines[1]) && lines[0].startsWith('# These rules') && /^# Plant/.test(lines[2]), `your rules: the threshold a variable at the top (${JSON.stringify(lines.slice(0, 3))})`);
 assert(r.includes('if garden.youngShare() > fertilizerAbove:') && !r.includes('> 0.67'), '…read by the if');
 assert(r.replace(/^fertilizerAbove = .*\n/m, '').replace('> fertilizerAbove:', '> 0.67:') === yours, 'nothing else changed');
 assert(!G2.compileRules(r).errors.length, 'and they compile');
-assert(G2.profiles().find((p) => p.name === 'Other').rules === 'garden.plantEmpty()\n', 'rules without it: left alone');
+assert(G2.gardenerRules(mine(G2, 'Other rules').id) === 'garden.plantEmpty()\n', 'rules without it: left alone');
+assert(G2.activeGardener().name === 'Rules rules' && G2.active().name === 'Rules', 'v3.2: the active profile’s rules, the active gardener');
 // loaded again: not lifted twice
 const g3 = boot({ idb: { factory: new IDBFactory(), IDBKeyRange }, save: g2.window.CookieMgr.Settings.serialize() });
 makeGarden(g3.Game);
 await sleep(400);
-assert(g3.window.CookieMgr.Garden.profiles().find((p) => p.name === 'Rules').rules === r, 'loaded again: as it was');
+const G3 = g3.window.CookieMgr.Garden;
+assert(G3.gardenerRules(mine(G3, 'Rules rules').id) === r && G3.gardeners().length === G2.gardeners().length, 'loaded again: as it was');
 
 assert(g.errors.length + g2.errors.length + g3.errors.length === 0, 'no runtime errors' + (g.errors.length ? `: ${g.errors.slice(0, 3).join(' | ')}` : ''));
 done();

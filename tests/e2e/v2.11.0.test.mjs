@@ -141,21 +141,24 @@ assert(page().querySelector('.ca-gprofile.on') && page().querySelectorAll('.ca-g
 CA.Settings.set('gardenLead', 15);
 Game.cookies = 1e6;
 set(4, 2, 'meddleweed', 3); // a weed where the profile has nothing
+set(2, 2, 'thumbcorn', 3); // not the profile's seed (wheat) for its tile
 set(1, 2, null); // a tile to replant
 set(2, 3, 'bakeberry', 98); // about to die (bakeberry grows 1–2 a tick → 50%)
 set(3, 3, 'goldenClover', 10); // a new seed, growing
 M.soil = 0; // dirt (profile: clay)
 M.nextStep = Date.now() + 200 * 1000; // tick far off
-assert(CA.Garden.tend() === 2 && at(4, 2) === 'meddleweed' && at(1, 2) === 'bakerWheat' && M.soil === 1, 'outside the window: plants the empty tile at once, leaves the weed for the tick (v2.26: and fertilizer — every plant is young)');
+assert(CA.Garden.tend() === 2 && at(2, 2) === 'thumbcorn' && at(1, 2) === 'bakerWheat' && M.soil === 1, 'outside the window: plants the empty tile at once, leaves the mismatch for the tick (v2.26: and fertilizer — every plant is young)');
 M.nextStep = Date.now() + 10 * 1000; // within 15s
 M.harvestLog.length = 0;
 const n = CA.Garden.tend();
-assert(at(4, 2) === null && M.harvestLog.includes('meddleweed@4,2'), 'pulls out what isn’t in the profile');
+assert(M.harvestLog.includes('thumbcorn@2,2') && at(2, 2) === 'bakerWheat', 'pulls out what isn’t the profile’s seed for its tile, and replants it');
+// v3.2 (the Effect maximizer): tiles the layout leaves empty aren't its business
+assert(at(4, 2) === 'meddleweed' && !M.harvestLog.includes('meddleweed@4,2'), 'a weed where the layout has nothing: left alone');
 assert(at(1, 2) === 'bakerWheat', 'the replanted tile stays');
 assert(at(3, 3) === 'goldenClover', 'a growing new seed is left alone');
 assert(M.harvestLog.every((h) => !h.startsWith('bakeberry')), `bakeberry at 98 (50%) kept at threshold 50% (${M.harvestLog})`);
 assert(M.soil === 1 && M.nextSoil > Date.now(), 'the soil stays (fertilizer, on its cooldown)');
-assert(Game.cookies === 1e6 - M.getCost(M.plants.bakerWheat) && n === 1, `paid for the seed (${Game.cookies}), then 1 thing in the window (${n})`);
+assert(Game.cookies === 1e6 - 2 * M.getCost(M.plants.bakerWheat) && n === 2, `paid for the two seeds (${Game.cookies}); 2 things in the window — a pull, a replant (${n})`);
 
 CA.Settings.set('gardenThreshold', 40);
 Game.cookies = 1e10; // bakeberries cost 2e9 here
@@ -176,10 +179,12 @@ assert(M.harvestLog.join() === 'goldenClover@3,3 mature' && M.plants.goldenClove
 // with the option off, a new seed is a mismatch like any other
 M.plants.goldenClover.unlocked = 0;
 CA.Settings.set('gardenUnlockNew', false);
-set(3, 3, 'goldenClover', 5);
+set(3, 3, null);
+set(2, 3, 'goldenClover', 5); // on a tile of the layout (bakeberry)
 M.nextStep = Date.now() + 5000;
+M.harvestLog.length = 0;
 CA.Garden.tend();
-assert(at(3, 3) === null, 'option off: pulled out in the window');
+assert(M.harvestLog.includes('goldenClover@2,3') && at(2, 3) === 'bakeberry', 'option off: pulled out in the window');
 CA.Settings.set('gardenUnlockNew', true);
 
 // can't afford: leaves it empty
@@ -215,7 +220,7 @@ CA.UI.GardenPage.sync();
 const tiles = page().querySelectorAll('[data-gp-plot] .ca-gtile');
 assert(tiles[3 * 6 + 4].classList.contains('off'), 'off-profile tile ringed');
 assert(/50%/.test(tiles[3 * 6 + 2].querySelector('.ca-gdecay').textContent) && /Dies next tick\s*50%/.test(tiles[3 * 6 + 2].textContent), 'mature plant: its death chance');
-assert(tiles[2 * 6 + 4].querySelector('.ca-gs') === null, 'empty tile with nothing planned');
+assert(tiles[4 * 6 + 4].querySelector('.ca-gs') === null, 'empty tile with nothing planned');
 
 // ---- profiles: rename, a second one, use, delete (two clicks)
 const rn = page().querySelector(`[data-gp-rename="${prof.id}"]`);
@@ -243,7 +248,7 @@ assert(CA.Garden.profiles().length === 1, 'then deletes');
 Game.WriteSave();
 const saved = Game.modSaveData.CookieMgr;
 const data = JSON.parse(saved);
-assert(data.garden.length === 1 && data.garden[0].plot[3][1] === 'bakeberry' && data.options.gardenThreshold === 35 && data.options.gardenProfile === prof.id, 'profiles and settings saved');
+assert(data.garden.profiles.length === 1 && data.garden.profiles[0].plot[3][1] === 'bakeberry' && data.options.gardenThreshold === 35 && data.options.gardenProfile === prof.id, 'profiles and settings saved');
 const g2 = boot({ idb: { factory: new IDBFactory(), IDBKeyRange }, save: saved });
 makeGarden(g2.Game);
 await sleep(400);
