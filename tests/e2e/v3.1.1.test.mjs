@@ -51,17 +51,17 @@ for (let x = 1; x <= 4; x++) {
   GM.plot[2][x] = [1, 5];
   GM.plot[3][x] = [2, 5];
 }
-const p1 = G.snapshot('Rules');
 const def = G.defaultRules();
-assert(/^fertilizerAbove = 0\.67\b/m.test(def) && /^tickWindow = 15\b/m.test(def) && /^dyingOver = 0\.5\b/m.test(def), 'the numbers at the top, as variables');
-assert(def.indexOf('garden.soil(fertilizer)') < def.indexOf('if garden.tickIn()'), 'the soil before the tick window (its effects count the whole time)');
+const soilSrc = G.soilRules();
+assert(/^fertilizerAbove = 0\.67\b/m.test(soilSrc) && /^tickWindow = 15\b/m.test(def) && /^dyingOver = 0\.5\b/m.test(def), 'the numbers at the top, as variables (v3.3: the threshold in the soil rule)');
+assert(def.indexOf('garden.soilRule()') < def.indexOf('if garden.tickIn()'), 'the soil before the tick window (its effects count the whole time)');
 assert(!G.compileRules(def).errors.length, 'they compile');
 // editing the variable is all it takes
 GM.nextSoil = 0;
 GM.soil = 0;
 G.tend();
 assert(GM.soil === 1, 'all growing, over 0.67: fertilizer');
-G.setGardenerRules('effects', def.replace('fertilizerAbove = 0.67', 'fertilizerAbove = 1.5'));
+CA.GardenLayers.set('soil', 'effects', { rules: soilSrc.replace('fertilizerAbove = 0.67', 'fertilizerAbove = 1.5') });
 GM.nextSoil = 0;
 G.tend();
 assert(GM.soil === 2, 'fertilizerAbove = 1.5 (never): clay');
@@ -85,31 +85,35 @@ if garden.tickIn() <= 15:
   garden.harvestDying(0.5)
   garden.plantEmpty()
 `;
-// as v3.1 saved them: the profiles, each with its own rules (v3.2: they become gardeners of yours)
-const other = G.snapshot('Other');
+// as v3.1 saved them: the profiles, each with its own rules (v3.2: they become gardeners of yours;
+// v3.3: each layout a template + seeds, and a profile of them)
 const save = JSON.parse(CA.Settings.serialize());
-const legacy = (p, rules) => ({ id: p.id, name: p.name, soil: p.soil, plot: p.plot, rules });
-save.garden = [legacy(p1, yours), legacy(other, 'garden.plantEmpty()\n')];
-save.options.gardenProfile = p1.id;
+const plot = Array.from({ length: 6 }, (_, y) => Array.from({ length: 6 }, (_, x) => (x >= 1 && x <= 4 && (y === 2 || y === 3) ? (y === 2 ? 'bakerWheat' : 'thumbcorn') : null)));
+const legacy = (id, name, rules) => ({ id, name, soil: 'clay', plot, rules });
+save.garden = [legacy('gRules', 'Rules', yours), legacy('gOther', 'Other', 'garden.plantEmpty()\n')];
+save.options.gardenProfile = 'gRules';
 const g2 = boot({ idb: { factory: new IDBFactory(), IDBKeyRange }, save: JSON.stringify(save) });
 makeGarden(g2.Game);
 await sleep(400);
 const G2 = g2.window.CookieMgr.Garden;
-const mine = (GG, name) => GG.gardeners().find((x) => x.name === name);
-const r = G2.gardenerRules(mine(G2, 'Rules rules').id);
+const L2 = g2.window.CookieMgr.GardenLayers;
+const mine = (LL, name) => LL.list('gardener').find((x) => x.name === name);
+const r = G2.gardenerRules(mine(L2, 'Rules rules').id);
 const lines = r.split('\n');
 assert(/^fertilizerAbove = 0\.67\b/.test(lines[1]) && lines[0].startsWith('# These rules') && /^# Plant/.test(lines[2]), `your rules: the threshold a variable at the top (${JSON.stringify(lines.slice(0, 3))})`);
 assert(r.includes('if garden.youngShare() > fertilizerAbove:') && !r.includes('> 0.67'), '…read by the if');
 assert(r.replace(/^fertilizerAbove = .*\n/m, '').replace('> fertilizerAbove:', '> 0.67:') === yours, 'nothing else changed');
 assert(!G2.compileRules(r).errors.length, 'and they compile');
-assert(G2.gardenerRules(mine(G2, 'Other rules').id) === 'garden.plantEmpty()\n', 'rules without it: left alone');
-assert(G2.activeGardener().name === 'Rules rules' && G2.active().name === 'Rules', 'v3.2: the active profile’s rules, the active gardener');
+assert(G2.gardenerRules(mine(L2, 'Other rules').id) === 'garden.plantEmpty()\n', 'rules without it: left alone');
+assert(G2.activeGardener().name === 'Rules rules' && L2.get('profile', L2.picked('profile')).name === 'Rules', 'v3.2: the active profile’s rules, the active gardener (v3.3: in that profile)');
+assert(G2.active().plot[2][1] === 'bakerWheat' && G2.active().plot[3][4] === 'thumbcorn' && L2.list('template').filter((t) => !t.builtin).length === 1, 'v3.3: the layout as it was; the same layout twice: one template');
 // loaded again: not lifted twice
 const g3 = boot({ idb: { factory: new IDBFactory(), IDBKeyRange }, save: g2.window.CookieMgr.Settings.serialize() });
 makeGarden(g3.Game);
 await sleep(400);
 const G3 = g3.window.CookieMgr.Garden;
-assert(G3.gardenerRules(mine(G3, 'Rules rules').id) === r && G3.gardeners().length === G2.gardeners().length, 'loaded again: as it was');
+const L3 = g3.window.CookieMgr.GardenLayers;
+assert(G3.gardenerRules(mine(L3, 'Rules rules').id) === r && L3.list('gardener').length === L2.list('gardener').length && L3.list('profile').length === L2.list('profile').length, 'loaded again: as it was');
 
 assert(g.errors.length + g2.errors.length + g3.errors.length === 0, 'no runtime errors' + (g.errors.length ? `: ${g.errors.slice(0, 3).join(' | ')}` : ''));
 done();

@@ -172,7 +172,7 @@ the way to switch several at once.)
 Every built-in that makes a decision is **code over building blocks** (below): Golden cookies, Wrath cookies,
 Reindeer, Wrinklers, the Sugar lump harvester, the Stock market autobuyer, Best building, Best upgrade, Research, Cheap
 upgrades, Pet the dragon, FtHoF on combos, SeasonCompletion and the Auto-gardener (whose code is the gardener you
-pick, its layout an input beside it). The Big cookie, Fortune news, Elder Pledge, Sell all and the spell casts have nothing to decide and
+pick, with its soil rule, template and seeds as inputs beside it). The Big cookie, Fortune news, Elder Pledge, Sell all and the spell casts have nothing to decide and
 stay shortcuts. A built-in's **inputs** — the choices on its card (the Wrinklers' "shiny" and "fed", the autobuyer's
 "buy" and "brokers", Best building's "skip", …) — are variables in its code; shift-click flips one, and changing one
 while it runs applies on its next pass. Each was checked against the JavaScript it replaced, on random states: the
@@ -374,9 +374,9 @@ that opens this page (can be turned off in Settings).
 ### Garden
 
 The **Garden** page shows your plot as it is now: every plant at its growth stage, the chance that a mature plant
-dies of old age on the coming tick (bottom-right of its tile), a red ring on tiles that don't match the active
-profile, and the profile's seed faded in on empty tiles. Hover a tile for its growth, death chance and what the
-profile wants there.
+dies of old age on the coming tick (bottom-right of its tile), a red ring on tiles that don't match the
+Auto-gardener's layout, and the layout's seed faded in on empty tiles. Hover a tile for its growth, death chance and
+what the layout wants there.
 
 Beside it, the **Growth** chart shows your garden over time as stacked bars: how many of each seed were at each
 growth stage. Every seed has its own colour (close to its sprite) and its younger stages are darker shades of it, with
@@ -393,48 +393,63 @@ Both charts can use **garden ticks** instead of time for their x axis (**X axis:
 tick, counted back from now, so a 15-minute clay tick and a 3-minute fertilizer tick take the same room.
 
 The **Auto-gardener** (a built-in macro — switch it on here or on the Macros page, ★ for its own button on the left
-panel) works in two layers that you pick separately, on its card here and on the Macros page:
+panel) is built from four layers, each picked on its own:
 
-- the **layout** — which seed goes on which tile: one of your **profiles**, or the **Current garden**
-- the **gardener** — what it does: algorithmic code (the same language as algorithmic macros, see
-  [Macros](#macros)) run from the top every second, tending towards the layout
+| Layer | What it is | Built in |
+| --- | --- | --- |
+| **Gardener** | what it does: algorithmic code (the language of algorithmic macros, see [Macros](#macros)) run from the top every second | Effect maximizer, Weed collector, Mutation tracker |
+| **Soil rule** | a little code of its own that picks the soil — run when the gardener calls `garden.soilRule()` | Fertilizer, then clay · Fertilizer, then wood chips · Always fertilizer / clay / wood chips · Leave the soil |
+| **Template** | where seeds go: a grid of letters (A, B, C…) — every one-seed garden is the same **Fill** template | Current garden, Fill, Bare, Checkerboard, Mutation rows, Rings |
+| **Seeds** | which seed each letter is | As planted; Golden clover, Baker's wheat, Bakeberry, Whiskerbloom, Queenbeet; every two-parent **mutation recipe** in the game (→ Cronerice = A Baker's wheat, B Thumbcorn…) |
 
-**Profiles** remember the seed on every tile and the soil: plant your garden the way you want it, then **Save
-current garden**. Rename, switch or delete them on the page. The **Current garden** (first in the list, and the
-layout when you haven't picked one) keeps whatever is planted, without saving anything: it takes the garden as it
-is when you pick it (**Take it again** refreshes it), replants a plant that dies, and follows what you plant or
-harvest by hand — but not a weed or mutation that springs up on its own.
+A **profile** is one of each, picked together: **Max effects · current garden** (the default), **Golden clover
+field**, **Mutation hunt** (Mutation rows on wood chips — pick the recipe in Seeds), **Juicy queenbeet** (rings of
+queenbeets) and **Weed farm** — and yours.
 
-Three gardeners are built in:
+On the Garden page the Auto-gardener's card has the **profile bar** — pick a profile, **Save** the slots into it when
+you've changed one, **Save as new**, or **From the garden**: what's planted now as a profile (it reuses a template you
+have when the garden is laid out the same way — Fill when it's one seed everywhere, Checkerboard for two alternating —
+and seeds you have with the same letters). Under it, four **slots** show what's picked; click one to see it below in
+detail, pick another, or edit it:
 
-- **Effect maximizer** (the default) — keeps the layout planted and its plants' effects as high as they go:
-  fertilizer while most plants are growing, clay (effects ×1.25) once enough are mature; in the last seconds before
-  a tick it clears the layout's tiles of what doesn't belong and replants mature plants likely to die on the tick.
-  It plants only where the layout has a seed and leaves the tiles the layout keeps empty alone. A seed you haven't
-  unlocked is left to grow and harvested once mature (that unlocks it).
-- **Weed collector** — keeps the garden bare on fertilizer (the most weeds), so meddleweed and fungi spring up.
-  Meddleweed is left to grow old, then harvested — the older it is, the likelier it leaves brown mold or crumbspore
-  behind; anything you haven't unlocked grows until it's mature and is harvested; everything else is cleared. It
-  plants nothing.
-- **Mutation tracker** — grows the layout's plants (the parents) on fertilizer, then switches to wood chips (three
-  times the mutation chances; needs 300 farms) once they're mature. On every other tile, a seed you have already is
-  cleared at once (so the tile can mutate again); a new one is kept — every copy of it — and harvested once mature.
-  Seeds unlocked in the last `keepRecentMinutes` (60) count as new, so a fresh find's other copies grow on too.
+- **Gardener** and **Soil rule**: their code, with the library of everything you can use beside it; while the
+  gardener runs, the lines it took light up and what it did shows under the code.
+- **Template**: a 6×6 grid — choose a letter (or *empty*) and click cells to paint; **Clear** and **Fill**. A
+  template sits on your plot from its top-left unlocked tile, so one made for the full 6×6 garden fits a smaller one
+  by its top-left part (cells off your plot are dimmed). The **Current garden** is live: whatever is planted, kept as
+  it is — it replants a plant that dies, follows what you plant or harvest by hand, and ignores weeds and mutations
+  that spring up.
+- **Seeds**: a seed for every letter of the template (seeds you haven't unlocked are marked: they can't be planted).
 
-The Effect maximizer's code:
+Every built-in can be edited — **Save**, and **Revert to default** brings it back — and **Save as new** makes one of
+your own to rename or delete. The Auto-gardener's card on the Macros page has the same five choices (profile, and the
+four layers).
+
+The three gardeners:
+
+- **Effect maximizer** — keeps the layout planted and its plants' effects as high as they go: plants the layout's
+  seed on every empty tile it has one for, harvests a seed you haven't unlocked once it's mature (that unlocks it),
+  runs the soil rule, and in the last seconds before a tick clears the layout's tiles of what doesn't belong and
+  replants mature plants likely to die on the tick. It leaves the tiles the layout keeps empty alone.
+- **Weed collector** — keeps the garden bare (with *Always fertilizer*: the most weeds), so meddleweed and fungi
+  spring up. Meddleweed is left to grow old, then harvested — the older it is, the likelier it leaves brown mold or
+  crumbspore behind; anything you haven't unlocked grows until it's mature and is harvested; everything else is
+  cleared. It plants nothing.
+- **Mutation tracker** — grows the layout's plants (the parents; with *Fertilizer, then wood chips*: three times the
+  mutation chances once they're mature). On every other tile, a seed you have already is cleared at once (so the tile
+  can mutate again); a new one is kept — every copy of it — and harvested once mature. Seeds unlocked in the last
+  `keepRecentMinutes` (60) count as new, so a fresh find's other copies grow on too.
+
+The Effect maximizer's code, and the soil rule it uses by default:
 
 ```
-fertilizerAbove = 0.67           # your numbers, at the top: fertilizer while more than this share is growing,
-tickWindow = 15                  #   the last seconds before a tick, when old plants are dealt with,
+tickWindow = 15                  # your numbers, at the top: the last seconds before a tick,
 dyingOver = 0.5                  #   how likely to die a mature plant has to be to get harvested,
 unlockNewSeeds = true            #   and whether new seeds are left to grow and unlocked
 garden.plantEmpty()              # plant the layout's seed on every empty tile it has one for, right away
 if unlockNewSeeds:
   garden.harvestNew()            # a seed you haven't unlocked: harvest it once mature (unlocks it)
-if garden.youngShare() > fertilizerAbove:   # soil first — its effects count the whole time:
-  garden.soil(fertilizer)        #   fertilizer while most plants are still growing,
-else:
-  garden.soil(clay)              #   clay once enough of them are mature
+garden.soilRule()                # the soil, as the soil rule picks it
 if garden.tickIn() <= tickWindow:  # in the last seconds before a garden tick:
   for tile in garden.tiles():    #   clear the layout's tiles of what doesn't belong
     if garden.wantAt(tile) != "" and garden.isOff(tile) and not garden.isEmpty(tile) and not (unlockNewSeeds and garden.isNew(tile)):
@@ -443,19 +458,22 @@ if garden.tickIn() <= tickWindow:  # in the last seconds before a garden tick:
   garden.plantEmpty()            #   …and replant them
 ```
 
-Change a number at the top and the gardener follows (your old "harvest before dying at" and "seconds before the
-tick" settings fill in `dyingOver` and `tickWindow`). Soil has a 10-minute cooldown in the game; the rule simply waits
-for it.
+```
+fertilizerAbove = 0.67           # Fertilizer, then clay
+if garden.youngShare() > fertilizerAbove:
+  garden.soil(fertilizer)        # fertilizer while most plants are still growing (quicker ticks),
+else:
+  garden.soil(clay)              # clay (effects ×1.25) once enough of them are mature
+```
 
-Edit the active gardener on the **Gardener** card under the Auto-gardener — the library beside the code lists
-everything you can use, the garden's own words first — then **Save**; **Revert to default** brings a built-in's code
-back. **Save as new** makes a gardener of your own from the code in the editor (rename or delete yours on the same
-card). While the gardener runs, the lines it took light up and what it did shows under the code. Rules you had
-written for a profile before v3.2 became a gardener of yours ("*profile* rules"), in use if that profile was.
+Change a number at the top and the code follows (your old "harvest before dying at" and "seconds before the tick"
+settings fill in `dyingOver` and `tickWindow`). Soil has a 10-minute cooldown in the game; the rule simply waits for
+it. Garden profiles saved before v3.3 became profiles of the same name (a template and seeds that lay them out as
+they were); rules written for a profile before v3.2 became a gardener of yours.
 
 The garden's words: actions `garden.plantEmpty()`, `garden.harvestNew()`, `garden.pullMismatches(keepNew)`,
 `garden.harvestDying(threshold)` (0–1), `garden.harvestMature()`, `garden.soil(type)` (dirt, fertilizer, clay,
-pebbles, woodchips, or `profile` for the profile's saved soil); the condition `garden.soilIs(type)`; values
+pebbles, woodchips, or `profile` for the soil rule's), `garden.soilRule()` (runs the soil rule); the condition `garden.soilIs(type)`; values
 `garden.tickIn()` (seconds), `garden.youngShare()` / `garden.matureShare()` (0–1 of the planted tiles),
 `garden.plants()`, `garden.mature()`, `garden.empty()`, `garden.offProfile()`, `garden.layoutYoungShare()` (0–1 of
 the layout's own plants), `garden.isUnlocked(seed)`, `garden.unlockedAgo(seed)` (seconds),
@@ -692,7 +710,8 @@ src/
     cookieMonster.js loads Cookie Monster on request or at start-up
     gameEvents.js    logs wrinkler pops, sugar lumps and achievements as events
     grimoire.js      spells as actions/macros, magic conditions, spell events, the auto-cast macro
-    garden.js        garden profiles and their rules (the Auto-gardener's code), the garden's building blocks
+    gardenLayers.js  the Auto-gardener's layers (gardeners, soil rules, templates, seeds) and profiles
+    garden.js        the garden's building blocks, the Current garden, the Auto-gardener macro
     pantheon.js      the Pantheon's building blocks: which spirit is where, slotting them
     gardenHistory.js snapshots of the garden (seed × stage counts) for the Growth chart; seed unlock events
     shop.js          the building store: Cookie Monster sort, rounding bulk buys up
@@ -716,7 +735,7 @@ src/
     wizardPage.js    the Grimoire page and the toolbar inside the game's Grimoire
     pantheonPage.js  the Pantheon page
     codeEditor.js    the code editor (colouring, line numbers, problems, live lines) and its library
-    gardenPage.js    the Garden page: the plot against the active profile, the auto-gardener (layout + gardener), the gardener's code, profiles
+    gardenPage.js    the Garden page: the plot against the active profile, the auto-gardener: profiles, its four layers and their editors
     storeBar.js      the store toolbar (building sort, rounding to multiples)
     stockGraph.js    the Stock market page charts: portfolio value / per-stock prices, rolling performance
     stockLog.js      the trade ticker + transaction history table, also on the Stock market page

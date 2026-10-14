@@ -1,20 +1,17 @@
-// The Garden page: the auto-gardener and its profiles (features/garden.js).
+// The Garden page: the auto-gardener, its layers and profiles (features/garden.js, gardenLayers.js).
 //
 //   Effects         the plants' combined effects over time (the game's Garden information figures)
 //   Growth          a stacked bar chart over time: how many of each seed were at each stage (each
 //                   seed its own colour, young stages darker) — features/gardenHistory.js
-//   Garden          your plot as it is now, against the active profile: each tile's plant and growth
-//                   stage, the profile's seed faded in on empty tiles, a red ring on tiles that don't
+//   Garden          your plot as it is now, against the layout: each tile's plant and growth
+//                   stage, the layout's seed faded in on empty tiles, a red ring on tiles that don't
 //                   match, and the chance a mature plant dies on the coming tick; hover a tile for details
-//   Auto-gardener   its on/off switch (★ for its button on the left panel), and its two choices: the
-//                   layout it keeps (a profile, or the Current garden) and the gardener (what it does);
-//                   what it last did
-//   Gardener        the active gardener's code (algorithmic: the macros' language, with the garden's
-//                   own actions and values) — save, revert a built-in to its default, save as a new
-//                   gardener of your own, rename or delete yours; while it runs, the lines it took
-//                   light up with its decisions
-//   Profiles        the Current garden, and your saved layouts: save the current garden (seeds + soil)
-//                   as a profile; use, rename or delete them
+//   Auto-gardener   its on/off switch (★ for its button on the left panel); the profile bar (a profile
+//                   picks all four layers — features/gardenLayers.js); four slots showing what's picked
+//                   — Gardener, Soil rule, Template, Seeds — and the selected one in detail, to pick
+//                   another or edit it: code (the macros' language, with the garden's own words; while
+//                   it runs, the lines it took light up), a grid of letters, or a seed per letter.
+//                   Built-ins can be edited and reverted; Save as new makes one of your own.
 
 CA.UI = CA.UI || {};
 
@@ -29,7 +26,7 @@ CA.UI.GardenPage = (() => {
   let life = null; // the mounted page (CA.UI.Pages.scope)
   let plot = null;
   let effectsPlot = null;
-  let draft = null; // { gardener, src } — code being edited, not saved yet
+  let draft = null; // { layer, id, data } — a slot's item being edited, not saved yet
   let rulesError = '';
 
   const stageOf = (me, age) => (age >= me.mature ? 4 : age >= me.mature * 0.666 ? 3 : age >= me.mature * 0.333 ? 2 : 1);
@@ -63,7 +60,7 @@ CA.UI.GardenPage = (() => {
       if (t.want) inner += sprite(t.want, 0, 'ghost');
       pop += '<span class="ca-wpop-head"><b>Empty</b></span>';
     }
-    if (profile) pop += `<span class="ca-wpop-row"><span class="ca-wpop-name">Profile</span><span class="ca-wpop-val">${t.want ? esc(t.want.name) : 'empty'}</span></span>`;
+    if (profile) pop += `<span class="ca-wpop-row"><span class="ca-wpop-name">Layout</span><span class="ca-wpop-val">${t.want ? esc(t.want.name) : 'empty'}</span></span>`;
     return `<div class="ca-gtile${t.match ? '' : ' off'}" data-pop>${inner}<span class="ca-wpop ca-gpop">${pop}</span></div>`;
   }
 
@@ -77,16 +74,11 @@ CA.UI.GardenPage = (() => {
     const mature = v.tiles.filter((t) => t.plant && t.age >= t.plant.mature).length;
     return (
       tile('Next tick', Number.isFinite(v.next) ? span(v.next) : '—', v.step ? `every ${span(v.step)}` : '') +
-      tile('Soil', v.soil ? esc(v.soil.name) : '—', v.profile && v.soil && v.soil.key !== v.profile.soil ? `profile: ${esc(soilName(v.profile.soil))}` : '') +
+      tile('Soil', v.soil ? esc(v.soil.name) : '—', esc(CA.GardenLayers.get('soil', CA.GardenLayers.picked('soil')).name)) +
       tile('Mature', String(mature), `of ${v.tiles.filter((t) => t.plant).length} plants`) +
-      (v.profile ? tile('Off-profile', String(off), off ? 'tiles to fix' : 'all as planned') : '')
+      tile('Off-layout', String(off), off ? 'tiles not as planned' : 'all as planned')
     );
   }
-
-  const soilName = (key) => {
-    const M = G().minigame();
-    return (M && M.soils && M.soils[key] && M.soils[key].name) || key;
-  };
 
   function gardenCard() {
     return (
@@ -97,71 +89,248 @@ CA.UI.GardenPage = (() => {
     );
   }
 
-  // ---- auto-gardener -----------------------------------------------------------------------------
+  // ---- auto-gardener: a profile, and its four layers -------------------------------------------------
+  //
+  // The card: the Auto-gardener's switch; the profile bar (load one, save the picks into it, save
+  // them as a new one, take one from the garden); four slots — Gardener, Soil rule, Template,
+  // Seeds — each showing what's picked; and under them the selected slot in detail: pick another,
+  // edit it (code, a grid of letters, or a seed per letter), save, save as new, revert, delete.
+
+  const L = () => CA.GardenLayers;
+  const CE = () => CA.UI.CodeEditor;
+  const RULES_HINT = 'run from the top every second while the Auto-gardener is on · Tab indents · click the library to insert';
+  const SOIL_HINT = 'run when the gardener calls garden.soilRule() · Tab indents · click the library to insert';
+  const SLOTS = [
+    { layer: 'gardener', label: 'Gardener', icon: 'bolt', what: 'what it does' },
+    { layer: 'soil', label: 'Soil rule', icon: 'drop', what: 'the soil it keeps' },
+    { layer: 'template', label: 'Template', icon: 'widget', what: 'where seeds go' },
+    { layer: 'seeds', label: 'Seeds', icon: 'leaf', what: 'which seed is which letter' },
+  ];
+  const LETTER_COLORS = ['#e8c547', '#6fb7ff', '#ff7a7a', '#8be07a', '#c792ff', '#ffa14f', '#4fd6c7', '#ff8fd0'];
+  const letterColor = (l) => LETTER_COLORS[(l.charCodeAt(0) - 65) % LETTER_COLORS.length];
+  let slot = 'gardener'; // the slot shown in detail
+  let brush = 'A'; // the template's brush ('' rubs out)
+
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  /** What the detail shows for a layer's item: the unsaved draft if it's this one's, else its saved data. */
+  const dataOf = (layer, it) => (draft && draft.layer === layer && draft.id === it.id ? draft.data : it.data);
+  const isDirty = (layer, it) => !!draft && draft.layer === layer && draft.id === it.id && !same(draft.data, it.data);
+  const pickedItem = (layer) => L().get(layer, L().picked(layer));
+
+  /** A layer's items as <option>s, grouped (built-ins, their groups, yours). */
+  function optionsHtml(layer, cur) {
+    const groups = new Map();
+    L()
+      .list(layer)
+      .forEach((x) => {
+        const g = x.builtin ? x.group || 'Built-in' : 'Yours';
+        if (!groups.has(g)) groups.set(g, []);
+        groups.get(g).push(x);
+      });
+    return [...groups]
+      .map(
+        ([g, xs]) =>
+          `<optgroup label="${esc(g)}">` + xs.map((x) => `<option value="${esc(x.id)}"${x.id === cur ? ' selected' : ''}>${esc(x.name)}${x.edited ? ' (edited)' : ''}</option>`).join('') + '</optgroup>'
+      )
+      .join('');
+  }
+  const plantOf = (key) => {
+    const M = G().minigame();
+    return (M && key && M.plants && M.plants[key]) || null;
+  };
+  const seedName = (key) => (plantOf(key) ? plantOf(key).name : L().NAMES[key] || key || '—');
+  /** A letter chip, in its colour. */
+  const chip = (l) => `<b class="ca-gletter" style="--lc:${letterColor(l)}">${esc(l)}</b>`;
+  /** A small grid of a template's letters. */
+  function miniLetters(plot) {
+    let h = '<div class="ca-gmini ca-gmini-letters">';
+    for (let y = 0; y < 6; y++) for (let x = 0; x < 6; x++) h += plot[y][x] ? `<span style="background:${letterColor(plot[y][x])}"></span>` : '<span></span>';
+    return h + '</div>';
+  }
+  /** The letters of the picked template (and any the seeds name), in order. */
+  function lettersNow(seedsMap) {
+    const t = pickedItem('template');
+    return [...new Set(L().lettersIn(t.data.plot).concat(Object.keys(seedsMap || {})))].sort();
+  }
+  const firstSentence = (s) => {
+    const m = String(s || '').match(/^.*?[.:;](\s|$)/);
+    return (m ? m[0] : String(s || '')).trim();
+  };
+
+  /** One slot: what's picked in a layer, at a glance. */
+  function slotHtml(s) {
+    const it = pickedItem(s.layer);
+    let sum = '';
+    if (s.layer === 'template') sum = miniLetters(it.data.plot) + `<span>${L().lettersIn(it.data.plot).map(chip).join('') || 'nothing planted'}</span>`;
+    else if (s.layer === 'seeds') {
+      const map = it.data.map;
+      const ls = lettersNow(map);
+      sum = ls.length
+        ? ls.map((l) => `<span class="ca-gseed-chip">${chip(l)}${plantOf(map[l]) ? sprite(plantOf(map[l]), 4) : ''}${esc(seedName(map[l]))}</span>`).join('')
+        : '<span>no letters</span>';
+    } else sum = `<span>${esc(firstSentence(it.desc) || 'your code')}</span>`;
+    const badge = it.live ? '<span class="ca-pill">live</span>' : it.edited ? '<span class="ca-badge ca-badge-edited">edited</span>' : it.builtin ? '' : '<span class="ca-pill">yours</span>';
+    return (
+      `<button type="button" class="ca-gslot${slot === s.layer ? ' on' : ''}" data-gp-slot="${s.layer}">` +
+      `<span class="ca-gslot-k">${I(s.icon, 12)} ${esc(s.label)} <em>${esc(s.what)}</em></span>` +
+      `<b class="ca-gslot-name">${esc(it.name)} ${badge}</b>` +
+      `<span class="ca-gslot-sum">${sum}</span>` +
+      '</button>'
+    );
+  }
+
+  /** The profile bar: load, save into, save as new, from the garden, revert, delete, rename. */
+  function profileBar() {
+    const p = pickedItem('profile');
+    const changed = L().profileChanged();
+    return (
+      '<div class="ca-gprof">' +
+      `<label class="ca-field"><span>${I('save', 12)} Profile</span><select data-gp-pick="profile">${optionsHtml('profile', p.id)}</select></label>` +
+      (changed ? '<span class="ca-pill ca-pill-warn">changed</span>' : '') +
+      '<span class="ca-controls">' +
+      (changed ? C().button(`${I('save', 12)} Save`, 'data-gp-pact="save"', 'ca-btn-small ca-btn-on') : '') +
+      C().button(`${I('plus', 12)} Save as new`, 'data-gp-pact="new"', 'ca-btn-small') +
+      C().button(`${I('leaf', 12)} From the garden`, 'data-gp-pact="snapshot"', 'ca-btn-small') +
+      (p.builtin && p.edited ? C().button(`${I('refresh', 12)} Revert`, 'data-gp-pact="revert" data-arm-label="Back to the built-in?"', 'ca-btn-small') : '') +
+      (p.builtin ? '' : C().button('Delete', 'data-gp-pact="delete" data-arm-label="Delete this profile?"', 'ca-btn-small ca-btn-off')) +
+      '</span>' +
+      (p.builtin ? '' : `<input type="text" class="ca-gname" maxlength="40" value="${esc(p.name)}" data-gp-iname="profile">`) +
+      `<div class="ca-hint ca-gprof-desc">${esc(p.desc || 'Yours: a gardener, a soil rule, a template and seeds.')}${changed ? ' — the slots below differ from it: Save puts them in it.' : ''}</div>` +
+      '</div>'
+    );
+  }
+
+  /** The selected slot's head: pick another, its state, its actions. */
+  function detailHead(layer, it) {
+    const dirty = isDirty(layer, it);
+    const noun = L().LAYERS[layer].noun;
+    return (
+      '<div class="ca-gdetail-head" data-gp-dhead>' +
+      `<select data-gp-pick="${layer}">${optionsHtml(layer, it.id)}</select>` +
+      (it.live ? '<span class="ca-pill">live</span>' : it.builtin ? (it.edited ? '<span class="ca-badge ca-badge-edited">edited</span>' : '<span class="ca-pill">built-in</span>') : '<span class="ca-pill">yours</span>') +
+      (dirty ? '<span class="ca-pill ca-pill-warn">unsaved</span>' : '') +
+      '<span class="ca-controls">' +
+      (it.live ? '' : C().button(`${I('save', 12)} Save`, 'data-gp-act="save"', `ca-btn-small${dirty ? ' ca-btn-on' : ''}`)) +
+      (dirty ? C().button('Discard', 'data-gp-act="discard"', 'ca-btn-small') : '') +
+      C().button(`${I('plus', 12)} Save as new`, 'data-gp-act="new"', 'ca-btn-small') +
+      (it.builtin && it.edited ? C().button(`${I('refresh', 12)} Revert to default`, `data-gp-act="revert" data-arm-label="Back to the built-in ${esc(noun)}?"`, 'ca-btn-small') : '') +
+      (it.builtin ? '' : C().button('Delete', `data-gp-act="delete" data-arm-label="Delete this ${esc(noun)}?"`, 'ca-btn-small ca-btn-off')) +
+      '</span>' +
+      (it.builtin ? '' : `<input type="text" class="ca-gname" maxlength="40" value="${esc(it.name)}" data-gp-iname="${layer}">`) +
+      '</div>'
+    );
+  }
+
+  function codeBody(layer, it) {
+    return (
+      '<div class="ca-ed-layout"><div class="ca-editor-body">' +
+      CE().html('garden', dataOf(layer, it).rules, { title: layer === 'soil' ? 'The soil rule' : 'What the auto-gardener does', hint: layer === 'soil' ? SOIL_HINT : RULES_HINT }) +
+      '</div>' +
+      CE().libraryHtml('garden', { first: ['Garden', 'Values'] }) +
+      '</div>'
+    );
+  }
+
+  /** The template's grid: paint letters with the brush (cells off your plot dimmed). */
+  function templateBody(it) {
+    const d = dataOf('template', it);
+    const M = G().minigame();
+    const [ox, oy] = d.abs ? [0, 0] : G().originOf(M);
+    const open = (x, y) => !M || typeof M.isTileUnlocked !== 'function' || (x + ox < 6 && y + oy < 6 && M.isTileUnlocked(x + ox, y + oy));
+    const used = L().lettersIn(d.plot);
+    const next = L().LETTERS.split('').find((l) => !used.includes(l));
+    const brushes = used.concat(next ? [next] : []);
+    if (brush && !brushes.includes(brush)) brush = brushes[0] || 'A';
+    const seeds = pickedItem('seeds').data.map;
+    let cells = '';
+    for (let y = 0; y < 6; y++)
+      for (let x = 0; x < 6; x++) {
+        const l = d.plot[y][x];
+        const me = l && plantOf(seeds[l]);
+        cells +=
+          `<button type="button" class="ca-gcell${open(x, y) ? '' : ' off'}"${it.live ? ' disabled' : ''} data-gp-cell="${x},${y}"${l ? ` style="--lc:${letterColor(l)}"` : ''}>` +
+          (l ? `${me ? sprite(me, 4) : ''}<b>${esc(l)}</b>` : '') +
+          '</button>';
+      }
+    return (
+      (it.live
+        ? '<div class="ca-hint">What’s planted now, as letters (A is the first seed, left to right, top to bottom). <b>Save as new</b> keeps it as a template of yours.</div>'
+        : '<div class="ca-gbrushes">' +
+          '<span class="ca-hint">Paint:</span>' +
+          brushes.map((l) => `<button type="button" class="ca-gbrush${brush === l ? ' on' : ''}" data-gp-brush="${l}">${chip(l)}${l === next ? ' new' : ''}</button>`).join('') +
+          `<button type="button" class="ca-gbrush${brush === '' ? ' on' : ''}" data-gp-brush="">${I('close', 11)} empty</button>` +
+          C().button('Clear', 'data-gp-tact="clear"', 'ca-btn-small') +
+          C().button('Fill', 'data-gp-tact="fill"', 'ca-btn-small') +
+          '</div>') +
+      `<div class="ca-gtemplate">${cells}</div>` +
+      `<div class="ca-hint">${d.abs ? 'Placed as it is on the plot.' : 'Laid on your plot from its top-left unlocked tile; dimmed cells are off your plot (a bigger garden uses them).'} ${used.length ? `${used.length} letter${used.length === 1 ? '' : 's'}: ${used.map((l) => `${l} = ${esc(seedName(seeds[l]))}`).join(', ')} (the Seeds slot)` : ''}</div>`
+    );
+  }
+
+  /** The seeds: which seed each letter is. */
+  function seedsBody(it) {
+    const map = dataOf('seeds', it).map;
+    const M = G().minigame();
+    const plants = M ? Object.keys(M.plants).map((k) => M.plants[k]) : [];
+    const ls = lettersNow(map);
+    if (!ls.length) return '<div class="ca-hint">The template has no letters — nothing to plant.</div>';
+    return (
+      '<div class="ca-gseeds">' +
+      ls
+        .map((l) => {
+          const me = plantOf(map[l]);
+          const opts =
+            '<option value="">— nothing —</option>' +
+            `<optgroup label="Unlocked">${plants.filter((p) => p.unlocked).map((p) => `<option value="${esc(p.key)}"${p.key === map[l] ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</optgroup>` +
+            `<optgroup label="Not unlocked yet">${plants.filter((p) => !p.unlocked).map((p) => `<option value="${esc(p.key)}"${p.key === map[l] ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</optgroup>`;
+          return (
+            '<div class="ca-gseed-row">' +
+            chip(l) +
+            `<span class="ca-gseed-sprite">${me ? sprite(me, 4) : ''}</span>` +
+            (it.live ? `<span>${esc(seedName(map[l]))}</span>` : `<select data-gp-seed="${l}">${opts}</select>`) +
+            (me && !me.unlocked ? '<span class="ca-pill ca-pill-warn">not unlocked: can’t be planted</span>' : '') +
+            '</div>'
+          );
+        })
+        .join('') +
+      '</div>' +
+      (it.live ? '<div class="ca-hint">The seeds of the Current garden. <b>Save as new</b> keeps them as a seed set of yours.</div>' : '')
+    );
+  }
+
+  function detailHtml() {
+    const it = pickedItem(slot);
+    const body = slot === 'template' ? templateBody(it) : slot === 'seeds' ? seedsBody(it) : codeBody(slot, it);
+    return (
+      `<div class="ca-gdetail" data-gp-detail="${slot}">` +
+      detailHead(slot, it) +
+      (it.desc ? `<div class="ca-hint">${esc(it.desc)}</div>` : '') +
+      (rulesError ? `<div class="ca-editor-error">${esc(rulesError)}</div>` : '') +
+      body +
+      '</div>'
+    );
+  }
 
   function gardenerCard() {
-    const lay = G().activeLayoutId();
-    const gd = G().activeGardener();
-    const opt = (list, cur) => list.map((o) => `<option value="${esc(o.v)}"${o.v === cur ? ' selected' : ''}>${esc(o.label)}</option>`).join('');
-    const gardeners = G()
-      .gardeners()
-      .map((g) => ({ v: g.id, label: g.name + (g.edited ? ' (edited)' : '') }));
     return (
-      '<div class="ca-card">' +
+      `<div class="ca-card ca-editor2 ca-gardener" data-gp-rules data-edits="${G().GARDENER}">` +
       C().cardHead('Auto-gardener', 'bolt', `<div class="ca-card-meta"><span class="ca-hint">also on the ${C().link('Macros', 'clickers')} page · ★ for a button on the left panel</span></div>`) +
       `<div class="ca-list">${CA.UI.MacrosPage.row(CA.Macros.get(G().GARDENER))}</div>` +
-      '<div class="ca-gsettings">' +
-      `<label class="ca-field"><span>${I('leaf', 12)} Layout</span><select data-gp-active>${opt(G().layoutOptions(), lay)}</select></label>` +
-      `<label class="ca-field"><span>${I('bolt', 12)} Gardener</span><select data-gp-gardener>${opt(gardeners, gd.id)}</select></label>` +
-      '</div>' +
-      `<div class="ca-card-note">${gd.desc ? `${esc(gd.desc)} ` : ''}<a class="ca-link" data-gp-rules-go>Its code</a></div>` +
+      profileBar() +
+      `<div class="ca-gslots">${SLOTS.map(slotHtml).join('')}</div>` +
+      detailHtml() +
       '<div class="ca-card-note" data-gp-last></div>' +
       '</div>'
     );
   }
 
-  // ---- the active gardener, as code ------------------------------------------------------------
-
-  const CE = () => CA.UI.CodeEditor;
-  const RULES_HINT = 'run from the top every second while the Auto-gardener is on · Tab indents · click the library to insert';
-  /** The code shown in the editor: the unsaved draft if it's this gardener's, else its saved code. */
-  const rulesText = (g) => (draft && draft.gardener === g.id ? draft.src : G().gardenerRules(g.id));
-  const isDirty = (g) => !!draft && draft.gardener === g.id && draft.src !== G().gardenerRules(g.id);
-
-  function rulesCard() {
-    const g = G().activeGardener();
-    const dirty = isDirty(g);
-    return (
-      `<div class="ca-card ca-editor2 ca-grules" data-gp-rules data-edits="${G().GARDENER}">` +
-      C().cardHead(
-        `Gardener · ${esc(g.name)}`,
-        'edit',
-        '<div class="ca-card-meta">' +
-          (g.builtin ? (g.edited ? '<span class="ca-badge ca-badge-edited">edited</span>' : '<span class="ca-pill">built-in</span>') : '<span class="ca-pill">yours</span>') +
-          (dirty ? '<span class="ca-pill ca-pill-warn">unsaved</span>' : '') +
-          C().button(`${I('save', 12)} Save`, 'data-gp-rules-act="save"', `ca-btn-small${dirty ? ' ca-btn-on' : ''}`) +
-          (dirty ? C().button('Discard', 'data-gp-rules-act="discard"', 'ca-btn-small') : '') +
-          C().button(`${I('plus', 12)} Save as new`, 'data-gp-rules-act="new"', 'ca-btn-small') +
-          (g.builtin && g.edited ? C().button(`${I('refresh', 12)} Revert to default`, 'data-gp-rules-act="revert" data-arm-label="Back to the default code?"', 'ca-btn-small') : '') +
-          (g.builtin ? '' : C().button('Delete', 'data-gp-rules-act="delete" data-arm-label="Delete this gardener?"', 'ca-btn-small ca-btn-off')) +
-          '</div>'
-      ) +
-      (g.builtin ? '' : `<div class="ca-gsave"><input type="text" maxlength="40" value="${esc(g.name)}" data-gp-grename="${esc(g.id)}"></div>`) +
-      (rulesError ? `<div class="ca-editor-error">${esc(rulesError)}</div>` : '') +
-      '<div class="ca-ed-layout"><div class="ca-editor-body">' +
-      CE().html('garden', rulesText(g), { title: 'What the auto-gardener does', hint: RULES_HINT }) +
-      '</div>' +
-      CE().libraryHtml('garden', { first: ['Garden', 'Values'] }) +
-      '</div></div>'
-    );
-  }
-
   /** What the last pass did, under the code (and its lines lit in the gutter). */
   function syncRules() {
-    const g = G().activeGardener();
-    const lp = G().lastPass();
+    if (slot !== 'gardener' && slot !== 'soil') return;
+    const it = pickedItem(slot);
+    const lp = slot === 'gardener' ? G().lastPass() : G().soilPass();
     const on = CA.Macros.isOn(G().GARDENER);
-    const live = on && lp && lp.gardener === g.id && !isDirty(g);
+    const live = on && lp && (slot === 'gardener' ? lp.gardener : lp.soil) === it.id && !isDirty(slot, it);
     CE().setLive(
       root,
       'garden',
@@ -169,7 +338,7 @@ CA.UI.GardenPage = (() => {
         ? {
             lines: lp.lines,
             html:
-              `<div class="ca-code-live-head">${I('play', 11)} last pass · ${CA.UI.Plot.fmt.span(Math.max(0, (Date.now() - lp.t) / 1000))} ago</div>` +
+              `<div class="ca-code-live-head">${I('play', 11)} last ${slot === 'soil' ? 'run' : 'pass'} · ${CA.UI.Plot.fmt.span(Math.max(0, (Date.now() - lp.t) / 1000))} ago</div>` +
               (lp.error ? `<div class="ca-code-live-at">${esc(lp.error)}</div>` : '') +
               lp.at.map((a) => `<div class="ca-code-live-at">${esc(a)}</div>`).join('') +
               (lp.trace.length ? lp.trace.map((x) => `<div class="ca-code-live-tr">${esc(x.text)}</div>`).join('') : '<div class="ca-code-live-tr">nothing to do</div>'),
@@ -178,103 +347,76 @@ CA.UI.GardenPage = (() => {
     );
   }
 
-  function rulesAct(act) {
-    const g = G().activeGardener();
+  /** The detail's actions: save, discard, save as new, revert, delete. */
+  function detailAct(act) {
+    const layer = slot;
+    const it = pickedItem(layer);
+    const data = dataOf(layer, it);
     rulesError = '';
-    if (act === 'save' || act === 'new') {
-      const src = rulesText(g);
-      const { errors } = G().compileRules(src);
+    if ((act === 'save' || act === 'new') && data.rules != null) {
+      const { errors } = G().compileRules(data.rules);
       if (errors.length) {
         rulesError = `Not saved — line ${errors[0].line}: ${errors[0].message}`;
         return;
       }
+    }
+    const noun = L().LAYERS[layer].noun;
+    if (act === 'save') {
+      if (it.live) return;
+      L().set(layer, it.id, data);
       draft = null;
-      if (act === 'new') {
-        G().useGardener(G().newGardener(`${g.name.replace(/ \(copy\)$/, '')} (copy)`, src));
-        CA.Util.notify('Gardener saved', `“${esc(G().activeGardener().name)}” — yours to change; the auto-gardener follows it from its next pass.`, CA.ICON, 3);
-        return;
-      }
-      G().setGardenerRules(g.id, src);
-      CA.Util.notify('Gardener saved', `“${esc(g.name)}” — the auto-gardener follows it from its next pass.`, CA.ICON, 3);
+      CA.Util.notify(`${noun[0].toUpperCase()}${noun.slice(1)} saved`, `“${esc(it.name)}” — the auto-gardener follows it from its next pass.`, CA.ICON, 3);
+    } else if (act === 'new') {
+      const id = L().add(layer, `${it.name.replace(/ \(copy\)$/, '')}${it.live ? '' : ' (copy)'}`, data);
+      draft = null;
+      L().pick(layer, id);
+      CA.Util.notify(`${noun[0].toUpperCase()}${noun.slice(1)} saved`, `“${esc(L().get(layer, id).name)}” — yours to change.`, CA.ICON, 3);
     } else if (act === 'discard') draft = null;
     else if (act === 'revert') {
-      G().setGardenerRules(g.id, null);
+      L().set(layer, it.id, null);
       draft = null;
     } else if (act === 'delete') {
-      G().removeGardener(g.id);
+      L().remove(layer, it.id);
       draft = null;
     }
+  }
+
+  function profileAct(act) {
+    const p = pickedItem('profile');
+    if (act === 'save') L().saveProfile();
+    else if (act === 'new') L().newProfile(`${p.name.replace(/ \(copy\)$/, '')} (copy)`);
+    else if (act === 'snapshot') {
+      const made = G().snapshot();
+      if (made) CA.Util.notify('Garden profile saved', `“${esc(made.name)}” — what’s planted, as a template and seeds, with the gardener and soil rule you have picked.`, CA.ICON, 3);
+    } else if (act === 'revert') {
+      L().set('profile', p.id, null);
+      L().loadProfile(p.id);
+    } else if (act === 'delete') L().remove('profile', p.id);
+  }
+
+  /** A template cell painted, cleared or filled (into the draft). */
+  function templateAct(cell, act) {
+    const it = pickedItem('template');
+    if (it.live) return;
+    const d = JSON.parse(JSON.stringify(dataOf('template', it)));
+    if (cell) {
+      const [x, y] = cell.split(',').map(Number);
+      d.plot[y][x] = d.plot[y][x] === brush ? null : brush || null;
+    } else if (act === 'clear') d.plot = d.plot.map((r) => r.map(() => null));
+    else if (act === 'fill') d.plot = d.plot.map((r) => r.map(() => brush || null));
+    draft = { layer: 'template', id: it.id, data: d };
   }
 
   function lastText() {
     const l = G().last();
-    if (!l.at) return 'It harvests and replants in the last seconds before each garden tick, so new plants start growing right away and plants about to die are picked first.';
+    if (!l.at) return 'Pick a profile — or a gardener, soil rule, template and seeds — then switch it on.';
     const parts = [];
     if (l.planted) parts.push(`planted ${l.planted}`);
-    if (l.harvested) parts.push(`pulled out ${l.harvested} off-profile`);
+    if (l.harvested) parts.push(`harvested ${l.harvested}`);
     if (l.saved) parts.push(`harvested ${l.saved} about to die`);
     if (l.unlocked) parts.push(`harvested ${l.unlocked} new seed${l.unlocked === 1 ? '' : 's'}`);
     if (l.soil) parts.push('changed the soil');
     return `Last: ${parts.join(', ')} — ${CA.UI.Plot.fmt.span((Date.now() - l.at) / 1000)} ago.`;
-  }
-
-  // ---- profiles ------------------------------------------------------------------------------
-
-  function miniPlot(p) {
-    const M = G().minigame();
-    let h = '<div class="ca-gmini">';
-    for (let y = 0; y < 6; y++) {
-      for (let x = 0; x < 6; x++) {
-        const key = p.plot[y][x];
-        const me = M && key && M.plants[key];
-        h += `<span>${me ? sprite(me, 4) : ''}</span>`;
-      }
-    }
-    return h + '</div>';
-  }
-
-  function profilesCard() {
-    const profs = G().profiles();
-    const lay = G().activeLayoutId();
-    // the Current garden first: what's planted, kept as it is
-    const cur = lay === G().CURRENT ? G().active() : null;
-    const curN = cur ? cur.plot.flat().filter(Boolean).length : 0;
-    let h =
-      '<div class="ca-card">' +
-      C().cardHead('Profiles', 'save') +
-      '<div class="ca-gsave">' +
-      `<input type="text" maxlength="40" placeholder="Garden ${profs.length + 1}" data-gp-name>` +
-      C().button(`${I('plus', 12)} Save current garden`, 'data-gp-save', 'ca-btn-small ca-btn-on') +
-      '</div>' +
-      '<div class="ca-gprofiles">' +
-      `<div class="ca-gprofile${cur ? ' on' : ''}" data-gp-current>` +
-      (cur ? miniPlot(cur) : `<div class="ca-gmini ca-gmini-live">${I('leaf', 22)}</div>`) +
-      '<div class="ca-gprofile-text">' +
-      '<b>Current garden</b>' +
-      `<div class="ca-row-desc">${cur ? `${curN} plant${curN === 1 ? '' : 's'} kept · <b>active</b>` : 'keeps whatever is planted — and follows what you plant or harvest by hand'}</div>` +
-      '<div class="ca-controls">' +
-      C().button(cur ? `${I('refresh', 12)} Take it again` : 'Use', `data-gp-use="${G().CURRENT}"`, 'ca-btn-small') +
-      '</div></div></div></div>';
-    if (!profs.length) h += '<div class="ca-card-note">A profile remembers the seed on every tile and the soil. Plant your garden the way you want it, then save it here.</div>';
-    else {
-      h += '<div class="ca-gprofiles">';
-      profs.forEach((p) => {
-        const on = lay === p.id;
-        const n = p.plot.flat().filter(Boolean).length;
-        h +=
-          `<div class="ca-gprofile${on ? ' on' : ''}">` +
-          miniPlot(p) +
-          '<div class="ca-gprofile-text">' +
-          `<input type="text" maxlength="40" value="${esc(p.name)}" data-gp-rename="${esc(p.id)}">` +
-          `<div class="ca-row-desc">${n} plant${n === 1 ? '' : 's'} · ${esc(soilName(p.soil))}${on ? ' · <b>active</b>' : ''}</div>` +
-          '<div class="ca-controls">' +
-          (on ? '' : C().button('Use', `data-gp-use="${esc(p.id)}"`, 'ca-btn-small')) +
-          C().button('Delete', `data-gp-del="${esc(p.id)}" data-arm-label="Delete it?"`, 'ca-btn-small ca-btn-off') +
-          '</div></div></div>';
-      });
-      h += '</div>';
-    }
-    return h + '</div>';
   }
 
   // ---- page ------------------------------------------------------------------------------
@@ -287,7 +429,7 @@ CA.UI.GardenPage = (() => {
         '<div class="ca-card-note">The Garden opens once you have a level-1 Farm (spend a sugar lump on it). The auto-gardener and its profiles will be here.</div>' +
         '</div>'
       );
-    return `<div class="ca-garden-row">${gardenCard()}${plot.html()}</div>` + effectsPlot.html() + gardenerCard() + rulesCard() + profilesCard();
+    return `<div class="ca-garden-row">${gardenCard()}${plot.html()}</div>` + effectsPlot.html() + gardenerCard();
   }
 
   function sync() {
@@ -299,7 +441,7 @@ CA.UI.GardenPage = (() => {
     const stats = root.querySelector('[data-gp-stats]');
     if (stats) CA.UI.Dom.morph(stats, statsHtml(v));
     const pill = root.querySelector('[data-gp-profile]');
-    if (pill) pill.textContent = v.profile ? `layout: ${v.profile.name}` : 'no layout';
+    if (pill) pill.textContent = `layout: ${v.profile.name}`;
     const last = root.querySelector('[data-gp-last]');
     if (last) last.textContent = lastText();
     syncRules();
@@ -307,30 +449,22 @@ CA.UI.GardenPage = (() => {
   }
 
   function onClick(e) {
-    const t = e.target.closest('[data-gp-save],[data-gp-use],[data-gp-del],[data-gp-rules-act],[data-gp-rules-go]');
-    if (!t) return;
+    const t = e.target.closest('[data-gp-slot],[data-gp-act],[data-gp-pact],[data-gp-cell],[data-gp-brush],[data-gp-tact]');
+    if (!t || !root.contains(t)) return;
     e.stopPropagation();
     const d = t.dataset;
-    if ('gpRulesGo' in d) {
-      const card = root.querySelector('[data-gp-rules]');
-      if (card) {
-        CA.Util.scrollInPanel(card, 'start');
-        CA.UI.Dom.replay(card, 'ca-flash');
-      }
-      return;
-    }
-    if (d.gpRulesAct) {
-      if ((d.gpRulesAct === 'revert' || d.gpRulesAct === 'delete') && !CA.UI.Dom.armed(t)) return;
-      rulesAct(d.gpRulesAct);
-    } else if ('gpDel' in d) {
-      if (!CA.UI.Dom.armed(t)) return;
-      G().removeProfile(d.gpDel);
-    } else if ('gpUse' in d) G().use(d.gpUse);
-    else if ('gpSave' in d) {
-      const name = root.querySelector('[data-gp-name]');
-      const p = G().snapshot(name && name.value.trim());
-      if (p) CA.Util.notify('Garden profile saved', `“${esc(p.name)}” — ${p.plot.flat().filter(Boolean).length} plants on ${esc(soilName(p.soil))}.`, CA.ICON, 3);
-    }
+    if (d.gpSlot) {
+      if (slot !== d.gpSlot) rulesError = '';
+      slot = d.gpSlot;
+    } else if (d.gpAct) {
+      if ((d.gpAct === 'revert' || d.gpAct === 'delete') && !CA.UI.Dom.armed(t)) return;
+      detailAct(d.gpAct);
+    } else if (d.gpPact) {
+      if ((d.gpPact === 'revert' || d.gpPact === 'delete') && !CA.UI.Dom.armed(t)) return;
+      profileAct(d.gpPact);
+    } else if (d.gpCell) templateAct(d.gpCell);
+    else if ('gpBrush' in d) brush = d.gpBrush;
+    else if (d.gpTact) templateAct(null, d.gpTact);
     CA.Util.sound('snd/tick.mp3');
     CA.UI.Menu.render();
   }
@@ -338,21 +472,19 @@ CA.UI.GardenPage = (() => {
   function onChange(e) {
     const el = e.target;
     const d = el.dataset || {};
-    if ('gpActive' in d) {
-      if (e.type !== 'change') return;
-      G().use(el.value);
-    } else if ('gpGardener' in d) {
-      if (e.type !== 'change') return;
-      G().useGardener(el.value);
+    if (e.type !== 'change') return;
+    if (d.gpPick) {
+      L().pick(d.gpPick, el.value);
       draft = null;
       rulesError = '';
-    } else if (d.gpRename) {
-      if (e.type !== 'change') return;
-      G().rename(d.gpRename, el.value);
-      return;
-    } else if (d.gpGrename) {
-      if (e.type !== 'change') return;
-      G().renameGardener(d.gpGrename, el.value);
+    } else if (d.gpIname) {
+      L().rename(d.gpIname, L().picked(d.gpIname), el.value);
+    } else if (d.gpSeed) {
+      const it = pickedItem('seeds');
+      const map = { ...dataOf('seeds', it).map };
+      if (el.value) map[d.gpSeed] = el.value;
+      else delete map[d.gpSeed];
+      draft = { layer: 'seeds', id: it.id, data: { map } };
     } else return;
     CA.UI.Menu.render();
   }
@@ -363,20 +495,19 @@ CA.UI.GardenPage = (() => {
     life = CA.UI.Pages.scope(el).on('click', onClick).on('change', onChange);
     life.add(
       CE().bind(root, {
-      onChange: (key, src) => {
-        if (key !== 'garden') return;
-        const g = G().activeGardener();
-        const was = isDirty(g);
-        draft = { gardener: g.id, src };
-        // the Save button lights up (and the "unsaved" pill shows) on the first change
-        if (was !== isDirty(g)) {
-          const card = root.querySelector('[data-gp-rules] .ca-card-head');
-          const tmp = document.createElement('div');
-          tmp.innerHTML = rulesCard();
-          const head = tmp.querySelector('.ca-card-head');
-          if (card && head) card.replaceWith(head);
-        }
-      },
+        onChange: (key, src) => {
+          if (key !== 'garden' || (slot !== 'gardener' && slot !== 'soil')) return;
+          const it = pickedItem(slot);
+          const was = isDirty(slot, it);
+          draft = { layer: slot, id: it.id, data: { rules: src } };
+          // the Save button lights up (and the "unsaved" pill shows) on the first change
+          if (was !== isDirty(slot, it)) {
+            const head = root.querySelector('[data-gp-dhead]');
+            const tmp = document.createElement('div');
+            tmp.innerHTML = detailHead(slot, it);
+            if (head && tmp.firstChild) head.replaceWith(tmp.firstChild);
+          }
+        },
       })
     );
     if (G().minigame()) life.child(plot).child(effectsPlot);

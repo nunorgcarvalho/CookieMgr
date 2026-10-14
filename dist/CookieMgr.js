@@ -1,9 +1,9 @@
-/*! CookieMgr v3.2.0 */
+/*! CookieMgr v3.3.0 */
 (function () {
 'use strict';
 const CA = {};
-CA.VERSION = "3.2.0";
-CA.CSS = "/* ==========================================================================\n   CookieMgr — styles\n   Colours and borders borrow from the game's own \"framed\" look so the panel\n   feels native. Everything is scoped under #CookieMgrTab / #CookieMgrMenu.\n   ========================================================================== */\n\n/* ---------- Sidebar (icon tabs sticking out of the left beam, one per page) ---------- */\n\n#CookieMgrTab {\n  position: absolute;\n  left: 30%;\n  top: calc(10% + 96px); /* fallback; tab.js pins it just under the game's cookie-count banner */\n  margin-left: 3px; /* tuck slightly under the beam */\n  transform: translateX(-100%);\n  z-index: 110;\n  display: flex;\n  flex-direction: column;\n  align-items: flex-end; /* items grow leftwards, away from the beam */\n  gap: 4px;\n}\n#CookieMgrTab .ca-tab-item {\n  box-sizing: border-box;\n  height: 32px;\n  display: flex;\n  align-items: center;\n  cursor: pointer;\n  user-select: none;\n  background: linear-gradient(to right, #3d2716, #221409);\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-right: none;\n  border-radius: 8px 0 0 8px;\n  box-shadow:\n    -3px 3px 10px rgba(0, 0, 0, 0.65),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.18);\n  transition:\n    background 0.2s,\n    box-shadow 0.2s;\n  outline: none;\n}\n#CookieMgrTab .ca-tab-item:hover,\n#CookieMgrTab .ca-tab-item:focus-visible {\n  box-shadow:\n    -3px 3px 12px rgba(0, 0, 0, 0.75),\n    0 0 12px rgba(255, 215, 110, 0.35),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.25);\n}\n#CookieMgrTab .ca-tab-item.selected {\n  background: linear-gradient(to right, #7a4f22, #43290f);\n  box-shadow:\n    -3px 3px 12px rgba(0, 0, 0, 0.75),\n    0 0 14px rgba(255, 215, 110, 0.55),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.3);\n}\n#CookieMgrTab .ca-tab-label {\n  max-width: 0;\n  overflow: hidden;\n  opacity: 0;\n  padding: 0;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-weight: bold;\n  font-size: 13px;\n  letter-spacing: 0.5px;\n  color: #f4e6c3;\n  text-shadow:\n    0 1px 2px #000,\n    0 0 6px rgba(255, 200, 120, 0.25);\n  white-space: nowrap;\n  transition:\n    max-width 0.22s ease-out,\n    opacity 0.15s,\n    padding 0.22s ease-out;\n}\n#CookieMgrTab .ca-tab-item:hover .ca-tab-label,\n#CookieMgrTab .ca-tab-item:focus-visible .ca-tab-label {\n  max-width: 180px;\n  opacity: 1;\n  padding: 0 2px 0 12px;\n}\n#CookieMgrTab .ca-tab-icon {\n  position: relative;\n  flex: none;\n  width: 30px;\n  height: 30px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  color: #f4e6c3;\n  filter: drop-shadow(0 1px 1px #000);\n}\n#CookieMgrTab .ca-tab-item.selected .ca-tab-icon,\n#CookieMgrTab .ca-tab-item:hover .ca-tab-icon {\n  color: #ffeab0;\n}\n#CookieMgrTab .ca-tab-badge {\n  display: none;\n  position: absolute;\n  top: -5px;\n  left: -5px;\n  min-width: 15px;\n  height: 15px;\n  padding: 0 3px;\n  box-sizing: border-box;\n  border-radius: 8px;\n  font:\n    bold 9px/15px Tahoma,\n    Arial,\n    sans-serif;\n  text-align: center;\n  color: #fff;\n  background: linear-gradient(#63c64a, #2f7d24);\n  box-shadow:\n    0 0 6px rgba(120, 240, 100, 0.8),\n    0 1px 1px #000;\n  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);\n}\n#CookieMgrTab .ca-tab-item.active .ca-tab-badge {\n  display: block;\n  animation: caBadgeGlow 2s infinite ease-in-out;\n}\n@keyframes caBadgeGlow {\n  0%,\n  100% {\n    box-shadow:\n      0 0 4px rgba(120, 240, 100, 0.6),\n      0 1px 1px #000;\n  }\n  50% {\n    box-shadow:\n      0 0 10px rgba(120, 240, 100, 1),\n      0 1px 1px #000;\n  }\n}\n#game.ascending #CookieMgrTab,\n#game.ascendIntro #CookieMgrTab,\n#game.reincarnating #CookieMgrTab {\n  display: none;\n}\n\n/* ---------- Icons (used everywhere, not just inside the panel) ---------- */\n\n.ca-ico {\n  display: inline-block;\n  flex: none;\n  vertical-align: middle;\n}\n.ca-ico-cookie {\n  background: url(img/perfectCookie.png) center / contain no-repeat;\n}\n\n/* ---------- Stock market toolbar inside the Bank minigame ---------- */\n\n#cm-bank-toolbar {\n  position: relative;\n  z-index: 10;\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  justify-content: center;\n  gap: 6px;\n  padding: 4px 4px 6px;\n}\n#cm-bank-toolbar .bankButton {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  font-size: 11px;\n  padding: 3px 9px;\n}\n#cm-bank-toolbar .cm-bt-open {\n  color: #f4e6c3;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n}\n\n/* ---------- Panel ---------- */\n\n#CookieMgrMenu {\n  max-width: none; /* use the whole middle section */\n  margin: 0 auto;\n  padding: 0 16px 120px;\n  color: #ddd;\n}\n\n/* Cards */\n#CookieMgrMenu .ca-card {\n  margin: 14px 4px;\n  border-radius: 6px;\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  background: rgba(0, 0, 0, 0.38);\n  box-shadow:\n    0 0 1px #000,\n    inset 0 0 1px #000,\n    0 6px 16px rgba(0, 0, 0, 0.35);\n  overflow: hidden;\n}\n#CookieMgrMenu .ca-card-head {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 10px;\n  padding: 9px 14px;\n  background: linear-gradient(to right, rgba(255, 235, 190, 0.09), rgba(255, 235, 190, 0));\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-card-title {\n  flex: 1;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-size: 20px;\n  color: #fff;\n  text-shadow:\n    0 -1px 5px rgba(255, 255, 200, 0.35),\n    0 1px 3px #000;\n}\n#CookieMgrMenu .ca-card-ico {\n  margin-right: 8px;\n  vertical-align: -1px;\n  color: #ffd98a;\n  filter: drop-shadow(0 1px 2px #000);\n}\n#CookieMgrMenu .ca-row-ico {\n  flex: 0 0 28px;\n  width: 28px;\n  height: 28px;\n  border-radius: 50%;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  color: #e8d7b0;\n  background: radial-gradient(circle at 35% 30%, rgba(255, 230, 170, 0.18), rgba(0, 0, 0, 0.25));\n  box-shadow:\n    inset 0 0 0 1px rgba(255, 220, 150, 0.25),\n    0 1px 3px rgba(0, 0, 0, 0.6);\n}\n#CookieMgrMenu .ca-row-option:has(.ca-switch.on) .ca-row-ico {\n  color: #ffeab0;\n  box-shadow:\n    inset 0 0 0 1px rgba(255, 220, 150, 0.55),\n    0 0 8px rgba(255, 210, 110, 0.35);\n}\n#CookieMgrMenu .ca-row-ico .ca-ico-cookie {\n  width: 18px !important;\n  height: 18px !important;\n}\n#CookieMgrMenu .ca-pill {\n  font-size: 11px;\n  white-space: nowrap;\n  padding: 3px 10px;\n  border-radius: 10px;\n  color: #bbb;\n  background: rgba(255, 255, 255, 0.07);\n  border: 1px solid rgba(255, 255, 255, 0.15);\n  transition: all 0.2s;\n}\n#CookieMgrMenu .ca-pill.on {\n  color: #cfc;\n  background: rgba(80, 200, 90, 0.16);\n  border-color: rgba(130, 235, 120, 0.5);\n}\n\n/* Rows */\n#CookieMgrMenu .ca-row {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 8px 12px;\n  padding: 8px 14px;\n  border-top: 1px solid rgba(255, 255, 255, 0.05);\n  transition: background 0.2s;\n}\n#CookieMgrMenu .ca-list .ca-row:first-child {\n  border-top: none;\n}\n#CookieMgrMenu .ca-row:hover {\n  background: rgba(255, 255, 255, 0.035);\n}\n#CookieMgrMenu .ca-row.on {\n  background: linear-gradient(to right, rgba(255, 210, 90, 0.12), rgba(255, 210, 90, 0) 65%);\n}\n#CookieMgrMenu .ca-row-option {\n  padding-top: 10px;\n  padding-bottom: 10px;\n}\n#CookieMgrMenu .ca-row-text {\n  flex: 1 1 160px;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-row-option {\n  flex-wrap: nowrap;\n}\n#CookieMgrMenu .ca-row-option .ca-row-text {\n  flex-basis: 0;\n}\n#CookieMgrMenu .ca-controls {\n  flex: 0 1 auto;\n  max-width: 100%;\n  margin-left: auto;\n  display: flex;\n  flex-wrap: wrap;\n  justify-content: flex-end;\n  align-items: center;\n  gap: 8px;\n}\n#CookieMgrMenu .ca-row-name {\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 14px;\n  color: #f2ead2;\n  text-shadow: 0 1px 2px #000;\n}\n#CookieMgrMenu .ca-row-desc {\n  margin-top: 2px;\n  font-size: 11px;\n  color: #b3a590;\n  text-shadow: 0 1px 1px #000;\n}\n\n/* Icons */\n#CookieMgrMenu .ca-icon {\n  flex: 0 0 36px;\n  width: 36px;\n  height: 36px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  transition:\n    filter 0.25s,\n    transform 0.25s;\n  filter: grayscale(0.55) brightness(0.8);\n}\n#CookieMgrMenu .ca-row.on .ca-icon {\n  filter: drop-shadow(0 0 6px rgba(255, 220, 120, 0.75));\n}\n#CookieMgrMenu .ca-row.on .ca-icon {\n  transform: scale(1.06);\n}\n#CookieMgrMenu .ca-img {\n  width: 36px;\n  height: 36px;\n  background-size: contain;\n  background-repeat: no-repeat;\n  background-position: center;\n}\n#CookieMgrMenu .ca-sprite {\n  flex: none;\n  width: 48px;\n  height: 48px;\n  background-image: url(img/icons.png);\n  transform: scale(0.75);\n}\n\n/* Toggle switch */\n#CookieMgrMenu .ca-switch {\n  flex: none;\n  padding: 2px;\n  background: none;\n  border: none;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-switch:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-switch-track {\n  display: block;\n  position: relative;\n  width: 42px;\n  height: 22px;\n  box-sizing: border-box;\n  border-radius: 11px;\n  background: #2a211c;\n  border: 1px solid rgba(255, 255, 255, 0.22);\n  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.75);\n  transition:\n    background 0.2s,\n    border-color 0.2s,\n    box-shadow 0.2s;\n}\n#CookieMgrMenu .ca-switch-knob {\n  position: absolute;\n  top: 2px;\n  left: 2px;\n  width: 16px;\n  height: 16px;\n  border-radius: 50%;\n  background: radial-gradient(circle at 35% 30%, #fff, #c9c1b5 55%, #8a8178);\n  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);\n  transition: left 0.18s ease-out;\n}\n#CookieMgrMenu .ca-switch:hover .ca-switch-track {\n  border-color: rgba(255, 225, 150, 0.6);\n}\n#CookieMgrMenu .ca-switch.on .ca-switch-track {\n  background: linear-gradient(#66c84b, #2f7d24);\n  border-color: #a5ea93;\n  box-shadow:\n    inset 0 1px 3px rgba(0, 0, 0, 0.35),\n    0 0 9px rgba(110, 230, 90, 0.45);\n}\n#CookieMgrMenu .ca-switch.on .ca-switch-knob {\n  left: 22px;\n}\n#CookieMgrMenu .ca-switch:focus-visible .ca-switch-track {\n  outline: 2px solid #ffd76a;\n  outline-offset: 2px;\n}\n\n/* Hotkey chips */\n#CookieMgrMenu .ca-hotkey {\n  flex: none;\n  display: inline-flex;\n  align-items: center;\n}\n#CookieMgrMenu .ca-key {\n  min-width: 46px;\n  height: 26px;\n  padding: 0 10px;\n  font:\n    bold 12px Tahoma,\n    Arial,\n    sans-serif;\n  color: #f4e6c3;\n  text-shadow: 0 1px 1px #000;\n  background: linear-gradient(#4d3c2d, #2a2018);\n  border: 1px solid;\n  border-color: #9a7d5b #3b2c1f #2a1f15 #74604a;\n  border-radius: 5px;\n  box-shadow:\n    0 2px 0 #140d08,\n    inset 0 1px 0 rgba(255, 255, 255, 0.16);\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    border-color 0.15s,\n    box-shadow 0.15s;\n}\n#CookieMgrMenu .ca-key:hover {\n  color: #fff;\n  border-color: #e0c08a #5a4430 #3d2e20 #b39468;\n}\n#CookieMgrMenu .ca-key:active {\n  transform: translateY(1px);\n  box-shadow:\n    0 1px 0 #140d08,\n    inset 0 1px 0 rgba(255, 255, 255, 0.16);\n}\n#CookieMgrMenu .ca-key:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-hotkey.unset .ca-key {\n  color: #8f877a;\n  font-weight: normal;\n  font-style: italic;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px dashed rgba(255, 255, 255, 0.22);\n  box-shadow: none;\n}\n#CookieMgrMenu .ca-hotkey.capturing .ca-key {\n  color: #ffe9a6;\n  border-color: #ffd76a;\n  animation: caCapture 1.1s infinite ease-in-out;\n}\n@keyframes caCapture {\n  0%,\n  100% {\n    box-shadow:\n      0 2px 0 #140d08,\n      0 0 0 0 rgba(255, 215, 106, 0.5);\n  }\n  50% {\n    box-shadow:\n      0 2px 0 #140d08,\n      0 0 12px 2px rgba(255, 215, 106, 0.55);\n  }\n}\n#CookieMgrMenu .ca-key-clear {\n  width: 18px;\n  height: 18px;\n  margin-left: 3px;\n  padding: 0;\n  border: none;\n  border-radius: 50%;\n  background: transparent;\n  color: #b09a8a;\n  font-size: 14px;\n  line-height: 18px;\n  cursor: pointer;\n  opacity: 0;\n  transition:\n    opacity 0.15s,\n    background 0.15s;\n}\n#CookieMgrMenu .ca-row:hover .ca-key-clear {\n  opacity: 0.8;\n}\n#CookieMgrMenu .ca-key-clear:hover {\n  color: #fff;\n  background: rgba(255, 80, 80, 0.35);\n}\n#CookieMgrMenu .ca-hotkey.unset .ca-key-clear,\n#CookieMgrMenu .ca-hotkey.capturing .ca-key-clear {\n  visibility: hidden;\n}\n\n/* Buttons */\n#CookieMgrMenu .ca-btn {\n  padding: 4px 12px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-weight: bold;\n  font-size: 12px;\n  color: #ddd;\n  text-shadow: 0 1px 1px #000;\n  background: linear-gradient(#3e2f23, #1d140f);\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 4px;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    inset 0 1px 0 rgba(255, 255, 255, 0.12);\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    box-shadow 0.15s,\n    opacity 0.15s;\n}\n#CookieMgrMenu .ca-btn:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-btn:not(:disabled):hover {\n  color: #fff;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    0 0 9px rgba(255, 220, 120, 0.35),\n    inset 0 1px 0 rgba(255, 255, 255, 0.18);\n}\n#CookieMgrMenu .ca-btn:not(:disabled):active {\n  transform: translateY(1px);\n}\n#CookieMgrMenu .ca-btn-on:not(:disabled):hover {\n  color: #d6ffcc;\n}\n#CookieMgrMenu .ca-btn-off:not(:disabled):hover {\n  color: #ffd2cc;\n}\n#CookieMgrMenu .ca-btn:disabled {\n  opacity: 0.38;\n  cursor: default;\n  box-shadow: none;\n}\n#CookieMgrMenu .ca-btn-small {\n  font-size: 11px;\n  padding: 3px 10px;\n}\n#CookieMgrMenu .ca-btn .ca-ico {\n  vertical-align: -2px;\n}\n#CookieMgrMenu .ca-btn.ca-armed {\n  color: #fff;\n  background: #8a2a22;\n  box-shadow: 0 0 0 1px #e5484d, 0 0 8px rgba(229, 72, 77, 0.6);\n}\n#CookieMgrMenu .ca-btn-lg {\n  padding: 10px 20px;\n  font-size: 15px;\n  border-radius: 6px;\n}\n#CookieMgrMenu .ca-btn-danger {\n  color: #ffdcd2;\n  background: linear-gradient(#6b2420, #3a1210);\n  border-color: #ffb199 #7a2a1e #5c1b12 #d98a6e;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    0 0 10px rgba(255, 90, 60, 0.25),\n    inset 0 1px 0 rgba(255, 255, 255, 0.15);\n}\n#CookieMgrMenu .ca-btn-danger:not(:disabled):hover {\n  color: #fff;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    0 0 16px rgba(255, 90, 60, 0.5),\n    inset 0 1px 0 rgba(255, 255, 255, 0.2);\n}\n#CookieMgrMenu .ca-card-danger {\n  border-color: rgba(255, 110, 80, 0.3);\n  box-shadow:\n    0 0 1px #000,\n    inset 0 0 1px #000,\n    0 0 14px rgba(255, 70, 40, 0.12),\n    0 6px 16px rgba(0, 0, 0, 0.35);\n}\n#CookieMgrMenu .ca-row-sellall {\n  align-items: center;\n  justify-content: space-between;\n  gap: 12px;\n}\n\n/* Footer */\n#CookieMgrMenu .ca-footer {\n  margin: 18px 8px 0;\n  font-size: 11px;\n  line-height: 1.7;\n  text-align: center;\n  color: #9b907f;\n  text-shadow: 0 1px 1px #000;\n}\n#CookieMgrMenu .ca-footer b {\n  color: #c9bba3;\n}\n#CookieMgrMenu kbd {\n  display: inline-block;\n  padding: 0 5px;\n  font:\n    bold 10px/16px Tahoma,\n    Arial,\n    sans-serif;\n  color: #e8dcc2;\n  background: #2a2018;\n  border: 1px solid #5a4632;\n  border-radius: 3px;\n  box-shadow: 0 1px 0 #140d08;\n}\n\n#CookieMgrMenu .ca-page {\n  animation: caFade 0.18s ease-out;\n}\n@keyframes caFade {\n  from {\n    opacity: 0;\n    transform: translateY(3px);\n  }\n  to {\n    opacity: 1;\n    transform: none;\n  }\n}\n#CookieMgrMenu a {\n  color: #ffd98a;\n}\n\n/* ---------- Graph ---------- */\n\n#CookieMgrMenu .ca-live {\n  font-size: 11px;\n  padding: 3px 10px 3px 20px;\n  position: relative;\n  border-radius: 10px;\n  color: #cfc;\n  background: rgba(80, 200, 90, 0.16);\n  border: 1px solid rgba(130, 235, 120, 0.5);\n}\n#CookieMgrMenu .ca-live:before {\n  content: '';\n  position: absolute;\n  left: 8px;\n  top: 50%;\n  width: 6px;\n  height: 6px;\n  margin-top: -3px;\n  border-radius: 50%;\n  background: #7be07b;\n  box-shadow: 0 0 6px #7be07b;\n  animation: caBadgeGlow 1.6s infinite ease-in-out;\n}\n#CookieMgrMenu .ca-live.paused {\n  color: #ffd9a0;\n  background: rgba(255, 170, 60, 0.14);\n  border-color: rgba(255, 190, 100, 0.5);\n}\n#CookieMgrMenu .ca-live.paused:before {\n  background: #ffb45c;\n  box-shadow: none;\n  animation: none;\n}\n\n#CookieMgrMenu .ca-stats {\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));\n  gap: 1px;\n  background: rgba(255, 255, 255, 0.06);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-stat {\n  min-width: 0; /* lets the grid cell shrink below its content so overflow/ellipsis below can work */\n  padding: 8px 12px;\n  background: rgba(0, 0, 0, 0.32);\n}\n#CookieMgrMenu .ca-stat-label {\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #a89a83;\n}\n#CookieMgrMenu .ca-stat-value {\n  margin-top: 2px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 17px;\n  color: #ffeab0;\n  text-shadow: 0 1px 3px #000;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n#CookieMgrMenu .ca-stat-sub {\n  margin-top: 1px;\n  font-size: 10px;\n  color: #93866f;\n  white-space: nowrap;\n}\n\n#CookieMgrMenu .ca-toolbar {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  justify-content: space-between;\n  gap: 6px 12px;\n  padding: 8px 12px;\n}\n#CookieMgrMenu .ca-toolbar-bottom {\n  padding-top: 6px;\n}\n#CookieMgrMenu .ca-chipgroup {\n  display: inline-flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 4px;\n}\n#CookieMgrMenu .ca-chip-label {\n  margin-right: 2px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-chip {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  padding: 3px 9px;\n  font:\n    bold 11px Tahoma,\n    Arial,\n    sans-serif;\n  color: #b9ab93;\n  text-shadow: 0 1px 1px #000;\n  background: rgba(255, 255, 255, 0.05);\n  border: 1px solid rgba(255, 255, 255, 0.14);\n  border-radius: 11px;\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    background 0.15s,\n    border-color 0.15s;\n}\n#CookieMgrMenu .ca-chip:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-chip:hover {\n  color: #fff;\n  border-color: rgba(255, 225, 150, 0.5);\n}\n#CookieMgrMenu .ca-chip.on {\n  color: #fff3cf;\n  background: rgba(255, 200, 100, 0.18);\n  border-color: rgba(255, 210, 120, 0.6);\n}\n#CookieMgrMenu .ca-sw,\n#CookieMgrLayer .ca-sw {\n  display: inline-block;\n  width: 9px;\n  height: 9px;\n  margin-right: 1px;\n  border-radius: 50%;\n  vertical-align: -1px;\n  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);\n}\n\n#CookieMgrMenu .ca-graph-wrap {\n  position: relative;\n  margin: 0 8px;\n}\n#CookieMgrMenu canvas.ca-graph {\n  display: block;\n  width: 100%;\n  height: 300px;\n  cursor: crosshair;\n}\n#CookieMgrMenu .ca-tip,\n#CookieMgrLayer .ca-tip {\n  display: none;\n  position: fixed;\n  z-index: 100000;\n  max-width: 340px;\n  min-width: 150px;\n  padding: 7px 10px;\n  pointer-events: none;\n  font-size: 11px;\n  line-height: 1.35;\n  color: #e6dcc6;\n  background: rgba(14, 10, 6, 0.95);\n  border: 1px solid;\n  border-color: #b98a4e #6a4626 #55301c #a0764a;\n  border-radius: 5px;\n  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7);\n}\n#CookieMgrMenu .ca-tip-head,\n#CookieMgrLayer .ca-tip-head {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  margin-bottom: 4px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 12px;\n  color: #ffeab0;\n}\n#CookieMgrMenu .ca-tip-head span,\n#CookieMgrLayer .ca-tip-head span {\n  margin-left: auto;\n  padding-left: 10px;\n  font:\n    normal 10px Tahoma,\n    Arial,\n    sans-serif;\n  color: #a89a83;\n}\n#CookieMgrMenu .ca-tip-row,\n#CookieMgrLayer .ca-tip-row {\n  display: flex;\n  align-items: center;\n  gap: 5px;\n  padding: 1px 0;\n}\n#CookieMgrMenu .ca-tip-row b,\n#CookieMgrLayer .ca-tip-row b {\n  font-weight: normal;\n  color: #b9ab93;\n}\n#CookieMgrMenu .ca-tip-row span,\n#CookieMgrLayer .ca-tip-row span {\n  margin-left: auto;\n  padding-left: 12px;\n  text-align: right;\n  color: #f2ead2;\n}\n#CookieMgrMenu .ca-tip-row.strong b,\n#CookieMgrMenu .ca-tip-row.strong span,\n#CookieMgrLayer .ca-tip-row.strong b,\n#CookieMgrLayer .ca-tip-row.strong span {\n  color: #fff3cf;\n  font-weight: bold;\n}\n#CookieMgrMenu .ca-tip-note,\n#CookieMgrLayer .ca-tip-note {\n  margin: 2px 0 4px;\n  font-style: italic;\n  color: #a89a83;\n}\n\n#CookieMgrMenu .ca-legend {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 4px 12px;\n  min-height: 16px;\n  padding: 2px 14px 12px;\n  font-size: 11px;\n  color: #b9ab93;\n}\n#CookieMgrMenu .ca-legend-item em {\n  font-style: normal;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-legend-empty {\n  font-style: italic;\n  color: #7f735f;\n}\n\n#CookieMgrMenu .ca-hidden {\n  display: none;\n}\n\n/* ---------- Stock transaction log + ticker ---------- */\n\n#CookieMgrMenu .cm-tx-wrap {\n  max-height: 220px;\n  overflow-y: auto;\n  margin: 0 4px 6px;\n}\n#CookieMgrMenu .cm-tx-table {\n  width: 100%;\n  border-collapse: collapse;\n  font-size: 11px;\n}\n#CookieMgrMenu .cm-tx-table th {\n  position: sticky;\n  top: 0;\n  text-align: left;\n  padding: 4px 8px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.06em;\n  color: #93866f;\n  background: #1c150d;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.1);\n}\n#CookieMgrMenu .cm-tx-table td {\n  padding: 3px 8px;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.05);\n  white-space: nowrap;\n  color: #d8cbb0;\n}\n#CookieMgrMenu .cm-tx-row:hover td {\n  background: rgba(255, 255, 255, 0.04);\n}\n#CookieMgrMenu .cm-tx-buy {\n  color: #8f8;\n  font-weight: bold;\n}\n#CookieMgrMenu .cm-tx-sell {\n  color: #f88;\n  font-weight: bold;\n}\n#CookieMgrMenu .cm-tx-empty {\n  padding: 14px 8px;\n  text-align: center;\n  font-style: italic;\n  color: #7f735f;\n  font-size: 12px;\n}\n\n#CookieMgrMenu .cm-tickbars {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 6px;\n  margin: 0 8px 8px;\n}\n#CookieMgrMenu .cm-tickbar {\n  flex: 1 1 90px;\n  min-width: 70px;\n  padding: 5px 6px;\n  background: rgba(0, 0, 0, 0.28);\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  border-radius: 4px;\n  font-size: 10px;\n}\n#CookieMgrMenu .cm-tickbar-time {\n  color: #93866f;\n  text-align: center;\n  margin-bottom: 3px;\n  white-space: nowrap;\n}\n#CookieMgrMenu .cm-tickbar-row {\n  height: 5px;\n  background: rgba(255, 255, 255, 0.06);\n  border-radius: 3px;\n  margin-bottom: 2px;\n  overflow: hidden;\n}\n#CookieMgrMenu .cm-tickbar-fill {\n  display: block;\n  height: 100%;\n  border-radius: 3px;\n}\n#CookieMgrMenu .cm-tickbar-buy {\n  background: #8f8;\n}\n#CookieMgrMenu .cm-tickbar-sell {\n  background: #f88;\n}\n#CookieMgrMenu .cm-tickbar-net {\n  text-align: center;\n  font-weight: bold;\n  margin-top: 3px;\n}\n#CookieMgrMenu .cm-ticks-empty {\n  margin: 0 8px 8px;\n  padding: 10px;\n  text-align: center;\n  font-style: italic;\n  color: #7f735f;\n  font-size: 11px;\n}\n\n#CookieMgrMenu .cm-ticker {\n  margin: 8px 8px 10px;\n  padding: 6px 0;\n  overflow: hidden;\n  white-space: nowrap;\n  background: rgba(0, 0, 0, 0.32);\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  border-radius: 4px;\n}\n#CookieMgrMenu .cm-ticker-track {\n  display: inline-block;\n  will-change: transform;\n}\n#CookieMgrMenu .cm-tick-item {\n  display: inline-block;\n  padding: 0 16px;\n  font:\n    bold 11px Tahoma,\n    Arial,\n    sans-serif;\n  color: #cbbfa6;\n}\n#CookieMgrMenu .cm-tick-buy {\n  color: #8f8;\n}\n#CookieMgrMenu .cm-tick-sell {\n  color: #f88;\n}\n#CookieMgrMenu .cm-tick-empty {\n  color: #7f735f;\n  font-style: italic;\n  font-weight: normal;\n}\n#CookieMgrMenu .cm-tick-sep {\n  color: #4a4232;\n  padding: 0 4px;\n}\n\n@keyframes cmTickerScroll {\n  from {\n    transform: translateX(0);\n  }\n  to {\n    transform: translateX(-50%);\n  }\n}\n\n/* ---------- Sub-tabs (Graphs page and others) ---------- */\n\n#CookieMgrMenu .ca-subtabs {\n  display: flex;\n  gap: 4px;\n  margin: 2px 0 10px;\n  padding: 0 4px;\n  border-bottom: 1px solid rgba(255, 220, 150, 0.25);\n}\n#CookieMgrMenu .ca-subtab {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  padding: 6px 14px 5px;\n  margin-bottom: -1px;\n  font:\n    bold 12px Tahoma,\n    Arial,\n    sans-serif;\n  color: #b9ab93;\n  text-shadow: 0 1px 1px #000;\n  background: rgba(0, 0, 0, 0.25);\n  border: 1px solid rgba(255, 220, 150, 0.18);\n  border-bottom-color: transparent;\n  border-radius: 6px 6px 0 0;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-subtab:hover {\n  color: #f0e2c0;\n}\n#CookieMgrMenu .ca-subtab.on {\n  color: #fff3cf;\n  background: linear-gradient(to bottom, rgba(255, 200, 100, 0.2), rgba(0, 0, 0, 0.3));\n  border-color: rgba(255, 220, 150, 0.45);\n  border-bottom-color: #1c150d;\n}\n#CookieMgrMenu .ca-subtab .ca-ico-cookie {\n  width: 14px !important;\n  height: 14px !important;\n}\n\n/* ---------- Tables, notes ---------- */\n\n#CookieMgrMenu .ca-card-note {\n  padding: 0 14px 6px;\n  font-size: 11px;\n  line-height: 1.4;\n  color: #a39477;\n}\n#CookieMgrMenu .ca-table-wrap {\n  padding: 4px 10px 6px;\n  overflow: hidden;\n}\n#CookieMgrMenu .ca-table {\n  width: 100%;\n  border-collapse: collapse;\n  font-size: 11px;\n}\n#CookieMgrMenu .ca-table th {\n  text-align: right;\n  padding: 4px 8px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.06em;\n  color: #93866f;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.1);\n  white-space: nowrap;\n}\n#CookieMgrMenu .ca-table th:first-child,\n#CookieMgrMenu .ca-table td:first-child {\n  text-align: left;\n}\n#CookieMgrMenu .ca-table td {\n  text-align: right;\n  padding: 3px 8px;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.05);\n  white-space: nowrap;\n  color: #d8cbb0;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrMenu .ca-table tr.strong td {\n  color: #fff3cf;\n  font-weight: bold;\n}\n#CookieMgrMenu .ca-table tbody tr:hover td {\n  background: rgba(255, 255, 255, 0.04);\n}\n#CookieMgrMenu .ca-sw.ca-sw-dash,\n#CookieMgrLayer .ca-sw.ca-sw-dash {\n  width: 10px;\n  height: 0;\n  border-radius: 0;\n  border-top: 2px dashed;\n  box-shadow: none;\n  vertical-align: 2px;\n}\n#CookieMgrMenu .ca-chip .ca-ico {\n  vertical-align: -2px;\n}\n\n/* ---------- Events page ---------- */\n\n#CookieMgrMenu .ca-table td.pos {\n  color: #9be89b;\n}\n#CookieMgrMenu .ca-table td.neg {\n  color: #ff9a8a;\n}\n#CookieMgrMenu .ca-table tr.muted td {\n  color: #6f6555;\n}\n#CookieMgrMenu .ca-ev-dot {\n  display: inline-flex;\n  width: 16px;\n  margin-right: 5px;\n  vertical-align: -2px;\n}\n#CookieMgrMenu .ca-ev-chip em {\n  font-style: normal;\n  opacity: 0.6;\n  font-weight: normal;\n}\n#CookieMgrMenu .ca-ev-chip .ca-ico {\n  color: var(--c);\n}\n#CookieMgrMenu .ca-ev-chip:not(.on) {\n  opacity: 0.5;\n}\n#CookieMgrMenu .ca-ev-chip:not(.on) .ca-ico {\n  color: inherit;\n}\n#CookieMgrMenu .ca-search {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  flex: 1 1 160px;\n  padding: 3px 8px;\n  color: #93866f;\n  background: rgba(0, 0, 0, 0.35);\n  border: 1px solid rgba(255, 220, 150, 0.2);\n  border-radius: 12px;\n}\n#CookieMgrMenu .ca-search input {\n  flex: 1;\n  min-width: 0;\n  font: 12px Tahoma, Arial, sans-serif;\n  color: #f0e2c0;\n  background: transparent;\n  border: none;\n  outline: none;\n}\n#CookieMgrMenu .ca-ev-list {\n  max-height: 420px;\n  overflow-y: auto;\n  padding: 0 6px 8px;\n}\n#CookieMgrMenu .ca-ev-row {\n  display: flex;\n  align-items: baseline;\n  gap: 8px;\n  padding: 4px 8px;\n  font-size: 11px;\n  color: #d8cbb0;\n  border-left: 2px solid var(--c);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.04);\n}\n#CookieMgrMenu .ca-ev-row:hover {\n  background: rgba(255, 255, 255, 0.04);\n}\n#CookieMgrMenu .ca-ev-ico {\n  flex: none;\n  color: var(--c);\n  align-self: center;\n  display: inline-flex;\n}\n#CookieMgrMenu .ca-ev-ico .ca-ico-cookie {\n  width: 14px !important;\n  height: 14px !important;\n}\n#CookieMgrMenu .ca-ev-time {\n  flex: none;\n  color: #93866f;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrMenu .ca-ev-text {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n#CookieMgrMenu .ca-ev-text b {\n  color: #f0e2c0;\n}\n#CookieMgrMenu .ca-ev-text span {\n  color: #a39477;\n}\n#CookieMgrMenu .ca-ev-cookies {\n  flex: none;\n  font-weight: bold;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrMenu .ca-ev-cookies.pos {\n  color: #9be89b;\n}\n#CookieMgrMenu .ca-ev-cookies.neg {\n  color: #ff9a8a;\n}\n#CookieMgrMenu .ca-ev-more {\n  display: block;\n  margin: 8px auto 0;\n}\n#CookieMgrMenu .ca-ev-empty {\n  display: block;\n  padding: 12px;\n  text-align: center;\n}\n\n/* ---------- Macros ---------- */\n\n#CookieMgrMenu .ca-icon-ico {\n  color: #ffd98a;\n  border-radius: 50%;\n  background: radial-gradient(circle at 35% 30%, rgba(255, 230, 170, 0.22), rgba(0, 0, 0, 0.3));\n  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.3);\n}\n#CookieMgrMenu .ca-icon-ico.small {\n  flex: 0 0 20px;\n  width: 20px;\n  height: 20px;\n}\n#CookieMgrMenu .ca-badge {\n  display: inline-block;\n  margin-left: 6px;\n  padding: 1px 7px;\n  font:\n    bold 9px Tahoma,\n    Arial,\n    sans-serif;\n  letter-spacing: 0.04em;\n  text-transform: uppercase;\n  vertical-align: 2px;\n  color: #c9bba0;\n  border-radius: 8px;\n  background: rgba(255, 255, 255, 0.07);\n  border: 1px solid rgba(255, 255, 255, 0.12);\n}\n#CookieMgrMenu .ca-badge-when {\n  color: #9fd3ff;\n  border-color: rgba(120, 190, 255, 0.35);\n}\n#CookieMgrMenu .ca-badge-once {\n  color: #ffd27a;\n  border-color: rgba(255, 200, 100, 0.35);\n}\n#CookieMgrMenu .ca-steps {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 3px;\n  margin-top: 4px;\n}\n#CookieMgrMenu .ca-step {\n  display: inline-flex;\n  align-items: center;\n  gap: 4px;\n  padding: 1px 7px 1px 5px;\n  font-size: 10px;\n  color: #d8cbb0;\n  border-radius: 9px;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px solid rgba(255, 220, 150, 0.15);\n}\n#CookieMgrMenu .ca-step .ca-ico {\n  color: #ffd98a;\n}\n#CookieMgrMenu .ca-step .ca-ico-cookie {\n  width: 12px !important;\n  height: 12px !important;\n}\n#CookieMgrMenu .ca-step-arrow {\n  color: #93866f;\n  font-weight: bold;\n}\n#CookieMgrMenu .ca-macro-status {\n  margin-top: 3px;\n  font-size: 10px;\n  color: #8fd18f;\n}\n#CookieMgrMenu .ca-macro-status:empty {\n  display: none;\n}\n#CookieMgrMenu .ca-macro:not(.on) .ca-macro-status {\n  color: #93866f;\n}\n#CookieMgrMenu .ca-iconbtn {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  min-width: 24px;\n  height: 24px;\n  padding: 0 4px;\n  font-size: 10px;\n  color: #b9ab93;\n  background: rgba(0, 0, 0, 0.25);\n  border: 1px solid rgba(255, 220, 150, 0.15);\n  border-radius: 6px;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-iconbtn:hover:not(:disabled) {\n  color: #fff3cf;\n  border-color: rgba(255, 220, 150, 0.45);\n}\n#CookieMgrMenu .ca-iconbtn:disabled {\n  opacity: 0.3;\n  cursor: default;\n}\n#CookieMgrMenu .ca-iconbtn.on,\n#CookieMgrMenu .ca-fav.on {\n  color: #ffd54a;\n  border-color: rgba(255, 213, 74, 0.55);\n}\n#CookieMgrMenu .ca-btn-run .ca-ico {\n  vertical-align: -1px;\n}\n\n/* status block (\"Running now\", also a widget) */\n.ca-status-step {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  margin: 3px 0 0 27px;\n  font-size: 10.5px;\n  color: #c9bba0;\n}\n.ca-status-step .ca-ico {\n  color: #93866f;\n}\n.ca-status-step.hot .ca-ico {\n  color: #7fe08b;\n  filter: drop-shadow(0 0 3px rgba(127, 224, 139, 0.8));\n}\n.ca-status-step.err {\n  color: #ff9a8a;\n}\n.ca-status-step.idle {\n  opacity: 0.55;\n}\n.ca-status-name {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n.ca-status-val {\n  flex: none;\n  font-variant-numeric: tabular-nums;\n  color: #a39477;\n}\n\n/* editor */\n#CookieMgrMenu .ca-editor {\n  box-shadow:\n    0 0 0 1px rgba(255, 210, 120, 0.45),\n    0 0 18px rgba(255, 200, 100, 0.15);\n}\n#CookieMgrMenu .ca-editor-body {\n  padding: 4px 14px 12px;\n}\n#CookieMgrMenu .ca-field {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  font-size: 11px;\n  color: #b9ab93;\n}\n#CookieMgrMenu .ca-field em {\n  font-style: normal;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-field-label {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  min-width: 64px;\n  font:\n    bold 11px Tahoma,\n    Arial,\n    sans-serif;\n  color: #e8d7b0;\n}\n#CookieMgrMenu .ca-hint {\n  font-size: 10.5px;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-editor input[type='text'],\n#CookieMgrMenu .ca-editor input[type='number'],\n#CookieMgrMenu .ca-editor select {\n  font: 12px Tahoma, Arial, sans-serif;\n  color: #f0e2c0;\n  background: rgba(0, 0, 0, 0.45);\n  border: 1px solid rgba(255, 220, 150, 0.25);\n  border-radius: 4px;\n  padding: 3px 6px;\n}\n#CookieMgrMenu .ca-editor input[type='number'] {\n  width: 80px;\n}\n#CookieMgrMenu .ca-editor select option,\n#CookieMgrMenu .ca-editor select optgroup {\n  background: #1c150d;\n  color: #f0e2c0;\n}\n#CookieMgrMenu .ca-iconpick {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 4px;\n}\n#CookieMgrMenu .ca-step-n {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 18px;\n  height: 18px;\n  font:\n    bold 10px Tahoma,\n    Arial,\n    sans-serif;\n  color: #1c150d;\n  background: #ffd98a;\n  border-radius: 50%;\n}\n#CookieMgrMenu .ca-editor-error {\n  margin: 6px 0;\n  padding: 5px 9px;\n  font-size: 11px;\n  color: #ffd2cc;\n  background: rgba(229, 72, 77, 0.18);\n  border: 1px solid rgba(229, 72, 77, 0.5);\n  border-radius: 5px;\n}\n\n/* ---------- Widgets (left panel) ---------- */\n\n#CookieMgrWidgets {\n  position: absolute;\n  inset: 0;\n  /* above the game's big-cookie click target (#bigCookie, 10000) so widgets dragged over the\n     cookie can still be grabbed; below its popups (20000+), golden cookies, notes and tooltips */\n  z-index: 15000;\n  pointer-events: none;\n  font-family: Tahoma, Arial, sans-serif;\n}\n#CookieMgrWidgets.ca-hidden,\n#game.ascending #CookieMgrWidgets,\n#game.ascendIntro #CookieMgrWidgets,\n#game.reincarnating #CookieMgrWidgets {\n  display: none;\n}\n#CookieMgrWidgets .ca-w {\n  position: absolute;\n  pointer-events: auto;\n  box-sizing: border-box;\n  max-width: calc(100% - 4px);\n  color: #e8d7b0;\n  background:\n    linear-gradient(to bottom, rgba(70, 45, 22, 0.92), rgba(28, 18, 9, 0.92)),\n    #1c120a;\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 6px;\n  box-shadow:\n    0 4px 14px rgba(0, 0, 0, 0.7),\n    inset 0 1px 0 rgba(255, 255, 255, 0.15);\n  user-select: none;\n}\n#CookieMgrWidgets .ca-w.dragging {\n  box-shadow:\n    0 8px 24px rgba(0, 0, 0, 0.85),\n    0 0 14px rgba(255, 215, 110, 0.35);\n  opacity: 0.95;\n}\n#CookieMgrWidgets .ca-w-head {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  padding: 3px 4px 3px 8px;\n  cursor: grab;\n  border-bottom: 1px solid rgba(255, 220, 150, 0.18);\n  color: #ffd98a;\n}\n#CookieMgrWidgets.locked .ca-w-head {\n  cursor: default;\n}\n#CookieMgrWidgets .ca-w.collapsed .ca-w-head {\n  border-bottom: none;\n}\n#CookieMgrWidgets .ca-w-title {\n  flex: 1;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-size: 13px;\n  color: #fff;\n  text-shadow: 0 1px 2px #000;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n#CookieMgrWidgets .ca-w-btn {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 18px;\n  height: 18px;\n  padding: 0;\n  font-size: 10px;\n  color: #b9ab93;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px solid rgba(255, 220, 150, 0.15);\n  border-radius: 4px;\n  cursor: pointer;\n  opacity: 0;\n  transition: opacity 0.15s;\n}\n#CookieMgrWidgets .ca-w:hover .ca-w-btn {\n  opacity: 1;\n}\n#CookieMgrWidgets .ca-w-btn:hover {\n  color: #fff3cf;\n}\n#CookieMgrWidgets .ca-w-body {\n  padding: 6px 8px 8px;\n  max-height: 320px;\n  overflow-y: auto;\n}\n#CookieMgrWidgets .ca-w.collapsed .ca-w-body {\n  display: none;\n}\n#CookieMgrWidgets .ca-w-empty {\n  font-size: 11px;\n  color: #93866f;\n  line-height: 1.4;\n}\n/* bare widgets: no frame, dragged from anywhere */\n#CookieMgrWidgets .ca-w.ca-w-bare {\n  background: none;\n  border: none;\n  box-shadow: none;\n  cursor: grab;\n}\n#CookieMgrWidgets.locked .ca-w.ca-w-bare {\n  cursor: default;\n}\n#CookieMgrWidgets .ca-w-bare > .ca-w-body {\n  padding: 0;\n  max-height: none;\n  overflow: visible;\n}\n#CookieMgrWidgets .ca-w-x {\n  position: absolute;\n  top: -6px;\n  right: -6px;\n  z-index: 2;\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 15px;\n  height: 15px;\n  padding: 0;\n  color: #f0e2c0;\n  background: #3a2414;\n  border: 1px solid #875526;\n  border-radius: 50%;\n  cursor: pointer;\n  opacity: 0;\n  transition: opacity 0.15s;\n}\n#CookieMgrWidgets .ca-w-bare:hover .ca-w-x {\n  opacity: 1;\n}\n#CookieMgrWidgets .ca-w-bare.dragging .ca-w-x {\n  opacity: 0;\n}\n\n/* a macro's own button */\n#CookieMgrWidgets .ca-wb {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  width: 38px;\n  height: 38px;\n  padding: 0;\n  border-radius: 50%;\n  cursor: inherit;\n  background: radial-gradient(circle at 35% 30%, rgba(110, 72, 36, 0.95), rgba(28, 18, 9, 0.95));\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  box-shadow:\n    0 3px 8px rgba(0, 0, 0, 0.7),\n    inset 0 1px 0 rgba(255, 255, 255, 0.2);\n  transition:\n    box-shadow 0.2s,\n    transform 0.1s,\n    filter 0.2s;\n}\n#CookieMgrWidgets .ca-wb:not(.on):not(.once) {\n  filter: grayscale(0.6) brightness(0.8);\n}\n#CookieMgrWidgets .ca-wb:hover {\n  filter: none;\n  box-shadow:\n    0 3px 10px rgba(0, 0, 0, 0.8),\n    0 0 10px rgba(255, 215, 110, 0.45),\n    inset 0 1px 0 rgba(255, 255, 255, 0.25);\n}\n#CookieMgrWidgets .ca-wb.on {\n  box-shadow:\n    0 3px 8px rgba(0, 0, 0, 0.7),\n    0 0 0 2px #1a3d12,\n    0 0 0 4px #4dff5e,\n    0 0 16px 2px rgba(77, 255, 94, 0.75);\n}\n#CookieMgrWidgets .ca-wb:active {\n  transform: scale(0.94);\n}\n#CookieMgrWidgets .ca-wb .ca-icon,\n#CookieMgrWidgets .ca-wb .ca-icon-ico {\n  flex: 0 0 26px;\n  width: 26px;\n  height: 26px;\n  background: none;\n  box-shadow: none;\n}\n#CookieMgrWidgets .ca-wb .ca-img {\n  width: 26px;\n  height: 26px;\n}\n#CookieMgrWidgets .ca-wb .ca-sprite {\n  transform: scale(0.54);\n}\n#CookieMgrWidgets .ca-wb .ca-icon-ico .ca-ico {\n  width: 20px;\n  height: 20px;\n}\n#CookieMgrWidgets .ca-wb-label {\n  position: absolute;\n  top: 100%;\n  left: 50%;\n  margin-top: 4px;\n  padding: 2px 7px;\n  font:\n    bold 10px Tahoma,\n    Arial,\n    sans-serif;\n  color: #fff3cf;\n  white-space: nowrap;\n  text-shadow: 0 1px 1px #000;\n  background: rgba(20, 12, 6, 0.92);\n  border: 1px solid rgba(255, 220, 150, 0.35);\n  border-radius: 8px;\n  transform: translateX(-50%) translateY(-3px);\n  opacity: 0;\n  pointer-events: none;\n  transition:\n    opacity 0.15s,\n    transform 0.15s;\n}\n#CookieMgrWidgets .ca-wb-label b,\n#CookieMgrWidgets .ca-wb-label em {\n  display: block;\n  text-align: center;\n}\n#CookieMgrWidgets .ca-wb-label em {\n  font-style: normal;\n  font-weight: normal;\n  font-size: 9.5px;\n  color: #b9ab93;\n}\n#CookieMgrWidgets .ca-wb-label em.on {\n  color: #7dff8a;\n}\n#CookieMgrWidgets .ca-w-macro:hover .ca-wb-label {\n  opacity: 1;\n  transform: translateX(-50%) translateY(0);\n}\n#CookieMgrWidgets .ca-w-macro.dragging .ca-wb-label {\n  opacity: 0;\n}\n\n/* \"Running now\" as a status bar */\n#CookieMgrWidgets .ca-w-status > .ca-w-body {\n  display: flex;\n  align-items: center;\n  gap: 4px;\n  min-height: 30px;\n  padding: 3px 8px 3px 6px;\n  background: linear-gradient(to bottom, rgba(70, 45, 22, 0.9), rgba(28, 18, 9, 0.9));\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 16px;\n  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.7);\n}\n#CookieMgrWidgets .ca-wbar-lead {\n  display: inline-flex;\n  color: #93866f;\n  margin-right: 2px;\n}\n#CookieMgrWidgets .ca-wbar-idle {\n  font-size: 10px;\n  font-style: italic;\n  color: #93866f;\n}\n#CookieMgrWidgets .ca-wbar-item {\n  position: relative;\n  display: inline-flex;\n  border-radius: 50%;\n  cursor: pointer;\n  box-shadow:\n    0 0 0 2px #4dff5e,\n    0 0 7px rgba(77, 255, 94, 0.6);\n}\n#CookieMgrWidgets .ca-wbar-item .ca-icon,\n#CookieMgrWidgets .ca-wbar-item .ca-icon-ico {\n  flex: 0 0 22px;\n  width: 22px;\n  height: 22px;\n}\n#CookieMgrWidgets .ca-wbar-item .ca-img {\n  width: 22px;\n  height: 22px;\n}\n#CookieMgrWidgets .ca-wbar-item .ca-sprite {\n  transform: scale(0.45);\n}\n#CookieMgrWidgets .ca-wbar-item.hot {\n  animation: caWbarPulse 1s ease-in-out infinite;\n}\n#CookieMgrWidgets .ca-wbar-item.err {\n  box-shadow: 0 0 0 2px rgba(229, 72, 77, 0.85);\n}\n@keyframes caWbarPulse {\n  0%,\n  100% {\n    box-shadow:\n      0 0 0 2px #4dff5e,\n      0 0 7px rgba(77, 255, 94, 0.6);\n  }\n  50% {\n    box-shadow:\n      0 0 0 3px #8dff98,\n      0 0 16px 3px rgba(77, 255, 94, 0.9);\n  }\n}\n#CookieMgrWidgets .ca-icon {\n  flex: 0 0 22px;\n  width: 22px;\n  height: 22px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  overflow: hidden;\n}\n#CookieMgrWidgets .ca-img {\n  width: 22px;\n  height: 22px;\n  background-size: contain;\n  background-repeat: no-repeat;\n  background-position: center;\n}\n#CookieMgrWidgets .ca-sprite {\n  flex: none;\n  width: 48px;\n  height: 48px;\n  background-image: url(img/icons.png);\n  transform: scale(0.45);\n}\n#CookieMgrWidgets .ca-icon-ico {\n  color: #ffd98a;\n  border-radius: 50%;\n  background: radial-gradient(circle at 35% 30%, rgba(255, 230, 170, 0.22), rgba(0, 0, 0, 0.3));\n}\n/* status block inside a widget */\n#CookieMgrWidgets .ca-status-step {\n  margin-left: 24px;\n}\n#CookieMgrWidgets .ca-iconbtn {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 18px;\n  height: 18px;\n  padding: 0;\n  color: #b9ab93;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px solid rgba(255, 220, 150, 0.15);\n  border-radius: 4px;\n  cursor: pointer;\n}\n/* quick stats */\n#CookieMgrWidgets .ca-w-stat {\n  display: flex;\n  justify-content: space-between;\n  gap: 10px;\n  padding: 2px 0;\n  font-size: 11px;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.05);\n}\n#CookieMgrWidgets .ca-w-stat:last-child {\n  border-bottom: none;\n}\n#CookieMgrWidgets .ca-w-stat span {\n  color: #a39477;\n}\n#CookieMgrWidgets .ca-w-stat b {\n  color: #fff3cf;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrWidgets .ca-w-stat em {\n  font-style: normal;\n  font-weight: normal;\n  color: #93866f;\n}\n/* latest events */\n#CookieMgrWidgets .ca-ev-row {\n  display: flex;\n  align-items: baseline;\n  gap: 6px;\n  padding: 2px 4px;\n  font-size: 10.5px;\n  color: #d8cbb0;\n  border-left: 2px solid var(--c);\n}\n#CookieMgrWidgets .ca-ev-ico {\n  flex: none;\n  align-self: center;\n  display: inline-flex;\n  color: var(--c);\n}\n#CookieMgrWidgets .ca-ev-ico .ca-ico-cookie {\n  width: 12px !important;\n  height: 12px !important;\n}\n#CookieMgrWidgets .ca-ev-time {\n  flex: none;\n  color: #93866f;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrWidgets .ca-ev-text {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n#CookieMgrWidgets .ca-ev-text span {\n  display: none;\n}\n#CookieMgrWidgets .ca-ev-cookies {\n  flex: none;\n  font-weight: bold;\n}\n#CookieMgrWidgets .ca-ev-cookies.pos {\n  color: #9be89b;\n}\n#CookieMgrWidgets .ca-ev-cookies.neg {\n  color: #ff9a8a;\n}\n#CookieMgrMenu .ca-card-meta .ca-iconbtn {\n  margin-left: 4px;\n}\n\n/* ---------- Wizard tower ---------- */\n\n#CookieMgrMenu .ca-magic {\n  position: relative;\n  height: 18px;\n  margin: 6px 14px 4px;\n  border-radius: 9px;\n  overflow: hidden;\n  background: rgba(0, 0, 0, 0.5);\n  box-shadow:\n    inset 0 1px 3px rgba(0, 0, 0, 0.8),\n    0 0 0 1px rgba(179, 136, 255, 0.35);\n}\n#CookieMgrMenu .ca-magic-fill {\n  position: absolute;\n  inset: 0 auto 0 0;\n  width: 0;\n  background: linear-gradient(to bottom, #c9a6ff, #7c4dff);\n  box-shadow: 0 0 10px rgba(179, 136, 255, 0.7);\n  transition: width 0.4s;\n}\n#CookieMgrMenu .ca-magic-text {\n  position: relative;\n  text-align: center;\n  font:\n    bold 11px/18px Tahoma,\n    Arial,\n    sans-serif;\n  color: #fff;\n  text-shadow:\n    0 0 3px #000,\n    0 1px 1px #000;\n}\n#CookieMgrMenu .ca-spells {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));\n  gap: 8px;\n  padding: 6px 12px 12px;\n}\n#CookieMgrMenu .ca-spell {\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  gap: 3px;\n  padding: 8px 6px;\n  text-align: center;\n  border-radius: 8px;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px solid rgba(179, 136, 255, 0.2);\n  opacity: 0.75;\n  transition:\n    opacity 0.2s,\n    box-shadow 0.2s;\n}\n#CookieMgrMenu .ca-spell.ready {\n  opacity: 1;\n  border-color: rgba(179, 136, 255, 0.55);\n  box-shadow: 0 0 10px rgba(179, 136, 255, 0.25);\n}\n#CookieMgrMenu .ca-spell-ico {\n  display: block;\n  width: 48px;\n  height: 48px;\n  margin: -6px 0 -8px;\n  transform: scale(0.75);\n}\n#CookieMgrMenu .ca-spell:not(.ready) .ca-spell-ico {\n  filter: grayscale(0.7) brightness(0.75);\n}\n#CookieMgrMenu .ca-spell-name {\n  font-family: 'Merriweather', Georgia, serif;\n  font-size: 12px;\n  color: #f0e2c0;\n}\n#CookieMgrMenu .ca-spell-meta {\n  min-height: 26px;\n  font-size: 10px;\n  color: #a39477;\n}\n#CookieMgrMenu .ca-spell-actions {\n  display: flex;\n  gap: 5px;\n  align-items: center;\n}\n\n/* toolbar inside the Grimoire */\n#cm-grimoire-toolbar {\n  position: relative;\n  z-index: 10;\n  display: flex;\n  flex-wrap: wrap;\n  justify-content: center;\n  gap: 6px;\n  margin: 6px auto 2px;\n}\n#cm-grimoire-toolbar .cm-gt-btn {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  padding: 3px 9px;\n  font:\n    11px Merriweather,\n    Georgia,\n    serif;\n  color: #ccc;\n  cursor: pointer;\n  background: rgba(0, 0, 0, 0.45);\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 4px;\n  text-shadow: 0 1px 1px #000;\n}\n#cm-grimoire-toolbar .cm-gt-btn:hover {\n  color: #fff;\n  box-shadow: 0 0 6px rgba(255, 220, 150, 0.4);\n}\n#cm-grimoire-toolbar .cm-gt-btn.on {\n  color: #e9d8ff;\n  background: rgba(124, 77, 255, 0.35);\n  box-shadow: 0 0 8px rgba(179, 136, 255, 0.55);\n}\n\n/* ---------- v2.4: hover stacking, status popups, groups, stages, prestige target ---------- */\n\n/* whatever you hover comes to the front, so its label/popup is never under a neighbour */\n#CookieMgrWidgets .ca-w:hover,\n#CookieMgrWidgets .ca-w.dragging {\n  z-index: 20;\n}\n#CookieMgrWidgets .ca-w-macro.pop-below .ca-wb-label {\n  top: auto;\n  bottom: 100%;\n  margin: 0 0 4px;\n}\n\n/* styled popup over a status-bar icon */\n#CookieMgrWidgets .ca-wpop,\n#CookieMgrLayer .ca-wpop {\n  position: absolute;\n  left: 50%;\n  bottom: calc(100% + 10px);\n  z-index: 30;\n  display: none;\n  width: 250px;\n  padding: 7px 9px 6px;\n  text-align: left;\n  font-size: 10.5px;\n  line-height: 1.35;\n  color: #e8d7b0;\n  background: linear-gradient(to bottom, rgba(64, 40, 18, 0.98), rgba(24, 15, 7, 0.98));\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 7px;\n  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.85);\n  transform: translateX(-50%);\n  cursor: default;\n  pointer-events: none;\n}\n#CookieMgrWidgets .ca-wbar-item:hover .ca-wpop {\n  display: block;\n}\n#CookieMgrWidgets .ca-w-status:not(.pop-left) .ca-wpop {\n  left: -6px;\n  transform: none;\n}\n#CookieMgrWidgets .ca-w-status.pop-left .ca-wpop {\n  left: auto;\n  right: -6px;\n  transform: none;\n}\n#CookieMgrWidgets .ca-w-status.pop-below .ca-wpop {\n  bottom: auto;\n  top: calc(100% + 10px);\n}\n#CookieMgrWidgets .ca-wpop-head,\n#CookieMgrLayer .ca-wpop-head {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  font-size: 12px;\n  color: #fff3cf;\n}\n#CookieMgrWidgets .ca-wpop-head .ca-icon,\n#CookieMgrWidgets .ca-wpop-head .ca-icon-ico,\n#CookieMgrLayer .ca-wpop-head .ca-icon,\n#CookieMgrLayer .ca-wpop-head .ca-icon-ico {\n  flex: 0 0 18px;\n  width: 18px;\n  height: 18px;\n}\n#CookieMgrWidgets .ca-wpop-head .ca-sprite,\n#CookieMgrLayer .ca-wpop-head .ca-sprite {\n  transform: scale(0.38);\n}\n#CookieMgrWidgets .ca-wpop-sub,\n#CookieMgrLayer .ca-wpop-sub {\n  display: block;\n  margin: 1px 0 5px 24px;\n  color: #93866f;\n}\n#CookieMgrWidgets .ca-wpop-row,\n#CookieMgrLayer .ca-wpop-row {\n  display: flex;\n  align-items: center;\n  gap: 5px;\n  padding: 2px 0;\n  border-top: 1px solid rgba(255, 255, 255, 0.06);\n}\n#CookieMgrWidgets .ca-wpop-row .ca-ico,\n#CookieMgrLayer .ca-wpop-row .ca-ico {\n  color: #93866f;\n}\n#CookieMgrWidgets .ca-wpop-row.hot .ca-ico,\n#CookieMgrLayer .ca-wpop-row.hot .ca-ico {\n  color: #4dff5e;\n}\n#CookieMgrWidgets .ca-wpop-row.err,\n#CookieMgrLayer .ca-wpop-row.err {\n  color: #ff9a8a;\n}\n#CookieMgrWidgets .ca-wpop-name,\n#CookieMgrLayer .ca-wpop-name {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n#CookieMgrWidgets .ca-wpop-val,\n#CookieMgrLayer .ca-wpop-val {\n  flex: none;\n  color: #c9bba0;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrWidgets .ca-wpop-foot,\n#CookieMgrLayer .ca-wpop-foot {\n  display: block;\n  margin-top: 4px;\n  font-size: 9.5px;\n  font-style: italic;\n  color: #7d7262;\n}\n\n/* group members (macro rows and the editor) */\n#CookieMgrMenu .ca-step-member .ca-icon,\n#CookieMgrMenu .ca-member .ca-icon {\n  flex: 0 0 16px;\n  width: 16px;\n  height: 16px;\n  filter: none;\n}\n#CookieMgrMenu .ca-step-member .ca-img,\n#CookieMgrMenu .ca-member .ca-img {\n  width: 16px;\n  height: 16px;\n}\n#CookieMgrMenu .ca-step-member .ca-sprite,\n#CookieMgrMenu .ca-member .ca-sprite {\n  transform: scale(0.33);\n}\n#CookieMgrMenu .ca-step-member .ca-icon-ico .ca-ico,\n#CookieMgrMenu .ca-member .ca-icon-ico .ca-ico {\n  width: 11px;\n  height: 11px;\n}\n#CookieMgrMenu .ca-members {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));\n  gap: 5px;\n  margin: 4px 0 8px;\n}\n#CookieMgrMenu .ca-member {\n  display: flex;\n  align-items: center;\n  gap: 7px;\n  padding: 5px 8px;\n  font-size: 11px;\n  color: #c9bba0;\n  border-radius: 6px;\n  background: rgba(0, 0, 0, 0.25);\n  border: 1px solid rgba(255, 220, 150, 0.12);\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-member.on {\n  color: #fff3cf;\n  border-color: rgba(77, 255, 94, 0.55);\n  background: rgba(77, 255, 94, 0.08);\n}\n\n/* CpS stages table */\n#CookieMgrMenu .ca-stage-n {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 16px;\n  height: 16px;\n  margin-right: 7px;\n  font:\n    bold 10px Tahoma,\n    Arial,\n    sans-serif;\n  color: #10141a;\n  border-radius: 50%;\n  vertical-align: 1px;\n}\n#CookieMgrMenu .ca-stage-x {\n  color: #ffd98a;\n  background: rgba(255, 217, 138, 0.15);\n  border: 1px solid rgba(255, 217, 138, 0.4);\n}\n#CookieMgrMenu .ca-row-sub {\n  display: block;\n  margin: 1px 0 0 23px;\n  font-size: 9.5px;\n  font-weight: normal;\n  color: #8a7e69;\n  white-space: normal;\n}\n#CookieMgrMenu .ca-stages tr.mult td {\n  color: #ffd98a;\n}\n\n/* prestige target */\n#CookieMgrMenu .ca-target {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 8px;\n  padding: 4px 14px 8px;\n}\n#CookieMgrMenu .ca-target input[type='number'],\n#CookieMgrMenu .ca-target select {\n  font: 13px Tahoma, Arial, sans-serif;\n  color: #f0e2c0;\n  background: rgba(0, 0, 0, 0.45);\n  border: 1px solid rgba(255, 220, 150, 0.3);\n  border-radius: 4px;\n  padding: 3px 6px;\n}\n#CookieMgrMenu .ca-target input[type='number'] {\n  width: 70px;\n}\n#CookieMgrMenu .ca-target select option {\n  background: #1c150d;\n}\n#CookieMgrMenu .ca-progress {\n  position: relative;\n  height: 14px;\n  margin: 2px 14px 10px;\n  border-radius: 7px;\n  overflow: hidden;\n  background: rgba(0, 0, 0, 0.5);\n  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.8);\n}\n#CookieMgrMenu .ca-progress-fill {\n  position: absolute;\n  inset: 0 auto 0 0;\n  background: linear-gradient(to bottom, #e6dcff, #9c7cff);\n  box-shadow: 0 0 8px rgba(201, 188, 255, 0.7);\n  transition: width 0.4s;\n}\n#CookieMgrMenu .ca-progress-text {\n  position: relative;\n  text-align: center;\n  font:\n    bold 10px/14px Tahoma,\n    Arial,\n    sans-serif;\n  color: #fff;\n  text-shadow: 0 0 3px #000;\n}\n\n/* tables that update live: fixed column widths, so changing numbers never resize them */\n#CookieMgrMenu .ca-table.ca-stages {\n  table-layout: fixed;\n}\n#CookieMgrMenu .ca-table.ca-stages th:first-child,\n#CookieMgrMenu .ca-table.ca-stages td:first-child {\n  width: 28%;\n}\n#CookieMgrMenu .ca-table.ca-stages td,\n#CookieMgrMenu .ca-table.ca-stages th {\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n#CookieMgrMenu .ca-table.ca-stages td:first-child {\n  white-space: normal;\n}\n#CookieMgrMenu .ca-stages tr.sep td {\n  border-top: 1px solid rgba(255, 217, 138, 0.25);\n}\n\n/* ---------- v2.6: resizable widgets ---------- */\n\n#CookieMgrWidgets .ca-w {\n  transform-origin: 0 0; /* scaling and the percentage translate both anchor at the top-left */\n}\n#CookieMgrWidgets .ca-w-resize {\n  position: absolute;\n  right: -3px;\n  bottom: -3px;\n  z-index: 3;\n  width: 12px;\n  height: 12px;\n  cursor: nwse-resize;\n  opacity: 0;\n  transition: opacity 0.15s;\n  background:\n    linear-gradient(135deg, transparent 45%, rgba(255, 220, 150, 0.9) 45%, rgba(255, 220, 150, 0.9) 55%, transparent 55%),\n    linear-gradient(135deg, transparent 70%, rgba(255, 220, 150, 0.9) 70%, rgba(255, 220, 150, 0.9) 80%, transparent 80%);\n}\n#CookieMgrWidgets .ca-w:hover .ca-w-resize,\n#CookieMgrWidgets .ca-w.resizing .ca-w-resize {\n  opacity: 1;\n}\n#CookieMgrWidgets.locked .ca-w-resize {\n  display: none;\n}\n#CookieMgrWidgets .ca-w.resizing {\n  box-shadow:\n    0 6px 20px rgba(0, 0, 0, 0.8),\n    0 0 0 1px rgba(255, 220, 150, 0.6);\n}\n#CookieMgrWidgets .ca-w.ca-w-bare.resizing {\n  box-shadow: none;\n  outline: 1px dashed rgba(255, 220, 150, 0.6);\n  outline-offset: 3px;\n}\n/* framed boxes given a height: the body fills it and scrolls */\n#CookieMgrWidgets .ca-w.sized {\n  display: flex;\n  flex-direction: column;\n}\n#CookieMgrWidgets .ca-w.sized > .ca-w-body {\n  flex: 1;\n  min-height: 0;\n  max-height: none;\n}\n\n/* category chips on the Actual CpS / Cookie bank charts */\n#CookieMgrMenu .ca-togglegroup .ca-chip:not(.on) .ca-sw {\n  opacity: 0.35;\n}\n/* simple total rows (In, Out, Net, multipliers…): no subtitle, shorter */\n#CookieMgrMenu .ca-stages tr.thin td {\n  padding-top: 2px;\n  padding-bottom: 2px;\n}\n#CookieMgrMenu .ca-stages tr.thin .ca-stage-n {\n  width: 13px;\n  height: 13px;\n  font-size: 9px;\n}\n#CookieMgrMenu .ca-table td span.pos {\n  color: #9be89b;\n}\n#CookieMgrMenu .ca-table td span.neg {\n  color: #ff9a8a;\n}\n\n/* ---------- v2.8: spell feedback ---------- */\n\n/* spells you can't afford yet: still clickable, dimmed; a click shakes them */\n#CookieMgrMenu .ca-btn.ca-unaffordable {\n  opacity: 0.5;\n  filter: grayscale(0.6);\n}\n.ca-shake {\n  animation: caShake 0.45s ease-in-out;\n}\n@keyframes caShake {\n  0%,\n  100% {\n    transform: translateX(0);\n  }\n  20%,\n  60% {\n    transform: translateX(-4px);\n  }\n  40%,\n  80% {\n    transform: translateX(4px);\n  }\n}\n#CookieMgrWidgets .ca-wb.ca-shake {\n  box-shadow:\n    0 3px 8px rgba(0, 0, 0, 0.7),\n    0 0 0 3px #e5484d,\n    0 0 14px rgba(229, 72, 77, 0.8);\n}\n\n/* ---------- v2.9: round minigame widgets, widget settings ---------- */\n\n/* text size (a widget's settings): scales its text, labels and popups */\n#CookieMgrWidgets .ca-wt {\n  zoom: var(--wfs, 1);\n}\n#CookieMgrWidgets .ca-w-events {\n  max-height: 100%;\n}\n#CookieMgrWidgets .ca-w-stat em {\n  font-style: normal;\n  color: #93866f;\n}\n\n/* ⚙ next to the × on bare widgets */\n#CookieMgrWidgets .ca-w-x.ca-w-gear {\n  right: 11px;\n}\n\n/* the round widget: a ring (the timer), an icon in the middle, a label under it */\n#CookieMgrWidgets .ca-orb {\n  --ring: #d9c4ff;\n  --glow: rgba(179, 136, 255, 0.55);\n  --bg: rgba(40, 22, 70, 0.92);\n  position: relative;\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  width: 44px;\n  cursor: pointer;\n}\n#CookieMgrWidgets .ca-orb-garden {\n  --ring: #a8f06a;\n  --glow: rgba(150, 230, 90, 0.5);\n  --bg: rgba(26, 50, 16, 0.92);\n}\n#CookieMgrWidgets .ca-orb-market {\n  --ring: #6fe6ef;\n  --glow: rgba(80, 220, 230, 0.5);\n  --bg: rgba(12, 42, 48, 0.92);\n}\n#CookieMgrWidgets .ca-orb-pantheon {\n  --ring: #ffd36a;\n  --glow: rgba(255, 210, 110, 0.5);\n  --bg: rgba(60, 40, 14, 0.92);\n}\n#CookieMgrWidgets .ca-orb-ring {\n  display: block;\n  width: 44px;\n  height: 44px;\n  border-radius: 50%;\n  background: radial-gradient(circle, var(--bg) 60%, rgba(0, 0, 0, 0.6) 100%);\n  box-shadow:\n    0 3px 8px rgba(0, 0, 0, 0.7),\n    0 0 0 1px rgba(0, 0, 0, 0.6);\n  transform: rotate(-90deg);\n}\n#CookieMgrWidgets .ca-orb-track,\n#CookieMgrWidgets .ca-orb-fill {\n  fill: none;\n  stroke-width: 4;\n}\n#CookieMgrWidgets .ca-orb-track {\n  stroke: rgba(0, 0, 0, 0.55);\n}\n#CookieMgrWidgets .ca-orb-fill {\n  stroke: var(--ring);\n  stroke-linecap: round;\n  filter: drop-shadow(0 0 2px var(--glow));\n  transition: stroke-dashoffset 0.45s linear;\n}\n#CookieMgrWidgets .ca-orb-ico {\n  position: absolute;\n  top: 13px;\n  left: 13px;\n  width: 18px;\n  height: 18px;\n  color: var(--ring);\n  pointer-events: none;\n}\n#CookieMgrWidgets .ca-orb:hover .ca-orb-ring {\n  box-shadow:\n    0 3px 8px rgba(0, 0, 0, 0.7),\n    0 0 10px var(--glow);\n}\n#CookieMgrWidgets .ca-orb-label {\n  margin-top: 2px;\n  padding: 0 4px;\n  font-size: 10px;\n  font-weight: bold;\n  line-height: 13px;\n  white-space: nowrap;\n  color: #fff3cf;\n  text-shadow:\n    0 0 3px #000,\n    0 1px 2px #000;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrWidgets .ca-orb-label .pos {\n  color: #9be89b;\n}\n#CookieMgrWidgets .ca-orb-label .neg {\n  color: #ff9a8a;\n}\n/* garden: plants by stage, as four coloured dots with counts */\n#CookieMgrWidgets .ca-orb-dots {\n  display: flex;\n  gap: 3px;\n  margin-top: 1px;\n  font-size: 9px;\n  line-height: 10px;\n  color: #e8f5d8;\n  text-shadow: 0 0 2px #000;\n}\n#CookieMgrWidgets .ca-orb-dots span {\n  display: inline-flex;\n  align-items: center;\n  gap: 1px;\n}\n#CookieMgrWidgets .ca-orb-dots i {\n  width: 5px;\n  height: 5px;\n  border-radius: 50%;\n}\n#CookieMgrWidgets .ca-orb-dots .s0 i {\n  background: #6b8a52;\n}\n#CookieMgrWidgets .ca-orb-dots .s1 i {\n  background: #8fc25e;\n}\n#CookieMgrWidgets .ca-orb-dots .s2 i {\n  background: #b5ec6e;\n}\n#CookieMgrWidgets .ca-orb-dots .s3 i {\n  background: #eaff8a;\n  box-shadow: 0 0 4px #eaff8a;\n}\n/* pantheon: the three slotted spirits under the ring */\n#CookieMgrWidgets .ca-orb-gods {\n  display: flex;\n  gap: 1px;\n  margin-top: 1px;\n}\n#CookieMgrWidgets .ca-orb-god {\n  display: block;\n  width: 48px;\n  height: 48px;\n  margin: -17px;\n  transform: scale(0.29);\n  border-radius: 8px;\n}\n#CookieMgrWidgets .ca-orb-god.empty {\n  background: rgba(0, 0, 0, 0.45);\n  box-shadow: inset 0 0 0 3px rgba(255, 210, 110, 0.4);\n}\n/* hover details */\n#CookieMgrWidgets .ca-orb-pop,\n#CookieMgrLayer .ca-orb-pop {\n  width: 190px;\n  left: 50%;\n  transform: translateX(-50%);\n}\n#CookieMgrWidgets .ca-orb:hover .ca-orb-pop {\n  display: block;\n}\n#CookieMgrWidgets .ca-w.pop-below .ca-orb-pop {\n  bottom: auto;\n  top: calc(100% + 6px);\n}\n#CookieMgrWidgets .ca-w.dragging .ca-orb-pop,\n#CookieMgrWidgets .ca-w.resizing .ca-orb-pop {\n  display: none;\n}\n\n/* the widget settings editor (Widgets page) */\n#CookieMgrMenu .ca-weditor-body {\n  display: flex;\n  flex-direction: column;\n  gap: 6px;\n  padding: 4px 2px 2px;\n}\n#CookieMgrMenu .ca-range-val {\n  min-width: 38px;\n  color: #c9bba0;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrMenu .ca-weditor input[type='text'],\n#CookieMgrMenu .ca-weditor input[type='number'] {\n  font: 12px Tahoma, Arial, sans-serif;\n  color: #f0e2c0;\n  background: rgba(0, 0, 0, 0.45);\n  border: 1px solid rgba(255, 220, 150, 0.25);\n  border-radius: 4px;\n  padding: 3px 6px;\n}\n\n/* ---------- v2.10: built-in macro choices (season, lump ripeness) ---------- */\n\n#CookieMgrMenu .ca-macro-options {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 8px;\n  margin-top: 5px;\n}\n#CookieMgrMenu .ca-macro-options select {\n  font: 11px Tahoma, Arial, sans-serif;\n  color: #f0e2c0;\n  background: rgba(0, 0, 0, 0.45);\n  border: 1px solid rgba(255, 220, 150, 0.25);\n  border-radius: 4px;\n  padding: 2px 5px;\n}\n#CookieMgrMenu .ca-macro-options select option {\n  background: #1c150d;\n  color: #f0e2c0;\n}\n\n/* ---------- v2.11: Garden page ---------- */\n\n#CookieMgrMenu .ca-garden-wrap {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 12px;\n  align-items: flex-start;\n}\n#CookieMgrMenu .ca-gplot {\n  display: grid;\n  grid-template-columns: repeat(6, 40px);\n  grid-auto-rows: 40px;\n  gap: 2px;\n  padding: 4px;\n  border-radius: 6px;\n  background: rgba(40, 26, 12, 0.6);\n  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.7);\n}\n#CookieMgrMenu .ca-gstats {\n  flex: 1 1 200px;\n}\n#CookieMgrMenu .ca-gtile {\n  position: relative;\n  border-radius: 4px;\n  background: rgba(92, 60, 30, 0.75);\n  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);\n}\n#CookieMgrMenu .ca-gtile.locked {\n  background: rgba(0, 0, 0, 0.25);\n  box-shadow: none;\n}\n#CookieMgrMenu .ca-gtile.off {\n  box-shadow: inset 0 0 0 2px #e5484d;\n}\n#CookieMgrMenu .ca-gtile:hover {\n  z-index: 5;\n  background: rgba(120, 82, 42, 0.85);\n}\n/* a 48px sprite from gardenPlants.png, shown at 40px */\n#CookieMgrMenu .ca-gs {\n  position: absolute;\n  left: 0;\n  top: 0;\n  width: 48px;\n  height: 48px;\n  zoom: 0.8333;\n  pointer-events: none;\n}\n#CookieMgrMenu .ca-gs.ghost {\n  opacity: 0.35;\n  filter: grayscale(0.5);\n}\n#CookieMgrMenu .ca-gdecay {\n  position: absolute;\n  right: 1px;\n  bottom: 1px;\n  padding: 0 2px;\n  font: bold 9px/11px Tahoma, Arial, sans-serif;\n  color: #ffe9a8;\n  background: rgba(0, 0, 0, 0.65);\n  border-radius: 3px;\n}\n#CookieMgrMenu .ca-gdecay.hi {\n  color: #ff9a8a;\n}\n#CookieMgrMenu .ca-gnew {\n  position: absolute;\n  left: 1px;\n  top: 1px;\n  color: #ffd36a;\n  filter: drop-shadow(0 0 2px #000);\n}\n/* tile details on hover (same look as the widget popups) */\n#CookieMgrMenu .ca-gpop,\n#CookieMgrLayer .ca-gpop {\n  position: absolute;\n  left: 50%;\n  bottom: calc(100% + 6px);\n  z-index: 30;\n  display: none;\n  width: 210px;\n  padding: 7px 9px 6px;\n  font-size: 10.5px;\n  line-height: 1.35;\n  text-align: left;\n  color: #e8d7b0;\n  background: linear-gradient(to bottom, rgba(64, 40, 18, 0.98), rgba(24, 15, 7, 0.98));\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 7px;\n  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.85);\n  transform: translateX(-50%);\n  pointer-events: none;\n}\n#CookieMgrMenu .ca-gtile:hover .ca-gpop {\n  display: block;\n}\n#CookieMgrMenu .ca-gpop .ca-wpop-head,\n#CookieMgrLayer .ca-gpop .ca-wpop-head {\n  display: block;\n  font-size: 12px;\n  color: #fff3cf;\n}\n#CookieMgrMenu .ca-gpop .ca-wpop-row,\n#CookieMgrLayer .ca-gpop .ca-wpop-row {\n  display: flex;\n  gap: 6px;\n  padding: 2px 0;\n  border-top: 1px solid rgba(255, 255, 255, 0.06);\n}\n#CookieMgrMenu .ca-gpop .ca-wpop-name,\n#CookieMgrLayer .ca-gpop .ca-wpop-name {\n  flex: 1;\n  color: #a39477;\n}\n#CookieMgrMenu .ca-gpop .ca-wpop-val,\n#CookieMgrLayer .ca-gpop .ca-wpop-val {\n  color: #fff3cf;\n  text-align: right;\n}\n\n/* auto-gardener settings */\n#CookieMgrMenu .ca-gsettings {\n  display: flex;\n  flex-direction: column;\n  gap: 6px;\n  padding: 6px 4px 8px;\n}\n#CookieMgrMenu .ca-gsettings input[type='number'],\n#CookieMgrMenu .ca-gsettings select,\n#CookieMgrMenu .ca-gsave input,\n#CookieMgrMenu .ca-gprofile input {\n  font: 12px Tahoma, Arial, sans-serif;\n  color: #f0e2c0;\n  background: rgba(0, 0, 0, 0.45);\n  border: 1px solid rgba(255, 220, 150, 0.25);\n  border-radius: 4px;\n  padding: 3px 6px;\n}\n#CookieMgrMenu .ca-gsettings input[type='number'] {\n  width: 56px;\n}\n#CookieMgrMenu .ca-gsettings select option {\n  background: #1c150d;\n}\n\n/* profiles */\n#CookieMgrMenu .ca-gsave {\n  display: flex;\n  gap: 6px;\n  padding: 4px 4px 8px;\n}\n#CookieMgrMenu .ca-gsave input {\n  flex: 1;\n  max-width: 220px;\n}\n#CookieMgrMenu .ca-gprofiles {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 8px;\n}\n#CookieMgrMenu .ca-gprofile {\n  display: flex;\n  gap: 8px;\n  flex: 1 1 260px;\n  padding: 6px;\n  border-radius: 6px;\n  background: rgba(0, 0, 0, 0.25);\n}\n#CookieMgrMenu .ca-gprofile.on {\n  box-shadow: 0 0 0 1px rgba(160, 230, 100, 0.6);\n}\n#CookieMgrMenu .ca-gprofile-text {\n  display: flex;\n  flex-direction: column;\n  gap: 4px;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-gmini {\n  display: grid;\n  grid-template-columns: repeat(6, 14px);\n  grid-auto-rows: 14px;\n  gap: 1px;\n  flex: none;\n}\n#CookieMgrMenu .ca-gmini span {\n  position: relative;\n  overflow: hidden;\n  border-radius: 2px;\n  background: rgba(92, 60, 30, 0.75);\n}\n#CookieMgrMenu .ca-gmini .ca-gs {\n  zoom: 0.2917;\n}\n/* the Current garden, not picked: a leaf where its plot would be */\n#CookieMgrMenu .ca-gmini.ca-gmini-live {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  width: 89px;\n  height: 89px;\n  border-radius: 4px;\n  background: rgba(92, 60, 30, 0.45);\n  color: #9fe06a;\n}\n\n/* ---------- v2.17: store toolbar (along the bottom of the store) ---------- */\n\n#CookieMgrStoreBar {\n  position: absolute;\n  z-index: 110;\n  box-sizing: border-box;\n  display: flex;\n  align-items: stretch;\n  gap: 6px;\n  padding: 4px 6px 5px;\n  background: linear-gradient(to bottom, rgba(54, 34, 16, 0.94), rgba(20, 12, 6, 0.97));\n  border-top: 1px solid #b98a4e;\n  box-shadow:\n    0 -4px 12px rgba(0, 0, 0, 0.55),\n    inset 0 1px 0 rgba(255, 255, 255, 0.12);\n  font-family: Tahoma, Arial, sans-serif;\n}\n#game.ascending #CookieMgrStoreBar,\n#game.reincarnating #CookieMgrStoreBar {\n  display: none;\n}\n/* room for the last building row to scroll clear of the toolbar */\nbody.ca-has-storebar #products {\n  padding-bottom: 38px;\n}\n#CookieMgrStoreBar .ca-sb-group {\n  display: flex;\n  align-items: stretch;\n  gap: 2px;\n  padding: 2px;\n  border-radius: 6px;\n  background: rgba(0, 0, 0, 0.35);\n  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.12);\n}\n#CookieMgrStoreBar .ca-sb-sort {\n  flex: 1;\n}\n#CookieMgrStoreBar .ca-sb-label {\n  display: inline-flex;\n  align-items: center;\n  gap: 3px;\n  padding: 0 6px 0 4px;\n  font-size: 9.5px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #93866f;\n}\n#CookieMgrStoreBar .ca-sb-btn {\n  position: relative;\n  flex: 1;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  min-width: 34px;\n  height: 24px;\n  padding: 0 6px;\n  color: #b9ab93;\n  background: none;\n  border: none;\n  border-radius: 4px;\n  cursor: pointer;\n}\n#CookieMgrStoreBar .ca-sb-btn:hover {\n  color: #fff3cf;\n  background: rgba(255, 220, 150, 0.12);\n}\n#CookieMgrStoreBar .ca-sb-btn.on {\n  color: #1c120a;\n  background: linear-gradient(to bottom, #ffe39a, #e0a84a);\n  box-shadow: 0 0 6px rgba(255, 210, 110, 0.5);\n}\n#CookieMgrStoreBar .ca-sb-sort.locked .ca-sb-btn {\n  color: #6d6252;\n  background: none;\n  box-shadow: none;\n}\n#CookieMgrStoreBar .ca-sb-lock {\n  position: absolute;\n  right: 3px;\n  top: 2px;\n  color: #ffb36a;\n}\n#CookieMgrStoreBar .ca-sb-round.idle:not(:hover) {\n  opacity: 0.55;\n}\n#CookieMgrStoreBar .ca-sb-txt {\n  font: bold 11px/1 Tahoma, Arial, sans-serif;\n}\n\n/* ---------- v2.13: macro activity rings, spell readiness, Grimoire target ---------- */\n\n/* activity: a band around the button, thicker and warmer the more it has been doing lately */\n#CookieMgrWidgets .ca-wb {\n  position: relative;\n}\n#CookieMgrWidgets .ca-wb-heat {\n  position: absolute;\n  inset: -6px;\n  border-radius: 50%;\n  border: 0 solid transparent;\n  pointer-events: none;\n  transition:\n    border-width 0.6s,\n    border-color 0.6s,\n    inset 0.6s;\n}\n#CookieMgrWidgets .ca-wb-heat.h1 {\n  inset: -6px;\n  border-width: 1px;\n  border-color: rgba(160, 140, 110, 0.55);\n}\n#CookieMgrWidgets .ca-wb-heat.h2 {\n  inset: -7px;\n  border-width: 2px;\n  border-color: rgba(214, 178, 96, 0.7);\n}\n#CookieMgrWidgets .ca-wb-heat.h3 {\n  inset: -8px;\n  border-width: 3px;\n  border-color: rgba(240, 168, 64, 0.8);\n}\n#CookieMgrWidgets .ca-wb-heat.h4 {\n  inset: -9px;\n  border-width: 4px;\n  border-color: rgba(255, 130, 50, 0.85);\n  box-shadow: 0 0 8px rgba(255, 130, 50, 0.45);\n}\n#CookieMgrWidgets .ca-wb-heat.h5 {\n  inset: -10px;\n  border-width: 5px;\n  border-color: rgba(255, 82, 40, 0.9);\n  box-shadow: 0 0 12px rgba(255, 82, 40, 0.6);\n}\n/* spells: a muted green/red wash for whether there's magic for them right now */\n#CookieMgrWidgets .ca-wb.spell-can {\n  background: radial-gradient(circle at 35% 30%, rgba(96, 140, 84, 0.95), rgba(26, 44, 20, 0.95));\n}\n#CookieMgrWidgets .ca-wb.spell-cant {\n  background: radial-gradient(circle at 35% 30%, rgba(140, 78, 70, 0.95), rgba(44, 20, 18, 0.95));\n}\n#CookieMgrWidgets .ca-wb.spell-cant:not(:hover) {\n  filter: saturate(0.8) brightness(0.85);\n}\n#CookieMgrWidgets .ca-wb-label em.off {\n  color: #e59a8e;\n}\n/* Grimoire: a tick where the target is, and a glow once there's enough */\n#CookieMgrWidgets .ca-orb-mark {\n  fill: none;\n  stroke: #fff;\n  stroke-width: 7;\n  opacity: 0.9;\n}\n#CookieMgrWidgets .ca-orb.ready .ca-orb-ring {\n  box-shadow:\n    0 3px 8px rgba(0, 0, 0, 0.7),\n    0 0 12px var(--glow);\n}\n\n/* ---------- v2.14: sidebar groups, links, Pantheon page ---------- */\n\n/* a small gap between kinds of page: data | minigames | customization */\n#CookieMgrTab .ca-tab-gap {\n  height: 10px;\n}\n/* links to other pages */\n#CookieMgrMenu .ca-link {\n  color: #ffd98a;\n  text-decoration: underline;\n  text-decoration-color: rgba(255, 217, 138, 0.4);\n  text-underline-offset: 2px;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-link:hover {\n  color: #fff3cf;\n  text-decoration-color: #fff3cf;\n}\n#CookieMgrMenu .ca-card-title .ca-link {\n  color: inherit;\n  text-decoration-color: rgba(255, 234, 176, 0.35);\n}\n#CookieMgrMenu .ca-btn-game {\n  margin-left: 6px;\n}\n\n/* Pantheon: the three slots */\n#CookieMgrMenu .ca-slots {\n  display: grid;\n  grid-template-columns: repeat(3, 1fr);\n  gap: 10px;\n  padding: 6px 4px 8px;\n}\n#CookieMgrMenu .ca-slot {\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  gap: 3px;\n  padding: 10px 8px 12px;\n  text-align: center;\n  border-radius: 8px;\n  background: radial-gradient(ellipse at 50% 0%, rgba(255, 210, 110, 0.12), rgba(0, 0, 0, 0.35) 70%);\n  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.15);\n}\n#CookieMgrMenu .ca-slot-gem {\n  font: bold 10px Tahoma, Arial, sans-serif;\n  text-transform: uppercase;\n  letter-spacing: 0.12em;\n}\n#CookieMgrMenu .ca-slot-0 .ca-slot-gem {\n  color: #bfe9ff;\n}\n#CookieMgrMenu .ca-slot-1 .ca-slot-gem {\n  color: #ff8a8a;\n}\n#CookieMgrMenu .ca-slot-2 .ca-slot-gem {\n  color: #8fe6a0;\n}\n#CookieMgrMenu .ca-slot-0 {\n  box-shadow: inset 0 0 0 1px rgba(191, 233, 255, 0.35);\n}\n#CookieMgrMenu .ca-slot-1 {\n  box-shadow: inset 0 0 0 1px rgba(255, 138, 138, 0.3);\n}\n#CookieMgrMenu .ca-slot-2 {\n  box-shadow: inset 0 0 0 1px rgba(143, 230, 160, 0.3);\n}\n#CookieMgrMenu .ca-slot-name {\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 14px;\n  color: #ffeab0;\n}\n#CookieMgrMenu .ca-slot-title {\n  font-size: 10px;\n  color: #a39477;\n}\n#CookieMgrMenu .ca-god-desc,\n#CookieMgrLayer .ca-god-desc {\n  margin-top: 4px;\n  font-size: 10.5px;\n  line-height: 1.4;\n  color: #d8cbb0;\n}\n#CookieMgrMenu .ca-god-desc .green,\n#CookieMgrLayer .ca-god-desc .green {\n  color: #9be89b;\n}\n#CookieMgrMenu .ca-god-desc .red,\n#CookieMgrLayer .ca-god-desc .red {\n  color: #ff9a8a;\n}\n#CookieMgrMenu .ca-god-ico {\n  display: inline-block;\n  flex: none;\n  width: 48px;\n  height: 48px;\n  zoom: 0.6;\n}\n#CookieMgrMenu .ca-god-ico.big {\n  zoom: 1;\n  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));\n}\n#CookieMgrMenu .ca-god-ico.empty {\n  border-radius: 50%;\n  background: rgba(0, 0, 0, 0.4);\n  box-shadow: inset 0 0 0 2px rgba(255, 220, 150, 0.2);\n  zoom: 0.8;\n}\n/* worship swaps */\n#CookieMgrMenu .ca-pips,\n#CookieMgrLayer .ca-pips {\n  display: inline-flex;\n  gap: 3px;\n  vertical-align: middle;\n}\n#CookieMgrMenu .ca-pips i,\n#CookieMgrLayer .ca-pips i {\n  width: 9px;\n  height: 9px;\n  border-radius: 50%;\n  background: rgba(0, 0, 0, 0.5);\n  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.3);\n}\n#CookieMgrMenu .ca-pips i.on,\n#CookieMgrLayer .ca-pips i.on {\n  background: #ffd36a;\n  box-shadow: 0 0 5px rgba(255, 211, 106, 0.7);\n}\n/* every spirit */\n#CookieMgrMenu .ca-gods {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));\n  gap: 6px;\n  padding: 4px;\n}\n#CookieMgrMenu .ca-god {\n  position: relative;\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  padding: 4px 6px;\n  border-radius: 6px;\n  background: rgba(0, 0, 0, 0.25);\n  font-size: 11px;\n  color: #e8d7b0;\n}\n#CookieMgrMenu .ca-god:hover {\n  z-index: 5;\n  background: rgba(255, 220, 150, 0.1);\n}\n#CookieMgrMenu .ca-god.in {\n  box-shadow: inset 0 0 0 1px rgba(255, 211, 106, 0.5);\n}\n#CookieMgrMenu .ca-god-name {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n#CookieMgrMenu .ca-god-slot {\n  font-size: 9px;\n  text-transform: uppercase;\n  color: #ffd36a;\n}\n#CookieMgrMenu .ca-god .ca-gpop {\n  width: 260px;\n}\n#CookieMgrMenu .ca-god:hover .ca-gpop {\n  display: block;\n}\n#CookieMgrMenu .ca-god-row,\n#CookieMgrLayer .ca-god-row {\n  display: block;\n  padding: 3px 0;\n  border-top: 1px solid rgba(255, 255, 255, 0.06);\n}\n#CookieMgrMenu .ca-god-row em,\n#CookieMgrLayer .ca-god-row em {\n  font-style: normal;\n  font-size: 9.5px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #a39477;\n}\n#CookieMgrMenu .ca-god-row .ca-god-desc,\n#CookieMgrLayer .ca-god-row .ca-god-desc {\n  margin-top: 1px;\n}\n#CookieMgrMenu .ca-god-quote,\n#CookieMgrLayer .ca-god-quote {\n  display: block;\n  margin-top: 4px;\n  font-style: italic;\n  font-size: 10px;\n  color: #93866f;\n}\n\n/* ---------- v2.15: option tiles, All options index, overview, macro cards, widget gallery, tips ---------- */\n\n/* options as a grid of tiles */\n#CookieMgrMenu .ca-optgrid {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));\n  gap: 8px;\n  padding: 8px;\n}\n#CookieMgrMenu .ca-opt {\n  display: flex;\n  align-items: flex-start;\n  gap: 9px;\n  padding: 9px 10px;\n  border-radius: 7px;\n  background: rgba(0, 0, 0, 0.28);\n  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.08);\n  transition: box-shadow 0.15s;\n}\n#CookieMgrMenu .ca-opt:hover {\n  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.25);\n}\n#CookieMgrMenu .ca-opt-ico {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  flex: none;\n  width: 28px;\n  height: 28px;\n  border-radius: 50%;\n  color: #ffd98a;\n  background: radial-gradient(circle at 35% 30%, rgba(110, 72, 36, 0.9), rgba(28, 18, 9, 0.9));\n  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.25);\n}\n#CookieMgrMenu .ca-opt-text {\n  flex: 1;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-opt-text b {\n  display: block;\n  font-size: 12px;\n  color: #f3e5c3;\n}\n#CookieMgrMenu .ca-opt-text span {\n  display: block;\n  margin-top: 2px;\n  font-size: 10.5px;\n  line-height: 1.35;\n  color: #a39477;\n}\n#CookieMgrMenu .ca-opt .ca-switch {\n  flex: none;\n  margin-top: 3px;\n}\n\n/* the All options index */\n#CookieMgrMenu .ca-index {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));\n  gap: 10px;\n  padding: 8px;\n}\n#CookieMgrMenu .ca-index-block {\n  padding: 8px 9px;\n  border-radius: 7px;\n  background: rgba(0, 0, 0, 0.22);\n}\n#CookieMgrMenu .ca-index-head {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  margin-bottom: 6px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 12.5px;\n  color: #ffeab0;\n}\n#CookieMgrMenu .ca-index-head .ca-link {\n  color: inherit;\n}\n#CookieMgrMenu .ca-index-chips {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 4px;\n}\n#CookieMgrMenu .ca-optchip {\n  font-size: 10.5px;\n}\n\n/* Settings overview */\n#CookieMgrMenu .ca-overview {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: stretch;\n  gap: 0;\n  background:\n    radial-gradient(ellipse at 0% 0%, rgba(255, 210, 110, 0.14), transparent 60%),\n    rgba(0, 0, 0, 0.38);\n}\n#CookieMgrMenu .ca-overview-brand {\n  display: flex;\n  align-items: center;\n  gap: 10px;\n  padding: 12px 16px;\n}\n#CookieMgrMenu .ca-overview-brand b {\n  display: block;\n  font-family: 'Merriweather', Georgia, serif;\n  font-size: 18px;\n  color: #ffeab0;\n  text-shadow: 0 1px 3px #000;\n}\n#CookieMgrMenu .ca-overview-brand span {\n  font-size: 11px;\n  color: #a39477;\n}\n#CookieMgrMenu .ca-overview .ca-stats {\n  flex: 1 1 360px;\n}\n\n/* built-in macros as cards */\n#CookieMgrMenu .ca-mtiles {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));\n  gap: 8px;\n  padding: 8px;\n}\n#CookieMgrMenu .ca-mtile {\n  display: flex;\n  flex-direction: column;\n  gap: 5px;\n  padding: 9px 10px 7px;\n  border-radius: 8px;\n  background: linear-gradient(to bottom, rgba(70, 45, 22, 0.35), rgba(0, 0, 0, 0.3));\n  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.1);\n  transition: box-shadow 0.2s;\n}\n#CookieMgrMenu .ca-mtile.on {\n  box-shadow:\n    inset 0 0 0 1px rgba(77, 255, 94, 0.55),\n    0 0 10px rgba(77, 255, 94, 0.15);\n}\n#CookieMgrMenu .ca-mtile-head {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n}\n#CookieMgrMenu .ca-mtile-name {\n  flex: 1;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-mtile-name b {\n  display: block;\n  font-size: 12.5px;\n  color: #f3e5c3;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n#CookieMgrMenu .ca-mtile-name .ca-badge {\n  margin-top: 2px;\n  display: inline-block;\n}\n#CookieMgrMenu .ca-mtile-desc {\n  font-size: 10.5px;\n  line-height: 1.35;\n  color: #a39477;\n}\n#CookieMgrMenu .ca-mtile .ca-macro-options {\n  margin-top: 0;\n}\n/* activity meter: the same bands as the rings on the left-panel buttons */\n#CookieMgrMenu .ca-mtile-heat {\n  height: 4px;\n  border-radius: 2px;\n  overflow: hidden;\n  background: rgba(0, 0, 0, 0.45);\n}\n#CookieMgrMenu .ca-mtile-heat i {\n  display: block;\n  height: 100%;\n  width: 0;\n  border-radius: 2px;\n  background: linear-gradient(to right, #a08c6e, #d6b260, #f0a840, #ff8232, #ff5228);\n  background-size: 230px 100%;\n  transition: width 0.6s;\n}\n#CookieMgrMenu .ca-mtile .ca-macro-status {\n  min-height: 12px;\n  font-size: 10px;\n}\n#CookieMgrMenu .ca-mtile-foot {\n  display: flex;\n  align-items: center;\n  gap: 4px;\n  margin-top: auto;\n  padding-top: 5px;\n  border-top: 1px solid rgba(255, 255, 255, 0.06);\n}\n#CookieMgrMenu .ca-mtile-foot .ca-hotkey,\n#CookieMgrMenu .ca-mtile-foot [data-hotkey] {\n  margin-left: auto;\n}\n\n/* widget gallery */\n#CookieMgrMenu .ca-wgallery {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));\n  gap: 8px;\n  padding: 8px;\n}\n#CookieMgrMenu .ca-wcard {\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  gap: 5px;\n  padding: 12px 10px 10px;\n  text-align: center;\n  border-radius: 8px;\n  background: radial-gradient(ellipse at 50% 0%, rgba(255, 210, 110, 0.1), rgba(0, 0, 0, 0.3) 70%);\n  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.1);\n}\n#CookieMgrMenu .ca-wcard.placed {\n  box-shadow: inset 0 0 0 1px rgba(255, 211, 106, 0.4);\n}\n#CookieMgrMenu .ca-wcard-ico {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  width: 46px;\n  height: 46px;\n  border-radius: 50%;\n  color: #ffd98a;\n  background: radial-gradient(circle at 35% 30%, rgba(110, 72, 36, 0.95), rgba(28, 18, 9, 0.95));\n  box-shadow:\n    0 3px 8px rgba(0, 0, 0, 0.6),\n    inset 0 0 0 1px rgba(255, 220, 150, 0.3);\n}\n#CookieMgrMenu .ca-wcard-name {\n  font-size: 12.5px;\n  font-weight: bold;\n  color: #f3e5c3;\n}\n#CookieMgrMenu .ca-wcard-desc {\n  flex: 1;\n  font-size: 10.5px;\n  line-height: 1.35;\n  color: #a39477;\n}\n#CookieMgrMenu .ca-wcard-foot {\n  margin-top: 4px;\n}\n\n/* styled hover tips (instead of the browser's own) */\n#CookieMgrTip {\n  position: fixed;\n  z-index: 1000000;\n  display: none;\n  max-width: 260px;\n  padding: 5px 8px;\n  font:\n    11px/1.35 Tahoma,\n    Arial,\n    sans-serif;\n  color: #f0e2c0;\n  background: linear-gradient(to bottom, rgba(64, 40, 18, 0.98), rgba(24, 15, 7, 0.98));\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 6px;\n  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.8);\n  pointer-events: none;\n}\n\n/* ---------- v2.16: Garden growth chart ---------- */\n\n/* the plot and its growth chart side by side (stacking on narrow panels) */\n#CookieMgrMenu .ca-garden-row {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: stretch;\n}\n#CookieMgrMenu .ca-garden-row > .ca-card:first-child {\n  flex: 0 1 auto;\n}\n#CookieMgrMenu .ca-garden-row > .ca-graph-card {\n  flex: 1 1 360px;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-garden-row .ca-garden-wrap {\n  flex-direction: column;\n}\n#CookieMgrMenu .ca-legend-stages {\n  color: #a39477;\n}\n#CookieMgrMenu .ca-legend-stages .ca-sw {\n  margin-left: 6px;\n}\n\n/* ---------- v2.17.1: floating layer (hover popups above the game's panels and beams) ---------- */\n\n#CookieMgrLayer {\n  position: fixed;\n  inset: 0;\n  z-index: 1000000;\n  pointer-events: none;\n  font-family: Tahoma, Arial, sans-serif;\n}\n/* popups shown in the layer instead of in place */\n#CookieMgrMenu [data-pop] > .ca-gpop,\n#CookieMgrMenu [data-pop] > .ca-wpop,\n#CookieMgrWidgets [data-pop] > .ca-wpop,\n#CookieMgrWidgets [data-pop] > .ca-orb-pop {\n  display: none !important;\n}\n#CookieMgrLayer .ca-float {\n  position: fixed;\n  display: none;\n}\n#CookieMgrLayer .ca-float > * {\n  display: block !important;\n  position: static !important;\n  transform: none !important;\n  margin: 0 !important;\n  left: auto !important;\n  top: auto !important;\n  right: auto !important;\n  bottom: auto !important;\n}\n#CookieMgrLayer .ca-float > .ca-gpop {\n  width: auto;\n  min-width: 200px;\n  max-width: 280px;\n}\n#CookieMgrLayer .ca-float .ca-god-desc .green {\n  color: #9be89b;\n}\n#CookieMgrLayer .ca-float .ca-god-desc .red {\n  color: #ff9a8a;\n}\n/* the chart tooltip and simple tips */\n#CookieMgrLayer .ca-tip {\n  position: fixed;\n}\n#CookieMgrLayer .ca-simple-tip {\n  position: fixed;\n  display: none;\n  max-width: 260px;\n  padding: 5px 8px;\n  font:\n    11px/1.35 Tahoma,\n    Arial,\n    sans-serif;\n  color: #f0e2c0;\n  background: linear-gradient(to bottom, rgba(64, 40, 18, 0.98), rgba(24, 15, 7, 0.98));\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 6px;\n  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.8);\n}\n/* chart tooltip rows stay on one line */\n#CookieMgrLayer .ca-tip {\n  max-width: none;\n}\n#CookieMgrLayer .ca-tip-row {\n  white-space: nowrap;\n}\n#CookieMgrLayer .ca-tip-row b {\n  overflow: visible;\n  text-overflow: clip;\n}\n\n/* ---------- v2.19: running strip, built-in settings, live steps on cards ---------- */\n\n/* what's running, one line at the top of the Macros page */\n#CookieMgrMenu .ca-runbar-head {\n  display: flex;\n  align-items: center;\n  flex-wrap: wrap;\n  gap: 8px;\n  padding: 8px 10px;\n}\n#CookieMgrMenu .ca-runbar-title {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 13px;\n  color: #ffeab0;\n}\n#CookieMgrMenu .ca-runchips {\n  display: flex;\n  flex: 1;\n  flex-wrap: wrap;\n  gap: 5px;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-runbar-idle {\n  font-size: 11px;\n  font-style: italic;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-runchip {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  padding: 2px 3px 2px 4px;\n  border-radius: 12px;\n  font-size: 11px;\n  color: #f3e5c3;\n  background: rgba(77, 255, 94, 0.08);\n  box-shadow: inset 0 0 0 1px rgba(77, 255, 94, 0.45);\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-runchip b {\n  font-weight: normal;\n  white-space: nowrap;\n}\n/* busier: warmer, the same bands as the rings on the left-panel buttons */\n#CookieMgrMenu .ca-runchip.h3 {\n  box-shadow: inset 0 0 0 1px rgba(240, 168, 64, 0.8);\n}\n#CookieMgrMenu .ca-runchip.h4,\n#CookieMgrMenu .ca-runchip.h5 {\n  box-shadow:\n    inset 0 0 0 2px rgba(255, 110, 45, 0.85),\n    0 0 6px rgba(255, 110, 45, 0.35);\n}\n#CookieMgrMenu .ca-runchip .ca-icon,\n#CookieMgrMenu .ca-runchip .ca-icon-ico {\n  flex: 0 0 18px;\n  width: 18px;\n  height: 18px;\n}\n#CookieMgrMenu .ca-runchip .ca-sprite {\n  transform: scale(0.375);\n}\n#CookieMgrMenu .ca-runchip-x {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 16px;\n  height: 16px;\n  padding: 0;\n  color: #f0e2c0;\n  background: rgba(0, 0, 0, 0.4);\n  border: none;\n  border-radius: 50%;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-runchip-x:hover {\n  background: #a8322e;\n}\n\n/* a built-in's settings: a one-line summary, unfolding into its fields */\n#CookieMgrMenu .ca-mtile-sum {\n  display: flex;\n  align-items: center;\n  gap: 5px;\n  padding: 3px 6px;\n  border-radius: 5px;\n  font-size: 10.5px;\n  color: #c9bba0;\n  background: rgba(0, 0, 0, 0.25);\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-mtile-sum span {\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n#CookieMgrMenu .ca-mtile-sum:hover {\n  color: #fff3cf;\n  background: rgba(255, 220, 150, 0.1);\n}\n#CookieMgrMenu .ca-mtile-settings .ca-macro-options {\n  display: none;\n  flex-direction: column;\n  align-items: stretch;\n  gap: 5px;\n  margin-top: 5px;\n  padding: 6px;\n  border-radius: 5px;\n  background: rgba(0, 0, 0, 0.3);\n}\n#CookieMgrMenu .ca-mtile-settings.open .ca-macro-options {\n  display: flex;\n}\n#CookieMgrMenu .ca-mtile-settings.open .ca-mtile-sum {\n  color: #ffd98a;\n}\n#CookieMgrMenu .ca-mtile-settings .ca-field {\n  justify-content: space-between;\n}\n#CookieMgrMenu .ca-macro-options input[type='number'] {\n  width: 70px;\n  font: 11px Tahoma, Arial, sans-serif;\n  color: #f0e2c0;\n  background: rgba(0, 0, 0, 0.45);\n  border: 1px solid rgba(255, 220, 150, 0.25);\n  border-radius: 4px;\n  padding: 2px 5px;\n}\n#CookieMgrMenu .ca-shift-hint {\n  font-style: normal;\n  font-size: 9.5px;\n  color: #93866f;\n}\n/* what a running macro's steps have done, on its card */\n#CookieMgrMenu .ca-mtile .ca-macro-status .ca-status-step,\n#CookieMgrMenu .ca-row .ca-macro-status .ca-status-step {\n  display: flex;\n  align-items: center;\n  gap: 4px;\n  font-size: 10px;\n  white-space: nowrap;\n}\n#CookieMgrMenu .ca-macro-status .ca-status-name {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n#CookieMgrMenu .ca-macro-status .ca-status-up {\n  font-size: 10px;\n  color: #7dff8a;\n}\n/* \"find it\": a short glow on the card */\n#CookieMgrMenu .ca-macro.ca-flash {\n  animation: caFlash 1.1s ease-out;\n}\n@keyframes caFlash {\n  0%,\n  30% {\n    box-shadow:\n      inset 0 0 0 2px #ffd36a,\n      0 0 14px rgba(255, 211, 106, 0.6);\n  }\n  100% {\n    box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.1);\n  }\n}\n\n/* ---------- v2.20: widget settings, the Your widgets map, linking ---------- */\n\n/* a widget hovered on the Widgets page (or being edited there) glows on the left panel */\n#CookieMgrWidgets .ca-w.ca-w-linked {\n  outline: 2px solid #ffd36a;\n  outline-offset: 3px;\n  border-radius: 8px;\n  box-shadow: 0 0 18px rgba(255, 211, 106, 0.55);\n  z-index: 25;\n}\n#CookieMgrWidgets .ca-w-bare.ca-w-linked {\n  border-radius: 50%;\n}\n\n/* settings: header + Look / Shows sections */\n#CookieMgrMenu .ca-weditor {\n  box-shadow:\n    0 0 0 1px rgba(255, 211, 106, 0.5),\n    0 0 18px rgba(255, 200, 100, 0.15);\n}\n#CookieMgrMenu .ca-weditor-head {\n  display: flex;\n  align-items: center;\n  gap: 10px;\n  padding: 10px 12px;\n  background: linear-gradient(to right, rgba(255, 210, 110, 0.12), transparent);\n  border-bottom: 1px solid rgba(255, 220, 150, 0.12);\n}\n#CookieMgrMenu .ca-weditor-ico {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  flex: none;\n  width: 38px;\n  height: 38px;\n  border-radius: 50%;\n  color: #ffd98a;\n  background: radial-gradient(circle at 35% 30%, rgba(110, 72, 36, 0.95), rgba(28, 18, 9, 0.95));\n  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.35);\n}\n#CookieMgrMenu .ca-weditor-title {\n  flex: 1;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-weditor-title b {\n  display: block;\n  font-family: 'Merriweather', Georgia, serif;\n  font-size: 14px;\n  color: #ffeab0;\n}\n#CookieMgrMenu .ca-weditor-title span {\n  font-size: 10.5px;\n  color: #a39477;\n}\n#CookieMgrMenu .ca-weditor .ca-weditor-body {\n  display: flex;\n  flex-direction: row;\n  flex-wrap: wrap;\n  gap: 10px;\n  padding: 10px;\n}\n#CookieMgrMenu .ca-weditor-sec {\n  flex: 1 1 260px;\n  display: flex;\n  flex-direction: column;\n  gap: 8px;\n  padding: 9px 10px 10px;\n  border-radius: 7px;\n  background: rgba(0, 0, 0, 0.25);\n}\n#CookieMgrMenu .ca-weditor-sec-head {\n  display: flex;\n  align-items: center;\n  gap: 5px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.1em;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-wf {\n  display: grid;\n  grid-template-columns: 90px 1fr;\n  align-items: center;\n  gap: 4px 10px;\n}\n#CookieMgrMenu .ca-wf.ca-wf-wide {\n  grid-template-columns: 1fr;\n}\n#CookieMgrMenu .ca-wf-label {\n  font-size: 11.5px;\n  color: #e8d7b0;\n}\n#CookieMgrMenu .ca-wf-input {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-wf-input input[type='range'] {\n  flex: 1;\n  accent-color: #e0a84a;\n}\n#CookieMgrMenu .ca-wf-input .ca-range-val {\n  min-width: 42px;\n  padding: 1px 6px;\n  text-align: center;\n  border-radius: 9px;\n  font-size: 10.5px;\n  color: #1c120a;\n  background: #e0b45a;\n}\n#CookieMgrMenu .ca-wf-input input[type='text'],\n#CookieMgrMenu .ca-wf-input input[type='number'],\n#CookieMgrMenu .ca-wf-input select {\n  flex: 1;\n  min-width: 0;\n  font: 12px Tahoma, Arial, sans-serif;\n  color: #f0e2c0;\n  background: rgba(0, 0, 0, 0.45);\n  border: 1px solid rgba(255, 220, 150, 0.25);\n  border-radius: 4px;\n  padding: 3px 6px;\n}\n#CookieMgrMenu .ca-wf-input select option {\n  background: #1c150d;\n}\n#CookieMgrMenu .ca-wf-input em {\n  font-style: normal;\n  font-size: 10.5px;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-wf-hint {\n  grid-column: 2;\n  font-size: 10px;\n  color: #93866f;\n}\n\n/* Your widgets: a map of the left panel beside the chips */\n#CookieMgrMenu .ca-wplaced {\n  display: flex;\n  gap: 12px;\n  align-items: flex-start;\n  padding: 10px;\n}\n#CookieMgrMenu .ca-wmap-wrap {\n  flex: 0 0 150px;\n}\n#CookieMgrMenu .ca-wmap {\n  position: relative;\n  width: 150px;\n  max-height: 300px;\n  border-radius: 6px;\n  overflow: hidden;\n  background:\n    radial-gradient(ellipse at 50% 40%, rgba(90, 140, 200, 0.18), transparent 70%),\n    linear-gradient(to bottom, #1b2533, #0e131b);\n  box-shadow:\n    inset 0 0 0 1px rgba(255, 220, 150, 0.2),\n    inset 0 0 12px rgba(0, 0, 0, 0.6);\n}\n#CookieMgrMenu .ca-wmap-cookie {\n  position: absolute;\n  border-radius: 50%;\n  background: radial-gradient(circle at 40% 35%, rgba(214, 160, 90, 0.55), rgba(120, 75, 30, 0.45));\n  pointer-events: none;\n}\n#CookieMgrMenu .ca-wmap-item {\n  position: absolute;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  min-width: 10px;\n  min-height: 10px;\n  padding: 0;\n  overflow: hidden;\n  color: #ffd98a;\n  background: rgba(60, 38, 18, 0.9);\n  border: 1px solid rgba(255, 220, 150, 0.5);\n  border-radius: 3px;\n  cursor: pointer;\n  transition:\n    box-shadow 0.15s,\n    transform 0.15s;\n}\n#CookieMgrMenu .ca-wmap-item.bare {\n  border-radius: 50%;\n}\n#CookieMgrMenu .ca-wmap-item .ca-icon,\n#CookieMgrMenu .ca-wmap-item .ca-icon-ico {\n  flex: none;\n  width: 12px;\n  height: 12px;\n}\n#CookieMgrMenu .ca-wmap-item .ca-sprite {\n  transform: scale(0.25);\n}\n#CookieMgrMenu .ca-wmap-item.linked,\n#CookieMgrMenu .ca-wmap-item:hover,\n#CookieMgrMenu .ca-wmap-item.editing {\n  z-index: 2;\n  border-color: #ffd36a;\n  box-shadow: 0 0 8px rgba(255, 211, 106, 0.8);\n  transform: scale(1.15);\n}\n#CookieMgrMenu .ca-wchips {\n  display: flex;\n  flex: 1;\n  flex-wrap: wrap;\n  align-content: flex-start;\n  gap: 5px;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-wchip {\n  display: inline-flex;\n  align-items: center;\n  border-radius: 13px;\n  background: rgba(0, 0, 0, 0.3);\n  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.15);\n  transition: box-shadow 0.15s;\n}\n#CookieMgrMenu .ca-wchip.linked,\n#CookieMgrMenu .ca-wchip.editing {\n  box-shadow:\n    inset 0 0 0 1px #ffd36a,\n    0 0 8px rgba(255, 211, 106, 0.4);\n}\n#CookieMgrMenu .ca-wchip-main {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  padding: 3px 4px 3px 5px;\n  font: 11px Tahoma, Arial, sans-serif;\n  color: #f3e5c3;\n  background: none;\n  border: none;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-wchip-main b {\n  font-weight: normal;\n  white-space: nowrap;\n}\n#CookieMgrMenu .ca-wchip-main > .ca-ico:last-child {\n  color: #93866f;\n}\n#CookieMgrMenu .ca-wchip-main .ca-icon,\n#CookieMgrMenu .ca-wchip-main .ca-icon-ico {\n  flex: 0 0 16px;\n  width: 16px;\n  height: 16px;\n}\n#CookieMgrMenu .ca-wchip-main .ca-sprite {\n  transform: scale(0.33);\n}\n#CookieMgrMenu .ca-wchip-x {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 18px;\n  height: 18px;\n  margin-right: 3px;\n  padding: 0;\n  color: #b9ab93;\n  background: none;\n  border: none;\n  border-radius: 50%;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-wchip-x:hover {\n  color: #fff;\n  background: #a8322e;\n}\n\n/* ---------- v2.21: buying macros ---------- */\n\n#CookieMgrMenu .ca-mtile-warn {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  padding: 4px 7px;\n  border-radius: 5px;\n  font-size: 10.5px;\n  color: #ffcf8a;\n  background: rgba(255, 150, 60, 0.12);\n  box-shadow: inset 0 0 0 1px rgba(255, 170, 80, 0.35);\n}\n#CookieMgrMenu .ca-mtile-warn .ca-btn {\n  margin-left: auto;\n}\n#CookieMgrMenu .ca-switch[disabled] {\n  opacity: 0.4;\n  cursor: not-allowed;\n}\n\n/* ---------- v2.22: the macro editor, flow blocks, SeasonCompletion's season order ---------- */\n\n#CookieMgrMenu .ca-editor2 .ca-ed-head {\n  display: flex;\n  align-items: center;\n  gap: 12px;\n  padding: 12px 14px;\n  background: linear-gradient(to right, rgba(255, 210, 110, 0.12), transparent);\n  border-bottom: 1px solid rgba(255, 220, 150, 0.12);\n}\n#CookieMgrMenu .ca-ed-icon .ca-icon,\n#CookieMgrMenu .ca-ed-icon .ca-icon-ico {\n  width: 44px;\n  height: 44px;\n  flex: 0 0 44px;\n}\n#CookieMgrMenu .ca-ed-names {\n  display: flex;\n  flex-direction: column;\n  gap: 4px;\n  flex: 1;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-editor2 input.ca-ed-name {\n  font: bold 15px 'Merriweather', Georgia, serif;\n  color: #ffeab0;\n  background: transparent;\n  border: none;\n  border-bottom: 1px dashed rgba(255, 220, 150, 0.3);\n  border-radius: 0;\n  padding: 2px 0;\n}\n#CookieMgrMenu .ca-editor2 input.ca-ed-desc {\n  font-size: 11px;\n  color: #c9bba0;\n  background: transparent;\n  border: none;\n  border-bottom: 1px dashed rgba(255, 220, 150, 0.18);\n  border-radius: 0;\n  padding: 2px 0;\n}\n#CookieMgrMenu .ca-ed-actions {\n  display: flex;\n  gap: 6px;\n}\n#CookieMgrMenu .ca-editor2 .ca-editor-body {\n  display: flex;\n  flex-direction: column;\n  gap: 10px;\n  padding: 12px 14px 14px;\n}\n/* the kind of macro, as cards */\n#CookieMgrMenu .ca-ed-kinds {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));\n  gap: 6px;\n}\n#CookieMgrMenu .ca-ed-kind {\n  display: flex;\n  flex-direction: column;\n  align-items: flex-start;\n  gap: 2px;\n  padding: 7px 9px;\n  text-align: left;\n  font: 11px Tahoma, Arial, sans-serif;\n  color: #c9bba0;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px solid rgba(255, 220, 150, 0.12);\n  border-radius: 7px;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-ed-kind b {\n  font-size: 12.5px;\n  color: #f3e5c3;\n}\n#CookieMgrMenu .ca-ed-kind span {\n  font-size: 9.5px;\n  line-height: 1.3;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-ed-kind.on {\n  color: #ffd98a;\n  background: rgba(255, 210, 110, 0.12);\n  border-color: #e0b45a;\n  box-shadow: 0 0 8px rgba(255, 200, 100, 0.25);\n}\n#CookieMgrMenu .ca-ed-row {\n  display: flex;\n  align-items: center;\n  flex-wrap: wrap;\n  gap: 8px;\n}\n#CookieMgrMenu .ca-ed-label {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  font-size: 11.5px;\n  color: #e8d7b0;\n}\n#CookieMgrMenu .ca-editor2 input.ca-ed-secs {\n  width: 64px;\n}\n#CookieMgrMenu .ca-ed-row em {\n  font-style: normal;\n  font-size: 10.5px;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-ed-sec {\n  display: flex;\n  flex-direction: column;\n  gap: 6px;\n  padding: 9px 10px;\n  border-radius: 8px;\n  background: rgba(0, 0, 0, 0.22);\n}\n#CookieMgrMenu .ca-ed-sec-head {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.1em;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-ed-sec-head .ca-hint {\n  text-transform: none;\n  letter-spacing: 0;\n}\n#CookieMgrMenu .ca-ed-steps {\n  display: flex;\n  flex-direction: column;\n  gap: 5px;\n}\n#CookieMgrMenu .ca-ed-step {\n  display: flex;\n  align-items: flex-start;\n  gap: 8px;\n  padding: 6px 8px;\n  border-radius: 6px;\n  background: rgba(70, 45, 22, 0.35);\n  box-shadow: inset 3px 0 0 #e0b45a;\n}\n#CookieMgrMenu .ca-ed-step-body {\n  display: flex;\n  align-items: center;\n  flex-wrap: wrap;\n  gap: 6px;\n  flex: 1;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-ed-aico {\n  color: #ffd98a;\n}\n#CookieMgrMenu .ca-ed-params {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 6px 10px;\n  width: 100%;\n}\n#CookieMgrMenu .ca-ed-tools {\n  display: inline-flex;\n  gap: 2px;\n  margin-left: auto;\n}\n#CookieMgrMenu .ca-ed-add {\n  align-self: flex-start;\n}\n#CookieMgrMenu .ca-ed-conds {\n  display: flex;\n  flex-direction: column;\n  gap: 4px;\n}\n#CookieMgrMenu .ca-ed-cond {\n  display: flex;\n  align-items: center;\n  flex-wrap: wrap;\n  gap: 6px;\n  padding: 4px 6px;\n  border-radius: 5px;\n  background: rgba(80, 140, 200, 0.1);\n  box-shadow: inset 3px 0 0 #6fb3e6;\n}\n#CookieMgrMenu .ca-ed-and {\n  min-width: 34px;\n  font-size: 10px;\n  font-weight: bold;\n  text-transform: uppercase;\n  color: #8fc3ea;\n}\n#CookieMgrMenu .ca-editor2 select,\n#CookieMgrMenu .ca-editor2 input[type=\"text\"],\n#CookieMgrMenu .ca-editor2 input[type=\"number\"] {\n  font: 12px Tahoma, Arial, sans-serif;\n  color: #f0e2c0;\n  background: rgba(0, 0, 0, 0.45);\n  border: 1px solid rgba(255, 220, 150, 0.25);\n  border-radius: 4px;\n  padding: 3px 6px;\n}\n#CookieMgrMenu .ca-editor2 select option,\n#CookieMgrMenu .ca-editor2 select optgroup {\n  background: #1c150d;\n  color: #f0e2c0;\n}\n#CookieMgrMenu .ca-ed-icons .ca-iconpick {\n  max-height: 64px;\n  overflow-y: auto;\n}\n\n/* SeasonCompletion: its season order */\n#CookieMgrMenu .ca-field.ca-field-wide {\n  flex-direction: column;\n  align-items: stretch;\n}\n\n/* ---------- v2.23: livelier widget settings, holding a buying button ---------- */\n\n/* the settings box arrives with a glow */\n#CookieMgrMenu .ca-weditor.ca-reveal {\n  animation: caReveal 1.2s ease-out;\n}\n@keyframes caReveal {\n  0%,\n  25% {\n    box-shadow:\n      0 0 0 2px #ffd36a,\n      0 0 26px rgba(255, 211, 106, 0.6);\n  }\n  100% {\n    box-shadow:\n      0 0 0 1px rgba(255, 211, 106, 0.5),\n      0 0 18px rgba(255, 200, 100, 0.15);\n  }\n}\n/* its header in the widget's own colour */\n#CookieMgrMenu .ca-weditor {\n  --wt: #e0b45a;\n}\n#CookieMgrMenu .ca-wtheme-grimoire {\n  --wt: #b48cf0;\n}\n#CookieMgrMenu .ca-wtheme-garden {\n  --wt: #8fd45e;\n}\n#CookieMgrMenu .ca-wtheme-market {\n  --wt: #4fd6e0;\n}\n#CookieMgrMenu .ca-wtheme-pantheon {\n  --wt: #ffd36a;\n}\n#CookieMgrMenu .ca-wtheme-stats {\n  --wt: #6fb3e6;\n}\n#CookieMgrMenu .ca-wtheme-events {\n  --wt: #ff9f43;\n}\n#CookieMgrMenu .ca-wtheme-status {\n  --wt: #7dff8a;\n}\n#CookieMgrMenu .ca-weditor .ca-weditor-head {\n  background:\n    radial-gradient(ellipse at 0% 50%, color-mix(in srgb, var(--wt) 35%, transparent), transparent 70%),\n    linear-gradient(to right, rgba(255, 210, 110, 0.08), transparent);\n  border-bottom-color: color-mix(in srgb, var(--wt) 40%, transparent);\n}\n#CookieMgrMenu .ca-weditor .ca-weditor-ico {\n  color: var(--wt);\n  box-shadow:\n    inset 0 0 0 1px color-mix(in srgb, var(--wt) 60%, transparent),\n    0 0 12px color-mix(in srgb, var(--wt) 35%, transparent);\n}\n#CookieMgrMenu .ca-weditor .ca-weditor-sec-head {\n  color: color-mix(in srgb, var(--wt) 70%, #93866f);\n}\n#CookieMgrMenu .ca-weditor .ca-wf-input input[type=\"range\"] {\n  accent-color: var(--wt);\n}\n#CookieMgrMenu .ca-wpresets {\n  display: inline-flex;\n  gap: 2px;\n}\n#CookieMgrMenu .ca-wpresets .ca-chip {\n  min-width: 26px;\n  padding: 1px 5px;\n  font-size: 10px;\n  text-align: center;\n}\n#CookieMgrMenu .ca-wf-input {\n  flex-wrap: wrap;\n}\n/* the place grid: a miniature left panel with nine spots */\n#CookieMgrMenu .ca-wsnap {\n  display: grid;\n  grid-template-columns: repeat(3, 26px);\n  grid-auto-rows: 26px;\n  gap: 3px;\n  padding: 4px;\n  width: max-content;\n  border-radius: 6px;\n  background: linear-gradient(to bottom, #1b2533, #0e131b);\n  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.2);\n}\n#CookieMgrMenu .ca-wsnap-cell {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  padding: 0;\n  background: rgba(255, 255, 255, 0.04);\n  border: 1px dashed rgba(255, 220, 150, 0.18);\n  border-radius: 4px;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-wsnap-cell i {\n  width: 8px;\n  height: 8px;\n  border-radius: 50%;\n  background: rgba(255, 220, 150, 0.25);\n}\n#CookieMgrMenu .ca-wsnap-cell:hover i {\n  background: #ffd98a;\n}\n#CookieMgrMenu .ca-wsnap-cell.on {\n  border-style: solid;\n  border-color: var(--wt);\n}\n#CookieMgrMenu .ca-wsnap-cell.on i {\n  width: 12px;\n  height: 12px;\n  background: var(--wt);\n  box-shadow: 0 0 8px var(--wt);\n}\n#CookieMgrMenu .ca-weditor-place .ca-wf-hint {\n  grid-column: auto;\n}\n\n/* holding a buying macro's button: it buys while it glows */\n#CookieMgrWidgets .ca-wb.ca-holding {\n  transform: scale(0.94);\n  box-shadow:\n    0 0 0 3px #ffd36a,\n    0 0 16px rgba(255, 211, 106, 0.8);\n}\n\n/* ---------- v2.24: algorithmic macros — the code editor and the library ---------- */\n\n/* the editor with its library beside it (stacking when the panel is narrow) */\n#CookieMgrMenu .ca-ed-layout {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: flex-start;\n}\n#CookieMgrMenu .ca-ed-layout > .ca-editor-body {\n  flex: 1 1 420px;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-ed-fixed-sub {\n  font-size: 10.5px;\n  color: #a39477;\n}\n\n/* the code: a textarea over its own highlighted copy, line numbers beside */\n#CookieMgrMenu .ca-code {\n  --code-font: 12px/18px Consolas, 'Cascadia Mono', Menlo, Monaco, monospace;\n  display: flex;\n  height: 340px;\n  border-radius: 6px;\n  overflow: hidden;\n  background: #120d08;\n  box-shadow:\n    inset 0 0 0 1px rgba(255, 220, 150, 0.2),\n    inset 0 2px 10px rgba(0, 0, 0, 0.6);\n}\n#CookieMgrMenu .ca-code-gutter {\n  flex: none;\n  width: 36px;\n  padding: 8px 0;\n  overflow: hidden;\n  font: var(--code-font);\n  text-align: right;\n  color: #5d5444;\n  background: rgba(0, 0, 0, 0.35);\n  user-select: none;\n}\n#CookieMgrMenu .ca-code-gutter span {\n  display: block;\n  padding-right: 7px;\n}\n#CookieMgrMenu .ca-code-gutter span.err {\n  color: #ff9a8a;\n  background: rgba(229, 72, 77, 0.18);\n}\n#CookieMgrMenu .ca-code-gutter span.run {\n  color: #1c120a;\n  background: #7dff8a;\n  box-shadow: 0 0 6px rgba(125, 255, 138, 0.6);\n}\n#CookieMgrMenu .ca-code-box {\n  position: relative;\n  flex: 1;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-code-hl,\n#CookieMgrMenu .ca-code-ta {\n  position: absolute;\n  inset: 0;\n  margin: 0;\n  padding: 8px 10px;\n  font: var(--code-font);\n  letter-spacing: 0;\n  white-space: pre;\n  tab-size: 2;\n  overflow: auto;\n  box-sizing: border-box;\n  border: none;\n}\n#CookieMgrMenu .ca-code-hl {\n  color: #e8d7b0;\n  pointer-events: none;\n  overflow: hidden;\n}\n#CookieMgrMenu .ca-editor2 textarea.ca-code-ta {\n  color: transparent;\n  caret-color: #ffd98a;\n  background: transparent;\n  border-radius: 0;\n  resize: none;\n  outline: none;\n}\n#CookieMgrMenu .ca-code-ta::selection {\n  background: rgba(255, 210, 110, 0.3);\n  color: transparent;\n}\n#CookieMgrMenu .ca-hl-line.err {\n  text-decoration: underline wavy rgba(255, 110, 100, 0.7);\n  text-underline-offset: 4px;\n}\n#CookieMgrMenu .ca-code-hl .hc {\n  color: #7b8a6a;\n  font-style: italic;\n}\n#CookieMgrMenu .ca-code-hl .hk {\n  color: #ffb86b;\n  font-weight: bold;\n}\n#CookieMgrMenu .ca-code-hl .ha {\n  color: #9be89b;\n}\n#CookieMgrMenu .ca-code-hl .hq {\n  color: #8fc3ea;\n}\n#CookieMgrMenu .ca-code-hl .hv {\n  color: #6fe6ef;\n}\n#CookieMgrMenu .ca-code-hl .hn {\n  color: #ff9a8a;\n}\n#CookieMgrMenu .ca-code-hl .hs {\n  color: #e6c07b;\n}\n#CookieMgrMenu .ca-code-hl .ho {\n  color: #ffd98a;\n}\n#CookieMgrMenu .ca-code-hl .hi {\n  color: #d8cbb0;\n}\n#CookieMgrMenu .ca-code-status {\n  font-size: 11px;\n}\n#CookieMgrMenu .ca-code-ok {\n  color: #7dff8a;\n}\n#CookieMgrMenu .ca-code-bad {\n  color: #ff9a8a;\n  font-weight: bold;\n}\n#CookieMgrMenu .ca-code-err {\n  padding: 1px 6px;\n  color: #ffb3a8;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-code-err:hover {\n  background: rgba(229, 72, 77, 0.15);\n}\n/* while it runs */\n#CookieMgrMenu .ca-code-live:empty {\n  display: none;\n}\n#CookieMgrMenu .ca-code-live {\n  padding: 6px 8px;\n  border-radius: 5px;\n  font: 11px/1.4 Consolas, Menlo, monospace;\n  background: rgba(125, 255, 138, 0.06);\n  box-shadow: inset 3px 0 0 #7dff8a;\n}\n#CookieMgrMenu .ca-code-live-head {\n  font: bold 10px Tahoma, Arial, sans-serif;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #7dff8a;\n}\n#CookieMgrMenu .ca-code-live-at {\n  color: #f3e5c3;\n}\n#CookieMgrMenu .ca-code-live-tr {\n  color: #93866f;\n}\n#CookieMgrMenu .ca-code-help summary {\n  font-size: 11px;\n  color: #ffd98a;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-code-help pre {\n  margin: 6px 0 0;\n  padding: 8px 10px;\n  font: 11px/1.5 Consolas, Menlo, monospace;\n  color: #d8cbb0;\n  white-space: pre;\n  overflow-x: auto;\n  border-radius: 5px;\n  background: rgba(0, 0, 0, 0.3);\n}\n/* a running algorithm's decisions, on its card */\n#CookieMgrMenu .ca-trace {\n  margin-top: 3px;\n  padding: 3px 6px;\n  border-radius: 4px;\n  font: 10px/1.35 Consolas, Menlo, monospace;\n  color: #a39477;\n  background: rgba(0, 0, 0, 0.25);\n}\n#CookieMgrMenu .ca-trace div {\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n\n/* the library: everything you can write, pinnable */\n#CookieMgrMenu .ca-ed-lib {\n  flex: 0 1 300px;\n  min-width: 240px;\n  max-height: 640px;\n  display: flex;\n  flex-direction: column;\n  margin: 12px 12px 12px 0;\n  border-radius: 8px;\n  background: rgba(0, 0, 0, 0.28);\n  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.12);\n}\n#CookieMgrMenu .ca-lib-head {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  padding: 7px 8px;\n  color: #93866f;\n  border-bottom: 1px solid rgba(255, 220, 150, 0.1);\n}\n#CookieMgrMenu .ca-lib-head input {\n  flex: 1;\n  min-width: 0;\n  font: 11.5px Tahoma, Arial, sans-serif;\n  color: #f0e2c0;\n  background: rgba(0, 0, 0, 0.45);\n  border: 1px solid rgba(255, 220, 150, 0.25);\n  border-radius: 4px;\n  padding: 3px 6px;\n}\n#CookieMgrMenu .ca-lib-body {\n  flex: 1;\n  overflow-y: auto;\n  padding: 4px 6px 8px;\n}\n#CookieMgrMenu .ca-lib-group.hidden,\n#CookieMgrMenu .ca-lib-row.hidden {\n  display: none;\n}\n#CookieMgrMenu .ca-lib-ghead {\n  position: sticky;\n  top: -4px;\n  z-index: 1;\n  display: flex;\n  align-items: center;\n  gap: 4px;\n  margin: 6px 0 2px;\n  padding: 2px 2px;\n  font-size: 9.5px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #93866f;\n  background: #1a120a;\n}\n#CookieMgrMenu .ca-lib-pinned .ca-lib-ghead {\n  color: #ffd36a;\n}\n#CookieMgrMenu .ca-lib-empty {\n  padding: 3px 6px;\n  font-size: 10px;\n  font-style: italic;\n  color: #6d6252;\n}\n#CookieMgrMenu .ca-lib-row {\n  display: grid;\n  grid-template-columns: 1fr auto;\n  align-items: center;\n  column-gap: 2px;\n  padding: 2px 3px;\n  border-radius: 4px;\n}\n#CookieMgrMenu .ca-lib-row:hover {\n  background: rgba(255, 220, 150, 0.07);\n}\n#CookieMgrMenu .ca-lib-ins {\n  display: flex;\n  align-items: center;\n  gap: 5px;\n  min-width: 0;\n  padding: 1px 2px;\n  text-align: left;\n  color: #9be89b;\n  background: none;\n  border: none;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-lib-condition .ca-lib-ins {\n  color: #8fc3ea;\n}\n#CookieMgrMenu .ca-lib-value .ca-lib-ins {\n  color: #6fe6ef;\n}\n#CookieMgrMenu .ca-lib-keyword .ca-lib-ins {\n  color: #ffb86b;\n}\n#CookieMgrMenu .ca-lib-ins code {\n  font: 11px Consolas, Menlo, monospace;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n#CookieMgrMenu .ca-lib-desc {\n  grid-column: 1;\n  padding-left: 19px;\n  font-size: 9.5px;\n  line-height: 1.25;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-lib-fav {\n  grid-column: 2;\n  grid-row: 1 / span 2;\n  opacity: 0.4;\n}\n#CookieMgrMenu .ca-lib-row:hover .ca-lib-fav,\n#CookieMgrMenu .ca-lib-fav.on {\n  opacity: 1;\n}\n#CookieMgrMenu .ca-lib-fav.on {\n  color: #ffd36a;\n}\n\n/* ---------- v2.24.1: the code editor's caret lines up with the text ---------- */\n/* Only the outer box scrolls: the highlighted copy sizes it, the textarea lies exactly on top of\n   that copy and never scrolls on its own, so the two can't drift apart. Same font everywhere, no\n   bold or italic (their widths can differ). */\n#CookieMgrMenu .ca-code {\n  height: auto;\n  max-height: 380px;\n  min-height: 220px;\n  overflow: auto;\n  align-items: flex-start;\n}\n#CookieMgrMenu .ca-code-gutter {\n  position: sticky;\n  left: 0;\n  z-index: 2;\n  align-self: stretch;\n  overflow: visible;\n}\n#CookieMgrMenu .ca-code-box {\n  position: relative;\n  flex: 1 0 auto;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-code-hl {\n  position: relative;\n  inset: auto;\n  min-height: 200px;\n  overflow: visible;\n  padding-bottom: 26px;\n}\n#CookieMgrMenu .ca-editor2 textarea.ca-code-ta {\n  position: absolute;\n  inset: 0;\n  width: 100%;\n  height: 100%;\n  overflow: hidden;\n  padding-bottom: 26px;\n}\n#CookieMgrMenu .ca-code-hl,\n#CookieMgrMenu .ca-editor2 textarea.ca-code-ta {\n  font: var(--code-font);\n  font-weight: normal;\n  font-style: normal;\n  letter-spacing: 0;\n  word-spacing: 0;\n  font-variant-ligatures: none;\n  font-kerning: none;\n  text-transform: none;\n  text-indent: 0;\n  text-shadow: none;\n  box-shadow: none;\n}\n#CookieMgrMenu .ca-code-hl .hk,\n#CookieMgrMenu .ca-code-hl .hc {\n  font-weight: normal;\n  font-style: normal;\n}\n\n/* ---------- v2.25: edited built-ins, interval boxes ---------- */\n\n#CookieMgrMenu .ca-badge-edited {\n  margin-left: 4px;\n  color: #1c120a;\n  background: #e0b45a;\n}\n#CookieMgrMenu input.ca-every-num {\n  width: 64px;\n  font: 11px Tahoma, Arial, sans-serif;\n  color: #f0e2c0;\n  background: rgba(0, 0, 0, 0.45);\n  border: 1px solid rgba(255, 220, 150, 0.25);\n  border-radius: 4px;\n  padding: 2px 5px;\n}\n\n/* ---------- v2.26: garden rules ---------- */\n\n#CookieMgrMenu .ca-grules .ca-card-meta {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 6px;\n}\n#CookieMgrMenu .ca-grules .ca-ed-layout {\n  margin: 0 -12px -12px;\n}\n#CookieMgrMenu .ca-grules.ca-flash {\n  animation: caFlash 1.1s ease-out;\n}\n#CookieMgrMenu .ca-pill.ca-pill-warn {\n  color: #1c120a;\n  background: #e0b45a;\n  border-color: #e0b45a;\n}\n\n/* ---------- v2.28: an algorithm that can't run ---------- */\n\n#CookieMgrMenu .ca-step.ca-step-problem {\n  color: #ffb3a8;\n  background: rgba(160, 40, 30, 0.35);\n}\n\n/* ---------- v2.31: every macro as code; the library's Lookup ---------- */\n\n#CookieMgrMenu .ca-ed-ascode summary {\n  cursor: pointer;\n  list-style: none;\n}\n#CookieMgrMenu .ca-ed-ascode summary::-webkit-details-marker {\n  display: none;\n}\n#CookieMgrMenu .ca-ed-ascode[open] summary {\n  margin-bottom: 6px;\n}\n#CookieMgrMenu .ca-ascode-pre {\n  position: static;\n  margin: 0 0 8px;\n  padding: 8px 10px;\n  max-height: 260px;\n  overflow: auto;\n  border-radius: 6px;\n  background: rgba(0, 0, 0, 0.35);\n  pointer-events: auto;\n}\n#CookieMgrMenu .ca-lib-tabs {\n  display: flex;\n  gap: 4px;\n  padding: 5px 8px;\n  border-bottom: 1px solid rgba(255, 220, 150, 0.1);\n}\n#CookieMgrMenu .ca-ed-lib [hidden] {\n  display: none !important;\n}\n#CookieMgrMenu .ca-lib-uses {\n  margin-left: 4px;\n  font: 9.5px Consolas, Menlo, monospace;\n  text-transform: none;\n  letter-spacing: 0;\n  color: #7d7262;\n}\n#CookieMgrMenu .ca-lib-lit .ca-lib-ins code {\n  color: #ffd98a;\n}\n";
+CA.VERSION = "3.3.0";
+CA.CSS = "/* ==========================================================================\n   CookieMgr — styles\n   Colours and borders borrow from the game's own \"framed\" look so the panel\n   feels native. Everything is scoped under #CookieMgrTab / #CookieMgrMenu.\n   ========================================================================== */\n\n/* ---------- Sidebar (icon tabs sticking out of the left beam, one per page) ---------- */\n\n#CookieMgrTab {\n  position: absolute;\n  left: 30%;\n  top: calc(10% + 96px); /* fallback; tab.js pins it just under the game's cookie-count banner */\n  margin-left: 3px; /* tuck slightly under the beam */\n  transform: translateX(-100%);\n  z-index: 110;\n  display: flex;\n  flex-direction: column;\n  align-items: flex-end; /* items grow leftwards, away from the beam */\n  gap: 4px;\n}\n#CookieMgrTab .ca-tab-item {\n  box-sizing: border-box;\n  height: 32px;\n  display: flex;\n  align-items: center;\n  cursor: pointer;\n  user-select: none;\n  background: linear-gradient(to right, #3d2716, #221409);\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-right: none;\n  border-radius: 8px 0 0 8px;\n  box-shadow:\n    -3px 3px 10px rgba(0, 0, 0, 0.65),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.18);\n  transition:\n    background 0.2s,\n    box-shadow 0.2s;\n  outline: none;\n}\n#CookieMgrTab .ca-tab-item:hover,\n#CookieMgrTab .ca-tab-item:focus-visible {\n  box-shadow:\n    -3px 3px 12px rgba(0, 0, 0, 0.75),\n    0 0 12px rgba(255, 215, 110, 0.35),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.25);\n}\n#CookieMgrTab .ca-tab-item.selected {\n  background: linear-gradient(to right, #7a4f22, #43290f);\n  box-shadow:\n    -3px 3px 12px rgba(0, 0, 0, 0.75),\n    0 0 14px rgba(255, 215, 110, 0.55),\n    inset 1px 1px 0 rgba(255, 255, 255, 0.3);\n}\n#CookieMgrTab .ca-tab-label {\n  max-width: 0;\n  overflow: hidden;\n  opacity: 0;\n  padding: 0;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-weight: bold;\n  font-size: 13px;\n  letter-spacing: 0.5px;\n  color: #f4e6c3;\n  text-shadow:\n    0 1px 2px #000,\n    0 0 6px rgba(255, 200, 120, 0.25);\n  white-space: nowrap;\n  transition:\n    max-width 0.22s ease-out,\n    opacity 0.15s,\n    padding 0.22s ease-out;\n}\n#CookieMgrTab .ca-tab-item:hover .ca-tab-label,\n#CookieMgrTab .ca-tab-item:focus-visible .ca-tab-label {\n  max-width: 180px;\n  opacity: 1;\n  padding: 0 2px 0 12px;\n}\n#CookieMgrTab .ca-tab-icon {\n  position: relative;\n  flex: none;\n  width: 30px;\n  height: 30px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  color: #f4e6c3;\n  filter: drop-shadow(0 1px 1px #000);\n}\n#CookieMgrTab .ca-tab-item.selected .ca-tab-icon,\n#CookieMgrTab .ca-tab-item:hover .ca-tab-icon {\n  color: #ffeab0;\n}\n#CookieMgrTab .ca-tab-badge {\n  display: none;\n  position: absolute;\n  top: -5px;\n  left: -5px;\n  min-width: 15px;\n  height: 15px;\n  padding: 0 3px;\n  box-sizing: border-box;\n  border-radius: 8px;\n  font:\n    bold 9px/15px Tahoma,\n    Arial,\n    sans-serif;\n  text-align: center;\n  color: #fff;\n  background: linear-gradient(#63c64a, #2f7d24);\n  box-shadow:\n    0 0 6px rgba(120, 240, 100, 0.8),\n    0 1px 1px #000;\n  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);\n}\n#CookieMgrTab .ca-tab-item.active .ca-tab-badge {\n  display: block;\n  animation: caBadgeGlow 2s infinite ease-in-out;\n}\n@keyframes caBadgeGlow {\n  0%,\n  100% {\n    box-shadow:\n      0 0 4px rgba(120, 240, 100, 0.6),\n      0 1px 1px #000;\n  }\n  50% {\n    box-shadow:\n      0 0 10px rgba(120, 240, 100, 1),\n      0 1px 1px #000;\n  }\n}\n#game.ascending #CookieMgrTab,\n#game.ascendIntro #CookieMgrTab,\n#game.reincarnating #CookieMgrTab {\n  display: none;\n}\n\n/* ---------- Icons (used everywhere, not just inside the panel) ---------- */\n\n.ca-ico {\n  display: inline-block;\n  flex: none;\n  vertical-align: middle;\n}\n.ca-ico-cookie {\n  background: url(img/perfectCookie.png) center / contain no-repeat;\n}\n\n/* ---------- Stock market toolbar inside the Bank minigame ---------- */\n\n#cm-bank-toolbar {\n  position: relative;\n  z-index: 10;\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  justify-content: center;\n  gap: 6px;\n  padding: 4px 4px 6px;\n}\n#cm-bank-toolbar .bankButton {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  font-size: 11px;\n  padding: 3px 9px;\n}\n#cm-bank-toolbar .cm-bt-open {\n  color: #f4e6c3;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n}\n\n/* ---------- Panel ---------- */\n\n#CookieMgrMenu {\n  max-width: none; /* use the whole middle section */\n  margin: 0 auto;\n  padding: 0 16px 120px;\n  color: #ddd;\n}\n\n/* Cards */\n#CookieMgrMenu .ca-card {\n  margin: 14px 4px;\n  border-radius: 6px;\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  background: rgba(0, 0, 0, 0.38);\n  box-shadow:\n    0 0 1px #000,\n    inset 0 0 1px #000,\n    0 6px 16px rgba(0, 0, 0, 0.35);\n  overflow: hidden;\n}\n#CookieMgrMenu .ca-card-head {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 10px;\n  padding: 9px 14px;\n  background: linear-gradient(to right, rgba(255, 235, 190, 0.09), rgba(255, 235, 190, 0));\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-card-title {\n  flex: 1;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-size: 20px;\n  color: #fff;\n  text-shadow:\n    0 -1px 5px rgba(255, 255, 200, 0.35),\n    0 1px 3px #000;\n}\n#CookieMgrMenu .ca-card-ico {\n  margin-right: 8px;\n  vertical-align: -1px;\n  color: #ffd98a;\n  filter: drop-shadow(0 1px 2px #000);\n}\n#CookieMgrMenu .ca-row-ico {\n  flex: 0 0 28px;\n  width: 28px;\n  height: 28px;\n  border-radius: 50%;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  color: #e8d7b0;\n  background: radial-gradient(circle at 35% 30%, rgba(255, 230, 170, 0.18), rgba(0, 0, 0, 0.25));\n  box-shadow:\n    inset 0 0 0 1px rgba(255, 220, 150, 0.25),\n    0 1px 3px rgba(0, 0, 0, 0.6);\n}\n#CookieMgrMenu .ca-row-option:has(.ca-switch.on) .ca-row-ico {\n  color: #ffeab0;\n  box-shadow:\n    inset 0 0 0 1px rgba(255, 220, 150, 0.55),\n    0 0 8px rgba(255, 210, 110, 0.35);\n}\n#CookieMgrMenu .ca-row-ico .ca-ico-cookie {\n  width: 18px !important;\n  height: 18px !important;\n}\n#CookieMgrMenu .ca-pill {\n  font-size: 11px;\n  white-space: nowrap;\n  padding: 3px 10px;\n  border-radius: 10px;\n  color: #bbb;\n  background: rgba(255, 255, 255, 0.07);\n  border: 1px solid rgba(255, 255, 255, 0.15);\n  transition: all 0.2s;\n}\n#CookieMgrMenu .ca-pill.on {\n  color: #cfc;\n  background: rgba(80, 200, 90, 0.16);\n  border-color: rgba(130, 235, 120, 0.5);\n}\n\n/* Rows */\n#CookieMgrMenu .ca-row {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 8px 12px;\n  padding: 8px 14px;\n  border-top: 1px solid rgba(255, 255, 255, 0.05);\n  transition: background 0.2s;\n}\n#CookieMgrMenu .ca-list .ca-row:first-child {\n  border-top: none;\n}\n#CookieMgrMenu .ca-row:hover {\n  background: rgba(255, 255, 255, 0.035);\n}\n#CookieMgrMenu .ca-row.on {\n  background: linear-gradient(to right, rgba(255, 210, 90, 0.12), rgba(255, 210, 90, 0) 65%);\n}\n#CookieMgrMenu .ca-row-option {\n  padding-top: 10px;\n  padding-bottom: 10px;\n}\n#CookieMgrMenu .ca-row-text {\n  flex: 1 1 160px;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-row-option {\n  flex-wrap: nowrap;\n}\n#CookieMgrMenu .ca-row-option .ca-row-text {\n  flex-basis: 0;\n}\n#CookieMgrMenu .ca-controls {\n  flex: 0 1 auto;\n  max-width: 100%;\n  margin-left: auto;\n  display: flex;\n  flex-wrap: wrap;\n  justify-content: flex-end;\n  align-items: center;\n  gap: 8px;\n}\n#CookieMgrMenu .ca-row-name {\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 14px;\n  color: #f2ead2;\n  text-shadow: 0 1px 2px #000;\n}\n#CookieMgrMenu .ca-row-desc {\n  margin-top: 2px;\n  font-size: 11px;\n  color: #b3a590;\n  text-shadow: 0 1px 1px #000;\n}\n\n/* Icons */\n#CookieMgrMenu .ca-icon {\n  flex: 0 0 36px;\n  width: 36px;\n  height: 36px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  transition:\n    filter 0.25s,\n    transform 0.25s;\n  filter: grayscale(0.55) brightness(0.8);\n}\n#CookieMgrMenu .ca-row.on .ca-icon {\n  filter: drop-shadow(0 0 6px rgba(255, 220, 120, 0.75));\n}\n#CookieMgrMenu .ca-row.on .ca-icon {\n  transform: scale(1.06);\n}\n#CookieMgrMenu .ca-img {\n  width: 36px;\n  height: 36px;\n  background-size: contain;\n  background-repeat: no-repeat;\n  background-position: center;\n}\n#CookieMgrMenu .ca-sprite {\n  flex: none;\n  width: 48px;\n  height: 48px;\n  background-image: url(img/icons.png);\n  transform: scale(0.75);\n}\n\n/* Toggle switch */\n#CookieMgrMenu .ca-switch {\n  flex: none;\n  padding: 2px;\n  background: none;\n  border: none;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-switch:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-switch-track {\n  display: block;\n  position: relative;\n  width: 42px;\n  height: 22px;\n  box-sizing: border-box;\n  border-radius: 11px;\n  background: #2a211c;\n  border: 1px solid rgba(255, 255, 255, 0.22);\n  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.75);\n  transition:\n    background 0.2s,\n    border-color 0.2s,\n    box-shadow 0.2s;\n}\n#CookieMgrMenu .ca-switch-knob {\n  position: absolute;\n  top: 2px;\n  left: 2px;\n  width: 16px;\n  height: 16px;\n  border-radius: 50%;\n  background: radial-gradient(circle at 35% 30%, #fff, #c9c1b5 55%, #8a8178);\n  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);\n  transition: left 0.18s ease-out;\n}\n#CookieMgrMenu .ca-switch:hover .ca-switch-track {\n  border-color: rgba(255, 225, 150, 0.6);\n}\n#CookieMgrMenu .ca-switch.on .ca-switch-track {\n  background: linear-gradient(#66c84b, #2f7d24);\n  border-color: #a5ea93;\n  box-shadow:\n    inset 0 1px 3px rgba(0, 0, 0, 0.35),\n    0 0 9px rgba(110, 230, 90, 0.45);\n}\n#CookieMgrMenu .ca-switch.on .ca-switch-knob {\n  left: 22px;\n}\n#CookieMgrMenu .ca-switch:focus-visible .ca-switch-track {\n  outline: 2px solid #ffd76a;\n  outline-offset: 2px;\n}\n\n/* Hotkey chips */\n#CookieMgrMenu .ca-hotkey {\n  flex: none;\n  display: inline-flex;\n  align-items: center;\n}\n#CookieMgrMenu .ca-key {\n  min-width: 46px;\n  height: 26px;\n  padding: 0 10px;\n  font:\n    bold 12px Tahoma,\n    Arial,\n    sans-serif;\n  color: #f4e6c3;\n  text-shadow: 0 1px 1px #000;\n  background: linear-gradient(#4d3c2d, #2a2018);\n  border: 1px solid;\n  border-color: #9a7d5b #3b2c1f #2a1f15 #74604a;\n  border-radius: 5px;\n  box-shadow:\n    0 2px 0 #140d08,\n    inset 0 1px 0 rgba(255, 255, 255, 0.16);\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    border-color 0.15s,\n    box-shadow 0.15s;\n}\n#CookieMgrMenu .ca-key:hover {\n  color: #fff;\n  border-color: #e0c08a #5a4430 #3d2e20 #b39468;\n}\n#CookieMgrMenu .ca-key:active {\n  transform: translateY(1px);\n  box-shadow:\n    0 1px 0 #140d08,\n    inset 0 1px 0 rgba(255, 255, 255, 0.16);\n}\n#CookieMgrMenu .ca-key:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-hotkey.unset .ca-key {\n  color: #8f877a;\n  font-weight: normal;\n  font-style: italic;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px dashed rgba(255, 255, 255, 0.22);\n  box-shadow: none;\n}\n#CookieMgrMenu .ca-hotkey.capturing .ca-key {\n  color: #ffe9a6;\n  border-color: #ffd76a;\n  animation: caCapture 1.1s infinite ease-in-out;\n}\n@keyframes caCapture {\n  0%,\n  100% {\n    box-shadow:\n      0 2px 0 #140d08,\n      0 0 0 0 rgba(255, 215, 106, 0.5);\n  }\n  50% {\n    box-shadow:\n      0 2px 0 #140d08,\n      0 0 12px 2px rgba(255, 215, 106, 0.55);\n  }\n}\n#CookieMgrMenu .ca-key-clear {\n  width: 18px;\n  height: 18px;\n  margin-left: 3px;\n  padding: 0;\n  border: none;\n  border-radius: 50%;\n  background: transparent;\n  color: #b09a8a;\n  font-size: 14px;\n  line-height: 18px;\n  cursor: pointer;\n  opacity: 0;\n  transition:\n    opacity 0.15s,\n    background 0.15s;\n}\n#CookieMgrMenu .ca-row:hover .ca-key-clear {\n  opacity: 0.8;\n}\n#CookieMgrMenu .ca-key-clear:hover {\n  color: #fff;\n  background: rgba(255, 80, 80, 0.35);\n}\n#CookieMgrMenu .ca-hotkey.unset .ca-key-clear,\n#CookieMgrMenu .ca-hotkey.capturing .ca-key-clear {\n  visibility: hidden;\n}\n\n/* Buttons */\n#CookieMgrMenu .ca-btn {\n  padding: 4px 12px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-weight: bold;\n  font-size: 12px;\n  color: #ddd;\n  text-shadow: 0 1px 1px #000;\n  background: linear-gradient(#3e2f23, #1d140f);\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 4px;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    inset 0 1px 0 rgba(255, 255, 255, 0.12);\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    box-shadow 0.15s,\n    opacity 0.15s;\n}\n#CookieMgrMenu .ca-btn:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-btn:not(:disabled):hover {\n  color: #fff;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    0 0 9px rgba(255, 220, 120, 0.35),\n    inset 0 1px 0 rgba(255, 255, 255, 0.18);\n}\n#CookieMgrMenu .ca-btn:not(:disabled):active {\n  transform: translateY(1px);\n}\n#CookieMgrMenu .ca-btn-on:not(:disabled):hover {\n  color: #d6ffcc;\n}\n#CookieMgrMenu .ca-btn-off:not(:disabled):hover {\n  color: #ffd2cc;\n}\n#CookieMgrMenu .ca-btn:disabled {\n  opacity: 0.38;\n  cursor: default;\n  box-shadow: none;\n}\n#CookieMgrMenu .ca-btn-small {\n  font-size: 11px;\n  padding: 3px 10px;\n}\n#CookieMgrMenu .ca-btn .ca-ico {\n  vertical-align: -2px;\n}\n#CookieMgrMenu .ca-btn.ca-armed {\n  color: #fff;\n  background: #8a2a22;\n  box-shadow: 0 0 0 1px #e5484d, 0 0 8px rgba(229, 72, 77, 0.6);\n}\n#CookieMgrMenu .ca-btn-lg {\n  padding: 10px 20px;\n  font-size: 15px;\n  border-radius: 6px;\n}\n#CookieMgrMenu .ca-btn-danger {\n  color: #ffdcd2;\n  background: linear-gradient(#6b2420, #3a1210);\n  border-color: #ffb199 #7a2a1e #5c1b12 #d98a6e;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    0 0 10px rgba(255, 90, 60, 0.25),\n    inset 0 1px 0 rgba(255, 255, 255, 0.15);\n}\n#CookieMgrMenu .ca-btn-danger:not(:disabled):hover {\n  color: #fff;\n  box-shadow:\n    0 1px 3px rgba(0, 0, 0, 0.6),\n    0 0 16px rgba(255, 90, 60, 0.5),\n    inset 0 1px 0 rgba(255, 255, 255, 0.2);\n}\n#CookieMgrMenu .ca-card-danger {\n  border-color: rgba(255, 110, 80, 0.3);\n  box-shadow:\n    0 0 1px #000,\n    inset 0 0 1px #000,\n    0 0 14px rgba(255, 70, 40, 0.12),\n    0 6px 16px rgba(0, 0, 0, 0.35);\n}\n#CookieMgrMenu .ca-row-sellall {\n  align-items: center;\n  justify-content: space-between;\n  gap: 12px;\n}\n\n/* Footer */\n#CookieMgrMenu .ca-footer {\n  margin: 18px 8px 0;\n  font-size: 11px;\n  line-height: 1.7;\n  text-align: center;\n  color: #9b907f;\n  text-shadow: 0 1px 1px #000;\n}\n#CookieMgrMenu .ca-footer b {\n  color: #c9bba3;\n}\n#CookieMgrMenu kbd {\n  display: inline-block;\n  padding: 0 5px;\n  font:\n    bold 10px/16px Tahoma,\n    Arial,\n    sans-serif;\n  color: #e8dcc2;\n  background: #2a2018;\n  border: 1px solid #5a4632;\n  border-radius: 3px;\n  box-shadow: 0 1px 0 #140d08;\n}\n\n#CookieMgrMenu .ca-page {\n  animation: caFade 0.18s ease-out;\n}\n@keyframes caFade {\n  from {\n    opacity: 0;\n    transform: translateY(3px);\n  }\n  to {\n    opacity: 1;\n    transform: none;\n  }\n}\n#CookieMgrMenu a {\n  color: #ffd98a;\n}\n\n/* ---------- Graph ---------- */\n\n#CookieMgrMenu .ca-live {\n  font-size: 11px;\n  padding: 3px 10px 3px 20px;\n  position: relative;\n  border-radius: 10px;\n  color: #cfc;\n  background: rgba(80, 200, 90, 0.16);\n  border: 1px solid rgba(130, 235, 120, 0.5);\n}\n#CookieMgrMenu .ca-live:before {\n  content: '';\n  position: absolute;\n  left: 8px;\n  top: 50%;\n  width: 6px;\n  height: 6px;\n  margin-top: -3px;\n  border-radius: 50%;\n  background: #7be07b;\n  box-shadow: 0 0 6px #7be07b;\n  animation: caBadgeGlow 1.6s infinite ease-in-out;\n}\n#CookieMgrMenu .ca-live.paused {\n  color: #ffd9a0;\n  background: rgba(255, 170, 60, 0.14);\n  border-color: rgba(255, 190, 100, 0.5);\n}\n#CookieMgrMenu .ca-live.paused:before {\n  background: #ffb45c;\n  box-shadow: none;\n  animation: none;\n}\n\n#CookieMgrMenu .ca-stats {\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));\n  gap: 1px;\n  background: rgba(255, 255, 255, 0.06);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.08);\n}\n#CookieMgrMenu .ca-stat {\n  min-width: 0; /* lets the grid cell shrink below its content so overflow/ellipsis below can work */\n  padding: 8px 12px;\n  background: rgba(0, 0, 0, 0.32);\n}\n#CookieMgrMenu .ca-stat-label {\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #a89a83;\n}\n#CookieMgrMenu .ca-stat-value {\n  margin-top: 2px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 17px;\n  color: #ffeab0;\n  text-shadow: 0 1px 3px #000;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n#CookieMgrMenu .ca-stat-sub {\n  margin-top: 1px;\n  font-size: 10px;\n  color: #93866f;\n  white-space: nowrap;\n}\n\n#CookieMgrMenu .ca-toolbar {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  justify-content: space-between;\n  gap: 6px 12px;\n  padding: 8px 12px;\n}\n#CookieMgrMenu .ca-toolbar-bottom {\n  padding-top: 6px;\n}\n#CookieMgrMenu .ca-chipgroup {\n  display: inline-flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 4px;\n}\n#CookieMgrMenu .ca-chip-label {\n  margin-right: 2px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-chip {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  padding: 3px 9px;\n  font:\n    bold 11px Tahoma,\n    Arial,\n    sans-serif;\n  color: #b9ab93;\n  text-shadow: 0 1px 1px #000;\n  background: rgba(255, 255, 255, 0.05);\n  border: 1px solid rgba(255, 255, 255, 0.14);\n  border-radius: 11px;\n  cursor: pointer;\n  transition:\n    color 0.15s,\n    background 0.15s,\n    border-color 0.15s;\n}\n#CookieMgrMenu .ca-chip:focus {\n  outline: none;\n}\n#CookieMgrMenu .ca-chip:hover {\n  color: #fff;\n  border-color: rgba(255, 225, 150, 0.5);\n}\n#CookieMgrMenu .ca-chip.on {\n  color: #fff3cf;\n  background: rgba(255, 200, 100, 0.18);\n  border-color: rgba(255, 210, 120, 0.6);\n}\n#CookieMgrMenu .ca-sw,\n#CookieMgrLayer .ca-sw {\n  display: inline-block;\n  width: 9px;\n  height: 9px;\n  margin-right: 1px;\n  border-radius: 50%;\n  vertical-align: -1px;\n  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);\n}\n\n#CookieMgrMenu .ca-graph-wrap {\n  position: relative;\n  margin: 0 8px;\n}\n#CookieMgrMenu canvas.ca-graph {\n  display: block;\n  width: 100%;\n  height: 300px;\n  cursor: crosshair;\n}\n#CookieMgrMenu .ca-tip,\n#CookieMgrLayer .ca-tip {\n  display: none;\n  position: fixed;\n  z-index: 100000;\n  max-width: 340px;\n  min-width: 150px;\n  padding: 7px 10px;\n  pointer-events: none;\n  font-size: 11px;\n  line-height: 1.35;\n  color: #e6dcc6;\n  background: rgba(14, 10, 6, 0.95);\n  border: 1px solid;\n  border-color: #b98a4e #6a4626 #55301c #a0764a;\n  border-radius: 5px;\n  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7);\n}\n#CookieMgrMenu .ca-tip-head,\n#CookieMgrLayer .ca-tip-head {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  margin-bottom: 4px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 12px;\n  color: #ffeab0;\n}\n#CookieMgrMenu .ca-tip-head span,\n#CookieMgrLayer .ca-tip-head span {\n  margin-left: auto;\n  padding-left: 10px;\n  font:\n    normal 10px Tahoma,\n    Arial,\n    sans-serif;\n  color: #a89a83;\n}\n#CookieMgrMenu .ca-tip-row,\n#CookieMgrLayer .ca-tip-row {\n  display: flex;\n  align-items: center;\n  gap: 5px;\n  padding: 1px 0;\n}\n#CookieMgrMenu .ca-tip-row b,\n#CookieMgrLayer .ca-tip-row b {\n  font-weight: normal;\n  color: #b9ab93;\n}\n#CookieMgrMenu .ca-tip-row span,\n#CookieMgrLayer .ca-tip-row span {\n  margin-left: auto;\n  padding-left: 12px;\n  text-align: right;\n  color: #f2ead2;\n}\n#CookieMgrMenu .ca-tip-row.strong b,\n#CookieMgrMenu .ca-tip-row.strong span,\n#CookieMgrLayer .ca-tip-row.strong b,\n#CookieMgrLayer .ca-tip-row.strong span {\n  color: #fff3cf;\n  font-weight: bold;\n}\n#CookieMgrMenu .ca-tip-note,\n#CookieMgrLayer .ca-tip-note {\n  margin: 2px 0 4px;\n  font-style: italic;\n  color: #a89a83;\n}\n\n#CookieMgrMenu .ca-legend {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 4px 12px;\n  min-height: 16px;\n  padding: 2px 14px 12px;\n  font-size: 11px;\n  color: #b9ab93;\n}\n#CookieMgrMenu .ca-legend-item em {\n  font-style: normal;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-legend-empty {\n  font-style: italic;\n  color: #7f735f;\n}\n\n#CookieMgrMenu .ca-hidden {\n  display: none;\n}\n\n/* ---------- Stock transaction log + ticker ---------- */\n\n#CookieMgrMenu .cm-tx-wrap {\n  max-height: 220px;\n  overflow-y: auto;\n  margin: 0 4px 6px;\n}\n#CookieMgrMenu .cm-tx-table {\n  width: 100%;\n  border-collapse: collapse;\n  font-size: 11px;\n}\n#CookieMgrMenu .cm-tx-table th {\n  position: sticky;\n  top: 0;\n  text-align: left;\n  padding: 4px 8px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.06em;\n  color: #93866f;\n  background: #1c150d;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.1);\n}\n#CookieMgrMenu .cm-tx-table td {\n  padding: 3px 8px;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.05);\n  white-space: nowrap;\n  color: #d8cbb0;\n}\n#CookieMgrMenu .cm-tx-row:hover td {\n  background: rgba(255, 255, 255, 0.04);\n}\n#CookieMgrMenu .cm-tx-buy {\n  color: #8f8;\n  font-weight: bold;\n}\n#CookieMgrMenu .cm-tx-sell {\n  color: #f88;\n  font-weight: bold;\n}\n#CookieMgrMenu .cm-tx-empty {\n  padding: 14px 8px;\n  text-align: center;\n  font-style: italic;\n  color: #7f735f;\n  font-size: 12px;\n}\n\n#CookieMgrMenu .cm-tickbars {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 6px;\n  margin: 0 8px 8px;\n}\n#CookieMgrMenu .cm-tickbar {\n  flex: 1 1 90px;\n  min-width: 70px;\n  padding: 5px 6px;\n  background: rgba(0, 0, 0, 0.28);\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  border-radius: 4px;\n  font-size: 10px;\n}\n#CookieMgrMenu .cm-tickbar-time {\n  color: #93866f;\n  text-align: center;\n  margin-bottom: 3px;\n  white-space: nowrap;\n}\n#CookieMgrMenu .cm-tickbar-row {\n  height: 5px;\n  background: rgba(255, 255, 255, 0.06);\n  border-radius: 3px;\n  margin-bottom: 2px;\n  overflow: hidden;\n}\n#CookieMgrMenu .cm-tickbar-fill {\n  display: block;\n  height: 100%;\n  border-radius: 3px;\n}\n#CookieMgrMenu .cm-tickbar-buy {\n  background: #8f8;\n}\n#CookieMgrMenu .cm-tickbar-sell {\n  background: #f88;\n}\n#CookieMgrMenu .cm-tickbar-net {\n  text-align: center;\n  font-weight: bold;\n  margin-top: 3px;\n}\n#CookieMgrMenu .cm-ticks-empty {\n  margin: 0 8px 8px;\n  padding: 10px;\n  text-align: center;\n  font-style: italic;\n  color: #7f735f;\n  font-size: 11px;\n}\n\n#CookieMgrMenu .cm-ticker {\n  margin: 8px 8px 10px;\n  padding: 6px 0;\n  overflow: hidden;\n  white-space: nowrap;\n  background: rgba(0, 0, 0, 0.32);\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  border-radius: 4px;\n}\n#CookieMgrMenu .cm-ticker-track {\n  display: inline-block;\n  will-change: transform;\n}\n#CookieMgrMenu .cm-tick-item {\n  display: inline-block;\n  padding: 0 16px;\n  font:\n    bold 11px Tahoma,\n    Arial,\n    sans-serif;\n  color: #cbbfa6;\n}\n#CookieMgrMenu .cm-tick-buy {\n  color: #8f8;\n}\n#CookieMgrMenu .cm-tick-sell {\n  color: #f88;\n}\n#CookieMgrMenu .cm-tick-empty {\n  color: #7f735f;\n  font-style: italic;\n  font-weight: normal;\n}\n#CookieMgrMenu .cm-tick-sep {\n  color: #4a4232;\n  padding: 0 4px;\n}\n\n@keyframes cmTickerScroll {\n  from {\n    transform: translateX(0);\n  }\n  to {\n    transform: translateX(-50%);\n  }\n}\n\n/* ---------- Sub-tabs (Graphs page and others) ---------- */\n\n#CookieMgrMenu .ca-subtabs {\n  display: flex;\n  gap: 4px;\n  margin: 2px 0 10px;\n  padding: 0 4px;\n  border-bottom: 1px solid rgba(255, 220, 150, 0.25);\n}\n#CookieMgrMenu .ca-subtab {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  padding: 6px 14px 5px;\n  margin-bottom: -1px;\n  font:\n    bold 12px Tahoma,\n    Arial,\n    sans-serif;\n  color: #b9ab93;\n  text-shadow: 0 1px 1px #000;\n  background: rgba(0, 0, 0, 0.25);\n  border: 1px solid rgba(255, 220, 150, 0.18);\n  border-bottom-color: transparent;\n  border-radius: 6px 6px 0 0;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-subtab:hover {\n  color: #f0e2c0;\n}\n#CookieMgrMenu .ca-subtab.on {\n  color: #fff3cf;\n  background: linear-gradient(to bottom, rgba(255, 200, 100, 0.2), rgba(0, 0, 0, 0.3));\n  border-color: rgba(255, 220, 150, 0.45);\n  border-bottom-color: #1c150d;\n}\n#CookieMgrMenu .ca-subtab .ca-ico-cookie {\n  width: 14px !important;\n  height: 14px !important;\n}\n\n/* ---------- Tables, notes ---------- */\n\n#CookieMgrMenu .ca-card-note {\n  padding: 0 14px 6px;\n  font-size: 11px;\n  line-height: 1.4;\n  color: #a39477;\n}\n#CookieMgrMenu .ca-table-wrap {\n  padding: 4px 10px 6px;\n  overflow: hidden;\n}\n#CookieMgrMenu .ca-table {\n  width: 100%;\n  border-collapse: collapse;\n  font-size: 11px;\n}\n#CookieMgrMenu .ca-table th {\n  text-align: right;\n  padding: 4px 8px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.06em;\n  color: #93866f;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.1);\n  white-space: nowrap;\n}\n#CookieMgrMenu .ca-table th:first-child,\n#CookieMgrMenu .ca-table td:first-child {\n  text-align: left;\n}\n#CookieMgrMenu .ca-table td {\n  text-align: right;\n  padding: 3px 8px;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.05);\n  white-space: nowrap;\n  color: #d8cbb0;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrMenu .ca-table tr.strong td {\n  color: #fff3cf;\n  font-weight: bold;\n}\n#CookieMgrMenu .ca-table tbody tr:hover td {\n  background: rgba(255, 255, 255, 0.04);\n}\n#CookieMgrMenu .ca-sw.ca-sw-dash,\n#CookieMgrLayer .ca-sw.ca-sw-dash {\n  width: 10px;\n  height: 0;\n  border-radius: 0;\n  border-top: 2px dashed;\n  box-shadow: none;\n  vertical-align: 2px;\n}\n#CookieMgrMenu .ca-chip .ca-ico {\n  vertical-align: -2px;\n}\n\n/* ---------- Events page ---------- */\n\n#CookieMgrMenu .ca-table td.pos {\n  color: #9be89b;\n}\n#CookieMgrMenu .ca-table td.neg {\n  color: #ff9a8a;\n}\n#CookieMgrMenu .ca-table tr.muted td {\n  color: #6f6555;\n}\n#CookieMgrMenu .ca-ev-dot {\n  display: inline-flex;\n  width: 16px;\n  margin-right: 5px;\n  vertical-align: -2px;\n}\n#CookieMgrMenu .ca-ev-chip em {\n  font-style: normal;\n  opacity: 0.6;\n  font-weight: normal;\n}\n#CookieMgrMenu .ca-ev-chip .ca-ico {\n  color: var(--c);\n}\n#CookieMgrMenu .ca-ev-chip:not(.on) {\n  opacity: 0.5;\n}\n#CookieMgrMenu .ca-ev-chip:not(.on) .ca-ico {\n  color: inherit;\n}\n#CookieMgrMenu .ca-search {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  flex: 1 1 160px;\n  padding: 3px 8px;\n  color: #93866f;\n  background: rgba(0, 0, 0, 0.35);\n  border: 1px solid rgba(255, 220, 150, 0.2);\n  border-radius: 12px;\n}\n#CookieMgrMenu .ca-search input {\n  flex: 1;\n  min-width: 0;\n  font: 12px Tahoma, Arial, sans-serif;\n  color: #f0e2c0;\n  background: transparent;\n  border: none;\n  outline: none;\n}\n#CookieMgrMenu .ca-ev-list {\n  max-height: 420px;\n  overflow-y: auto;\n  padding: 0 6px 8px;\n}\n#CookieMgrMenu .ca-ev-row {\n  display: flex;\n  align-items: baseline;\n  gap: 8px;\n  padding: 4px 8px;\n  font-size: 11px;\n  color: #d8cbb0;\n  border-left: 2px solid var(--c);\n  border-bottom: 1px solid rgba(255, 255, 255, 0.04);\n}\n#CookieMgrMenu .ca-ev-row:hover {\n  background: rgba(255, 255, 255, 0.04);\n}\n#CookieMgrMenu .ca-ev-ico {\n  flex: none;\n  color: var(--c);\n  align-self: center;\n  display: inline-flex;\n}\n#CookieMgrMenu .ca-ev-ico .ca-ico-cookie {\n  width: 14px !important;\n  height: 14px !important;\n}\n#CookieMgrMenu .ca-ev-time {\n  flex: none;\n  color: #93866f;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrMenu .ca-ev-text {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n#CookieMgrMenu .ca-ev-text b {\n  color: #f0e2c0;\n}\n#CookieMgrMenu .ca-ev-text span {\n  color: #a39477;\n}\n#CookieMgrMenu .ca-ev-cookies {\n  flex: none;\n  font-weight: bold;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrMenu .ca-ev-cookies.pos {\n  color: #9be89b;\n}\n#CookieMgrMenu .ca-ev-cookies.neg {\n  color: #ff9a8a;\n}\n#CookieMgrMenu .ca-ev-more {\n  display: block;\n  margin: 8px auto 0;\n}\n#CookieMgrMenu .ca-ev-empty {\n  display: block;\n  padding: 12px;\n  text-align: center;\n}\n\n/* ---------- Macros ---------- */\n\n#CookieMgrMenu .ca-icon-ico {\n  color: #ffd98a;\n  border-radius: 50%;\n  background: radial-gradient(circle at 35% 30%, rgba(255, 230, 170, 0.22), rgba(0, 0, 0, 0.3));\n  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.3);\n}\n#CookieMgrMenu .ca-icon-ico.small {\n  flex: 0 0 20px;\n  width: 20px;\n  height: 20px;\n}\n#CookieMgrMenu .ca-badge {\n  display: inline-block;\n  margin-left: 6px;\n  padding: 1px 7px;\n  font:\n    bold 9px Tahoma,\n    Arial,\n    sans-serif;\n  letter-spacing: 0.04em;\n  text-transform: uppercase;\n  vertical-align: 2px;\n  color: #c9bba0;\n  border-radius: 8px;\n  background: rgba(255, 255, 255, 0.07);\n  border: 1px solid rgba(255, 255, 255, 0.12);\n}\n#CookieMgrMenu .ca-badge-when {\n  color: #9fd3ff;\n  border-color: rgba(120, 190, 255, 0.35);\n}\n#CookieMgrMenu .ca-badge-once {\n  color: #ffd27a;\n  border-color: rgba(255, 200, 100, 0.35);\n}\n#CookieMgrMenu .ca-steps {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 3px;\n  margin-top: 4px;\n}\n#CookieMgrMenu .ca-step {\n  display: inline-flex;\n  align-items: center;\n  gap: 4px;\n  padding: 1px 7px 1px 5px;\n  font-size: 10px;\n  color: #d8cbb0;\n  border-radius: 9px;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px solid rgba(255, 220, 150, 0.15);\n}\n#CookieMgrMenu .ca-step .ca-ico {\n  color: #ffd98a;\n}\n#CookieMgrMenu .ca-step .ca-ico-cookie {\n  width: 12px !important;\n  height: 12px !important;\n}\n#CookieMgrMenu .ca-step-arrow {\n  color: #93866f;\n  font-weight: bold;\n}\n#CookieMgrMenu .ca-macro-status {\n  margin-top: 3px;\n  font-size: 10px;\n  color: #8fd18f;\n}\n#CookieMgrMenu .ca-macro-status:empty {\n  display: none;\n}\n#CookieMgrMenu .ca-macro:not(.on) .ca-macro-status {\n  color: #93866f;\n}\n#CookieMgrMenu .ca-iconbtn {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  min-width: 24px;\n  height: 24px;\n  padding: 0 4px;\n  font-size: 10px;\n  color: #b9ab93;\n  background: rgba(0, 0, 0, 0.25);\n  border: 1px solid rgba(255, 220, 150, 0.15);\n  border-radius: 6px;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-iconbtn:hover:not(:disabled) {\n  color: #fff3cf;\n  border-color: rgba(255, 220, 150, 0.45);\n}\n#CookieMgrMenu .ca-iconbtn:disabled {\n  opacity: 0.3;\n  cursor: default;\n}\n#CookieMgrMenu .ca-iconbtn.on,\n#CookieMgrMenu .ca-fav.on {\n  color: #ffd54a;\n  border-color: rgba(255, 213, 74, 0.55);\n}\n#CookieMgrMenu .ca-btn-run .ca-ico {\n  vertical-align: -1px;\n}\n\n/* status block (\"Running now\", also a widget) */\n.ca-status-step {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  margin: 3px 0 0 27px;\n  font-size: 10.5px;\n  color: #c9bba0;\n}\n.ca-status-step .ca-ico {\n  color: #93866f;\n}\n.ca-status-step.hot .ca-ico {\n  color: #7fe08b;\n  filter: drop-shadow(0 0 3px rgba(127, 224, 139, 0.8));\n}\n.ca-status-step.err {\n  color: #ff9a8a;\n}\n.ca-status-step.idle {\n  opacity: 0.55;\n}\n.ca-status-name {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n.ca-status-val {\n  flex: none;\n  font-variant-numeric: tabular-nums;\n  color: #a39477;\n}\n\n/* editor */\n#CookieMgrMenu .ca-editor {\n  box-shadow:\n    0 0 0 1px rgba(255, 210, 120, 0.45),\n    0 0 18px rgba(255, 200, 100, 0.15);\n}\n#CookieMgrMenu .ca-editor-body {\n  padding: 4px 14px 12px;\n}\n#CookieMgrMenu .ca-field {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  font-size: 11px;\n  color: #b9ab93;\n}\n#CookieMgrMenu .ca-field em {\n  font-style: normal;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-field-label {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  min-width: 64px;\n  font:\n    bold 11px Tahoma,\n    Arial,\n    sans-serif;\n  color: #e8d7b0;\n}\n#CookieMgrMenu .ca-hint {\n  font-size: 10.5px;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-editor input[type='text'],\n#CookieMgrMenu .ca-editor input[type='number'],\n#CookieMgrMenu .ca-editor select {\n  font: 12px Tahoma, Arial, sans-serif;\n  color: #f0e2c0;\n  background: rgba(0, 0, 0, 0.45);\n  border: 1px solid rgba(255, 220, 150, 0.25);\n  border-radius: 4px;\n  padding: 3px 6px;\n}\n#CookieMgrMenu .ca-editor input[type='number'] {\n  width: 80px;\n}\n#CookieMgrMenu .ca-editor select option,\n#CookieMgrMenu .ca-editor select optgroup {\n  background: #1c150d;\n  color: #f0e2c0;\n}\n#CookieMgrMenu .ca-iconpick {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 4px;\n}\n#CookieMgrMenu .ca-step-n {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 18px;\n  height: 18px;\n  font:\n    bold 10px Tahoma,\n    Arial,\n    sans-serif;\n  color: #1c150d;\n  background: #ffd98a;\n  border-radius: 50%;\n}\n#CookieMgrMenu .ca-editor-error {\n  margin: 6px 0;\n  padding: 5px 9px;\n  font-size: 11px;\n  color: #ffd2cc;\n  background: rgba(229, 72, 77, 0.18);\n  border: 1px solid rgba(229, 72, 77, 0.5);\n  border-radius: 5px;\n}\n\n/* ---------- Widgets (left panel) ---------- */\n\n#CookieMgrWidgets {\n  position: absolute;\n  inset: 0;\n  /* above the game's big-cookie click target (#bigCookie, 10000) so widgets dragged over the\n     cookie can still be grabbed; below its popups (20000+), golden cookies, notes and tooltips */\n  z-index: 15000;\n  pointer-events: none;\n  font-family: Tahoma, Arial, sans-serif;\n}\n#CookieMgrWidgets.ca-hidden,\n#game.ascending #CookieMgrWidgets,\n#game.ascendIntro #CookieMgrWidgets,\n#game.reincarnating #CookieMgrWidgets {\n  display: none;\n}\n#CookieMgrWidgets .ca-w {\n  position: absolute;\n  pointer-events: auto;\n  box-sizing: border-box;\n  max-width: calc(100% - 4px);\n  color: #e8d7b0;\n  background:\n    linear-gradient(to bottom, rgba(70, 45, 22, 0.92), rgba(28, 18, 9, 0.92)),\n    #1c120a;\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 6px;\n  box-shadow:\n    0 4px 14px rgba(0, 0, 0, 0.7),\n    inset 0 1px 0 rgba(255, 255, 255, 0.15);\n  user-select: none;\n}\n#CookieMgrWidgets .ca-w.dragging {\n  box-shadow:\n    0 8px 24px rgba(0, 0, 0, 0.85),\n    0 0 14px rgba(255, 215, 110, 0.35);\n  opacity: 0.95;\n}\n#CookieMgrWidgets .ca-w-head {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  padding: 3px 4px 3px 8px;\n  cursor: grab;\n  border-bottom: 1px solid rgba(255, 220, 150, 0.18);\n  color: #ffd98a;\n}\n#CookieMgrWidgets.locked .ca-w-head {\n  cursor: default;\n}\n#CookieMgrWidgets .ca-w.collapsed .ca-w-head {\n  border-bottom: none;\n}\n#CookieMgrWidgets .ca-w-title {\n  flex: 1;\n  font-family: 'Merriweather', Georgia, serif;\n  font-variant: small-caps;\n  font-size: 13px;\n  color: #fff;\n  text-shadow: 0 1px 2px #000;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n#CookieMgrWidgets .ca-w-btn {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 18px;\n  height: 18px;\n  padding: 0;\n  font-size: 10px;\n  color: #b9ab93;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px solid rgba(255, 220, 150, 0.15);\n  border-radius: 4px;\n  cursor: pointer;\n  opacity: 0;\n  transition: opacity 0.15s;\n}\n#CookieMgrWidgets .ca-w:hover .ca-w-btn {\n  opacity: 1;\n}\n#CookieMgrWidgets .ca-w-btn:hover {\n  color: #fff3cf;\n}\n#CookieMgrWidgets .ca-w-body {\n  padding: 6px 8px 8px;\n  max-height: 320px;\n  overflow-y: auto;\n}\n#CookieMgrWidgets .ca-w.collapsed .ca-w-body {\n  display: none;\n}\n#CookieMgrWidgets .ca-w-empty {\n  font-size: 11px;\n  color: #93866f;\n  line-height: 1.4;\n}\n/* bare widgets: no frame, dragged from anywhere */\n#CookieMgrWidgets .ca-w.ca-w-bare {\n  background: none;\n  border: none;\n  box-shadow: none;\n  cursor: grab;\n}\n#CookieMgrWidgets.locked .ca-w.ca-w-bare {\n  cursor: default;\n}\n#CookieMgrWidgets .ca-w-bare > .ca-w-body {\n  padding: 0;\n  max-height: none;\n  overflow: visible;\n}\n#CookieMgrWidgets .ca-w-x {\n  position: absolute;\n  top: -6px;\n  right: -6px;\n  z-index: 2;\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 15px;\n  height: 15px;\n  padding: 0;\n  color: #f0e2c0;\n  background: #3a2414;\n  border: 1px solid #875526;\n  border-radius: 50%;\n  cursor: pointer;\n  opacity: 0;\n  transition: opacity 0.15s;\n}\n#CookieMgrWidgets .ca-w-bare:hover .ca-w-x {\n  opacity: 1;\n}\n#CookieMgrWidgets .ca-w-bare.dragging .ca-w-x {\n  opacity: 0;\n}\n\n/* a macro's own button */\n#CookieMgrWidgets .ca-wb {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  width: 38px;\n  height: 38px;\n  padding: 0;\n  border-radius: 50%;\n  cursor: inherit;\n  background: radial-gradient(circle at 35% 30%, rgba(110, 72, 36, 0.95), rgba(28, 18, 9, 0.95));\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  box-shadow:\n    0 3px 8px rgba(0, 0, 0, 0.7),\n    inset 0 1px 0 rgba(255, 255, 255, 0.2);\n  transition:\n    box-shadow 0.2s,\n    transform 0.1s,\n    filter 0.2s;\n}\n#CookieMgrWidgets .ca-wb:not(.on):not(.once) {\n  filter: grayscale(0.6) brightness(0.8);\n}\n#CookieMgrWidgets .ca-wb:hover {\n  filter: none;\n  box-shadow:\n    0 3px 10px rgba(0, 0, 0, 0.8),\n    0 0 10px rgba(255, 215, 110, 0.45),\n    inset 0 1px 0 rgba(255, 255, 255, 0.25);\n}\n#CookieMgrWidgets .ca-wb.on {\n  box-shadow:\n    0 3px 8px rgba(0, 0, 0, 0.7),\n    0 0 0 2px #1a3d12,\n    0 0 0 4px #4dff5e,\n    0 0 16px 2px rgba(77, 255, 94, 0.75);\n}\n#CookieMgrWidgets .ca-wb:active {\n  transform: scale(0.94);\n}\n#CookieMgrWidgets .ca-wb .ca-icon,\n#CookieMgrWidgets .ca-wb .ca-icon-ico {\n  flex: 0 0 26px;\n  width: 26px;\n  height: 26px;\n  background: none;\n  box-shadow: none;\n}\n#CookieMgrWidgets .ca-wb .ca-img {\n  width: 26px;\n  height: 26px;\n}\n#CookieMgrWidgets .ca-wb .ca-sprite {\n  transform: scale(0.54);\n}\n#CookieMgrWidgets .ca-wb .ca-icon-ico .ca-ico {\n  width: 20px;\n  height: 20px;\n}\n#CookieMgrWidgets .ca-wb-label {\n  position: absolute;\n  top: 100%;\n  left: 50%;\n  margin-top: 4px;\n  padding: 2px 7px;\n  font:\n    bold 10px Tahoma,\n    Arial,\n    sans-serif;\n  color: #fff3cf;\n  white-space: nowrap;\n  text-shadow: 0 1px 1px #000;\n  background: rgba(20, 12, 6, 0.92);\n  border: 1px solid rgba(255, 220, 150, 0.35);\n  border-radius: 8px;\n  transform: translateX(-50%) translateY(-3px);\n  opacity: 0;\n  pointer-events: none;\n  transition:\n    opacity 0.15s,\n    transform 0.15s;\n}\n#CookieMgrWidgets .ca-wb-label b,\n#CookieMgrWidgets .ca-wb-label em {\n  display: block;\n  text-align: center;\n}\n#CookieMgrWidgets .ca-wb-label em {\n  font-style: normal;\n  font-weight: normal;\n  font-size: 9.5px;\n  color: #b9ab93;\n}\n#CookieMgrWidgets .ca-wb-label em.on {\n  color: #7dff8a;\n}\n#CookieMgrWidgets .ca-w-macro:hover .ca-wb-label {\n  opacity: 1;\n  transform: translateX(-50%) translateY(0);\n}\n#CookieMgrWidgets .ca-w-macro.dragging .ca-wb-label {\n  opacity: 0;\n}\n\n/* \"Running now\" as a status bar */\n#CookieMgrWidgets .ca-w-status > .ca-w-body {\n  display: flex;\n  align-items: center;\n  gap: 4px;\n  min-height: 30px;\n  padding: 3px 8px 3px 6px;\n  background: linear-gradient(to bottom, rgba(70, 45, 22, 0.9), rgba(28, 18, 9, 0.9));\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 16px;\n  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.7);\n}\n#CookieMgrWidgets .ca-wbar-lead {\n  display: inline-flex;\n  color: #93866f;\n  margin-right: 2px;\n}\n#CookieMgrWidgets .ca-wbar-idle {\n  font-size: 10px;\n  font-style: italic;\n  color: #93866f;\n}\n#CookieMgrWidgets .ca-wbar-item {\n  position: relative;\n  display: inline-flex;\n  border-radius: 50%;\n  cursor: pointer;\n  box-shadow:\n    0 0 0 2px #4dff5e,\n    0 0 7px rgba(77, 255, 94, 0.6);\n}\n#CookieMgrWidgets .ca-wbar-item .ca-icon,\n#CookieMgrWidgets .ca-wbar-item .ca-icon-ico {\n  flex: 0 0 22px;\n  width: 22px;\n  height: 22px;\n}\n#CookieMgrWidgets .ca-wbar-item .ca-img {\n  width: 22px;\n  height: 22px;\n}\n#CookieMgrWidgets .ca-wbar-item .ca-sprite {\n  transform: scale(0.45);\n}\n#CookieMgrWidgets .ca-wbar-item.hot {\n  animation: caWbarPulse 1s ease-in-out infinite;\n}\n#CookieMgrWidgets .ca-wbar-item.err {\n  box-shadow: 0 0 0 2px rgba(229, 72, 77, 0.85);\n}\n@keyframes caWbarPulse {\n  0%,\n  100% {\n    box-shadow:\n      0 0 0 2px #4dff5e,\n      0 0 7px rgba(77, 255, 94, 0.6);\n  }\n  50% {\n    box-shadow:\n      0 0 0 3px #8dff98,\n      0 0 16px 3px rgba(77, 255, 94, 0.9);\n  }\n}\n#CookieMgrWidgets .ca-icon {\n  flex: 0 0 22px;\n  width: 22px;\n  height: 22px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  overflow: hidden;\n}\n#CookieMgrWidgets .ca-img {\n  width: 22px;\n  height: 22px;\n  background-size: contain;\n  background-repeat: no-repeat;\n  background-position: center;\n}\n#CookieMgrWidgets .ca-sprite {\n  flex: none;\n  width: 48px;\n  height: 48px;\n  background-image: url(img/icons.png);\n  transform: scale(0.45);\n}\n#CookieMgrWidgets .ca-icon-ico {\n  color: #ffd98a;\n  border-radius: 50%;\n  background: radial-gradient(circle at 35% 30%, rgba(255, 230, 170, 0.22), rgba(0, 0, 0, 0.3));\n}\n/* status block inside a widget */\n#CookieMgrWidgets .ca-status-step {\n  margin-left: 24px;\n}\n#CookieMgrWidgets .ca-iconbtn {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 18px;\n  height: 18px;\n  padding: 0;\n  color: #b9ab93;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px solid rgba(255, 220, 150, 0.15);\n  border-radius: 4px;\n  cursor: pointer;\n}\n/* quick stats */\n#CookieMgrWidgets .ca-w-stat {\n  display: flex;\n  justify-content: space-between;\n  gap: 10px;\n  padding: 2px 0;\n  font-size: 11px;\n  border-bottom: 1px solid rgba(255, 255, 255, 0.05);\n}\n#CookieMgrWidgets .ca-w-stat:last-child {\n  border-bottom: none;\n}\n#CookieMgrWidgets .ca-w-stat span {\n  color: #a39477;\n}\n#CookieMgrWidgets .ca-w-stat b {\n  color: #fff3cf;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrWidgets .ca-w-stat em {\n  font-style: normal;\n  font-weight: normal;\n  color: #93866f;\n}\n/* latest events */\n#CookieMgrWidgets .ca-ev-row {\n  display: flex;\n  align-items: baseline;\n  gap: 6px;\n  padding: 2px 4px;\n  font-size: 10.5px;\n  color: #d8cbb0;\n  border-left: 2px solid var(--c);\n}\n#CookieMgrWidgets .ca-ev-ico {\n  flex: none;\n  align-self: center;\n  display: inline-flex;\n  color: var(--c);\n}\n#CookieMgrWidgets .ca-ev-ico .ca-ico-cookie {\n  width: 12px !important;\n  height: 12px !important;\n}\n#CookieMgrWidgets .ca-ev-time {\n  flex: none;\n  color: #93866f;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrWidgets .ca-ev-text {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n#CookieMgrWidgets .ca-ev-text span {\n  display: none;\n}\n#CookieMgrWidgets .ca-ev-cookies {\n  flex: none;\n  font-weight: bold;\n}\n#CookieMgrWidgets .ca-ev-cookies.pos {\n  color: #9be89b;\n}\n#CookieMgrWidgets .ca-ev-cookies.neg {\n  color: #ff9a8a;\n}\n#CookieMgrMenu .ca-card-meta .ca-iconbtn {\n  margin-left: 4px;\n}\n\n/* ---------- Wizard tower ---------- */\n\n#CookieMgrMenu .ca-magic {\n  position: relative;\n  height: 18px;\n  margin: 6px 14px 4px;\n  border-radius: 9px;\n  overflow: hidden;\n  background: rgba(0, 0, 0, 0.5);\n  box-shadow:\n    inset 0 1px 3px rgba(0, 0, 0, 0.8),\n    0 0 0 1px rgba(179, 136, 255, 0.35);\n}\n#CookieMgrMenu .ca-magic-fill {\n  position: absolute;\n  inset: 0 auto 0 0;\n  width: 0;\n  background: linear-gradient(to bottom, #c9a6ff, #7c4dff);\n  box-shadow: 0 0 10px rgba(179, 136, 255, 0.7);\n  transition: width 0.4s;\n}\n#CookieMgrMenu .ca-magic-text {\n  position: relative;\n  text-align: center;\n  font:\n    bold 11px/18px Tahoma,\n    Arial,\n    sans-serif;\n  color: #fff;\n  text-shadow:\n    0 0 3px #000,\n    0 1px 1px #000;\n}\n#CookieMgrMenu .ca-spells {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));\n  gap: 8px;\n  padding: 6px 12px 12px;\n}\n#CookieMgrMenu .ca-spell {\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  gap: 3px;\n  padding: 8px 6px;\n  text-align: center;\n  border-radius: 8px;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px solid rgba(179, 136, 255, 0.2);\n  opacity: 0.75;\n  transition:\n    opacity 0.2s,\n    box-shadow 0.2s;\n}\n#CookieMgrMenu .ca-spell.ready {\n  opacity: 1;\n  border-color: rgba(179, 136, 255, 0.55);\n  box-shadow: 0 0 10px rgba(179, 136, 255, 0.25);\n}\n#CookieMgrMenu .ca-spell-ico {\n  display: block;\n  width: 48px;\n  height: 48px;\n  margin: -6px 0 -8px;\n  transform: scale(0.75);\n}\n#CookieMgrMenu .ca-spell:not(.ready) .ca-spell-ico {\n  filter: grayscale(0.7) brightness(0.75);\n}\n#CookieMgrMenu .ca-spell-name {\n  font-family: 'Merriweather', Georgia, serif;\n  font-size: 12px;\n  color: #f0e2c0;\n}\n#CookieMgrMenu .ca-spell-meta {\n  min-height: 26px;\n  font-size: 10px;\n  color: #a39477;\n}\n#CookieMgrMenu .ca-spell-actions {\n  display: flex;\n  gap: 5px;\n  align-items: center;\n}\n\n/* toolbar inside the Grimoire */\n#cm-grimoire-toolbar {\n  position: relative;\n  z-index: 10;\n  display: flex;\n  flex-wrap: wrap;\n  justify-content: center;\n  gap: 6px;\n  margin: 6px auto 2px;\n}\n#cm-grimoire-toolbar .cm-gt-btn {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  padding: 3px 9px;\n  font:\n    11px Merriweather,\n    Georgia,\n    serif;\n  color: #ccc;\n  cursor: pointer;\n  background: rgba(0, 0, 0, 0.45);\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 4px;\n  text-shadow: 0 1px 1px #000;\n}\n#cm-grimoire-toolbar .cm-gt-btn:hover {\n  color: #fff;\n  box-shadow: 0 0 6px rgba(255, 220, 150, 0.4);\n}\n#cm-grimoire-toolbar .cm-gt-btn.on {\n  color: #e9d8ff;\n  background: rgba(124, 77, 255, 0.35);\n  box-shadow: 0 0 8px rgba(179, 136, 255, 0.55);\n}\n\n/* ---------- v2.4: hover stacking, status popups, groups, stages, prestige target ---------- */\n\n/* whatever you hover comes to the front, so its label/popup is never under a neighbour */\n#CookieMgrWidgets .ca-w:hover,\n#CookieMgrWidgets .ca-w.dragging {\n  z-index: 20;\n}\n#CookieMgrWidgets .ca-w-macro.pop-below .ca-wb-label {\n  top: auto;\n  bottom: 100%;\n  margin: 0 0 4px;\n}\n\n/* styled popup over a status-bar icon */\n#CookieMgrWidgets .ca-wpop,\n#CookieMgrLayer .ca-wpop {\n  position: absolute;\n  left: 50%;\n  bottom: calc(100% + 10px);\n  z-index: 30;\n  display: none;\n  width: 250px;\n  padding: 7px 9px 6px;\n  text-align: left;\n  font-size: 10.5px;\n  line-height: 1.35;\n  color: #e8d7b0;\n  background: linear-gradient(to bottom, rgba(64, 40, 18, 0.98), rgba(24, 15, 7, 0.98));\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 7px;\n  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.85);\n  transform: translateX(-50%);\n  cursor: default;\n  pointer-events: none;\n}\n#CookieMgrWidgets .ca-wbar-item:hover .ca-wpop {\n  display: block;\n}\n#CookieMgrWidgets .ca-w-status:not(.pop-left) .ca-wpop {\n  left: -6px;\n  transform: none;\n}\n#CookieMgrWidgets .ca-w-status.pop-left .ca-wpop {\n  left: auto;\n  right: -6px;\n  transform: none;\n}\n#CookieMgrWidgets .ca-w-status.pop-below .ca-wpop {\n  bottom: auto;\n  top: calc(100% + 10px);\n}\n#CookieMgrWidgets .ca-wpop-head,\n#CookieMgrLayer .ca-wpop-head {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  font-size: 12px;\n  color: #fff3cf;\n}\n#CookieMgrWidgets .ca-wpop-head .ca-icon,\n#CookieMgrWidgets .ca-wpop-head .ca-icon-ico,\n#CookieMgrLayer .ca-wpop-head .ca-icon,\n#CookieMgrLayer .ca-wpop-head .ca-icon-ico {\n  flex: 0 0 18px;\n  width: 18px;\n  height: 18px;\n}\n#CookieMgrWidgets .ca-wpop-head .ca-sprite,\n#CookieMgrLayer .ca-wpop-head .ca-sprite {\n  transform: scale(0.38);\n}\n#CookieMgrWidgets .ca-wpop-sub,\n#CookieMgrLayer .ca-wpop-sub {\n  display: block;\n  margin: 1px 0 5px 24px;\n  color: #93866f;\n}\n#CookieMgrWidgets .ca-wpop-row,\n#CookieMgrLayer .ca-wpop-row {\n  display: flex;\n  align-items: center;\n  gap: 5px;\n  padding: 2px 0;\n  border-top: 1px solid rgba(255, 255, 255, 0.06);\n}\n#CookieMgrWidgets .ca-wpop-row .ca-ico,\n#CookieMgrLayer .ca-wpop-row .ca-ico {\n  color: #93866f;\n}\n#CookieMgrWidgets .ca-wpop-row.hot .ca-ico,\n#CookieMgrLayer .ca-wpop-row.hot .ca-ico {\n  color: #4dff5e;\n}\n#CookieMgrWidgets .ca-wpop-row.err,\n#CookieMgrLayer .ca-wpop-row.err {\n  color: #ff9a8a;\n}\n#CookieMgrWidgets .ca-wpop-name,\n#CookieMgrLayer .ca-wpop-name {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n#CookieMgrWidgets .ca-wpop-val,\n#CookieMgrLayer .ca-wpop-val {\n  flex: none;\n  color: #c9bba0;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrWidgets .ca-wpop-foot,\n#CookieMgrLayer .ca-wpop-foot {\n  display: block;\n  margin-top: 4px;\n  font-size: 9.5px;\n  font-style: italic;\n  color: #7d7262;\n}\n\n/* group members (macro rows and the editor) */\n#CookieMgrMenu .ca-step-member .ca-icon,\n#CookieMgrMenu .ca-member .ca-icon {\n  flex: 0 0 16px;\n  width: 16px;\n  height: 16px;\n  filter: none;\n}\n#CookieMgrMenu .ca-step-member .ca-img,\n#CookieMgrMenu .ca-member .ca-img {\n  width: 16px;\n  height: 16px;\n}\n#CookieMgrMenu .ca-step-member .ca-sprite,\n#CookieMgrMenu .ca-member .ca-sprite {\n  transform: scale(0.33);\n}\n#CookieMgrMenu .ca-step-member .ca-icon-ico .ca-ico,\n#CookieMgrMenu .ca-member .ca-icon-ico .ca-ico {\n  width: 11px;\n  height: 11px;\n}\n#CookieMgrMenu .ca-members {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));\n  gap: 5px;\n  margin: 4px 0 8px;\n}\n#CookieMgrMenu .ca-member {\n  display: flex;\n  align-items: center;\n  gap: 7px;\n  padding: 5px 8px;\n  font-size: 11px;\n  color: #c9bba0;\n  border-radius: 6px;\n  background: rgba(0, 0, 0, 0.25);\n  border: 1px solid rgba(255, 220, 150, 0.12);\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-member.on {\n  color: #fff3cf;\n  border-color: rgba(77, 255, 94, 0.55);\n  background: rgba(77, 255, 94, 0.08);\n}\n\n/* CpS stages table */\n#CookieMgrMenu .ca-stage-n {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 16px;\n  height: 16px;\n  margin-right: 7px;\n  font:\n    bold 10px Tahoma,\n    Arial,\n    sans-serif;\n  color: #10141a;\n  border-radius: 50%;\n  vertical-align: 1px;\n}\n#CookieMgrMenu .ca-stage-x {\n  color: #ffd98a;\n  background: rgba(255, 217, 138, 0.15);\n  border: 1px solid rgba(255, 217, 138, 0.4);\n}\n#CookieMgrMenu .ca-row-sub {\n  display: block;\n  margin: 1px 0 0 23px;\n  font-size: 9.5px;\n  font-weight: normal;\n  color: #8a7e69;\n  white-space: normal;\n}\n#CookieMgrMenu .ca-stages tr.mult td {\n  color: #ffd98a;\n}\n\n/* prestige target */\n#CookieMgrMenu .ca-target {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 8px;\n  padding: 4px 14px 8px;\n}\n#CookieMgrMenu .ca-target input[type='number'],\n#CookieMgrMenu .ca-target select {\n  font: 13px Tahoma, Arial, sans-serif;\n  color: #f0e2c0;\n  background: rgba(0, 0, 0, 0.45);\n  border: 1px solid rgba(255, 220, 150, 0.3);\n  border-radius: 4px;\n  padding: 3px 6px;\n}\n#CookieMgrMenu .ca-target input[type='number'] {\n  width: 70px;\n}\n#CookieMgrMenu .ca-target select option {\n  background: #1c150d;\n}\n#CookieMgrMenu .ca-progress {\n  position: relative;\n  height: 14px;\n  margin: 2px 14px 10px;\n  border-radius: 7px;\n  overflow: hidden;\n  background: rgba(0, 0, 0, 0.5);\n  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.8);\n}\n#CookieMgrMenu .ca-progress-fill {\n  position: absolute;\n  inset: 0 auto 0 0;\n  background: linear-gradient(to bottom, #e6dcff, #9c7cff);\n  box-shadow: 0 0 8px rgba(201, 188, 255, 0.7);\n  transition: width 0.4s;\n}\n#CookieMgrMenu .ca-progress-text {\n  position: relative;\n  text-align: center;\n  font:\n    bold 10px/14px Tahoma,\n    Arial,\n    sans-serif;\n  color: #fff;\n  text-shadow: 0 0 3px #000;\n}\n\n/* tables that update live: fixed column widths, so changing numbers never resize them */\n#CookieMgrMenu .ca-table.ca-stages {\n  table-layout: fixed;\n}\n#CookieMgrMenu .ca-table.ca-stages th:first-child,\n#CookieMgrMenu .ca-table.ca-stages td:first-child {\n  width: 28%;\n}\n#CookieMgrMenu .ca-table.ca-stages td,\n#CookieMgrMenu .ca-table.ca-stages th {\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n#CookieMgrMenu .ca-table.ca-stages td:first-child {\n  white-space: normal;\n}\n#CookieMgrMenu .ca-stages tr.sep td {\n  border-top: 1px solid rgba(255, 217, 138, 0.25);\n}\n\n/* ---------- v2.6: resizable widgets ---------- */\n\n#CookieMgrWidgets .ca-w {\n  transform-origin: 0 0; /* scaling and the percentage translate both anchor at the top-left */\n}\n#CookieMgrWidgets .ca-w-resize {\n  position: absolute;\n  right: -3px;\n  bottom: -3px;\n  z-index: 3;\n  width: 12px;\n  height: 12px;\n  cursor: nwse-resize;\n  opacity: 0;\n  transition: opacity 0.15s;\n  background:\n    linear-gradient(135deg, transparent 45%, rgba(255, 220, 150, 0.9) 45%, rgba(255, 220, 150, 0.9) 55%, transparent 55%),\n    linear-gradient(135deg, transparent 70%, rgba(255, 220, 150, 0.9) 70%, rgba(255, 220, 150, 0.9) 80%, transparent 80%);\n}\n#CookieMgrWidgets .ca-w:hover .ca-w-resize,\n#CookieMgrWidgets .ca-w.resizing .ca-w-resize {\n  opacity: 1;\n}\n#CookieMgrWidgets.locked .ca-w-resize {\n  display: none;\n}\n#CookieMgrWidgets .ca-w.resizing {\n  box-shadow:\n    0 6px 20px rgba(0, 0, 0, 0.8),\n    0 0 0 1px rgba(255, 220, 150, 0.6);\n}\n#CookieMgrWidgets .ca-w.ca-w-bare.resizing {\n  box-shadow: none;\n  outline: 1px dashed rgba(255, 220, 150, 0.6);\n  outline-offset: 3px;\n}\n/* framed boxes given a height: the body fills it and scrolls */\n#CookieMgrWidgets .ca-w.sized {\n  display: flex;\n  flex-direction: column;\n}\n#CookieMgrWidgets .ca-w.sized > .ca-w-body {\n  flex: 1;\n  min-height: 0;\n  max-height: none;\n}\n\n/* category chips on the Actual CpS / Cookie bank charts */\n#CookieMgrMenu .ca-togglegroup .ca-chip:not(.on) .ca-sw {\n  opacity: 0.35;\n}\n/* simple total rows (In, Out, Net, multipliers…): no subtitle, shorter */\n#CookieMgrMenu .ca-stages tr.thin td {\n  padding-top: 2px;\n  padding-bottom: 2px;\n}\n#CookieMgrMenu .ca-stages tr.thin .ca-stage-n {\n  width: 13px;\n  height: 13px;\n  font-size: 9px;\n}\n#CookieMgrMenu .ca-table td span.pos {\n  color: #9be89b;\n}\n#CookieMgrMenu .ca-table td span.neg {\n  color: #ff9a8a;\n}\n\n/* ---------- v2.8: spell feedback ---------- */\n\n/* spells you can't afford yet: still clickable, dimmed; a click shakes them */\n#CookieMgrMenu .ca-btn.ca-unaffordable {\n  opacity: 0.5;\n  filter: grayscale(0.6);\n}\n.ca-shake {\n  animation: caShake 0.45s ease-in-out;\n}\n@keyframes caShake {\n  0%,\n  100% {\n    transform: translateX(0);\n  }\n  20%,\n  60% {\n    transform: translateX(-4px);\n  }\n  40%,\n  80% {\n    transform: translateX(4px);\n  }\n}\n#CookieMgrWidgets .ca-wb.ca-shake {\n  box-shadow:\n    0 3px 8px rgba(0, 0, 0, 0.7),\n    0 0 0 3px #e5484d,\n    0 0 14px rgba(229, 72, 77, 0.8);\n}\n\n/* ---------- v2.9: round minigame widgets, widget settings ---------- */\n\n/* text size (a widget's settings): scales its text, labels and popups */\n#CookieMgrWidgets .ca-wt {\n  zoom: var(--wfs, 1);\n}\n#CookieMgrWidgets .ca-w-events {\n  max-height: 100%;\n}\n#CookieMgrWidgets .ca-w-stat em {\n  font-style: normal;\n  color: #93866f;\n}\n\n/* ⚙ next to the × on bare widgets */\n#CookieMgrWidgets .ca-w-x.ca-w-gear {\n  right: 11px;\n}\n\n/* the round widget: a ring (the timer), an icon in the middle, a label under it */\n#CookieMgrWidgets .ca-orb {\n  --ring: #d9c4ff;\n  --glow: rgba(179, 136, 255, 0.55);\n  --bg: rgba(40, 22, 70, 0.92);\n  position: relative;\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  width: 44px;\n  cursor: pointer;\n}\n#CookieMgrWidgets .ca-orb-garden {\n  --ring: #a8f06a;\n  --glow: rgba(150, 230, 90, 0.5);\n  --bg: rgba(26, 50, 16, 0.92);\n}\n#CookieMgrWidgets .ca-orb-market {\n  --ring: #6fe6ef;\n  --glow: rgba(80, 220, 230, 0.5);\n  --bg: rgba(12, 42, 48, 0.92);\n}\n#CookieMgrWidgets .ca-orb-pantheon {\n  --ring: #ffd36a;\n  --glow: rgba(255, 210, 110, 0.5);\n  --bg: rgba(60, 40, 14, 0.92);\n}\n#CookieMgrWidgets .ca-orb-ring {\n  display: block;\n  width: 44px;\n  height: 44px;\n  border-radius: 50%;\n  background: radial-gradient(circle, var(--bg) 60%, rgba(0, 0, 0, 0.6) 100%);\n  box-shadow:\n    0 3px 8px rgba(0, 0, 0, 0.7),\n    0 0 0 1px rgba(0, 0, 0, 0.6);\n  transform: rotate(-90deg);\n}\n#CookieMgrWidgets .ca-orb-track,\n#CookieMgrWidgets .ca-orb-fill {\n  fill: none;\n  stroke-width: 4;\n}\n#CookieMgrWidgets .ca-orb-track {\n  stroke: rgba(0, 0, 0, 0.55);\n}\n#CookieMgrWidgets .ca-orb-fill {\n  stroke: var(--ring);\n  stroke-linecap: round;\n  filter: drop-shadow(0 0 2px var(--glow));\n  transition: stroke-dashoffset 0.45s linear;\n}\n#CookieMgrWidgets .ca-orb-ico {\n  position: absolute;\n  top: 13px;\n  left: 13px;\n  width: 18px;\n  height: 18px;\n  color: var(--ring);\n  pointer-events: none;\n}\n#CookieMgrWidgets .ca-orb:hover .ca-orb-ring {\n  box-shadow:\n    0 3px 8px rgba(0, 0, 0, 0.7),\n    0 0 10px var(--glow);\n}\n#CookieMgrWidgets .ca-orb-label {\n  margin-top: 2px;\n  padding: 0 4px;\n  font-size: 10px;\n  font-weight: bold;\n  line-height: 13px;\n  white-space: nowrap;\n  color: #fff3cf;\n  text-shadow:\n    0 0 3px #000,\n    0 1px 2px #000;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrWidgets .ca-orb-label .pos {\n  color: #9be89b;\n}\n#CookieMgrWidgets .ca-orb-label .neg {\n  color: #ff9a8a;\n}\n/* garden: plants by stage, as four coloured dots with counts */\n#CookieMgrWidgets .ca-orb-dots {\n  display: flex;\n  gap: 3px;\n  margin-top: 1px;\n  font-size: 9px;\n  line-height: 10px;\n  color: #e8f5d8;\n  text-shadow: 0 0 2px #000;\n}\n#CookieMgrWidgets .ca-orb-dots span {\n  display: inline-flex;\n  align-items: center;\n  gap: 1px;\n}\n#CookieMgrWidgets .ca-orb-dots i {\n  width: 5px;\n  height: 5px;\n  border-radius: 50%;\n}\n#CookieMgrWidgets .ca-orb-dots .s0 i {\n  background: #6b8a52;\n}\n#CookieMgrWidgets .ca-orb-dots .s1 i {\n  background: #8fc25e;\n}\n#CookieMgrWidgets .ca-orb-dots .s2 i {\n  background: #b5ec6e;\n}\n#CookieMgrWidgets .ca-orb-dots .s3 i {\n  background: #eaff8a;\n  box-shadow: 0 0 4px #eaff8a;\n}\n/* pantheon: the three slotted spirits under the ring */\n#CookieMgrWidgets .ca-orb-gods {\n  display: flex;\n  gap: 1px;\n  margin-top: 1px;\n}\n#CookieMgrWidgets .ca-orb-god {\n  display: block;\n  width: 48px;\n  height: 48px;\n  margin: -17px;\n  transform: scale(0.29);\n  border-radius: 8px;\n}\n#CookieMgrWidgets .ca-orb-god.empty {\n  background: rgba(0, 0, 0, 0.45);\n  box-shadow: inset 0 0 0 3px rgba(255, 210, 110, 0.4);\n}\n/* hover details */\n#CookieMgrWidgets .ca-orb-pop,\n#CookieMgrLayer .ca-orb-pop {\n  width: 190px;\n  left: 50%;\n  transform: translateX(-50%);\n}\n#CookieMgrWidgets .ca-orb:hover .ca-orb-pop {\n  display: block;\n}\n#CookieMgrWidgets .ca-w.pop-below .ca-orb-pop {\n  bottom: auto;\n  top: calc(100% + 6px);\n}\n#CookieMgrWidgets .ca-w.dragging .ca-orb-pop,\n#CookieMgrWidgets .ca-w.resizing .ca-orb-pop {\n  display: none;\n}\n\n/* the widget settings editor (Widgets page) */\n#CookieMgrMenu .ca-weditor-body {\n  display: flex;\n  flex-direction: column;\n  gap: 6px;\n  padding: 4px 2px 2px;\n}\n#CookieMgrMenu .ca-range-val {\n  min-width: 38px;\n  color: #c9bba0;\n  font-variant-numeric: tabular-nums;\n}\n#CookieMgrMenu .ca-weditor input[type='text'],\n#CookieMgrMenu .ca-weditor input[type='number'] {\n  font: 12px Tahoma, Arial, sans-serif;\n  color: #f0e2c0;\n  background: rgba(0, 0, 0, 0.45);\n  border: 1px solid rgba(255, 220, 150, 0.25);\n  border-radius: 4px;\n  padding: 3px 6px;\n}\n\n/* ---------- v2.10: built-in macro choices (season, lump ripeness) ---------- */\n\n#CookieMgrMenu .ca-macro-options {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 8px;\n  margin-top: 5px;\n}\n#CookieMgrMenu .ca-macro-options select {\n  font: 11px Tahoma, Arial, sans-serif;\n  color: #f0e2c0;\n  background: rgba(0, 0, 0, 0.45);\n  border: 1px solid rgba(255, 220, 150, 0.25);\n  border-radius: 4px;\n  padding: 2px 5px;\n}\n#CookieMgrMenu .ca-macro-options select option {\n  background: #1c150d;\n  color: #f0e2c0;\n}\n\n/* ---------- v2.11: Garden page ---------- */\n\n#CookieMgrMenu .ca-garden-wrap {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 12px;\n  align-items: flex-start;\n}\n#CookieMgrMenu .ca-gplot {\n  display: grid;\n  grid-template-columns: repeat(6, 40px);\n  grid-auto-rows: 40px;\n  gap: 2px;\n  padding: 4px;\n  border-radius: 6px;\n  background: rgba(40, 26, 12, 0.6);\n  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.7);\n}\n#CookieMgrMenu .ca-gstats {\n  flex: 1 1 200px;\n}\n#CookieMgrMenu .ca-gtile {\n  position: relative;\n  border-radius: 4px;\n  background: rgba(92, 60, 30, 0.75);\n  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);\n}\n#CookieMgrMenu .ca-gtile.locked {\n  background: rgba(0, 0, 0, 0.25);\n  box-shadow: none;\n}\n#CookieMgrMenu .ca-gtile.off {\n  box-shadow: inset 0 0 0 2px #e5484d;\n}\n#CookieMgrMenu .ca-gtile:hover {\n  z-index: 5;\n  background: rgba(120, 82, 42, 0.85);\n}\n/* a 48px sprite from gardenPlants.png, shown at 40px */\n#CookieMgrMenu .ca-gs {\n  position: absolute;\n  left: 0;\n  top: 0;\n  width: 48px;\n  height: 48px;\n  zoom: 0.8333;\n  pointer-events: none;\n}\n#CookieMgrMenu .ca-gs.ghost {\n  opacity: 0.35;\n  filter: grayscale(0.5);\n}\n#CookieMgrMenu .ca-gdecay {\n  position: absolute;\n  right: 1px;\n  bottom: 1px;\n  padding: 0 2px;\n  font: bold 9px/11px Tahoma, Arial, sans-serif;\n  color: #ffe9a8;\n  background: rgba(0, 0, 0, 0.65);\n  border-radius: 3px;\n}\n#CookieMgrMenu .ca-gdecay.hi {\n  color: #ff9a8a;\n}\n#CookieMgrMenu .ca-gnew {\n  position: absolute;\n  left: 1px;\n  top: 1px;\n  color: #ffd36a;\n  filter: drop-shadow(0 0 2px #000);\n}\n/* tile details on hover (same look as the widget popups) */\n#CookieMgrMenu .ca-gpop,\n#CookieMgrLayer .ca-gpop {\n  position: absolute;\n  left: 50%;\n  bottom: calc(100% + 6px);\n  z-index: 30;\n  display: none;\n  width: 210px;\n  padding: 7px 9px 6px;\n  font-size: 10.5px;\n  line-height: 1.35;\n  text-align: left;\n  color: #e8d7b0;\n  background: linear-gradient(to bottom, rgba(64, 40, 18, 0.98), rgba(24, 15, 7, 0.98));\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 7px;\n  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.85);\n  transform: translateX(-50%);\n  pointer-events: none;\n}\n#CookieMgrMenu .ca-gtile:hover .ca-gpop {\n  display: block;\n}\n#CookieMgrMenu .ca-gpop .ca-wpop-head,\n#CookieMgrLayer .ca-gpop .ca-wpop-head {\n  display: block;\n  font-size: 12px;\n  color: #fff3cf;\n}\n#CookieMgrMenu .ca-gpop .ca-wpop-row,\n#CookieMgrLayer .ca-gpop .ca-wpop-row {\n  display: flex;\n  gap: 6px;\n  padding: 2px 0;\n  border-top: 1px solid rgba(255, 255, 255, 0.06);\n}\n#CookieMgrMenu .ca-gpop .ca-wpop-name,\n#CookieMgrLayer .ca-gpop .ca-wpop-name {\n  flex: 1;\n  color: #a39477;\n}\n#CookieMgrMenu .ca-gpop .ca-wpop-val,\n#CookieMgrLayer .ca-gpop .ca-wpop-val {\n  color: #fff3cf;\n  text-align: right;\n}\n\n/* the auto-gardener: a profile bar, four slots, the selected one in detail (v3.3) */\n#CookieMgrMenu .ca-gardener select,\n#CookieMgrMenu .ca-gardener .ca-gname {\n  font: 12px Tahoma, Arial, sans-serif;\n  color: #f0e2c0;\n  background: rgba(0, 0, 0, 0.45);\n  border: 1px solid rgba(255, 220, 150, 0.25);\n  border-radius: 4px;\n  padding: 3px 6px;\n  max-width: 260px;\n}\n#CookieMgrMenu .ca-gardener select option,\n#CookieMgrMenu .ca-gardener select optgroup {\n  background: #1c150d;\n}\n#CookieMgrMenu .ca-gprof,\n#CookieMgrMenu .ca-gdetail-head {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 6px;\n}\n#CookieMgrMenu .ca-gprof {\n  padding: 8px 6px;\n  margin: 6px 0;\n  border-radius: 6px;\n  background: rgba(0, 0, 0, 0.22);\n}\n#CookieMgrMenu .ca-gprof .ca-field {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  font-weight: bold;\n}\n#CookieMgrMenu .ca-gprof-desc {\n  flex: 1 1 100%;\n}\n#CookieMgrMenu .ca-gslots {\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));\n  gap: 6px;\n}\n#CookieMgrMenu .ca-gslot {\n  display: flex;\n  flex-direction: column;\n  align-items: flex-start;\n  gap: 4px;\n  min-width: 0;\n  padding: 7px 8px;\n  text-align: left;\n  font: 12px Tahoma, Arial, sans-serif;\n  color: #e8dcc0;\n  cursor: pointer;\n  border: 1px solid rgba(255, 220, 150, 0.14);\n  border-radius: 6px;\n  background: rgba(0, 0, 0, 0.28);\n  transition: border-color 0.15s, background 0.15s;\n}\n#CookieMgrMenu .ca-gslot:hover {\n  border-color: rgba(160, 230, 100, 0.4);\n}\n#CookieMgrMenu .ca-gslot.on {\n  border-color: rgba(160, 230, 100, 0.85);\n  background: rgba(60, 90, 30, 0.35);\n}\n#CookieMgrMenu .ca-gslot-k {\n  display: flex;\n  align-items: center;\n  gap: 4px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.04em;\n  color: #9fe06a;\n}\n#CookieMgrMenu .ca-gslot-k em {\n  font-style: normal;\n  text-transform: none;\n  letter-spacing: 0;\n  color: rgba(232, 220, 192, 0.5);\n}\n#CookieMgrMenu .ca-gslot-name {\n  font-size: 13px;\n  color: #fff3d6;\n}\n#CookieMgrMenu .ca-gslot-sum {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 4px;\n  font-size: 11px;\n  color: rgba(232, 220, 192, 0.75);\n}\n#CookieMgrMenu .ca-gletter {\n  display: inline-grid;\n  place-items: center;\n  min-width: 15px;\n  height: 15px;\n  padding: 0 2px;\n  border-radius: 3px;\n  font: bold 10px Tahoma, Arial, sans-serif;\n  color: #1a120a;\n  background: var(--lc);\n}\n#CookieMgrMenu .ca-gseed-chip {\n  display: inline-flex;\n  align-items: center;\n  gap: 3px;\n}\n#CookieMgrMenu .ca-gseed-chip .ca-gs,\n#CookieMgrMenu .ca-gseed-sprite .ca-gs {\n  zoom: 0.4;\n}\n#CookieMgrMenu .ca-gmini-letters {\n  grid-template-columns: repeat(6, 7px);\n  grid-auto-rows: 7px;\n}\n#CookieMgrMenu .ca-gmini-letters span {\n  border-radius: 1px;\n  background: rgba(92, 60, 30, 0.5);\n}\n#CookieMgrMenu .ca-gdetail {\n  display: flex;\n  flex-direction: column;\n  gap: 6px;\n  margin-top: 8px;\n  padding: 8px;\n  border-radius: 6px;\n  border: 1px solid rgba(160, 230, 100, 0.35);\n  background: rgba(0, 0, 0, 0.18);\n}\n#CookieMgrMenu .ca-gbrushes {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 4px;\n}\n#CookieMgrMenu .ca-gbrush {\n  display: inline-flex;\n  align-items: center;\n  gap: 3px;\n  padding: 2px 6px;\n  font: 11px Tahoma, Arial, sans-serif;\n  color: #e8dcc0;\n  cursor: pointer;\n  border: 1px solid rgba(255, 220, 150, 0.2);\n  border-radius: 4px;\n  background: rgba(0, 0, 0, 0.3);\n}\n#CookieMgrMenu .ca-gbrush.on {\n  border-color: #fff3d6;\n  box-shadow: 0 0 0 1px #fff3d6;\n}\n#CookieMgrMenu .ca-gtemplate {\n  display: grid;\n  grid-template-columns: repeat(6, 34px);\n  grid-auto-rows: 34px;\n  gap: 2px;\n  align-self: flex-start;\n  padding: 4px;\n  border-radius: 6px;\n  background: rgba(40, 26, 12, 0.6);\n}\n#CookieMgrMenu .ca-gcell {\n  position: relative;\n  display: grid;\n  place-items: center;\n  padding: 0;\n  overflow: hidden;\n  cursor: pointer;\n  border: 0;\n  border-radius: 3px;\n  background: rgba(92, 60, 30, 0.75);\n}\n#CookieMgrMenu .ca-gcell[style] {\n  box-shadow: inset 0 0 0 2px var(--lc);\n}\n#CookieMgrMenu .ca-gcell b {\n  position: absolute;\n  right: 2px;\n  bottom: 1px;\n  font: bold 10px Tahoma, Arial, sans-serif;\n  color: var(--lc);\n  text-shadow: 0 0 2px #000, 0 0 2px #000;\n}\n#CookieMgrMenu .ca-gcell .ca-gs {\n  zoom: 0.6;\n}\n#CookieMgrMenu .ca-gcell.off {\n  opacity: 0.35;\n}\n#CookieMgrMenu .ca-gcell:disabled {\n  cursor: default;\n}\n#CookieMgrMenu .ca-gseeds {\n  display: flex;\n  flex-direction: column;\n  gap: 4px;\n}\n#CookieMgrMenu .ca-gseed-row {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n}\n#CookieMgrMenu .ca-gseed-sprite {\n  display: inline-block;\n  width: 20px;\n  height: 20px;\n}\n#CookieMgrMenu .ca-gmini {\n  display: grid;\n  grid-template-columns: repeat(6, 14px);\n  grid-auto-rows: 14px;\n  gap: 1px;\n  flex: none;\n}\n#CookieMgrMenu .ca-gmini span {\n  position: relative;\n  overflow: hidden;\n  border-radius: 2px;\n  background: rgba(92, 60, 30, 0.75);\n}\n\n/* ---------- v2.17: store toolbar (along the bottom of the store) ---------- */\n\n#CookieMgrStoreBar {\n  position: absolute;\n  z-index: 110;\n  box-sizing: border-box;\n  display: flex;\n  align-items: stretch;\n  gap: 6px;\n  padding: 4px 6px 5px;\n  background: linear-gradient(to bottom, rgba(54, 34, 16, 0.94), rgba(20, 12, 6, 0.97));\n  border-top: 1px solid #b98a4e;\n  box-shadow:\n    0 -4px 12px rgba(0, 0, 0, 0.55),\n    inset 0 1px 0 rgba(255, 255, 255, 0.12);\n  font-family: Tahoma, Arial, sans-serif;\n}\n#game.ascending #CookieMgrStoreBar,\n#game.reincarnating #CookieMgrStoreBar {\n  display: none;\n}\n/* room for the last building row to scroll clear of the toolbar */\nbody.ca-has-storebar #products {\n  padding-bottom: 38px;\n}\n#CookieMgrStoreBar .ca-sb-group {\n  display: flex;\n  align-items: stretch;\n  gap: 2px;\n  padding: 2px;\n  border-radius: 6px;\n  background: rgba(0, 0, 0, 0.35);\n  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.12);\n}\n#CookieMgrStoreBar .ca-sb-sort {\n  flex: 1;\n}\n#CookieMgrStoreBar .ca-sb-label {\n  display: inline-flex;\n  align-items: center;\n  gap: 3px;\n  padding: 0 6px 0 4px;\n  font-size: 9.5px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #93866f;\n}\n#CookieMgrStoreBar .ca-sb-btn {\n  position: relative;\n  flex: 1;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  min-width: 34px;\n  height: 24px;\n  padding: 0 6px;\n  color: #b9ab93;\n  background: none;\n  border: none;\n  border-radius: 4px;\n  cursor: pointer;\n}\n#CookieMgrStoreBar .ca-sb-btn:hover {\n  color: #fff3cf;\n  background: rgba(255, 220, 150, 0.12);\n}\n#CookieMgrStoreBar .ca-sb-btn.on {\n  color: #1c120a;\n  background: linear-gradient(to bottom, #ffe39a, #e0a84a);\n  box-shadow: 0 0 6px rgba(255, 210, 110, 0.5);\n}\n#CookieMgrStoreBar .ca-sb-sort.locked .ca-sb-btn {\n  color: #6d6252;\n  background: none;\n  box-shadow: none;\n}\n#CookieMgrStoreBar .ca-sb-lock {\n  position: absolute;\n  right: 3px;\n  top: 2px;\n  color: #ffb36a;\n}\n#CookieMgrStoreBar .ca-sb-round.idle:not(:hover) {\n  opacity: 0.55;\n}\n#CookieMgrStoreBar .ca-sb-txt {\n  font: bold 11px/1 Tahoma, Arial, sans-serif;\n}\n\n/* ---------- v2.13: macro activity rings, spell readiness, Grimoire target ---------- */\n\n/* activity: a band around the button, thicker and warmer the more it has been doing lately */\n#CookieMgrWidgets .ca-wb {\n  position: relative;\n}\n#CookieMgrWidgets .ca-wb-heat {\n  position: absolute;\n  inset: -6px;\n  border-radius: 50%;\n  border: 0 solid transparent;\n  pointer-events: none;\n  transition:\n    border-width 0.6s,\n    border-color 0.6s,\n    inset 0.6s;\n}\n#CookieMgrWidgets .ca-wb-heat.h1 {\n  inset: -6px;\n  border-width: 1px;\n  border-color: rgba(160, 140, 110, 0.55);\n}\n#CookieMgrWidgets .ca-wb-heat.h2 {\n  inset: -7px;\n  border-width: 2px;\n  border-color: rgba(214, 178, 96, 0.7);\n}\n#CookieMgrWidgets .ca-wb-heat.h3 {\n  inset: -8px;\n  border-width: 3px;\n  border-color: rgba(240, 168, 64, 0.8);\n}\n#CookieMgrWidgets .ca-wb-heat.h4 {\n  inset: -9px;\n  border-width: 4px;\n  border-color: rgba(255, 130, 50, 0.85);\n  box-shadow: 0 0 8px rgba(255, 130, 50, 0.45);\n}\n#CookieMgrWidgets .ca-wb-heat.h5 {\n  inset: -10px;\n  border-width: 5px;\n  border-color: rgba(255, 82, 40, 0.9);\n  box-shadow: 0 0 12px rgba(255, 82, 40, 0.6);\n}\n/* spells: a muted green/red wash for whether there's magic for them right now */\n#CookieMgrWidgets .ca-wb.spell-can {\n  background: radial-gradient(circle at 35% 30%, rgba(96, 140, 84, 0.95), rgba(26, 44, 20, 0.95));\n}\n#CookieMgrWidgets .ca-wb.spell-cant {\n  background: radial-gradient(circle at 35% 30%, rgba(140, 78, 70, 0.95), rgba(44, 20, 18, 0.95));\n}\n#CookieMgrWidgets .ca-wb.spell-cant:not(:hover) {\n  filter: saturate(0.8) brightness(0.85);\n}\n#CookieMgrWidgets .ca-wb-label em.off {\n  color: #e59a8e;\n}\n/* Grimoire: a tick where the target is, and a glow once there's enough */\n#CookieMgrWidgets .ca-orb-mark {\n  fill: none;\n  stroke: #fff;\n  stroke-width: 7;\n  opacity: 0.9;\n}\n#CookieMgrWidgets .ca-orb.ready .ca-orb-ring {\n  box-shadow:\n    0 3px 8px rgba(0, 0, 0, 0.7),\n    0 0 12px var(--glow);\n}\n\n/* ---------- v2.14: sidebar groups, links, Pantheon page ---------- */\n\n/* a small gap between kinds of page: data | minigames | customization */\n#CookieMgrTab .ca-tab-gap {\n  height: 10px;\n}\n/* links to other pages */\n#CookieMgrMenu .ca-link {\n  color: #ffd98a;\n  text-decoration: underline;\n  text-decoration-color: rgba(255, 217, 138, 0.4);\n  text-underline-offset: 2px;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-link:hover {\n  color: #fff3cf;\n  text-decoration-color: #fff3cf;\n}\n#CookieMgrMenu .ca-card-title .ca-link {\n  color: inherit;\n  text-decoration-color: rgba(255, 234, 176, 0.35);\n}\n#CookieMgrMenu .ca-btn-game {\n  margin-left: 6px;\n}\n\n/* Pantheon: the three slots */\n#CookieMgrMenu .ca-slots {\n  display: grid;\n  grid-template-columns: repeat(3, 1fr);\n  gap: 10px;\n  padding: 6px 4px 8px;\n}\n#CookieMgrMenu .ca-slot {\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  gap: 3px;\n  padding: 10px 8px 12px;\n  text-align: center;\n  border-radius: 8px;\n  background: radial-gradient(ellipse at 50% 0%, rgba(255, 210, 110, 0.12), rgba(0, 0, 0, 0.35) 70%);\n  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.15);\n}\n#CookieMgrMenu .ca-slot-gem {\n  font: bold 10px Tahoma, Arial, sans-serif;\n  text-transform: uppercase;\n  letter-spacing: 0.12em;\n}\n#CookieMgrMenu .ca-slot-0 .ca-slot-gem {\n  color: #bfe9ff;\n}\n#CookieMgrMenu .ca-slot-1 .ca-slot-gem {\n  color: #ff8a8a;\n}\n#CookieMgrMenu .ca-slot-2 .ca-slot-gem {\n  color: #8fe6a0;\n}\n#CookieMgrMenu .ca-slot-0 {\n  box-shadow: inset 0 0 0 1px rgba(191, 233, 255, 0.35);\n}\n#CookieMgrMenu .ca-slot-1 {\n  box-shadow: inset 0 0 0 1px rgba(255, 138, 138, 0.3);\n}\n#CookieMgrMenu .ca-slot-2 {\n  box-shadow: inset 0 0 0 1px rgba(143, 230, 160, 0.3);\n}\n#CookieMgrMenu .ca-slot-name {\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 14px;\n  color: #ffeab0;\n}\n#CookieMgrMenu .ca-slot-title {\n  font-size: 10px;\n  color: #a39477;\n}\n#CookieMgrMenu .ca-god-desc,\n#CookieMgrLayer .ca-god-desc {\n  margin-top: 4px;\n  font-size: 10.5px;\n  line-height: 1.4;\n  color: #d8cbb0;\n}\n#CookieMgrMenu .ca-god-desc .green,\n#CookieMgrLayer .ca-god-desc .green {\n  color: #9be89b;\n}\n#CookieMgrMenu .ca-god-desc .red,\n#CookieMgrLayer .ca-god-desc .red {\n  color: #ff9a8a;\n}\n#CookieMgrMenu .ca-god-ico {\n  display: inline-block;\n  flex: none;\n  width: 48px;\n  height: 48px;\n  zoom: 0.6;\n}\n#CookieMgrMenu .ca-god-ico.big {\n  zoom: 1;\n  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));\n}\n#CookieMgrMenu .ca-god-ico.empty {\n  border-radius: 50%;\n  background: rgba(0, 0, 0, 0.4);\n  box-shadow: inset 0 0 0 2px rgba(255, 220, 150, 0.2);\n  zoom: 0.8;\n}\n/* worship swaps */\n#CookieMgrMenu .ca-pips,\n#CookieMgrLayer .ca-pips {\n  display: inline-flex;\n  gap: 3px;\n  vertical-align: middle;\n}\n#CookieMgrMenu .ca-pips i,\n#CookieMgrLayer .ca-pips i {\n  width: 9px;\n  height: 9px;\n  border-radius: 50%;\n  background: rgba(0, 0, 0, 0.5);\n  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.3);\n}\n#CookieMgrMenu .ca-pips i.on,\n#CookieMgrLayer .ca-pips i.on {\n  background: #ffd36a;\n  box-shadow: 0 0 5px rgba(255, 211, 106, 0.7);\n}\n/* every spirit */\n#CookieMgrMenu .ca-gods {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));\n  gap: 6px;\n  padding: 4px;\n}\n#CookieMgrMenu .ca-god {\n  position: relative;\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  padding: 4px 6px;\n  border-radius: 6px;\n  background: rgba(0, 0, 0, 0.25);\n  font-size: 11px;\n  color: #e8d7b0;\n}\n#CookieMgrMenu .ca-god:hover {\n  z-index: 5;\n  background: rgba(255, 220, 150, 0.1);\n}\n#CookieMgrMenu .ca-god.in {\n  box-shadow: inset 0 0 0 1px rgba(255, 211, 106, 0.5);\n}\n#CookieMgrMenu .ca-god-name {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n#CookieMgrMenu .ca-god-slot {\n  font-size: 9px;\n  text-transform: uppercase;\n  color: #ffd36a;\n}\n#CookieMgrMenu .ca-god .ca-gpop {\n  width: 260px;\n}\n#CookieMgrMenu .ca-god:hover .ca-gpop {\n  display: block;\n}\n#CookieMgrMenu .ca-god-row,\n#CookieMgrLayer .ca-god-row {\n  display: block;\n  padding: 3px 0;\n  border-top: 1px solid rgba(255, 255, 255, 0.06);\n}\n#CookieMgrMenu .ca-god-row em,\n#CookieMgrLayer .ca-god-row em {\n  font-style: normal;\n  font-size: 9.5px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #a39477;\n}\n#CookieMgrMenu .ca-god-row .ca-god-desc,\n#CookieMgrLayer .ca-god-row .ca-god-desc {\n  margin-top: 1px;\n}\n#CookieMgrMenu .ca-god-quote,\n#CookieMgrLayer .ca-god-quote {\n  display: block;\n  margin-top: 4px;\n  font-style: italic;\n  font-size: 10px;\n  color: #93866f;\n}\n\n/* ---------- v2.15: option tiles, All options index, overview, macro cards, widget gallery, tips ---------- */\n\n/* options as a grid of tiles */\n#CookieMgrMenu .ca-optgrid {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));\n  gap: 8px;\n  padding: 8px;\n}\n#CookieMgrMenu .ca-opt {\n  display: flex;\n  align-items: flex-start;\n  gap: 9px;\n  padding: 9px 10px;\n  border-radius: 7px;\n  background: rgba(0, 0, 0, 0.28);\n  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.08);\n  transition: box-shadow 0.15s;\n}\n#CookieMgrMenu .ca-opt:hover {\n  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.25);\n}\n#CookieMgrMenu .ca-opt-ico {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  flex: none;\n  width: 28px;\n  height: 28px;\n  border-radius: 50%;\n  color: #ffd98a;\n  background: radial-gradient(circle at 35% 30%, rgba(110, 72, 36, 0.9), rgba(28, 18, 9, 0.9));\n  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.25);\n}\n#CookieMgrMenu .ca-opt-text {\n  flex: 1;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-opt-text b {\n  display: block;\n  font-size: 12px;\n  color: #f3e5c3;\n}\n#CookieMgrMenu .ca-opt-text span {\n  display: block;\n  margin-top: 2px;\n  font-size: 10.5px;\n  line-height: 1.35;\n  color: #a39477;\n}\n#CookieMgrMenu .ca-opt .ca-switch {\n  flex: none;\n  margin-top: 3px;\n}\n\n/* the All options index */\n#CookieMgrMenu .ca-index {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));\n  gap: 10px;\n  padding: 8px;\n}\n#CookieMgrMenu .ca-index-block {\n  padding: 8px 9px;\n  border-radius: 7px;\n  background: rgba(0, 0, 0, 0.22);\n}\n#CookieMgrMenu .ca-index-head {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  margin-bottom: 6px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 12.5px;\n  color: #ffeab0;\n}\n#CookieMgrMenu .ca-index-head .ca-link {\n  color: inherit;\n}\n#CookieMgrMenu .ca-index-chips {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 4px;\n}\n#CookieMgrMenu .ca-optchip {\n  font-size: 10.5px;\n}\n\n/* Settings overview */\n#CookieMgrMenu .ca-overview {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: stretch;\n  gap: 0;\n  background:\n    radial-gradient(ellipse at 0% 0%, rgba(255, 210, 110, 0.14), transparent 60%),\n    rgba(0, 0, 0, 0.38);\n}\n#CookieMgrMenu .ca-overview-brand {\n  display: flex;\n  align-items: center;\n  gap: 10px;\n  padding: 12px 16px;\n}\n#CookieMgrMenu .ca-overview-brand b {\n  display: block;\n  font-family: 'Merriweather', Georgia, serif;\n  font-size: 18px;\n  color: #ffeab0;\n  text-shadow: 0 1px 3px #000;\n}\n#CookieMgrMenu .ca-overview-brand span {\n  font-size: 11px;\n  color: #a39477;\n}\n#CookieMgrMenu .ca-overview .ca-stats {\n  flex: 1 1 360px;\n}\n\n/* built-in macros as cards */\n#CookieMgrMenu .ca-mtiles {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));\n  gap: 8px;\n  padding: 8px;\n}\n#CookieMgrMenu .ca-mtile {\n  display: flex;\n  flex-direction: column;\n  gap: 5px;\n  padding: 9px 10px 7px;\n  border-radius: 8px;\n  background: linear-gradient(to bottom, rgba(70, 45, 22, 0.35), rgba(0, 0, 0, 0.3));\n  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.1);\n  transition: box-shadow 0.2s;\n}\n#CookieMgrMenu .ca-mtile.on {\n  box-shadow:\n    inset 0 0 0 1px rgba(77, 255, 94, 0.55),\n    0 0 10px rgba(77, 255, 94, 0.15);\n}\n#CookieMgrMenu .ca-mtile-head {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n}\n#CookieMgrMenu .ca-mtile-name {\n  flex: 1;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-mtile-name b {\n  display: block;\n  font-size: 12.5px;\n  color: #f3e5c3;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n#CookieMgrMenu .ca-mtile-name .ca-badge {\n  margin-top: 2px;\n  display: inline-block;\n}\n#CookieMgrMenu .ca-mtile-desc {\n  font-size: 10.5px;\n  line-height: 1.35;\n  color: #a39477;\n}\n#CookieMgrMenu .ca-mtile .ca-macro-options {\n  margin-top: 0;\n}\n/* activity meter: the same bands as the rings on the left-panel buttons */\n#CookieMgrMenu .ca-mtile-heat {\n  height: 4px;\n  border-radius: 2px;\n  overflow: hidden;\n  background: rgba(0, 0, 0, 0.45);\n}\n#CookieMgrMenu .ca-mtile-heat i {\n  display: block;\n  height: 100%;\n  width: 0;\n  border-radius: 2px;\n  background: linear-gradient(to right, #a08c6e, #d6b260, #f0a840, #ff8232, #ff5228);\n  background-size: 230px 100%;\n  transition: width 0.6s;\n}\n#CookieMgrMenu .ca-mtile .ca-macro-status {\n  min-height: 12px;\n  font-size: 10px;\n}\n#CookieMgrMenu .ca-mtile-foot {\n  display: flex;\n  align-items: center;\n  gap: 4px;\n  margin-top: auto;\n  padding-top: 5px;\n  border-top: 1px solid rgba(255, 255, 255, 0.06);\n}\n#CookieMgrMenu .ca-mtile-foot .ca-hotkey,\n#CookieMgrMenu .ca-mtile-foot [data-hotkey] {\n  margin-left: auto;\n}\n\n/* widget gallery */\n#CookieMgrMenu .ca-wgallery {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));\n  gap: 8px;\n  padding: 8px;\n}\n#CookieMgrMenu .ca-wcard {\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  gap: 5px;\n  padding: 12px 10px 10px;\n  text-align: center;\n  border-radius: 8px;\n  background: radial-gradient(ellipse at 50% 0%, rgba(255, 210, 110, 0.1), rgba(0, 0, 0, 0.3) 70%);\n  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.1);\n}\n#CookieMgrMenu .ca-wcard.placed {\n  box-shadow: inset 0 0 0 1px rgba(255, 211, 106, 0.4);\n}\n#CookieMgrMenu .ca-wcard-ico {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  width: 46px;\n  height: 46px;\n  border-radius: 50%;\n  color: #ffd98a;\n  background: radial-gradient(circle at 35% 30%, rgba(110, 72, 36, 0.95), rgba(28, 18, 9, 0.95));\n  box-shadow:\n    0 3px 8px rgba(0, 0, 0, 0.6),\n    inset 0 0 0 1px rgba(255, 220, 150, 0.3);\n}\n#CookieMgrMenu .ca-wcard-name {\n  font-size: 12.5px;\n  font-weight: bold;\n  color: #f3e5c3;\n}\n#CookieMgrMenu .ca-wcard-desc {\n  flex: 1;\n  font-size: 10.5px;\n  line-height: 1.35;\n  color: #a39477;\n}\n#CookieMgrMenu .ca-wcard-foot {\n  margin-top: 4px;\n}\n\n/* styled hover tips (instead of the browser's own) */\n#CookieMgrTip {\n  position: fixed;\n  z-index: 1000000;\n  display: none;\n  max-width: 260px;\n  padding: 5px 8px;\n  font:\n    11px/1.35 Tahoma,\n    Arial,\n    sans-serif;\n  color: #f0e2c0;\n  background: linear-gradient(to bottom, rgba(64, 40, 18, 0.98), rgba(24, 15, 7, 0.98));\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 6px;\n  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.8);\n  pointer-events: none;\n}\n\n/* ---------- v2.16: Garden growth chart ---------- */\n\n/* the plot and its growth chart side by side (stacking on narrow panels) */\n#CookieMgrMenu .ca-garden-row {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: stretch;\n}\n#CookieMgrMenu .ca-garden-row > .ca-card:first-child {\n  flex: 0 1 auto;\n}\n#CookieMgrMenu .ca-garden-row > .ca-graph-card {\n  flex: 1 1 360px;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-garden-row .ca-garden-wrap {\n  flex-direction: column;\n}\n#CookieMgrMenu .ca-legend-stages {\n  color: #a39477;\n}\n#CookieMgrMenu .ca-legend-stages .ca-sw {\n  margin-left: 6px;\n}\n\n/* ---------- v2.17.1: floating layer (hover popups above the game's panels and beams) ---------- */\n\n#CookieMgrLayer {\n  position: fixed;\n  inset: 0;\n  z-index: 1000000;\n  pointer-events: none;\n  font-family: Tahoma, Arial, sans-serif;\n}\n/* popups shown in the layer instead of in place */\n#CookieMgrMenu [data-pop] > .ca-gpop,\n#CookieMgrMenu [data-pop] > .ca-wpop,\n#CookieMgrWidgets [data-pop] > .ca-wpop,\n#CookieMgrWidgets [data-pop] > .ca-orb-pop {\n  display: none !important;\n}\n#CookieMgrLayer .ca-float {\n  position: fixed;\n  display: none;\n}\n#CookieMgrLayer .ca-float > * {\n  display: block !important;\n  position: static !important;\n  transform: none !important;\n  margin: 0 !important;\n  left: auto !important;\n  top: auto !important;\n  right: auto !important;\n  bottom: auto !important;\n}\n#CookieMgrLayer .ca-float > .ca-gpop {\n  width: auto;\n  min-width: 200px;\n  max-width: 280px;\n}\n#CookieMgrLayer .ca-float .ca-god-desc .green {\n  color: #9be89b;\n}\n#CookieMgrLayer .ca-float .ca-god-desc .red {\n  color: #ff9a8a;\n}\n/* the chart tooltip and simple tips */\n#CookieMgrLayer .ca-tip {\n  position: fixed;\n}\n#CookieMgrLayer .ca-simple-tip {\n  position: fixed;\n  display: none;\n  max-width: 260px;\n  padding: 5px 8px;\n  font:\n    11px/1.35 Tahoma,\n    Arial,\n    sans-serif;\n  color: #f0e2c0;\n  background: linear-gradient(to bottom, rgba(64, 40, 18, 0.98), rgba(24, 15, 7, 0.98));\n  border: 1px solid;\n  border-color: #ece2b6 #875526 #733726 #dfbc9a;\n  border-radius: 6px;\n  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.8);\n}\n/* chart tooltip rows stay on one line */\n#CookieMgrLayer .ca-tip {\n  max-width: none;\n}\n#CookieMgrLayer .ca-tip-row {\n  white-space: nowrap;\n}\n#CookieMgrLayer .ca-tip-row b {\n  overflow: visible;\n  text-overflow: clip;\n}\n\n/* ---------- v2.19: running strip, built-in settings, live steps on cards ---------- */\n\n/* what's running, one line at the top of the Macros page */\n#CookieMgrMenu .ca-runbar-head {\n  display: flex;\n  align-items: center;\n  flex-wrap: wrap;\n  gap: 8px;\n  padding: 8px 10px;\n}\n#CookieMgrMenu .ca-runbar-title {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  font-family: 'Merriweather', Georgia, serif;\n  font-weight: bold;\n  font-size: 13px;\n  color: #ffeab0;\n}\n#CookieMgrMenu .ca-runchips {\n  display: flex;\n  flex: 1;\n  flex-wrap: wrap;\n  gap: 5px;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-runbar-idle {\n  font-size: 11px;\n  font-style: italic;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-runchip {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  padding: 2px 3px 2px 4px;\n  border-radius: 12px;\n  font-size: 11px;\n  color: #f3e5c3;\n  background: rgba(77, 255, 94, 0.08);\n  box-shadow: inset 0 0 0 1px rgba(77, 255, 94, 0.45);\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-runchip b {\n  font-weight: normal;\n  white-space: nowrap;\n}\n/* busier: warmer, the same bands as the rings on the left-panel buttons */\n#CookieMgrMenu .ca-runchip.h3 {\n  box-shadow: inset 0 0 0 1px rgba(240, 168, 64, 0.8);\n}\n#CookieMgrMenu .ca-runchip.h4,\n#CookieMgrMenu .ca-runchip.h5 {\n  box-shadow:\n    inset 0 0 0 2px rgba(255, 110, 45, 0.85),\n    0 0 6px rgba(255, 110, 45, 0.35);\n}\n#CookieMgrMenu .ca-runchip .ca-icon,\n#CookieMgrMenu .ca-runchip .ca-icon-ico {\n  flex: 0 0 18px;\n  width: 18px;\n  height: 18px;\n}\n#CookieMgrMenu .ca-runchip .ca-sprite {\n  transform: scale(0.375);\n}\n#CookieMgrMenu .ca-runchip-x {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 16px;\n  height: 16px;\n  padding: 0;\n  color: #f0e2c0;\n  background: rgba(0, 0, 0, 0.4);\n  border: none;\n  border-radius: 50%;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-runchip-x:hover {\n  background: #a8322e;\n}\n\n/* a built-in's settings: a one-line summary, unfolding into its fields */\n#CookieMgrMenu .ca-mtile-sum {\n  display: flex;\n  align-items: center;\n  gap: 5px;\n  padding: 3px 6px;\n  border-radius: 5px;\n  font-size: 10.5px;\n  color: #c9bba0;\n  background: rgba(0, 0, 0, 0.25);\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-mtile-sum span {\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n#CookieMgrMenu .ca-mtile-sum:hover {\n  color: #fff3cf;\n  background: rgba(255, 220, 150, 0.1);\n}\n#CookieMgrMenu .ca-mtile-settings .ca-macro-options {\n  display: none;\n  flex-direction: column;\n  align-items: stretch;\n  gap: 5px;\n  margin-top: 5px;\n  padding: 6px;\n  border-radius: 5px;\n  background: rgba(0, 0, 0, 0.3);\n}\n#CookieMgrMenu .ca-mtile-settings.open .ca-macro-options {\n  display: flex;\n}\n#CookieMgrMenu .ca-mtile-settings.open .ca-mtile-sum {\n  color: #ffd98a;\n}\n#CookieMgrMenu .ca-mtile-settings .ca-field {\n  justify-content: space-between;\n}\n#CookieMgrMenu .ca-macro-options input[type='number'] {\n  width: 70px;\n  font: 11px Tahoma, Arial, sans-serif;\n  color: #f0e2c0;\n  background: rgba(0, 0, 0, 0.45);\n  border: 1px solid rgba(255, 220, 150, 0.25);\n  border-radius: 4px;\n  padding: 2px 5px;\n}\n#CookieMgrMenu .ca-shift-hint {\n  font-style: normal;\n  font-size: 9.5px;\n  color: #93866f;\n}\n/* what a running macro's steps have done, on its card */\n#CookieMgrMenu .ca-mtile .ca-macro-status .ca-status-step,\n#CookieMgrMenu .ca-row .ca-macro-status .ca-status-step {\n  display: flex;\n  align-items: center;\n  gap: 4px;\n  font-size: 10px;\n  white-space: nowrap;\n}\n#CookieMgrMenu .ca-macro-status .ca-status-name {\n  flex: 1;\n  min-width: 0;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n#CookieMgrMenu .ca-macro-status .ca-status-up {\n  font-size: 10px;\n  color: #7dff8a;\n}\n/* \"find it\": a short glow on the card */\n#CookieMgrMenu .ca-macro.ca-flash {\n  animation: caFlash 1.1s ease-out;\n}\n@keyframes caFlash {\n  0%,\n  30% {\n    box-shadow:\n      inset 0 0 0 2px #ffd36a,\n      0 0 14px rgba(255, 211, 106, 0.6);\n  }\n  100% {\n    box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.1);\n  }\n}\n\n/* ---------- v2.20: widget settings, the Your widgets map, linking ---------- */\n\n/* a widget hovered on the Widgets page (or being edited there) glows on the left panel */\n#CookieMgrWidgets .ca-w.ca-w-linked {\n  outline: 2px solid #ffd36a;\n  outline-offset: 3px;\n  border-radius: 8px;\n  box-shadow: 0 0 18px rgba(255, 211, 106, 0.55);\n  z-index: 25;\n}\n#CookieMgrWidgets .ca-w-bare.ca-w-linked {\n  border-radius: 50%;\n}\n\n/* settings: header + Look / Shows sections */\n#CookieMgrMenu .ca-weditor {\n  box-shadow:\n    0 0 0 1px rgba(255, 211, 106, 0.5),\n    0 0 18px rgba(255, 200, 100, 0.15);\n}\n#CookieMgrMenu .ca-weditor-head {\n  display: flex;\n  align-items: center;\n  gap: 10px;\n  padding: 10px 12px;\n  background: linear-gradient(to right, rgba(255, 210, 110, 0.12), transparent);\n  border-bottom: 1px solid rgba(255, 220, 150, 0.12);\n}\n#CookieMgrMenu .ca-weditor-ico {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  flex: none;\n  width: 38px;\n  height: 38px;\n  border-radius: 50%;\n  color: #ffd98a;\n  background: radial-gradient(circle at 35% 30%, rgba(110, 72, 36, 0.95), rgba(28, 18, 9, 0.95));\n  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.35);\n}\n#CookieMgrMenu .ca-weditor-title {\n  flex: 1;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-weditor-title b {\n  display: block;\n  font-family: 'Merriweather', Georgia, serif;\n  font-size: 14px;\n  color: #ffeab0;\n}\n#CookieMgrMenu .ca-weditor-title span {\n  font-size: 10.5px;\n  color: #a39477;\n}\n#CookieMgrMenu .ca-weditor .ca-weditor-body {\n  display: flex;\n  flex-direction: row;\n  flex-wrap: wrap;\n  gap: 10px;\n  padding: 10px;\n}\n#CookieMgrMenu .ca-weditor-sec {\n  flex: 1 1 260px;\n  display: flex;\n  flex-direction: column;\n  gap: 8px;\n  padding: 9px 10px 10px;\n  border-radius: 7px;\n  background: rgba(0, 0, 0, 0.25);\n}\n#CookieMgrMenu .ca-weditor-sec-head {\n  display: flex;\n  align-items: center;\n  gap: 5px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.1em;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-wf {\n  display: grid;\n  grid-template-columns: 90px 1fr;\n  align-items: center;\n  gap: 4px 10px;\n}\n#CookieMgrMenu .ca-wf.ca-wf-wide {\n  grid-template-columns: 1fr;\n}\n#CookieMgrMenu .ca-wf-label {\n  font-size: 11.5px;\n  color: #e8d7b0;\n}\n#CookieMgrMenu .ca-wf-input {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-wf-input input[type='range'] {\n  flex: 1;\n  accent-color: #e0a84a;\n}\n#CookieMgrMenu .ca-wf-input .ca-range-val {\n  min-width: 42px;\n  padding: 1px 6px;\n  text-align: center;\n  border-radius: 9px;\n  font-size: 10.5px;\n  color: #1c120a;\n  background: #e0b45a;\n}\n#CookieMgrMenu .ca-wf-input input[type='text'],\n#CookieMgrMenu .ca-wf-input input[type='number'],\n#CookieMgrMenu .ca-wf-input select {\n  flex: 1;\n  min-width: 0;\n  font: 12px Tahoma, Arial, sans-serif;\n  color: #f0e2c0;\n  background: rgba(0, 0, 0, 0.45);\n  border: 1px solid rgba(255, 220, 150, 0.25);\n  border-radius: 4px;\n  padding: 3px 6px;\n}\n#CookieMgrMenu .ca-wf-input select option {\n  background: #1c150d;\n}\n#CookieMgrMenu .ca-wf-input em {\n  font-style: normal;\n  font-size: 10.5px;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-wf-hint {\n  grid-column: 2;\n  font-size: 10px;\n  color: #93866f;\n}\n\n/* Your widgets: a map of the left panel beside the chips */\n#CookieMgrMenu .ca-wplaced {\n  display: flex;\n  gap: 12px;\n  align-items: flex-start;\n  padding: 10px;\n}\n#CookieMgrMenu .ca-wmap-wrap {\n  flex: 0 0 150px;\n}\n#CookieMgrMenu .ca-wmap {\n  position: relative;\n  width: 150px;\n  max-height: 300px;\n  border-radius: 6px;\n  overflow: hidden;\n  background:\n    radial-gradient(ellipse at 50% 40%, rgba(90, 140, 200, 0.18), transparent 70%),\n    linear-gradient(to bottom, #1b2533, #0e131b);\n  box-shadow:\n    inset 0 0 0 1px rgba(255, 220, 150, 0.2),\n    inset 0 0 12px rgba(0, 0, 0, 0.6);\n}\n#CookieMgrMenu .ca-wmap-cookie {\n  position: absolute;\n  border-radius: 50%;\n  background: radial-gradient(circle at 40% 35%, rgba(214, 160, 90, 0.55), rgba(120, 75, 30, 0.45));\n  pointer-events: none;\n}\n#CookieMgrMenu .ca-wmap-item {\n  position: absolute;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  min-width: 10px;\n  min-height: 10px;\n  padding: 0;\n  overflow: hidden;\n  color: #ffd98a;\n  background: rgba(60, 38, 18, 0.9);\n  border: 1px solid rgba(255, 220, 150, 0.5);\n  border-radius: 3px;\n  cursor: pointer;\n  transition:\n    box-shadow 0.15s,\n    transform 0.15s;\n}\n#CookieMgrMenu .ca-wmap-item.bare {\n  border-radius: 50%;\n}\n#CookieMgrMenu .ca-wmap-item .ca-icon,\n#CookieMgrMenu .ca-wmap-item .ca-icon-ico {\n  flex: none;\n  width: 12px;\n  height: 12px;\n}\n#CookieMgrMenu .ca-wmap-item .ca-sprite {\n  transform: scale(0.25);\n}\n#CookieMgrMenu .ca-wmap-item.linked,\n#CookieMgrMenu .ca-wmap-item:hover,\n#CookieMgrMenu .ca-wmap-item.editing {\n  z-index: 2;\n  border-color: #ffd36a;\n  box-shadow: 0 0 8px rgba(255, 211, 106, 0.8);\n  transform: scale(1.15);\n}\n#CookieMgrMenu .ca-wchips {\n  display: flex;\n  flex: 1;\n  flex-wrap: wrap;\n  align-content: flex-start;\n  gap: 5px;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-wchip {\n  display: inline-flex;\n  align-items: center;\n  border-radius: 13px;\n  background: rgba(0, 0, 0, 0.3);\n  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.15);\n  transition: box-shadow 0.15s;\n}\n#CookieMgrMenu .ca-wchip.linked,\n#CookieMgrMenu .ca-wchip.editing {\n  box-shadow:\n    inset 0 0 0 1px #ffd36a,\n    0 0 8px rgba(255, 211, 106, 0.4);\n}\n#CookieMgrMenu .ca-wchip-main {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  padding: 3px 4px 3px 5px;\n  font: 11px Tahoma, Arial, sans-serif;\n  color: #f3e5c3;\n  background: none;\n  border: none;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-wchip-main b {\n  font-weight: normal;\n  white-space: nowrap;\n}\n#CookieMgrMenu .ca-wchip-main > .ca-ico:last-child {\n  color: #93866f;\n}\n#CookieMgrMenu .ca-wchip-main .ca-icon,\n#CookieMgrMenu .ca-wchip-main .ca-icon-ico {\n  flex: 0 0 16px;\n  width: 16px;\n  height: 16px;\n}\n#CookieMgrMenu .ca-wchip-main .ca-sprite {\n  transform: scale(0.33);\n}\n#CookieMgrMenu .ca-wchip-x {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 18px;\n  height: 18px;\n  margin-right: 3px;\n  padding: 0;\n  color: #b9ab93;\n  background: none;\n  border: none;\n  border-radius: 50%;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-wchip-x:hover {\n  color: #fff;\n  background: #a8322e;\n}\n\n/* ---------- v2.21: buying macros ---------- */\n\n#CookieMgrMenu .ca-mtile-warn {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  padding: 4px 7px;\n  border-radius: 5px;\n  font-size: 10.5px;\n  color: #ffcf8a;\n  background: rgba(255, 150, 60, 0.12);\n  box-shadow: inset 0 0 0 1px rgba(255, 170, 80, 0.35);\n}\n#CookieMgrMenu .ca-mtile-warn .ca-btn {\n  margin-left: auto;\n}\n#CookieMgrMenu .ca-switch[disabled] {\n  opacity: 0.4;\n  cursor: not-allowed;\n}\n\n/* ---------- v2.22: the macro editor, flow blocks, SeasonCompletion's season order ---------- */\n\n#CookieMgrMenu .ca-editor2 .ca-ed-head {\n  display: flex;\n  align-items: center;\n  gap: 12px;\n  padding: 12px 14px;\n  background: linear-gradient(to right, rgba(255, 210, 110, 0.12), transparent);\n  border-bottom: 1px solid rgba(255, 220, 150, 0.12);\n}\n#CookieMgrMenu .ca-ed-icon .ca-icon,\n#CookieMgrMenu .ca-ed-icon .ca-icon-ico {\n  width: 44px;\n  height: 44px;\n  flex: 0 0 44px;\n}\n#CookieMgrMenu .ca-ed-names {\n  display: flex;\n  flex-direction: column;\n  gap: 4px;\n  flex: 1;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-editor2 input.ca-ed-name {\n  font: bold 15px 'Merriweather', Georgia, serif;\n  color: #ffeab0;\n  background: transparent;\n  border: none;\n  border-bottom: 1px dashed rgba(255, 220, 150, 0.3);\n  border-radius: 0;\n  padding: 2px 0;\n}\n#CookieMgrMenu .ca-editor2 input.ca-ed-desc {\n  font-size: 11px;\n  color: #c9bba0;\n  background: transparent;\n  border: none;\n  border-bottom: 1px dashed rgba(255, 220, 150, 0.18);\n  border-radius: 0;\n  padding: 2px 0;\n}\n#CookieMgrMenu .ca-ed-actions {\n  display: flex;\n  gap: 6px;\n}\n#CookieMgrMenu .ca-editor2 .ca-editor-body {\n  display: flex;\n  flex-direction: column;\n  gap: 10px;\n  padding: 12px 14px 14px;\n}\n/* the kind of macro, as cards */\n#CookieMgrMenu .ca-ed-kinds {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));\n  gap: 6px;\n}\n#CookieMgrMenu .ca-ed-kind {\n  display: flex;\n  flex-direction: column;\n  align-items: flex-start;\n  gap: 2px;\n  padding: 7px 9px;\n  text-align: left;\n  font: 11px Tahoma, Arial, sans-serif;\n  color: #c9bba0;\n  background: rgba(0, 0, 0, 0.3);\n  border: 1px solid rgba(255, 220, 150, 0.12);\n  border-radius: 7px;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-ed-kind b {\n  font-size: 12.5px;\n  color: #f3e5c3;\n}\n#CookieMgrMenu .ca-ed-kind span {\n  font-size: 9.5px;\n  line-height: 1.3;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-ed-kind.on {\n  color: #ffd98a;\n  background: rgba(255, 210, 110, 0.12);\n  border-color: #e0b45a;\n  box-shadow: 0 0 8px rgba(255, 200, 100, 0.25);\n}\n#CookieMgrMenu .ca-ed-row {\n  display: flex;\n  align-items: center;\n  flex-wrap: wrap;\n  gap: 8px;\n}\n#CookieMgrMenu .ca-ed-label {\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  font-size: 11.5px;\n  color: #e8d7b0;\n}\n#CookieMgrMenu .ca-editor2 input.ca-ed-secs {\n  width: 64px;\n}\n#CookieMgrMenu .ca-ed-row em {\n  font-style: normal;\n  font-size: 10.5px;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-ed-sec {\n  display: flex;\n  flex-direction: column;\n  gap: 6px;\n  padding: 9px 10px;\n  border-radius: 8px;\n  background: rgba(0, 0, 0, 0.22);\n}\n#CookieMgrMenu .ca-ed-sec-head {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  font-size: 10px;\n  text-transform: uppercase;\n  letter-spacing: 0.1em;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-ed-sec-head .ca-hint {\n  text-transform: none;\n  letter-spacing: 0;\n}\n#CookieMgrMenu .ca-ed-steps {\n  display: flex;\n  flex-direction: column;\n  gap: 5px;\n}\n#CookieMgrMenu .ca-ed-step {\n  display: flex;\n  align-items: flex-start;\n  gap: 8px;\n  padding: 6px 8px;\n  border-radius: 6px;\n  background: rgba(70, 45, 22, 0.35);\n  box-shadow: inset 3px 0 0 #e0b45a;\n}\n#CookieMgrMenu .ca-ed-step-body {\n  display: flex;\n  align-items: center;\n  flex-wrap: wrap;\n  gap: 6px;\n  flex: 1;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-ed-aico {\n  color: #ffd98a;\n}\n#CookieMgrMenu .ca-ed-params {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 6px 10px;\n  width: 100%;\n}\n#CookieMgrMenu .ca-ed-tools {\n  display: inline-flex;\n  gap: 2px;\n  margin-left: auto;\n}\n#CookieMgrMenu .ca-ed-add {\n  align-self: flex-start;\n}\n#CookieMgrMenu .ca-ed-conds {\n  display: flex;\n  flex-direction: column;\n  gap: 4px;\n}\n#CookieMgrMenu .ca-ed-cond {\n  display: flex;\n  align-items: center;\n  flex-wrap: wrap;\n  gap: 6px;\n  padding: 4px 6px;\n  border-radius: 5px;\n  background: rgba(80, 140, 200, 0.1);\n  box-shadow: inset 3px 0 0 #6fb3e6;\n}\n#CookieMgrMenu .ca-ed-and {\n  min-width: 34px;\n  font-size: 10px;\n  font-weight: bold;\n  text-transform: uppercase;\n  color: #8fc3ea;\n}\n#CookieMgrMenu .ca-editor2 select,\n#CookieMgrMenu .ca-editor2 input[type=\"text\"],\n#CookieMgrMenu .ca-editor2 input[type=\"number\"] {\n  font: 12px Tahoma, Arial, sans-serif;\n  color: #f0e2c0;\n  background: rgba(0, 0, 0, 0.45);\n  border: 1px solid rgba(255, 220, 150, 0.25);\n  border-radius: 4px;\n  padding: 3px 6px;\n}\n#CookieMgrMenu .ca-editor2 select option,\n#CookieMgrMenu .ca-editor2 select optgroup {\n  background: #1c150d;\n  color: #f0e2c0;\n}\n#CookieMgrMenu .ca-ed-icons .ca-iconpick {\n  max-height: 64px;\n  overflow-y: auto;\n}\n\n/* SeasonCompletion: its season order */\n#CookieMgrMenu .ca-field.ca-field-wide {\n  flex-direction: column;\n  align-items: stretch;\n}\n\n/* ---------- v2.23: livelier widget settings, holding a buying button ---------- */\n\n/* the settings box arrives with a glow */\n#CookieMgrMenu .ca-weditor.ca-reveal {\n  animation: caReveal 1.2s ease-out;\n}\n@keyframes caReveal {\n  0%,\n  25% {\n    box-shadow:\n      0 0 0 2px #ffd36a,\n      0 0 26px rgba(255, 211, 106, 0.6);\n  }\n  100% {\n    box-shadow:\n      0 0 0 1px rgba(255, 211, 106, 0.5),\n      0 0 18px rgba(255, 200, 100, 0.15);\n  }\n}\n/* its header in the widget's own colour */\n#CookieMgrMenu .ca-weditor {\n  --wt: #e0b45a;\n}\n#CookieMgrMenu .ca-wtheme-grimoire {\n  --wt: #b48cf0;\n}\n#CookieMgrMenu .ca-wtheme-garden {\n  --wt: #8fd45e;\n}\n#CookieMgrMenu .ca-wtheme-market {\n  --wt: #4fd6e0;\n}\n#CookieMgrMenu .ca-wtheme-pantheon {\n  --wt: #ffd36a;\n}\n#CookieMgrMenu .ca-wtheme-stats {\n  --wt: #6fb3e6;\n}\n#CookieMgrMenu .ca-wtheme-events {\n  --wt: #ff9f43;\n}\n#CookieMgrMenu .ca-wtheme-status {\n  --wt: #7dff8a;\n}\n#CookieMgrMenu .ca-weditor .ca-weditor-head {\n  background:\n    radial-gradient(ellipse at 0% 50%, color-mix(in srgb, var(--wt) 35%, transparent), transparent 70%),\n    linear-gradient(to right, rgba(255, 210, 110, 0.08), transparent);\n  border-bottom-color: color-mix(in srgb, var(--wt) 40%, transparent);\n}\n#CookieMgrMenu .ca-weditor .ca-weditor-ico {\n  color: var(--wt);\n  box-shadow:\n    inset 0 0 0 1px color-mix(in srgb, var(--wt) 60%, transparent),\n    0 0 12px color-mix(in srgb, var(--wt) 35%, transparent);\n}\n#CookieMgrMenu .ca-weditor .ca-weditor-sec-head {\n  color: color-mix(in srgb, var(--wt) 70%, #93866f);\n}\n#CookieMgrMenu .ca-weditor .ca-wf-input input[type=\"range\"] {\n  accent-color: var(--wt);\n}\n#CookieMgrMenu .ca-wpresets {\n  display: inline-flex;\n  gap: 2px;\n}\n#CookieMgrMenu .ca-wpresets .ca-chip {\n  min-width: 26px;\n  padding: 1px 5px;\n  font-size: 10px;\n  text-align: center;\n}\n#CookieMgrMenu .ca-wf-input {\n  flex-wrap: wrap;\n}\n/* the place grid: a miniature left panel with nine spots */\n#CookieMgrMenu .ca-wsnap {\n  display: grid;\n  grid-template-columns: repeat(3, 26px);\n  grid-auto-rows: 26px;\n  gap: 3px;\n  padding: 4px;\n  width: max-content;\n  border-radius: 6px;\n  background: linear-gradient(to bottom, #1b2533, #0e131b);\n  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.2);\n}\n#CookieMgrMenu .ca-wsnap-cell {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  padding: 0;\n  background: rgba(255, 255, 255, 0.04);\n  border: 1px dashed rgba(255, 220, 150, 0.18);\n  border-radius: 4px;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-wsnap-cell i {\n  width: 8px;\n  height: 8px;\n  border-radius: 50%;\n  background: rgba(255, 220, 150, 0.25);\n}\n#CookieMgrMenu .ca-wsnap-cell:hover i {\n  background: #ffd98a;\n}\n#CookieMgrMenu .ca-wsnap-cell.on {\n  border-style: solid;\n  border-color: var(--wt);\n}\n#CookieMgrMenu .ca-wsnap-cell.on i {\n  width: 12px;\n  height: 12px;\n  background: var(--wt);\n  box-shadow: 0 0 8px var(--wt);\n}\n#CookieMgrMenu .ca-weditor-place .ca-wf-hint {\n  grid-column: auto;\n}\n\n/* holding a buying macro's button: it buys while it glows */\n#CookieMgrWidgets .ca-wb.ca-holding {\n  transform: scale(0.94);\n  box-shadow:\n    0 0 0 3px #ffd36a,\n    0 0 16px rgba(255, 211, 106, 0.8);\n}\n\n/* ---------- v2.24: algorithmic macros — the code editor and the library ---------- */\n\n/* the editor with its library beside it (stacking when the panel is narrow) */\n#CookieMgrMenu .ca-ed-layout {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: flex-start;\n}\n#CookieMgrMenu .ca-ed-layout > .ca-editor-body {\n  flex: 1 1 420px;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-ed-fixed-sub {\n  font-size: 10.5px;\n  color: #a39477;\n}\n\n/* the code: a textarea over its own highlighted copy, line numbers beside */\n#CookieMgrMenu .ca-code {\n  --code-font: 12px/18px Consolas, 'Cascadia Mono', Menlo, Monaco, monospace;\n  display: flex;\n  height: 340px;\n  border-radius: 6px;\n  overflow: hidden;\n  background: #120d08;\n  box-shadow:\n    inset 0 0 0 1px rgba(255, 220, 150, 0.2),\n    inset 0 2px 10px rgba(0, 0, 0, 0.6);\n}\n#CookieMgrMenu .ca-code-gutter {\n  flex: none;\n  width: 36px;\n  padding: 8px 0;\n  overflow: hidden;\n  font: var(--code-font);\n  text-align: right;\n  color: #5d5444;\n  background: rgba(0, 0, 0, 0.35);\n  user-select: none;\n}\n#CookieMgrMenu .ca-code-gutter span {\n  display: block;\n  padding-right: 7px;\n}\n#CookieMgrMenu .ca-code-gutter span.err {\n  color: #ff9a8a;\n  background: rgba(229, 72, 77, 0.18);\n}\n#CookieMgrMenu .ca-code-gutter span.run {\n  color: #1c120a;\n  background: #7dff8a;\n  box-shadow: 0 0 6px rgba(125, 255, 138, 0.6);\n}\n#CookieMgrMenu .ca-code-box {\n  position: relative;\n  flex: 1;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-code-hl,\n#CookieMgrMenu .ca-code-ta {\n  position: absolute;\n  inset: 0;\n  margin: 0;\n  padding: 8px 10px;\n  font: var(--code-font);\n  letter-spacing: 0;\n  white-space: pre;\n  tab-size: 2;\n  overflow: auto;\n  box-sizing: border-box;\n  border: none;\n}\n#CookieMgrMenu .ca-code-hl {\n  color: #e8d7b0;\n  pointer-events: none;\n  overflow: hidden;\n}\n#CookieMgrMenu .ca-editor2 textarea.ca-code-ta {\n  color: transparent;\n  caret-color: #ffd98a;\n  background: transparent;\n  border-radius: 0;\n  resize: none;\n  outline: none;\n}\n#CookieMgrMenu .ca-code-ta::selection {\n  background: rgba(255, 210, 110, 0.3);\n  color: transparent;\n}\n#CookieMgrMenu .ca-hl-line.err {\n  text-decoration: underline wavy rgba(255, 110, 100, 0.7);\n  text-underline-offset: 4px;\n}\n#CookieMgrMenu .ca-code-hl .hc {\n  color: #7b8a6a;\n  font-style: italic;\n}\n#CookieMgrMenu .ca-code-hl .hk {\n  color: #ffb86b;\n  font-weight: bold;\n}\n#CookieMgrMenu .ca-code-hl .ha {\n  color: #9be89b;\n}\n#CookieMgrMenu .ca-code-hl .hq {\n  color: #8fc3ea;\n}\n#CookieMgrMenu .ca-code-hl .hv {\n  color: #6fe6ef;\n}\n#CookieMgrMenu .ca-code-hl .hn {\n  color: #ff9a8a;\n}\n#CookieMgrMenu .ca-code-hl .hs {\n  color: #e6c07b;\n}\n#CookieMgrMenu .ca-code-hl .ho {\n  color: #ffd98a;\n}\n#CookieMgrMenu .ca-code-hl .hi {\n  color: #d8cbb0;\n}\n#CookieMgrMenu .ca-code-status {\n  font-size: 11px;\n}\n#CookieMgrMenu .ca-code-ok {\n  color: #7dff8a;\n}\n#CookieMgrMenu .ca-code-bad {\n  color: #ff9a8a;\n  font-weight: bold;\n}\n#CookieMgrMenu .ca-code-err {\n  padding: 1px 6px;\n  color: #ffb3a8;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-code-err:hover {\n  background: rgba(229, 72, 77, 0.15);\n}\n/* while it runs */\n#CookieMgrMenu .ca-code-live:empty {\n  display: none;\n}\n#CookieMgrMenu .ca-code-live {\n  padding: 6px 8px;\n  border-radius: 5px;\n  font: 11px/1.4 Consolas, Menlo, monospace;\n  background: rgba(125, 255, 138, 0.06);\n  box-shadow: inset 3px 0 0 #7dff8a;\n}\n#CookieMgrMenu .ca-code-live-head {\n  font: bold 10px Tahoma, Arial, sans-serif;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #7dff8a;\n}\n#CookieMgrMenu .ca-code-live-at {\n  color: #f3e5c3;\n}\n#CookieMgrMenu .ca-code-live-tr {\n  color: #93866f;\n}\n#CookieMgrMenu .ca-code-help summary {\n  font-size: 11px;\n  color: #ffd98a;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-code-help pre {\n  margin: 6px 0 0;\n  padding: 8px 10px;\n  font: 11px/1.5 Consolas, Menlo, monospace;\n  color: #d8cbb0;\n  white-space: pre;\n  overflow-x: auto;\n  border-radius: 5px;\n  background: rgba(0, 0, 0, 0.3);\n}\n/* a running algorithm's decisions, on its card */\n#CookieMgrMenu .ca-trace {\n  margin-top: 3px;\n  padding: 3px 6px;\n  border-radius: 4px;\n  font: 10px/1.35 Consolas, Menlo, monospace;\n  color: #a39477;\n  background: rgba(0, 0, 0, 0.25);\n}\n#CookieMgrMenu .ca-trace div {\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n\n/* the library: everything you can write, pinnable */\n#CookieMgrMenu .ca-ed-lib {\n  flex: 0 1 300px;\n  min-width: 240px;\n  max-height: 640px;\n  display: flex;\n  flex-direction: column;\n  margin: 12px 12px 12px 0;\n  border-radius: 8px;\n  background: rgba(0, 0, 0, 0.28);\n  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.12);\n}\n#CookieMgrMenu .ca-lib-head {\n  display: flex;\n  align-items: center;\n  gap: 6px;\n  padding: 7px 8px;\n  color: #93866f;\n  border-bottom: 1px solid rgba(255, 220, 150, 0.1);\n}\n#CookieMgrMenu .ca-lib-head input {\n  flex: 1;\n  min-width: 0;\n  font: 11.5px Tahoma, Arial, sans-serif;\n  color: #f0e2c0;\n  background: rgba(0, 0, 0, 0.45);\n  border: 1px solid rgba(255, 220, 150, 0.25);\n  border-radius: 4px;\n  padding: 3px 6px;\n}\n#CookieMgrMenu .ca-lib-body {\n  flex: 1;\n  overflow-y: auto;\n  padding: 4px 6px 8px;\n}\n#CookieMgrMenu .ca-lib-group.hidden,\n#CookieMgrMenu .ca-lib-row.hidden {\n  display: none;\n}\n#CookieMgrMenu .ca-lib-ghead {\n  position: sticky;\n  top: -4px;\n  z-index: 1;\n  display: flex;\n  align-items: center;\n  gap: 4px;\n  margin: 6px 0 2px;\n  padding: 2px 2px;\n  font-size: 9.5px;\n  text-transform: uppercase;\n  letter-spacing: 0.08em;\n  color: #93866f;\n  background: #1a120a;\n}\n#CookieMgrMenu .ca-lib-pinned .ca-lib-ghead {\n  color: #ffd36a;\n}\n#CookieMgrMenu .ca-lib-empty {\n  padding: 3px 6px;\n  font-size: 10px;\n  font-style: italic;\n  color: #6d6252;\n}\n#CookieMgrMenu .ca-lib-row {\n  display: grid;\n  grid-template-columns: 1fr auto;\n  align-items: center;\n  column-gap: 2px;\n  padding: 2px 3px;\n  border-radius: 4px;\n}\n#CookieMgrMenu .ca-lib-row:hover {\n  background: rgba(255, 220, 150, 0.07);\n}\n#CookieMgrMenu .ca-lib-ins {\n  display: flex;\n  align-items: center;\n  gap: 5px;\n  min-width: 0;\n  padding: 1px 2px;\n  text-align: left;\n  color: #9be89b;\n  background: none;\n  border: none;\n  cursor: pointer;\n}\n#CookieMgrMenu .ca-lib-condition .ca-lib-ins {\n  color: #8fc3ea;\n}\n#CookieMgrMenu .ca-lib-value .ca-lib-ins {\n  color: #6fe6ef;\n}\n#CookieMgrMenu .ca-lib-keyword .ca-lib-ins {\n  color: #ffb86b;\n}\n#CookieMgrMenu .ca-lib-ins code {\n  font: 11px Consolas, Menlo, monospace;\n  overflow: hidden;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n#CookieMgrMenu .ca-lib-desc {\n  grid-column: 1;\n  padding-left: 19px;\n  font-size: 9.5px;\n  line-height: 1.25;\n  color: #93866f;\n}\n#CookieMgrMenu .ca-lib-fav {\n  grid-column: 2;\n  grid-row: 1 / span 2;\n  opacity: 0.4;\n}\n#CookieMgrMenu .ca-lib-row:hover .ca-lib-fav,\n#CookieMgrMenu .ca-lib-fav.on {\n  opacity: 1;\n}\n#CookieMgrMenu .ca-lib-fav.on {\n  color: #ffd36a;\n}\n\n/* ---------- v2.24.1: the code editor's caret lines up with the text ---------- */\n/* Only the outer box scrolls: the highlighted copy sizes it, the textarea lies exactly on top of\n   that copy and never scrolls on its own, so the two can't drift apart. Same font everywhere, no\n   bold or italic (their widths can differ). */\n#CookieMgrMenu .ca-code {\n  height: auto;\n  max-height: 380px;\n  min-height: 220px;\n  overflow: auto;\n  align-items: flex-start;\n}\n#CookieMgrMenu .ca-code-gutter {\n  position: sticky;\n  left: 0;\n  z-index: 2;\n  align-self: stretch;\n  overflow: visible;\n}\n#CookieMgrMenu .ca-code-box {\n  position: relative;\n  flex: 1 0 auto;\n  min-width: 0;\n}\n#CookieMgrMenu .ca-code-hl {\n  position: relative;\n  inset: auto;\n  min-height: 200px;\n  overflow: visible;\n  padding-bottom: 26px;\n}\n#CookieMgrMenu .ca-editor2 textarea.ca-code-ta {\n  position: absolute;\n  inset: 0;\n  width: 100%;\n  height: 100%;\n  overflow: hidden;\n  padding-bottom: 26px;\n}\n#CookieMgrMenu .ca-code-hl,\n#CookieMgrMenu .ca-editor2 textarea.ca-code-ta {\n  font: var(--code-font);\n  font-weight: normal;\n  font-style: normal;\n  letter-spacing: 0;\n  word-spacing: 0;\n  font-variant-ligatures: none;\n  font-kerning: none;\n  text-transform: none;\n  text-indent: 0;\n  text-shadow: none;\n  box-shadow: none;\n}\n#CookieMgrMenu .ca-code-hl .hk,\n#CookieMgrMenu .ca-code-hl .hc {\n  font-weight: normal;\n  font-style: normal;\n}\n\n/* ---------- v2.25: edited built-ins, interval boxes ---------- */\n\n#CookieMgrMenu .ca-badge-edited {\n  margin-left: 4px;\n  color: #1c120a;\n  background: #e0b45a;\n}\n#CookieMgrMenu input.ca-every-num {\n  width: 64px;\n  font: 11px Tahoma, Arial, sans-serif;\n  color: #f0e2c0;\n  background: rgba(0, 0, 0, 0.45);\n  border: 1px solid rgba(255, 220, 150, 0.25);\n  border-radius: 4px;\n  padding: 2px 5px;\n}\n\n/* ---------- v2.26: garden rules ---------- */\n\n#CookieMgrMenu .ca-gardener .ca-card-meta {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 6px;\n}\n#CookieMgrMenu .ca-gardener.ca-flash {\n  animation: caFlash 1.1s ease-out;\n}\n#CookieMgrMenu .ca-pill.ca-pill-warn {\n  color: #1c120a;\n  background: #e0b45a;\n  border-color: #e0b45a;\n}\n\n/* ---------- v2.28: an algorithm that can't run ---------- */\n\n#CookieMgrMenu .ca-step.ca-step-problem {\n  color: #ffb3a8;\n  background: rgba(160, 40, 30, 0.35);\n}\n\n/* ---------- v2.31: every macro as code; the library's Lookup ---------- */\n\n#CookieMgrMenu .ca-ed-ascode summary {\n  cursor: pointer;\n  list-style: none;\n}\n#CookieMgrMenu .ca-ed-ascode summary::-webkit-details-marker {\n  display: none;\n}\n#CookieMgrMenu .ca-ed-ascode[open] summary {\n  margin-bottom: 6px;\n}\n#CookieMgrMenu .ca-ascode-pre {\n  position: static;\n  margin: 0 0 8px;\n  padding: 8px 10px;\n  max-height: 260px;\n  overflow: auto;\n  border-radius: 6px;\n  background: rgba(0, 0, 0, 0.35);\n  pointer-events: auto;\n}\n#CookieMgrMenu .ca-lib-tabs {\n  display: flex;\n  gap: 4px;\n  padding: 5px 8px;\n  border-bottom: 1px solid rgba(255, 220, 150, 0.1);\n}\n#CookieMgrMenu .ca-ed-lib [hidden] {\n  display: none !important;\n}\n#CookieMgrMenu .ca-lib-uses {\n  margin-left: 4px;\n  font: 9.5px Consolas, Menlo, monospace;\n  text-transform: none;\n  letter-spacing: 0;\n  color: #7d7262;\n}\n#CookieMgrMenu .ca-lib-lit .ca-lib-ins code {\n  color: #ffd98a;\n}\n";
 
 // ---- src/core/util.js ------------------------------------------------
 // Small helpers shared by every module.
@@ -3504,30 +3504,532 @@ CA.Pantheon = (() => {
   return { init, minigame, slot, godOf, SLOTS };
 })();
 
-// ---- src/features/garden.js ------------------------------------------
-// The **auto-gardener**, in two layers you pick separately:
+// ---- src/features/gardenLayers.js ------------------------------------
+// What the auto-gardener keeps and what it does, in four layers you pick separately — and profiles
+// that pick all four at once:
 //
-//   a **garden profile** (layout): which seed goes on which tile (or nothing), and a soil — a saved
-//     snapshot, or the built-in "Current garden": whatever is planted, kept as it is (each tile's
-//     plant remembered, and replanted when it dies)
-//   a **gardener** (behaviour): algorithmic code run from the top every second — the built-in
-//     Effect maximizer, Weed collector and Mutation tracker (editable, revertable), or your own
+//   gardener   what it does: algorithmic code run from the top every second (features/script.js,
+//              with the garden's words from features/garden.js) — it calls garden.soilRule() where
+//              it deals with the soil
+//   soil       the soil rule: a little code of its own that picks the soil (garden.soil(…)), run
+//              when the gardener calls garden.soilRule()
+//   template   where the seeds go: a 6×6 grid of letters (A, B, C…) or nothing. "Fill" (A on every
+//              tile) is every garden of one seed; "Mutation rows" two parents with a row of empty
+//              tiles between them. It sits on the unlocked part of the plot from its top-left
+//              corner (a smaller garden uses its top-left part); one taken as it is on the plot
+//              (abs) stays where it was
+//   seeds      which seed each letter is: { A: 'bakerWheat', B: 'thumbcorn' }
+//   profile    a combination: { gardener, soil, template, seeds } — loading one picks all four
+//
+// Every layer has built-ins (editable — your edit is kept apart and Revert brings the built-in
+// back) and yours (made with Save as new; renamed, deleted). The "Current garden" template and
+// "As planted" seeds are live: what's planted now (features/garden.js keeps that memory).
+
+CA.GardenLayers = (() => {
+  const SIZE = 6;
+  const S = () => CA.Settings;
+  const changed = () => CA.Events.emit('garden');
+  const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+  // ---- the built-ins -------------------------------------------------------------------------
+
+  /** The Effect maximizer, with the numbers of the old settings (seconds before the tick, the death-chance threshold, unlocking new seeds). */
+  function effectsGardener() {
+    const lead = Math.max(1, Number(S().get('gardenLead')) || 15);
+    const thr = Math.max(0, Math.min(100, Number(S().get('gardenThreshold')))) / 100;
+    const unlock = S().get('gardenUnlockNew') !== false;
+    const lines = [
+      '# Effect maximizer: keeps the layout planted, and its plants\' effects as high as they go.',
+      '# It plants only where the layout has a seed, and only clears the tiles the layout uses.',
+      '# Your numbers (used below):',
+      `tickWindow = ${lead}   # the last seconds before a garden tick, when old plants are dealt with`,
+    ];
+    if (thr < 1) lines.push(`dyingOver = ${thr}   # replant mature plants more likely than this to die on the tick (the new one grows at it)`);
+    lines.push(
+      `unlockNewSeeds = ${unlock}   # a seed you haven't unlocked yet: let it grow, harvest it once mature (that unlocks it)`,
+      "# Plant the layout's seed on every empty tile it has one for, right away.",
+      'garden.plantEmpty()',
+      'if unlockNewSeeds:',
+      '  garden.harvestNew()',
+      '# The soil, as the soil rule picks it (its effects count the whole time, not just at the tick).',
+      'garden.soilRule()',
+      '# In the last tickWindow seconds before a garden tick:',
+      'if garden.tickIn() <= tickWindow:',
+      "  # clear the layout's tiles of what doesn't belong there (leaving new seeds to grow)",
+      '  for tile in garden.tiles():',
+      '    if garden.wantAt(tile) != "" and garden.isOff(tile) and not garden.isEmpty(tile) and not (unlockNewSeeds and garden.isNew(tile)):',
+      '      garden.harvest(tile)'
+    );
+    if (thr < 1) lines.push('  # replant mature plants likely to die on the tick', '  garden.harvestDying(dyingOver)', '  garden.plantEmpty()');
+    return lines.join('\n') + '\n';
+  }
+  const WEED_GARDENER = `# Weed collector: keeps the garden bare, so weeds and fungi spring up, and gets their seeds.
+# Meddleweed is left to grow old, then harvested — the older it is, the likelier it leaves brown
+# mold or crumbspore behind. Anything you haven't unlocked yet grows until it's mature and is
+# harvested (that unlocks it); everything else is cleared away. It plants nothing.
+oldWeedOver = 0.5   # harvest a meddleweed once it's this likely to die on the next tick
+# the soil, as the soil rule picks it (fertilizer: the most weeds, ×1.2)
+garden.soilRule()
+for tile in garden.tiles():
+  if not garden.isEmpty(tile):
+    if garden.plantAt(tile) == "meddleweed":
+      if garden.decay(tile) > oldWeedOver:
+        garden.harvest(tile)
+    elif garden.isNew(tile):
+      if garden.isMature(tile):
+        garden.harvest(tile)
+    else:
+      garden.harvest(tile)
+`;
+  const MUTATION_GARDENER = `# Mutation tracker: keeps the layout's plants (the parents) growing, and watches every other tile
+# for mutations. A seed you've unlocked already is cleared at once (its tile is another chance); a
+# new one is kept — every copy of it — and harvested once mature (that unlocks it). Seeds unlocked
+# in the last keepRecentMinutes count as new, so a fresh find's other copies grow on too.
+keepRecentMinutes = 60
+tickWindow = 15
+dyingOver = 0.5
+garden.plantEmpty()
+# the soil, as the soil rule picks it (wood chips: three times the mutation chances)
+garden.soilRule()
+for tile in garden.tiles():
+  if not garden.isEmpty(tile) and garden.isOff(tile):
+    if garden.isNew(tile) or garden.unlockedAgo(garden.plantAt(tile)) < keepRecentMinutes * 60:
+      if garden.isMature(tile):
+        garden.harvest(tile)
+    else:
+      garden.harvest(tile)
+# In the last tickWindow seconds before a garden tick: replant parents likely to die on it
+if garden.tickIn() <= tickWindow:
+  garden.harvestDying(dyingOver)
+  garden.plantEmpty()
+`;
+  const GARDENERS = [
+    { id: 'effects', name: 'Effect maximizer', desc: 'Keeps the layout planted and its effects high: plants the layout’s seeds, unlocks new seeds, and replants mature plants about to die just before the tick. Only touches the tiles the layout uses.', data: () => ({ rules: effectsGardener() }) },
+    { id: 'weeds', name: 'Weed collector', desc: 'Keeps the garden bare so weeds and fungi spring up; harvests old meddleweed (for brown mold and crumbspore) and new seeds once mature, clears everything else. Plants nothing.', data: () => ({ rules: WEED_GARDENER }) },
+    { id: 'mutations', name: 'Mutation tracker', desc: 'Grows the layout’s parents and watches the other tiles: a seed you have is cleared at once, a new one (or one unlocked in the last hour) is kept until mature and harvested.', data: () => ({ rules: MUTATION_GARDENER }) },
+  ];
+
+  const FERTILIZER_VAR = 'fertilizerAbove';
+  const SOIL_EFFECTS = `# Fertilizer while most plants are still growing (quicker ticks), clay (effects ×1.25) once
+# enough of them are mature.
+${FERTILIZER_VAR} = 0.67   # fertilizer while more than this share of the planted tiles is still growing
+if garden.youngShare() > ${FERTILIZER_VAR}:
+  garden.soil(fertilizer)
+else:
+  garden.soil(clay)
+`;
+  const SOIL_MUTATIONS = `# Fertilizer to grow the layout's plants; wood chips (three times the mutation chances) once
+# they're mature — if you have the 300 farms it needs, else fertilizer (quicker ticks, more chances).
+growingOver = 0.34   # fertilizer while more than this share of the layout's plants is still growing
+if garden.layoutYoungShare() > growingOver or not garden.soilAvailable(woodchips):
+  garden.soil(fertilizer)
+else:
+  garden.soil(woodchips)
+`;
+  const fixedSoil = (key, why) => `# Always ${key}${why ? ` — ${why}` : ''}.\ngarden.soil(${key})\n`;
+  const SOILS = [
+    { id: 'effects', name: 'Fertilizer, then clay', desc: 'Fertilizer while most plants grow, clay (effects ×1.25) once a third of them are mature.', data: () => ({ rules: SOIL_EFFECTS }) },
+    { id: 'mutations', name: 'Fertilizer, then wood chips', desc: 'Fertilizer while the layout’s plants grow, wood chips (×3 mutation chances) once they’re mature.', data: () => ({ rules: SOIL_MUTATIONS }) },
+    { id: 'fertilizer', name: 'Always fertilizer', desc: 'Quickest ticks, the most weeds (×1.2); effects ×0.75.', data: () => ({ rules: fixedSoil('fertilizer', 'the quickest ticks and the most weeds') }) },
+    { id: 'clay', name: 'Always clay', desc: 'Effects ×1.25; slow ticks.', data: () => ({ rules: fixedSoil('clay', 'effects ×1.25, slow ticks') }) },
+    { id: 'woodchips', name: 'Always wood chips', desc: 'Three times the mutation chances; needs 300 farms.', data: () => ({ rules: fixedSoil('woodchips', 'three times the mutation chances') }) },
+    { id: 'none', name: 'Leave the soil', desc: 'Doesn’t change the soil.', data: () => ({ rules: '# Leaves the soil as it is.\n' }) },
+  ];
+
+  const grid = (rows) => rows.map((r) => r.split('').map((c) => (c === '.' ? null : c)));
+  const TEMPLATES = [
+    { id: 'current', name: 'Current garden', desc: 'Whatever is planted, kept as it is: a plant that dies is replanted; it follows what you plant or harvest by hand, not weeds or mutations that spring up.', live: true, data: () => ({ plot: currentLetters().plot, abs: true }) },
+    { id: 'fill', name: 'Fill', desc: 'One seed on every tile.', data: () => ({ plot: grid(Array(SIZE).fill('AAAAAA')), abs: false }) },
+    { id: 'bare', name: 'Bare', desc: 'Nothing planted (for weeds).', data: () => ({ plot: grid(Array(SIZE).fill('......')), abs: false }) },
+    { id: 'checker', name: 'Checkerboard', desc: 'Two seeds, alternating.', data: () => ({ plot: grid(['ABABAB', 'BABABA', 'ABABAB', 'BABABA', 'ABABAB', 'BABABA']), abs: false }) },
+    { id: 'rows', name: 'Mutation rows', desc: 'A row of A, an empty row, a row of B: every empty tile has three of each around it — for two-parent mutations (A = B for a seed with itself).', data: () => ({ plot: grid(['AAAAAA', '......', 'BBBBBB', 'AAAAAA', '......', 'BBBBBB']), abs: false }) },
+    { id: 'rings', name: 'Rings', desc: 'Rings of A around empty tiles: eight around each — for mutations that need many of one plant (Juicy queenbeet: 8 queenbeets).', data: () => ({ plot: grid(['AAAAAA', 'A.AA.A', 'AAAAAA', 'AAAAAA', 'A.AA.A', 'AAAAAA']), abs: false }) },
+  ];
+
+  const NAMES = {
+    bakerWheat: 'Baker’s wheat', thumbcorn: 'Thumbcorn', cronerice: 'Cronerice', gildmillet: 'Gildmillet', clover: 'Ordinary clover', goldenClover: 'Golden clover',
+    shimmerlily: 'Shimmerlily', elderwort: 'Elderwort', bakeberry: 'Bakeberry', chocoroot: 'Chocoroot', whiteChocoroot: 'White chocoroot', whiteMildew: 'White mildew',
+    brownMold: 'Brown mold', whiskerbloom: 'Whiskerbloom', chimerose: 'Chimerose', nursetulip: 'Nursetulip', drowsyfern: 'Drowsyfern', wardlichen: 'Wardlichen',
+    keenmoss: 'Keenmoss', queenbeet: 'Queenbeet', queenbeetLump: 'Juicy queenbeet', duketater: 'Duketater', crumbspore: 'Crumbspore', doughshroom: 'Doughshroom',
+    glovemorel: 'Glovemorel', cheapcap: 'Cheapcap', foolBolete: 'Fool’s bolete', wrinklegill: 'Wrinklegill', greenRot: 'Green rot', shriekbulb: 'Shriekbulb',
+    tidygrass: 'Tidygrass', everdaisy: 'Everdaisy', ichorpuff: 'Ichorpuff',
+  };
+  // the game's mutations from two mature parents (minigameGarden.js M.getMuts): [what grows, A, B, chance a tick]
+  const RECIPES = [
+    ['thumbcorn', 'bakerWheat', 'bakerWheat', '5%'], ['cronerice', 'bakerWheat', 'thumbcorn', '1%'], ['gildmillet', 'cronerice', 'thumbcorn', '3%'],
+    ['clover', 'bakerWheat', 'gildmillet', '3%; Golden clover 0.07%'], ['shimmerlily', 'clover', 'gildmillet', '2%'], ['elderwort', 'shimmerlily', 'cronerice', '1%'],
+    ['chocoroot', 'bakerWheat', 'brownMold', '10%'], ['whiteChocoroot', 'chocoroot', 'whiteMildew', '10%'], ['whiskerbloom', 'shimmerlily', 'whiteChocoroot', '1%'],
+    ['chimerose', 'shimmerlily', 'whiskerbloom', '5%'], ['nursetulip', 'whiskerbloom', 'whiskerbloom', '5%'], ['greenRot', 'whiteMildew', 'clover', '5%'],
+    ['keenmoss', 'greenRot', 'brownMold', '10%'], ['drowsyfern', 'chocoroot', 'keenmoss', '0.5%'], ['wardlichen', 'cronerice', 'keenmoss', '0.5%'],
+    ['queenbeet', 'chocoroot', 'bakeberry', '1%'], ['duketater', 'queenbeet', 'queenbeet', '0.1%'], ['tidygrass', 'bakerWheat', 'whiteChocoroot', '0.2%'],
+    ['everdaisy', 'tidygrass', 'elderwort', '0.2% (3 of each)'], ['wrinklegill', 'crumbspore', 'brownMold', '6%'], ['doughshroom', 'crumbspore', 'crumbspore', '0.5%'],
+    ['glovemorel', 'crumbspore', 'thumbcorn', '2%'], ['cheapcap', 'crumbspore', 'shimmerlily', '4%'], ['foolBolete', 'doughshroom', 'greenRot', '4%'],
+    ['shriekbulb', 'wrinklegill', 'elderwort', '0.1%'], ['ichorpuff', 'elderwort', 'crumbspore', '0.2%'],
+  ];
+  const one = (id, key, desc) => ({ id, name: NAMES[key], desc, group: 'For their effects', data: () => ({ map: { A: key } }) });
+  const SEEDS = [
+    { id: 'current', name: 'As planted', desc: 'The seeds of the Current garden: A is the first seed on the plot (left to right, top to bottom), B the next…', live: true, data: () => ({ map: currentLetters().map }) },
+    one('goldenClover', 'goldenClover', 'Golden cookies more often (+3% each).'),
+    one('bakerWheat', 'bakerWheat', 'CpS +1% each.'),
+    one('bakeberry', 'bakeberry', 'CpS +1% each; a harvest of a mature one pays 30 minutes of CpS.'),
+    one('whiskerbloom', 'whiskerbloom', 'Milk effects +0.2% each.'),
+    one('queenbeet', 'queenbeet', 'Golden cookie effects +0.3% each; eight around an empty tile can grow a Juicy queenbeet.'),
+    ...RECIPES.map(([out, a, b, p]) => ({
+      id: `to-${out}`,
+      name: `→ ${NAMES[out]}`,
+      desc: `${NAMES[a]} × ${NAMES[b]} → ${NAMES[out]} (${p} a tick, on an empty tile next to both, mature).`,
+      group: 'Mutation recipes',
+      data: () => ({ map: { A: a, B: b } }),
+    })),
+  ];
+
+  const PROFILES = [
+    { id: 'maxEffects', name: 'Max effects · current garden', desc: 'Keeps what you’ve planted, its effects as high as they go.', data: () => ({ gardener: 'effects', soil: 'effects', template: 'current', seeds: 'current' }) },
+    { id: 'goldenClovers', name: 'Golden clover field', desc: 'Golden clover on every tile, for golden cookies.', data: () => ({ gardener: 'effects', soil: 'effects', template: 'fill', seeds: 'goldenClover' }) },
+    { id: 'mutationHunt', name: 'Mutation hunt', desc: 'Two parents in rows, wood chips once they’re mature; new seeds kept until unlocked. Pick the recipe in Seeds.', data: () => ({ gardener: 'mutations', soil: 'mutations', template: 'rows', seeds: 'to-cronerice' }) },
+    { id: 'juicyQueenbeet', name: 'Juicy queenbeet', desc: 'Rings of queenbeets on wood chips: each empty centre can grow a Juicy queenbeet (a sugar lump).', data: () => ({ gardener: 'mutations', soil: 'mutations', template: 'rings', seeds: 'queenbeet' }) },
+    { id: 'weedFarm', name: 'Weed farm', desc: 'A bare garden on fertilizer, for meddleweed, brown mold and crumbspore.', data: () => ({ gardener: 'weeds', soil: 'fertilizer', template: 'bare', seeds: 'current' }) },
+  ];
+
+  // ---- the stores ----------------------------------------------------------------------------
+
+  const cleanRules = (d) => ({ rules: String((d && d.rules) || '').slice(0, 20000) });
+  const cleanPlot = (plot) => Array.from({ length: SIZE }, (_, y) => Array.from({ length: SIZE }, (_, x) => (plot && plot[y] && typeof plot[y][x] === 'string' && /^[A-Z]$/.test(plot[y][x]) ? plot[y][x] : null)));
+  const cleanMap = (m) => {
+    const out = {};
+    Object.keys(m || {}).forEach((k) => /^[A-Z]$/.test(k) && typeof m[k] === 'string' && m[k] && (out[k] = m[k].slice(0, 40)));
+    return out;
+  };
+  const LAYERS = {
+    gardener: { opt: 'gardenGardener', def: 'effects', builtins: GARDENERS, clean: cleanRules, noun: 'gardener' },
+    soil: { opt: 'gardenSoil', def: 'effects', builtins: SOILS, clean: cleanRules, noun: 'soil rule' },
+    template: { opt: 'gardenTemplate', def: 'current', builtins: TEMPLATES, clean: (d) => ({ plot: cleanPlot(d && d.plot), abs: !!(d && d.abs) }), noun: 'template' },
+    seeds: { opt: 'gardenSeeds', def: 'current', builtins: SEEDS, clean: (d) => ({ map: cleanMap(d && d.map) }), noun: 'seed set' },
+    profile: {
+      opt: 'gardenProfile',
+      def: 'maxEffects',
+      builtins: PROFILES,
+      clean: (d) => ({ gardener: String((d && d.gardener) || 'effects'), soil: String((d && d.soil) || 'effects'), template: String((d && d.template) || 'current'), seeds: String((d && d.seeds) || 'current') }),
+      noun: 'profile',
+    },
+  };
+  const PARTS = ['gardener', 'soil', 'template', 'seeds'];
+  // yours: { id, name, data }; a built-in you edited: { id, data }
+  let saved = { gardener: [], soil: [], template: [], seeds: [], profile: [] };
+
+  const builtinOf = (layer, id) => LAYERS[layer].builtins.find((b) => b.id === id) || null;
+  /** An item: { id, name, desc, builtin, live, edited, group, data }, or null. */
+  function get(layer, id) {
+    const b = builtinOf(layer, id);
+    const own = saved[layer].find((x) => x.id === id);
+    if (b) return { id, name: b.name, desc: b.desc || '', builtin: true, live: !!b.live, group: b.group || '', edited: !!own && !b.live, data: own && !b.live ? own.data : b.data() };
+    if (own) return { id, name: own.name, desc: '', builtin: false, live: false, edited: false, group: '', data: own.data };
+    return null;
+  }
+  /** Every item of a layer (built-ins first, then yours), without their data. */
+  function list(layer) {
+    const L = LAYERS[layer];
+    return L.builtins
+      .map((b) => ({ id: b.id, name: b.name, desc: b.desc || '', builtin: true, live: !!b.live, group: b.group || '', edited: !b.live && saved[layer].some((x) => x.id === b.id) }))
+      .concat(saved[layer].filter((x) => !builtinOf(layer, x.id)).map((x) => ({ id: x.id, name: x.name, desc: '', builtin: false, live: false, group: '', edited: false })));
+  }
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  /** Changes an item (a built-in: your version, kept apart; null, or its own data, brings it back). */
+  function set(layer, id, data) {
+    const L = LAYERS[layer];
+    const b = builtinOf(layer, id);
+    const i = saved[layer].findIndex((x) => x.id === id);
+    if (b) {
+      if (b.live) return;
+      const d = data == null ? null : L.clean(data);
+      if (!d || same(d, L.clean(b.data()))) {
+        if (i >= 0) saved[layer].splice(i, 1);
+      } else if (i >= 0) saved[layer][i].data = d;
+      else saved[layer].push({ id, data: d });
+    } else if (i >= 0 && data != null) saved[layer][i].data = L.clean(data);
+    changed();
+  }
+  const newId = (layer) => `${layer[0]}${Date.now().toString(36)}${Math.floor(Math.random() * 46656).toString(36)}`;
+  /** A new item of yours; returns its id. */
+  function add(layer, name, data) {
+    let id = newId(layer);
+    while (get(layer, id)) id += 'x';
+    saved[layer].push({ id, name: String(name || `My ${LAYERS[layer].noun}`).trim().slice(0, 40) || `My ${LAYERS[layer].noun}`, data: LAYERS[layer].clean(data) });
+    changed();
+    return id;
+  }
+  function rename(layer, id, name) {
+    const own = saved[layer].find((x) => x.id === id && !builtinOf(layer, id));
+    if (!own || !String(name).trim()) return;
+    own.name = String(name).trim().slice(0, 40);
+    changed();
+  }
+  function remove(layer, id) {
+    if (builtinOf(layer, id)) return;
+    saved[layer] = saved[layer].filter((x) => x.id !== id);
+    if (S().get(LAYERS[layer].opt) === id) S().set(LAYERS[layer].opt, LAYERS[layer].def);
+    changed();
+  }
+
+  // ---- what's picked -------------------------------------------------------------------------
+
+  /** Whether a layer has an item with this id. */
+  const has = (layer, id) => !!builtinOf(layer, id) || saved[layer].some((x) => x.id === id);
+  /** The id picked in a layer (its default when the pick is gone). */
+  const picked = (layer) => (has(layer, S().get(LAYERS[layer].opt)) ? S().get(LAYERS[layer].opt) : LAYERS[layer].def);
+  const picks = () => ({ gardener: picked('gardener'), soil: picked('soil'), template: picked('template'), seeds: picked('seeds') });
+  /** Picks one item of a layer (the Current garden: taken afresh). A profile: loads its four. */
+  function pick(layer, id) {
+    if (!has(layer, id)) return;
+    if (layer === 'profile') return loadProfile(id);
+    S().set(LAYERS[layer].opt, id);
+    if (layer === 'template' && id === 'current' && CA.Garden.captureCurrent) CA.Garden.captureCurrent();
+  }
+  function loadProfile(id, opts = {}) {
+    const p = get('profile', id);
+    if (!p) return;
+    PARTS.forEach((k) => S().set(LAYERS[k].opt, has(k, p.data[k]) ? p.data[k] : LAYERS[k].def));
+    S().set(LAYERS.profile.opt, id);
+    if (picked('template') === 'current' && !opts.lazy && CA.Garden.captureCurrent) CA.Garden.captureCurrent();
+  }
+  /** Whether the four picks differ from the loaded profile's. */
+  function profileChanged() {
+    const p = get('profile', picked('profile'));
+    return !!p && PARTS.some((k) => (has(k, p.data[k]) ? p.data[k] : LAYERS[k].def) !== picked(k));
+  }
+  /** The loaded profile, set to the four picks. */
+  const saveProfile = () => set('profile', picked('profile'), picks());
+  /** A new profile of yours from the four picks, loaded. */
+  function newProfile(name) {
+    const id = add('profile', name, picks());
+    S().set(LAYERS.profile.opt, id);
+    return id;
+  }
+
+  // ---- layouts: a template's letters on the plot, each its seed --------------------------------
+
+  /** The Current garden as letters: { plot, map } (A: the first seed, left to right, top to bottom). */
+  function currentLetters() {
+    const mem = (CA.Garden.currentPlot && CA.Garden.currentPlot()) || null;
+    return lettersOf(mem);
+  }
+  /** Seeds per tile → { plot of letters, map letter → seed } (letters by first appearance). */
+  function lettersOf(seedPlot) {
+    const map = {};
+    const back = {};
+    const plot = Array.from({ length: SIZE }, (_, y) =>
+      Array.from({ length: SIZE }, (_, x) => {
+        const k = seedPlot && seedPlot[y] && seedPlot[y][x];
+        if (!k) return null;
+        if (!back[k]) {
+          const l = LETTERS[Object.keys(map).length] || 'Z';
+          back[k] = l;
+          map[l] = k;
+        }
+        return back[k];
+      })
+    );
+    return { plot, map };
+  }
+  /** The letters a template uses, in order. */
+  const lettersIn = (plot) => [...new Set((plot || []).flat().filter(Boolean))].sort();
+  /**
+   * Where a template's cell lands on the plot: as it is (abs), or from the top-left unlocked tile
+   * (origin) — so a template for the full plot fits a smaller one by its top-left part.
+   */
+  function seedPlot(templateData, map, origin) {
+    const out = Array.from({ length: SIZE }, () => Array(SIZE).fill(null));
+    const [ox, oy] = templateData.abs ? [0, 0] : origin || [0, 0];
+    for (let ty = 0; ty < SIZE; ty++)
+      for (let tx = 0; tx < SIZE; tx++) {
+        const l = templateData.plot[ty] && templateData.plot[ty][tx];
+        const x = tx + ox;
+        const y = ty + oy;
+        if (l && x < SIZE && y < SIZE) out[y][x] = map[l] || null;
+      }
+    return out;
+  }
+
+  /**
+   * A template and seeds for a plot of seeds (what's planted): a template you already have that
+   * lays its letters out the same way on the unlocked tiles (Fill for one seed everywhere), else a
+   * new one; the same for the seeds. Returns { template, seeds } (ids).
+   */
+  function adopt(seedPlotNow, name, isOpen, origin) {
+    const [ox, oy] = origin;
+    // the letters on the unlocked tiles, relative to the origin, labelled by first appearance
+    const norm = (letterAt) => {
+      const back = {};
+      let n = 0;
+      const cells = [];
+      for (let y = 0; y < SIZE; y++)
+        for (let x = 0; x < SIZE; x++) {
+          if (!isOpen(x, y)) continue;
+          const l = letterAt(x, y);
+          if (l && !back[l]) back[l] = LETTERS[n++];
+          cells.push(l ? back[l] : '.');
+        }
+      return { key: cells.join(''), back };
+    };
+    const mine = lettersOf(seedPlotNow);
+    const target = norm((x, y) => mine.plot[y][x]);
+    let template = null;
+    let relabel = null; // a template's letter → the plot's letter
+    for (const t of list('template')) {
+      if (t.live) continue;
+      const d = get('template', t.id).data;
+      const n = norm((x, y) => (d.abs ? d.plot[y] && d.plot[y][x] : d.plot[y - oy] && d.plot[y - oy][x - ox]) || null);
+      if (n.key === target.key) {
+        template = t.id;
+        const toMine = {};
+        Object.keys(target.back).forEach((l) => (toMine[target.back[l]] = l)); // normalized → the plot's letter
+        relabel = {};
+        Object.keys(n.back).forEach((l) => (relabel[l] = toMine[n.back[l]]));
+        break;
+      }
+    }
+    let map;
+    if (template) {
+      map = {};
+      Object.keys(relabel).forEach((l) => (map[l] = mine.map[relabel[l]]));
+    } else {
+      // a new one, from the origin
+      const plot = Array.from({ length: SIZE }, (_, y) => Array.from({ length: SIZE }, (_, x) => (x + ox < SIZE && y + oy < SIZE && isOpen(x + ox, y + oy) ? mine.plot[y + oy][x + ox] : null)));
+      template = add('template', name, { plot, abs: false });
+      map = mine.map;
+    }
+    const seeds = list('seeds').find((s) => !s.live && same(get('seeds', s.id).data.map, map));
+    return { template, seeds: seeds ? seeds.id : add('seeds', name, { map }) };
+  }
+
+  // ---- save / load ---------------------------------------------------------------------------
+
+  const serialize = () => {
+    const out = { v: 3 };
+    Object.keys(LAYERS).forEach((k) => (out[k] = saved[k].map((x) => ({ ...x, data: JSON.parse(JSON.stringify(x.data)) }))));
+    return out;
+  };
+  function loadV3(data) {
+    saved = { gardener: [], soil: [], template: [], seeds: [], profile: [] };
+    Object.keys(LAYERS).forEach((k) => {
+      (Array.isArray(data[k]) ? data[k] : []).forEach((x) => {
+        if (!x || !x.id || !x.data || saved[k].some((y) => y.id === x.id)) return;
+        const b = builtinOf(k, String(x.id));
+        if (b && b.live) return;
+        saved[k].push({ id: String(x.id), ...(b ? {} : { name: String(x.name || LAYERS[k].noun).slice(0, 40) }), data: LAYERS[k].clean(x.data) });
+      });
+    });
+  }
+  /**
+   * Garden profiles from before v3.3 — a plot of seeds each (and, before v3.2, its own rules) —
+   * become a template and seeds each (or ones you have, laid out the same), and a profile of them
+   * with the same id; the profile that was in use is loaded (or Max effects for the Current garden).
+   */
+  function migrate(oldProfiles, oldGardeners, liftSoil) {
+    saved = { gardener: [], soil: [], template: [], seeds: [], profile: [] };
+    (oldGardeners || []).forEach((g) => {
+      if (!g || !g.id || typeof g.rules !== 'string') return;
+      const b = builtinOf('gardener', g.id);
+      saved.gardener.push({ id: String(g.id), ...(b ? {} : { name: String(g.name || 'My gardener').slice(0, 40) }), data: cleanRules(g) });
+    });
+    const was = S().get('gardenProfile');
+    const wasGardener = S().get('gardenGardener');
+    let load = null;
+    (oldProfiles || []).forEach((p) => {
+      if (!p || !p.id || !Array.isArray(p.plot)) return;
+      const name = String(p.name || 'Garden').slice(0, 40);
+      let gardener = has('gardener', wasGardener) ? wasGardener : 'effects';
+      if (typeof p.rules === 'string') {
+        gardener = `r${String(p.id)}`;
+        saved.gardener.push({ id: gardener, name: `${name.slice(0, 30)} rules`, data: { rules: liftSoil(p.rules.slice(0, 20000)) } });
+      }
+      const seedsAt = Array.from({ length: SIZE }, (_, y) => Array.from({ length: SIZE }, (_, x) => (p.plot[y] && typeof p.plot[y][x] === 'string' ? p.plot[y][x] : null)));
+      const keys = [...new Set(seedsAt.flat().filter(Boolean))];
+      let template;
+      let seeds;
+      if (keys.length === 1 && seedsAt.flat().every(Boolean)) template = 'fill';
+      const lt = lettersOf(seedsAt);
+      if (!template) {
+        const t = saved.template.find((x) => same(x.data.plot, lt.plot) && x.data.abs);
+        template = t ? t.id : `t${String(p.id)}`;
+        if (!t) saved.template.push({ id: template, name, data: { plot: lt.plot, abs: true } });
+      }
+      const s = saved.seeds.find((x) => same(x.data.map, lt.map));
+      seeds = s ? s.id : `s${String(p.id)}`;
+      if (!s) saved.seeds.push({ id: seeds, name, data: { map: lt.map } });
+      saved.profile.push({ id: String(p.id), name, data: { gardener, soil: 'effects', template, seeds } });
+      if (String(p.id) === was) load = String(p.id);
+    });
+    if (load) loadProfile(load, { lazy: true });
+    else {
+      loadProfile('maxEffects', { lazy: true });
+      if (has('gardener', wasGardener)) S().set('gardenGardener', wasGardener);
+    }
+  }
+
+  /** The options of every layer (garden.js defines them with its own). */
+  function defineOptions() {
+    Object.keys(LAYERS).forEach((k) => S().defineOption({ key: LAYERS[k].opt, group: 'garden-hidden', name: `Auto-gardener: ${LAYERS[k].noun}`, desc: '', default: LAYERS[k].def }));
+  }
+
+  return {
+    LAYERS,
+    PARTS,
+    LETTERS,
+    NAMES,
+    FERTILIZER_VAR,
+    get,
+    has,
+    list,
+    set,
+    add,
+    rename,
+    remove,
+    picked,
+    picks,
+    pick,
+    loadProfile,
+    profileChanged,
+    saveProfile,
+    newProfile,
+    lettersOf,
+    lettersIn,
+    seedPlot,
+    adopt,
+    effectsGardener,
+    serialize,
+    loadV3,
+    migrate,
+    defineOptions,
+  };
+})();
+
+// ---- src/features/garden.js ------------------------------------------
+// The **auto-gardener**: tends the Garden (Farm minigame) once a second while it's on, as four
+// layers you pick separately say (features/gardenLayers.js) — or a profile that picks all four:
+//
+//   gardener   what it does: algorithmic code, run from the top every pass — the built-in Effect
+//              maximizer, Weed collector and Mutation tracker (editable, revertable), or your own
+//   soil rule  the code the gardener runs (garden.soilRule()) to pick the soil
+//   template   where seeds go: letters (A, B…) on the plot — or the Current garden, what's planted
+//   seeds      which seed each letter is
+//
+// A template and seeds together are the **layout**: the seed each tile should have. This file has
+// the garden's words the gardeners are made of (actions and values, which work in any algorithmic
+// macro), the Current garden's memory, and the Auto-gardener macro.
 //
 // The Effect maximizer (the default) does what the auto-gardener always did:
 //
-//   - in the last `lead` seconds before a garden tick (15 by default):
+//   - in the last `tickWindow` seconds before a garden tick (15 by default):
 //       · on the tiles the layout has a seed for, harvests plants that aren't that seed (weeds,
 //         mutations, leftovers) — tiles the layout leaves empty it doesn't touch
 //       · harvests the layout's own mature plants when the chance that they die of old age on the
 //         coming tick is above your threshold (50% by default; 100% = let them die)
 //       · replants the tiles it just cleared
 //   - any time: plants the layout's seed on every empty tile you can afford; harvests a plant whose
-//     seed you haven't unlocked yet as soon as it's mature, which unlocks it; and keeps the soil on
-//     fertilizer while most plants are growing, clay once they're mature (when the game lets you —
+//     seed you haven't unlocked yet as soon as it's mature, which unlocks it; and runs the soil rule
+//     (fertilizer while most plants are growing, clay once they're mature — when the game lets you,
 //     a 10-minute cooldown)
-//
-// The Weed collector keeps the garden bare for weeds and fungi; the Mutation tracker grows the
-// layout's parents and watches the other tiles for mutations (see their code below).
 //
 // Why harvest before a plant dies? A harvest of a mature plant unlocks its seed if it's new, counts
 // towards the harvest achievements, and some plants pay out on harvest (Bakeberry, Chocoroot, Queenbeet…);
@@ -3538,12 +4040,12 @@ CA.Pantheon = (() => {
 
 CA.Garden = (() => {
   const SIZE = 6;
-  let profiles = []; // { id, name, soil, plot: [[key|null × 6] × 6] }
-  let gardeners = []; // yours: { id, name, rules }; a built-in you edited: { id, rules }
-  let current = null; // the Current garden layout: each tile's plant as last seen ([[key|null × 6] × 6])
+  let current = null; // the Current garden: each tile's plant as remembered ([[key|null × 6] × 6])
   let unlockedAt = {}; // seed → when a harvest by CookieMgr unlocked it (ms)
   const CURRENT = 'current';
   const S = () => CA.Settings;
+  const L = () => CA.GardenLayers;
+  const changed = () => CA.Events.emit('garden');
 
   function minigame() {
     const M = CA.Util.minigame('Farm');
@@ -3557,6 +4059,19 @@ CA.Garden = (() => {
   };
   /** Seconds until the next garden tick. */
   const nextTickIn = (M) => (M.nextStep ? Math.max(0, (M.nextStep - Date.now()) / 1000) : Infinity);
+  /** The top-left unlocked tile: where a template's top-left cell goes. */
+  function originOf(M) {
+    if (!M) return [0, 0];
+    let ox = SIZE;
+    let oy = SIZE;
+    for (let y = 0; y < SIZE; y++)
+      for (let x = 0; x < SIZE; x++)
+        if (unlockedTile(M, x, y)) {
+          ox = Math.min(ox, x);
+          oy = Math.min(oy, y);
+        }
+    return ox === SIZE ? [0, 0] : [ox, oy];
+  }
 
   // ---- the chance a plant dies on the next tick -------------------------------------------------
 
@@ -3583,29 +4098,28 @@ CA.Garden = (() => {
     return Math.max(0, Math.min(1, (F(b) - F(a)) / (b - a)));
   }
 
-  // ---- profiles ------------------------------------------------------------------------------
+  // ---- the Current garden ------------------------------------------------------------------------
+  //
+  // It remembers each tile's plant: taken from the garden when you pick it, then changed only by
+  // your own clicks on the garden (a seed you plant, a plant you harvest) — a plant that dies or is
+  // harvested by the gardener is replanted, and a mutation or weed that springs up isn't adopted.
 
-  const newId = () => `g${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`;
-  /** The layout the gardener keeps: a saved profile, or (picked, or none picked) the Current garden. */
-  function active() {
-    const id = S().get('gardenProfile');
-    return profiles.find((p) => p.id === id) || currentProfile();
-  }
-  const activeLayoutId = () => active().id;
   const emptyPlot = () => Array.from({ length: SIZE }, () => Array(SIZE).fill(null));
-  // The Current garden remembers each tile's plant: taken from the garden when you pick it, then
-  // changed only by your own clicks on the garden (a seed you plant, a plant you harvest) — a plant
-  // that dies or is harvested by the gardener is replanted, and a mutation or weed that springs up
-  // isn't adopted.
   const keeps = (me) => !!me && !!me.unlocked && !me.weed && !me.fungus;
-  /** What's planted now, seed by seed (seeds you've unlocked — not weeds, fungi or new mutations). */
+  /** What's planted, seed by seed, as it is now (any seed, or only ones the Current garden keeps). */
+  function plantedNow(M, filter = keeps) {
+    const plot = emptyPlot();
+    for (let y = 0; y < SIZE; y++)
+      for (let x = 0; x < SIZE; x++) {
+        const me = unlockedTile(M, x, y) ? plantAt(M, x, y) : null;
+        if (me && filter(me)) plot[y][x] = me.key;
+      }
+    return plot;
+  }
+  /** Takes the Current garden afresh (no garden yet: when there is one). */
   function captureCurrent() {
     const M = minigame();
-    current = emptyPlot();
-    if (M) for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
-      const me = unlockedTile(M, x, y) ? plantAt(M, x, y) : null;
-      if (keeps(me)) current[y][x] = me.key;
-    }
+    current = M ? plantedNow(M) : null;
     changed();
   }
   /** Notes your clicks on the garden's tiles (once per garden), for the Current garden. */
@@ -3616,7 +4130,7 @@ CA.Garden = (() => {
     M.clickTile = function (x, y) {
       const out = orig.apply(this, arguments);
       try {
-        if (current && activeLayoutId() === CURRENT && current[y]) {
+        if (current && current[y] && L().picked('template') === CURRENT) {
           const me = plantAt(M, x, y);
           current[y][x] = keeps(me) ? me.key : null;
           changed();
@@ -3627,59 +4141,37 @@ CA.Garden = (() => {
       return out;
     };
   }
-  function currentProfile() {
+  /** The Current garden's memory (taken now if there's none yet). */
+  function currentPlot() {
     const M = minigame();
     watchClicks(M);
-    if (!current && M) captureCurrent();
-    const soil = M && M.soilsById && M.soilsById[M.soil] ? M.soilsById[M.soil].key : 'dirt';
-    return { id: CURRENT, name: 'Current garden', soil, plot: current || emptyPlot(), live: true };
+    if (!current && M) current = plantedNow(M);
+    return current || emptyPlot();
   }
 
-  /** Saves the current garden (seeds on every tile + the soil) as a new profile. */
+  // ---- the layout: the template's letters, each its seed -------------------------------------------
+
+  /** The layout the gardener keeps: { id, name, plot (seed per tile), template, seeds }. */
+  function active() {
+    const t = L().get('template', L().picked('template'));
+    const s = L().get('seeds', L().picked('seeds'));
+    const plot = t.id === CURRENT && s.id === CURRENT ? currentPlot() : L().seedPlot(t.data, s.data.map, originOf(minigame()));
+    return { id: `${t.id}/${s.id}`, name: t.id === CURRENT && s.id === CURRENT ? 'Current garden' : `${t.name} · ${s.name}`, plot, template: t, seeds: s };
+  }
+
+  /**
+   * The garden as it is, as a profile of yours: its template (one you have, laid out the same — Fill
+   * for one seed everywhere — else a new one), its seeds, the gardener and soil rule picked now. Loaded.
+   */
   function snapshot(name) {
     const M = minigame();
     if (!M) return null;
-    const plot = [];
-    for (let y = 0; y < SIZE; y++) {
-      plot.push([]);
-      for (let x = 0; x < SIZE; x++) {
-        const me = unlockedTile(M, x, y) ? plantAt(M, x, y) : null;
-        plot[y].push(me ? me.key : null);
-      }
-    }
-    const soil = M.soilsById && M.soilsById[M.soil] ? M.soilsById[M.soil].key : 'dirt';
-    const p = { id: newId(), name: String(name || `Garden ${profiles.length + 1}`).slice(0, 40), soil, plot };
-    profiles.push(p);
-    if (activeLayoutId() === CURRENT && S().get('gardenProfile') !== CURRENT) S().set('gardenProfile', p.id);
-    changed();
-    return p;
+    const nm = String(name || `Garden ${L().list('profile').filter((p) => !p.builtin).length + 1}`).slice(0, 40);
+    const got = L().adopt(plantedNow(M, () => true), nm, (x, y) => unlockedTile(M, x, y), originOf(M));
+    const id = L().add('profile', nm, { gardener: L().picked('gardener'), soil: L().picked('soil'), template: got.template, seeds: got.seeds });
+    L().loadProfile(id);
+    return L().get('profile', id);
   }
-
-  function removeProfile(id) {
-    const i = profiles.findIndex((p) => p.id === id);
-    if (i < 0) return;
-    profiles.splice(i, 1);
-    if (S().get('gardenProfile') === id) S().set('gardenProfile', profiles[0] ? profiles[0].id : CURRENT);
-    changed();
-  }
-
-  function rename(id, name) {
-    const p = profiles.find((x) => x.id === id);
-    if (!p || !String(name).trim()) return;
-    p.name = String(name).trim().slice(0, 40);
-    changed();
-  }
-
-  /** Keep the garden like this layout (Current garden: what's planted now, captured afresh). */
-  function use(id) {
-    if (id === CURRENT) {
-      captureCurrent();
-      S().set('gardenProfile', CURRENT);
-      return;
-    }
-    if (profiles.some((p) => p.id === id)) S().set('gardenProfile', id);
-  }
-  const changed = () => CA.Events.emit('garden');
 
   // ---- tending ------------------------------------------------------------------------------
 
@@ -3707,165 +4199,34 @@ CA.Garden = (() => {
     return true;
   }
 
-  // ---- gardeners: what the auto-gardener does, written as code ------------------------------------
-  //
-  // A gardener is algorithmic code (features/script.js) run from the top on every pass of the
-  // auto-gardener, made of the garden's own words below; it tends towards the active layout. The
-  // built-in ones can be edited (and reverted); your own are made from any of them.
+  // ---- gardeners and soil rules: code ---------------------------------------------------------
 
-  const FERTILIZER_VAR = 'fertilizerAbove';
-  /** The Effect maximizer, with the numbers of the old settings (seconds before the tick, the death-chance threshold, unlocking new seeds). */
-  function defaultRules() {
-    const lead = Math.max(1, Number(S().get('gardenLead')) || 15);
-    const thr = Math.max(0, Math.min(100, Number(S().get('gardenThreshold')))) / 100;
-    const unlock = S().get('gardenUnlockNew') !== false;
-    const lines = [
-      '# Effect maximizer: keeps the layout planted, and its plants\' effects as high as they go.',
-      '# It plants only where the layout has a seed, and only clears the tiles the layout uses.',
-      '# Your numbers (used below):',
-      `${FERTILIZER_VAR} = 0.67   # fertilizer while more than this share of the planted tiles is still growing, else clay`,
-      `tickWindow = ${lead}   # the last seconds before a garden tick, when old plants are dealt with`,
-    ];
-    if (thr < 1) lines.push(`dyingOver = ${thr}   # replant mature plants more likely than this to die on the tick (the new one grows at it)`);
-    lines.push(
-      `unlockNewSeeds = ${unlock}   # a seed you haven't unlocked yet: let it grow, harvest it once mature (that unlocks it)`,
-      "# Plant the layout's seed on every empty tile it has one for, right away.",
-      'garden.plantEmpty()',
-      'if unlockNewSeeds:',
-      '  garden.harvestNew()',
-      '# Soil, first: its effects count the whole time, not just at the tick — fertilizer while most',
-      '# plants are still growing, clay (effects ×1.25) once enough of them are mature.',
-      `if garden.youngShare() > ${FERTILIZER_VAR}:`,
-      '  garden.soil(fertilizer)',
-      'else:',
-      '  garden.soil(clay)',
-      '# In the last tickWindow seconds before a garden tick:',
-      'if garden.tickIn() <= tickWindow:',
-      "  # clear the layout's tiles of what doesn't belong there (leaving new seeds to grow)",
-      '  for tile in garden.tiles():',
-      '    if garden.wantAt(tile) != "" and garden.isOff(tile) and not garden.isEmpty(tile) and not (unlockNewSeeds and garden.isNew(tile)):',
-      '      garden.harvest(tile)'
-    );
-    if (thr < 1) lines.push('  # replant mature plants likely to die on the tick', '  garden.harvestDying(dyingOver)', '  garden.plantEmpty()');
-    return lines.join('\n') + '\n';
-  }
-  const WEED_RULES = `# Weed collector: keeps the garden bare, so weeds and fungi spring up, and gets their seeds.
-# Meddleweed is left to grow old, then harvested — the older it is, the likelier it leaves brown
-# mold or crumbspore behind. Anything you haven't unlocked yet grows until it's mature and is
-# harvested (that unlocks it); everything else is cleared away. It plants nothing.
-oldWeedOver = 0.5   # harvest a meddleweed once it's this likely to die on the next tick
-# fertilizer: the most weeds (×1.2) and the quickest ticks
-garden.soil(fertilizer)
-for tile in garden.tiles():
-  if not garden.isEmpty(tile):
-    if garden.plantAt(tile) == "meddleweed":
-      if garden.decay(tile) > oldWeedOver:
-        garden.harvest(tile)
-    elif garden.isNew(tile):
-      if garden.isMature(tile):
-        garden.harvest(tile)
-    else:
-      garden.harvest(tile)
-`;
-  const MUTATION_RULES = `# Mutation tracker: keeps the layout's plants (the parents) growing, and watches every other tile
-# for mutations. A seed you've unlocked already is cleared at once (its tile is another chance); a
-# new one is kept — every copy of it — and harvested once mature (that unlocks it). Seeds unlocked
-# in the last keepRecentMinutes count as new, so a fresh find's other copies grow on too.
-growingOver = 0.34        # fertilizer while more than this share of the layout's plants is still growing
-keepRecentMinutes = 60
-tickWindow = 15
-dyingOver = 0.5
-garden.plantEmpty()
-# Soil: fertilizer to grow the parents; wood chips (three times the mutation chances) once they're
-# mature, if you have the 300 farms it needs — else fertilizer, whose quicker ticks give more chances
-if garden.layoutYoungShare() > growingOver or not garden.soilAvailable(woodchips):
-  garden.soil(fertilizer)
-else:
-  garden.soil(woodchips)
-for tile in garden.tiles():
-  if not garden.isEmpty(tile) and garden.isOff(tile):
-    if garden.isNew(tile) or garden.unlockedAgo(garden.plantAt(tile)) < keepRecentMinutes * 60:
-      if garden.isMature(tile):
-        garden.harvest(tile)
-    else:
-      garden.harvest(tile)
-# In the last tickWindow seconds before a garden tick: replant parents likely to die on it
-if garden.tickIn() <= tickWindow:
-  garden.harvestDying(dyingOver)
-  garden.plantEmpty()
-`;
-  const BUILTIN_GARDENERS = [
-    { id: 'effects', name: 'Effect maximizer', desc: 'Keeps the layout planted and its effects high: fertilizer while plants grow, clay once they’re mature; replants plants about to die.', source: defaultRules },
-    { id: 'weeds', name: 'Weed collector', desc: 'Keeps the garden bare on fertilizer so weeds and fungi spring up; harvests old meddleweed (for brown mold and crumbspore) and new seeds once mature.', source: () => WEED_RULES },
-    { id: 'mutations', name: 'Mutation tracker', desc: 'Grows the layout’s parents, then wood chips for mutations; clears seeds you have from the other tiles at once, keeps new ones until they’re mature.', source: () => MUTATION_RULES },
-  ];
-  const isBuiltinGardener = (id) => BUILTIN_GARDENERS.some((g) => g.id === id);
-  /** Every gardener: { id, name, desc, builtin, edited }. */
-  function gardenerList() {
-    return BUILTIN_GARDENERS.map((g) => ({ id: g.id, name: g.name, desc: g.desc, builtin: true, edited: gardeners.some((x) => x.id === g.id) })).concat(
-      gardeners.filter((g) => !isBuiltinGardener(g.id)).map((g) => ({ id: g.id, name: g.name, desc: '', builtin: false, edited: false }))
-    );
-  }
-  const gardenerById = (id) => gardenerList().find((g) => g.id === id) || null;
-  /** The gardener the auto-gardener follows (the Effect maximizer unless you picked another). */
-  const activeGardener = () => gardenerById(S().get('gardenGardener')) || gardenerById('effects');
-  /** A gardener's code: yours, a built-in's as you edited it, or its default. */
-  function gardenerRules(id) {
-    const own = gardeners.find((g) => g.id === id);
-    if (own && typeof own.rules === 'string') return own.rules;
-    const b = BUILTIN_GARDENERS.find((g) => g.id === id);
-    return b ? b.source() : '';
-  }
-  /** Sets a gardener's code (a built-in: null, or its default code, brings the default back). */
-  function setGardenerRules(id, src) {
-    const b = BUILTIN_GARDENERS.find((g) => g.id === id);
-    const i = gardeners.findIndex((g) => g.id === id);
-    if (b) {
-      if (src == null || String(src).trim() === b.source().trim()) {
-        if (i >= 0) gardeners.splice(i, 1);
-      } else if (i >= 0) gardeners[i].rules = String(src).slice(0, 20000);
-      else gardeners.push({ id, rules: String(src).slice(0, 20000) });
-    } else if (i >= 0 && src != null) gardeners[i].rules = String(src).slice(0, 20000);
-    changed();
-  }
-  /** A gardener of your own (its code: the given one, or a copy of the active gardener's); returns its id. */
-  function newGardener(name, src) {
-    const id = `r${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`;
-    gardeners.push({ id, name: String(name || 'My gardener').trim().slice(0, 40) || 'My gardener', rules: String(src != null ? src : rulesOf()).slice(0, 20000) });
-    changed();
-    return id;
-  }
-  function renameGardener(id, name) {
-    const g = gardeners.find((x) => x.id === id && !isBuiltinGardener(id));
-    if (!g || !String(name).trim()) return;
-    g.name = String(name).trim().slice(0, 40);
-    changed();
-  }
-  function removeGardener(id) {
-    if (isBuiltinGardener(id)) return;
-    gardeners = gardeners.filter((g) => g.id !== id);
-    if (S().get('gardenGardener') === id) S().set('gardenGardener', 'effects');
-    changed();
-  }
-  const useGardener = (id) => S().set('gardenGardener', gardenerById(id) ? id : 'effects');
+  const gardenerRules = (id) => {
+    const g = L().get('gardener', id);
+    return g ? g.data.rules : '';
+  };
   /** The active gardener's code (what the auto-gardener runs). */
-  const rulesOf = () => gardenerRules(activeGardener().id);
-  /** Sets a gardener's code — by its id (a garden profile's id, from before v3.2: the active gardener's). */
-  const setRules = (id, src) => setGardenerRules(gardenerById(id) ? id : activeGardener().id, src);
+  const rulesOf = () => gardenerRules(L().picked('gardener'));
+  /** The active soil rule's code. */
+  const soilRules = () => L().get('soil', L().picked('soil')).data.rules;
+  /** Sets a gardener's code (a built-in: null brings its default back); an id that isn't a gardener's: the active one's. */
+  const setRules = (id, src) => L().set('gardener', L().get('gardener', id) ? id : L().picked('gardener'), src == null ? null : { rules: src });
+  const defaultRules = () => L().effectsGardener();
 
   /**
    * Rules saved before v3.1.1 had the soil threshold written into their if (if garden.youngShare() > 0.67:):
-   * it becomes a variable at the top, like the default rules have it — the rest of the code as it was.
+   * it becomes a variable at the top, like the default rules had it — the rest of the code as it was.
    */
   function liftSoilThreshold(src) {
+    const V = L().FERTILIZER_VAR;
     const re = /^([ \t]*)if garden\.youngShare\(\) > ([0-9.]+)[ \t]*:[ \t]*$/gm;
     const found = [...src.matchAll(re)];
-    if (found.length !== 1 || new RegExp(`\\b${FERTILIZER_VAR}\\b`).test(src)) return src;
+    if (found.length !== 1 || new RegExp(`\\b${V}\\b`).test(src)) return src;
     const value = found[0][2];
-    const lines = src.replace(re, `$1if garden.youngShare() > ${FERTILIZER_VAR}:`).split('\n');
+    const lines = src.replace(re, `$1if garden.youngShare() > ${V}:`).split('\n');
     // under the rules' heading comment (the comments after it belong to the lines they describe)
     const at = /^\s*#/.test(lines[0] || '') ? 1 : 0;
-    lines.splice(at, 0, `${FERTILIZER_VAR} = ${value}   # fertilizer while more than this share of the planted tiles is still growing, else clay`);
+    lines.splice(at, 0, `${V} = ${value}   # fertilizer while more than this share of the planted tiles is still growing, else clay`);
     return lines.join('\n');
   }
   const compiled = new Map(); // source → { flow, errors }
@@ -3886,12 +4247,11 @@ if garden.tickIn() <= tickWindow:
     acc[k] += n;
     last = { at: now, harvested: acc.harvested, planted: acc.planted, saved: acc.saved, unlocked: acc.unlocked, soil: acc.soil > 0 };
   }
-  /** Runs fn(M, profile) on a garden that can be tended, else 0. */
+  /** Runs fn(M, layout) on a garden that can be tended, else 0. */
   function withGarden(fn) {
     const M = minigame();
-    const p = active();
-    if (!M || !p || M.freeze) return 0;
-    return fn(M, p) || 0;
+    if (!M || M.freeze) return 0;
+    return fn(M, active()) || 0;
   }
   const tilesOf = (M) => {
     const out = [];
@@ -3914,6 +4274,16 @@ if garden.tickIn() <= tickWindow:
     const me = plantAt(M, x, y);
     return !!me && M.plot[y][x][1] >= me.mature;
   };
+
+  let soilWanted = null; // the soil last asked for (garden.soilIs(profile): the soil rule's)
+  let soilPass = null; // the soil rule's last run: { t, lines, trace, error, errors, soil }
+  /** Runs the soil rule (its own little pass); how many things it did. */
+  function runSoilRule() {
+    const { flow, errors } = compileRules(soilRules());
+    const F = CA.Macros.runPass(flow);
+    soilPass = { t: Date.now(), at: F.at, trace: F.trace, lines: F.trace.map((x) => x.line).filter(Boolean), error: F.error, errors: errors || [], soil: L().picked('soil') };
+    return F.done;
+  }
 
   const actions = {
     plantEmpty: () =>
@@ -3968,23 +4338,27 @@ if garden.tickIn() <= tickWindow:
         count('harvested', n);
         return n;
       }),
-    soil: (key) =>
-      withGarden((M, p) => {
-        const k = key === 'profile' ? p.soil : key;
-        if (setSoil(M, k)) {
+    soil: (key) => {
+      // "profile": the soil rule's choice (before v3.3, a profile had a soil of its own)
+      if (key === 'profile') return withGarden(() => runSoilRule());
+      soilWanted = key;
+      return withGarden((M) => {
+        if (setSoil(M, key)) {
           count('soil');
           return 1;
         }
         return 0;
-      }),
+      });
+    },
+    soilRule: () => withGarden(() => runSoilRule()),
   };
 
   /** The layout's own plants (tiles where its seed grows): { planted, young }. */
   function layoutCensus() {
     const M = minigame();
-    const p = active();
     const c = { planted: 0, young: 0 };
-    if (!M || !p) return c;
+    if (!M) return c;
+    const p = active();
     tilesOf(M).forEach(([x, y]) => {
       const me = plantAt(M, x, y);
       if (!me || me.key !== wantAt(p, x, y)) return;
@@ -3997,9 +4371,9 @@ if garden.tickIn() <= tickWindow:
   /** Plants on the plot now: { planted, mature, young, empty, off } (empty: unlocked tiles with nothing). */
   function census() {
     const M = minigame();
-    const p = active();
     const c = { planted: 0, mature: 0, young: 0, empty: 0, off: 0 };
     if (!M) return c;
+    const p = active();
     tilesOf(M).forEach(([x, y]) => {
       const me = plantAt(M, x, y);
       if (!me) c.empty++;
@@ -4008,7 +4382,7 @@ if garden.tickIn() <= tickWindow:
         if (isMature(M, x, y)) c.mature++;
         else c.young++;
       }
-      if (p && (me ? me.key : null) !== wantAt(p, x, y)) c.off++;
+      if ((me ? me.key : null) !== wantAt(p, x, y)) c.off++;
     });
     return c;
   }
@@ -4017,15 +4391,14 @@ if garden.tickIn() <= tickWindow:
   // (sourceFrom), run from the top every second (pass) while there's a garden to tend (ready).
   // tend() is the same pass by hand — the garden.tend action.
   let last = { at: 0, harvested: 0, planted: 0, saved: 0, unlocked: 0, soil: false };
-  let lastPass = null; // { t, at, trace, lines, error, errors, profile }
+  let lastPass = null; // { t, at, trace, lines, error, errors, layout, gardener }
   const canTend = () => {
     const M = minigame();
-    return !!M && !!active() && !M.freeze;
+    return !!M && !M.freeze;
   };
-  /** After each pass (the gardener's, or tend()'s): where the rules went, for the page. */
+  /** After each pass (the gardener's, or tend()'s): where its code went, for the page. */
   function recordPass(F, errors) {
-    const p = active();
-    lastPass = { t: Date.now(), at: F.at, trace: F.trace, lines: F.trace.map((x) => x.line).filter(Boolean), error: F.error, errors: errors || [], profile: p && p.id, gardener: activeGardener().id };
+    lastPass = { t: Date.now(), at: F.at, trace: F.trace, lines: F.trace.map((x) => x.line).filter(Boolean), error: F.error, errors: errors || [], layout: active().id, gardener: L().picked('gardener') };
   }
   function tend() {
     if (!canTend()) return 0;
@@ -4035,8 +4408,7 @@ if garden.tickIn() <= tickWindow:
     return F.done;
   }
 
-
-  /** What the current garden looks like against the active profile, tile by tile (for the page). */
+  /** What the current garden looks like against the layout, tile by tile (for the page). */
   function view() {
     const M = minigame();
     if (!M) return null;
@@ -4046,7 +4418,7 @@ if garden.tickIn() <= tickWindow:
       for (let x = 0; x < SIZE; x++) {
         const open = unlockedTile(M, x, y);
         const me = open ? plantAt(M, x, y) : null;
-        const want = p && p.plot[y] ? p.plot[y][x] : null;
+        const want = p.plot[y] ? p.plot[y][x] : null;
         tiles.push({
           x,
           y,
@@ -4054,7 +4426,7 @@ if garden.tickIn() <= tickWindow:
           plant: me,
           age: me ? M.plot[y][x][1] : 0,
           want: want && M.plants[want] ? M.plants[want] : null,
-          match: !p || (me ? me.key : null) === want,
+          match: (me ? me.key : null) === want,
           decay: me ? decayChance(M, x, y) : 0,
         });
       }
@@ -4066,40 +4438,26 @@ if garden.tickIn() <= tickWindow:
 
   const cleanPlot = (plot) => Array.from({ length: SIZE }, (_, y) => Array.from({ length: SIZE }, (_, x) => (plot && plot[y] && typeof plot[y][x] === 'string' ? plot[y][x] : null)));
   const serialize = () => ({
-    profiles: profiles.map((p) => ({ id: p.id, name: p.name, soil: p.soil, plot: p.plot.map((r) => r.slice()) })),
-    gardeners: gardeners.map((g) => ({ ...g })),
+    ...L().serialize(),
     ...(current ? { current: current.map((r) => r.slice()) } : {}),
     unlockedAt: { ...unlockedAt },
   });
   function load(data) {
-    // before v3.2: just the profiles (an array), each with its own rules
-    const v2 = Array.isArray(data);
-    const list = v2 ? data : (data && Array.isArray(data.profiles) && data.profiles) || [];
-    gardeners = !v2 && data && Array.isArray(data.gardeners) ? data.gardeners.filter((g) => g && g.id && typeof g.rules === 'string').map((g) => ({ id: String(g.id), ...(isBuiltinGardener(g.id) ? {} : { name: String(g.name || 'My gardener').slice(0, 40) }), rules: g.rules.slice(0, 20000) })) : [];
-    current = !v2 && data && Array.isArray(data.current) ? cleanPlot(data.current) : null;
-    unlockedAt = !v2 && data && data.unlockedAt && typeof data.unlockedAt === 'object' ? { ...data.unlockedAt } : {};
-    profiles = list
-      .filter((p) => p && p.id && Array.isArray(p.plot))
-      .map((p) => {
-        // a profile's own rules (v2.26–v3.1): a gardener of yours now — the active one if its profile was
-        if (typeof p.rules === 'string') {
-          const id = `r${String(p.id)}`;
-          gardeners.push({ id, name: `${String(p.name || 'Garden').slice(0, 30)} rules`, rules: liftSoilThreshold(p.rules.slice(0, 20000)) });
-          if (S().get('gardenProfile') === String(p.id)) S().set('gardenGardener', id);
-        }
-        return { id: String(p.id), name: String(p.name || 'Garden').slice(0, 40), soil: typeof p.soil === 'string' ? p.soil : 'dirt', plot: cleanPlot(p.plot) };
-      });
+    const obj = data && typeof data === 'object' && !Array.isArray(data) ? data : null;
+    current = obj && Array.isArray(obj.current) ? cleanPlot(obj.current) : null;
+    unlockedAt = obj && obj.unlockedAt && typeof obj.unlockedAt === 'object' ? { ...obj.unlockedAt } : {};
+    if (obj && obj.v === 3) L().loadV3(obj);
+    // before v3.3: profiles were plots of seeds (v3.2: { profiles, gardeners }; before: an array, each with its own rules)
+    else if (Array.isArray(data) || (obj && Array.isArray(obj.profiles))) L().migrate(Array.isArray(data) ? data : obj.profiles, obj && obj.gardeners, liftSoilThreshold);
+    else L().loadV3({});
     changed();
   }
 
   const GARDENER = 'gardener';
-  /** The layouts to pick from: the Current garden, then your profiles. */
-  const layoutOptions = () => [{ v: CURRENT, label: 'Current garden (keeps what’s planted)' }].concat(profiles.map((p) => ({ v: p.id, label: p.name })));
 
   function init() {
     CA.Settings.registerSection('garden', { serialize, load, event: 'garden' });
-    S().defineOption({ key: 'gardenProfile', group: 'garden-hidden', name: 'Active garden profile', desc: '', default: '' });
-    S().defineOption({ key: 'gardenGardener', group: 'garden-hidden', name: 'Active gardener', desc: '', default: 'effects' });
+    L().defineOptions();
     S().defineOption({ key: 'gardenThreshold', group: 'garden-hidden', name: 'Harvest before dying at', desc: '', default: 50 });
     S().defineOption({ key: 'gardenLead', group: 'garden-hidden', name: 'Seconds before the tick', desc: '', default: 15 });
     S().defineOption({
@@ -4110,13 +4468,13 @@ if garden.tickIn() <= tickWindow:
       desc: 'Lets a seed you haven’t unlocked yet grow wherever it appears, and harvests it the moment it’s mature (which unlocks it) — instead of pulling it out as a mismatch.',
       default: true,
     });
-    // the garden's words, for its rules (and any algorithmic macro)
+    // the garden's words, for the gardeners (and any algorithmic macro)
     const A = CA.Actions.register;
-    A({ id: 'garden.plantEmpty', name: 'Plant the profile’s seed on every empty tile', icon: 'leaf', group: 'Garden', unit: 'planted', run: () => actions.plantEmpty() });
+    A({ id: 'garden.plantEmpty', name: 'Plant the layout’s seed on every empty tile', icon: 'leaf', group: 'Garden', unit: 'planted', run: () => actions.plantEmpty() });
     A({ id: 'garden.harvestNew', name: 'Harvest new seeds once mature (unlocks them)', icon: 'leaf', group: 'Garden', unit: 'unlocked', run: () => actions.harvestNew() });
     A({
       id: 'garden.pullMismatches',
-      name: 'Pull out what isn’t the profile’s seed',
+      name: 'Pull out what isn’t the layout’s seed',
       icon: 'leaf',
       group: 'Garden',
       unit: 'pulled',
@@ -4132,8 +4490,8 @@ if garden.tickIn() <= tickWindow:
       params: [{ key: 'threshold', label: 'Chance to die over', type: 'number', default: 0.5, min: 0 }],
       run: (p) => actions.harvestDying(Number(p.threshold)),
     });
-    A({ id: 'garden.harvestMature', name: 'Harvest every mature plant of the profile', icon: 'leaf', group: 'Garden', unit: 'harvested', run: () => actions.harvestMature() });
-    const soils = () => ['dirt', 'fertilizer', 'clay', 'pebbles', 'woodchips', 'profile'].map((v) => ({ v, label: v === 'profile' ? 'the profile’s soil' : v }));
+    A({ id: 'garden.harvestMature', name: 'Harvest every mature plant of the layout', icon: 'leaf', group: 'Garden', unit: 'harvested', run: () => actions.harvestMature() });
+    const soils = () => ['dirt', 'fertilizer', 'clay', 'pebbles', 'woodchips', 'profile'].map((v) => ({ v, label: v === 'profile' ? 'the soil rule’s' : v }));
     A({
       id: 'garden.soil',
       name: 'Switch the soil (when the game allows)',
@@ -4143,6 +4501,7 @@ if garden.tickIn() <= tickWindow:
       params: [{ key: 'soil', label: 'Soil', type: 'select', default: 'fertilizer', options: soils }],
       run: (p) => actions.soil(p.soil),
     });
+    A({ id: 'garden.soilRule', name: 'Pick the soil, as the soil rule says', icon: 'leaf', group: 'Garden', unit: 'done', run: () => actions.soilRule() });
     CA.Conditions.register({
       id: 'garden.soilIs',
       name: 'The garden’s soil is…',
@@ -4152,7 +4511,7 @@ if garden.tickIn() <= tickWindow:
       test: (p) => {
         const M = minigame();
         const s = M && M.soilsById && M.soilsById[M.soil];
-        return !!s && s.key === (p.soil === 'profile' && active() ? active().soil : p.soil);
+        return !!s && s.key === (p.soil === 'profile' ? soilWanted : p.soil);
       },
     });
     const V = (id, desc, get) => CA.Script.defineValue({ id, desc, get });
@@ -4171,7 +4530,7 @@ if garden.tickIn() <= tickWindow:
     V('garden.plants', 'plants on the plot', () => census().planted);
     V('garden.mature', 'mature plants on the plot', () => census().mature);
     V('garden.empty', 'empty tiles', () => census().empty);
-    V('garden.offProfile', 'tiles that aren’t as the profile has them', () => census().off);
+    V('garden.offProfile', 'tiles that aren’t as the layout has them', () => census().off);
     V('garden.layoutYoungShare', 'share of the layout’s own plants not mature yet (0–1)', () => {
       const c = layoutCensus();
       return c.planted ? Math.round((c.young / c.planted) * 1000) / 1000 : 0;
@@ -4226,13 +4585,13 @@ if garden.tickIn() <= tickWindow:
       },
     });
     T('garden.plantAt', 'what grows on a tile (its seed, or "" when empty)', at((M, x, y) => (plantAt(M, x, y) || {}).key || '', ''));
-    T('garden.wantAt', 'the layout’s seed for a tile (or "")', at((M, x, y) => (active() && wantAt(active(), x, y)) || '', ''));
+    T('garden.wantAt', 'the layout’s seed for a tile (or "")', at((M, x, y) => wantAt(active(), x, y) || '', ''));
     T('garden.age', 'how far a tile’s plant has grown (its age; 0 when empty)', at((M, x, y) => (plantAt(M, x, y) ? M.plot[y][x][1] : 0), 0));
     T('garden.decay', 'the chance a tile’s plant dies on the next tick (0–1)', at((M, x, y) => (isMature(M, x, y) ? decayChance(M, x, y) : 0), 0));
     T('garden.isMature', 'whether a tile’s plant is mature', at((M, x, y) => isMature(M, x, y), false), true);
     T('garden.isNew', 'whether a tile’s plant is a seed you haven’t unlocked yet', at((M, x, y) => !!plantAt(M, x, y) && !plantAt(M, x, y).unlocked, false), true);
     T('garden.isEmpty', 'whether a tile has nothing growing', at((M, x, y) => !plantAt(M, x, y), false), true);
-    T('garden.isOff', 'whether a tile isn’t as the layout has it', at((M, x, y) => ((plantAt(M, x, y) || {}).key || null) !== ((active() && wantAt(active(), x, y)) || null), false), true);
+    T('garden.isOff', 'whether a tile isn’t as the layout has it', at((M, x, y) => ((plantAt(M, x, y) || {}).key || null) !== wantAt(active(), x, y), false), true);
     CA.Script.defineValue({
       id: 'garden.seeds',
       desc: 'a list: every seed you’ve unlocked',
@@ -4285,23 +4644,29 @@ if garden.tickIn() <= tickWindow:
       icon: 'leaf',
       group: 'Garden',
       unit: 'done',
-      available: () => !!minigame() && !!active(),
+      available: () => !!minigame(),
       run: () => tend(),
+    });
+    // its choices on its card: a profile, or any of the four layers (the Garden page's own picks)
+    const choice = (layer, label) => ({
+      key: layer === 'soil' ? 'soilRule' : layer === 'seeds' ? 'seedSet' : layer,
+      label,
+      type: 'select',
+      default: L().LAYERS[layer].def,
+      options: () => L().list(layer).map((x) => ({ v: x.id, label: x.name + (x.edited ? ' (edited)' : '') })),
+      get: () => L().picked(layer),
+      set: (v) => L().pick(layer, v),
     });
     CA.Macros.addBuiltin({
       id: GARDENER,
       name: 'Auto-gardener',
-      desc: 'Tends your garden: the gardener you pick (what it does — the Effect maximizer, the Weed collector, the Mutation tracker, or your own code) with the layout you pick (a garden profile, or the Current garden). Edit gardeners on the Garden page.',
+      desc: 'Tends your garden as four layers say: the gardener (what it does), its soil rule, the template (where seeds go) and the seeds — or a profile that picks all four. Edit them on the Garden page.',
       icon: { sprite: [4, 0], sheet: 'img/gardenPlants.png' }, // mature Baker's wheat
       mode: 'flow',
       pass: true,
       every: 1000,
-      sourceFrom: () => (active() ? rulesOf() : ''),
-      // its two choices, on its card: the layout and the gardener (the Garden page's own settings)
-      inputs: [
-        { key: 'layout', label: 'Layout', type: 'select', default: '', options: layoutOptions, get: activeLayoutId, set: (v) => use(v) },
-        { key: 'gardener', label: 'Gardener', type: 'select', default: 'effects', options: () => gardenerList().map((g) => ({ v: g.id, label: g.name })), get: () => activeGardener().id, set: (v) => useGardener(v) },
-      ],
+      sourceFrom: () => rulesOf(),
+      inputs: [choice('profile', 'Profile'), choice('gardener', 'Gardener'), choice('soil', 'Soil rule'), choice('template', 'Template'), choice('seeds', 'Seeds')],
       ready: canTend,
       afterPass: (F) => recordPass(F),
       editAt: 'garden',
@@ -4310,34 +4675,33 @@ if garden.tickIn() <= tickWindow:
     });
   }
 
+  // a few words for the other layers (and the tests) — the layers themselves are CA.GardenLayers
+  function use(id) {
+    if (id !== CURRENT) return L().loadProfile(id);
+    L().pick('template', CURRENT);
+    L().pick('seeds', CURRENT);
+  }
   return {
     init,
     minigame,
     decayChance,
     snapshot,
-    removeProfile,
-    rename,
     use,
     active,
-    profiles: () => profiles.slice(),
-    layoutOptions,
     CURRENT,
-    gardeners: gardenerList,
-    gardener: gardenerById,
-    activeGardener,
-    activeLayoutId,
     captureCurrent,
+    currentPlot,
+    originOf,
     gardenerRules,
-    setGardenerRules,
-    newGardener,
-    renameGardener,
-    removeGardener,
-    useGardener,
+    useGardener: (id) => L().pick('gardener', id),
+    activeGardener: () => L().get('gardener', L().picked('gardener')),
     tend,
     view,
     last: () => last,
     lastPass: () => lastPass,
+    soilPass: () => soilPass,
     rulesOf,
+    soilRules,
     setRules,
     defaultRules,
     census,
@@ -14714,23 +15078,20 @@ CA.UI.WizardPage = (() => {
 })();
 
 // ---- src/ui/gardenPage.js --------------------------------------------
-// The Garden page: the auto-gardener and its profiles (features/garden.js).
+// The Garden page: the auto-gardener, its layers and profiles (features/garden.js, gardenLayers.js).
 //
 //   Effects         the plants' combined effects over time (the game's Garden information figures)
 //   Growth          a stacked bar chart over time: how many of each seed were at each stage (each
 //                   seed its own colour, young stages darker) — features/gardenHistory.js
-//   Garden          your plot as it is now, against the active profile: each tile's plant and growth
-//                   stage, the profile's seed faded in on empty tiles, a red ring on tiles that don't
+//   Garden          your plot as it is now, against the layout: each tile's plant and growth
+//                   stage, the layout's seed faded in on empty tiles, a red ring on tiles that don't
 //                   match, and the chance a mature plant dies on the coming tick; hover a tile for details
-//   Auto-gardener   its on/off switch (★ for its button on the left panel), and its two choices: the
-//                   layout it keeps (a profile, or the Current garden) and the gardener (what it does);
-//                   what it last did
-//   Gardener        the active gardener's code (algorithmic: the macros' language, with the garden's
-//                   own actions and values) — save, revert a built-in to its default, save as a new
-//                   gardener of your own, rename or delete yours; while it runs, the lines it took
-//                   light up with its decisions
-//   Profiles        the Current garden, and your saved layouts: save the current garden (seeds + soil)
-//                   as a profile; use, rename or delete them
+//   Auto-gardener   its on/off switch (★ for its button on the left panel); the profile bar (a profile
+//                   picks all four layers — features/gardenLayers.js); four slots showing what's picked
+//                   — Gardener, Soil rule, Template, Seeds — and the selected one in detail, to pick
+//                   another or edit it: code (the macros' language, with the garden's own words; while
+//                   it runs, the lines it took light up), a grid of letters, or a seed per letter.
+//                   Built-ins can be edited and reverted; Save as new makes one of your own.
 
 CA.UI = CA.UI || {};
 
@@ -14745,7 +15106,7 @@ CA.UI.GardenPage = (() => {
   let life = null; // the mounted page (CA.UI.Pages.scope)
   let plot = null;
   let effectsPlot = null;
-  let draft = null; // { gardener, src } — code being edited, not saved yet
+  let draft = null; // { layer, id, data } — a slot's item being edited, not saved yet
   let rulesError = '';
 
   const stageOf = (me, age) => (age >= me.mature ? 4 : age >= me.mature * 0.666 ? 3 : age >= me.mature * 0.333 ? 2 : 1);
@@ -14779,7 +15140,7 @@ CA.UI.GardenPage = (() => {
       if (t.want) inner += sprite(t.want, 0, 'ghost');
       pop += '<span class="ca-wpop-head"><b>Empty</b></span>';
     }
-    if (profile) pop += `<span class="ca-wpop-row"><span class="ca-wpop-name">Profile</span><span class="ca-wpop-val">${t.want ? esc(t.want.name) : 'empty'}</span></span>`;
+    if (profile) pop += `<span class="ca-wpop-row"><span class="ca-wpop-name">Layout</span><span class="ca-wpop-val">${t.want ? esc(t.want.name) : 'empty'}</span></span>`;
     return `<div class="ca-gtile${t.match ? '' : ' off'}" data-pop>${inner}<span class="ca-wpop ca-gpop">${pop}</span></div>`;
   }
 
@@ -14793,16 +15154,11 @@ CA.UI.GardenPage = (() => {
     const mature = v.tiles.filter((t) => t.plant && t.age >= t.plant.mature).length;
     return (
       tile('Next tick', Number.isFinite(v.next) ? span(v.next) : '—', v.step ? `every ${span(v.step)}` : '') +
-      tile('Soil', v.soil ? esc(v.soil.name) : '—', v.profile && v.soil && v.soil.key !== v.profile.soil ? `profile: ${esc(soilName(v.profile.soil))}` : '') +
+      tile('Soil', v.soil ? esc(v.soil.name) : '—', esc(CA.GardenLayers.get('soil', CA.GardenLayers.picked('soil')).name)) +
       tile('Mature', String(mature), `of ${v.tiles.filter((t) => t.plant).length} plants`) +
-      (v.profile ? tile('Off-profile', String(off), off ? 'tiles to fix' : 'all as planned') : '')
+      tile('Off-layout', String(off), off ? 'tiles not as planned' : 'all as planned')
     );
   }
-
-  const soilName = (key) => {
-    const M = G().minigame();
-    return (M && M.soils && M.soils[key] && M.soils[key].name) || key;
-  };
 
   function gardenCard() {
     return (
@@ -14813,71 +15169,248 @@ CA.UI.GardenPage = (() => {
     );
   }
 
-  // ---- auto-gardener -----------------------------------------------------------------------------
+  // ---- auto-gardener: a profile, and its four layers -------------------------------------------------
+  //
+  // The card: the Auto-gardener's switch; the profile bar (load one, save the picks into it, save
+  // them as a new one, take one from the garden); four slots — Gardener, Soil rule, Template,
+  // Seeds — each showing what's picked; and under them the selected slot in detail: pick another,
+  // edit it (code, a grid of letters, or a seed per letter), save, save as new, revert, delete.
+
+  const L = () => CA.GardenLayers;
+  const CE = () => CA.UI.CodeEditor;
+  const RULES_HINT = 'run from the top every second while the Auto-gardener is on · Tab indents · click the library to insert';
+  const SOIL_HINT = 'run when the gardener calls garden.soilRule() · Tab indents · click the library to insert';
+  const SLOTS = [
+    { layer: 'gardener', label: 'Gardener', icon: 'bolt', what: 'what it does' },
+    { layer: 'soil', label: 'Soil rule', icon: 'drop', what: 'the soil it keeps' },
+    { layer: 'template', label: 'Template', icon: 'widget', what: 'where seeds go' },
+    { layer: 'seeds', label: 'Seeds', icon: 'leaf', what: 'which seed is which letter' },
+  ];
+  const LETTER_COLORS = ['#e8c547', '#6fb7ff', '#ff7a7a', '#8be07a', '#c792ff', '#ffa14f', '#4fd6c7', '#ff8fd0'];
+  const letterColor = (l) => LETTER_COLORS[(l.charCodeAt(0) - 65) % LETTER_COLORS.length];
+  let slot = 'gardener'; // the slot shown in detail
+  let brush = 'A'; // the template's brush ('' rubs out)
+
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  /** What the detail shows for a layer's item: the unsaved draft if it's this one's, else its saved data. */
+  const dataOf = (layer, it) => (draft && draft.layer === layer && draft.id === it.id ? draft.data : it.data);
+  const isDirty = (layer, it) => !!draft && draft.layer === layer && draft.id === it.id && !same(draft.data, it.data);
+  const pickedItem = (layer) => L().get(layer, L().picked(layer));
+
+  /** A layer's items as <option>s, grouped (built-ins, their groups, yours). */
+  function optionsHtml(layer, cur) {
+    const groups = new Map();
+    L()
+      .list(layer)
+      .forEach((x) => {
+        const g = x.builtin ? x.group || 'Built-in' : 'Yours';
+        if (!groups.has(g)) groups.set(g, []);
+        groups.get(g).push(x);
+      });
+    return [...groups]
+      .map(
+        ([g, xs]) =>
+          `<optgroup label="${esc(g)}">` + xs.map((x) => `<option value="${esc(x.id)}"${x.id === cur ? ' selected' : ''}>${esc(x.name)}${x.edited ? ' (edited)' : ''}</option>`).join('') + '</optgroup>'
+      )
+      .join('');
+  }
+  const plantOf = (key) => {
+    const M = G().minigame();
+    return (M && key && M.plants && M.plants[key]) || null;
+  };
+  const seedName = (key) => (plantOf(key) ? plantOf(key).name : L().NAMES[key] || key || '—');
+  /** A letter chip, in its colour. */
+  const chip = (l) => `<b class="ca-gletter" style="--lc:${letterColor(l)}">${esc(l)}</b>`;
+  /** A small grid of a template's letters. */
+  function miniLetters(plot) {
+    let h = '<div class="ca-gmini ca-gmini-letters">';
+    for (let y = 0; y < 6; y++) for (let x = 0; x < 6; x++) h += plot[y][x] ? `<span style="background:${letterColor(plot[y][x])}"></span>` : '<span></span>';
+    return h + '</div>';
+  }
+  /** The letters of the picked template (and any the seeds name), in order. */
+  function lettersNow(seedsMap) {
+    const t = pickedItem('template');
+    return [...new Set(L().lettersIn(t.data.plot).concat(Object.keys(seedsMap || {})))].sort();
+  }
+  const firstSentence = (s) => {
+    const m = String(s || '').match(/^.*?[.:;](\s|$)/);
+    return (m ? m[0] : String(s || '')).trim();
+  };
+
+  /** One slot: what's picked in a layer, at a glance. */
+  function slotHtml(s) {
+    const it = pickedItem(s.layer);
+    let sum = '';
+    if (s.layer === 'template') sum = miniLetters(it.data.plot) + `<span>${L().lettersIn(it.data.plot).map(chip).join('') || 'nothing planted'}</span>`;
+    else if (s.layer === 'seeds') {
+      const map = it.data.map;
+      const ls = lettersNow(map);
+      sum = ls.length
+        ? ls.map((l) => `<span class="ca-gseed-chip">${chip(l)}${plantOf(map[l]) ? sprite(plantOf(map[l]), 4) : ''}${esc(seedName(map[l]))}</span>`).join('')
+        : '<span>no letters</span>';
+    } else sum = `<span>${esc(firstSentence(it.desc) || 'your code')}</span>`;
+    const badge = it.live ? '<span class="ca-pill">live</span>' : it.edited ? '<span class="ca-badge ca-badge-edited">edited</span>' : it.builtin ? '' : '<span class="ca-pill">yours</span>';
+    return (
+      `<button type="button" class="ca-gslot${slot === s.layer ? ' on' : ''}" data-gp-slot="${s.layer}">` +
+      `<span class="ca-gslot-k">${I(s.icon, 12)} ${esc(s.label)} <em>${esc(s.what)}</em></span>` +
+      `<b class="ca-gslot-name">${esc(it.name)} ${badge}</b>` +
+      `<span class="ca-gslot-sum">${sum}</span>` +
+      '</button>'
+    );
+  }
+
+  /** The profile bar: load, save into, save as new, from the garden, revert, delete, rename. */
+  function profileBar() {
+    const p = pickedItem('profile');
+    const changed = L().profileChanged();
+    return (
+      '<div class="ca-gprof">' +
+      `<label class="ca-field"><span>${I('save', 12)} Profile</span><select data-gp-pick="profile">${optionsHtml('profile', p.id)}</select></label>` +
+      (changed ? '<span class="ca-pill ca-pill-warn">changed</span>' : '') +
+      '<span class="ca-controls">' +
+      (changed ? C().button(`${I('save', 12)} Save`, 'data-gp-pact="save"', 'ca-btn-small ca-btn-on') : '') +
+      C().button(`${I('plus', 12)} Save as new`, 'data-gp-pact="new"', 'ca-btn-small') +
+      C().button(`${I('leaf', 12)} From the garden`, 'data-gp-pact="snapshot"', 'ca-btn-small') +
+      (p.builtin && p.edited ? C().button(`${I('refresh', 12)} Revert`, 'data-gp-pact="revert" data-arm-label="Back to the built-in?"', 'ca-btn-small') : '') +
+      (p.builtin ? '' : C().button('Delete', 'data-gp-pact="delete" data-arm-label="Delete this profile?"', 'ca-btn-small ca-btn-off')) +
+      '</span>' +
+      (p.builtin ? '' : `<input type="text" class="ca-gname" maxlength="40" value="${esc(p.name)}" data-gp-iname="profile">`) +
+      `<div class="ca-hint ca-gprof-desc">${esc(p.desc || 'Yours: a gardener, a soil rule, a template and seeds.')}${changed ? ' — the slots below differ from it: Save puts them in it.' : ''}</div>` +
+      '</div>'
+    );
+  }
+
+  /** The selected slot's head: pick another, its state, its actions. */
+  function detailHead(layer, it) {
+    const dirty = isDirty(layer, it);
+    const noun = L().LAYERS[layer].noun;
+    return (
+      '<div class="ca-gdetail-head" data-gp-dhead>' +
+      `<select data-gp-pick="${layer}">${optionsHtml(layer, it.id)}</select>` +
+      (it.live ? '<span class="ca-pill">live</span>' : it.builtin ? (it.edited ? '<span class="ca-badge ca-badge-edited">edited</span>' : '<span class="ca-pill">built-in</span>') : '<span class="ca-pill">yours</span>') +
+      (dirty ? '<span class="ca-pill ca-pill-warn">unsaved</span>' : '') +
+      '<span class="ca-controls">' +
+      (it.live ? '' : C().button(`${I('save', 12)} Save`, 'data-gp-act="save"', `ca-btn-small${dirty ? ' ca-btn-on' : ''}`)) +
+      (dirty ? C().button('Discard', 'data-gp-act="discard"', 'ca-btn-small') : '') +
+      C().button(`${I('plus', 12)} Save as new`, 'data-gp-act="new"', 'ca-btn-small') +
+      (it.builtin && it.edited ? C().button(`${I('refresh', 12)} Revert to default`, `data-gp-act="revert" data-arm-label="Back to the built-in ${esc(noun)}?"`, 'ca-btn-small') : '') +
+      (it.builtin ? '' : C().button('Delete', `data-gp-act="delete" data-arm-label="Delete this ${esc(noun)}?"`, 'ca-btn-small ca-btn-off')) +
+      '</span>' +
+      (it.builtin ? '' : `<input type="text" class="ca-gname" maxlength="40" value="${esc(it.name)}" data-gp-iname="${layer}">`) +
+      '</div>'
+    );
+  }
+
+  function codeBody(layer, it) {
+    return (
+      '<div class="ca-ed-layout"><div class="ca-editor-body">' +
+      CE().html('garden', dataOf(layer, it).rules, { title: layer === 'soil' ? 'The soil rule' : 'What the auto-gardener does', hint: layer === 'soil' ? SOIL_HINT : RULES_HINT }) +
+      '</div>' +
+      CE().libraryHtml('garden', { first: ['Garden', 'Values'] }) +
+      '</div>'
+    );
+  }
+
+  /** The template's grid: paint letters with the brush (cells off your plot dimmed). */
+  function templateBody(it) {
+    const d = dataOf('template', it);
+    const M = G().minigame();
+    const [ox, oy] = d.abs ? [0, 0] : G().originOf(M);
+    const open = (x, y) => !M || typeof M.isTileUnlocked !== 'function' || (x + ox < 6 && y + oy < 6 && M.isTileUnlocked(x + ox, y + oy));
+    const used = L().lettersIn(d.plot);
+    const next = L().LETTERS.split('').find((l) => !used.includes(l));
+    const brushes = used.concat(next ? [next] : []);
+    if (brush && !brushes.includes(brush)) brush = brushes[0] || 'A';
+    const seeds = pickedItem('seeds').data.map;
+    let cells = '';
+    for (let y = 0; y < 6; y++)
+      for (let x = 0; x < 6; x++) {
+        const l = d.plot[y][x];
+        const me = l && plantOf(seeds[l]);
+        cells +=
+          `<button type="button" class="ca-gcell${open(x, y) ? '' : ' off'}"${it.live ? ' disabled' : ''} data-gp-cell="${x},${y}"${l ? ` style="--lc:${letterColor(l)}"` : ''}>` +
+          (l ? `${me ? sprite(me, 4) : ''}<b>${esc(l)}</b>` : '') +
+          '</button>';
+      }
+    return (
+      (it.live
+        ? '<div class="ca-hint">What’s planted now, as letters (A is the first seed, left to right, top to bottom). <b>Save as new</b> keeps it as a template of yours.</div>'
+        : '<div class="ca-gbrushes">' +
+          '<span class="ca-hint">Paint:</span>' +
+          brushes.map((l) => `<button type="button" class="ca-gbrush${brush === l ? ' on' : ''}" data-gp-brush="${l}">${chip(l)}${l === next ? ' new' : ''}</button>`).join('') +
+          `<button type="button" class="ca-gbrush${brush === '' ? ' on' : ''}" data-gp-brush="">${I('close', 11)} empty</button>` +
+          C().button('Clear', 'data-gp-tact="clear"', 'ca-btn-small') +
+          C().button('Fill', 'data-gp-tact="fill"', 'ca-btn-small') +
+          '</div>') +
+      `<div class="ca-gtemplate">${cells}</div>` +
+      `<div class="ca-hint">${d.abs ? 'Placed as it is on the plot.' : 'Laid on your plot from its top-left unlocked tile; dimmed cells are off your plot (a bigger garden uses them).'} ${used.length ? `${used.length} letter${used.length === 1 ? '' : 's'}: ${used.map((l) => `${l} = ${esc(seedName(seeds[l]))}`).join(', ')} (the Seeds slot)` : ''}</div>`
+    );
+  }
+
+  /** The seeds: which seed each letter is. */
+  function seedsBody(it) {
+    const map = dataOf('seeds', it).map;
+    const M = G().minigame();
+    const plants = M ? Object.keys(M.plants).map((k) => M.plants[k]) : [];
+    const ls = lettersNow(map);
+    if (!ls.length) return '<div class="ca-hint">The template has no letters — nothing to plant.</div>';
+    return (
+      '<div class="ca-gseeds">' +
+      ls
+        .map((l) => {
+          const me = plantOf(map[l]);
+          const opts =
+            '<option value="">— nothing —</option>' +
+            `<optgroup label="Unlocked">${plants.filter((p) => p.unlocked).map((p) => `<option value="${esc(p.key)}"${p.key === map[l] ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</optgroup>` +
+            `<optgroup label="Not unlocked yet">${plants.filter((p) => !p.unlocked).map((p) => `<option value="${esc(p.key)}"${p.key === map[l] ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</optgroup>`;
+          return (
+            '<div class="ca-gseed-row">' +
+            chip(l) +
+            `<span class="ca-gseed-sprite">${me ? sprite(me, 4) : ''}</span>` +
+            (it.live ? `<span>${esc(seedName(map[l]))}</span>` : `<select data-gp-seed="${l}">${opts}</select>`) +
+            (me && !me.unlocked ? '<span class="ca-pill ca-pill-warn">not unlocked: can’t be planted</span>' : '') +
+            '</div>'
+          );
+        })
+        .join('') +
+      '</div>' +
+      (it.live ? '<div class="ca-hint">The seeds of the Current garden. <b>Save as new</b> keeps them as a seed set of yours.</div>' : '')
+    );
+  }
+
+  function detailHtml() {
+    const it = pickedItem(slot);
+    const body = slot === 'template' ? templateBody(it) : slot === 'seeds' ? seedsBody(it) : codeBody(slot, it);
+    return (
+      `<div class="ca-gdetail" data-gp-detail="${slot}">` +
+      detailHead(slot, it) +
+      (it.desc ? `<div class="ca-hint">${esc(it.desc)}</div>` : '') +
+      (rulesError ? `<div class="ca-editor-error">${esc(rulesError)}</div>` : '') +
+      body +
+      '</div>'
+    );
+  }
 
   function gardenerCard() {
-    const lay = G().activeLayoutId();
-    const gd = G().activeGardener();
-    const opt = (list, cur) => list.map((o) => `<option value="${esc(o.v)}"${o.v === cur ? ' selected' : ''}>${esc(o.label)}</option>`).join('');
-    const gardeners = G()
-      .gardeners()
-      .map((g) => ({ v: g.id, label: g.name + (g.edited ? ' (edited)' : '') }));
     return (
-      '<div class="ca-card">' +
+      `<div class="ca-card ca-editor2 ca-gardener" data-gp-rules data-edits="${G().GARDENER}">` +
       C().cardHead('Auto-gardener', 'bolt', `<div class="ca-card-meta"><span class="ca-hint">also on the ${C().link('Macros', 'clickers')} page · ★ for a button on the left panel</span></div>`) +
       `<div class="ca-list">${CA.UI.MacrosPage.row(CA.Macros.get(G().GARDENER))}</div>` +
-      '<div class="ca-gsettings">' +
-      `<label class="ca-field"><span>${I('leaf', 12)} Layout</span><select data-gp-active>${opt(G().layoutOptions(), lay)}</select></label>` +
-      `<label class="ca-field"><span>${I('bolt', 12)} Gardener</span><select data-gp-gardener>${opt(gardeners, gd.id)}</select></label>` +
-      '</div>' +
-      `<div class="ca-card-note">${gd.desc ? `${esc(gd.desc)} ` : ''}<a class="ca-link" data-gp-rules-go>Its code</a></div>` +
+      profileBar() +
+      `<div class="ca-gslots">${SLOTS.map(slotHtml).join('')}</div>` +
+      detailHtml() +
       '<div class="ca-card-note" data-gp-last></div>' +
       '</div>'
     );
   }
 
-  // ---- the active gardener, as code ------------------------------------------------------------
-
-  const CE = () => CA.UI.CodeEditor;
-  const RULES_HINT = 'run from the top every second while the Auto-gardener is on · Tab indents · click the library to insert';
-  /** The code shown in the editor: the unsaved draft if it's this gardener's, else its saved code. */
-  const rulesText = (g) => (draft && draft.gardener === g.id ? draft.src : G().gardenerRules(g.id));
-  const isDirty = (g) => !!draft && draft.gardener === g.id && draft.src !== G().gardenerRules(g.id);
-
-  function rulesCard() {
-    const g = G().activeGardener();
-    const dirty = isDirty(g);
-    return (
-      `<div class="ca-card ca-editor2 ca-grules" data-gp-rules data-edits="${G().GARDENER}">` +
-      C().cardHead(
-        `Gardener · ${esc(g.name)}`,
-        'edit',
-        '<div class="ca-card-meta">' +
-          (g.builtin ? (g.edited ? '<span class="ca-badge ca-badge-edited">edited</span>' : '<span class="ca-pill">built-in</span>') : '<span class="ca-pill">yours</span>') +
-          (dirty ? '<span class="ca-pill ca-pill-warn">unsaved</span>' : '') +
-          C().button(`${I('save', 12)} Save`, 'data-gp-rules-act="save"', `ca-btn-small${dirty ? ' ca-btn-on' : ''}`) +
-          (dirty ? C().button('Discard', 'data-gp-rules-act="discard"', 'ca-btn-small') : '') +
-          C().button(`${I('plus', 12)} Save as new`, 'data-gp-rules-act="new"', 'ca-btn-small') +
-          (g.builtin && g.edited ? C().button(`${I('refresh', 12)} Revert to default`, 'data-gp-rules-act="revert" data-arm-label="Back to the default code?"', 'ca-btn-small') : '') +
-          (g.builtin ? '' : C().button('Delete', 'data-gp-rules-act="delete" data-arm-label="Delete this gardener?"', 'ca-btn-small ca-btn-off')) +
-          '</div>'
-      ) +
-      (g.builtin ? '' : `<div class="ca-gsave"><input type="text" maxlength="40" value="${esc(g.name)}" data-gp-grename="${esc(g.id)}"></div>`) +
-      (rulesError ? `<div class="ca-editor-error">${esc(rulesError)}</div>` : '') +
-      '<div class="ca-ed-layout"><div class="ca-editor-body">' +
-      CE().html('garden', rulesText(g), { title: 'What the auto-gardener does', hint: RULES_HINT }) +
-      '</div>' +
-      CE().libraryHtml('garden', { first: ['Garden', 'Values'] }) +
-      '</div></div>'
-    );
-  }
-
   /** What the last pass did, under the code (and its lines lit in the gutter). */
   function syncRules() {
-    const g = G().activeGardener();
-    const lp = G().lastPass();
+    if (slot !== 'gardener' && slot !== 'soil') return;
+    const it = pickedItem(slot);
+    const lp = slot === 'gardener' ? G().lastPass() : G().soilPass();
     const on = CA.Macros.isOn(G().GARDENER);
-    const live = on && lp && lp.gardener === g.id && !isDirty(g);
+    const live = on && lp && (slot === 'gardener' ? lp.gardener : lp.soil) === it.id && !isDirty(slot, it);
     CE().setLive(
       root,
       'garden',
@@ -14885,7 +15418,7 @@ CA.UI.GardenPage = (() => {
         ? {
             lines: lp.lines,
             html:
-              `<div class="ca-code-live-head">${I('play', 11)} last pass · ${CA.UI.Plot.fmt.span(Math.max(0, (Date.now() - lp.t) / 1000))} ago</div>` +
+              `<div class="ca-code-live-head">${I('play', 11)} last ${slot === 'soil' ? 'run' : 'pass'} · ${CA.UI.Plot.fmt.span(Math.max(0, (Date.now() - lp.t) / 1000))} ago</div>` +
               (lp.error ? `<div class="ca-code-live-at">${esc(lp.error)}</div>` : '') +
               lp.at.map((a) => `<div class="ca-code-live-at">${esc(a)}</div>`).join('') +
               (lp.trace.length ? lp.trace.map((x) => `<div class="ca-code-live-tr">${esc(x.text)}</div>`).join('') : '<div class="ca-code-live-tr">nothing to do</div>'),
@@ -14894,103 +15427,76 @@ CA.UI.GardenPage = (() => {
     );
   }
 
-  function rulesAct(act) {
-    const g = G().activeGardener();
+  /** The detail's actions: save, discard, save as new, revert, delete. */
+  function detailAct(act) {
+    const layer = slot;
+    const it = pickedItem(layer);
+    const data = dataOf(layer, it);
     rulesError = '';
-    if (act === 'save' || act === 'new') {
-      const src = rulesText(g);
-      const { errors } = G().compileRules(src);
+    if ((act === 'save' || act === 'new') && data.rules != null) {
+      const { errors } = G().compileRules(data.rules);
       if (errors.length) {
         rulesError = `Not saved — line ${errors[0].line}: ${errors[0].message}`;
         return;
       }
+    }
+    const noun = L().LAYERS[layer].noun;
+    if (act === 'save') {
+      if (it.live) return;
+      L().set(layer, it.id, data);
       draft = null;
-      if (act === 'new') {
-        G().useGardener(G().newGardener(`${g.name.replace(/ \(copy\)$/, '')} (copy)`, src));
-        CA.Util.notify('Gardener saved', `“${esc(G().activeGardener().name)}” — yours to change; the auto-gardener follows it from its next pass.`, CA.ICON, 3);
-        return;
-      }
-      G().setGardenerRules(g.id, src);
-      CA.Util.notify('Gardener saved', `“${esc(g.name)}” — the auto-gardener follows it from its next pass.`, CA.ICON, 3);
+      CA.Util.notify(`${noun[0].toUpperCase()}${noun.slice(1)} saved`, `“${esc(it.name)}” — the auto-gardener follows it from its next pass.`, CA.ICON, 3);
+    } else if (act === 'new') {
+      const id = L().add(layer, `${it.name.replace(/ \(copy\)$/, '')}${it.live ? '' : ' (copy)'}`, data);
+      draft = null;
+      L().pick(layer, id);
+      CA.Util.notify(`${noun[0].toUpperCase()}${noun.slice(1)} saved`, `“${esc(L().get(layer, id).name)}” — yours to change.`, CA.ICON, 3);
     } else if (act === 'discard') draft = null;
     else if (act === 'revert') {
-      G().setGardenerRules(g.id, null);
+      L().set(layer, it.id, null);
       draft = null;
     } else if (act === 'delete') {
-      G().removeGardener(g.id);
+      L().remove(layer, it.id);
       draft = null;
     }
+  }
+
+  function profileAct(act) {
+    const p = pickedItem('profile');
+    if (act === 'save') L().saveProfile();
+    else if (act === 'new') L().newProfile(`${p.name.replace(/ \(copy\)$/, '')} (copy)`);
+    else if (act === 'snapshot') {
+      const made = G().snapshot();
+      if (made) CA.Util.notify('Garden profile saved', `“${esc(made.name)}” — what’s planted, as a template and seeds, with the gardener and soil rule you have picked.`, CA.ICON, 3);
+    } else if (act === 'revert') {
+      L().set('profile', p.id, null);
+      L().loadProfile(p.id);
+    } else if (act === 'delete') L().remove('profile', p.id);
+  }
+
+  /** A template cell painted, cleared or filled (into the draft). */
+  function templateAct(cell, act) {
+    const it = pickedItem('template');
+    if (it.live) return;
+    const d = JSON.parse(JSON.stringify(dataOf('template', it)));
+    if (cell) {
+      const [x, y] = cell.split(',').map(Number);
+      d.plot[y][x] = d.plot[y][x] === brush ? null : brush || null;
+    } else if (act === 'clear') d.plot = d.plot.map((r) => r.map(() => null));
+    else if (act === 'fill') d.plot = d.plot.map((r) => r.map(() => brush || null));
+    draft = { layer: 'template', id: it.id, data: d };
   }
 
   function lastText() {
     const l = G().last();
-    if (!l.at) return 'It harvests and replants in the last seconds before each garden tick, so new plants start growing right away and plants about to die are picked first.';
+    if (!l.at) return 'Pick a profile — or a gardener, soil rule, template and seeds — then switch it on.';
     const parts = [];
     if (l.planted) parts.push(`planted ${l.planted}`);
-    if (l.harvested) parts.push(`pulled out ${l.harvested} off-profile`);
+    if (l.harvested) parts.push(`harvested ${l.harvested}`);
     if (l.saved) parts.push(`harvested ${l.saved} about to die`);
     if (l.unlocked) parts.push(`harvested ${l.unlocked} new seed${l.unlocked === 1 ? '' : 's'}`);
     if (l.soil) parts.push('changed the soil');
     return `Last: ${parts.join(', ')} — ${CA.UI.Plot.fmt.span((Date.now() - l.at) / 1000)} ago.`;
-  }
-
-  // ---- profiles ------------------------------------------------------------------------------
-
-  function miniPlot(p) {
-    const M = G().minigame();
-    let h = '<div class="ca-gmini">';
-    for (let y = 0; y < 6; y++) {
-      for (let x = 0; x < 6; x++) {
-        const key = p.plot[y][x];
-        const me = M && key && M.plants[key];
-        h += `<span>${me ? sprite(me, 4) : ''}</span>`;
-      }
-    }
-    return h + '</div>';
-  }
-
-  function profilesCard() {
-    const profs = G().profiles();
-    const lay = G().activeLayoutId();
-    // the Current garden first: what's planted, kept as it is
-    const cur = lay === G().CURRENT ? G().active() : null;
-    const curN = cur ? cur.plot.flat().filter(Boolean).length : 0;
-    let h =
-      '<div class="ca-card">' +
-      C().cardHead('Profiles', 'save') +
-      '<div class="ca-gsave">' +
-      `<input type="text" maxlength="40" placeholder="Garden ${profs.length + 1}" data-gp-name>` +
-      C().button(`${I('plus', 12)} Save current garden`, 'data-gp-save', 'ca-btn-small ca-btn-on') +
-      '</div>' +
-      '<div class="ca-gprofiles">' +
-      `<div class="ca-gprofile${cur ? ' on' : ''}" data-gp-current>` +
-      (cur ? miniPlot(cur) : `<div class="ca-gmini ca-gmini-live">${I('leaf', 22)}</div>`) +
-      '<div class="ca-gprofile-text">' +
-      '<b>Current garden</b>' +
-      `<div class="ca-row-desc">${cur ? `${curN} plant${curN === 1 ? '' : 's'} kept · <b>active</b>` : 'keeps whatever is planted — and follows what you plant or harvest by hand'}</div>` +
-      '<div class="ca-controls">' +
-      C().button(cur ? `${I('refresh', 12)} Take it again` : 'Use', `data-gp-use="${G().CURRENT}"`, 'ca-btn-small') +
-      '</div></div></div></div>';
-    if (!profs.length) h += '<div class="ca-card-note">A profile remembers the seed on every tile and the soil. Plant your garden the way you want it, then save it here.</div>';
-    else {
-      h += '<div class="ca-gprofiles">';
-      profs.forEach((p) => {
-        const on = lay === p.id;
-        const n = p.plot.flat().filter(Boolean).length;
-        h +=
-          `<div class="ca-gprofile${on ? ' on' : ''}">` +
-          miniPlot(p) +
-          '<div class="ca-gprofile-text">' +
-          `<input type="text" maxlength="40" value="${esc(p.name)}" data-gp-rename="${esc(p.id)}">` +
-          `<div class="ca-row-desc">${n} plant${n === 1 ? '' : 's'} · ${esc(soilName(p.soil))}${on ? ' · <b>active</b>' : ''}</div>` +
-          '<div class="ca-controls">' +
-          (on ? '' : C().button('Use', `data-gp-use="${esc(p.id)}"`, 'ca-btn-small')) +
-          C().button('Delete', `data-gp-del="${esc(p.id)}" data-arm-label="Delete it?"`, 'ca-btn-small ca-btn-off') +
-          '</div></div></div>';
-      });
-      h += '</div>';
-    }
-    return h + '</div>';
   }
 
   // ---- page ------------------------------------------------------------------------------
@@ -15003,7 +15509,7 @@ CA.UI.GardenPage = (() => {
         '<div class="ca-card-note">The Garden opens once you have a level-1 Farm (spend a sugar lump on it). The auto-gardener and its profiles will be here.</div>' +
         '</div>'
       );
-    return `<div class="ca-garden-row">${gardenCard()}${plot.html()}</div>` + effectsPlot.html() + gardenerCard() + rulesCard() + profilesCard();
+    return `<div class="ca-garden-row">${gardenCard()}${plot.html()}</div>` + effectsPlot.html() + gardenerCard();
   }
 
   function sync() {
@@ -15015,7 +15521,7 @@ CA.UI.GardenPage = (() => {
     const stats = root.querySelector('[data-gp-stats]');
     if (stats) CA.UI.Dom.morph(stats, statsHtml(v));
     const pill = root.querySelector('[data-gp-profile]');
-    if (pill) pill.textContent = v.profile ? `layout: ${v.profile.name}` : 'no layout';
+    if (pill) pill.textContent = `layout: ${v.profile.name}`;
     const last = root.querySelector('[data-gp-last]');
     if (last) last.textContent = lastText();
     syncRules();
@@ -15023,30 +15529,22 @@ CA.UI.GardenPage = (() => {
   }
 
   function onClick(e) {
-    const t = e.target.closest('[data-gp-save],[data-gp-use],[data-gp-del],[data-gp-rules-act],[data-gp-rules-go]');
-    if (!t) return;
+    const t = e.target.closest('[data-gp-slot],[data-gp-act],[data-gp-pact],[data-gp-cell],[data-gp-brush],[data-gp-tact]');
+    if (!t || !root.contains(t)) return;
     e.stopPropagation();
     const d = t.dataset;
-    if ('gpRulesGo' in d) {
-      const card = root.querySelector('[data-gp-rules]');
-      if (card) {
-        CA.Util.scrollInPanel(card, 'start');
-        CA.UI.Dom.replay(card, 'ca-flash');
-      }
-      return;
-    }
-    if (d.gpRulesAct) {
-      if ((d.gpRulesAct === 'revert' || d.gpRulesAct === 'delete') && !CA.UI.Dom.armed(t)) return;
-      rulesAct(d.gpRulesAct);
-    } else if ('gpDel' in d) {
-      if (!CA.UI.Dom.armed(t)) return;
-      G().removeProfile(d.gpDel);
-    } else if ('gpUse' in d) G().use(d.gpUse);
-    else if ('gpSave' in d) {
-      const name = root.querySelector('[data-gp-name]');
-      const p = G().snapshot(name && name.value.trim());
-      if (p) CA.Util.notify('Garden profile saved', `“${esc(p.name)}” — ${p.plot.flat().filter(Boolean).length} plants on ${esc(soilName(p.soil))}.`, CA.ICON, 3);
-    }
+    if (d.gpSlot) {
+      if (slot !== d.gpSlot) rulesError = '';
+      slot = d.gpSlot;
+    } else if (d.gpAct) {
+      if ((d.gpAct === 'revert' || d.gpAct === 'delete') && !CA.UI.Dom.armed(t)) return;
+      detailAct(d.gpAct);
+    } else if (d.gpPact) {
+      if ((d.gpPact === 'revert' || d.gpPact === 'delete') && !CA.UI.Dom.armed(t)) return;
+      profileAct(d.gpPact);
+    } else if (d.gpCell) templateAct(d.gpCell);
+    else if ('gpBrush' in d) brush = d.gpBrush;
+    else if (d.gpTact) templateAct(null, d.gpTact);
     CA.Util.sound('snd/tick.mp3');
     CA.UI.Menu.render();
   }
@@ -15054,21 +15552,19 @@ CA.UI.GardenPage = (() => {
   function onChange(e) {
     const el = e.target;
     const d = el.dataset || {};
-    if ('gpActive' in d) {
-      if (e.type !== 'change') return;
-      G().use(el.value);
-    } else if ('gpGardener' in d) {
-      if (e.type !== 'change') return;
-      G().useGardener(el.value);
+    if (e.type !== 'change') return;
+    if (d.gpPick) {
+      L().pick(d.gpPick, el.value);
       draft = null;
       rulesError = '';
-    } else if (d.gpRename) {
-      if (e.type !== 'change') return;
-      G().rename(d.gpRename, el.value);
-      return;
-    } else if (d.gpGrename) {
-      if (e.type !== 'change') return;
-      G().renameGardener(d.gpGrename, el.value);
+    } else if (d.gpIname) {
+      L().rename(d.gpIname, L().picked(d.gpIname), el.value);
+    } else if (d.gpSeed) {
+      const it = pickedItem('seeds');
+      const map = { ...dataOf('seeds', it).map };
+      if (el.value) map[d.gpSeed] = el.value;
+      else delete map[d.gpSeed];
+      draft = { layer: 'seeds', id: it.id, data: { map } };
     } else return;
     CA.UI.Menu.render();
   }
@@ -15079,20 +15575,19 @@ CA.UI.GardenPage = (() => {
     life = CA.UI.Pages.scope(el).on('click', onClick).on('change', onChange);
     life.add(
       CE().bind(root, {
-      onChange: (key, src) => {
-        if (key !== 'garden') return;
-        const g = G().activeGardener();
-        const was = isDirty(g);
-        draft = { gardener: g.id, src };
-        // the Save button lights up (and the "unsaved" pill shows) on the first change
-        if (was !== isDirty(g)) {
-          const card = root.querySelector('[data-gp-rules] .ca-card-head');
-          const tmp = document.createElement('div');
-          tmp.innerHTML = rulesCard();
-          const head = tmp.querySelector('.ca-card-head');
-          if (card && head) card.replaceWith(head);
-        }
-      },
+        onChange: (key, src) => {
+          if (key !== 'garden' || (slot !== 'gardener' && slot !== 'soil')) return;
+          const it = pickedItem(slot);
+          const was = isDirty(slot, it);
+          draft = { layer: slot, id: it.id, data: { rules: src } };
+          // the Save button lights up (and the "unsaved" pill shows) on the first change
+          if (was !== isDirty(slot, it)) {
+            const head = root.querySelector('[data-gp-dhead]');
+            const tmp = document.createElement('div');
+            tmp.innerHTML = detailHead(slot, it);
+            if (head && tmp.firstChild) head.replaceWith(tmp.firstChild);
+          }
+        },
       })
     );
     if (G().minigame()) life.child(plot).child(effectsPlot);

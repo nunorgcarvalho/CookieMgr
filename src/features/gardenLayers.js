@@ -1,0 +1,498 @@
+// What the auto-gardener keeps and what it does, in four layers you pick separately — and profiles
+// that pick all four at once:
+//
+//   gardener   what it does: algorithmic code run from the top every second (features/script.js,
+//              with the garden's words from features/garden.js) — it calls garden.soilRule() where
+//              it deals with the soil
+//   soil       the soil rule: a little code of its own that picks the soil (garden.soil(…)), run
+//              when the gardener calls garden.soilRule()
+//   template   where the seeds go: a 6×6 grid of letters (A, B, C…) or nothing. "Fill" (A on every
+//              tile) is every garden of one seed; "Mutation rows" two parents with a row of empty
+//              tiles between them. It sits on the unlocked part of the plot from its top-left
+//              corner (a smaller garden uses its top-left part); one taken as it is on the plot
+//              (abs) stays where it was
+//   seeds      which seed each letter is: { A: 'bakerWheat', B: 'thumbcorn' }
+//   profile    a combination: { gardener, soil, template, seeds } — loading one picks all four
+//
+// Every layer has built-ins (editable — your edit is kept apart and Revert brings the built-in
+// back) and yours (made with Save as new; renamed, deleted). The "Current garden" template and
+// "As planted" seeds are live: what's planted now (features/garden.js keeps that memory).
+
+CA.GardenLayers = (() => {
+  const SIZE = 6;
+  const S = () => CA.Settings;
+  const changed = () => CA.Events.emit('garden');
+  const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+  // ---- the built-ins -------------------------------------------------------------------------
+
+  /** The Effect maximizer, with the numbers of the old settings (seconds before the tick, the death-chance threshold, unlocking new seeds). */
+  function effectsGardener() {
+    const lead = Math.max(1, Number(S().get('gardenLead')) || 15);
+    const thr = Math.max(0, Math.min(100, Number(S().get('gardenThreshold')))) / 100;
+    const unlock = S().get('gardenUnlockNew') !== false;
+    const lines = [
+      '# Effect maximizer: keeps the layout planted, and its plants\' effects as high as they go.',
+      '# It plants only where the layout has a seed, and only clears the tiles the layout uses.',
+      '# Your numbers (used below):',
+      `tickWindow = ${lead}   # the last seconds before a garden tick, when old plants are dealt with`,
+    ];
+    if (thr < 1) lines.push(`dyingOver = ${thr}   # replant mature plants more likely than this to die on the tick (the new one grows at it)`);
+    lines.push(
+      `unlockNewSeeds = ${unlock}   # a seed you haven't unlocked yet: let it grow, harvest it once mature (that unlocks it)`,
+      "# Plant the layout's seed on every empty tile it has one for, right away.",
+      'garden.plantEmpty()',
+      'if unlockNewSeeds:',
+      '  garden.harvestNew()',
+      '# The soil, as the soil rule picks it (its effects count the whole time, not just at the tick).',
+      'garden.soilRule()',
+      '# In the last tickWindow seconds before a garden tick:',
+      'if garden.tickIn() <= tickWindow:',
+      "  # clear the layout's tiles of what doesn't belong there (leaving new seeds to grow)",
+      '  for tile in garden.tiles():',
+      '    if garden.wantAt(tile) != "" and garden.isOff(tile) and not garden.isEmpty(tile) and not (unlockNewSeeds and garden.isNew(tile)):',
+      '      garden.harvest(tile)'
+    );
+    if (thr < 1) lines.push('  # replant mature plants likely to die on the tick', '  garden.harvestDying(dyingOver)', '  garden.plantEmpty()');
+    return lines.join('\n') + '\n';
+  }
+  const WEED_GARDENER = `# Weed collector: keeps the garden bare, so weeds and fungi spring up, and gets their seeds.
+# Meddleweed is left to grow old, then harvested — the older it is, the likelier it leaves brown
+# mold or crumbspore behind. Anything you haven't unlocked yet grows until it's mature and is
+# harvested (that unlocks it); everything else is cleared away. It plants nothing.
+oldWeedOver = 0.5   # harvest a meddleweed once it's this likely to die on the next tick
+# the soil, as the soil rule picks it (fertilizer: the most weeds, ×1.2)
+garden.soilRule()
+for tile in garden.tiles():
+  if not garden.isEmpty(tile):
+    if garden.plantAt(tile) == "meddleweed":
+      if garden.decay(tile) > oldWeedOver:
+        garden.harvest(tile)
+    elif garden.isNew(tile):
+      if garden.isMature(tile):
+        garden.harvest(tile)
+    else:
+      garden.harvest(tile)
+`;
+  const MUTATION_GARDENER = `# Mutation tracker: keeps the layout's plants (the parents) growing, and watches every other tile
+# for mutations. A seed you've unlocked already is cleared at once (its tile is another chance); a
+# new one is kept — every copy of it — and harvested once mature (that unlocks it). Seeds unlocked
+# in the last keepRecentMinutes count as new, so a fresh find's other copies grow on too.
+keepRecentMinutes = 60
+tickWindow = 15
+dyingOver = 0.5
+garden.plantEmpty()
+# the soil, as the soil rule picks it (wood chips: three times the mutation chances)
+garden.soilRule()
+for tile in garden.tiles():
+  if not garden.isEmpty(tile) and garden.isOff(tile):
+    if garden.isNew(tile) or garden.unlockedAgo(garden.plantAt(tile)) < keepRecentMinutes * 60:
+      if garden.isMature(tile):
+        garden.harvest(tile)
+    else:
+      garden.harvest(tile)
+# In the last tickWindow seconds before a garden tick: replant parents likely to die on it
+if garden.tickIn() <= tickWindow:
+  garden.harvestDying(dyingOver)
+  garden.plantEmpty()
+`;
+  const GARDENERS = [
+    { id: 'effects', name: 'Effect maximizer', desc: 'Keeps the layout planted and its effects high: plants the layout’s seeds, unlocks new seeds, and replants mature plants about to die just before the tick. Only touches the tiles the layout uses.', data: () => ({ rules: effectsGardener() }) },
+    { id: 'weeds', name: 'Weed collector', desc: 'Keeps the garden bare so weeds and fungi spring up; harvests old meddleweed (for brown mold and crumbspore) and new seeds once mature, clears everything else. Plants nothing.', data: () => ({ rules: WEED_GARDENER }) },
+    { id: 'mutations', name: 'Mutation tracker', desc: 'Grows the layout’s parents and watches the other tiles: a seed you have is cleared at once, a new one (or one unlocked in the last hour) is kept until mature and harvested.', data: () => ({ rules: MUTATION_GARDENER }) },
+  ];
+
+  const FERTILIZER_VAR = 'fertilizerAbove';
+  const SOIL_EFFECTS = `# Fertilizer while most plants are still growing (quicker ticks), clay (effects ×1.25) once
+# enough of them are mature.
+${FERTILIZER_VAR} = 0.67   # fertilizer while more than this share of the planted tiles is still growing
+if garden.youngShare() > ${FERTILIZER_VAR}:
+  garden.soil(fertilizer)
+else:
+  garden.soil(clay)
+`;
+  const SOIL_MUTATIONS = `# Fertilizer to grow the layout's plants; wood chips (three times the mutation chances) once
+# they're mature — if you have the 300 farms it needs, else fertilizer (quicker ticks, more chances).
+growingOver = 0.34   # fertilizer while more than this share of the layout's plants is still growing
+if garden.layoutYoungShare() > growingOver or not garden.soilAvailable(woodchips):
+  garden.soil(fertilizer)
+else:
+  garden.soil(woodchips)
+`;
+  const fixedSoil = (key, why) => `# Always ${key}${why ? ` — ${why}` : ''}.\ngarden.soil(${key})\n`;
+  const SOILS = [
+    { id: 'effects', name: 'Fertilizer, then clay', desc: 'Fertilizer while most plants grow, clay (effects ×1.25) once a third of them are mature.', data: () => ({ rules: SOIL_EFFECTS }) },
+    { id: 'mutations', name: 'Fertilizer, then wood chips', desc: 'Fertilizer while the layout’s plants grow, wood chips (×3 mutation chances) once they’re mature.', data: () => ({ rules: SOIL_MUTATIONS }) },
+    { id: 'fertilizer', name: 'Always fertilizer', desc: 'Quickest ticks, the most weeds (×1.2); effects ×0.75.', data: () => ({ rules: fixedSoil('fertilizer', 'the quickest ticks and the most weeds') }) },
+    { id: 'clay', name: 'Always clay', desc: 'Effects ×1.25; slow ticks.', data: () => ({ rules: fixedSoil('clay', 'effects ×1.25, slow ticks') }) },
+    { id: 'woodchips', name: 'Always wood chips', desc: 'Three times the mutation chances; needs 300 farms.', data: () => ({ rules: fixedSoil('woodchips', 'three times the mutation chances') }) },
+    { id: 'none', name: 'Leave the soil', desc: 'Doesn’t change the soil.', data: () => ({ rules: '# Leaves the soil as it is.\n' }) },
+  ];
+
+  const grid = (rows) => rows.map((r) => r.split('').map((c) => (c === '.' ? null : c)));
+  const TEMPLATES = [
+    { id: 'current', name: 'Current garden', desc: 'Whatever is planted, kept as it is: a plant that dies is replanted; it follows what you plant or harvest by hand, not weeds or mutations that spring up.', live: true, data: () => ({ plot: currentLetters().plot, abs: true }) },
+    { id: 'fill', name: 'Fill', desc: 'One seed on every tile.', data: () => ({ plot: grid(Array(SIZE).fill('AAAAAA')), abs: false }) },
+    { id: 'bare', name: 'Bare', desc: 'Nothing planted (for weeds).', data: () => ({ plot: grid(Array(SIZE).fill('......')), abs: false }) },
+    { id: 'checker', name: 'Checkerboard', desc: 'Two seeds, alternating.', data: () => ({ plot: grid(['ABABAB', 'BABABA', 'ABABAB', 'BABABA', 'ABABAB', 'BABABA']), abs: false }) },
+    { id: 'rows', name: 'Mutation rows', desc: 'A row of A, an empty row, a row of B: every empty tile has three of each around it — for two-parent mutations (A = B for a seed with itself).', data: () => ({ plot: grid(['AAAAAA', '......', 'BBBBBB', 'AAAAAA', '......', 'BBBBBB']), abs: false }) },
+    { id: 'rings', name: 'Rings', desc: 'Rings of A around empty tiles: eight around each — for mutations that need many of one plant (Juicy queenbeet: 8 queenbeets).', data: () => ({ plot: grid(['AAAAAA', 'A.AA.A', 'AAAAAA', 'AAAAAA', 'A.AA.A', 'AAAAAA']), abs: false }) },
+  ];
+
+  const NAMES = {
+    bakerWheat: 'Baker’s wheat', thumbcorn: 'Thumbcorn', cronerice: 'Cronerice', gildmillet: 'Gildmillet', clover: 'Ordinary clover', goldenClover: 'Golden clover',
+    shimmerlily: 'Shimmerlily', elderwort: 'Elderwort', bakeberry: 'Bakeberry', chocoroot: 'Chocoroot', whiteChocoroot: 'White chocoroot', whiteMildew: 'White mildew',
+    brownMold: 'Brown mold', whiskerbloom: 'Whiskerbloom', chimerose: 'Chimerose', nursetulip: 'Nursetulip', drowsyfern: 'Drowsyfern', wardlichen: 'Wardlichen',
+    keenmoss: 'Keenmoss', queenbeet: 'Queenbeet', queenbeetLump: 'Juicy queenbeet', duketater: 'Duketater', crumbspore: 'Crumbspore', doughshroom: 'Doughshroom',
+    glovemorel: 'Glovemorel', cheapcap: 'Cheapcap', foolBolete: 'Fool’s bolete', wrinklegill: 'Wrinklegill', greenRot: 'Green rot', shriekbulb: 'Shriekbulb',
+    tidygrass: 'Tidygrass', everdaisy: 'Everdaisy', ichorpuff: 'Ichorpuff',
+  };
+  // the game's mutations from two mature parents (minigameGarden.js M.getMuts): [what grows, A, B, chance a tick]
+  const RECIPES = [
+    ['thumbcorn', 'bakerWheat', 'bakerWheat', '5%'], ['cronerice', 'bakerWheat', 'thumbcorn', '1%'], ['gildmillet', 'cronerice', 'thumbcorn', '3%'],
+    ['clover', 'bakerWheat', 'gildmillet', '3%; Golden clover 0.07%'], ['shimmerlily', 'clover', 'gildmillet', '2%'], ['elderwort', 'shimmerlily', 'cronerice', '1%'],
+    ['chocoroot', 'bakerWheat', 'brownMold', '10%'], ['whiteChocoroot', 'chocoroot', 'whiteMildew', '10%'], ['whiskerbloom', 'shimmerlily', 'whiteChocoroot', '1%'],
+    ['chimerose', 'shimmerlily', 'whiskerbloom', '5%'], ['nursetulip', 'whiskerbloom', 'whiskerbloom', '5%'], ['greenRot', 'whiteMildew', 'clover', '5%'],
+    ['keenmoss', 'greenRot', 'brownMold', '10%'], ['drowsyfern', 'chocoroot', 'keenmoss', '0.5%'], ['wardlichen', 'cronerice', 'keenmoss', '0.5%'],
+    ['queenbeet', 'chocoroot', 'bakeberry', '1%'], ['duketater', 'queenbeet', 'queenbeet', '0.1%'], ['tidygrass', 'bakerWheat', 'whiteChocoroot', '0.2%'],
+    ['everdaisy', 'tidygrass', 'elderwort', '0.2% (3 of each)'], ['wrinklegill', 'crumbspore', 'brownMold', '6%'], ['doughshroom', 'crumbspore', 'crumbspore', '0.5%'],
+    ['glovemorel', 'crumbspore', 'thumbcorn', '2%'], ['cheapcap', 'crumbspore', 'shimmerlily', '4%'], ['foolBolete', 'doughshroom', 'greenRot', '4%'],
+    ['shriekbulb', 'wrinklegill', 'elderwort', '0.1%'], ['ichorpuff', 'elderwort', 'crumbspore', '0.2%'],
+  ];
+  const one = (id, key, desc) => ({ id, name: NAMES[key], desc, group: 'For their effects', data: () => ({ map: { A: key } }) });
+  const SEEDS = [
+    { id: 'current', name: 'As planted', desc: 'The seeds of the Current garden: A is the first seed on the plot (left to right, top to bottom), B the next…', live: true, data: () => ({ map: currentLetters().map }) },
+    one('goldenClover', 'goldenClover', 'Golden cookies more often (+3% each).'),
+    one('bakerWheat', 'bakerWheat', 'CpS +1% each.'),
+    one('bakeberry', 'bakeberry', 'CpS +1% each; a harvest of a mature one pays 30 minutes of CpS.'),
+    one('whiskerbloom', 'whiskerbloom', 'Milk effects +0.2% each.'),
+    one('queenbeet', 'queenbeet', 'Golden cookie effects +0.3% each; eight around an empty tile can grow a Juicy queenbeet.'),
+    ...RECIPES.map(([out, a, b, p]) => ({
+      id: `to-${out}`,
+      name: `→ ${NAMES[out]}`,
+      desc: `${NAMES[a]} × ${NAMES[b]} → ${NAMES[out]} (${p} a tick, on an empty tile next to both, mature).`,
+      group: 'Mutation recipes',
+      data: () => ({ map: { A: a, B: b } }),
+    })),
+  ];
+
+  const PROFILES = [
+    { id: 'maxEffects', name: 'Max effects · current garden', desc: 'Keeps what you’ve planted, its effects as high as they go.', data: () => ({ gardener: 'effects', soil: 'effects', template: 'current', seeds: 'current' }) },
+    { id: 'goldenClovers', name: 'Golden clover field', desc: 'Golden clover on every tile, for golden cookies.', data: () => ({ gardener: 'effects', soil: 'effects', template: 'fill', seeds: 'goldenClover' }) },
+    { id: 'mutationHunt', name: 'Mutation hunt', desc: 'Two parents in rows, wood chips once they’re mature; new seeds kept until unlocked. Pick the recipe in Seeds.', data: () => ({ gardener: 'mutations', soil: 'mutations', template: 'rows', seeds: 'to-cronerice' }) },
+    { id: 'juicyQueenbeet', name: 'Juicy queenbeet', desc: 'Rings of queenbeets on wood chips: each empty centre can grow a Juicy queenbeet (a sugar lump).', data: () => ({ gardener: 'mutations', soil: 'mutations', template: 'rings', seeds: 'queenbeet' }) },
+    { id: 'weedFarm', name: 'Weed farm', desc: 'A bare garden on fertilizer, for meddleweed, brown mold and crumbspore.', data: () => ({ gardener: 'weeds', soil: 'fertilizer', template: 'bare', seeds: 'current' }) },
+  ];
+
+  // ---- the stores ----------------------------------------------------------------------------
+
+  const cleanRules = (d) => ({ rules: String((d && d.rules) || '').slice(0, 20000) });
+  const cleanPlot = (plot) => Array.from({ length: SIZE }, (_, y) => Array.from({ length: SIZE }, (_, x) => (plot && plot[y] && typeof plot[y][x] === 'string' && /^[A-Z]$/.test(plot[y][x]) ? plot[y][x] : null)));
+  const cleanMap = (m) => {
+    const out = {};
+    Object.keys(m || {}).forEach((k) => /^[A-Z]$/.test(k) && typeof m[k] === 'string' && m[k] && (out[k] = m[k].slice(0, 40)));
+    return out;
+  };
+  const LAYERS = {
+    gardener: { opt: 'gardenGardener', def: 'effects', builtins: GARDENERS, clean: cleanRules, noun: 'gardener' },
+    soil: { opt: 'gardenSoil', def: 'effects', builtins: SOILS, clean: cleanRules, noun: 'soil rule' },
+    template: { opt: 'gardenTemplate', def: 'current', builtins: TEMPLATES, clean: (d) => ({ plot: cleanPlot(d && d.plot), abs: !!(d && d.abs) }), noun: 'template' },
+    seeds: { opt: 'gardenSeeds', def: 'current', builtins: SEEDS, clean: (d) => ({ map: cleanMap(d && d.map) }), noun: 'seed set' },
+    profile: {
+      opt: 'gardenProfile',
+      def: 'maxEffects',
+      builtins: PROFILES,
+      clean: (d) => ({ gardener: String((d && d.gardener) || 'effects'), soil: String((d && d.soil) || 'effects'), template: String((d && d.template) || 'current'), seeds: String((d && d.seeds) || 'current') }),
+      noun: 'profile',
+    },
+  };
+  const PARTS = ['gardener', 'soil', 'template', 'seeds'];
+  // yours: { id, name, data }; a built-in you edited: { id, data }
+  let saved = { gardener: [], soil: [], template: [], seeds: [], profile: [] };
+
+  const builtinOf = (layer, id) => LAYERS[layer].builtins.find((b) => b.id === id) || null;
+  /** An item: { id, name, desc, builtin, live, edited, group, data }, or null. */
+  function get(layer, id) {
+    const b = builtinOf(layer, id);
+    const own = saved[layer].find((x) => x.id === id);
+    if (b) return { id, name: b.name, desc: b.desc || '', builtin: true, live: !!b.live, group: b.group || '', edited: !!own && !b.live, data: own && !b.live ? own.data : b.data() };
+    if (own) return { id, name: own.name, desc: '', builtin: false, live: false, edited: false, group: '', data: own.data };
+    return null;
+  }
+  /** Every item of a layer (built-ins first, then yours), without their data. */
+  function list(layer) {
+    const L = LAYERS[layer];
+    return L.builtins
+      .map((b) => ({ id: b.id, name: b.name, desc: b.desc || '', builtin: true, live: !!b.live, group: b.group || '', edited: !b.live && saved[layer].some((x) => x.id === b.id) }))
+      .concat(saved[layer].filter((x) => !builtinOf(layer, x.id)).map((x) => ({ id: x.id, name: x.name, desc: '', builtin: false, live: false, group: '', edited: false })));
+  }
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  /** Changes an item (a built-in: your version, kept apart; null, or its own data, brings it back). */
+  function set(layer, id, data) {
+    const L = LAYERS[layer];
+    const b = builtinOf(layer, id);
+    const i = saved[layer].findIndex((x) => x.id === id);
+    if (b) {
+      if (b.live) return;
+      const d = data == null ? null : L.clean(data);
+      if (!d || same(d, L.clean(b.data()))) {
+        if (i >= 0) saved[layer].splice(i, 1);
+      } else if (i >= 0) saved[layer][i].data = d;
+      else saved[layer].push({ id, data: d });
+    } else if (i >= 0 && data != null) saved[layer][i].data = L.clean(data);
+    changed();
+  }
+  const newId = (layer) => `${layer[0]}${Date.now().toString(36)}${Math.floor(Math.random() * 46656).toString(36)}`;
+  /** A new item of yours; returns its id. */
+  function add(layer, name, data) {
+    let id = newId(layer);
+    while (get(layer, id)) id += 'x';
+    saved[layer].push({ id, name: String(name || `My ${LAYERS[layer].noun}`).trim().slice(0, 40) || `My ${LAYERS[layer].noun}`, data: LAYERS[layer].clean(data) });
+    changed();
+    return id;
+  }
+  function rename(layer, id, name) {
+    const own = saved[layer].find((x) => x.id === id && !builtinOf(layer, id));
+    if (!own || !String(name).trim()) return;
+    own.name = String(name).trim().slice(0, 40);
+    changed();
+  }
+  function remove(layer, id) {
+    if (builtinOf(layer, id)) return;
+    saved[layer] = saved[layer].filter((x) => x.id !== id);
+    if (S().get(LAYERS[layer].opt) === id) S().set(LAYERS[layer].opt, LAYERS[layer].def);
+    changed();
+  }
+
+  // ---- what's picked -------------------------------------------------------------------------
+
+  /** Whether a layer has an item with this id. */
+  const has = (layer, id) => !!builtinOf(layer, id) || saved[layer].some((x) => x.id === id);
+  /** The id picked in a layer (its default when the pick is gone). */
+  const picked = (layer) => (has(layer, S().get(LAYERS[layer].opt)) ? S().get(LAYERS[layer].opt) : LAYERS[layer].def);
+  const picks = () => ({ gardener: picked('gardener'), soil: picked('soil'), template: picked('template'), seeds: picked('seeds') });
+  /** Picks one item of a layer (the Current garden: taken afresh). A profile: loads its four. */
+  function pick(layer, id) {
+    if (!has(layer, id)) return;
+    if (layer === 'profile') return loadProfile(id);
+    S().set(LAYERS[layer].opt, id);
+    if (layer === 'template' && id === 'current' && CA.Garden.captureCurrent) CA.Garden.captureCurrent();
+  }
+  function loadProfile(id, opts = {}) {
+    const p = get('profile', id);
+    if (!p) return;
+    PARTS.forEach((k) => S().set(LAYERS[k].opt, has(k, p.data[k]) ? p.data[k] : LAYERS[k].def));
+    S().set(LAYERS.profile.opt, id);
+    if (picked('template') === 'current' && !opts.lazy && CA.Garden.captureCurrent) CA.Garden.captureCurrent();
+  }
+  /** Whether the four picks differ from the loaded profile's. */
+  function profileChanged() {
+    const p = get('profile', picked('profile'));
+    return !!p && PARTS.some((k) => (has(k, p.data[k]) ? p.data[k] : LAYERS[k].def) !== picked(k));
+  }
+  /** The loaded profile, set to the four picks. */
+  const saveProfile = () => set('profile', picked('profile'), picks());
+  /** A new profile of yours from the four picks, loaded. */
+  function newProfile(name) {
+    const id = add('profile', name, picks());
+    S().set(LAYERS.profile.opt, id);
+    return id;
+  }
+
+  // ---- layouts: a template's letters on the plot, each its seed --------------------------------
+
+  /** The Current garden as letters: { plot, map } (A: the first seed, left to right, top to bottom). */
+  function currentLetters() {
+    const mem = (CA.Garden.currentPlot && CA.Garden.currentPlot()) || null;
+    return lettersOf(mem);
+  }
+  /** Seeds per tile → { plot of letters, map letter → seed } (letters by first appearance). */
+  function lettersOf(seedPlot) {
+    const map = {};
+    const back = {};
+    const plot = Array.from({ length: SIZE }, (_, y) =>
+      Array.from({ length: SIZE }, (_, x) => {
+        const k = seedPlot && seedPlot[y] && seedPlot[y][x];
+        if (!k) return null;
+        if (!back[k]) {
+          const l = LETTERS[Object.keys(map).length] || 'Z';
+          back[k] = l;
+          map[l] = k;
+        }
+        return back[k];
+      })
+    );
+    return { plot, map };
+  }
+  /** The letters a template uses, in order. */
+  const lettersIn = (plot) => [...new Set((plot || []).flat().filter(Boolean))].sort();
+  /**
+   * Where a template's cell lands on the plot: as it is (abs), or from the top-left unlocked tile
+   * (origin) — so a template for the full plot fits a smaller one by its top-left part.
+   */
+  function seedPlot(templateData, map, origin) {
+    const out = Array.from({ length: SIZE }, () => Array(SIZE).fill(null));
+    const [ox, oy] = templateData.abs ? [0, 0] : origin || [0, 0];
+    for (let ty = 0; ty < SIZE; ty++)
+      for (let tx = 0; tx < SIZE; tx++) {
+        const l = templateData.plot[ty] && templateData.plot[ty][tx];
+        const x = tx + ox;
+        const y = ty + oy;
+        if (l && x < SIZE && y < SIZE) out[y][x] = map[l] || null;
+      }
+    return out;
+  }
+
+  /**
+   * A template and seeds for a plot of seeds (what's planted): a template you already have that
+   * lays its letters out the same way on the unlocked tiles (Fill for one seed everywhere), else a
+   * new one; the same for the seeds. Returns { template, seeds } (ids).
+   */
+  function adopt(seedPlotNow, name, isOpen, origin) {
+    const [ox, oy] = origin;
+    // the letters on the unlocked tiles, relative to the origin, labelled by first appearance
+    const norm = (letterAt) => {
+      const back = {};
+      let n = 0;
+      const cells = [];
+      for (let y = 0; y < SIZE; y++)
+        for (let x = 0; x < SIZE; x++) {
+          if (!isOpen(x, y)) continue;
+          const l = letterAt(x, y);
+          if (l && !back[l]) back[l] = LETTERS[n++];
+          cells.push(l ? back[l] : '.');
+        }
+      return { key: cells.join(''), back };
+    };
+    const mine = lettersOf(seedPlotNow);
+    const target = norm((x, y) => mine.plot[y][x]);
+    let template = null;
+    let relabel = null; // a template's letter → the plot's letter
+    for (const t of list('template')) {
+      if (t.live) continue;
+      const d = get('template', t.id).data;
+      const n = norm((x, y) => (d.abs ? d.plot[y] && d.plot[y][x] : d.plot[y - oy] && d.plot[y - oy][x - ox]) || null);
+      if (n.key === target.key) {
+        template = t.id;
+        const toMine = {};
+        Object.keys(target.back).forEach((l) => (toMine[target.back[l]] = l)); // normalized → the plot's letter
+        relabel = {};
+        Object.keys(n.back).forEach((l) => (relabel[l] = toMine[n.back[l]]));
+        break;
+      }
+    }
+    let map;
+    if (template) {
+      map = {};
+      Object.keys(relabel).forEach((l) => (map[l] = mine.map[relabel[l]]));
+    } else {
+      // a new one, from the origin
+      const plot = Array.from({ length: SIZE }, (_, y) => Array.from({ length: SIZE }, (_, x) => (x + ox < SIZE && y + oy < SIZE && isOpen(x + ox, y + oy) ? mine.plot[y + oy][x + ox] : null)));
+      template = add('template', name, { plot, abs: false });
+      map = mine.map;
+    }
+    const seeds = list('seeds').find((s) => !s.live && same(get('seeds', s.id).data.map, map));
+    return { template, seeds: seeds ? seeds.id : add('seeds', name, { map }) };
+  }
+
+  // ---- save / load ---------------------------------------------------------------------------
+
+  const serialize = () => {
+    const out = { v: 3 };
+    Object.keys(LAYERS).forEach((k) => (out[k] = saved[k].map((x) => ({ ...x, data: JSON.parse(JSON.stringify(x.data)) }))));
+    return out;
+  };
+  function loadV3(data) {
+    saved = { gardener: [], soil: [], template: [], seeds: [], profile: [] };
+    Object.keys(LAYERS).forEach((k) => {
+      (Array.isArray(data[k]) ? data[k] : []).forEach((x) => {
+        if (!x || !x.id || !x.data || saved[k].some((y) => y.id === x.id)) return;
+        const b = builtinOf(k, String(x.id));
+        if (b && b.live) return;
+        saved[k].push({ id: String(x.id), ...(b ? {} : { name: String(x.name || LAYERS[k].noun).slice(0, 40) }), data: LAYERS[k].clean(x.data) });
+      });
+    });
+  }
+  /**
+   * Garden profiles from before v3.3 — a plot of seeds each (and, before v3.2, its own rules) —
+   * become a template and seeds each (or ones you have, laid out the same), and a profile of them
+   * with the same id; the profile that was in use is loaded (or Max effects for the Current garden).
+   */
+  function migrate(oldProfiles, oldGardeners, liftSoil) {
+    saved = { gardener: [], soil: [], template: [], seeds: [], profile: [] };
+    (oldGardeners || []).forEach((g) => {
+      if (!g || !g.id || typeof g.rules !== 'string') return;
+      const b = builtinOf('gardener', g.id);
+      saved.gardener.push({ id: String(g.id), ...(b ? {} : { name: String(g.name || 'My gardener').slice(0, 40) }), data: cleanRules(g) });
+    });
+    const was = S().get('gardenProfile');
+    const wasGardener = S().get('gardenGardener');
+    let load = null;
+    (oldProfiles || []).forEach((p) => {
+      if (!p || !p.id || !Array.isArray(p.plot)) return;
+      const name = String(p.name || 'Garden').slice(0, 40);
+      let gardener = has('gardener', wasGardener) ? wasGardener : 'effects';
+      if (typeof p.rules === 'string') {
+        gardener = `r${String(p.id)}`;
+        saved.gardener.push({ id: gardener, name: `${name.slice(0, 30)} rules`, data: { rules: liftSoil(p.rules.slice(0, 20000)) } });
+      }
+      const seedsAt = Array.from({ length: SIZE }, (_, y) => Array.from({ length: SIZE }, (_, x) => (p.plot[y] && typeof p.plot[y][x] === 'string' ? p.plot[y][x] : null)));
+      const keys = [...new Set(seedsAt.flat().filter(Boolean))];
+      let template;
+      let seeds;
+      if (keys.length === 1 && seedsAt.flat().every(Boolean)) template = 'fill';
+      const lt = lettersOf(seedsAt);
+      if (!template) {
+        const t = saved.template.find((x) => same(x.data.plot, lt.plot) && x.data.abs);
+        template = t ? t.id : `t${String(p.id)}`;
+        if (!t) saved.template.push({ id: template, name, data: { plot: lt.plot, abs: true } });
+      }
+      const s = saved.seeds.find((x) => same(x.data.map, lt.map));
+      seeds = s ? s.id : `s${String(p.id)}`;
+      if (!s) saved.seeds.push({ id: seeds, name, data: { map: lt.map } });
+      saved.profile.push({ id: String(p.id), name, data: { gardener, soil: 'effects', template, seeds } });
+      if (String(p.id) === was) load = String(p.id);
+    });
+    if (load) loadProfile(load, { lazy: true });
+    else {
+      loadProfile('maxEffects', { lazy: true });
+      if (has('gardener', wasGardener)) S().set('gardenGardener', wasGardener);
+    }
+  }
+
+  /** The options of every layer (garden.js defines them with its own). */
+  function defineOptions() {
+    Object.keys(LAYERS).forEach((k) => S().defineOption({ key: LAYERS[k].opt, group: 'garden-hidden', name: `Auto-gardener: ${LAYERS[k].noun}`, desc: '', default: LAYERS[k].def }));
+  }
+
+  return {
+    LAYERS,
+    PARTS,
+    LETTERS,
+    NAMES,
+    FERTILIZER_VAR,
+    get,
+    has,
+    list,
+    set,
+    add,
+    rename,
+    remove,
+    picked,
+    picks,
+    pick,
+    loadProfile,
+    profileChanged,
+    saveProfile,
+    newProfile,
+    lettersOf,
+    lettersIn,
+    seedPlot,
+    adopt,
+    effectsGardener,
+    serialize,
+    loadV3,
+    migrate,
+    defineOptions,
+  };
+})();

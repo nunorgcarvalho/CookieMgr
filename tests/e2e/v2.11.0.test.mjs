@@ -131,11 +131,12 @@ CA.UI.Menu.openPage('garden');
 const page = () => doc.querySelector('[data-page="garden"]');
 assert(page() && page().querySelectorAll('[data-gp-plot] .ca-gtile').length === 36 && page().querySelectorAll('[data-gp-plot] .ca-gtile.locked').length === 24, 'Garden page: the plot, locked tiles greyed');
 assert(page().querySelector('[data-macro-row="gardener"]'), 'the Auto-gardener switch');
-page().querySelector('[data-gp-name]').value = 'Bakeberries';
-click(w, page().querySelector('[data-gp-save]'));
-const prof = CA.Garden.profiles()[0];
-assert(prof && prof.name === 'Bakeberries' && prof.soil === 'clay' && prof.plot[3][1] === 'bakeberry' && prof.plot[2][4] === null && CA.Garden.active() === prof, 'profile saved: seeds + soil, and made active');
-assert(page().querySelector('.ca-gprofile.on') && page().querySelectorAll('.ca-gmini span').length === 36, 'listed with a mini plot');
+// v3.3: "From the garden" — a profile of yours: a template + seeds of what's planted, loaded
+click(w, page().querySelector('[data-gp-pact="snapshot"]'));
+const prof = CA.GardenLayers.get('profile', CA.GardenLayers.picked('profile'));
+const lay = CA.Garden.active();
+assert(prof && !prof.builtin && lay.plot[3][1] === 'bakeberry' && lay.plot[2][1] === 'bakerWheat' && lay.plot[2][4] === null, 'profile saved from the garden, and loaded');
+assert(page().querySelector('[data-gp-slot="template"] .ca-gmini') && page().querySelectorAll('[data-gp-slot="template"] .ca-gmini span').length === 36, 'its template: a mini grid of letters');
 
 // ---- tending
 CA.Settings.set('gardenLead', 15);
@@ -223,37 +224,40 @@ assert(/50%/.test(tiles[3 * 6 + 2].querySelector('.ca-gdecay').textContent) && /
 assert(tiles[4 * 6 + 4].querySelector('.ca-gs') === null, 'empty tile with nothing planned');
 
 // ---- profiles: rename, a second one, use, delete (two clicks)
-const rn = page().querySelector(`[data-gp-rename="${prof.id}"]`);
+const LY = CA.GardenLayers;
+const mine = () => LY.list('profile').filter((p) => !p.builtin);
+const rn = page().querySelector('[data-gp-iname="profile"]');
 rn.value = 'Berry farm';
 rn.dispatchEvent(new w.Event('change', { bubbles: true }));
-assert(CA.Garden.profiles()[0].name === 'Berry farm', 'rename');
-click(w, page().querySelector('[data-gp-save]'));
-const p2 = CA.Garden.profiles()[1];
-assert(p2 && p2.name === 'Garden 2' && CA.Garden.active().id === prof.id, 'second profile; the active one stays');
-click(w, page().querySelector(`[data-gp-use="${p2.id}"]`));
-assert(CA.Garden.active().id === p2.id, 'use another profile');
-const sel = page().querySelector('[data-gp-active]');
+assert(LY.get('profile', prof.id).name === 'Berry farm', 'rename');
+click(w, page().querySelector('[data-gp-pact="new"]'));
+const p2 = mine()[1];
+assert(p2 && p2.name === 'Berry farm (copy)' && LY.picked('profile') === p2.id, 'Save as new: a second profile, loaded');
+const sel = page().querySelector('[data-gp-pick="profile"]');
 sel.value = prof.id;
 sel.dispatchEvent(new w.Event('change', { bubbles: true }));
-assert(CA.Garden.active().id === prof.id, 'or pick it in the Auto-gardener card');
+assert(LY.picked('profile') === prof.id, 'pick another in the profile bar');
 // v2.26: the threshold and lead are written into the default rules now (no fields of their own)
 assert(!page().querySelector('[data-gp-num]'), 'no threshold / lead fields (v2.26: rules)');
 CA.Settings.set('gardenThreshold', 35);
-click(w, page().querySelector(`[data-gp-del="${p2.id}"]`));
-assert(CA.Garden.profiles().length === 2, 'delete asks first');
-click(w, page().querySelector(`[data-gp-del="${p2.id}"]`));
-assert(CA.Garden.profiles().length === 1, 'then deletes');
+LY.pick('profile', p2.id);
+CA.UI.Menu.render();
+click(w, page().querySelector('[data-gp-pact="delete"]'));
+assert(mine().length === 2, 'delete asks first');
+click(w, page().querySelector('[data-gp-pact="delete"]'));
+assert(mine().length === 1, 'then deletes');
+LY.pick('profile', prof.id);
 
 // ---- saved and restored
 Game.WriteSave();
 const saved = Game.modSaveData.CookieMgr;
 const data = JSON.parse(saved);
-assert(data.garden.profiles.length === 1 && data.garden.profiles[0].plot[3][1] === 'bakeberry' && data.options.gardenThreshold === 35 && data.options.gardenProfile === prof.id, 'profiles and settings saved');
+assert(data.garden.profile.length === 1 && data.garden.template.length === 1 && data.options.gardenThreshold === 35 && data.options.gardenProfile === prof.id, 'profiles and settings saved');
 const g2 = boot({ idb: { factory: new IDBFactory(), IDBKeyRange }, save: saved });
 makeGarden(g2.Game);
 await sleep(400);
 const CA2 = g2.window.CookieMgr;
-assert(CA2.Garden.active() && CA2.Garden.active().name === 'Berry farm' && CA2.Settings.get('gardenThreshold') === 35, 'restored');
+assert(CA2.GardenLayers.get('profile', CA2.GardenLayers.picked('profile')).name === 'Berry farm' && CA2.Garden.active().plot[3][1] === 'bakeberry' && CA2.Settings.get('gardenThreshold') === 35, 'restored');
 
 // ---- no garden yet
 const g3 = boot({ idb: { factory: new IDBFactory(), IDBKeyRange } });

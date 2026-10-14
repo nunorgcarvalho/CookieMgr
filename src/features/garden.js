@@ -1,26 +1,28 @@
-// The **auto-gardener**, in two layers you pick separately:
+// The **auto-gardener**: tends the Garden (Farm minigame) once a second while it's on, as four
+// layers you pick separately say (features/gardenLayers.js) — or a profile that picks all four:
 //
-//   a **garden profile** (layout): which seed goes on which tile (or nothing), and a soil — a saved
-//     snapshot, or the built-in "Current garden": whatever is planted, kept as it is (each tile's
-//     plant remembered, and replanted when it dies)
-//   a **gardener** (behaviour): algorithmic code run from the top every second — the built-in
-//     Effect maximizer, Weed collector and Mutation tracker (editable, revertable), or your own
+//   gardener   what it does: algorithmic code, run from the top every pass — the built-in Effect
+//              maximizer, Weed collector and Mutation tracker (editable, revertable), or your own
+//   soil rule  the code the gardener runs (garden.soilRule()) to pick the soil
+//   template   where seeds go: letters (A, B…) on the plot — or the Current garden, what's planted
+//   seeds      which seed each letter is
+//
+// A template and seeds together are the **layout**: the seed each tile should have. This file has
+// the garden's words the gardeners are made of (actions and values, which work in any algorithmic
+// macro), the Current garden's memory, and the Auto-gardener macro.
 //
 // The Effect maximizer (the default) does what the auto-gardener always did:
 //
-//   - in the last `lead` seconds before a garden tick (15 by default):
+//   - in the last `tickWindow` seconds before a garden tick (15 by default):
 //       · on the tiles the layout has a seed for, harvests plants that aren't that seed (weeds,
 //         mutations, leftovers) — tiles the layout leaves empty it doesn't touch
 //       · harvests the layout's own mature plants when the chance that they die of old age on the
 //         coming tick is above your threshold (50% by default; 100% = let them die)
 //       · replants the tiles it just cleared
 //   - any time: plants the layout's seed on every empty tile you can afford; harvests a plant whose
-//     seed you haven't unlocked yet as soon as it's mature, which unlocks it; and keeps the soil on
-//     fertilizer while most plants are growing, clay once they're mature (when the game lets you —
+//     seed you haven't unlocked yet as soon as it's mature, which unlocks it; and runs the soil rule
+//     (fertilizer while most plants are growing, clay once they're mature — when the game lets you,
 //     a 10-minute cooldown)
-//
-// The Weed collector keeps the garden bare for weeds and fungi; the Mutation tracker grows the
-// layout's parents and watches the other tiles for mutations (see their code below).
 //
 // Why harvest before a plant dies? A harvest of a mature plant unlocks its seed if it's new, counts
 // towards the harvest achievements, and some plants pay out on harvest (Bakeberry, Chocoroot, Queenbeet…);
@@ -31,12 +33,12 @@
 
 CA.Garden = (() => {
   const SIZE = 6;
-  let profiles = []; // { id, name, soil, plot: [[key|null × 6] × 6] }
-  let gardeners = []; // yours: { id, name, rules }; a built-in you edited: { id, rules }
-  let current = null; // the Current garden layout: each tile's plant as last seen ([[key|null × 6] × 6])
+  let current = null; // the Current garden: each tile's plant as remembered ([[key|null × 6] × 6])
   let unlockedAt = {}; // seed → when a harvest by CookieMgr unlocked it (ms)
   const CURRENT = 'current';
   const S = () => CA.Settings;
+  const L = () => CA.GardenLayers;
+  const changed = () => CA.Events.emit('garden');
 
   function minigame() {
     const M = CA.Util.minigame('Farm');
@@ -50,6 +52,19 @@ CA.Garden = (() => {
   };
   /** Seconds until the next garden tick. */
   const nextTickIn = (M) => (M.nextStep ? Math.max(0, (M.nextStep - Date.now()) / 1000) : Infinity);
+  /** The top-left unlocked tile: where a template's top-left cell goes. */
+  function originOf(M) {
+    if (!M) return [0, 0];
+    let ox = SIZE;
+    let oy = SIZE;
+    for (let y = 0; y < SIZE; y++)
+      for (let x = 0; x < SIZE; x++)
+        if (unlockedTile(M, x, y)) {
+          ox = Math.min(ox, x);
+          oy = Math.min(oy, y);
+        }
+    return ox === SIZE ? [0, 0] : [ox, oy];
+  }
 
   // ---- the chance a plant dies on the next tick -------------------------------------------------
 
@@ -76,29 +91,28 @@ CA.Garden = (() => {
     return Math.max(0, Math.min(1, (F(b) - F(a)) / (b - a)));
   }
 
-  // ---- profiles ------------------------------------------------------------------------------
+  // ---- the Current garden ------------------------------------------------------------------------
+  //
+  // It remembers each tile's plant: taken from the garden when you pick it, then changed only by
+  // your own clicks on the garden (a seed you plant, a plant you harvest) — a plant that dies or is
+  // harvested by the gardener is replanted, and a mutation or weed that springs up isn't adopted.
 
-  const newId = () => `g${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`;
-  /** The layout the gardener keeps: a saved profile, or (picked, or none picked) the Current garden. */
-  function active() {
-    const id = S().get('gardenProfile');
-    return profiles.find((p) => p.id === id) || currentProfile();
-  }
-  const activeLayoutId = () => active().id;
   const emptyPlot = () => Array.from({ length: SIZE }, () => Array(SIZE).fill(null));
-  // The Current garden remembers each tile's plant: taken from the garden when you pick it, then
-  // changed only by your own clicks on the garden (a seed you plant, a plant you harvest) — a plant
-  // that dies or is harvested by the gardener is replanted, and a mutation or weed that springs up
-  // isn't adopted.
   const keeps = (me) => !!me && !!me.unlocked && !me.weed && !me.fungus;
-  /** What's planted now, seed by seed (seeds you've unlocked — not weeds, fungi or new mutations). */
+  /** What's planted, seed by seed, as it is now (any seed, or only ones the Current garden keeps). */
+  function plantedNow(M, filter = keeps) {
+    const plot = emptyPlot();
+    for (let y = 0; y < SIZE; y++)
+      for (let x = 0; x < SIZE; x++) {
+        const me = unlockedTile(M, x, y) ? plantAt(M, x, y) : null;
+        if (me && filter(me)) plot[y][x] = me.key;
+      }
+    return plot;
+  }
+  /** Takes the Current garden afresh (no garden yet: when there is one). */
   function captureCurrent() {
     const M = minigame();
-    current = emptyPlot();
-    if (M) for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) {
-      const me = unlockedTile(M, x, y) ? plantAt(M, x, y) : null;
-      if (keeps(me)) current[y][x] = me.key;
-    }
+    current = M ? plantedNow(M) : null;
     changed();
   }
   /** Notes your clicks on the garden's tiles (once per garden), for the Current garden. */
@@ -109,7 +123,7 @@ CA.Garden = (() => {
     M.clickTile = function (x, y) {
       const out = orig.apply(this, arguments);
       try {
-        if (current && activeLayoutId() === CURRENT && current[y]) {
+        if (current && current[y] && L().picked('template') === CURRENT) {
           const me = plantAt(M, x, y);
           current[y][x] = keeps(me) ? me.key : null;
           changed();
@@ -120,59 +134,37 @@ CA.Garden = (() => {
       return out;
     };
   }
-  function currentProfile() {
+  /** The Current garden's memory (taken now if there's none yet). */
+  function currentPlot() {
     const M = minigame();
     watchClicks(M);
-    if (!current && M) captureCurrent();
-    const soil = M && M.soilsById && M.soilsById[M.soil] ? M.soilsById[M.soil].key : 'dirt';
-    return { id: CURRENT, name: 'Current garden', soil, plot: current || emptyPlot(), live: true };
+    if (!current && M) current = plantedNow(M);
+    return current || emptyPlot();
   }
 
-  /** Saves the current garden (seeds on every tile + the soil) as a new profile. */
+  // ---- the layout: the template's letters, each its seed -------------------------------------------
+
+  /** The layout the gardener keeps: { id, name, plot (seed per tile), template, seeds }. */
+  function active() {
+    const t = L().get('template', L().picked('template'));
+    const s = L().get('seeds', L().picked('seeds'));
+    const plot = t.id === CURRENT && s.id === CURRENT ? currentPlot() : L().seedPlot(t.data, s.data.map, originOf(minigame()));
+    return { id: `${t.id}/${s.id}`, name: t.id === CURRENT && s.id === CURRENT ? 'Current garden' : `${t.name} · ${s.name}`, plot, template: t, seeds: s };
+  }
+
+  /**
+   * The garden as it is, as a profile of yours: its template (one you have, laid out the same — Fill
+   * for one seed everywhere — else a new one), its seeds, the gardener and soil rule picked now. Loaded.
+   */
   function snapshot(name) {
     const M = minigame();
     if (!M) return null;
-    const plot = [];
-    for (let y = 0; y < SIZE; y++) {
-      plot.push([]);
-      for (let x = 0; x < SIZE; x++) {
-        const me = unlockedTile(M, x, y) ? plantAt(M, x, y) : null;
-        plot[y].push(me ? me.key : null);
-      }
-    }
-    const soil = M.soilsById && M.soilsById[M.soil] ? M.soilsById[M.soil].key : 'dirt';
-    const p = { id: newId(), name: String(name || `Garden ${profiles.length + 1}`).slice(0, 40), soil, plot };
-    profiles.push(p);
-    if (activeLayoutId() === CURRENT && S().get('gardenProfile') !== CURRENT) S().set('gardenProfile', p.id);
-    changed();
-    return p;
+    const nm = String(name || `Garden ${L().list('profile').filter((p) => !p.builtin).length + 1}`).slice(0, 40);
+    const got = L().adopt(plantedNow(M, () => true), nm, (x, y) => unlockedTile(M, x, y), originOf(M));
+    const id = L().add('profile', nm, { gardener: L().picked('gardener'), soil: L().picked('soil'), template: got.template, seeds: got.seeds });
+    L().loadProfile(id);
+    return L().get('profile', id);
   }
-
-  function removeProfile(id) {
-    const i = profiles.findIndex((p) => p.id === id);
-    if (i < 0) return;
-    profiles.splice(i, 1);
-    if (S().get('gardenProfile') === id) S().set('gardenProfile', profiles[0] ? profiles[0].id : CURRENT);
-    changed();
-  }
-
-  function rename(id, name) {
-    const p = profiles.find((x) => x.id === id);
-    if (!p || !String(name).trim()) return;
-    p.name = String(name).trim().slice(0, 40);
-    changed();
-  }
-
-  /** Keep the garden like this layout (Current garden: what's planted now, captured afresh). */
-  function use(id) {
-    if (id === CURRENT) {
-      captureCurrent();
-      S().set('gardenProfile', CURRENT);
-      return;
-    }
-    if (profiles.some((p) => p.id === id)) S().set('gardenProfile', id);
-  }
-  const changed = () => CA.Events.emit('garden');
 
   // ---- tending ------------------------------------------------------------------------------
 
@@ -200,165 +192,34 @@ CA.Garden = (() => {
     return true;
   }
 
-  // ---- gardeners: what the auto-gardener does, written as code ------------------------------------
-  //
-  // A gardener is algorithmic code (features/script.js) run from the top on every pass of the
-  // auto-gardener, made of the garden's own words below; it tends towards the active layout. The
-  // built-in ones can be edited (and reverted); your own are made from any of them.
+  // ---- gardeners and soil rules: code ---------------------------------------------------------
 
-  const FERTILIZER_VAR = 'fertilizerAbove';
-  /** The Effect maximizer, with the numbers of the old settings (seconds before the tick, the death-chance threshold, unlocking new seeds). */
-  function defaultRules() {
-    const lead = Math.max(1, Number(S().get('gardenLead')) || 15);
-    const thr = Math.max(0, Math.min(100, Number(S().get('gardenThreshold')))) / 100;
-    const unlock = S().get('gardenUnlockNew') !== false;
-    const lines = [
-      '# Effect maximizer: keeps the layout planted, and its plants\' effects as high as they go.',
-      '# It plants only where the layout has a seed, and only clears the tiles the layout uses.',
-      '# Your numbers (used below):',
-      `${FERTILIZER_VAR} = 0.67   # fertilizer while more than this share of the planted tiles is still growing, else clay`,
-      `tickWindow = ${lead}   # the last seconds before a garden tick, when old plants are dealt with`,
-    ];
-    if (thr < 1) lines.push(`dyingOver = ${thr}   # replant mature plants more likely than this to die on the tick (the new one grows at it)`);
-    lines.push(
-      `unlockNewSeeds = ${unlock}   # a seed you haven't unlocked yet: let it grow, harvest it once mature (that unlocks it)`,
-      "# Plant the layout's seed on every empty tile it has one for, right away.",
-      'garden.plantEmpty()',
-      'if unlockNewSeeds:',
-      '  garden.harvestNew()',
-      '# Soil, first: its effects count the whole time, not just at the tick — fertilizer while most',
-      '# plants are still growing, clay (effects ×1.25) once enough of them are mature.',
-      `if garden.youngShare() > ${FERTILIZER_VAR}:`,
-      '  garden.soil(fertilizer)',
-      'else:',
-      '  garden.soil(clay)',
-      '# In the last tickWindow seconds before a garden tick:',
-      'if garden.tickIn() <= tickWindow:',
-      "  # clear the layout's tiles of what doesn't belong there (leaving new seeds to grow)",
-      '  for tile in garden.tiles():',
-      '    if garden.wantAt(tile) != "" and garden.isOff(tile) and not garden.isEmpty(tile) and not (unlockNewSeeds and garden.isNew(tile)):',
-      '      garden.harvest(tile)'
-    );
-    if (thr < 1) lines.push('  # replant mature plants likely to die on the tick', '  garden.harvestDying(dyingOver)', '  garden.plantEmpty()');
-    return lines.join('\n') + '\n';
-  }
-  const WEED_RULES = `# Weed collector: keeps the garden bare, so weeds and fungi spring up, and gets their seeds.
-# Meddleweed is left to grow old, then harvested — the older it is, the likelier it leaves brown
-# mold or crumbspore behind. Anything you haven't unlocked yet grows until it's mature and is
-# harvested (that unlocks it); everything else is cleared away. It plants nothing.
-oldWeedOver = 0.5   # harvest a meddleweed once it's this likely to die on the next tick
-# fertilizer: the most weeds (×1.2) and the quickest ticks
-garden.soil(fertilizer)
-for tile in garden.tiles():
-  if not garden.isEmpty(tile):
-    if garden.plantAt(tile) == "meddleweed":
-      if garden.decay(tile) > oldWeedOver:
-        garden.harvest(tile)
-    elif garden.isNew(tile):
-      if garden.isMature(tile):
-        garden.harvest(tile)
-    else:
-      garden.harvest(tile)
-`;
-  const MUTATION_RULES = `# Mutation tracker: keeps the layout's plants (the parents) growing, and watches every other tile
-# for mutations. A seed you've unlocked already is cleared at once (its tile is another chance); a
-# new one is kept — every copy of it — and harvested once mature (that unlocks it). Seeds unlocked
-# in the last keepRecentMinutes count as new, so a fresh find's other copies grow on too.
-growingOver = 0.34        # fertilizer while more than this share of the layout's plants is still growing
-keepRecentMinutes = 60
-tickWindow = 15
-dyingOver = 0.5
-garden.plantEmpty()
-# Soil: fertilizer to grow the parents; wood chips (three times the mutation chances) once they're
-# mature, if you have the 300 farms it needs — else fertilizer, whose quicker ticks give more chances
-if garden.layoutYoungShare() > growingOver or not garden.soilAvailable(woodchips):
-  garden.soil(fertilizer)
-else:
-  garden.soil(woodchips)
-for tile in garden.tiles():
-  if not garden.isEmpty(tile) and garden.isOff(tile):
-    if garden.isNew(tile) or garden.unlockedAgo(garden.plantAt(tile)) < keepRecentMinutes * 60:
-      if garden.isMature(tile):
-        garden.harvest(tile)
-    else:
-      garden.harvest(tile)
-# In the last tickWindow seconds before a garden tick: replant parents likely to die on it
-if garden.tickIn() <= tickWindow:
-  garden.harvestDying(dyingOver)
-  garden.plantEmpty()
-`;
-  const BUILTIN_GARDENERS = [
-    { id: 'effects', name: 'Effect maximizer', desc: 'Keeps the layout planted and its effects high: fertilizer while plants grow, clay once they’re mature; replants plants about to die.', source: defaultRules },
-    { id: 'weeds', name: 'Weed collector', desc: 'Keeps the garden bare on fertilizer so weeds and fungi spring up; harvests old meddleweed (for brown mold and crumbspore) and new seeds once mature.', source: () => WEED_RULES },
-    { id: 'mutations', name: 'Mutation tracker', desc: 'Grows the layout’s parents, then wood chips for mutations; clears seeds you have from the other tiles at once, keeps new ones until they’re mature.', source: () => MUTATION_RULES },
-  ];
-  const isBuiltinGardener = (id) => BUILTIN_GARDENERS.some((g) => g.id === id);
-  /** Every gardener: { id, name, desc, builtin, edited }. */
-  function gardenerList() {
-    return BUILTIN_GARDENERS.map((g) => ({ id: g.id, name: g.name, desc: g.desc, builtin: true, edited: gardeners.some((x) => x.id === g.id) })).concat(
-      gardeners.filter((g) => !isBuiltinGardener(g.id)).map((g) => ({ id: g.id, name: g.name, desc: '', builtin: false, edited: false }))
-    );
-  }
-  const gardenerById = (id) => gardenerList().find((g) => g.id === id) || null;
-  /** The gardener the auto-gardener follows (the Effect maximizer unless you picked another). */
-  const activeGardener = () => gardenerById(S().get('gardenGardener')) || gardenerById('effects');
-  /** A gardener's code: yours, a built-in's as you edited it, or its default. */
-  function gardenerRules(id) {
-    const own = gardeners.find((g) => g.id === id);
-    if (own && typeof own.rules === 'string') return own.rules;
-    const b = BUILTIN_GARDENERS.find((g) => g.id === id);
-    return b ? b.source() : '';
-  }
-  /** Sets a gardener's code (a built-in: null, or its default code, brings the default back). */
-  function setGardenerRules(id, src) {
-    const b = BUILTIN_GARDENERS.find((g) => g.id === id);
-    const i = gardeners.findIndex((g) => g.id === id);
-    if (b) {
-      if (src == null || String(src).trim() === b.source().trim()) {
-        if (i >= 0) gardeners.splice(i, 1);
-      } else if (i >= 0) gardeners[i].rules = String(src).slice(0, 20000);
-      else gardeners.push({ id, rules: String(src).slice(0, 20000) });
-    } else if (i >= 0 && src != null) gardeners[i].rules = String(src).slice(0, 20000);
-    changed();
-  }
-  /** A gardener of your own (its code: the given one, or a copy of the active gardener's); returns its id. */
-  function newGardener(name, src) {
-    const id = `r${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`;
-    gardeners.push({ id, name: String(name || 'My gardener').trim().slice(0, 40) || 'My gardener', rules: String(src != null ? src : rulesOf()).slice(0, 20000) });
-    changed();
-    return id;
-  }
-  function renameGardener(id, name) {
-    const g = gardeners.find((x) => x.id === id && !isBuiltinGardener(id));
-    if (!g || !String(name).trim()) return;
-    g.name = String(name).trim().slice(0, 40);
-    changed();
-  }
-  function removeGardener(id) {
-    if (isBuiltinGardener(id)) return;
-    gardeners = gardeners.filter((g) => g.id !== id);
-    if (S().get('gardenGardener') === id) S().set('gardenGardener', 'effects');
-    changed();
-  }
-  const useGardener = (id) => S().set('gardenGardener', gardenerById(id) ? id : 'effects');
+  const gardenerRules = (id) => {
+    const g = L().get('gardener', id);
+    return g ? g.data.rules : '';
+  };
   /** The active gardener's code (what the auto-gardener runs). */
-  const rulesOf = () => gardenerRules(activeGardener().id);
-  /** Sets a gardener's code — by its id (a garden profile's id, from before v3.2: the active gardener's). */
-  const setRules = (id, src) => setGardenerRules(gardenerById(id) ? id : activeGardener().id, src);
+  const rulesOf = () => gardenerRules(L().picked('gardener'));
+  /** The active soil rule's code. */
+  const soilRules = () => L().get('soil', L().picked('soil')).data.rules;
+  /** Sets a gardener's code (a built-in: null brings its default back); an id that isn't a gardener's: the active one's. */
+  const setRules = (id, src) => L().set('gardener', L().get('gardener', id) ? id : L().picked('gardener'), src == null ? null : { rules: src });
+  const defaultRules = () => L().effectsGardener();
 
   /**
    * Rules saved before v3.1.1 had the soil threshold written into their if (if garden.youngShare() > 0.67:):
-   * it becomes a variable at the top, like the default rules have it — the rest of the code as it was.
+   * it becomes a variable at the top, like the default rules had it — the rest of the code as it was.
    */
   function liftSoilThreshold(src) {
+    const V = L().FERTILIZER_VAR;
     const re = /^([ \t]*)if garden\.youngShare\(\) > ([0-9.]+)[ \t]*:[ \t]*$/gm;
     const found = [...src.matchAll(re)];
-    if (found.length !== 1 || new RegExp(`\\b${FERTILIZER_VAR}\\b`).test(src)) return src;
+    if (found.length !== 1 || new RegExp(`\\b${V}\\b`).test(src)) return src;
     const value = found[0][2];
-    const lines = src.replace(re, `$1if garden.youngShare() > ${FERTILIZER_VAR}:`).split('\n');
+    const lines = src.replace(re, `$1if garden.youngShare() > ${V}:`).split('\n');
     // under the rules' heading comment (the comments after it belong to the lines they describe)
     const at = /^\s*#/.test(lines[0] || '') ? 1 : 0;
-    lines.splice(at, 0, `${FERTILIZER_VAR} = ${value}   # fertilizer while more than this share of the planted tiles is still growing, else clay`);
+    lines.splice(at, 0, `${V} = ${value}   # fertilizer while more than this share of the planted tiles is still growing, else clay`);
     return lines.join('\n');
   }
   const compiled = new Map(); // source → { flow, errors }
@@ -379,12 +240,11 @@ if garden.tickIn() <= tickWindow:
     acc[k] += n;
     last = { at: now, harvested: acc.harvested, planted: acc.planted, saved: acc.saved, unlocked: acc.unlocked, soil: acc.soil > 0 };
   }
-  /** Runs fn(M, profile) on a garden that can be tended, else 0. */
+  /** Runs fn(M, layout) on a garden that can be tended, else 0. */
   function withGarden(fn) {
     const M = minigame();
-    const p = active();
-    if (!M || !p || M.freeze) return 0;
-    return fn(M, p) || 0;
+    if (!M || M.freeze) return 0;
+    return fn(M, active()) || 0;
   }
   const tilesOf = (M) => {
     const out = [];
@@ -407,6 +267,16 @@ if garden.tickIn() <= tickWindow:
     const me = plantAt(M, x, y);
     return !!me && M.plot[y][x][1] >= me.mature;
   };
+
+  let soilWanted = null; // the soil last asked for (garden.soilIs(profile): the soil rule's)
+  let soilPass = null; // the soil rule's last run: { t, lines, trace, error, errors, soil }
+  /** Runs the soil rule (its own little pass); how many things it did. */
+  function runSoilRule() {
+    const { flow, errors } = compileRules(soilRules());
+    const F = CA.Macros.runPass(flow);
+    soilPass = { t: Date.now(), at: F.at, trace: F.trace, lines: F.trace.map((x) => x.line).filter(Boolean), error: F.error, errors: errors || [], soil: L().picked('soil') };
+    return F.done;
+  }
 
   const actions = {
     plantEmpty: () =>
@@ -461,23 +331,27 @@ if garden.tickIn() <= tickWindow:
         count('harvested', n);
         return n;
       }),
-    soil: (key) =>
-      withGarden((M, p) => {
-        const k = key === 'profile' ? p.soil : key;
-        if (setSoil(M, k)) {
+    soil: (key) => {
+      // "profile": the soil rule's choice (before v3.3, a profile had a soil of its own)
+      if (key === 'profile') return withGarden(() => runSoilRule());
+      soilWanted = key;
+      return withGarden((M) => {
+        if (setSoil(M, key)) {
           count('soil');
           return 1;
         }
         return 0;
-      }),
+      });
+    },
+    soilRule: () => withGarden(() => runSoilRule()),
   };
 
   /** The layout's own plants (tiles where its seed grows): { planted, young }. */
   function layoutCensus() {
     const M = minigame();
-    const p = active();
     const c = { planted: 0, young: 0 };
-    if (!M || !p) return c;
+    if (!M) return c;
+    const p = active();
     tilesOf(M).forEach(([x, y]) => {
       const me = plantAt(M, x, y);
       if (!me || me.key !== wantAt(p, x, y)) return;
@@ -490,9 +364,9 @@ if garden.tickIn() <= tickWindow:
   /** Plants on the plot now: { planted, mature, young, empty, off } (empty: unlocked tiles with nothing). */
   function census() {
     const M = minigame();
-    const p = active();
     const c = { planted: 0, mature: 0, young: 0, empty: 0, off: 0 };
     if (!M) return c;
+    const p = active();
     tilesOf(M).forEach(([x, y]) => {
       const me = plantAt(M, x, y);
       if (!me) c.empty++;
@@ -501,7 +375,7 @@ if garden.tickIn() <= tickWindow:
         if (isMature(M, x, y)) c.mature++;
         else c.young++;
       }
-      if (p && (me ? me.key : null) !== wantAt(p, x, y)) c.off++;
+      if ((me ? me.key : null) !== wantAt(p, x, y)) c.off++;
     });
     return c;
   }
@@ -510,15 +384,14 @@ if garden.tickIn() <= tickWindow:
   // (sourceFrom), run from the top every second (pass) while there's a garden to tend (ready).
   // tend() is the same pass by hand — the garden.tend action.
   let last = { at: 0, harvested: 0, planted: 0, saved: 0, unlocked: 0, soil: false };
-  let lastPass = null; // { t, at, trace, lines, error, errors, profile }
+  let lastPass = null; // { t, at, trace, lines, error, errors, layout, gardener }
   const canTend = () => {
     const M = minigame();
-    return !!M && !!active() && !M.freeze;
+    return !!M && !M.freeze;
   };
-  /** After each pass (the gardener's, or tend()'s): where the rules went, for the page. */
+  /** After each pass (the gardener's, or tend()'s): where its code went, for the page. */
   function recordPass(F, errors) {
-    const p = active();
-    lastPass = { t: Date.now(), at: F.at, trace: F.trace, lines: F.trace.map((x) => x.line).filter(Boolean), error: F.error, errors: errors || [], profile: p && p.id, gardener: activeGardener().id };
+    lastPass = { t: Date.now(), at: F.at, trace: F.trace, lines: F.trace.map((x) => x.line).filter(Boolean), error: F.error, errors: errors || [], layout: active().id, gardener: L().picked('gardener') };
   }
   function tend() {
     if (!canTend()) return 0;
@@ -528,8 +401,7 @@ if garden.tickIn() <= tickWindow:
     return F.done;
   }
 
-
-  /** What the current garden looks like against the active profile, tile by tile (for the page). */
+  /** What the current garden looks like against the layout, tile by tile (for the page). */
   function view() {
     const M = minigame();
     if (!M) return null;
@@ -539,7 +411,7 @@ if garden.tickIn() <= tickWindow:
       for (let x = 0; x < SIZE; x++) {
         const open = unlockedTile(M, x, y);
         const me = open ? plantAt(M, x, y) : null;
-        const want = p && p.plot[y] ? p.plot[y][x] : null;
+        const want = p.plot[y] ? p.plot[y][x] : null;
         tiles.push({
           x,
           y,
@@ -547,7 +419,7 @@ if garden.tickIn() <= tickWindow:
           plant: me,
           age: me ? M.plot[y][x][1] : 0,
           want: want && M.plants[want] ? M.plants[want] : null,
-          match: !p || (me ? me.key : null) === want,
+          match: (me ? me.key : null) === want,
           decay: me ? decayChance(M, x, y) : 0,
         });
       }
@@ -559,40 +431,26 @@ if garden.tickIn() <= tickWindow:
 
   const cleanPlot = (plot) => Array.from({ length: SIZE }, (_, y) => Array.from({ length: SIZE }, (_, x) => (plot && plot[y] && typeof plot[y][x] === 'string' ? plot[y][x] : null)));
   const serialize = () => ({
-    profiles: profiles.map((p) => ({ id: p.id, name: p.name, soil: p.soil, plot: p.plot.map((r) => r.slice()) })),
-    gardeners: gardeners.map((g) => ({ ...g })),
+    ...L().serialize(),
     ...(current ? { current: current.map((r) => r.slice()) } : {}),
     unlockedAt: { ...unlockedAt },
   });
   function load(data) {
-    // before v3.2: just the profiles (an array), each with its own rules
-    const v2 = Array.isArray(data);
-    const list = v2 ? data : (data && Array.isArray(data.profiles) && data.profiles) || [];
-    gardeners = !v2 && data && Array.isArray(data.gardeners) ? data.gardeners.filter((g) => g && g.id && typeof g.rules === 'string').map((g) => ({ id: String(g.id), ...(isBuiltinGardener(g.id) ? {} : { name: String(g.name || 'My gardener').slice(0, 40) }), rules: g.rules.slice(0, 20000) })) : [];
-    current = !v2 && data && Array.isArray(data.current) ? cleanPlot(data.current) : null;
-    unlockedAt = !v2 && data && data.unlockedAt && typeof data.unlockedAt === 'object' ? { ...data.unlockedAt } : {};
-    profiles = list
-      .filter((p) => p && p.id && Array.isArray(p.plot))
-      .map((p) => {
-        // a profile's own rules (v2.26–v3.1): a gardener of yours now — the active one if its profile was
-        if (typeof p.rules === 'string') {
-          const id = `r${String(p.id)}`;
-          gardeners.push({ id, name: `${String(p.name || 'Garden').slice(0, 30)} rules`, rules: liftSoilThreshold(p.rules.slice(0, 20000)) });
-          if (S().get('gardenProfile') === String(p.id)) S().set('gardenGardener', id);
-        }
-        return { id: String(p.id), name: String(p.name || 'Garden').slice(0, 40), soil: typeof p.soil === 'string' ? p.soil : 'dirt', plot: cleanPlot(p.plot) };
-      });
+    const obj = data && typeof data === 'object' && !Array.isArray(data) ? data : null;
+    current = obj && Array.isArray(obj.current) ? cleanPlot(obj.current) : null;
+    unlockedAt = obj && obj.unlockedAt && typeof obj.unlockedAt === 'object' ? { ...obj.unlockedAt } : {};
+    if (obj && obj.v === 3) L().loadV3(obj);
+    // before v3.3: profiles were plots of seeds (v3.2: { profiles, gardeners }; before: an array, each with its own rules)
+    else if (Array.isArray(data) || (obj && Array.isArray(obj.profiles))) L().migrate(Array.isArray(data) ? data : obj.profiles, obj && obj.gardeners, liftSoilThreshold);
+    else L().loadV3({});
     changed();
   }
 
   const GARDENER = 'gardener';
-  /** The layouts to pick from: the Current garden, then your profiles. */
-  const layoutOptions = () => [{ v: CURRENT, label: 'Current garden (keeps what’s planted)' }].concat(profiles.map((p) => ({ v: p.id, label: p.name })));
 
   function init() {
     CA.Settings.registerSection('garden', { serialize, load, event: 'garden' });
-    S().defineOption({ key: 'gardenProfile', group: 'garden-hidden', name: 'Active garden profile', desc: '', default: '' });
-    S().defineOption({ key: 'gardenGardener', group: 'garden-hidden', name: 'Active gardener', desc: '', default: 'effects' });
+    L().defineOptions();
     S().defineOption({ key: 'gardenThreshold', group: 'garden-hidden', name: 'Harvest before dying at', desc: '', default: 50 });
     S().defineOption({ key: 'gardenLead', group: 'garden-hidden', name: 'Seconds before the tick', desc: '', default: 15 });
     S().defineOption({
@@ -603,13 +461,13 @@ if garden.tickIn() <= tickWindow:
       desc: 'Lets a seed you haven’t unlocked yet grow wherever it appears, and harvests it the moment it’s mature (which unlocks it) — instead of pulling it out as a mismatch.',
       default: true,
     });
-    // the garden's words, for its rules (and any algorithmic macro)
+    // the garden's words, for the gardeners (and any algorithmic macro)
     const A = CA.Actions.register;
-    A({ id: 'garden.plantEmpty', name: 'Plant the profile’s seed on every empty tile', icon: 'leaf', group: 'Garden', unit: 'planted', run: () => actions.plantEmpty() });
+    A({ id: 'garden.plantEmpty', name: 'Plant the layout’s seed on every empty tile', icon: 'leaf', group: 'Garden', unit: 'planted', run: () => actions.plantEmpty() });
     A({ id: 'garden.harvestNew', name: 'Harvest new seeds once mature (unlocks them)', icon: 'leaf', group: 'Garden', unit: 'unlocked', run: () => actions.harvestNew() });
     A({
       id: 'garden.pullMismatches',
-      name: 'Pull out what isn’t the profile’s seed',
+      name: 'Pull out what isn’t the layout’s seed',
       icon: 'leaf',
       group: 'Garden',
       unit: 'pulled',
@@ -625,8 +483,8 @@ if garden.tickIn() <= tickWindow:
       params: [{ key: 'threshold', label: 'Chance to die over', type: 'number', default: 0.5, min: 0 }],
       run: (p) => actions.harvestDying(Number(p.threshold)),
     });
-    A({ id: 'garden.harvestMature', name: 'Harvest every mature plant of the profile', icon: 'leaf', group: 'Garden', unit: 'harvested', run: () => actions.harvestMature() });
-    const soils = () => ['dirt', 'fertilizer', 'clay', 'pebbles', 'woodchips', 'profile'].map((v) => ({ v, label: v === 'profile' ? 'the profile’s soil' : v }));
+    A({ id: 'garden.harvestMature', name: 'Harvest every mature plant of the layout', icon: 'leaf', group: 'Garden', unit: 'harvested', run: () => actions.harvestMature() });
+    const soils = () => ['dirt', 'fertilizer', 'clay', 'pebbles', 'woodchips', 'profile'].map((v) => ({ v, label: v === 'profile' ? 'the soil rule’s' : v }));
     A({
       id: 'garden.soil',
       name: 'Switch the soil (when the game allows)',
@@ -636,6 +494,7 @@ if garden.tickIn() <= tickWindow:
       params: [{ key: 'soil', label: 'Soil', type: 'select', default: 'fertilizer', options: soils }],
       run: (p) => actions.soil(p.soil),
     });
+    A({ id: 'garden.soilRule', name: 'Pick the soil, as the soil rule says', icon: 'leaf', group: 'Garden', unit: 'done', run: () => actions.soilRule() });
     CA.Conditions.register({
       id: 'garden.soilIs',
       name: 'The garden’s soil is…',
@@ -645,7 +504,7 @@ if garden.tickIn() <= tickWindow:
       test: (p) => {
         const M = minigame();
         const s = M && M.soilsById && M.soilsById[M.soil];
-        return !!s && s.key === (p.soil === 'profile' && active() ? active().soil : p.soil);
+        return !!s && s.key === (p.soil === 'profile' ? soilWanted : p.soil);
       },
     });
     const V = (id, desc, get) => CA.Script.defineValue({ id, desc, get });
@@ -664,7 +523,7 @@ if garden.tickIn() <= tickWindow:
     V('garden.plants', 'plants on the plot', () => census().planted);
     V('garden.mature', 'mature plants on the plot', () => census().mature);
     V('garden.empty', 'empty tiles', () => census().empty);
-    V('garden.offProfile', 'tiles that aren’t as the profile has them', () => census().off);
+    V('garden.offProfile', 'tiles that aren’t as the layout has them', () => census().off);
     V('garden.layoutYoungShare', 'share of the layout’s own plants not mature yet (0–1)', () => {
       const c = layoutCensus();
       return c.planted ? Math.round((c.young / c.planted) * 1000) / 1000 : 0;
@@ -719,13 +578,13 @@ if garden.tickIn() <= tickWindow:
       },
     });
     T('garden.plantAt', 'what grows on a tile (its seed, or "" when empty)', at((M, x, y) => (plantAt(M, x, y) || {}).key || '', ''));
-    T('garden.wantAt', 'the layout’s seed for a tile (or "")', at((M, x, y) => (active() && wantAt(active(), x, y)) || '', ''));
+    T('garden.wantAt', 'the layout’s seed for a tile (or "")', at((M, x, y) => wantAt(active(), x, y) || '', ''));
     T('garden.age', 'how far a tile’s plant has grown (its age; 0 when empty)', at((M, x, y) => (plantAt(M, x, y) ? M.plot[y][x][1] : 0), 0));
     T('garden.decay', 'the chance a tile’s plant dies on the next tick (0–1)', at((M, x, y) => (isMature(M, x, y) ? decayChance(M, x, y) : 0), 0));
     T('garden.isMature', 'whether a tile’s plant is mature', at((M, x, y) => isMature(M, x, y), false), true);
     T('garden.isNew', 'whether a tile’s plant is a seed you haven’t unlocked yet', at((M, x, y) => !!plantAt(M, x, y) && !plantAt(M, x, y).unlocked, false), true);
     T('garden.isEmpty', 'whether a tile has nothing growing', at((M, x, y) => !plantAt(M, x, y), false), true);
-    T('garden.isOff', 'whether a tile isn’t as the layout has it', at((M, x, y) => ((plantAt(M, x, y) || {}).key || null) !== ((active() && wantAt(active(), x, y)) || null), false), true);
+    T('garden.isOff', 'whether a tile isn’t as the layout has it', at((M, x, y) => ((plantAt(M, x, y) || {}).key || null) !== wantAt(active(), x, y), false), true);
     CA.Script.defineValue({
       id: 'garden.seeds',
       desc: 'a list: every seed you’ve unlocked',
@@ -778,23 +637,29 @@ if garden.tickIn() <= tickWindow:
       icon: 'leaf',
       group: 'Garden',
       unit: 'done',
-      available: () => !!minigame() && !!active(),
+      available: () => !!minigame(),
       run: () => tend(),
+    });
+    // its choices on its card: a profile, or any of the four layers (the Garden page's own picks)
+    const choice = (layer, label) => ({
+      key: layer === 'soil' ? 'soilRule' : layer === 'seeds' ? 'seedSet' : layer,
+      label,
+      type: 'select',
+      default: L().LAYERS[layer].def,
+      options: () => L().list(layer).map((x) => ({ v: x.id, label: x.name + (x.edited ? ' (edited)' : '') })),
+      get: () => L().picked(layer),
+      set: (v) => L().pick(layer, v),
     });
     CA.Macros.addBuiltin({
       id: GARDENER,
       name: 'Auto-gardener',
-      desc: 'Tends your garden: the gardener you pick (what it does — the Effect maximizer, the Weed collector, the Mutation tracker, or your own code) with the layout you pick (a garden profile, or the Current garden). Edit gardeners on the Garden page.',
+      desc: 'Tends your garden as four layers say: the gardener (what it does), its soil rule, the template (where seeds go) and the seeds — or a profile that picks all four. Edit them on the Garden page.',
       icon: { sprite: [4, 0], sheet: 'img/gardenPlants.png' }, // mature Baker's wheat
       mode: 'flow',
       pass: true,
       every: 1000,
-      sourceFrom: () => (active() ? rulesOf() : ''),
-      // its two choices, on its card: the layout and the gardener (the Garden page's own settings)
-      inputs: [
-        { key: 'layout', label: 'Layout', type: 'select', default: '', options: layoutOptions, get: activeLayoutId, set: (v) => use(v) },
-        { key: 'gardener', label: 'Gardener', type: 'select', default: 'effects', options: () => gardenerList().map((g) => ({ v: g.id, label: g.name })), get: () => activeGardener().id, set: (v) => useGardener(v) },
-      ],
+      sourceFrom: () => rulesOf(),
+      inputs: [choice('profile', 'Profile'), choice('gardener', 'Gardener'), choice('soil', 'Soil rule'), choice('template', 'Template'), choice('seeds', 'Seeds')],
       ready: canTend,
       afterPass: (F) => recordPass(F),
       editAt: 'garden',
@@ -803,34 +668,33 @@ if garden.tickIn() <= tickWindow:
     });
   }
 
+  // a few words for the other layers (and the tests) — the layers themselves are CA.GardenLayers
+  function use(id) {
+    if (id !== CURRENT) return L().loadProfile(id);
+    L().pick('template', CURRENT);
+    L().pick('seeds', CURRENT);
+  }
   return {
     init,
     minigame,
     decayChance,
     snapshot,
-    removeProfile,
-    rename,
     use,
     active,
-    profiles: () => profiles.slice(),
-    layoutOptions,
     CURRENT,
-    gardeners: gardenerList,
-    gardener: gardenerById,
-    activeGardener,
-    activeLayoutId,
     captureCurrent,
+    currentPlot,
+    originOf,
     gardenerRules,
-    setGardenerRules,
-    newGardener,
-    renameGardener,
-    removeGardener,
-    useGardener,
+    useGardener: (id) => L().pick('gardener', id),
+    activeGardener: () => L().get('gardener', L().picked('gardener')),
     tend,
     view,
     last: () => last,
     lastPass: () => lastPass,
+    soilPass: () => soilPass,
     rulesOf,
+    soilRules,
     setRules,
     defaultRules,
     census,

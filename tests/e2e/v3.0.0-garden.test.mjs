@@ -93,7 +93,7 @@ assert(G.lastPass() && G.lastPass().lines.length > 0 && M.flowStatus('gardener')
 // another gardener (v3.2: picked apart from the profile): its code, from the next pass
 const p2 = G.snapshot('Second');
 G.use(p2.id);
-const logger = G.newGardener('Logger', 'log "second gardener"\n');
+const logger = CA.GardenLayers.add('gardener', 'Logger', { rules: 'log "second gardener"\n' });
 G.useGardener(logger);
 await sleep(1100);
 assert(M.flowStatus('gardener').trace.some((t) => /second gardener/.test(t.text)), 'switching gardener: the Auto-gardener follows its code');

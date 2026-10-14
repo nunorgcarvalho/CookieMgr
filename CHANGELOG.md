@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+## 3.3.0 — 2026-10-14
+
+- **The auto-gardener is four layers, and profiles that combine them.** Each layer is picked on its own, has
+  built-ins you can edit (and revert) and ones of your own (Save as new, rename, delete):
+  - **Gardener** — what it does, as code (Effect maximizer, Weed collector, Mutation tracker).
+  - **Soil rule** — a little code of its own that picks the soil, run when the gardener calls `garden.soilRule()`:
+    Fertilizer, then clay · Fertilizer, then wood chips · Always fertilizer / clay / wood chips · Leave the soil.
+  - **Template** — where seeds go, as letters: Fill (every one-seed garden), Bare, Checkerboard, Mutation rows,
+    Rings, and the live Current garden. A template sits on your plot from its top-left unlocked tile, so a 6×6 one
+    fits a smaller garden.
+  - **Seeds** — which seed each letter is: a few for their effects, and every two-parent mutation recipe in the
+    game (→ Cronerice: A Baker's wheat, B Thumbcorn…).
+  - **Profiles** pick all four at once: Max effects · current garden, Golden clover field, Mutation hunt, Juicy
+    queenbeet, Weed farm — and yours.
+- **The Auto-gardener's card on the Garden page, redone**: a profile bar (pick, Save into it, Save as new, From the
+  garden), four slots showing what's picked, and the one you click in detail below — code with the library, a grid
+  to paint letters on, or a seed per letter. The Macros page card has the same five choices.
+- **From the garden** reuses a template you have when the garden is laid out the same way (Fill for one seed
+  everywhere) and seeds you have with the same letters.
+- Garden profiles from before become profiles of the same name (a template and seeds that lay them out as they
+  were); the gardeners you had stay.
+
 ## 3.2.0 — 2026-10-14
 
 - **The auto-gardener comes in two layers, picked separately**: the **layout** (which seed goes on which tile — a
