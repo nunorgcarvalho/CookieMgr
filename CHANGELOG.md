@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 3.11.2 — 2026-10-16
+
 - **Fix: working out the garden's mutation odds changed the live garden.** It ran the game's own boost calculation
   (what plants like Nursetulip do to their neighbours) on the garden itself, every second — so a plant that matured
   or died since the last tick changed its neighbours' effects at once instead of at the next tick, and a game with

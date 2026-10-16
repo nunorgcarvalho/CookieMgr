@@ -1,4 +1,4 @@
-// Garden mutation odds only read the garden (renamed vX.Y.Z.test.mjs when it lands): the boosts plants give
+// v3.11.2: garden mutation odds only read the garden: the boosts plants give
 // their neighbours (M.plotBoost) are the game's to change, at a tick — the odds run the game's own
 // computeBoostPlot on a grid of their own and put the game's back, even when it throws.
 // (In the real game, with a nursetulip that matured since the last tick: tests/sim/mutations.)
