@@ -442,9 +442,11 @@ The gardeners:
   replants mature plants likely to die on the tick. It leaves the tiles the layout keeps empty alone.
 - **Full-garden replanter** — plants the whole layout at once and lets it grow as one round: on fertilizer while it
   grows, clay once most of it is mature (its soil rule, *Grow together, then clay*, `clayAt` 75%), and it doesn't
-  replant plants that die; once fewer than `replantBelow` (75%) of the layout's tiles hold a mature plant, it harvests
-  everything and plants the whole layout again. Planted together, the plants are mature together — for a level-6
-  golden clover field, golden cookies +55% on average (+49% replanting one at a time) and +60% or more about 60% of
+  replant plants that die; once fewer than `replantBelow` (75%) of the layout's tiles hold a mature plant, it starts a
+  new round — fertilizer first (the next tick comes within 3 minutes, and the old plants keep working until then),
+  then everything harvested and the whole layout replanted in the last `plantWindow` (15) seconds before that tick, so
+  the new plants grow on it straight away. Planted together, the plants are mature together — for a level-6
+  golden clover field, golden cookies +56% on average (+49% replanting one at a time) and +60% or more about 60% of
   the time (4%), so about 12% more chances for two effects to overlap. It replants about twice as often.
 - **Weed collector** — keeps the garden bare (with *Always fertilizer*: the most weeds), so meddleweed and fungi
   spring up. Meddleweed is left to grow old, then harvested — the older it is, the likelier it leaves brown mold or
