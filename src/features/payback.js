@@ -209,53 +209,97 @@ CA.Payback = (() => {
       Game.dragonAura2,
       Game.prestige,
     ].join('|');
-  let cache = null; // { key, t, cps, base, b: { 1: { name: income }, 10, 100 }, u: { name: { bonus, mouse } }, won: { 'b|name|n': [...] } }
+  // The bonus incomes are measured lazily, in batches, only as something asks for them: buying (the
+  // ranking) asks for the buildings you can buy, at the amount you'd buy, and the store's upgrades;
+  // the full table (the colours, the Payback page) for every building at ×1, ×10 and ×100 — Cookie
+  // Monster's colour scale ranks all sixty. Whatever has been measured is kept until the state changes.
+  let cache = null; // { key, t, cps, b: { 'name|n': income }, u: { name: { bonus, mouse, won } }, won: { 'name|n': [...] } }
 
-  /** The bonus incomes, fresh: every building ×1, ×10, ×100 and every measurable upgrade in the store. */
-  function compute() {
-    const bs = objects();
-    const us = (Game.UpgradesInStore || []).filter(measurable);
-    const changes = [];
-    BULKS.forEach((n) => bs.forEach((b) => changes.push(buyBuildingChange(b, n))));
-    us.forEach((u) => changes.push(buyUpgradeChange(u)));
-    const res = measureAll(changes);
-    const base = res.shift();
-    const c = { key: structKey(), t: Date.now(), cps: Game.cookiesPs, base, b: {}, u: {}, won: {}, extra: {} };
-    let i = 0;
-    BULKS.forEach((n) => {
-      c.b[n] = {};
-      bs.forEach((b) => {
-        const r = res[i++];
-        c.b[n][b.name] = r.cps - base.cps;
-        c.won[`${b.name}|${n}`] = r.won;
-      });
-    });
-    us.forEach((u) => {
-      const r = res[i++];
-      c.u[u.name] = { bonus: r.cps - base.cps, mouse: r.mouse - base.mouse, won: r.won };
-    });
-    return c;
-  }
   function fresh() {
     const k = structKey();
     const moved = cache ? Math.abs((Game.cookiesPs || 0) - cache.cps) / Math.max(1e-9, Math.abs(cache.cps)) : 1;
     // a real change of CpS (a god, an aura, a lump…): now; a drift (the god of Ages wobbles it every frame): once a second
-    if (!cache || cache.key !== k || moved > 1e-3 || (moved > 0 && Date.now() - cache.t > 1000)) cache = compute();
+    if (!cache || cache.key !== k || moved > 1e-3 || (moved > 0 && Date.now() - cache.t > 1000)) cache = { key: k, t: Date.now(), cps: Game.cookiesPs, b: {}, u: {}, won: {} };
     return cache;
   }
-  /** The bonus income of n of a building (×1/×10/×100 from the batch, other amounts measured as asked). */
+  let calls = 0; // CpS computations so far (for the tests' and the simulator's benefit)
+  /**
+   * A cookie upgrade's worth without asking the game: the game counts the cookie upgrades in one
+   * place only (main.js CalculateGains: mult × (1 + power%)), so one that wins no achievement (no
+   * upgrade-count milestone, no set like Spooky cookies, no CpS milestone) adds exactly CpS × power%
+   * — and to a click, a fixed share of that (a click is worth a fixed part plus 1% of CpS per mouse
+   * upgrade). Its power, or null when it has to be measured.
+   */
+  function cookiePower(u) {
+    if (!u || !(Game.cookieUpgrades || []).includes(u)) return null;
+    const p = typeof u.power === 'function' ? u.power(u) : u.power;
+    if (!Number.isFinite(p)) return null;
+    const owned = Game.UpgradesOwned || 0;
+    const counts = typeof Game.CountsAsUpgradeOwned === 'function' ? Game.CountsAsUpgradeOwned(u.pool) : u.pool === 'cookie';
+    if (counts && UPGRADE_ACHIEVS.some(([k, a]) => owned < k && owned + 1 >= k && !hasAchiev(a))) return null;
+    const raw = Game.cookiesPsRaw || 0;
+    if ((Game.CpsAchievements || []).some((a) => !a.won && raw < a.threshold && raw * (1 + p / 100) >= a.threshold)) return null;
+    // the sets and other checks of the game: anything they'd win with it bought?
+    const wins = () => {
+      const out = [];
+      otherWins((w) => [].concat(w).forEach((n) => Game.Achievements[n] && !Game.Achievements[n].won && out.push(n)));
+      return out.join('|');
+    };
+    const before = wins();
+    const was = u.bought;
+    u.bought = 1;
+    let after;
+    try {
+      after = wins();
+    } finally {
+      u.bought = was;
+    }
+    return before === after ? p : null;
+  }
+
+  /**
+   * Measures what `c` doesn't have yet — buildings [[name, n]…] and upgrades (names) — in one batch.
+   * Cookie upgrades that win nothing are worked out (cookiePower) — after one of them is measured
+   * with the rest as a check: should it not come out the same (a mod, a game change), they're all
+   * measured.
+   */
+  function ensure(c, bs, us) {
+    const needB = bs.filter(([n, k]) => !(`${n}|${k}` in c.b) && buildingNamed(n));
+    let needU = us.filter((n) => !(n in c.u) && measurable(upgradeNamed(n)));
+    if (!needB.length && !needU.length) return;
+    const easy = needU.map((n) => [n, cookiePower(upgradeNamed(n))]).filter(([, p]) => p !== null);
+    const sample = easy.length > 1 ? easy[0] : null;
+    const derived = sample ? easy.slice(1) : [];
+    if (derived.length) needU = needU.filter((n) => !derived.some(([d]) => d === n));
+    const res = measureAll(needB.map(([n, k]) => buyBuildingChange(buildingNamed(n), k)).concat(needU.map((n) => buyUpgradeChange(upgradeNamed(n)))));
+    calls += res.length + 1;
+    const base = res.shift();
+    needB.forEach(([n, k], i) => {
+      c.b[`${n}|${k}`] = res[i].cps - base.cps;
+      c.won[`${n}|${k}`] = res[i].won;
+    });
+    needU.forEach((n, i) => {
+      const r = res[needB.length + i];
+      c.u[n] = { bonus: r.cps - base.cps, mouse: r.mouse - base.mouse, won: r.won };
+    });
+    if (!derived.length) return;
+    const s = c.u[sample[0]];
+    const predicted = (base.cps * sample[1]) / 100;
+    if (s && Math.abs(s.bonus - predicted) <= 1e-9 * Math.max(1, Math.abs(predicted))) {
+      const clickShare = s.bonus ? s.mouse / s.bonus : 0;
+      derived.forEach(([n, p]) => {
+        const bonus = (base.cps * p) / 100;
+        c.u[n] = { bonus, mouse: bonus * clickShare, won: [] };
+      });
+    } else ensure(c, [], derived.map(([n]) => n)); // not as expected: measure them all
+  }
+  /** The bonus income of n of a building. */
   function buildingBonus(name, n = 1) {
     const b = buildingNamed(name);
     if (!b) return 0;
     const c = fresh();
-    if (c.b[n] && b.name in c.b[n]) return c.b[n][b.name];
-    const k = `${b.name}|${n}`;
-    if (!(k in c.extra)) {
-      const [base, r] = measureAll([buyBuildingChange(b, n)]);
-      c.extra[k] = r.cps - base.cps;
-      c.won[k] = r.won;
-    }
-    return c.extra[k];
+    ensure(c, [[b.name, n]], []);
+    return c.b[`${b.name}|${n}`];
   }
 
   // ---- payback periods, colours -------------------------------------------------------------------
@@ -283,31 +327,40 @@ CA.Payback = (() => {
   function upgradeWorth(name, c = fresh()) {
     const u = upgradeNamed(name);
     if (!u) return null;
-    let e = c.u[u.name];
-    if (!e && measurable(u)) {
-      const [base, r] = measureAll([buyUpgradeChange(u)]);
-      e = c.u[u.name] = { bonus: r.cps - base.cps, mouse: r.mouse - base.mouse, won: r.won };
-    }
+    ensure(c, [], [u.name]);
+    const e = c.u[u.name];
     if (!e) return null;
     return { bonus: e.bonus, mouse: e.mouse, gain: e.bonus + Math.max(0, e.mouse) * clickRate(), won: e.won };
   }
 
   /** Every building at every bulk, and every store upgrade: PP, price, bonus, colour — Cookie Monster's table. */
-  let memo = null; // { c, key, t } — the table, until the bank, the CpS or the settings move
-  function table() {
+  let memo = null; // { c, key, t, at } — the table, until the bank, the CpS or the settings move
+  /**
+   * The table. opts.staleMs: one worked out at most that long ago will do (the store's colours and
+   * sort, redrawn every half second: while purchases come one after another — an autobuyer with a
+   * big bank — they'd otherwise measure sixty rows on each).
+   */
+  function table(opts = {}) {
+    if (opts.staleMs && memo && Date.now() - memo.at < opts.staleMs) return memo.t;
     const c = fresh();
     const mk = [Game.cookies, Game.cookiesPs, clickRate(), CA.Settings.get('ppWrinklers'), CA.Settings.get('ppOnlyBuyable'), CA.Settings.get('ppSecondsLowerLimit'), CA.Wrinklers ? CA.Wrinklers.bank('all') : 0].join('|');
     if (memo && memo.c === c && memo.key === mk) return memo.t;
-    memo = { c, key: mk, t: tableFrom(c) };
+    memo = { c, key: mk, t: tableFrom(c), at: Date.now() };
     return memo.t;
   }
   function tableFrom(c) {
+    // every building at every bulk, and the store's upgrades: one batch for whatever isn't measured yet
+    ensure(
+      c,
+      BULKS.flatMap((n) => objects().map((b) => [b.name, n])),
+      (Game.UpgradesInStore || []).map((u) => u.name)
+    );
     const rows = { 1: {}, 10: {}, 100: {} };
     const ranked = [];
     BULKS.forEach((n) =>
       objects().forEach((b) => {
         const price = sumPrice(b, n);
-        const bonus = c.b[n][b.name];
+        const bonus = c.b[`${b.name}|${n}`];
         const v = pp(price, bonus);
         rows[n][b.name] = { name: b.name, n, price, bonus, pp: v, won: c.won[`${b.name}|${n}`] || [] };
         ranked.push([v, n, price]);
@@ -356,30 +409,59 @@ CA.Payback = (() => {
   /**
    * What to buy, lowest PP first: [{ kind, name, n, label, price, pp, bonus, colour }]. kind
    * 'building' | 'upgrade' | 'all'; opts.bulk: 1 (default) or 'round' — buildings to the next
-   * multiple of 10 (the store's Round to multiples); opts.skip: only what you can afford now.
+   * multiple of 10 (the store's Round to multiples); opts.skip: only what you can afford now;
+   * opts.top: only the best has to be right (best()) — what can't beat it isn't measured: an upgrade
+   * whose wait to afford alone is longer than the best building's payback period (a payback period is
+   * at least that wait), anything you can't afford when skipping.
    */
   function ranking(kind = 'all', opts = {}) {
-    const t = table();
+    const c = fresh();
+    // only what can be bought: the unlocked buildings at the amount a buy would take, the store's upgrades
+    let bs =
+      kind === 'upgrade'
+        ? []
+        : objects()
+            .filter((b) => !b.locked)
+            .map((b) => [b.name, opts.bulk === 'round' ? Math.max(1, 10 - ((b.amount || 0) % 10)) : opts.bulk === 10 || opts.bulk === 100 ? opts.bulk : 1]);
+    let us = kind === 'building' ? [] : storeUpgrades();
+    const affordable = (price) => price <= Game.cookies;
+    if (opts.skip && opts.top) {
+      bs = bs.filter(([name, n]) => affordable(sumPrice(buildingNamed(name), n)));
+      us = us.filter((u) => affordable(upgradePrice(u)));
+    }
+    ensure(c, bs, []);
+    if (opts.top && us.length) {
+      const bestB = bs.reduce((m, [name, n]) => Math.min(m, pp(sumPrice(buildingNamed(name), n), c.b[`${name}|${n}`])), Infinity);
+      if (Number.isFinite(bestB)) us = us.filter((u) => timeTo(upgradePrice(u)) < bestB);
+    }
+    ensure(
+      c,
+      [],
+      us.map((u) => u.name)
+    );
+    // colours come from the full table — when it's been worked out for this state (the store, the Payback page)
+    const t = memo && memo.c === c ? memo.t : null;
     const out = [];
-    if (kind !== 'upgrade')
-      objects().forEach((b) => {
-        if (b.locked) return;
-        const n = opts.bulk === 'round' ? Math.max(1, 10 - ((b.amount || 0) % 10)) : opts.bulk === 10 || opts.bulk === 100 ? opts.bulk : 1;
-        const row = t.buildings[n] && t.buildings[n][b.name];
-        const price = row ? row.price : sumPrice(b, n);
-        const bonus = row ? row.bonus : buildingBonus(b.name, n);
-        const v = row ? row.pp : pp(price, bonus);
-        out.push({ kind: 'building', name: b.name, n, label: n > 1 ? `${n} × ${b.dname || b.name}` : b.dname || b.name, price, bonus, pp: v, colour: row ? row.colour : 'gray' });
-      });
-    if (kind !== 'building')
-      storeUpgrades().forEach((u) => {
-        const r = t.upgrades[u.name];
-        if (r) out.push({ kind: 'upgrade', name: u.name, n: 1, label: u.dname || u.name, price: r.price, bonus: r.gain, pp: r.pp, colour: r.colour, estimated: !(r.bonus > 0) && r.mouse > 0 });
-      });
+    bs.forEach(([name, n]) => {
+      const b = buildingNamed(name);
+      const price = sumPrice(b, n);
+      const bonus = c.b[`${name}|${n}`];
+      const v = pp(price, bonus);
+      const row = t && t.buildings[n] && t.buildings[n][name];
+      out.push({ kind: 'building', name, n, label: n > 1 ? `${n} × ${b.dname || name}` : b.dname || name, price, bonus, pp: v, colour: row ? row.colour : t ? t.colourOf(v, price) : null });
+    });
+    us.forEach((u) => {
+      const w = upgradeWorth(u.name, c);
+      if (!w) return;
+      const price = upgradePrice(u);
+      const v = pp(price, w.gain);
+      const row = t && t.upgrades[u.name];
+      out.push({ kind: 'upgrade', name: u.name, n: 1, label: u.dname || u.name, price, bonus: w.gain, pp: v, colour: row ? row.colour : t ? t.colourOf(v, price) : null, estimated: !(w.bonus > 0) && w.mouse > 0 });
+    });
     return out.filter((x) => Number.isFinite(x.pp) && (!opts.skip || x.price <= Game.cookies)).sort((a, b) => a.pp - b.pp);
   }
   /** The lowest PP: { kind, name, n, price, pp, … } or null. */
-  const best = (kind = 'all', opts = {}) => ranking(kind, opts)[0] || null;
+  const best = (kind = 'all', opts = {}) => ranking(kind, { ...opts, top: true })[0] || null;
 
   // ---- buying ------------------------------------------------------------------------------
 
@@ -549,5 +631,5 @@ CA.Payback = (() => {
     V('timeTo', 'seconds until you can afford a price at your CpS (0: now)', ['price'], (p) => timeTo(Number(p)));
   }
 
-  return { init, table, ranking, best, buy, buyBuilding, buyUpgrade, buildingBonus, upgradeWorth, pp, timeTo, sumPrice, clickRate, nextAchievement, storeUpgrades, measureAll, COLOURS, BULKS };
+  return { init, calls: () => calls, table, ranking, best, buy, buyBuilding, buyUpgrade, buildingBonus, upgradeWorth, pp, timeTo, sumPrice, clickRate, nextAchievement, storeUpgrades, measureAll, COLOURS, BULKS };
 })();

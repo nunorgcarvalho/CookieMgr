@@ -3,13 +3,10 @@
 // store — bonus income, payback period, colour — in several states of the game (early, mid, with
 // buildings not owned yet, a Frenzy, a pantheon god, heavenly upgrades).
 import { makeAssert } from '../harness/game.mjs';
-import { gameOrSkip } from '../harness/sim.mjs';
-import { createSim } from '../../sim/sim.mjs';
+import { simWithCookieMonster, settle } from '../harness/cmSim.mjs';
 
 const { assert, done } = makeAssert();
-await gameOrSkip();
-
-const sim = await createSim({ seed: 7, cookieMonster: true });
+const sim = await simWithCookieMonster({ seed: 7 }); // v3.7.2: waits for Cookie Monster's numbers; skips if it can't be downloaded
 const { Game, CA } = sim;
 const W = sim.game.ctx;
 sim.run({ seconds: 3 });
@@ -25,8 +22,13 @@ const fmt = (x) => (typeof x === 'number' ? x.toPrecision(6) : String(x));
  * then compares everything.
  */
 function compare(label) {
-  Game.recalculateGains = 1;
-  sim.run({ seconds: 6 });
+  let n = 0;
+  let u = 0;
+  // v3.7.2: given up to three refreshes (settle) — Cookie Monster refreshes on its own schedule
+  const bad = settle(sim, () => differences((x, y) => ((n = x), (u = y))));
+  assert(!bad.length && n >= 60, `${label}: ${n} building rows and ${u} upgrades match Cookie Monster${bad.length ? ` — ${bad.length} differ: ${bad.slice(0, 6).join('; ')}` : ''}`);
+}
+function differences(counted) {
   const D = W.CookieMonsterData;
   const t = CA.Payback.table();
   const bad = [];
@@ -52,7 +54,8 @@ function compare(label) {
     if (!close(a.bonus, b.bonus)) bad.push(`${up.name} bonus ${fmt(a.bonus)} vs CM ${fmt(b.bonus)}`);
     else if (!(a.mouse > 0) && !close(a.pp, b.pp, 1e-5)) bad.push(`${up.name} PP ${fmt(a.pp)} vs CM ${fmt(b.pp)}`);
   }
-  assert(!bad.length && n >= 60, `${label}: ${n} building rows and ${u} upgrades match Cookie Monster${bad.length ? ` — ${bad.length} differ: ${bad.slice(0, 6).join('; ')}` : ''}`);
+  counted(n, u);
+  return bad;
 }
 
 // ---- early: a few cursors and grandmas

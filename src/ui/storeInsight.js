@@ -36,7 +36,7 @@ CA.UI.StoreInsight = (() => {
 
   function paint() {
     const on = S('storeColours') && Game.buyMode === 1;
-    const t = on ? P().table() : null;
+    const t = on ? P().table({ staleMs: 2000 }) : null;
     Object.values(Game.Objects || {}).forEach((b) => {
       const el = document.getElementById(`productPrice${b.id}`);
       if (!el) return;

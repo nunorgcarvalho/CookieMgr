@@ -34,25 +34,27 @@ CA.AutoBuy = (() => {
   const priceOf = (u) => (typeof u.getPrice === 'function' ? u.getPrice() : u.basePrice || u.price || 0);
 
   /** Every building and upgrade the two buyers could pick, lowest PP first: { kind, name, n, label, price, pp, buy() }. */
-  let memo = null; // { key, list } — the same list within one pass of a macro (worked out three times in one)
-  function candidates(kinds) {
+  // within one pass of a macro the same lists (worked out three times in one): pass → { key → list }
+  let memo = null; // { pass, lists: Map }
+  /** The candidates, lowest PP first — top: only the first has to be right (what can't beat it isn't measured). */
+  function candidates(kinds, opts = {}) {
     const pass = CA.Macros.passKey();
-    if (pass == null) return candidatesNow(kinds);
-    const key = `${pass}|${kinds.join(',')}|${CA.Shop.roundUp()}|${Game.cookies}`;
-    if (memo && memo.key === key) return memo.list;
-    memo = { key, list: candidatesNow(kinds) };
-    return memo.list;
+    if (pass == null) return candidatesNow(kinds, opts);
+    const key = `${kinds.join(',')}|${!!opts.top}|${!!opts.skip}|${CA.Shop.roundUp()}|${Game.cookies}`;
+    if (!memo || memo.pass !== pass) memo = { pass, lists: new Map() };
+    if (!memo.lists.has(key)) memo.lists.set(key, candidatesNow(kinds, opts));
+    return memo.lists.get(key);
   }
-  function candidatesNow(kinds) {
+  function candidatesNow(kinds, opts = {}) {
     const kind = kinds.length > 1 ? 'all' : kinds[0];
     return P()
-      .ranking(kind, { bulk: CA.Shop.roundUp() ? 'round' : 1 })
+      .ranking(kind, { bulk: CA.Shop.roundUp() ? 'round' : 1, top: !!opts.top, skip: !!opts.skip })
       .map((x) => ({ ...x, buy: () => P().buy(x) }));
   }
 
   /** The lowest-PP choice among `kinds` (only affordable ones when `skip`). */
   function best(kinds, skip) {
-    let list = candidates(kinds);
+    let list = candidates(kinds, { top: true, skip: !!skip });
     if (skip) list = list.filter((c) => c.price <= Game.cookies);
     return list[0] || null;
   }
@@ -183,7 +185,12 @@ CA.AutoBuy = (() => {
 
   const KINDS = { building: ['building'], upgrade: ['upgrade'], all: ['building', 'upgrade'] };
   const thingKey = (c) => `${c.kind}:${c.name}`;
-  const thingOf = (k) => (k ? candidates(['building', 'upgrade']).find((c) => thingKey(c) === String(k)) || null : null);
+  /** A thing to buy by its key: from what this pass ranked already (pp.best's pick), else the full ranking. */
+  function thingOf(k) {
+    if (!k) return null;
+    const hit = memo && memo.pass === CA.Macros.passKey() ? [...memo.lists.values()].flat().find((c) => thingKey(c) === String(k)) : null;
+    return hit || candidates(['building', 'upgrade']).find((c) => thingKey(c) === String(k)) || null;
+  }
   const upgradeNamed = (n) => (Game.UpgradesInStore || []).find((u) => u && u.name === n) || (Game.UpgradesByName && Game.UpgradesByName[n]) || (Game.Upgrades && Game.Upgrades[n]) || null;
   function blocks() {
     const V = (id, desc, get, more) => CA.Script.defineValue({ id, desc, get, ...(more || {}) });
@@ -220,8 +227,9 @@ CA.AutoBuy = (() => {
       params: [{ key: 'thing', label: 'Thing', type: 'select', default: '', options: () => candidates(['building', 'upgrade']).map((c) => ({ v: thingKey(c), label: c.label })) }],
       run: (p) => {
         const c = thingOf(p.thing);
+        const ok = c && c.price <= Game.cookies && c.buy() > 0 ? 1 : 0;
         memo = null;
-        return c && c.price <= Game.cookies && c.buy() > 0 ? 1 : 0;
+        return ok;
       },
     });
     A(buyThing(false));
