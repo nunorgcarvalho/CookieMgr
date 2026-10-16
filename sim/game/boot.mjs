@@ -21,9 +21,26 @@ import { makeRng } from './rng.mjs';
  *   quiet    swallow the game's console.log
  * Returns { Game, ctx (the page's global), clock, run(code, name), frame(), dir }.
  */
+/**
+ * When a save was made (ms) — its "last date", as Game.LoadSave reads it: base64 up to "!END!",
+ * then "version|…|startDate;fullDate;lastDate;…". Null if it can't be read.
+ */
+export function saveDate(save) {
+  try {
+    const str = Buffer.from(decodeURIComponent(escape(unescape(String(save).trim()).split('!END!')[0])), 'base64').toString('utf8');
+    const last = parseInt(str.split('|')[2].split(';')[2], 10);
+    return Number.isFinite(last) && last > 0 ? last : null;
+  } catch (e) {
+    return null;
+  }
+}
+
 export async function bootGame({ seed = 1, fps = 30, start, save = null, quiet = true } = {}) {
   const dir = await ensureGame({ quiet: true });
   const read = (f) => fs.readFileSync(path.join(dir, f), 'utf8');
+  // a save starts the clock where it was made — no time has passed since (no offline earnings, the
+  // sugar lump and the garden pick up where they were)
+  if (start == null && save) start = saveDate(save) || undefined;
   const clock = makeClock(start);
   const rng = makeRng(seed);
   let context = null;
@@ -204,6 +221,7 @@ export async function bootGame({ seed = 1, fps = 30, start, save = null, quiet =
   };
   const frame = () => {
     clock.runUntil(clock.now + 1000 / Game.fps);
+    Game.time = clock.now; // as Game.Loop keeps it (a save is stamped with it)
     Game.Logic();
     if (drawT++ % 5 === 0) syncStore();
   };

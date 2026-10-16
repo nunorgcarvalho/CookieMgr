@@ -1,6 +1,6 @@
 # CookieMgr simulator
 
-*v0.1.0 — versioned apart from the add-on (`sim-v*` tags; `SIM_VERSION` in `sim.mjs`).*
+*v0.1.1 — versioned apart from the add-on (`sim-v*` tags; `SIM_VERSION` in `sim.mjs`).*
 
 A Cookie Clicker simulator for trying out strategies over long timescales — written in CookieMgr's
 own words, so what works here can be pasted into the add-on and run on the real game.

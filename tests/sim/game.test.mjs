@@ -5,7 +5,7 @@ import { gameOrSkip } from '../harness/sim.mjs';
 import { makeClock } from '../../sim/game/clock.mjs';
 import { makeRng } from '../../sim/game/rng.mjs';
 import { makeDom } from '../../sim/game/dom.mjs';
-import { bootGame } from '../../sim/game/boot.mjs';
+import { bootGame, saveDate } from '../../sim/game/boot.mjs';
 
 const { assert, done } = makeAssert();
 
@@ -112,6 +112,14 @@ assert(p1.spawned.length && p1.spawned.join() !== p3.spawned.join(), `another se
 const save = G.WriteSave(1);
 const g2 = await bootGame({ seed: 1, save });
 assert(g2.Game.Objects.Cursor.amount === 5 && g2.Game.Objects.Grandma.amount === 3 && Math.abs(g2.Game.cookiesEarned - G.cookiesEarned) < 1, 'an exported save loads into a new simulation');
+// a save from another date (yours, exported today): the clock starts where it was made
+const oct = Date.UTC(2026, 9, 16, 9);
+const g3 = await bootGame({ seed: 1, start: oct });
+for (let i = 0; i < 30 * 120; i++) g3.frame();
+const later = g3.Game.WriteSave(1);
+assert(Math.abs(saveDate(later) - (oct + 120000)) < 1000, `a save is stamped when it's made (${new Date(saveDate(later)).toISOString()})`);
+const g4 = await bootGame({ seed: 2, save: later });
+assert(Math.abs(g4.clock.now - saveDate(later)) < 1000 && Math.abs((g4.clock.now - g4.Game.lumpT) / 1000 - 120) < 2, 'loading it starts the clock there: no time has passed (the sugar lump is as old as it was)');
 
 assert(g.clock.errors.length === 0, `no errors in the page's timers${g.clock.errors.length ? ': ' + g.clock.errors[0] : ''}`);
 done();
