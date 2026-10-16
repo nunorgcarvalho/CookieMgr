@@ -4,8 +4,8 @@
 //   Bank          what golden cookies and spells pay at their most, and the bank each needs: a meter
 //                 per one (your bank against it — wrinklers counted when Payback says so), how long
 //                 until you get there, what it pays
-//   Next golden   when the next golden cookie comes: soonest, expected, latest, and the chance it
-//   cookie        comes within the next minute — over a strip of the odds, second by second
+//   Next golden   when the next golden cookie (and, at Christmas, reindeer) comes: the distribution of
+//   cookie        the wait, drawn and summed up, and what moves it (ui/spawnView.js)
 //   Prestige      levels if you ascended now, the next one, the rate, what they'd add to your CpS,
 //                 the Lucky digit / number / payout levels
 //   Wrinklers     what popping them would give, the fattest, what they eat
@@ -58,30 +58,6 @@ CA.UI.StatsPage = (() => {
       meter('Chain in a Frenzy', chf.bank, chf.total, 'A cookie chain while a Frenzy runs.') +
       meter('Conjure Baked Goods', c.bank, c.reward, 'The spell pays 15% of your bank, up to 30 minutes of CpS.') +
       (ed ? meter(`Spontaneous Edifice: ${(Game.Objects[ed.building] || {}).dname || ed.building}`, ed.bank, ed.price, 'The spell gives a random building you have fewer than 400 of (and fewer than your most-owned) costing up to twice your bank — this bank covers the most expensive one.') : '')
-    );
-  }
-
-  // ---- the next golden cookie -------------------------------------------------------------------------
-
-  function spawnHtml(type, label) {
-    const s = CA.Timers.spawnOf(type);
-    const { tile } = CA.UI.Plot.fmt;
-    if (!s) return tile(label, 'not coming', type === 'golden' ? 'the Golden switch is on' : 'not in season');
-    if (s.spawned) return tile(label, 'on screen', 'pop it!');
-    // the odds, second by second up to the latest: a strip of bars
-    const n = 40;
-    const span = Math.max(1, s.latest);
-    let bars = '';
-    let prev = 0;
-    for (let i = 1; i <= n; i++) {
-      const p = s.within((span * i) / n);
-      bars += `<i style="height:${Math.max(2, Math.round((p - prev) * 400))}%"></i>`;
-      prev = p;
-    }
-    return (
-      tile(label, when(s.expected), `expected · soonest ${when(s.soonest)} · latest ${when(s.latest)}`) +
-      tile('Within a minute', `${Math.round(s.within(60) * 100)}%`, `within 5 min: ${Math.round(s.within(300) * 100)}%`) +
-      `<div class="ca-stat ca-spawn-strip" data-tip="${esc('How likely it comes in each stretch of time from now to the latest it can come')}"><div class="ca-stat-label">Odds over time</div><div class="ca-strip">${bars}</div><div class="ca-stat-sub">now → ${when(s.latest)}</div></div>`
     );
   }
 
@@ -202,7 +178,8 @@ CA.UI.StatsPage = (() => {
   }
   const PARTS = [
     ['data-st-bank', bankHtml],
-    ['data-st-spawn', () => spawnHtml('golden', 'Next golden cookie') + (Game.season === 'christmas' ? spawnHtml('reindeer', 'Next reindeer') : '')],
+    ['data-st-spawn', () => CA.UI.SpawnView.html('golden')],
+    ['data-st-reindeer', () => CA.UI.SpawnView.html('reindeer')],
     ['data-st-prestige', prestigeHtml],
     ['data-st-wrinklers', wrinklersHtml],
     ['data-st-timers', timersHtml],
@@ -211,7 +188,8 @@ CA.UI.StatsPage = (() => {
     const meta = (t) => `<div class="ca-card-meta"><span class="ca-hint">${t}</span></div>`;
     return (
       card('Bank', 'dollar', bankHtml(), 'class="ca-meters" data-st-bank', meta('what golden cookies and spells pay at their most — and the bank it takes')) +
-      card('Golden cookies', 'sparkle', PARTS[1][1](), 'class="ca-stats" data-st-spawn') +
+      card('Next golden cookie', 'sparkle', CA.UI.SpawnView.html('golden'), 'class="ca-sp" data-st-spawn', meta('exact, from the game’s own odds — hover the chart')) +
+      (Game.season === 'christmas' ? card('Next reindeer', 'sparkle', CA.UI.SpawnView.html('reindeer'), 'class="ca-sp" data-st-reindeer') : '') +
       card('Prestige', 'ascend', prestigeHtml(), 'class="ca-stats" data-st-prestige') +
       card('Wrinklers', 'wrinkler', wrinklersHtml(), 'class="ca-stats" data-st-wrinklers') +
       card('Timers', 'clock', timersHtml(), 'class="ca-stats" data-st-timers') +
@@ -231,7 +209,23 @@ CA.UI.StatsPage = (() => {
   function mount(el) {
     unmount();
     root = el;
-    life = CA.UI.Pages.scope(el).every(SYNC_MS, sync);
+    const spawnNow = () => ['data-st-spawn', 'data-st-reindeer'].forEach((attr) => {
+      const p = root && root.querySelector(`[${attr}]`);
+      if (p) CA.UI.Dom.morph(p, CA.UI.SpawnView.html(attr === 'data-st-spawn' ? 'golden' : 'reindeer'));
+    });
+    life = CA.UI.Pages.scope(el)
+      .every(SYNC_MS, sync)
+      .on('mousemove', (e) => CA.UI.SpawnView.onMove(e) && spawnNow())
+      .on('mouseout', (e) => {
+        CA.UI.SpawnView.onLeave(e);
+        spawnNow();
+      })
+      .on('click', (e) => {
+        if (CA.UI.SpawnView.onClick(e)) {
+          e.stopPropagation();
+          spawnNow();
+        }
+      });
   }
   function unmount() {
     if (life) life.close();

@@ -331,10 +331,11 @@ CA.UI.WidgetTypes = (() => {
       ? s.spawned
         ? [['Golden cookie', 'on screen!']]
         : [
-            ['Soonest', when(s.soonest)],
+            [null, CA.UI.SpawnView.sparkline('golden')],
             ['Expected', when(s.expected)],
-            ['Latest', when(s.latest)],
+            ['Median', when(s.median)],
             ['Within a minute', `${Math.round(s.within(60) * 100)}%`],
+            ['Soonest – latest', `${when(s.soonest)} – ${when(s.latest)}`],
           ]
       : [['Golden cookies', 'not coming (Golden switch)']];
     return orb({

@@ -6,7 +6,8 @@
 //   Buildings     every building: owned, then ×1 / ×10 / ×100, each a cell coloured by its payback
 //                 colour with its payback period, the CpS it adds and its price (click one to buy that
 //                 many); and how many more win the next achievement
-//   Upgrades      the store's upgrades as tiles, ringed in their colour, best first; click to buy
+//   Upgrades      the store's upgrades as tiles, ringed in their colour, best first; click to buy —
+//                 switches (no payback period) only when the filter chip shows them, greyed
 //   Options       the wrinkler bank, "best = what you can afford", the cheap-enough floor
 //
 // Colours (Cookie Monster's): blue better than the best building · green the best building ·
@@ -101,7 +102,9 @@ CA.UI.PaybackPage = (() => {
 
   function upgradesHtml(t) {
     const list = Object.values(t.upgrades).sort((a, b) => a.pp - b.pp);
-    if (!list.length) return '<div class="ca-card-note">No upgrades in the store.</div>';
+    // switches (Elder Pledge, the Golden switch, season biscuits…) have no payback period: shown only when asked, greyed, last
+    const sw = CA.Settings.get('ppShowSwitches') ? t.switches : [];
+    if (!list.length && !sw.length) return '<div class="ca-card-note">No upgrades in the store.</div>';
     return (
       '<div class="ca-pp-upgrades">' +
       list
@@ -116,8 +119,19 @@ CA.UI.PaybackPage = (() => {
           );
         })
         .join('') +
+      sw
+        .map((n) => {
+          const u = (Game.Upgrades && Game.Upgrades[n]) || (Game.UpgradesInStore || []).find((x) => x.name === n) || {};
+          return `<span class="ca-pp-up ca-pp-switch" data-tip="${esc(`${u.dname || n}: a switch — no payback period (switches are left out of payback)`)}">${u.icon ? sprite(u.icon) : ''}<span>—</span></span>`;
+        })
+        .join('') +
       '</div>'
     );
+  }
+  /** The upgrades card's switch filter: a chip, on when switches are shown. */
+  function switchChip(t) {
+    const on = !!CA.Settings.get('ppShowSwitches');
+    return `<button type="button" class="ca-chip${on ? ' on' : ''}" data-pp-opt="ppShowSwitches" data-tip="${esc(`${on ? 'Hide' : 'Show'} the switches in the store (${t.switches.length}: Elder Pledge, the Golden switch, season biscuits…) — they have no payback period, so they’re left out of it`)}">${I('filter', 11)} switches ${t.switches.length}</button>`;
   }
 
   function legendHtml() {
@@ -149,7 +163,7 @@ CA.UI.PaybackPage = (() => {
       C().cardHead('Buildings', 'building', '<div class="ca-card-meta"><span class="ca-hint">payback period, CpS added, price — click a cell to buy</span></div>') +
       `<div data-pp-buildings>${buildingsHtml(t)}</div>${legendHtml()}</div>` +
       '<div class="ca-card">' +
-      C().cardHead('Upgrades', 'upgrade', '<div class="ca-card-meta"><span class="ca-hint">best first — click to buy</span></div>') +
+      C().cardHead('Upgrades', 'upgrade', `<div class="ca-card-meta"><span class="ca-hint">best first — click to buy</span><span data-pp-swchip>${switchChip(t)}</span></div>`) +
       `<div data-pp-upgrades>${upgradesHtml(t)}</div></div>` +
       optionsCard()
     );
@@ -162,6 +176,7 @@ CA.UI.PaybackPage = (() => {
       ['[data-pp-buildings]', () => buildingsHtml(t)],
       ['[data-pp-upgrades]', () => upgradesHtml(t)],
       ['[data-pp-best]', () => bestTiles(t)],
+      ['[data-pp-swchip]', () => switchChip(t)],
     ];
     parts.forEach(([sel, fn]) => {
       const el = root.querySelector(sel);

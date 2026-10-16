@@ -169,8 +169,17 @@ CA.Payback = (() => {
     return () => (b.amount -= n);
   };
   /** Whether an upgrade can be measured: unbought and unlocked (not heavenly), or a switch. */
-  const measurable = (u) => !!u && (u.pool === 'toggle' || (!u.bought && u.unlocked !== 0 && u.unlocked !== false && u.pool !== 'prestige'));
-  /** The change "buy an upgrade" (a switch flips; "… [on]" turns its "[off]" twin off). */
+  /**
+   * Switches: the game's toggle upgrades (main.js pool 'toggle') — Elder Pledge, Elder Covenant and
+   * its revoking, the Golden switch, Shimmering veil, Sugar frenzy, the season biscuits, the milk /
+   * background / sound selectors, the Jukebox. Things you flip, not things you own: they get no
+   * payback period, no colour, no place in the rankings — never "the best buy". (A Chocolate egg is a
+   * real upgrade — owned once, it pays out once — so it isn't one: it just adds no CpS.)
+   */
+  const isSwitch = (u) => !!u && u.pool === 'toggle';
+  /** Whether an upgrade can be measured: unbought, unlocked, not heavenly, not a switch. */
+  const measurable = (u) => !!u && !isSwitch(u) && !u.bought && u.unlocked !== 0 && u.unlocked !== false && u.pool !== 'prestige';
+  /** The change "buy an upgrade" (a switch flips; "… [on]" turns its "[off]" twin off — switches aren't measured now, see isSwitch, but code can still ask). */
   const buyUpgradeChange = (u) => (win) => {
     const twin = /\[on\]$/.test(u.name) ? upgradeNamed(u.name.replace('[on]', '[off]')) : null;
     const target = twin && (u.name === 'Golden switch [on]' || u.name === 'Shimmering veil [on]') ? twin : u;
@@ -282,7 +291,7 @@ CA.Payback = (() => {
   /** An upgrade's measured worth: { bonus, mouse, gain } — gain counts its clicks at your click rate. */
   function upgradeWorth(name, c = fresh()) {
     const u = upgradeNamed(name);
-    if (!u) return null;
+    if (!u || isSwitch(u)) return null;
     let e = c.u[u.name];
     if (!e && measurable(u)) {
       const [base, r] = measureAll([buyUpgradeChange(u)]);
@@ -336,13 +345,15 @@ CA.Payback = (() => {
     };
     BULKS.forEach((n) => Object.values(rows[n]).forEach((r) => (r.colour = colourOf(r.pp, r.price))));
     const upgrades = {};
+    const switches = [];
     (Game.UpgradesInStore || []).forEach((u) => {
+      if (isSwitch(u)) return switches.push(u.name);
       const w = upgradeWorth(u.name, c);
       const price = upgradePrice(u);
       const v = w ? pp(price, w.gain) : Infinity;
       upgrades[u.name] = { name: u.name, price, bonus: w ? w.bonus : 0, mouse: w ? w.mouse : 0, gain: w ? w.gain : 0, pp: v, colour: colourOf(v, price), won: w ? w.won : [] };
     });
-    return { buildings: rows, upgrades, min, minBulk, colourOf };
+    return { buildings: rows, upgrades, switches, min, minBulk, colourOf };
   }
 
   // ---- the best thing to buy -----------------------------------------------------------------------
@@ -468,6 +479,7 @@ CA.Payback = (() => {
       desc: 'The best (green) building is the lowest payback period you can afford right now; anything you can’t afford yet shows red.',
       default: false,
     });
+    CA.Settings.defineOption({ key: 'ppShowSwitches', group: 'payback', icon: 'filter', name: 'Show switches on the Payback page', desc: 'Switches (Elder Pledge, the Golden switch, season biscuits…) have no payback period; this shows them anyway, greyed.', default: false });
     CA.Settings.defineOption({
       key: 'ppSecondsLowerLimit',
       group: 'payback',
@@ -538,9 +550,11 @@ CA.Payback = (() => {
       return b1(n) ? pp(sumPrice(b1(n), m), buildingBonus(n, m)) : Infinity;
     });
     V('building.toNextAchievement', 'how many more of a building win an achievement (101: none within 100)', ['building'], (n) => nextAchievement(n).n);
-    V('upgrade.gain', 'the CpS an upgrade adds (clicks counted at your click rate)', ['upgrade'], (n) => (upgradeWorth(n) || { gain: 0 }).gain);
-    V('upgrade.payback', 'the payback period of an upgrade (seconds)', ['upgrade'], (n) => {
+    // a switch has neither: NaN
+    V('upgrade.gain', 'the CpS an upgrade adds (clicks counted at your click rate; NaN for a switch)', ['upgrade'], (n) => (isSwitch(upgradeNamed(n)) ? NaN : (upgradeWorth(n) || { gain: 0 }).gain));
+    V('upgrade.payback', 'the payback period of an upgrade (seconds; NaN for a switch)', ['upgrade'], (n) => {
       const u = upgradeNamed(n);
+      if (isSwitch(u)) return NaN;
       const w = upgradeWorth(n);
       return u && w ? pp(upgradePrice(u), w.gain) : Infinity;
     });
@@ -549,5 +563,5 @@ CA.Payback = (() => {
     V('timeTo', 'seconds until you can afford a price at your CpS (0: now)', ['price'], (p) => timeTo(Number(p)));
   }
 
-  return { init, table, ranking, best, buy, buyBuilding, buyUpgrade, buildingBonus, upgradeWorth, pp, timeTo, sumPrice, clickRate, nextAchievement, storeUpgrades, measureAll, COLOURS, BULKS };
+  return { init, isSwitch, table, ranking, best, buy, buyBuilding, buyUpgrade, buildingBonus, upgradeWorth, pp, timeTo, sumPrice, clickRate, nextAchievement, storeUpgrades, measureAll, COLOURS, BULKS };
 })();
