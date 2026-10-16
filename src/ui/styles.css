@@ -3586,6 +3586,21 @@ body.ca-has-storebar #products {
   flex: none;
   margin-top: 3px;
 }
+/* an option with choices: its dropdown, where the switch would be */
+#CookieMgrMenu .ca-opt-choice {
+  flex: none;
+  max-width: 230px;
+  margin-top: 1px;
+  font: 12px Tahoma, Arial, sans-serif;
+  color: #f0e2c0;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 220, 150, 0.25);
+  border-radius: 4px;
+  padding: 3px 6px;
+}
+#CookieMgrMenu .ca-opt-choice option {
+  background: #1c150d;
+}
 
 /* the All options index */
 #CookieMgrMenu .ca-index {
