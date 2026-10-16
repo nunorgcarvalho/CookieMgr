@@ -5956,3 +5956,34 @@ body.ca-has-storebar #products {
   filter: grayscale(1);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
 }
+
+/* the game's garden: mutation odds (ui/gardenInsight.js) */
+#tooltip .ca-tt-note {
+  margin-top: 3px;
+  font-size: 10px;
+  color: #8a7d68;
+}
+#tooltip .ca-gi-new {
+  color: #ffd56a;
+  font-size: 9px;
+}
+#tooltip .ca-gi-any {
+  color: #7dff7a;
+}
+.ca-gi-chip {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  padding: 0 3px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #e8dcc4;
+  font: bold 9px Tahoma, Arial, sans-serif;
+  line-height: 12px;
+  pointer-events: none;
+  z-index: 2;
+}
+.ca-gi-chip.new {
+  color: #ffd56a;
+  box-shadow: 0 0 0 1px rgba(255, 213, 106, 0.6);
+}

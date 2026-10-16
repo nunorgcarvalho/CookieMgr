@@ -85,6 +85,7 @@ const MODULES = [
   'ui/pantheonPage.js',
   'ui/storeBar.js',
   'ui/storeInsight.js',
+  'ui/gardenInsight.js',
   'ui/paybackPage.js',
   'ui/spawnView.js',
   'ui/statsPage.js',
