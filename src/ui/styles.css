@@ -5801,23 +5801,28 @@ body.ca-has-storebar #products {
 }
 
 /* ---------- the next golden cookie, as statistics (ui/spawnView.js) ---------- */
-#CookieMgrMenu .ca-sp-chart {
+#CookieMgrMenu .ca-sp-chart,
+#CookieMgrWidgets .ca-sp-chart {
   display: block;
   width: calc(100% - 24px);
   height: 150px;
   margin: 8px 12px 0;
   cursor: crosshair;
 }
-#CookieMgrMenu .ca-sp-band {
+#CookieMgrMenu .ca-sp-band,
+#CookieMgrWidgets .ca-sp-band {
   fill: rgba(255, 224, 102, 0.07);
 }
-#CookieMgrMenu .ca-sp-band2 {
+#CookieMgrMenu .ca-sp-band2,
+#CookieMgrWidgets .ca-sp-band2 {
   fill: rgba(255, 224, 102, 0.12);
 }
-#CookieMgrMenu .ca-sp-pdf rect {
+#CookieMgrMenu .ca-sp-pdf rect,
+#CookieMgrWidgets .ca-sp-pdf rect {
   fill: #e0a84a;
 }
-#CookieMgrMenu .ca-sp-cdf {
+#CookieMgrMenu .ca-sp-cdf,
+#CookieMgrWidgets .ca-sp-cdf {
   fill: none;
   stroke: #fff3d6;
   stroke-width: 1.6;
@@ -5826,34 +5831,46 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-sp-mean line,
 #CookieMgrMenu .ca-sp-median line,
 #CookieMgrMenu .ca-sp-hover line,
-#CookieMgrMenu .ca-sp-axis {
+#CookieMgrMenu .ca-sp-axis,
+#CookieMgrWidgets .ca-sp-mean line,
+#CookieMgrWidgets .ca-sp-median line,
+#CookieMgrWidgets .ca-sp-hover line,
+#CookieMgrWidgets .ca-sp-axis {
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
 }
-#CookieMgrMenu .ca-sp-mean line {
+#CookieMgrMenu .ca-sp-mean line,
+#CookieMgrWidgets .ca-sp-mean line {
   stroke: #7dff7a;
   stroke-dasharray: 4 3;
 }
-#CookieMgrMenu .ca-sp-median line {
+#CookieMgrMenu .ca-sp-median line,
+#CookieMgrWidgets .ca-sp-median line {
   stroke: #6ec3ff;
 }
-#CookieMgrMenu .ca-sp-axis {
+#CookieMgrMenu .ca-sp-axis,
+#CookieMgrWidgets .ca-sp-axis {
   stroke: rgba(255, 255, 255, 0.25);
 }
-#CookieMgrMenu .ca-sp-chart text {
+#CookieMgrMenu .ca-sp-chart text,
+#CookieMgrWidgets .ca-sp-chart text {
   font: 10px Tahoma, Arial, sans-serif;
   fill: #a89a83;
 }
-#CookieMgrMenu .ca-sp-mean text {
+#CookieMgrMenu .ca-sp-mean text,
+#CookieMgrWidgets .ca-sp-mean text {
   fill: #7dff7a;
 }
-#CookieMgrMenu .ca-sp-median text {
+#CookieMgrMenu .ca-sp-median text,
+#CookieMgrWidgets .ca-sp-median text {
   fill: #6ec3ff;
 }
-#CookieMgrMenu .ca-sp-hover line {
+#CookieMgrMenu .ca-sp-hover line,
+#CookieMgrWidgets .ca-sp-hover line {
   stroke: #fff3d6;
 }
-#CookieMgrMenu .ca-sp-hover text {
+#CookieMgrMenu .ca-sp-hover text,
+#CookieMgrWidgets .ca-sp-hover text {
   fill: #fff3d6;
   font-weight: bold;
   paint-order: stroke;
@@ -5861,43 +5878,54 @@ body.ca-has-storebar #products {
   stroke-width: 3px;
 }
 /* the timer bars under the spawn chart */
-#CookieMgrMenu .ca-sp-lane .track {
+#CookieMgrMenu .ca-sp-lane .track,
+#CookieMgrWidgets .ca-sp-lane .track {
   fill: rgba(255, 255, 255, 0.04);
 }
-#CookieMgrMenu .ca-sp-lane .wait {
+#CookieMgrMenu .ca-sp-lane .wait,
+#CookieMgrWidgets .ca-sp-lane .wait {
   fill: rgba(255, 255, 255, 0.1);
 }
-#CookieMgrMenu .ca-sp-lane .open {
+#CookieMgrMenu .ca-sp-lane .open,
+#CookieMgrWidgets .ca-sp-lane .open {
   fill: rgba(224, 168, 74, 0.55);
 }
-#CookieMgrMenu .ca-sp-lane line {
+#CookieMgrMenu .ca-sp-lane line,
+#CookieMgrWidgets .ca-sp-lane line {
   stroke: #7dff7a;
   stroke-width: 2;
   vector-effect: non-scaling-stroke;
 }
-#CookieMgrMenu .ca-sp-lane .left {
+#CookieMgrMenu .ca-sp-lane .left,
+#CookieMgrWidgets .ca-sp-lane .left {
   fill: rgba(160, 160, 160, 0.5);
 }
-#CookieMgrMenu .ca-sp-lane.up .left {
+#CookieMgrMenu .ca-sp-lane.up .left,
+#CookieMgrWidgets .ca-sp-lane.up .left {
   fill: rgba(125, 255, 122, 0.45);
 }
-#CookieMgrMenu .ca-sp-lane.click .left {
+#CookieMgrMenu .ca-sp-lane.click .left,
+#CookieMgrWidgets .ca-sp-lane.click .left {
   fill: rgba(196, 140, 255, 0.55);
 }
-#CookieMgrMenu .ca-sp-lane.down .left {
+#CookieMgrMenu .ca-sp-lane.down .left,
+#CookieMgrWidgets .ca-sp-lane.down .left {
   fill: rgba(255, 110, 110, 0.5);
 }
-#CookieMgrMenu .ca-sp-chart .ca-sp-lane text {
+#CookieMgrMenu .ca-sp-chart .ca-sp-lane text,
+#CookieMgrWidgets .ca-sp-chart .ca-sp-lane text {
   font-size: 9px;
   fill: #fff3d6;
   paint-order: stroke;
   stroke: rgba(0, 0, 0, 0.8);
   stroke-width: 2.5px;
 }
-#CookieMgrMenu .ca-sp-legend .lane {
+#CookieMgrMenu .ca-sp-legend .lane,
+#CookieMgrWidgets .ca-sp-legend .lane {
   background: rgba(125, 255, 122, 0.45);
 }
-#CookieMgrMenu .ca-sp-legend {
+#CookieMgrMenu .ca-sp-legend,
+#CookieMgrWidgets .ca-sp-legend {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -5906,28 +5934,35 @@ body.ca-has-storebar #products {
   font-size: 10px;
   color: #a89a83;
 }
-#CookieMgrMenu .ca-sp-legend span {
+#CookieMgrMenu .ca-sp-legend span,
+#CookieMgrWidgets .ca-sp-legend span {
   display: inline-block;
   width: 10px;
   height: 8px;
   margin-left: 6px;
   border-radius: 2px;
 }
-#CookieMgrMenu .ca-sp-legend .pdf {
+#CookieMgrMenu .ca-sp-legend .pdf,
+#CookieMgrWidgets .ca-sp-legend .pdf {
   background: #e0a84a;
 }
-#CookieMgrMenu .ca-sp-legend .cdf {
+#CookieMgrMenu .ca-sp-legend .cdf,
+#CookieMgrWidgets .ca-sp-legend .cdf {
   height: 2px;
   background: #fff3d6;
 }
-#CookieMgrMenu .ca-sp-legend .band {
+#CookieMgrMenu .ca-sp-legend .band,
+#CookieMgrWidgets .ca-sp-legend .band {
   background: rgba(255, 224, 102, 0.24);
 }
-#CookieMgrMenu .ca-sp-legend .band2 {
+#CookieMgrMenu .ca-sp-legend .band2,
+#CookieMgrWidgets .ca-sp-legend .band2 {
   background: rgba(255, 224, 102, 0.12);
 }
 #CookieMgrMenu .ca-sp-chips,
-#CookieMgrMenu .ca-sp-factors {
+#CookieMgrMenu .ca-sp-factors,
+#CookieMgrWidgets .ca-sp-chips,
+#CookieMgrWidgets .ca-sp-factors {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -5937,32 +5972,40 @@ body.ca-has-storebar #products {
   color: #a89a83;
 }
 #CookieMgrMenu .ca-sp-chip,
-#CookieMgrMenu .ca-sp-factor {
+#CookieMgrMenu .ca-sp-factor,
+#CookieMgrWidgets .ca-sp-chip,
+#CookieMgrWidgets .ca-sp-factor {
   padding: 2px 7px;
   border-radius: 10px;
   color: #e8dcc0;
   background: rgba(0, 0, 0, 0.3);
 }
 #CookieMgrMenu .ca-sp-chip b,
-#CookieMgrMenu .ca-sp-factor b {
+#CookieMgrMenu .ca-sp-factor b,
+#CookieMgrWidgets .ca-sp-chip b,
+#CookieMgrWidgets .ca-sp-factor b {
   color: #ffe066;
 }
-#CookieMgrMenu .ca-sp-factor {
+#CookieMgrMenu .ca-sp-factor,
+#CookieMgrWidgets .ca-sp-factor {
   border: 1px solid rgba(255, 224, 102, 0.3);
   font: 11px Tahoma, Arial, sans-serif;
   cursor: pointer;
 }
-#CookieMgrMenu .ca-sp-factor.off {
+#CookieMgrMenu .ca-sp-factor.off,
+#CookieMgrWidgets .ca-sp-factor.off {
   opacity: 0.45;
   text-decoration: line-through;
 }
-#CookieMgrMenu .ca-sp-note {
+#CookieMgrMenu .ca-sp-note,
+#CookieMgrWidgets .ca-sp-note {
   padding: 6px 12px 0;
   font-size: 11px;
   line-height: 1.45;
   color: #a89a83;
 }
-#CookieMgrMenu .ca-sp-note b {
+#CookieMgrMenu .ca-sp-note b,
+#CookieMgrWidgets .ca-sp-note b {
   color: #fff3d6;
 }
 #CookieMgrMenu .ca-sp {
@@ -6036,4 +6079,79 @@ body.ca-has-storebar #products {
 #CookieMgrAscendTip .ca-tt {
   margin: 0;
   text-align: left;
+}
+
+/* the golden cookie widgets (ui/timelineWidget.js) */
+#CookieMgrWidgets .ca-sp-chart.ca-sp-fixed {
+  display: block;
+  margin: 2px 0 0;
+  max-width: 100%;
+  cursor: default;
+}
+#CookieMgrWidgets .ca-tl-nums {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  cursor: pointer;
+}
+#CookieMgrWidgets .ca-tl-nums span {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+#CookieMgrWidgets .ca-tl-nums em {
+  font-style: normal;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #a89a83;
+}
+#CookieMgrWidgets .ca-tl-nums b {
+  color: #fff3d6;
+  font-size: 12px;
+}
+#CookieMgrWidgets .ca-tl-line {
+  font-size: 11px;
+  color: #e8dcc4;
+}
+#CookieMgrWidgets .ca-tl-dim {
+  color: #8a7d68;
+}
+#CookieMgrWidgets .ca-tl-now {
+  color: #ffd56a;
+}
+#CookieMgrWidgets .ca-tl-fthof {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px;
+  margin-top: 4px;
+  font-size: 10px;
+}
+#CookieMgrWidgets .ca-tl-label {
+  color: #a89a83;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-right: 2px;
+}
+#CookieMgrWidgets .ca-tl-cast {
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #e8dcc4;
+  white-space: nowrap;
+}
+#CookieMgrWidgets .ca-tl-cast i {
+  font-style: normal;
+  color: #8a7d68;
+  margin-right: 3px;
+}
+#CookieMgrWidgets .ca-tl-cast.good {
+  background: rgba(125, 255, 122, 0.14);
+  color: #b6ffb3;
+}
+#CookieMgrWidgets .ca-tl-cast.wrath {
+  background: rgba(255, 110, 110, 0.16);
+  color: #ffb3ad;
 }

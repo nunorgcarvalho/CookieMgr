@@ -40,70 +40,91 @@ CA.UI.SpawnView = (() => {
    * The chart: density (bars), cumulative chance (line), percentile bands, mean and median ticks, the
    * hover readout — and under it, on the same axis, the timer bars: the next one's window, then (golden
    * cookies) each effect running with the chance one comes before it ends.
+   * w: the wait (CA.Timers distribution's), or null (nothing coming / on screen: the effects alone).
+   * opts (the widgets'): width (drawn at the size it's shown: text unstretched), height (of the plot),
+   * plot (false: the bars alone), next (false: no next-cookie bar), span (seconds the axis covers —
+   * default the 99.9% of the wait, or the longest effect), hover (false: no readout), lane (bar height).
    */
-  function chart(type, w, effects = []) {
-    const lanes = 1 + effects.length;
-    const HH = H + lanes * LANE;
+  function chart(type, w, effects = [], opts = {}) {
+    const WW = opts.width || W;
+    const plot = opts.plot !== false && !!w;
+    const showNext = opts.next !== false && !!w;
+    const LN = opts.lane || LANE;
+    const lanes = (showNext ? 1 : 0) + effects.length;
     const x0 = PAD.l;
-    const x1 = W - PAD.r;
-    const y0 = H - PAD.b;
+    const x1 = WW - PAD.r;
     const y1 = PAD.t;
-    const span = Math.max(1e-9, w.range);
+    const y0 = plot ? (opts.height || H) - PAD.b : PAD.t - 6;
+    const HH = y0 + 4 + lanes * LN + 18;
+    const longest = effects.reduce((m, e) => Math.max(m, e.secs), 0);
+    const span = Math.max(1e-9, opts.span || (w ? w.range : longest * 1.05 || 60));
     const X = (s) => x0 + ((x1 - x0) * Math.max(0, Math.min(span, s))) / span;
-    const maxP = Math.max(...w.pdf, 1e-12);
-    const bw = (x1 - x0) / w.bins;
-    let bars = '';
-    w.pdf.forEach((p, i) => {
-      const h = ((y0 - y1) * p) / maxP;
-      if (h > 0.05) bars += `<rect x="${(x0 + i * bw).toFixed(2)}" y="${(y0 - h).toFixed(2)}" width="${Math.max(0.6, bw - 0.4).toFixed(2)}" height="${h.toFixed(2)}"/>`;
-    });
-    const line = w.cdf.map((c, i) => `${i ? 'L' : 'M'}${(x0 + (i + 1) * bw).toFixed(2)},${(y0 - (y0 - y1) * c).toFixed(2)}`).join('');
-    const band = (a, b, cls) => `<rect class="${cls}" x="${X(w.pct(a)).toFixed(2)}" y="${y1}" width="${Math.max(0, X(w.pct(b)) - X(w.pct(a))).toFixed(2)}" height="${y0 - y1}"/>`;
-    // the two labels on either side of their ticks (mean right, median left — they're often close)
-    const tick = (s, cls, label, left) => `<g class="${cls}"><line x1="${X(s).toFixed(2)}" x2="${X(s).toFixed(2)}" y1="${y1}" y2="${y0}"/><text x="${(X(s) + (left ? -3 : 3)).toFixed(2)}" y="${y1 + 9}" text-anchor="${left ? 'end' : 'start'}">${label}</text></g>`;
+    let plotSvg = '';
+    if (plot) {
+      const maxP = Math.max(...w.pdf, 1e-12);
+      const bw = (x1 - x0) / w.bins;
+      let bars = '';
+      w.pdf.forEach((p, i) => {
+        const h = ((y0 - y1) * p) / maxP;
+        if (h > 0.05) bars += `<rect x="${(x0 + i * bw).toFixed(2)}" y="${(y0 - h).toFixed(2)}" width="${Math.max(0.6, bw - 0.4).toFixed(2)}" height="${h.toFixed(2)}"/>`;
+      });
+      const line = w.cdf.map((c, i) => `${i ? 'L' : 'M'}${(x0 + (i + 1) * bw).toFixed(2)},${(y0 - (y0 - y1) * c).toFixed(2)}`).join('');
+      const band = (a, b, cls) => `<rect class="${cls}" x="${X(w.pct(a)).toFixed(2)}" y="${y1}" width="${Math.max(0, X(w.pct(b)) - X(w.pct(a))).toFixed(2)}" height="${y0 - y1}"/>`;
+      // the two labels on either side of their ticks (mean right, median left — they're often close)
+      // too close to label both (a narrow chart): the lines alone
+      const labels = Math.abs(X(w.mean) - X(w.median)) >= 44 || x1 - x0 >= 400;
+      const tick = (s, cls, label, left) => `<g class="${cls}"><line x1="${X(s).toFixed(2)}" x2="${X(s).toFixed(2)}" y1="${y1}" y2="${y0}"/>${labels ? `<text x="${(X(s) + (left ? -3 : 3)).toFixed(2)}" y="${y1 + 9}" text-anchor="${left ? 'end' : 'start'}">${label}</text>` : ''}</g>`;
+      plotSvg =
+        band(10, 90, 'ca-sp-band') +
+        band(25, 75, 'ca-sp-band2') +
+        `<g class="ca-sp-pdf">${bars}</g>` +
+        `<path class="ca-sp-cdf" d="${line}"/>` +
+        tick(w.mean, 'ca-sp-mean', 'mean', w.mean < w.median) +
+        tick(w.median, 'ca-sp-median', 'median', w.median <= w.mean) +
+        `<line class="ca-sp-axis" x1="${x0}" x2="${x1}" y1="${y0}" y2="${y0}"/>`;
+    }
     // the time axis: a few round moments from now
-    const step = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600].find((s) => span / s <= 6) || 3600;
+    const step = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200].find((s) => span / s <= Math.max(3, Math.floor((x1 - x0) / 100))) || 7200;
     let axis = '';
     for (let s = 0; s <= span + 1e-9; s += step) axis += `<text x="${X(s).toFixed(2)}" y="${HH - 6}" text-anchor="${s === 0 ? 'start' : 'middle'}">${s === 0 ? 'now' : F().span(s)}</text>`;
     // the timer bars, from now: the next one's window, then each effect's time left
-    const ly = (i) => y0 + 4 + i * LANE;
-    const bh = LANE - 3;
+    const ly = (i) => y0 + 4 + i * LN;
+    const bh = LN - 3;
     const more = (s) => (s > span + 0.5 ? ' →' : '');
-    let bars2 =
-      `<g class="ca-sp-lane next" data-tip="${esc(`The next ${LABEL[type]}: it can't come for ${when(w.soonest)}, then can until ${when(w.latest)}; on average in ${when(w.mean)}`)}">` +
-      `<rect class="track" x="${x0}" y="${ly(0)}" width="${x1 - x0}" height="${bh}"/>` +
-      `<rect class="wait" x="${x0}" y="${ly(0)}" width="${(X(w.soonest) - x0).toFixed(2)}" height="${bh}"/>` +
-      `<rect class="open" x="${X(w.soonest).toFixed(2)}" y="${ly(0)}" width="${Math.max(0, X(w.latest) - X(w.soonest)).toFixed(2)}" height="${bh}"/>` +
-      `<line x1="${X(w.mean).toFixed(2)}" x2="${X(w.mean).toFixed(2)}" y1="${ly(0)}" y2="${ly(0) + bh}"/>` +
-      `<text x="${x0 + 3}" y="${ly(0) + bh - 2}">next ${LABEL[type]} · ${when(w.soonest)}–${when(w.latest)}${more(w.latest)}</text></g>`;
-    effects.forEach((b, i) => {
-      const y = ly(i + 1);
+    const short = (x1 - x0) < 400; // a narrow chart (a widget): shorter labels
+    let bars2 = '';
+    if (showNext)
       bars2 +=
-        `<g class="ca-sp-lane ${buffKind(b)}" data-tip="${esc(`${b.name}: ${when(b.secs)} left — a golden cookie comes before it ends ${pc(b.golden)} of the time`)}">` +
+        `<g class="ca-sp-lane next" data-tip="${esc(`The next ${LABEL[type]}: it can't come for ${when(w.soonest)}, then can until ${when(w.latest)}; on average in ${when(w.mean)}`)}">` +
+        `<rect class="track" x="${x0}" y="${ly(0)}" width="${x1 - x0}" height="${bh}"/>` +
+        `<rect class="wait" x="${x0}" y="${ly(0)}" width="${(X(w.soonest) - x0).toFixed(2)}" height="${bh}"/>` +
+        `<rect class="open" x="${X(w.soonest).toFixed(2)}" y="${ly(0)}" width="${Math.max(0, X(w.latest) - X(w.soonest)).toFixed(2)}" height="${bh}"/>` +
+        `<line x1="${X(w.mean).toFixed(2)}" x2="${X(w.mean).toFixed(2)}" y1="${ly(0)}" y2="${ly(0) + bh}"/>` +
+        `<text x="${x0 + 3}" y="${ly(0) + bh - 2}">${short ? 'next' : `next ${LABEL[type]}`} · ${when(w.soonest)}–${when(w.latest)}${more(w.latest)}</text></g>`;
+    effects.forEach((b, i) => {
+      const y = ly(i + (showNext ? 1 : 0));
+      const gc = Number.isFinite(b.golden) ? ` · ${short ? 'GC' : 'golden cookie before it ends'} ${pc(b.golden)}` : '';
+      bars2 +=
+        `<g class="ca-sp-lane ${buffKind(b)}" data-tip="${esc(`${b.name}: ${when(b.secs)} left${Number.isFinite(b.golden) ? ` — a golden cookie comes before it ends ${pc(b.golden)} of the time` : ''}`)}">` +
         `<rect class="track" x="${x0}" y="${y}" width="${x1 - x0}" height="${bh}"/>` +
         `<rect class="left" x="${x0}" y="${y}" width="${Math.max(1, X(b.secs) - x0).toFixed(2)}" height="${bh}"/>` +
-        `<text x="${x0 + 3}" y="${y + bh - 2}">${esc(b.name)} · ${when(b.secs)}${more(b.secs)} · golden cookie before it ends ${pc(b.golden)}</text></g>`;
+        `<text x="${x0 + 3}" y="${y + bh - 2}">${esc(b.name)} · ${when(b.secs)}${more(b.secs)}${gc}</text></g>`;
     });
     // the hover readout
     let hov = '';
     const hf = hover[type];
-    if (hf !== null && hf !== undefined) {
+    if (plot && opts.hover !== false && hf !== null && hf !== undefined) {
       const s = span * hf;
       const i = Math.min(w.bins - 1, Math.max(0, Math.floor(hf * w.bins)));
       const hx = X(s);
       hov =
-        `<g class="ca-sp-hover"><line x1="${hx.toFixed(2)}" x2="${hx.toFixed(2)}" y1="${y1}" y2="${y0 + lanes * LANE}"/>` +
+        `<g class="ca-sp-hover"><line x1="${hx.toFixed(2)}" x2="${hx.toFixed(2)}" y1="${y1}" y2="${y0 + lanes * LN}"/>` +
         `<text x="${Math.min(x1 - 4, Math.max(x0 + 4, hx + (hf > 0.6 ? -6 : 6))).toFixed(2)}" y="${y0 - 8}" text-anchor="${hf > 0.6 ? 'end' : 'start'}">in ${when(s)}: ${pc(w.within(s))} by then · ${pc(w.pdf[i])} in those ${when(w.bin)}</text></g>`;
     }
+    const sized = opts.width ? `width:${WW}px;` : '';
     return (
-      `<svg class="ca-sp-chart" viewBox="0 0 ${W} ${HH}" preserveAspectRatio="none" style="height:${HH}px" data-sp-chart="${type}">` +
-      band(10, 90, 'ca-sp-band') +
-      band(25, 75, 'ca-sp-band2') +
-      `<g class="ca-sp-pdf">${bars}</g>` +
-      `<path class="ca-sp-cdf" d="${line}"/>` +
-      tick(w.mean, 'ca-sp-mean', 'mean', w.mean < w.median) +
-      tick(w.median, 'ca-sp-median', 'median', w.median <= w.mean) +
-      `<line class="ca-sp-axis" x1="${x0}" x2="${x1}" y1="${y0}" y2="${y0}"/>` +
+      `<svg class="ca-sp-chart${opts.width ? ' ca-sp-fixed' : ''}" viewBox="0 0 ${WW} ${HH}" preserveAspectRatio="none" style="${sized}height:${HH}px"${opts.hover === false ? '' : ` data-sp-chart="${type}"`}>` +
+      plotSvg +
       `<g class="ca-sp-ticks">${axis}</g>` +
       bars2 +
       hov +

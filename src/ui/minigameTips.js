@@ -40,6 +40,16 @@ CA.UI.MinigameTips = (() => {
       rows.push(['Can give', esc((Game.Objects[s.edifice.building] || {}).dname || s.edifice.building)]);
       rows.push(['Needs banked', F().beautify(s.edifice.bank), Game.cookies >= s.edifice.bank ? 'ca-mg-ok' : 'ca-mg-bad']);
     }
+    // the forecast (features/fthof.js): what the next casts give — any spell cast moves it on
+    const f = CA.Fthof && (s.key === 'hand of fate' || s.key === "gambler's fever dream") ? CA.Fthof.forecast(8) : null;
+    if (f && s.key === 'hand of fate') {
+      f.forEach((x) => rows.push([`Cast ${x.n}${x.n === 1 ? ' (next)' : ''}`, `${esc(x.name)}${x.wrath ? ' <small>(backfire)</small>' : ` <small>(backfire: ${esc(CA.Fthof.nameOf(x.backfire))})</small>`}`, x.wrath ? 'ca-mg-bad' : x.good ? 'ca-mg-ok' : '']));
+      return block(rows, `the game rolls each cast from your save: this is what it gives, at today’s ${Math.round(f[0].failChance * 100)}% backfire chance — casting any spell moves the list on by one`);
+    }
+    if (f && s.key === "gambler's fever dream") {
+      f.slice(0, 4).forEach((x) => rows.push([`Cast ${x.n}${x.n === 1 ? ' (next)' : ''}`, x.gfd ? `${esc(x.gfd.name)}${x.gfd.fthof ? ` → ${esc(x.gfd.fthof.name)}${x.gfd.fthof.wrath ? ' <small>(backfire)</small>' : ''}` : ''}` : 'nothing (too little magic)', x.gfd && x.gfd.fthof ? (x.gfd.fthof.wrath ? 'ca-mg-bad' : 'ca-mg-ok') : '']));
+      return block(rows, 'the spell it would cast as that cast, with the magic you have now (Force the Hand of Fate through it: at least 50% to backfire)');
+    }
     return block(rows);
   }
 

@@ -72,7 +72,7 @@ for (let save = 0; save < 12; save++) {
     if (i % 5 === 3) Game.gainBuff('dragonflight', 10, 1111); // no Click frenzy
     if (i % 4 === 2) {
       // a golden cookie on screen: +15% backfire
-      new Game.shimmer('golden', { noWrath: true }); // eslint-disable-line no-new
+      new Game.shimmer('golden', { noWrath: true });
     }
     if (i % 6 === 5) {
       // another spell in between moves the seed on

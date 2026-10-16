@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- **Force the Hand of Fate, forecast.** The game rolls each spell cast from your save's seed and how many spells you've
+  cast, so CookieMgr replays its draws: the spell's tooltip lists what the next eight casts give (and what each would be
+  as a backfire), Gambler's Fever Dream's what it would cast. Any cast moves the list on — cast something cheap to skip
+  a bad one. Checked against 180 real casts (seasons, Dragonflight, buildings, backfires, other spells in between).
+  Words `fthof.next()`, `fthof.nextIs(outcome)`, `fthof.after(n)`, `fthof.castsUntil(outcome)`,
+  `fthof.backfireChance()` — for macros.
+- **Golden cookie widgets**: **Golden timeline** — the next golden cookie's odds, its window, every effect running with
+  its time left and the chance a golden cookie comes before it ends, and the next Force the Hand of Fate casts, on one
+  time axis; **Next golden cookie** (the countdown and its chart) and **Effect timers** (the bars). Each picks its parts
+  in its settings; the numbers are the Stats page's.
+
 ## 3.11.2 — 2026-10-16
 
 - **Fix: working out the garden's mutation odds changed the live garden.** It ran the game's own boost calculation

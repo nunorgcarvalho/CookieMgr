@@ -28,7 +28,7 @@ const mod = {
     [
       CA.EventLog, CA.GameActions, CA.Macros, CA.Grimoire, CA.Pantheon, CA.Garden, CA.GardenHistory, CA.Shop, CA.Payback, CA.GoldenMath, CA.Wrinklers, CA.Prestige, CA.Timers, CA.Collection, CA.WhatIf, CA.Mutations, CA.MinigameInfo, CA.Fthof, CA.Alerts, CA.AutoBuy, CA.Seasons,
       CA.Stocks, CA.StockLog, CA.History, CA.GameStates, CA.Recorder, CA.GameEvents, CA.NotifyTips,
-      CA.UI.Graphs, CA.UI.EventsPage, CA.UI.CodeEditor, CA.UI.MacrosPage, CA.UI.Widgets, CA.UI.WizardPage, CA.UI.GardenPage,
+      CA.UI.Graphs, CA.UI.EventsPage, CA.UI.CodeEditor, CA.UI.MacrosPage, CA.UI.Widgets, CA.UI.TimelineWidget, CA.UI.WizardPage, CA.UI.GardenPage,
       CA.UI.PantheonPage, CA.UI.StoreBar, CA.UI.StoreInsight, CA.UI.GardenInsight, CA.UI.MinigameTips, CA.UI.AscendTip, CA.UI.PaybackPage, CA.UI.StatsPage, CA.UI.StockGraph, CA.UI.StockPerf, CA.UI.StockLog, CA.UI.BankToolbar,
       CA.Hotkeys, CA.Ascension, CA.UI.Menu, CA.UI.Tab, CA.UI.Tips,
     ].forEach((m, i) => {

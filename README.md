@@ -299,6 +299,10 @@ forever:
   `garden.plant(tile, seed)` — and the whole-plot ones the default rules use (`garden.plantEmpty()`…);
   `garden.mutationChance(x, y)`, `garden.growChance(seed)` (at the next tick, 0–1), `garden.growIn(seed)` (seconds).
 - **Minigames** — `spell.cost / waitFor / recover(spell)`, `stock.restingRatio(good)`.
+- **Force the Hand of Fate** — `fthof.next()` (what the next cast gives: `frenzy`, `click frenzy`, `building special`,
+  `multiply cookies`, `cookie storm`, `cookie storm drop`, `blab`, `free sugar lump`; backfires `clot`, `ruin cookies`,
+  `cursed finger`, `blood frenzy`), `fthof.nextIs(outcome)`, `fthof.after(n)`, `fthof.castsUntil(outcome)`,
+  `fthof.backfireChance()`.
 - **Shimmers & wrinklers** — `shimmers()`, `shimmer.type / isWrath / life(s)`, `shimmer.pop(s)`; `wrinklers()`,
   `wrinkler.isShiny / isFed / sucked(w)`, `wrinkler.pop(w)`.
 - **Sugar lump** — `lump.isRipe()`, `lump.isMature()`, `lump.pick()`.
@@ -450,6 +454,12 @@ CookieMgr adds to the game's own tooltips (each with its option):
 - **Grimoire** — under a spell's tooltip: when you'll have the magic for it; once you can, the magic left after
   casting it and how long it takes to come back (to where it is, and to full). Conjure Baked Goods: what it gives
   now and the bank that gives the most; Spontaneous Edifice: the building it can give and the bank it needs.
+  **Force the Hand of Fate, forecast**: the game rolls every cast from your save (its seed and how many spells you've
+  cast), so what the next casts give is already fixed — its tooltip lists the next eight (and what each would be as a
+  backfire), at today's backfire chance. Any spell cast moves the list on by one, so a cheap one skips an outcome you
+  don't want. Gambler's Fever Dream's tooltip says which spell it would cast at each of the next four casts, and what
+  Force the Hand of Fate gives through it. Worked out by replaying the game's own draws — checked against hundreds of
+  real casts across saves, seasons, Dragonflight and backfires.
 - **Stock market** — under a stock's tooltip: its resting value (the price it drifts back to) and how far the price
   is from it, its trend, what you hold of what your offices can, its worth in cookies, and a share's.
 - **Pantheon** — under a spirit's tooltip: the CpS it would bring in each slot (and taking it out), measured on the
@@ -683,6 +693,13 @@ always grab them again). Drag them anywhere; hover for × and ⚙ (its settings)
   - **Stock market** — ring and label = the next market tick; after one, the label is what it did to the stocks you
     held going into it ($; cookies in the popup).
   - **Pantheon** — your three slotted spirits under a ring counting down to the next worship swap.
+- **Golden timeline** — everything golden on one time axis from now: the odds of the next golden cookie over time (the
+  Stats page's chart), its window (soonest – latest, the mean), a bar per effect running with its time left and the
+  chance a golden cookie comes before it ends, and what Force the Hand of Fate gives over your next casts (green: a
+  good one, red: a backfire; hover for each). Its settings pick the parts and how many casts ahead.
+- **Next golden cookie** — the countdown in numbers (on average, the median, the chance within a minute, its window)
+  over the odds chart. **Effect timers** — the effect bars alone. Both are the Golden timeline with fewer parts — tick
+  more in their settings. Click the numbers for the Stats page.
 
 Framed boxes (Quick stats, Latest events) are dragged by their title bar and folded with ▾. **Resize** any widget
 from its bottom-right corner: buttons, round widgets and the status bar scale up or down keeping their shape, framed
