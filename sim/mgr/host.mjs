@@ -34,7 +34,7 @@ export function stagingModules() {
 export const headlessModules = () => moduleList().filter((f) => f.startsWith('core/') || f.startsWith('features/'));
 
 /** The modules main.js starts, in its order — minus the UI's (and the update check / Cookie Monster loader). */
-const START = ['EventLog', 'GameActions', 'Macros', 'Grimoire', 'Pantheon', 'Garden', 'GardenHistory', 'Shop', 'Payback', 'AutoBuy', 'Seasons', 'Stocks', 'StockLog', 'History', 'GameStates', 'Recorder', 'GameEvents', 'NotifyTips', 'Hotkeys', 'Ascension'];
+const START = ['EventLog', 'GameActions', 'Macros', 'Grimoire', 'Pantheon', 'Garden', 'GardenHistory', 'Shop', 'Payback', 'GoldenMath', 'Wrinklers', 'Prestige', 'Timers', 'Collection', 'WhatIf', 'AutoBuy', 'Seasons', 'Stocks', 'StockLog', 'History', 'GameStates', 'Recorder', 'GameEvents', 'NotifyTips', 'Hotkeys', 'Ascension'];
 /** Ones that only record history for the add-on's charts — off by default (they cost time, nothing reads them here). History stays on: it logs golden cookies and buffs into the event log. */
 export const RECORDING = ['Recorder', 'GardenHistory', 'StockLog'];
 
