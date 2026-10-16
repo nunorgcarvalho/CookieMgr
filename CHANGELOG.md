@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 3.12.1 — 2026-10-16
+
+- **Force the Hand of Fate on combos reads the forecast.** Two new choices on its card: **Forecast** — off (as before,
+  the default) or only when the next cast gives a click frenzy or a building special (or a frenzy, for a combo without
+  one); **Skip ahead** — when the next cast is bad and a good one is at most that many casts away, Haggler's Charm
+  (the cheapest spell) moves the forecast on, with spare magic only (never below what Force the Hand of Fate costs).
+  In the simulator — the real game, 24 Frenzy + Dragonflight combos — Forecast off cast 24 times, 1 of them good;
+  Forecast on cast once, on that good one. Built on v3.12.0's forecast (fthof.*).
+
 ## 3.12.0 — 2026-10-16
 
 - **Force the Hand of Fate, forecast.** The game rolls each spell cast from your save's seed and how many spells you've

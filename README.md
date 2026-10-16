@@ -497,8 +497,12 @@ The **Grimoire** page (Wizard tower minigame) is the Grimoire, CookieMgr-style:
   two effects line up *and* there's enough magic, it casts Force the Hand of Fate, so its golden cookie can stack a third.
   The combos: Frenzy + Dragonflight, Frenzy + Click frenzy, Frenzy + a building special, a building special +
   Dragonflight, a building special + Click frenzy (a combo that starts when you're short of magic still gets its cast
-  once the magic is there). Its code is yours to change (Edit on its card; Revert to default brings these back). Pair
-  it with the Golden cookies macro to pop the cookie it summons. Your own macros that cast spells are listed here too.
+  once the magic is there). With **Forecast** on (its card), it reads what the next cast gives (the forecast, fthof.*)
+  and casts only on a click frenzy or a building special — or a frenzy, for a combo without one; **Skip ahead** (a
+  number of casts) spends spare magic on Haggler's Charm to bring a good cast closer, never dipping below what Force
+  the Hand of Fate costs. In the simulator (the real game, 24 Frenzy + Dragonflight combos) Forecast off cast 24 times
+  for 1 good outcome; on, it cast once — that one. Its code is yours to change (Edit on its card; Revert to default
+  brings these back). Pair it with the Golden cookies macro to pop the cookie it summons. Your own macros that cast spells are listed here too.
 - **Spell combos** — **New combo** starts a "once" macro that casts several spells in order (Force the Hand of Fate,
   then Stretch Time, by default); combos get a Run button, a hotkey and a ★ like any macro.
 - **Magic** — a chart of magic over time with every cast marked (red if it backfired).
