@@ -19,6 +19,8 @@ import { makeRng } from './rng.mjs';
  *   start    the clock's start (ms since 1970) — the date matters for seasons
  *   save     a save string (Game.ExportSave()'s) to start from; none = a new game
  *   quiet    swallow the game's console.log
+ *   idb      give the page an IndexedDB (in memory, fake-indexeddb) — what CookieMgr's recorder and
+ *            event log keep their history in
  * Returns { Game, ctx (the page's global), clock, run(code, name), frame(), dir }.
  */
 /**
@@ -35,7 +37,7 @@ export function saveDate(save) {
   }
 }
 
-export async function bootGame({ seed = 1, fps = 30, start, save = null, quiet = true } = {}) {
+export async function bootGame({ seed = 1, fps = 30, start, save = null, quiet = true, idb = false } = {}) {
   const dir = await ensureGame({ quiet: true });
   const read = (f) => fs.readFileSync(path.join(dir, f), 'utf8');
   // a save starts the clock where it was made — no time has passed since (no offline earnings, the
@@ -154,6 +156,11 @@ export async function bootGame({ seed = 1, fps = 30, start, save = null, quiet =
     App: 0,
     LOCAL: false,
   };
+  if (idb) {
+    const { IDBFactory, IDBKeyRange } = await import('fake-indexeddb');
+    page.indexedDB = new IDBFactory();
+    page.IDBKeyRange = IDBKeyRange;
+  }
   context = vm.createContext(page);
   page.window = context;
   page.self = context;

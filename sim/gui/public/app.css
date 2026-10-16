@@ -584,3 +584,22 @@ body {
 #CookieMgrMenu .sim-strats .ca-knob-cfg {
   display: none;
 }
+
+/* the add-on's pages, hosted (its Graphs and Events pages) */
+#CookieMgrMenu .sim-h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 18px 4px 0;
+  font-family: 'Merriweather', Georgia, serif;
+  font-size: 17px;
+  font-weight: bold;
+  color: #fff3cf;
+  text-shadow: 0 2px 4px #000;
+}
+#CookieMgrMenu .sim-h2 small {
+  font: 11.5px Tahoma, Arial, sans-serif;
+  font-weight: normal;
+  color: #b9ab93;
+  text-shadow: none;
+}

@@ -94,12 +94,21 @@ vc.on('error', (...a) => errors.push(a.map(String).join(' ')));
 const dom = new JSDOM(fs.readFileSync(path.join(PUBLIC, 'index.html'), 'utf8').replace(/<script[\s\S]*?<\/script>/g, ''), { url: `${url}/#sim/${id}`, runScripts: 'outside-only', pretendToBeVisual: true, virtualConsole: vc });
 const w = dom.window;
 w.fetch = (u, o) => fetch(new URL(u, url), o);
+w.scrollTo = () => {}; // jsdom has no layout
 w.ResizeObserver = class {
   observe() {}
   disconnect() {}
 };
 w.HTMLCanvasElement.prototype.getContext = function () {
-  return new Proxy({}, { get: (_t, p) => (p === 'measureText' ? (s) => ({ width: String(s).length * 6 }) : () => {}), set: () => true });
+  // as tests/harness/game.mjs's: every call a no-op, the few that return something returning it
+  const noop = () => {};
+  return new Proxy(
+    {},
+    {
+      get: (_t, p) => (p === 'measureText' ? (s) => ({ width: String(s).length * 6 }) : p === 'createLinearGradient' || p === 'createRadialGradient' ? () => ({ addColorStop: noop }) : p === 'getImageData' ? () => ({ data: [] }) : noop),
+      set: () => true,
+    }
+  );
 };
 Object.defineProperty(w.HTMLCanvasElement.prototype, 'clientWidth', { get: () => 640 });
 Object.defineProperty(w.HTMLCanvasElement.prototype, 'clientHeight', { get: () => 220 });
@@ -130,7 +139,7 @@ w.EventSource = class {
 };
 w.eval('window.Game = { resPath: "/game/" };');
 w.eval(bundle);
-for (const f of ['chart.js', 'app.js']) w.eval(fs.readFileSync(path.join(PUBLIC, f), 'utf8'));
+for (const f of ['mirrors.js', 'chart.js', 'app.js']) w.eval(fs.readFileSync(path.join(PUBLIC, f), 'utf8'));
 const doc = w.document;
 const $ = (s) => doc.querySelector(s);
 await sleep(1500);
@@ -142,7 +151,27 @@ assert(/the simulator/.test($('[data-sim-versions]').textContent) && doc.querySe
 assert($('[data-sim-runbar]') && /Speed/.test($('[data-sim-runbar]').textContent) && $('[data-sim-stats] .ca-stat'), 'Simulate: the run bar and the stats tiles');
 assert(doc.querySelectorAll('[data-sim-bld] .sim-bld').length >= 2 && /Cursor/.test($('[data-sim-bld]').textContent), `the buildings (${doc.querySelectorAll('[data-sim-bld] .sim-bld').length})`);
 assert(doc.querySelectorAll('[data-sim-macros] .sim-macro').length >= 3 && $('[data-sim-macros] .ca-switch'), 'CookieMgr’s macros, with switches');
-assert(doc.querySelectorAll('[data-sim-actions] .sim-act-row').length > 0 && /click\.bigCookie/.test($('[data-sim-actions]').textContent) && doc.querySelectorAll('[data-sim-events] .ca-ev-row').length > 0, 'the action log and the event log');
+assert(doc.querySelectorAll('[data-sim-actions] .sim-act-row').length > 0 && /click\.bigCookie/.test($('[data-sim-actions]').textContent), 'the action log');
+// the add-on's own pages, hosted, on what CookieMgr recorded in the simulated game
+assert(w.CA.Recorder.frames().length >= 500 && Math.abs(w.CA.Recorder.frames().at(-1).t - w.CookieSimClock.now) < 2000 && Number.isFinite(w.CA.Recorder.frames().at(-1).cps), `the add-on’s recorder holds the simulation’s frames (${w.CA.Recorder.frames().length})`);
+const gh = $('[data-host="graphs"]');
+assert(gh && gh.querySelectorAll('.ca-subtab').length >= 2 && gh.querySelectorAll('canvas').length >= 2 && /Cookies per second/.test(gh.textContent), 'the add-on’s Graphs page: its tabs and charts');
+assert(gh.querySelector('[data-option="graphEffects"]') && /Effect shading/.test(gh.textContent), 'its options card (effect shading, event markers…)');
+const eh = $('[data-host="events"]');
+assert(eh && eh.querySelectorAll('.ca-ev-row').length > 0 && /Building|Achievement/.test(eh.textContent), `the add-on’s Events page, with the simulation’s events (${eh ? eh.querySelectorAll('.ca-ev-row').length : 0} rows)`);
+// a tab of the hosted Graphs page: the page draws itself again (through CA.UI.Menu.render)
+click(w, gh.querySelector('[data-graph-tab="prestige"]'));
+await sleep(100);
+assert(/prestige/i.test($('[data-host="graphs"]').textContent) && $('[data-host="graphs"] canvas'), 'its Prestige tab (prestige from the simulated game)');
+assert(/Prestige/.test($('[data-host="graphs"] .ca-subtab.on').textContent), 'its tabs switch, as in the add-on');
+click(w, $('[data-host="graphs"] [data-graph-tab="cookies"]'));
+const opt = $('[data-host="graphs"] [data-ca="option"][data-key="graphEffects"]');
+const was = w.CA.Settings.get('graphEffects');
+click(w, opt);
+await sleep(50);
+assert(w.CA.Settings.get('graphEffects') === !was, 'its option switches work');
+click(w, $('[data-host="graphs"] [data-ca="option"][data-key="graphEffects"]'));
+await sleep(50);
 assert($('[data-code-ed="console"]') && $('[data-doaction]').options.length > 20, 'the code console (the add-on’s code editor) and the action picker');
 // a finished comparison, as the Compare page shows it
 w.localStorage.setItem('CookieSimMgr.cmpJob', JSON.stringify(job.id));

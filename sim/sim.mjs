@@ -20,9 +20,12 @@ import { loadCookieMgr } from './mgr/host.mjs';
 import { ensureMod } from './game/fetch.mjs';
 
 export async function createSim({ seed = 1, fps = 30, start, save = null, mgr = true, mgrSave = '', record = false, logAll = false, sampleEvery = 60, quiet = true, cookieMonster = false } = {}) {
-  const game = await bootGame({ seed, fps, start, save, quiet });
+  // recording (CookieMgr's history recorder, for its charts) keeps its frames in IndexedDB, as in the browser
+  const game = await bootGame({ seed, fps, start, save, quiet, idb: record });
   const { Game, clock } = game;
   const host = mgr ? loadCookieMgr(game, { save: mgrSave, record, logAll }) : null;
+  // the recorder starts once its (empty) history has loaded — asynchronously, as IndexedDB answers
+  if (host && record && host.CA.Recorder.whenLoaded()) await host.CA.Recorder.whenLoaded();
   const CA = host && host.CA;
   // Cookie Monster (CookieMgr's Best building / Best upgrade read its payback periods), loaded the way the add-on loads it
   if (cookieMonster) {

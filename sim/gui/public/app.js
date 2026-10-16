@@ -3,9 +3,10 @@
 // library) and talking to sim/gui/server.mjs, which runs the simulations.
 //
 //   Simulate      start a game (a new one, a scenario, or your own save) with a strategy, watch it
-//                 play — cookies, CpS, buildings, upgrades, effects, the garden, CookieMgr's macros,
-//                 every action it takes and every event — and take part: switch macros, do actions,
-//                 run code, export the save
+//                 play — the add-on's own Graphs and Events pages (its charts: zoom, windows,
+//                 smoothing, effect bands, markers…) on what CookieMgr records in the simulated game,
+//                 buildings, upgrades, effects, the garden, CookieMgr's macros, every action it takes
+//                 — and take part: switch macros, do actions, run code, export the save
 //   Compare       strategies side by side over several seeds, in parallel
 //   Strategies    the .cmgr files: CookieMgr's code editor, with its library
 //   Experiments   the fast models, run with their output
@@ -97,7 +98,6 @@
     ['8h', '8 h'],
     ['24h', '1 day'],
   ];
-  const evType = (t) => (meta.vocab.eventTypes[t] || { name: t, icon: 'log', color: '#aaa' });
 
   /** The words, registered in the page's own registries — so the add-on's code editor colours, checks and lists them as in the game. */
   function installVocab(v) {
@@ -168,9 +168,6 @@ buy.best(all)
     actions: [],
     events: [],
     tally: {},
-    evOff: new Set(store.get('evOff', [])),
-    series: Object.assign({ baked: true, bank: false, cps: true, log: true }, store.get('series', {})),
-    chart: null,
     gardenOpen: true,
     doAction: '',
     consoleSrc: 'for s in shimmers():\n  shimmer.pop(s)\n',
@@ -189,6 +186,7 @@ buy.best(all)
     S.events = [];
     S.tally = {};
     S.snap = null;
+    S.feeding = CA.SimData.reset();
     if (!id) return;
     const es = new EventSource(`/api/sessions/${id}/stream`);
     S.es = es;
@@ -204,6 +202,8 @@ buy.best(all)
       if (S.actions.length > 3000) S.actions.splice(0, S.actions.length - 3000);
       s.events.forEach((x) => S.events.push(x));
       if (S.events.length > 3000) S.events.splice(0, S.events.length - 3000);
+      // the add-on's pages: what CookieMgr recorded there, in place (one snapshot after another)
+      S.feeding = S.feeding.then(() => CA.SimData.feed(s)).catch((err) => console.error(err));
       if (current === 'sim') live();
       topRun();
     });
@@ -227,18 +227,9 @@ buy.best(all)
       return (
         `<div class="sim-runbar" data-sim-runbar>${runbarHtml()}</div>` +
         (S.snap && S.snap.error ? `<div class="sim-err">${esc(S.snap.error)}</div>` : '') +
-        `<div class="ca-card"><div class="ca-stats" data-sim-stats>${statsHtml()}</div>` +
-        `<div class="ca-toolbar"><span class="ca-chipgroup"><span class="ca-chip-label">Show</span>${['baked', 'bank', 'cps']
-          .map((k) => `<button type="button" class="ca-chip${S.series[k] ? ' on' : ''}" data-series="${k}">${{ baked: 'Cookies baked', bank: 'Bank', cps: 'CpS' }[k]}</button>`)
-          .join('')}</span>${chips(
-          [
-            ['log', 'Log'],
-            ['lin', 'Linear'],
-          ],
-          'data-scale',
-          S.series.log ? 'log' : 'lin'
-        )}</div>` +
-        '<div class="sim-chart"><canvas data-sim-chart></canvas></div></div>' +
+        `<div class="ca-card"><div class="ca-stats" data-sim-stats>${statsHtml()}</div></div>` +
+        `<div class="sim-h2">${I('graphs', 16)} Graphs <small>CookieMgr’s own — drag across a chart to zoom in, the chips for windows and smoothing, hover for the details</small></div>` +
+        '<div class="sim-host" data-host="graphs"></div>' +
         '<div class="sim-cols"><div>' +
         `<div class="ca-card">${C.cardHead('Buildings', 'building', '<span class="ca-hint" data-sim-bldsum></span>')}<div data-sim-bld></div></div>` +
         `<div class="ca-card">${C.cardHead('Effects', 'sparkle', '<span class="ca-hint">golden cookie buffs, as the game has them</span>')}<div data-sim-buffs></div></div>` +
@@ -248,14 +239,15 @@ buy.best(all)
         `<div class="ca-card">${C.cardHead("CookieMgr's macros", 'bolt', '<span class="ca-hint">switch them while it plays</span>')}<div data-sim-macros></div></div>` +
         `<div class="ca-card ca-editor2">${C.cardHead('Do something', 'play', '<span class="ca-hint">any CookieMgr action, or code — now</span>')}${doHtml()}</div>` +
         `<div class="ca-card">${C.cardHead('Actions', 'bolt', '<span class="ca-hint">what CookieMgr did, by its action ids</span>')}<div data-sim-actions></div></div>` +
-        `<div class="ca-card">${C.cardHead('Events', 'events', '<span class="ca-hint">CookieMgr’s event log</span>')}<div class="ca-toolbar" data-sim-evfilter>${evFilterHtml()}</div><div class="sim-log" data-sim-events></div></div>` +
-        '</div></div>'
+        '</div></div>' +
+        `<div class="sim-h2">${I('events', 16)} Events <small>CookieMgr’s Events page — everything its event log recorded in the simulated game</small></div>` +
+        '<div class="sim-host" data-host="events"></div>'
       );
     },
     mount(root) {
       if (!S.id) return mountSetup(root);
       if (!S.es) connect(S.id);
-      S.chart = SimChart.create($('[data-sim-chart]', root));
+      host(root);
       root.addEventListener('click', onSimClick);
       root.addEventListener('change', onSimChange);
       S.unbindCE = CE.bind(root, {
@@ -274,10 +266,38 @@ buy.best(all)
       root.removeEventListener('input', onSetupChange);
       if (S.unbindCE) S.unbindCE();
       S.unbindCE = null;
-      if (S.chart) S.chart.destroy();
-      S.chart = null;
+      unhost();
     },
   };
+
+  // ---- the add-on's pages, hosted: its Graphs page and its Events page (their own html / mount /
+  // unmount / tick — the data comes from mirrors.js) ------------------------------------------------
+  const HOSTS = {
+    graphs: () => CA.UI.Graphs,
+    events: () => CA.UI.Pages.get('events'),
+  };
+  function host(root) {
+    root.querySelectorAll('[data-host]').forEach((el) => {
+      const p = HOSTS[el.dataset.host]();
+      if (!p) return;
+      p.unmount();
+      el.innerHTML = p.html();
+      p.mount(el);
+    });
+  }
+  function unhost() {
+    Object.values(HOSTS).forEach((get) => {
+      const p = get();
+      if (p) p.unmount();
+    });
+  }
+  /** What the pages ask for with CA.UI.Menu.render(): drawn again (a tab, an option…), keeping the scroll. */
+  function rehost() {
+    if (current !== 'sim' || !S.id) return;
+    const y = window.scrollY;
+    host(main());
+    window.scrollTo(0, y);
+  }
 
   // ---- setup -------------------------------------------------------------------------------------------
 
@@ -444,19 +464,6 @@ buy.best(all)
       (st.magicM ? tile('Magic', `${Math.floor(st.magic)}/${Math.floor(st.magicM)}`, 'Grimoire') : '')
     );
   }
-  function chartSpec() {
-    const t0 = S.snap ? S.snap.clock - S.snap.t * 1000 : 0;
-    const at = (ms) => (ms - t0) / 1000;
-    const series = [];
-    if (S.series.baked) series.push({ name: 'Cookies baked', color: '#ffd36a', points: S.samples.map((x) => [x.t, x.cookiesEarned]) });
-    if (S.series.bank) series.push({ name: 'Bank', color: '#c8b48a', dash: true, width: 1.5, points: S.samples.map((x) => [x.t, x.cookies]) });
-    if (S.series.cps) series.push({ name: 'CpS', color: '#6fc3ff', points: S.samples.map((x) => [x.t, x.cps]), fmt: (v) => `${short(v)}/s` });
-    const gold = S.events.filter((e) => e.type === 'golden' || e.type === 'wrath');
-    const bands = [];
-    gold.forEach((e) => ((e.data && e.data.effects) || []).forEach((ef) => ef.duration && bands.push({ x0: at(e.t), x1: at(e.t) + ef.duration, color: ef.multCps > 1 || ef.multClick > 1 ? '#ffd36a' : '#e5484d', label: `${ef.name}${ef.multCps !== 1 ? ` ×${ef.multCps}` : ef.multClick !== 1 ? ` ×${ef.multClick} clicks` : ''}` })));
-    const markers = gold.map((e) => ({ x: at(e.t), color: e.type === 'wrath' ? '#e5484d' : '#ffd54a', label: `${e.title}${e.data && e.data.effects && e.data.effects.length ? ': ' + e.data.effects.map((x) => x.name).join(', ') : e.text ? ': ' + e.text : ''}` }));
-    return { series, log: S.series.log, bands, markers, x1: S.snap ? S.snap.t : undefined, xFmt: span, empty: 'Press play — the chart fills as it plays' };
-  }
   function buildingsHtml() {
     const s = S.snap;
     if (!s) return '';
@@ -566,28 +573,6 @@ buy.best(all)
       `<div class="sim-log">${rows}</div>`
     );
   }
-  function evFilterHtml() {
-    const types = Object.keys(meta.vocab.eventTypes);
-    return `<span class="ca-chipgroup">${types
-      .map((t) => {
-        const ty = evType(t);
-        return `<button type="button" class="ca-chip ca-ev-chip${S.evOff.has(t) ? '' : ' on'}" data-evtype="${esc(t)}" style="--c:${ty.color}">${I(ty.icon, 11)} ${esc(ty.name)}</button>`;
-      })
-      .join('')}</span>`;
-  }
-  function eventsHtml() {
-    const t0 = S.snap ? S.snap.clock - S.snap.t * 1000 : 0;
-    const rows = S.events.filter((e) => !S.evOff.has(e.type)).slice(-200).reverse();
-    if (!rows.length) return '<div class="ca-legend-empty ca-ev-empty">No events yet.</div>';
-    return rows
-      .map((e) => {
-        const ty = evType(e.type);
-        const eff = e.data && e.data.effects && e.data.effects.length ? e.data.effects.map((x) => `${x.name}${x.multCps !== 1 ? ` ×${x.multCps}` : x.multClick !== 1 ? ` ×${x.multClick}` : ''}`).join(', ') : e.cookies ? `${e.cookies > 0 ? '+' : ''}${short(e.cookies)}` : '';
-        return `<div class="ca-ev-row" style="--c:${ty.color}"><span class="ca-ev-ico">${I(ty.icon, 14)}</span><span class="ca-ev-time">${span((e.t - t0) / 1000)}</span><span class="ca-ev-text"><b>${esc(e.title)}</b>${e.text ? ` <span>${esc(e.text)}</span>` : ''}</span><span class="ca-ev-cookies">${esc(eff)}</span></div>`;
-      })
-      .join('');
-  }
-
   /** Refreshes everything live (morphing, so hovers and inputs survive). */
   let snaps = 0;
   function live(force) {
@@ -597,7 +582,6 @@ buy.best(all)
     if (!bar) return;
     morph(bar, runbarHtml());
     morph($('[data-sim-stats]', root), statsHtml());
-    if (S.chart) S.chart.draw(chartSpec());
     // the heavier panels every other snapshot (they come ~3 times a second)
     if (!force && snaps++ % 2) return;
     morph($('[data-sim-bld]', root), buildingsHtml());
@@ -610,7 +594,6 @@ buy.best(all)
     morph($('[data-sim-garden]', root), gardenHtml());
     morph($('[data-sim-macros]', root), macrosHtml());
     morph($('[data-sim-actions]', root), actionsHtml());
-    morph($('[data-sim-events]', root), eventsHtml());
   }
   function topRun() {
     const el = $('[data-sim-toprun]');
@@ -621,7 +604,7 @@ buy.best(all)
 
   const ctl = (body) => api.post(`/api/sessions/${S.id}/control`, body);
   const onSimClick = guard(async (e) => {
-    const t = e.target.closest('[data-ctl],[data-speed],[data-runfor],[data-series],[data-scale],[data-macro],[data-evtype],[data-do],[data-console]');
+    const t = e.target.closest('[data-ctl],[data-speed],[data-runfor],[data-macro],[data-do],[data-console],[data-ca="option"]');
     if (!t) return;
     const d = t.dataset;
     if (d.ctl === 'play') await ctl({ playing: true });
@@ -642,26 +625,14 @@ buy.best(all)
       store.set('speed', Number(d.speed));
       await ctl({ speed: Number(d.speed), playing: true });
     } else if (d.runfor) await ctl({ run: d.runfor });
-    else if (d.series) {
-      S.series[d.series] = !S.series[d.series];
-      store.set('series', S.series);
-      t.classList.toggle('on', S.series[d.series]);
-      S.chart.draw(chartSpec());
-    } else if (d.scale) {
-      S.series.log = d.scale === 'log';
-      store.set('series', S.series);
-      t.parentNode.querySelectorAll('[data-scale]').forEach((b) => b.classList.toggle('on', b === t));
-      S.chart.draw(chartSpec());
+    else if (d.ca === 'option') {
+      // an option card on a hosted page (Effect shading, Event markers, Active time only…)
+      CA.Settings.set(d.key, !CA.Settings.get(d.key));
+      rehost();
     } else if (d.macro) {
       const on = !t.classList.contains('on');
       t.classList.toggle('on', on);
       await api.post(`/api/sessions/${S.id}/macro`, { id: d.macro, on });
-    } else if (d.evtype) {
-      if (S.evOff.has(d.evtype)) S.evOff.delete(d.evtype);
-      else S.evOff.add(d.evtype);
-      store.set('evOff', [...S.evOff]);
-      t.classList.toggle('on', !S.evOff.has(d.evtype));
-      morph($('[data-sim-events]'), eventsHtml());
     } else if ('do' in d) {
       const params = {};
       main()
@@ -707,7 +678,6 @@ buy.best(all)
     combo: '',
     job: null, // { id, state, meta, progress, results }
     es: null,
-    chart: null,
     metric: 'cookiesEarned',
   };
   const COLORS = ['#ffd36a', '#6fc3ff', '#9be15d', '#ff8a65', '#c77dff', '#4fd6c7', '#ff8fd0', '#e8c547'];
@@ -1287,6 +1257,7 @@ buy.best(all)
       return;
     }
     installVocab(meta.vocab);
+    CA.SimData.setup(meta, { render: () => rehost() });
     CE.init();
     CA.UI.Tips.init();
     $('[data-sim-versions]').textContent = `the simulator ${meta.simVersion} · CookieMgr ${meta.addonVersion} · Cookie Clicker ${meta.gameVersion}`;

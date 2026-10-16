@@ -26,7 +26,28 @@ const ASSETS = path.join(GAME_DIR, 'assets');
 
 // the add-on's code the page uses, in load order (no game needed: formatting, the registries and
 // the language for the code editor, icons, components, DOM helpers, tooltips, chart helpers)
-const ADDON_FILES = ['core/util.js', 'core/format.js', 'core/events.js', 'core/actions.js', 'core/conditions.js', 'features/script.js', 'ui/icons.js', 'ui/components.js', 'ui/dom.js', 'ui/tips.js', 'ui/chart.js', 'ui/codeEditor.js', 'ui/codeKnobs.js'];
+const ADDON_FILES = [
+  'core/util.js',
+  'core/format.js',
+  'core/events.js',
+  'core/actions.js',
+  'core/conditions.js',
+  'core/states.js',
+  'core/recorder.js',
+  'features/script.js',
+  'features/history.js',
+  'ui/icons.js',
+  'ui/components.js',
+  'ui/dom.js',
+  'ui/tips.js',
+  'ui/pages.js',
+  'ui/chart.js',
+  'ui/plot.js',
+  'ui/graphs.js',
+  'ui/eventsPage.js',
+  'ui/codeEditor.js',
+  'ui/codeKnobs.js',
+];
 
 const json = (res, code, data) => {
   res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
@@ -67,6 +88,7 @@ async function vocab() {
       .filter((m) => m.builtin)
       .map((m) => ({ id: m.id, name: m.name, desc: m.desc, icon: m.icon, mode: m.mode, every: m.every, section: m.section, needsCM: !!m.needsCM })),
     eventTypes: C.EventLog.types(),
+    states: C.States.list().map((d) => ({ id: d.id, name: d.name, unit: d.unit, group: d.group, kind: d.kind, agg: d.agg, record: d.record, desc: d.desc })),
     buildings: Object.values(vocabSim.Game.Objects).map((o) => ({ name: o.name, icon: [o.iconColumn, 0] })),
     profiles: C.GardenLayers ? C.GardenLayers.list('profile').map((p) => ({ id: p.id, name: p.name, desc: p.desc })) : [],
   };
@@ -129,7 +151,7 @@ async function newSession({ start = {}, strategy = null, seed = 1, label = '' })
     if (!String(start.save || '').trim()) throw new Error('Paste a save first (Options → Export save in the game).');
     opts.save = String(start.save).trim();
   } else if (start.kind === 'scenario' && start.scenario && start.scenario !== 'fresh') sc = await loadScenario(start.scenario);
-  const sim = await createSim({ ...opts, ...(sc ? sc.options : {}) });
+  const sim = await createSim({ ...opts, record: true, ...(sc ? sc.options : {}) });
   if (sc) await sc.prepare(sim);
   if (opts.save && sim.Game.cookiesEarned === 0 && sim.Game.Objects.Cursor.amount === 0) throw new Error("That save didn't load — is it the whole text from Export save?");
   let stratName = '';
@@ -156,6 +178,7 @@ async function newSession({ start = {}, strategy = null, seed = 1, label = '' })
     wallRun: 0, // real ms spent simulating
     created: Date.now(),
     cursor: { actions: 0, events: 0, samples: 0 },
+    ivSig: '',
     clients: new Set(),
     error: '',
   };
@@ -218,7 +241,7 @@ function snapshot(s, since) {
     t: sim.t,
     clock: sim.clock.now,
     ratio: s.wallRun ? sim.t / (s.wallRun / 1000) : 0,
-    stats: { ...st, prestige: G.prestige, heavenlyChips: G.heavenlyChips, wrinklers: (G.wrinklers || []).filter((w) => w.phase > 0).length, elderWrath: G.elderWrath, season: G.season, magic: G.Objects['Wizard tower'].minigame ? G.Objects['Wizard tower'].minigame.magic : null, magicM: G.Objects['Wizard tower'].minigame ? G.Objects['Wizard tower'].minigame.magicM : null },
+    stats: { ...st, cookiesReset: G.cookiesReset, hcFactor: G.HCfactor, prestige: G.prestige, heavenlyChips: G.heavenlyChips, wrinklers: (G.wrinklers || []).filter((w) => w.phase > 0).length, elderWrath: G.elderWrath, season: G.season, magic: G.Objects['Wizard tower'].minigame ? G.Objects['Wizard tower'].minigame.magic : null, magicM: G.Objects['Wizard tower'].minigame ? G.Objects['Wizard tower'].minigame.magicM : null },
     buildings: Object.values(G.Objects).map((o) => ({ name: o.name, amount: o.amount, level: o.level, price: o.getPrice(), cps: o.storedTotalCps * G.globalCpsMult, locked: !!o.locked, icon: [o.iconColumn, 0] })),
     buffs: Object.values(G.buffs).map((b) => ({ name: b.name, icon: buffIcon(b), time: b.time / G.fps, maxTime: b.maxTime / G.fps, multCpS: b.multCpS, multClick: b.multClick })),
     shimmers: G.shimmers.map((x) => ({ type: x.type, wrath: !!x.wrath, life: x.life / G.fps })),
@@ -231,13 +254,66 @@ function snapshot(s, since) {
       .filter((m) => m.mode !== 'group')
       .map((m) => ({ id: m.id, name: m.name, builtin: !!m.builtin, on: C.Macros.isOn(m.id), icon: m.icon, mode: m.mode, every: C.Macros.everyOf(m), problem: C.Macros.problemOf(m.id) || '', runs: (C.Macros.status(m.id) || {}).runs || 0, section: m.section || '' })),
     actions: fresh(sim.actions, since.actions).slice(-400),
-    events: fresh(events, since.events).slice(-400).map((e) => ({ t: e.t, type: e.type, title: e.title, text: e.text, cookies: e.cookies, data: e.data && e.data.effects ? { effects: e.data.effects } : undefined })),
+    events: fresh(events, since.events).map(plainEvent),
     samples: fresh(sim.samples, since.samples),
-    cursor: { actions: sim.actions.length, events: events.length, samples: sim.samples.length },
+    rec: recFrames(sim, since),
+    intervals: intervalsIfChanged(sim, since),
+    cursor: { actions: sim.actions.length, events: events.length, samples: sim.samples.length, ivSig: since.ivSig },
     garden: gardenView(sim),
   };
   return out;
 }
+/** An event as plain data (what CookieMgr's event log holds). */
+const plainEvent = (e) => ({ id: e.id, t: e.t, a: e.a, type: e.type, title: e.title, text: e.text, cookies: e.cookies, data: e.data });
+/**
+ * CookieMgr's recorder frames, as a change to what the page already has: { active, reset, frames }
+ * the first time, then { active, keep, head, drop, tail } — the page keeps its first `keep` frames,
+ * puts `head` after them in place of its frames up to index `drop`, and appends `tail`. New frames
+ * only ever come at the end; past 3 hours of play the recorder merges older frames into coarser
+ * ones (once a minute) — a stretch after the oldest, already merged ones — so only that stretch is
+ * sent again, not the whole history. `since.list` is the frames (objects) the page has.
+ */
+function recFrames(sim, since) {
+  const R = sim.CA.Recorder;
+  const cur = R.frames();
+  const had = since.list;
+  const reset = () => {
+    since.list = cur.slice();
+    return { active: R.activeNow(), reset: true, frames: cur.slice() };
+  };
+  if (!had || !had.length || !cur.length) return reset();
+  // what's still the same at the start
+  const n = Math.min(had.length, cur.length);
+  let keep = 0;
+  while (keep < n && cur[keep] === had[keep]) keep++;
+  let head = [];
+  let drop = keep;
+  let from = keep; // where, in cur, what the page has goes on
+  if (keep < had.length) {
+    // a stretch was merged: where the two line up again (the first frame both still have)
+    const theirs = new Map();
+    for (let i = keep; i < had.length; i++) theirs.set(had[i], i);
+    let q = keep;
+    while (q < cur.length && !theirs.has(cur[q])) q++;
+    if (q === cur.length) return reset();
+    head = cur.slice(keep, q);
+    drop = theirs.get(cur[q]);
+    from = q + (had.length - drop);
+    if (cur[from - 1] !== had[had.length - 1]) return reset(); // not just a merge: start over
+  }
+  const out = { active: R.activeNow(), keep, head, drop, tail: cur.slice(from) };
+  since.list = cur.slice();
+  return out;
+}
+/** The golden cookie effects CookieMgr has recorded (start, end, multipliers), when they changed. */
+function intervalsIfChanged(sim, since) {
+  const ivs = sim.CA.History.intervals || [];
+  const sig = `${ivs.length}:${ivs.filter((iv) => iv.end).length}:${ivs.length ? ivs[ivs.length - 1].start : 0}`;
+  if (sig === since.ivSig) return null;
+  since.ivSig = sig;
+  return ivs.map(({ ref, ...iv }) => iv);
+}
+
 function gardenView(sim) {
   const G = sim.Game;
   const F = G.Objects.Farm;
@@ -302,15 +378,43 @@ function cmBundle() {
     '(function () {',
     "'use strict';",
     'const CA = (window.CA = {});',
+    // the add-on's pages read "now" from Date.now(): here that's the simulation's clock (the page
+    // sets CookieSimClock.now from each snapshot) — so its charts' windows end at the simulated now
+    `const RealDate = window.Date;
+    const SimClock = (window.CookieSimClock = { now: 0 });
+    class Date extends RealDate {
+      constructor(...a) {
+        if (a.length) super(...a);
+        else super(SimClock.now);
+      }
+      static now() {
+        return SimClock.now;
+      }
+    }`,
     `CA.VERSION = ${JSON.stringify(pkg.version)};`,
     // the add-on keeps its options in the game save; here, in this browser
+    // the add-on's options API (core/settings.js: defineOption, optionsIn, definitions, get, set — set
+    // announcing 'settings' as it does), kept in this browser's localStorage
     `CA.Settings = (() => {
-      const defs = {};
-      const read = () => { try { return JSON.parse(localStorage.getItem('CookieSimMgr.options') || '{}'); } catch (e) { return {}; } };
+      const defs = [];
+      const byKey = {};
+      let values = {};
+      try { values = JSON.parse(localStorage.getItem('CookieSimMgr.options') || '{}'); } catch (e) { values = {}; }
       return {
-        defineOption: (d) => (defs[d.key] = d),
-        get: (k) => { const v = read()[k]; return v !== undefined ? v : defs[k] ? defs[k].default : undefined; },
-        set: (k, v) => { const o = read(); o[k] = v; try { localStorage.setItem('CookieSimMgr.options', JSON.stringify(o)); } catch (e) {} },
+        defineOption(d) {
+          if (!byKey[d.key]) defs.push(d);
+          byKey[d.key] = d;
+          return d;
+        },
+        optionsIn: (group) => defs.filter((d) => d.group === group),
+        definitions: () => defs.slice(),
+        get: (k) => (values[k] !== undefined ? values[k] : byKey[k] ? byKey[k].default : undefined),
+        set(k, v) {
+          if (values[k] === v) return;
+          values[k] = v;
+          try { localStorage.setItem('CookieSimMgr.options', JSON.stringify(values)); } catch (e) {}
+          if (CA.Events) CA.Events.emit('settings', k);
+        },
       };
     })();`,
   ];
@@ -415,7 +519,7 @@ async function route(req, res) {
     const what = parts[3];
     if (method === 'GET' && what === 'stream')
       return stream(req, res, (send) => {
-        const since = { actions: Math.max(0, s.sim.actions.length - 200), events: Math.max(0, s.sim.events().length - 200), samples: 0 };
+        const since = { actions: Math.max(0, s.sim.actions.length - 200), events: 0, samples: 0, list: null, ivSig: '' };
         const tick = () => {
           const snap = snapshot(s, since);
           Object.assign(since, snap.cursor);
@@ -425,7 +529,7 @@ async function route(req, res) {
         const iv = setInterval(tick, 300);
         return () => clearInterval(iv);
       });
-    if (method === 'GET' && what === 'snap') return json(res, 200, snapshot(s, { actions: Math.max(0, s.sim.actions.length - 200), events: Math.max(0, s.sim.events().length - 200), samples: 0 }));
+    if (method === 'GET' && what === 'snap') return json(res, 200, snapshot(s, { actions: Math.max(0, s.sim.actions.length - 200), events: 0, samples: 0, list: null, ivSig: '' }));
     if (method === 'POST' && what === 'control') {
       const b = await body(req);
       if (b.speed != null) s.speed = Math.max(0, Number(b.speed) || 0);
