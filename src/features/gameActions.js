@@ -3,8 +3,11 @@
 // Spells live in features/grimoire.js.
 
 CA.GameActions = (() => {
+  // the shimmers still to pop: the game leaves a popped one in Game.shimmers (popped = true) while
+  // it fades out, and its pop() does nothing the second time
+  const onScreen = () => (Game.shimmers || []).filter((s) => !s.popped);
   const popShimmers = (filter) => {
-    const list = (Game.shimmers || []).filter(filter);
+    const list = onScreen().filter(filter);
     list.forEach((s) => s.pop());
     return list.length;
   };
@@ -20,7 +23,7 @@ CA.GameActions = (() => {
   const shimmerIds = new WeakMap();
   let shimmerN = 0;
   const shimmerKey = (s) => (s.id != null ? s.id : shimmerIds.get(s) || (shimmerIds.set(s, `s${++shimmerN}`), shimmerIds.get(s)));
-  const shimmerOf = (k) => (Game.shimmers || []).find((s) => String(shimmerKey(s)) === String(k)) || null;
+  const shimmerOf = (k) => onScreen().find((s) => String(shimmerKey(s)) === String(k)) || null;
   // a wrinkler's key: its id (its slot), or its place in the list when it has none
   const wrinklerKey = (w, i) => (w.id != null ? w.id : i);
   const wrinklerOf = (k) => (Game.wrinklers || []).find((w, i) => String(wrinklerKey(w, i)) === String(k) && w.phase > 0 && w.hp > 0) || null;
@@ -28,7 +31,7 @@ CA.GameActions = (() => {
 
   function blocks() {
     const V = (id, desc, get, more) => CA.Script.defineValue({ id, desc, get, ...(more || {}) });
-    V('shimmers', 'a list: the golden cookies and reindeer on screen', () => (Game.shimmers || []).map(shimmerKey), { list: true });
+    V('shimmers', 'a list: the golden cookies and reindeer on screen', () => onScreen().map(shimmerKey), { list: true });
     V('shimmer.type', 'a shimmer’s kind: "golden" or "reindeer"', (k) => (shimmerOf(k) || {}).type || '', { params: ['shimmer'] });
     V('shimmer.isWrath', 'whether a golden cookie is a wrath cookie', (k) => !!(shimmerOf(k) || {}).wrath, { params: ['shimmer'], bool: true });
     V('shimmer.life', 'seconds a shimmer has left on screen', (k) => {
@@ -50,10 +53,10 @@ CA.GameActions = (() => {
       icon: 'cookie',
       group: 'Shimmers',
       unit: 'popped',
-      params: [{ key: 'shimmer', label: 'Shimmer', type: 'select', default: '', options: () => (Game.shimmers || []).map((s) => ({ v: shimmerKey(s), label: `${s.type}${s.wrath ? ' (wrath)' : ''}` })) }],
+      params: [{ key: 'shimmer', label: 'Shimmer', type: 'select', default: '', options: () => onScreen().map((s) => ({ v: shimmerKey(s), label: `${s.type}${s.wrath ? ' (wrath)' : ''}` })) }],
       run: (p) => {
         const s = shimmerOf(p.shimmer);
-        if (!s) return 0;
+        if (!s || s.popped) return 0;
         s.pop();
         return 1;
       },
@@ -402,7 +405,7 @@ CA.GameActions = (() => {
       ],
       describe: (p) => `a ${p.type === 'golden' ? 'golden cookie' : p.type === 'wrath' ? 'wrath cookie' : 'reindeer'} is on screen`,
       test: (p) =>
-        (Game.shimmers || []).some((s) =>
+        onScreen().some((s) =>
           p.type === 'reindeer' ? s.type === 'reindeer' : s.type === 'golden' && !!s.wrath === (p.type === 'wrath')
         ),
     });

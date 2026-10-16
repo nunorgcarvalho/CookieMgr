@@ -26,14 +26,22 @@ CA.GardenLayers = (() => {
 
   // ---- the built-ins -------------------------------------------------------------------------
 
-  /** The Effect maximizer, with the numbers of the old settings (seconds before the tick, the death-chance threshold, unlocking new seeds). */
+  // A built-in's **knobs**: how its variables show above its code (ui/codeKnobs.js) —
+  // { name: { kind: 'percent' | 'number' | 'toggle' | 'hidden', min, max, step, unit } }; a variable
+  // without one gets a knob that suits its value.
+  const PCT = { kind: 'percent' };
+  const TOGGLE = { kind: 'toggle' };
+  const SECONDS = { kind: 'number', min: 1, max: 120, step: 1, unit: 's' };
+
+  /** The Steady replanter, with the numbers of the old settings (seconds before the tick, the death-chance threshold, unlocking new seeds). */
   function effectsGardener() {
     const lead = Math.max(1, Number(S().get('gardenLead')) || 15);
     const thr = Math.max(0, Math.min(100, Number(S().get('gardenThreshold')))) / 100;
     const unlock = S().get('gardenUnlockNew') !== false;
     const lines = [
-      '# Effect maximizer: keeps the layout planted, and its plants\' effects as high as they go.',
-      '# It plants only where the layout has a seed, and only clears the tiles the layout uses.',
+      '# Steady replanter: keeps the layout planted, replanting each plant as it dies (or just before,',
+      '# when it is likely to die on the coming tick) — so the garden is always in full, its plants at',
+      '# every age. It plants only where the layout has a seed, and only clears the tiles the layout uses.',
       '# Your numbers (used below):',
       `tickWindow = ${lead}   # the last seconds before a garden tick, when old plants are dealt with`,
     ];
@@ -78,9 +86,9 @@ for tile in garden.tiles():
 # for mutations. A seed you've unlocked already is cleared at once (its tile is another chance); a
 # new one is kept — every copy of it — and harvested once mature (that unlocks it). Seeds unlocked
 # in the last keepRecentMinutes count as new, so a fresh find's other copies grow on too.
-keepRecentMinutes = 60
-tickWindow = 15
-dyingOver = 0.5
+keepRecentMinutes = 60   # a seed unlocked this recently still counts as new
+tickWindow = 15   # the last seconds before a garden tick, when parents likely to die are replanted
+dyingOver = 0.5   # replant a parent more likely than this to die on the tick
 garden.plantEmpty()
 # the soil, as the soil rule picks it (wood chips: three times the mutation chances)
 garden.soilRule()
@@ -96,17 +104,74 @@ if garden.tickIn() <= tickWindow:
   garden.harvestDying(dyingOver)
   garden.plantEmpty()
 `;
+  const COHORT_GARDENER = `# Full-garden replanter: plants the whole layout at once and lets it grow as one round — on
+# fertilizer while it grows, clay once most of it is mature (its soil rule, "Grow together, then
+# clay") — and doesn't replant plants that die. Once too few mature plants are left, it starts a new
+# round: fertilizer first (the next tick comes within 3 minutes; the old plants keep working till
+# then), and the whole layout harvested and replanted in the last seconds before that tick, so the
+# new plants grow on it straight away. Planted together, the plants are mature together: the
+# effects stay near their best for most of each round, and a new round grows fast.
+replantBelow = 0.75   # start a new round once fewer than this share of the layout's tiles hold a mature plant
+plantWindow = 15   # a new round is planted in the last seconds before a tick, so it grows on it at once
+unlockNewSeeds = true   # a seed you haven't unlocked yet: let it grow, harvest it once mature (that unlocks it)
+if unlockNewSeeds:
+  garden.harvestNew()
+# what doesn't belong on the layout's tiles (weeds, mutations) is cleared, so it can't hold up a round
+for tile in garden.tiles():
+  if garden.wantAt(tile) != "" and garden.isOff(tile) and not garden.isEmpty(tile) and not (unlockNewSeeds and garden.isNew(tile)):
+    garden.harvest(tile)
+# a new round is due: nothing of the layout growing, and too few of its plants mature
+if garden.layoutYoung() == 0 and garden.layoutMature() < replantBelow * garden.layoutTiles():
+  # fertilizer first: it brings the next tick within 3 minutes
+  garden.soil(fertilizer)
+  # then, just before that tick: harvest everything and plant the whole layout
+  if garden.tickIn() <= plantWindow:
+    for tile in garden.tiles():
+      if garden.wantAt(tile) != "" and not garden.isEmpty(tile):
+        garden.harvest(tile)
+    garden.plantEmpty()
+else:
+  garden.soilRule()
+# while a round is still young, fill any tile it couldn't plant (not enough cookies at the time)
+if garden.layoutYoung() > 0 and garden.layoutMature() == 0:
+  garden.plantEmpty()
+`;
   const GARDENERS = [
-    { id: 'effects', name: 'Effect maximizer', desc: 'Keeps the layout planted and its effects high: plants the layout’s seeds, unlocks new seeds, and replants mature plants about to die just before the tick. Only touches the tiles the layout uses.', data: () => ({ rules: effectsGardener() }) },
-    { id: 'weeds', name: 'Weed collector', desc: 'Keeps the garden bare so weeds and fungi spring up; harvests old meddleweed (for brown mold and crumbspore) and new seeds once mature, clears everything else. Plants nothing.', data: () => ({ rules: WEED_GARDENER }) },
-    { id: 'mutations', name: 'Mutation tracker', desc: 'Grows the layout’s parents and watches the other tiles: a seed you have is cleared at once, a new one (or one unlocked in the last hour) is kept until mature and harvested.', data: () => ({ rules: MUTATION_GARDENER }) },
+    {
+      id: 'effects',
+      name: 'Steady replanter',
+      desc: 'Keeps the layout in full: replants each plant as it dies (or just before, when it’s likely to die on the tick), unlocks new seeds. Only touches the tiles the layout uses.',
+      data: () => ({ rules: effectsGardener(), knobs: { tickWindow: SECONDS, dyingOver: PCT, unlockNewSeeds: TOGGLE } }),
+    },
+    {
+      id: 'cohort',
+      name: 'Full-garden replanter',
+      desc: 'Plants the whole layout together, grows it on fertilizer, holds it on clay, and once too few are left, switches to fertilizer and replants everything just before the next tick — so the plants are mature together. The most golden cookies from a golden clover field, in high windows.',
+      data: () => ({ rules: COHORT_GARDENER, knobs: { replantBelow: PCT, plantWindow: SECONDS, unlockNewSeeds: TOGGLE } }),
+    },
+    { id: 'weeds', name: 'Weed collector', desc: 'Keeps the garden bare so weeds and fungi spring up; harvests old meddleweed (for brown mold and crumbspore) and new seeds once mature, clears everything else. Plants nothing.', data: () => ({ rules: WEED_GARDENER, knobs: { oldWeedOver: PCT } }) },
+    {
+      id: 'mutations',
+      name: 'Mutation tracker',
+      desc: 'Grows the layout’s parents and watches the other tiles: a seed you have is cleared at once, a new one (or one unlocked in the last hour) is kept until mature and harvested.',
+      data: () => ({ rules: MUTATION_GARDENER, knobs: { keepRecentMinutes: { kind: 'number', min: 0, max: 240, step: 5, unit: 'min' }, tickWindow: SECONDS, dyingOver: PCT } }),
+    },
   ];
 
   const FERTILIZER_VAR = 'fertilizerAbove';
-  const SOIL_EFFECTS = `# Fertilizer while most plants are still growing (quicker ticks), clay (effects ×1.25) once
-# enough of them are mature.
-${FERTILIZER_VAR} = 0.67   # fertilizer while more than this share of the planted tiles is still growing
+  const SOIL_EFFECTS = `# Fertilizer while nearly everything is still growing (a freshly planted garden: quicker ticks),
+# clay (effects ×1.25) otherwise. Once plants are replanted one at a time, fertilizer doesn't help:
+# a plant spends the same share of its ticks growing on either soil, at 0.75 instead of 1.25.
+${FERTILIZER_VAR} = 0.9   # fertilizer while more than this share of the planted tiles is still growing
 if garden.youngShare() > ${FERTILIZER_VAR}:
+  garden.soil(fertilizer)
+else:
+  garden.soil(clay)
+`;
+  const SOIL_COHORT = `# Grow together, then clay: fertilizer while the layout's plants grow as a round (quick ticks),
+# clay (effects ×1.25) once clayAt of its tiles hold a mature plant.
+clayAt = 0.75   # switch to clay once this share of the layout's tiles hold a mature plant
+if garden.layoutYoung() > 0 and garden.layoutMature() < clayAt * garden.layoutTiles():
   garden.soil(fertilizer)
 else:
   garden.soil(clay)
@@ -121,8 +186,9 @@ else:
 `;
   const fixedSoil = (key, why) => `# Always ${key}${why ? ` — ${why}` : ''}.\ngarden.soil(${key})\n`;
   const SOILS = [
-    { id: 'effects', name: 'Fertilizer, then clay', desc: 'Fertilizer while most plants grow, clay (effects ×1.25) once a third of them are mature.', data: () => ({ rules: SOIL_EFFECTS }) },
-    { id: 'mutations', name: 'Fertilizer, then wood chips', desc: 'Fertilizer while the layout’s plants grow, wood chips (×3 mutation chances) once they’re mature.', data: () => ({ rules: SOIL_MUTATIONS }) },
+    { id: 'effects', name: 'Fertilizer, then clay', desc: 'Fertilizer for a freshly planted garden, clay (effects ×1.25) the rest of the time.', data: () => ({ rules: SOIL_EFFECTS, knobs: { [FERTILIZER_VAR]: PCT } }) },
+    { id: 'cohort', name: 'Grow together, then clay', desc: 'For the Full-garden replanter: fertilizer while a round grows, clay once most of it is mature.', data: () => ({ rules: SOIL_COHORT, knobs: { clayAt: PCT } }) },
+    { id: 'mutations', name: 'Fertilizer, then wood chips', desc: 'Fertilizer while the layout’s plants grow, wood chips (×3 mutation chances) once they’re mature.', data: () => ({ rules: SOIL_MUTATIONS, knobs: { growingOver: PCT } }) },
     { id: 'fertilizer', name: 'Always fertilizer', desc: 'Quickest ticks, the most weeds (×1.2); effects ×0.75.', data: () => ({ rules: fixedSoil('fertilizer', 'the quickest ticks and the most weeds') }) },
     { id: 'clay', name: 'Always clay', desc: 'Effects ×1.25; slow ticks.', data: () => ({ rules: fixedSoil('clay', 'effects ×1.25, slow ticks') }) },
     { id: 'woodchips', name: 'Always wood chips', desc: 'Three times the mutation chances; needs 300 farms.', data: () => ({ rules: fixedSoil('woodchips', 'three times the mutation chances') }) },
@@ -179,6 +245,7 @@ else:
   const PROFILES = [
     { id: 'maxEffects', name: 'Max effects · current garden', desc: 'Keeps what you’ve planted, its effects as high as they go.', data: () => ({ gardener: 'effects', soil: 'effects', template: 'current', seeds: 'current' }) },
     { id: 'goldenClovers', name: 'Golden clover field', desc: 'Golden clover on every tile, for golden cookies.', data: () => ({ gardener: 'effects', soil: 'effects', template: 'fill', seeds: 'goldenClover' }) },
+    { id: 'goldenCombos', name: 'Golden clover combos', desc: 'Golden clover on every tile, planted and replanted all together: the field is mature at once, for the most golden cookies in long high windows.', data: () => ({ gardener: 'cohort', soil: 'cohort', template: 'fill', seeds: 'goldenClover' }) },
     { id: 'mutationHunt', name: 'Mutation hunt', desc: 'Two parents in rows, wood chips once they’re mature; new seeds kept until unlocked. Pick the recipe in Seeds.', data: () => ({ gardener: 'mutations', soil: 'mutations', template: 'rows', seeds: 'to-cronerice' }) },
     { id: 'juicyQueenbeet', name: 'Juicy queenbeet', desc: 'Rings of queenbeets on wood chips: each empty centre can grow a Juicy queenbeet (a sugar lump).', data: () => ({ gardener: 'mutations', soil: 'mutations', template: 'rings', seeds: 'queenbeet' }) },
     { id: 'weedFarm', name: 'Weed farm', desc: 'A bare garden on fertilizer, for meddleweed, brown mold and crumbspore.', data: () => ({ gardener: 'weeds', soil: 'fertilizer', template: 'bare', seeds: 'current' }) },
@@ -186,7 +253,23 @@ else:
 
   // ---- the stores ----------------------------------------------------------------------------
 
-  const cleanRules = (d) => ({ rules: String((d && d.rules) || '').slice(0, 20000) });
+  const KINDS = ['percent', 'number', 'toggle', 'hidden'];
+  /** Knobs as saved: { name: { kind, min?, max?, step?, unit? } }. */
+  function cleanKnobs(k) {
+    const out = {};
+    Object.keys(k && typeof k === 'object' ? k : {})
+      .slice(0, 60)
+      .forEach((name) => {
+        const v = k[name];
+        if (!/^[A-Za-z_]\w{0,40}$/.test(name) || !v || !KINDS.includes(v.kind)) return;
+        const o = { kind: v.kind };
+        ['min', 'max', 'step'].forEach((f) => Number.isFinite(Number(v[f])) && v[f] !== '' && v[f] != null && (o[f] = Number(v[f])));
+        if (typeof v.unit === 'string' && v.unit) o.unit = v.unit.slice(0, 8);
+        out[name] = o;
+      });
+    return out;
+  }
+  const cleanRules = (d) => ({ rules: String((d && d.rules) || '').slice(0, 20000), knobs: cleanKnobs(d && d.knobs) });
   const cleanPlot = (plot) => Array.from({ length: SIZE }, (_, y) => Array.from({ length: SIZE }, (_, x) => (plot && plot[y] && typeof plot[y][x] === 'string' && /^[A-Z]$/.test(plot[y][x]) ? plot[y][x] : null)));
   const cleanMap = (m) => {
     const out = {};
@@ -215,7 +298,12 @@ else:
   function get(layer, id) {
     const b = builtinOf(layer, id);
     const own = saved[layer].find((x) => x.id === id);
-    if (b) return { id, name: b.name, desc: b.desc || '', builtin: true, live: !!b.live, group: b.group || '', edited: !!own && !b.live, data: own && !b.live ? own.data : b.data() };
+    if (b) {
+      const def = b.data();
+      // an edit saved before its knobs were: the built-in's
+      const data = own && !b.live ? (def.knobs && own.data.rules != null && !Object.keys(own.data.knobs || {}).length ? { ...own.data, knobs: def.knobs } : own.data) : def;
+      return { id, name: b.name, desc: b.desc || '', builtin: true, live: !!b.live, edited: !!own && !b.live, group: b.group || '', data };
+    }
     if (own) return { id, name: own.name, desc: '', builtin: false, live: false, edited: false, group: '', data: own.data };
     return null;
   }

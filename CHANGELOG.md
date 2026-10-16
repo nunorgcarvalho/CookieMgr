@@ -2,6 +2,39 @@
 
 ## Unreleased
 
+## 3.4.2 — 2026-10-16
+
+- **The Full-garden replanter starts a new round fertilizer first.** It switches to fertilizer as soon as a round is
+  due — which brings the next tick within 3 minutes — keeps the old plants working until then, and harvests and
+  replants the whole layout in the last `plantWindow` (15) seconds before that tick, so the new plants grow on it
+  straight away instead of sitting as seedlings until the next one. On a level-6 golden clover field: golden cookies
+  +55.8% on average instead of +55.0%, at the same number of plantings. (If the soil can't change yet — its
+  10-minute cooldown — it still replants just before the next tick.) Edited copies of the gardener keep their code.
+
+## 3.4.1 — 2026-10-16
+
+- **Fix: a popped golden cookie was counted again while it faded out.** The game keeps a popped shimmer on screen
+  (marked popped) for a moment, and the Golden cookies macro — every 100 ms — popped it again each time: nothing
+  happened in the game, but its count and the logs went up (103 pops for 8 golden cookies in an hour).
+  `shimmers()`, `shimmer.pop` and "a golden cookie is on screen" now skip popped ones.
+
+## 3.4.0 — 2026-10-16
+
+- **Two replanting gardeners.** The Effect maximizer is now the **Steady replanter** (each plant replaced as it
+  dies — same code, same id). New: the **Full-garden replanter** — plants the whole layout at once, grows it on
+  fertilizer, holds it on clay once most of it is mature (its soil rule, *Grow together, then clay*), doesn't
+  replant plants that die, and replants everything once fewer than `replantBelow` (75%) are left. On a level-6
+  golden clover field: golden cookies +55% on average instead of +49%, and +60% or more about 60% of the time
+  instead of 4%. The **Golden clover combos** profile loads it with Fill and Golden clover.
+- **Variables as controls.** Above a gardener's or soil rule's code, every top-level `name = number` or
+  `true/false` line is a control — a percentage slider in 5% steps, a number slider, or a switch, each with a box
+  for an exact value — in step with the code both ways. ⚙ sets how a variable shows (kind, range, step, unit, or
+  hidden), kept with the algorithm; the built-ins come with theirs.
+- **"Fertilizer, then clay" switches at 0.9** (was 0.67): with plants replanted one at a time fertilizer only
+  lowers effects (×0.75) and makes plants die sooner, so it's now kept for a freshly planted garden. Edited copies
+  keep their number.
+- New garden values: `garden.layoutTiles()`, `garden.layoutMature()`, `garden.layoutYoung()`.
+
 ## 3.3.1 — 2026-10-14
 
 - **The Seeds slot picks seeds by their icons**: a tab per letter of the template (its seed's icon and name), and

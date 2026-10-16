@@ -34,7 +34,7 @@ const def = G.defaultRules();
 assert(G.compileRules(def).errors.length === 0, `default rules compile (${JSON.stringify(G.compileRules(def).errors)})`);
 assert(/garden\.plantEmpty\(\)/.test(def) && /garden\.harvestNew\(\)/.test(def) && /tickWindow = 15\b/.test(def) && /garden\.tickIn\(\) <= tickWindow/.test(def) && /dyingOver = 0\.5\b/.test(def) && /garden\.harvestDying\(dyingOver\)/.test(def), 'default rules: plant, unlock new seeds, the 15s window, the 50% threshold (v3.1.1: as variables at the top)');
 const soil = G.soilRules();
-assert(/garden\.soilRule\(\)/.test(def) && /fertilizerAbove = 0\.67\b/.test(soil) && /if garden\.youngShare\(\) > fertilizerAbove:\n\s+garden\.soil\(fertilizer\)\nelse:\n\s+garden\.soil\(clay\)/.test(soil), 'default soil rule (v3.3: its own, called by the gardener): fertilizer while > 0.67 is young, else clay');
+assert(/garden\.soilRule\(\)/.test(def) && /fertilizerAbove = 0\.9\b/.test(soil) && /if garden\.youngShare\(\) > fertilizerAbove:\n\s+garden\.soil\(fertilizer\)\nelse:\n\s+garden\.soil\(clay\)/.test(soil), 'default soil rule (v3.3: its own, called by the gardener): fertilizer while > 0.9 is young, else clay');
 CA.Settings.set('gardenLead', 30);
 CA.Settings.set('gardenThreshold', 80);
 CA.Settings.set('gardenUnlockNew', false);
@@ -67,11 +67,11 @@ assert(M.soil === 1, 'clay waits for the soil cooldown');
 M.nextSoil = 0;
 G.tend();
 assert(M.soil === 2, `≥33% mature: clay (soil ${M.soil})`);
-// back: only 2 of 8 mature → 75% young → fertilizer
-set(3, 2, 'bakerWheat', 5);
+// back: all young (a fresh planting) → fertilizer (v3.4: the threshold is 0.9 — 75% young stays on clay)
+[1, 2, 3].forEach((x) => set(x, 2, 'bakerWheat', 5));
 M.nextSoil = 0;
 G.tend();
-assert(M.soil === 1, '75% young again: fertilizer');
+assert(M.soil === 1, 'all young again: fertilizer');
 
 // ---- the last pass: the lines it took, its decisions
 const lp = G.lastPass();
@@ -80,10 +80,10 @@ assert(lp.trace.some((t) => /garden\.soilRule: 1/.test(t.text)), 'trace: the act
 assert(!lp.trace.some((t) => /plantEmpty/.test(t.text)), 'actions with nothing to do are left out');
 const sp = G.soilPass();
 const lineOf = (re) => G.soilRules().split('\n').findIndex((l) => re.test(l)) + 1;
-assert(sp && sp.soil === 'effects' && sp.lines.includes(lineOf(/^if garden\.youngShare/)) && sp.trace.some((t) => /youngShare\(\) = 0\.75 > fertilizerAbove = 0\.67 ✓ → yes/.test(t.text)), `the soil rule's own run: the if, taken (${sp && sp.trace.map((t) => t.text).join(' | ')})`);
+assert(sp && sp.soil === 'effects' && sp.lines.includes(lineOf(/^if garden\.youngShare/)) && sp.trace.some((t) => /youngShare\(\) = 1(?:\.0+)? > fertilizerAbove = 0\.90? ✓ → yes/.test(t.text)), `the soil rule's own run: the if, taken (${sp && sp.trace.map((t) => t.text).join(' | ')})`);
 
 // ---- your own code
-set(4, 2, 'bakerWheat', 40); // 3 mature wheat now: 1,2,4
+[1, 2, 4].forEach((x) => set(x, 2, 'bakerWheat', 40)); // 3 mature wheat now: 1,2,4
 const mine = LY.add('gardener', 'Harvest all', { rules: '# harvest everything that is mature, replant\ngarden.harvestMature()\ngarden.plantEmpty()\n' });
 G.useGardener(mine);
 assert(G.activeGardener().id === mine && /harvestMature/.test(G.rulesOf()), 'a gardener of your own, in use');

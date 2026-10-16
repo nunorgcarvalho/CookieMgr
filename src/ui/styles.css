@@ -3016,6 +3016,140 @@
   justify-content: center;
   color: rgba(232, 220, 192, 0.6);
 }
+/* knobs: the code's variables as controls, above it (ui/codeKnobs.js) */
+#CookieMgrMenu .ca-knobs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 220, 150, 0.14);
+  background: rgba(0, 0, 0, 0.25);
+}
+#CookieMgrMenu .ca-knobs:empty {
+  display: none;
+}
+#CookieMgrMenu .ca-knobs-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: bold 12px Tahoma, Arial, sans-serif;
+  color: #9fe06a;
+}
+#CookieMgrMenu .ca-knobs-head .ca-hint {
+  font-weight: normal;
+}
+#CookieMgrMenu .ca-knob {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(180px, 2fr) auto;
+  align-items: center;
+  gap: 4px 10px;
+  padding: 3px 0;
+}
+#CookieMgrMenu .ca-knob + .ca-knob {
+  border-top: 1px solid rgba(255, 220, 150, 0.07);
+}
+#CookieMgrMenu .ca-knob-label {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-size: 12px;
+  color: #f0e2c0;
+}
+#CookieMgrMenu .ca-knob-label code {
+  font: 10px Consolas, Menlo, monospace;
+  color: rgba(232, 220, 192, 0.45);
+}
+#CookieMgrMenu .ca-knob-ctl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+#CookieMgrMenu .ca-knob-range {
+  flex: 1;
+  min-width: 80px;
+  accent-color: #8bd45e;
+}
+#CookieMgrMenu .ca-knob-num {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+#CookieMgrMenu .ca-knob-num input {
+  width: 58px;
+  font: 12px Tahoma, Arial, sans-serif;
+  color: #f0e2c0;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 220, 150, 0.25);
+  border-radius: 4px;
+  padding: 2px 5px;
+  text-align: right;
+}
+#CookieMgrMenu .ca-knob-num em {
+  min-width: 18px;
+  font-style: normal;
+  font-size: 11px;
+  color: rgba(232, 220, 192, 0.6);
+}
+#CookieMgrMenu .ca-knob-val {
+  font-size: 11px;
+  color: rgba(232, 220, 192, 0.7);
+}
+#CookieMgrMenu .ca-knob-cfg {
+  padding: 2px 4px;
+  cursor: pointer;
+  color: rgba(232, 220, 192, 0.4);
+  border: 0;
+  border-radius: 4px;
+  background: none;
+}
+#CookieMgrMenu .ca-knob-cfg:hover,
+#CookieMgrMenu .ca-knob.open .ca-knob-cfg {
+  color: #fff3d6;
+  background: rgba(255, 255, 255, 0.08);
+}
+#CookieMgrMenu .ca-knob-cfg.custom {
+  color: #9fe06a;
+}
+#CookieMgrMenu .ca-knob-cfg-panel {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 6px 8px;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.3);
+  font-size: 11px;
+  color: rgba(232, 220, 192, 0.8);
+}
+#CookieMgrMenu .ca-knob-cfg-panel label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+#CookieMgrMenu .ca-knob-cfg-panel input,
+#CookieMgrMenu .ca-knob-cfg-panel select {
+  width: 56px;
+  font: 11px Tahoma, Arial, sans-serif;
+  color: #f0e2c0;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 220, 150, 0.25);
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+#CookieMgrMenu .ca-knob-cfg-panel select {
+  width: auto;
+}
+#CookieMgrMenu .ca-knobs-hidden {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding-top: 4px;
+}
 #CookieMgrMenu .ca-gmini {
   display: grid;
   grid-template-columns: repeat(6, 14px);
