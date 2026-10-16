@@ -1,5 +1,5 @@
 // v3.9.1: the Full-garden replanter plants an empty plot at once (it used to wait for the next
-// tick); when a new round is planted is a knob — replantAtTick: false (the default) at once, true
+// tick); when a new round is planted is a knob — replantAtTick: false at once, true (the default since v3.10.1)
 // fertilizer first and the old plants kept until the last seconds before the tick. And Cookie
 // Monster's own suffixes and spacing for long numbers (…SpDe, ODe, NDe, Vi… UCt).
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
@@ -29,7 +29,7 @@ LY.pick('profile', 'goldenCombos');
 LY.pick('seeds', 'bakerWheat');
 
 // ---- the knob: when a new round is planted — at once by default
-assert(/^replantAtTick = false\b/m.test(G.rulesOf()) && LY.get('gardener', 'cohort').data.knobs.replantAtTick.kind === 'toggle', 'replantAtTick: a switch, off (a new round at once) by default');
+assert(/^replantAtTick = true\b/m.test(G.rulesOf()) && LY.get('gardener', 'cohort').data.knobs.replantAtTick.kind === 'toggle', 'replantAtTick: a switch, on by default (v3.10.1 — the simulator’s sweep; it was off in v3.9.1)');
 assert(/replantAtTick only/.test(G.rulesOf().split('\n').find((l) => /^plantWindow/.test(l))), 'plantWindow says it only matters with replantAtTick');
 
 // ---- an empty plot, the tick 10 minutes away: planted on the first pass — in both modes
@@ -55,7 +55,7 @@ atTick(false);
 due();
 let before = M.harvestLog.length;
 G.tend();
-assert(M.harvestLog.length - before === 8 && young() === 12 && soil() === 'fertilizer', 'at once (the default): the 8 left harvested and the whole layout planted now, on fertilizer');
+assert(M.harvestLog.length - before === 8 && young() === 12 && soil() === 'fertilizer', 'at once (replantAtTick off): the 8 left harvested and the whole layout planted now, on fertilizer');
 atTick(true);
 due();
 before = M.harvestLog.length;
@@ -64,7 +64,7 @@ assert(M.harvestLog.length === before && young() === 0 && soil() === 'fertilizer
 tickIn(10);
 G.tend();
 assert(M.harvestLog.length - before === 8 && young() === 12, '…then in the last seconds before the tick: everything replanted');
-atTick(false);
+atTick(true);
 assert(!LY.get('gardener', 'cohort').edited, '(back to the built-in)');
 
 // ---- Cookie Monster's suffixes (its own lists), with its space

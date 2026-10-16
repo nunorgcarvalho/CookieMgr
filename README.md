@@ -569,11 +569,13 @@ The gardeners:
 - **Full-garden replanter** — plants the whole layout at once and lets it grow as one round: on fertilizer while it
   grows, clay once most of it is mature (its soil rule, *Grow together, then clay*, `clayAt` 75%), and it doesn't
   replant plants that die during a round; once fewer than `replantBelow` (75%) of the layout's tiles hold a mature
-  plant, a new round: the plants still alive harvested and the whole layout planted at once, on fertilizer. With
-  `replantAtTick` on, a new round waits instead: fertilizer first (the next tick within 3 minutes, the old plants
-  working until then), then everything harvested and replanted in the last `plantWindow` (15) seconds before that
-  tick, so the new plants grow on it straight away (about +1 point of golden cookies in the simulation). Either way an
-  empty plot — the first round, or every plant dead — is planted at once. Planted together, the plants are mature together — for a level-6
+  plant, a new round: fertilizer first (the next tick within 3 minutes, the old plants working until then), then
+  everything harvested and the whole layout replanted in the last `plantWindow` (15) seconds before that tick, so the
+  new plants grow on it straight away. That's `replantAtTick` (on by default); off, a new round is planted at once.
+  The simulator (the real game, a level-6 golden clover field, 24 h × 4 seeds) has the tick ahead on every seed:
+  golden cookies +56.0% ± 0.3 against +54.8% ± 0.5, and +60% or more 69.4% of the time against 68.3%
+  (`npm run sim -- experiment garden-replant-modes --hours 24 --seeds 4`). Either way an empty plot — the first
+  round, or every plant dead — is planted at once, and so is a round fertilizer can't come for (its cooldown). Planted together, the plants are mature together — for a level-6
   golden clover field, golden cookies +56% on average (+49% replanting one at a time) and +60% or more about 60% of
   the time (4%), so about 12% more chances for two effects to overlap. It replants about twice as often.
 - **Weed collector** — keeps the garden bare (with *Always fertilizer*: the most weeds), so meddleweed and fungi
