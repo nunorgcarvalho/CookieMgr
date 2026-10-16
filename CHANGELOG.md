@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- **Alerts** (Cookie Monster's notifications, CookieMgr's way): built-in "When…" macros for a golden cookie, a wrath
+  cookie, a reindeer, a fortune cookie in the news, the Grimoire's magic full and the sugar lump ripe — each flashes
+  the screen, plays a sound and notes it (event log, game or desktop notification), its card picking the colour,
+  sound and where (Macros page → Alerts). New actions `alert.flash`, `alert.sound`, `alert.notify`; new conditions
+  `fortune`, `lumpRipe`. While a golden cookie is on screen the tab's title starts with ✦ (wrath: ⚠) and its icon
+  becomes the cookie (Events page option).
+- Actions can take free text (a text field in the macro editor and on built-in cards).
+
 ## 3.6.0 — 2026-10-16
 
 - **Cookie Monster's statistics, CookieMgr's way** — a **Stats** page and a **Payback** page, and the store shows

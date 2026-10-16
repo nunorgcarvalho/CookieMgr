@@ -35,9 +35,9 @@ const all = [...files('core'), ...files('features'), ...files('ui')];
 const missing = all.filter((f) => !build.includes(`'${f}'`));
 assert(!missing.length, `every src file is built${missing.length ? ` — not in build.mjs: ${missing.join(', ')}` : ''}`);
 
-// ---- house rules (out.title: a widget's saved name, not an attribute)
+// ---- house rules (out.title: a widget's saved name; document.title: the tab's — neither an attribute)
 const ui = [...files('ui'), ...files('features')];
-const titles = ui.flatMap((f) => where(f, /\stitle="|(?<!\bout)\.title\s*=[^=]|setAttribute\(\s*'title'/)).filter((x) => !x.startsWith('ui/tips.js'));
+const titles = ui.flatMap((f) => where(f, /\stitle="|(?<!\bout|\bdocument)\.title\s*=[^=]|setAttribute\(\s*'title'/)).filter((x) => !x.startsWith('ui/tips.js'));
 assert(!titles.length, `no native title tooltips — data-tip (ui/tips.js)${titles.length ? ` — ${titles.join(', ')}` : ''}`);
 const scrolls = all.flatMap((f) => where(f, /scrollIntoView\(/));
 assert(!scrolls.length, `no scrollIntoView (it shifts the game's own containers) — CA.Util.scrollInPanel${scrolls.length ? ` — ${scrolls.join(', ')}` : ''}`);

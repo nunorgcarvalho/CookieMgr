@@ -21,6 +21,7 @@ CA.UI.MacrosPage = (() => {
     { id: 'garden', title: 'Garden', icon: 'leaf', page: 'garden' },
     { id: 'buying', title: 'Buying', icon: 'dollar' },
     { id: 'upkeep', title: 'Seasons, lumps & the dragon', icon: 'calendar' },
+    { id: 'alerts', title: 'Alerts', icon: 'bell' },
   ];
   const ICONS = ['bolt', 'cookie', 'star', 'sparkle', 'play', 'clock', 'stocks', 'dollar', 'wizard', 'wrinkler', 'lump', 'trophy', 'graphs', 'tag', 'marker', 'ascend'];
   const MODES = [
@@ -78,6 +79,7 @@ CA.UI.MacrosPage = (() => {
   function choiceField(p, cur, attrs) {
     if (p.type === 'bool') return { html: `<input type="checkbox" ${attrs} data-type="bool"${cur ? ' checked' : ''}>`, summary: cur ? p.label : `no: ${p.label.toLowerCase()}` };
     if (p.type === 'number') return { html: `<input type="number" step="any" ${attrs} data-type="number" value="${esc(cur)}"${p.min != null ? ` min="${p.min}"` : ''}>`, summary: `${p.label}: ${cur}` };
+    if (p.type === 'text') return { html: `<input type="text" ${attrs} data-type="string" value="${esc(cur)}">`, summary: `${p.label}: ${cur}` };
     const list = typeof p.options === 'function' ? p.options() : p.options || [];
     const sel = list.find((x) => String(x.v) === String(cur));
     return {
@@ -286,6 +288,8 @@ CA.UI.MacrosPage = (() => {
         '</select>';
     } else if (p.type === 'bool') {
       input = `<input type="checkbox" data-edit="${path}" data-type="bool"${v ? ' checked' : ''}>`;
+    } else if (p.type === 'text') {
+      input = `<input type="text" data-edit="${path}" data-type="string" value="${esc(v)}">`;
     } else {
       input = `<input type="number" step="any" data-edit="${path}" data-type="number" value="${esc(v)}"${p.min != null ? ` min="${p.min}"` : ''}>`;
     }

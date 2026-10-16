@@ -5606,3 +5606,20 @@ body.ca-has-storebar #products {
 #CookieMgrMenu [data-st-spawn] .ca-stat-sub {
   white-space: normal;
 }
+
+/* ---------- alerts: a screen flash (features/alerts.js) ---------- */
+.ca-alert-flash {
+  position: fixed;
+  inset: 0;
+  z-index: 100000000;
+  pointer-events: none;
+  animation: caAlertFlash 0.9s ease-out forwards;
+}
+@keyframes caAlertFlash {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}

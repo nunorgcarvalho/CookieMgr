@@ -639,6 +639,15 @@ Hover a notification about an upgrade or an achievement (unlocked, dropped, foun
 store and the stats menu show. The game only does this for a few of its notifications; CookieMgr adds it to every one
 that names an upgrade or achievement.
 
+**Alerts** tell you when something worth catching appears — a golden cookie, a wrath cookie, a reindeer, a fortune
+cookie in the news, the Grimoire's magic full, the sugar lump ripe. Each is a built-in macro (Macros page → **Alerts**;
+switch on the ones you want) that, when it appears, flashes the screen, plays a sound and notes it — in the event log,
+or also as a game or desktop notification; its card picks the colour, the sound and where. They're made of pieces
+your own macros can use: the conditions `fortune` and `lumpRipe` (with `shimmer` and `magicPct`), and the actions
+`alert.flash(colour)`, `alert.sound(sound)` and `alert.notify(text, where)`. And while a golden cookie is on screen
+the tab's title starts with ✦ (a wrath cookie: ⚠) and its icon becomes the cookie, so you see it from another tab
+(Events page → **Golden cookie in the tab**).
+
 ### Store
 
 A small toolbar runs along the bottom of the store, over the building rows (hover a button for what it does;
@@ -812,6 +821,7 @@ src/
     timers.js        golden cookie / reindeer odds (exact), buffs, sugar lump, autosave, magic
     collection.js    what's left to collect: upgrades, achievements, season and plant drops
     whatIf.js        the CpS a Pantheon spirit or a dragon aura would bring, asked of the game
+    alerts.js        alerts: flash / sound / notify actions, fortune & lump conditions, the built-in alerts, the tab
     autoBuy.js       buying macros (lowest payback period, research, cheap upgrades) and petting the dragon
     seasons.js       season drops and completion, the Grandmapocalypse, SeasonCompletion's code
     script.js        the language of algorithmic macros: parsing, values, explaining conditions

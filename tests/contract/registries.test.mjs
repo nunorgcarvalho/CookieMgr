@@ -33,7 +33,7 @@ function every(what, items, check) {
 
 // ---- actions --------------------------------------------------------------------------------
 const actions = CA.Actions.all();
-const PARAM_TYPES = ['select', 'number', 'bool'];
+const PARAM_TYPES = ['select', 'number', 'bool', 'text'];
 function paramsOk(params) {
   for (const p of params || []) {
     if (!p.key || !p.label) return `a param without key/label`;
@@ -46,6 +46,7 @@ function paramsOk(params) {
     }
     if (p.type === 'number' && typeof p.default !== 'number') return `param ${p.key}: number default ${p.default}`;
     if (p.type === 'bool' && typeof p.default !== 'boolean') return `param ${p.key}: bool default ${p.default}`;
+    if (p.type === 'text' && typeof p.default !== 'string') return `param ${p.key}: text default ${p.default}`;
   }
   return true;
 }
