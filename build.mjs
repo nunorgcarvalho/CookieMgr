@@ -55,6 +55,7 @@ const MODULES = [
   'features/timers.js',
   'features/collection.js',
   'features/whatIf.js',
+  'features/mutations.js',
   'features/alerts.js',
   'features/autoBuy.js',
   'features/seasons.js',
