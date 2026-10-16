@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- **Force the Hand of Fate's forecast is much cheaper to ask.** What the next casts give is worked out once for the
+  state it depends on (the save's seed and spells cast, the backfire chance, the season's cookie picture, Dragonflight,
+  10+ buildings) and kept; `fthof.castsUntil` looks only as far ahead as it needs, and the words skip what Gambler's
+  Fever Dream would do (the tooltips and widgets still show it). Each cast is worked out from one seeding instead of
+  three. A macro asking every tick (Force the Hand of Fate on combos, skip ahead) went from about 500 seedings an ask to
+  none once known — a simulated hour 13× faster. Same answers.
+
 ## 3.12.1 — 2026-10-16
 
 - **Force the Hand of Fate on combos reads the forecast.** Two new choices on its card: **Forecast** — off (as before,

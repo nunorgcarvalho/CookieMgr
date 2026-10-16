@@ -8598,8 +8598,10 @@ CA.Fthof = (() => {
   const STARTDENOM = WIDTH ** CHUNKS;
   const SIGNIFICANCE = 2 ** 52;
   const OVERFLOW = SIGNIFICANCE * 2;
-  /** A generator of the numbers Math.seedrandom(seed) would make Math.random give. */
+  let seedings = 0; // how many generators were seeded (the costly part: a key schedule and 256 dropped bytes)
+  /** A generator of the numbers Math.seedrandom(seed) would make Math.random give; .fork() copies it where it is. */
   function seeded(seed) {
+    seedings++;
     const key = [];
     const s = String(seed);
     let smear = 0;
@@ -8608,8 +8610,6 @@ CA.Fthof = (() => {
       key[MASK & i] = MASK & (smear + s.charCodeAt(i));
     }
     const S = [];
-    let i = 0;
-    let j = 0;
     const k = key.length ? key : [0];
     for (let n = 0; n < WIDTH; n++) S[n] = n;
     for (let n = 0, g = 0; n < WIDTH; n++) {
@@ -8618,6 +8618,14 @@ CA.Fthof = (() => {
       S[n] = S[g];
       S[g] = t;
     }
+    const gen = arc4(S, 0, 0);
+    gen.skip(WIDTH); // RC4-drop[256]
+    return gen;
+  }
+  /** The generator from an ARC4 state (S, i, j): numbers as seedrandom 2.0 makes them. */
+  function arc4(S, i0, j0) {
+    let i = i0;
+    let j = j0;
     const next = (count) => {
       let c = 0;
       while (count--) {
@@ -8630,8 +8638,7 @@ CA.Fthof = (() => {
       }
       return c;
     };
-    next(WIDTH); // RC4-drop[256]
-    return () => {
+    const gen = () => {
       let n = next(CHUNKS);
       let d = STARTDENOM;
       let x = 0;
@@ -8647,6 +8654,9 @@ CA.Fthof = (() => {
       }
       return (n + x) / d;
     };
+    gen.skip = (count) => next(count);
+    gen.fork = () => arc4(S.slice(), i, j);
+    return gen;
   }
 
   // ---- the outcomes -----------------------------------------------------------------------------
@@ -8698,11 +8708,11 @@ CA.Fthof = (() => {
 
   /** What Force the Hand of Fate gives cast at seed `seed` with fail chance `fc`: { roll, win, backfire, outcome, wrath }. */
   function castAt(seed, fc) {
-    const roll = seeded(seed)();
-    const w = seeded(seed);
-    w();
-    const b = seeded(seed);
-    b();
+    const g = seeded(seed);
+    const roll = g();
+    // a win and a backfire both draw on from just after the roll: two copies of it there
+    const w = g.fork();
+    const b = g;
     const win = winOf(w);
     const backfire = backfireOf(b);
     const ok = roll < 1 - fc;
@@ -8719,6 +8729,32 @@ CA.Fthof = (() => {
     return choose(seeded(seed), list);
   }
 
+  // ---- the cache --------------------------------------------------------------------------------
+  // A cast's outcome depends on: the save's seed and spells cast (the seed of each cast), the backfire
+  // chance (golden cookies on screen, Magic adept / inept, Supreme Intellect — all through getFailChance),
+  // whether the season draws a cookie picture (Valentine's, Business day, Easter, Halloween — which one
+  // doesn't matter), Dragonflight (no Click frenzy) and whether you own 10+ buildings (the Building
+  // special draw). Not on the grandmapocalypse: the cookie is forced golden (a win) or wrath (a backfire).
+  // So the rows are kept for that key and only added to — a macro asking every tick costs nothing more.
+  let cache = { key: '', rows: [] };
+  function stateKey(M, fc) {
+    const df = typeof Game.hasBuff === 'function' && !!Game.hasBuff('Dragonflight');
+    return [Game.seed, M.spellsCastTotal || 0, fc, PICTURE_SEASONS.includes(Game.season) ? 'picture' : '', df ? 'df' : '', (Game.BuildingsOwned || 0) >= 10 ? '10+' : ''].join('|');
+  }
+  /** The first `count` rows for the state as it is (cached; extended as asked). */
+  function rows(M, count) {
+    const fc = failChance(M);
+    const key = stateKey(M, fc);
+    if (cache.key !== key) cache = { key, rows: [] };
+    while (cache.rows.length < count) {
+      const n = cache.rows.length + 1;
+      const c = castAt(seedOf(M, n - 1), fc);
+      cache.rows.push({ n, roll: c.roll, failChance: fc, outcome: c.outcome, name: nameOf(c.outcome), good: !!(OUTCOMES[c.outcome] || {}).good, wrath: c.wrath, win: c.win, backfire: c.backfire });
+    }
+    return cache.rows;
+  }
+  const ready = (M) => !!(M && M.spells && M.spells['hand of fate'] && Game.seed !== undefined);
+
   /**
    * The next `count` casts: [{ n (1: the next cast), roll, failChance, outcome, name, good, wrath, win,
    * backfire, gfd: { spell, name, fthof?: { outcome, name, wrath } } }] — each row is what Force the Hand
@@ -8726,47 +8762,57 @@ CA.Fthof = (() => {
    * would do as that cast, and if it picks Force the Hand of Fate, what that gives (seed + 1, ≥ 50% fail).
    * null without the Grimoire.
    */
-  function forecast(count = 10) {
+  function forecast(count = 10, opts = {}) {
     const M = grimoire();
-    if (!M || !M.spells || !M.spells['hand of fate'] || Game.seed === undefined) return null;
-    const fc = failChance(M);
-    const out = [];
-    for (let n = 1; n <= count; n++) {
-      const c = castAt(seedOf(M, n - 1), fc);
-      const pick = feverDreamPick(M, seedOf(M, n - 1));
+    if (!ready(M)) return null;
+    const base = rows(M, count).slice(0, count);
+    if (opts.gfd === false) return base.map((r) => ({ ...r }));
+    // what Gambler's Fever Dream would do: depends on the magic too — worked out when asked (the tooltips, the widgets)
+    const fc = base.length ? base[0].failChance : failChance(M);
+    return base.map((r) => {
+      const pick = feverDreamPick(M, seedOf(M, r.n - 1));
       const gfd = pick ? { spell: pick, name: M.spells[pick].name } : null;
       if (gfd && pick === 'hand of fate') {
-        const inner = castAt(seedOf(M, n), Math.max(fc, 0.5));
+        const inner = castAt(seedOf(M, r.n), Math.max(fc, 0.5));
         gfd.fthof = { outcome: inner.outcome, name: nameOf(inner.outcome), wrath: inner.wrath };
       }
-      out.push({ n, roll: c.roll, failChance: fc, outcome: c.outcome, name: nameOf(c.outcome), good: !!(OUTCOMES[c.outcome] || {}).good, wrath: c.wrath, win: c.win, backfire: c.backfire, gfd });
-    }
-    return out;
+      return { ...r, gfd };
+    });
+  }
+
+  /** The outcome as the n-th cast from now (1: the next), or '' without the Grimoire. */
+  function after(n) {
+    const M = grimoire();
+    if (!ready(M)) return '';
+    const k = Math.max(1, Math.floor(Number(n)) || 1);
+    return rows(M, k)[k - 1].outcome;
   }
 
   /** How many casts before Force the Hand of Fate gives `outcome` (0: the next one), within `within` casts; -1: not that soon. */
   function castsUntil(outcome, within = 100) {
+    const M = grimoire();
+    if (!ready(M)) return -1;
     const want = String(outcome).toLowerCase();
-    const f = forecast(within) || [];
-    const i = f.findIndex((x) => x.outcome === want || x.name.toLowerCase() === want);
-    return i;
+    const hit = (x) => x.outcome === want || x.name.toLowerCase() === want;
+    // look on one cast at a time: what's already worked out first, then only as far as it takes
+    for (let n = 1; n <= within; n++) {
+      const r = rows(M, n)[n - 1];
+      if (hit(r)) return n - 1;
+    }
+    return -1;
   }
 
   function init() {
     const V = (id, desc, params, get, more) => CA.Script.defineValue({ id, desc, params, get, ...(more || {}) });
-    const next = () => (forecast(1) || [{ outcome: '' }])[0].outcome;
+    const next = () => after(1);
     V('fthof.next', 'what Force the Hand of Fate gives cast next (the game’s name: frenzy, click frenzy, building special, multiply cookies, cookie storm, clot…; "" without the Grimoire)', [], next);
     V('fthof.nextIs', 'whether Force the Hand of Fate cast next gives an outcome (frenzy, click frenzy, building special…)', ['outcome'], (o) => next() === String(o).toLowerCase(), { bool: true });
-    V('fthof.after', 'what Force the Hand of Fate gives as the n-th cast from now (1: the next; other spells cast before it count)', ['n'], (n) => {
-      const k = Math.max(1, Math.floor(Number(n)) || 1);
-      const f = forecast(k);
-      return f ? f[k - 1].outcome : '';
-    });
+    V('fthof.after', 'what Force the Hand of Fate gives as the n-th cast from now (1: the next; other spells cast before it count)', ['n'], after);
     V('fthof.castsUntil', 'how many casts (of anything) before Force the Hand of Fate gives an outcome (0: the next; -1: not within 100)', ['outcome'], (o) => castsUntil(o));
     V('fthof.backfireChance', 'Force the Hand of Fate’s chance to backfire now (0–1)', [], () => failChance(grimoire()));
   }
 
-  return { init, forecast, castAt, castsUntil, seeded, feverDreamPick, OUTCOMES, nameOf };
+  return { init, forecast, after, castsUntil, castAt, seeded, feverDreamPick, OUTCOMES, nameOf, seedings: () => seedings };
 })();
 
 // ---- src/features/alerts.js ------------------------------------------

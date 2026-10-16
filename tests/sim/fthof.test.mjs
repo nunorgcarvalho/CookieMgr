@@ -129,5 +129,69 @@ assert(V('fthof.next') === f5[0].outcome && V('fthof.nextIs', f5[0].outcome) ===
 const firstFrenzy = f5.findIndex((x) => x.outcome === 'frenzy');
 assert(V('fthof.castsUntil', 'frenzy') === firstFrenzy && Math.abs(V('fthof.backfireChance') - M.getFailChance(M.spells['hand of fate'])) < 1e-12, `fthof.castsUntil(frenzy) ${firstFrenzy}, fthof.backfireChance`);
 
+// ---- cached (v3.12.2): what's asked often is worked out once per state — and equals working it out afresh
+// as the state changes: a cast, the season, the building count crossing 10, a golden cookie appearing
+// (the backfire chance), Dragonflight, the grandmapocalypse (which mustn't matter: the cookie is forced)
+const fc = () => M.getFailChance(M.spells['hand of fate']);
+const fresh = (k) => Array.from({ length: k }, (_, i) => F.castAt(`${Game.seed}/${M.spellsCastTotal + i}`, fc()).outcome);
+const cachedAgrees = (label) => {
+  const want = fresh(100);
+  const got = F.forecast(30, { gfd: false }).map((x) => x.outcome);
+  const until = ['frenzy', 'click frenzy', 'building special', 'clot'].every((o) => V('fthof.castsUntil', o) === want.indexOf(o));
+  assert(got.join() === want.slice(0, 30).join() && V('fthof.next') === want[0] && V('fthof.after', 7) === want[6] && until, `cached = afresh: ${label}`);
+};
+Game.seed = 'cache';
+M.spellsCastTotal = 3;
+Game.season = '';
+Game.BuildingsOwned = 400;
+clear();
+cachedAgrees('as it is');
+M.magic = M.magicM;
+M.castSpell(M.spells["haggler's charm"]);
+cachedAgrees('after a cast');
+Game.season = 'easter';
+cachedAgrees('Easter (a picture draw)');
+Game.season = 'christmas';
+cachedAgrees('Christmas (none)');
+Game.BuildingsOwned = 9;
+cachedAgrees('9 buildings');
+Game.BuildingsOwned = 10;
+cachedAgrees('10 buildings');
+new Game.shimmer('golden', { noWrath: true });
+cachedAgrees('a golden cookie on screen');
+Game.gainBuff('dragonflight', 10, 1111);
+cachedAgrees('Dragonflight');
+clear();
+const wrathBefore = F.forecast(30, { gfd: false }).map((x) => x.outcome).join();
+Game.elderWrath = 3;
+assert(F.forecast(30, { gfd: false }).map((x) => x.outcome).join() === wrathBefore, 'the grandmapocalypse changes nothing (the cookie is forced golden or wrath)');
+cachedAgrees('the grandmapocalypse');
+Game.elderWrath = 0;
+
+// ---- and cheap: a macro asking four things every 250 ms for a minute seeds next to nothing
+Game.seed = 'perf';
+M.spellsCastTotal = 0;
+clear();
+V('fthof.next'); // the state's rows: worked out once…
+const s0 = F.seedings();
+const t0 = Date.now();
+for (let tick = 0; tick < 240; tick++) {
+  V('fthof.castsUntil', 'click frenzy');
+  V('fthof.castsUntil', 'building special');
+  V('fthof.nextIs', 'frenzy');
+  V('fthof.after', 2);
+}
+const perMinute = F.seedings() - s0;
+const ms = Date.now() - t0;
+assert(perMinute <= 100, `960 asks in a minute of ticks: ${perMinute} seedings (at most the 100 casts looked at once; v3.12.1: ~500 an ask), ${ms} ms`);
+const s1 = F.seedings();
+M.magic = M.magicM;
+M.castSpell(M.spells["haggler's charm"]);
+V('fthof.castsUntil', 'building special');
+assert(F.seedings() - s1 <= 100, `after a cast: worked out once more (${F.seedings() - s1} seedings)`);
+const s2 = F.seedings();
+V('fthof.next');
+assert(F.seedings() === s2, 'and asking again: none');
+
 done();
 process.exit();
