@@ -2,7 +2,7 @@
 // haven't unlocked behind a toggle); the Current garden / As planted follows what you do by hand
 // from the start, whatever template is picked — and the page shows it as it happens.
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
-import { boot, sleep, makeAssert, click } from '../harness/game.mjs';
+import { boot, waitFor, makeAssert, click } from '../harness/game.mjs';
 import { makeGarden } from '../harness/gardenStub.mjs';
 
 const { assert, done } = makeAssert();
@@ -21,7 +21,7 @@ const plantByHand = (x, y, key) => {
 };
 Game.cookies = 1e12;
 set(1, 2, 'bakerWheat', 5);
-await sleep(1300);
+await waitFor(() => M.__caWatched, 5000); // (hooked within a second — later on a busy machine)
 
 // ---- your clicks are followed from the start (nothing opened, nothing asked)
 assert(M.__caWatched, 'the garden’s clicks are watched once it’s there');
