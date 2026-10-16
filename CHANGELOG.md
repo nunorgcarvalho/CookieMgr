@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+- **The next golden cookie, as statistics** (Stats page): the wait's whole distribution, exact from the game's own
+  rule and checked against it — expected, median, most likely, the chance within a minute and this second, the wrath
+  chance; a chart of the odds over time (density, cumulative chance, 25–75% and 10–90% bands, mean and median; hover
+  for any moment), percentiles, the chance within 10 s / 30 s / 1 min / 5 min, this cycle's bounds; what makes them
+  come sooner as chips, each a what-if. The Golden cookies widget's popup gains a sparkline and the median.
+- **Timer bars on the chart's axis**: the next golden cookie's window, and each effect running with the time it has
+  left and **the chance a golden cookie comes before it ends** — on the bar, in the widget's popup, and as
+  `buff.goldenChance(effect)`.
+- **Minimum bulk** (Settings → Store, the store toolbar, the Payback page): Best building, `buy.best`, `best` and the
+  Payback page's best buy buy ×1, ×10 or ×100 at a time — up to the next multiple with Round to multiples on; the Best
+  buy store sort ranks at least that many. Auto (the default) is what it was: ×10 with Round to multiples, else ×1.
+- **Payback by actual income**: a chip on the Payback page shows payback periods by what you've really been taking in
+  (the Recorder's baked cookies — clicking, golden cookies, wrinklers) instead of CpS: PP × CpS ÷ your actual income
+  over a stretch of play as long as the period (at least 5 minutes). Also a line in the store's tooltips, and
+  `paybackActual(seconds)`, `actualIncome(seconds)`.
+- **Switches are out of payback**: Elder Pledge, the Golden switch, season biscuits and the other switches have no
+  payback period — never the best buy, never bought by the buyers, no tooltip block; the Payback page shows them only
+  with its filter chip, greyed. `upgrade.gain / payback` are NaN for them.
+- **Upgrades: best first** (Settings → Store): the store lists its upgrades by payback colour, then payback period,
+  switches last.
+- Settings: page option cards show options with choices as dropdowns too.
+- In CI, the parity tests against Cookie Monster fail instead of skipping when they can't download it.
+
 ## 3.8.0 — 2026-10-16
 
 - **Numbers in Cookie Monster's notations, everywhere.** A **Numbers** setting (Settings → General): short scale,
