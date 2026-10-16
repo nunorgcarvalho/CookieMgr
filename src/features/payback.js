@@ -419,8 +419,9 @@ CA.Payback = (() => {
   }
   /**
    * What to buy, lowest PP first: [{ kind, name, n, label, price, pp, bonus, colour }]. kind
-   * 'building' | 'upgrade' | 'all'; opts.bulk: 1 (default) or 'round' — buildings to the next
-   * multiple of 10 (the store's Round to multiples); opts.skip: only what you can afford now;
+   * 'building' | 'upgrade' | 'all'; opts.bulk: 1 (default), 10, 100, 'round' (to the next multiple of 10)
+   * or 'auto' — what CookieMgr's buyers buy (CA.Shop.buyAmount: the minimum bulk, rounded up with
+   * Round to multiples); opts.skip: only what you can afford now;
    * opts.top: only the best has to be right (best()) — what can't beat it isn't measured: an upgrade
    * whose wait to afford alone is longer than the best building's payback period (a payback period is
    * at least that wait), anything you can't afford when skipping.
@@ -433,7 +434,7 @@ CA.Payback = (() => {
         ? []
         : objects()
             .filter((b) => !b.locked)
-            .map((b) => [b.name, opts.bulk === 'round' ? Math.max(1, 10 - ((b.amount || 0) % 10)) : opts.bulk === 10 || opts.bulk === 100 ? opts.bulk : 1]);
+            .map((b) => [b.name, opts.bulk === 'auto' ? (CA.Shop ? CA.Shop.buyAmount(b) : 1) : opts.bulk === 'round' ? Math.max(1, 10 - ((b.amount || 0) % 10)) : opts.bulk === 10 || opts.bulk === 100 ? opts.bulk : 1]);
     let us = kind === 'building' ? [] : storeUpgrades();
     const affordable = (price) => price <= Game.cookies;
     if (opts.skip && opts.top) {
@@ -471,8 +472,8 @@ CA.Payback = (() => {
     });
     return out.filter((x) => Number.isFinite(x.pp) && (!opts.skip || x.price <= Game.cookies)).sort((a, b) => a.pp - b.pp);
   }
-  /** The lowest PP: { kind, name, n, price, pp, … } or null. */
-  const best = (kind = 'all', opts = {}) => ranking(kind, { ...opts, top: true })[0] || null;
+  /** The lowest PP: { kind, name, n, price, pp, … } or null — buildings in the minimum bulk unless opts.bulk says otherwise. */
+  const best = (kind = 'all', opts = {}) => ranking(kind, { bulk: 'auto', ...opts, top: true })[0] || null;
 
   // ---- buying ------------------------------------------------------------------------------
 

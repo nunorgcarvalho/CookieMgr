@@ -6410,6 +6410,11 @@ CA.CookieMonster = (() => {
 //                 away from one last, in the game's order
 // While the store sells, it's the game's order.
 //
+// **Minimum bulk** — what CookieMgr's buyers (Best building, buy.best, the Payback page's ranking, the
+// store's Best buy sort) buy a building in: ×1, ×10 or ×100 — single purchases out, if you like to buy
+// in tens. With Round to multiples on, up to the next multiple of it (37 owned, ×10 → 3, to 40); off,
+// exactly that many. "auto" (the default): ×10 with Round to multiples on, else ×1 — as before.
+//
 // **Round to multiples** — with ×10 or ×100 selected, a click stops at a multiple of it:
 //   buying, the next one up: 37 owned, ×10 → buys 3 (to 40); 40 owned → buys 10
 //   selling, the next one down: 37 owned, ×10 → sells 7 (to 30); 40 owned → sells 10
@@ -6455,7 +6460,8 @@ CA.Shop = (() => {
     const C = CA.Payback.COLOURS;
     return all
       .map((b) => {
-        const bulk = Game.buyBulk === 10 || Game.buyBulk === 100 ? Game.buyBulk : 1;
+        // what a click buys — or the minimum bulk, when one is set and it's more
+        const bulk = Math.max(Game.buyBulk === 10 || Game.buyBulk === 100 ? Game.buyBulk : 1, Number(CA.Settings.get('minBulk')) || 1);
         const n = amountFor(b, bulk) || 1;
         const row = t.buildings[n] && t.buildings[n][b.name];
         const price = row ? row.price : CA.Payback.sumPrice(b, n);
@@ -6469,6 +6475,18 @@ CA.Shop = (() => {
   // ---- round up ---------------------------------------------------------------------------
 
   const roundUp = () => !!CA.Settings.get('roundUpBulk');
+  /** The minimum bulk CookieMgr's buyers buy in: 1, 10 or 100. */
+  function minBulk() {
+    const v = Number(CA.Settings.get('minBulk'));
+    if (v === 1 || v === 10 || v === 100) return v;
+    return roundUp() ? 10 : 1; // auto
+  }
+  /** How many of a building one purchase by CookieMgr's buyers takes (minimum bulk, rounded up with Round to multiples). */
+  function buyAmount(b) {
+    const m = minBulk();
+    if (m === 1) return 1;
+    return roundUp() ? m - ((b && b.amount) || 0) % m : m;
+  }
   /** How many a store click buys (or sells) now: the bulk amount, or what it takes to reach a multiple of it. */
   function amountFor(b, bulk = Game.buyBulk) {
     if (!roundUp() || (bulk !== 10 && bulk !== 100)) return bulk;
@@ -6512,6 +6530,11 @@ CA.Shop = (() => {
   function setRoundUp(on) {
     CA.Settings.set('roundUpBulk', !!on);
   }
+  const MIN_BULKS = [0, 1, 10, 100];
+  /** Sets the minimum bulk: 0 (auto), 1, 10 or 100. */
+  function setMinBulk(v) {
+    CA.Settings.set('minBulk', MIN_BULKS.includes(Number(v)) ? Number(v) : 0);
+  }
 
   function init() {
     CA.Settings.defineOption({
@@ -6521,6 +6544,20 @@ CA.Shop = (() => {
       name: 'Round to multiples',
       desc: 'With ×10 or ×100 selected, buying stops at the next multiple (37 → 40, not 47) and selling at the one below (37 → 30). Also on the store toolbar.',
       default: false,
+    });
+    CA.Settings.defineOption({
+      key: 'minBulk',
+      group: 'store',
+      icon: 'building',
+      name: 'Minimum bulk',
+      desc: 'What CookieMgr’s buyers buy a building in (Best building, the Payback page’s ranking, the Best buy sort): ×1, ×10 or ×100 — with Round to multiples on, up to the next multiple. Auto: ×10 with Round to multiples, else ×1.',
+      default: 0,
+      choices: [
+        { v: 0, label: 'auto' },
+        { v: 1, label: '×1' },
+        { v: 10, label: '×10' },
+        { v: 100, label: '×100' },
+      ],
     });
     CA.Settings.defineOption({
       key: 'storeSwitch',
@@ -6533,9 +6570,10 @@ CA.Shop = (() => {
     CA.Settings.defineOption({ key: 'storeSort', group: 'store-hidden', name: 'Building sort', desc: '', default: 'default' });
     Object.values(Game.Objects || {}).forEach(wrap);
     CA.Events.on('settings', (k) => k === 'roundUpBulk' && refreshStore());
+    CA.Events.on('settings', (k) => k === 'minBulk' && CA.Events.emit('shop'));
   }
 
-  return { init, SORTS, canSort, sort, setSort, order, roundUp, setRoundUp, amountFor };
+  return { init, SORTS, canSort, sort, setSort, order, roundUp, setRoundUp, amountFor, minBulk, buyAmount, setMinBulk, MIN_BULKS };
 })();
 
 // ---- src/features/payback.js -----------------------------------------
@@ -6960,8 +6998,9 @@ CA.Payback = (() => {
   }
   /**
    * What to buy, lowest PP first: [{ kind, name, n, label, price, pp, bonus, colour }]. kind
-   * 'building' | 'upgrade' | 'all'; opts.bulk: 1 (default) or 'round' — buildings to the next
-   * multiple of 10 (the store's Round to multiples); opts.skip: only what you can afford now;
+   * 'building' | 'upgrade' | 'all'; opts.bulk: 1 (default), 10, 100, 'round' (to the next multiple of 10)
+   * or 'auto' — what CookieMgr's buyers buy (CA.Shop.buyAmount: the minimum bulk, rounded up with
+   * Round to multiples); opts.skip: only what you can afford now;
    * opts.top: only the best has to be right (best()) — what can't beat it isn't measured: an upgrade
    * whose wait to afford alone is longer than the best building's payback period (a payback period is
    * at least that wait), anything you can't afford when skipping.
@@ -6974,7 +7013,7 @@ CA.Payback = (() => {
         ? []
         : objects()
             .filter((b) => !b.locked)
-            .map((b) => [b.name, opts.bulk === 'round' ? Math.max(1, 10 - ((b.amount || 0) % 10)) : opts.bulk === 10 || opts.bulk === 100 ? opts.bulk : 1]);
+            .map((b) => [b.name, opts.bulk === 'auto' ? (CA.Shop ? CA.Shop.buyAmount(b) : 1) : opts.bulk === 'round' ? Math.max(1, 10 - ((b.amount || 0) % 10)) : opts.bulk === 10 || opts.bulk === 100 ? opts.bulk : 1]);
     let us = kind === 'building' ? [] : storeUpgrades();
     const affordable = (price) => price <= Game.cookies;
     if (opts.skip && opts.top) {
@@ -7012,8 +7051,8 @@ CA.Payback = (() => {
     });
     return out.filter((x) => Number.isFinite(x.pp) && (!opts.skip || x.price <= Game.cookies)).sort((a, b) => a.pp - b.pp);
   }
-  /** The lowest PP: { kind, name, n, price, pp, … } or null. */
-  const best = (kind = 'all', opts = {}) => ranking(kind, { ...opts, top: true })[0] || null;
+  /** The lowest PP: { kind, name, n, price, pp, … } or null — buildings in the minimum bulk unless opts.bulk says otherwise. */
+  const best = (kind = 'all', opts = {}) => ranking(kind, { bulk: 'auto', ...opts, top: true })[0] || null;
 
   // ---- buying ------------------------------------------------------------------------------
 
@@ -8130,9 +8169,9 @@ CA.Alerts = (() => {
 // ---- src/features/autoBuy.js -----------------------------------------
 // Buying macros, and petting the dragon.
 //
-//   Best building                    buys the building with the lowest payback period (PP) — one at
-//                                    a time, or up to the next multiple of 10 when the store's
-//                                    "Round to multiples" is on (ranked by the PP of exactly that many)
+//   Best building                    buys the building with the lowest payback period (PP) — in the
+//                                    store's minimum bulk (×1, ×10, ×100; up to the next multiple of it
+//                                    when "Round to multiples" is on), ranked by the PP of exactly that many
 //   Best upgrade                     buys the upgrade with the lowest PP; an upgrade that only makes
 //                                    clicks stronger is worth what it adds per click × your clicks
 //                                    per second
@@ -8170,7 +8209,7 @@ CA.AutoBuy = (() => {
   function candidates(kinds, opts = {}) {
     const pass = CA.Macros.passKey();
     if (pass == null) return candidatesNow(kinds, opts);
-    const key = `${kinds.join(',')}|${!!opts.top}|${!!opts.skip}|${CA.Shop.roundUp()}|${Game.cookies}`;
+    const key = `${kinds.join(',')}|${!!opts.top}|${!!opts.skip}|${CA.Shop.roundUp()}|${CA.Shop.minBulk()}|${Game.cookies}`;
     if (!memo || memo.pass !== pass) memo = { pass, lists: new Map() };
     if (!memo.lists.has(key)) memo.lists.set(key, candidatesNow(kinds, opts));
     return memo.lists.get(key);
@@ -8178,7 +8217,7 @@ CA.AutoBuy = (() => {
   function candidatesNow(kinds, opts = {}) {
     const kind = kinds.length > 1 ? 'all' : kinds[0];
     return P()
-      .ranking(kind, { bulk: CA.Shop.roundUp() ? 'round' : 1, top: !!opts.top, skip: !!opts.skip })
+      .ranking(kind, { bulk: 'auto', top: !!opts.top, skip: !!opts.skip })
       .map((x) => ({ ...x, buy: () => P().buy(x) }));
   }
 
@@ -18074,6 +18113,7 @@ CA.UI.PantheonPage = (() => {
 //               order out; laySort() lays the store's building rows out in it, as Cookie Monster
 //               does: the building list as a grid, a row number per building)
 //   multiples   on/off: ×10 / ×100 buys and sells stop at a multiple of it
+//   min bulk    auto → ×1 → ×10 → ×100: what CookieMgr's buyers buy a building in (features/shop.js)
 //
 // Placed like the sidebar: measured from the game's panels on resize and every half second. The
 // building list gets a little room at the bottom so its last row can scroll clear of the toolbar.
@@ -18103,7 +18143,12 @@ CA.UI.StoreBar = (() => {
       `data-tip="${CA.Util.escapeHtml(
         `Round to multiples: ${on ? 'on' : 'off'} — with ×10 or ×100, buying stops at the next multiple (37 → 40) and selling at the one below (37 → 30).${usable ? '' : ' Select ×10 or ×100 to use it.'}`
       )}">` +
-      `<span class="ca-sb-txt">${selling ? '⌊' : '⌈'}${bulk}${selling ? '⌋' : '⌉'}</span></button></div>`;
+      `<span class="ca-sb-txt">${selling ? '⌊' : '⌈'}${bulk}${selling ? '⌋' : '⌉'}</span></button>`;
+    const mb = Number(CA.Settings.get('minBulk')) || 0;
+    h +=
+      `<button type="button" class="ca-sb-btn ca-sb-min${mb ? ' on' : ''}" data-ss-min data-tip="${CA.Util.escapeHtml(
+        `Minimum bulk: ${mb ? `×${mb}` : `auto (×${CA.Shop.minBulk()})`} — what CookieMgr’s buyers (Best building, buy.best, the Payback page) buy a building in${CA.Shop.roundUp() ? ', up to the next multiple of it' : ''}. Click for the next: auto, ×1, ×10, ×100.`
+      )}"><span class="ca-sb-txt">≥${CA.Shop.minBulk()}</span></button></div>`;
     return h;
   }
 
@@ -18152,6 +18197,15 @@ CA.UI.StoreBar = (() => {
       laySort();
       return;
     }
+    if (e.target.closest('[data-ss-min]')) {
+      e.stopPropagation();
+      CA.Util.sound('snd/tick.mp3');
+      const all = CA.Shop.MIN_BULKS;
+      CA.Shop.setMinBulk(all[(all.indexOf(Number(CA.Settings.get('minBulk')) || 0) + 1) % all.length]);
+      render();
+      laySort();
+      return;
+    }
     if (e.target.closest('[data-ss-round]')) {
       e.stopPropagation();
       CA.Util.sound(CA.Shop.roundUp() ? 'snd/clickOff2.mp3' : 'snd/clickOn2.mp3');
@@ -18193,7 +18247,7 @@ CA.UI.StoreBar = (() => {
   }
 
   function init() {
-    CA.Events.on('settings', (k) => (k === 'storeSwitch' || k === 'roundUpBulk' || k === null) && render());
+    CA.Events.on('settings', (k) => (k === 'storeSwitch' || k === 'roundUpBulk' || k === 'minBulk' || k === null) && render());
     CA.Events.on('shop', render);
     addEventListener('resize', place);
     // bulk / buy-sell mode, Cookie Monster arriving, the window resizing: cheap to redo
@@ -18455,9 +18509,10 @@ CA.UI.PaybackPage = (() => {
     );
   }
   function bestTiles(t) {
-    const all = P().ranking('all');
+    // in the minimum bulk: what the buyers would buy
+    const all = P().ranking('all', { bulk: 'auto' });
     const top = all[0];
-    const bb = P().ranking('building')[0];
+    const bb = P().ranking('building', { bulk: 'auto' })[0];
     const bu = P().ranking('upgrade')[0];
     const { tile } = CA.UI.Plot.fmt;
     const wait = (x) => {
@@ -18550,11 +18605,14 @@ CA.UI.PaybackPage = (() => {
     const S = CA.Settings;
     const wr = S.get('ppWrinklers');
     const choice = (v, label) => `<button type="button" class="ca-chip${wr === v ? ' on' : ''}" data-pp-wrink="${v}">${label}</button>`;
+    const mb = Number(S.get('minBulk')) || 0;
+    const bulkChip = (v) => `<button type="button" class="ca-chip${mb === v ? ' on' : ''}" data-pp-bulk="${v}">${v ? `×${v}` : 'auto'}</button>`;
     return (
       '<div class="ca-card">' +
       C().cardHead('Options', 'settings') +
       '<div class="ca-list">' +
       `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('wrinkler', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Count wrinklers in the bank</div><div class="ca-row-desc">What popping them would give counts towards affording things.</div></div><span class="ca-pp-chips">${choice('none', 'No')}${choice('all', 'All')}${choice('fattest', 'The fattest')}</span></div>` +
+      `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('building', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Minimum bulk</div><div class="ca-row-desc">What the buyers (Best building, buy.best, Best of all above) buy a building in — with Round to multiples on, up to the next multiple of it. Auto: ×10 with Round to multiples, else ×1. Now: ×${CA.Shop.minBulk()}${CA.Shop.roundUp() ? ', rounded up' : ''}.</div></div><span class="ca-pp-chips">${CA.Shop.MIN_BULKS.map(bulkChip).join('')}</span></div>` +
       `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('dollar', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Best = what you can afford</div><div class="ca-row-desc">The green building is the best you can buy now; what you can’t afford yet shows red.</div></div>${C().toggle(!!S.get('ppOnlyBuyable'), 'data-pp-opt="ppOnlyBuyable"', 'Best = what you can afford')}</div>` +
       `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('clock', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Cheap enough to just buy</div><div class="ca-row-desc">Anything costing less than this many seconds of CpS shows blue (0: off).</div></div><input type="number" min="0" step="1" class="ca-pp-num" data-pp-num="ppSecondsLowerLimit" value="${Number(S.get('ppSecondsLowerLimit')) || 0}"></div>` +
       '</div>' +
@@ -18593,7 +18651,7 @@ CA.UI.PaybackPage = (() => {
   }
 
   function onClick(e) {
-    const b = e.target.closest('[data-pp-buy],[data-pp-up],[data-pp-wrink],[data-pp-opt]');
+    const b = e.target.closest('[data-pp-buy],[data-pp-up],[data-pp-wrink],[data-pp-opt],[data-pp-bulk]');
     if (!b) return;
     e.stopPropagation();
     const d = b.dataset;
@@ -18604,6 +18662,11 @@ CA.UI.PaybackPage = (() => {
     } else if (d.ppUp) {
       const got = P().buyUpgrade(d.ppUp);
       CA.Util.sound(got ? 'snd/buy1.mp3' : 'snd/tick.mp3');
+    } else if (d.ppBulk !== undefined) {
+      CA.Util.sound('snd/tick.mp3');
+      CA.Shop.setMinBulk(Number(d.ppBulk));
+      CA.UI.Menu.render();
+      return;
     } else if (d.ppWrink) {
       CA.Settings.set('ppWrinklers', d.ppWrink);
       CA.UI.Menu.render();

@@ -47,9 +47,10 @@ CA.UI.PaybackPage = (() => {
     );
   }
   function bestTiles(t) {
-    const all = P().ranking('all');
+    // in the minimum bulk: what the buyers would buy
+    const all = P().ranking('all', { bulk: 'auto' });
     const top = all[0];
-    const bb = P().ranking('building')[0];
+    const bb = P().ranking('building', { bulk: 'auto' })[0];
     const bu = P().ranking('upgrade')[0];
     const { tile } = CA.UI.Plot.fmt;
     const wait = (x) => {
@@ -142,11 +143,14 @@ CA.UI.PaybackPage = (() => {
     const S = CA.Settings;
     const wr = S.get('ppWrinklers');
     const choice = (v, label) => `<button type="button" class="ca-chip${wr === v ? ' on' : ''}" data-pp-wrink="${v}">${label}</button>`;
+    const mb = Number(S.get('minBulk')) || 0;
+    const bulkChip = (v) => `<button type="button" class="ca-chip${mb === v ? ' on' : ''}" data-pp-bulk="${v}">${v ? `×${v}` : 'auto'}</button>`;
     return (
       '<div class="ca-card">' +
       C().cardHead('Options', 'settings') +
       '<div class="ca-list">' +
       `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('wrinkler', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Count wrinklers in the bank</div><div class="ca-row-desc">What popping them would give counts towards affording things.</div></div><span class="ca-pp-chips">${choice('none', 'No')}${choice('all', 'All')}${choice('fattest', 'The fattest')}</span></div>` +
+      `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('building', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Minimum bulk</div><div class="ca-row-desc">What the buyers (Best building, buy.best, Best of all above) buy a building in — with Round to multiples on, up to the next multiple of it. Auto: ×10 with Round to multiples, else ×1. Now: ×${CA.Shop.minBulk()}${CA.Shop.roundUp() ? ', rounded up' : ''}.</div></div><span class="ca-pp-chips">${CA.Shop.MIN_BULKS.map(bulkChip).join('')}</span></div>` +
       `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('dollar', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Best = what you can afford</div><div class="ca-row-desc">The green building is the best you can buy now; what you can’t afford yet shows red.</div></div>${C().toggle(!!S.get('ppOnlyBuyable'), 'data-pp-opt="ppOnlyBuyable"', 'Best = what you can afford')}</div>` +
       `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('clock', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Cheap enough to just buy</div><div class="ca-row-desc">Anything costing less than this many seconds of CpS shows blue (0: off).</div></div><input type="number" min="0" step="1" class="ca-pp-num" data-pp-num="ppSecondsLowerLimit" value="${Number(S.get('ppSecondsLowerLimit')) || 0}"></div>` +
       '</div>' +
@@ -185,7 +189,7 @@ CA.UI.PaybackPage = (() => {
   }
 
   function onClick(e) {
-    const b = e.target.closest('[data-pp-buy],[data-pp-up],[data-pp-wrink],[data-pp-opt]');
+    const b = e.target.closest('[data-pp-buy],[data-pp-up],[data-pp-wrink],[data-pp-opt],[data-pp-bulk]');
     if (!b) return;
     e.stopPropagation();
     const d = b.dataset;
@@ -196,6 +200,11 @@ CA.UI.PaybackPage = (() => {
     } else if (d.ppUp) {
       const got = P().buyUpgrade(d.ppUp);
       CA.Util.sound(got ? 'snd/buy1.mp3' : 'snd/tick.mp3');
+    } else if (d.ppBulk !== undefined) {
+      CA.Util.sound('snd/tick.mp3');
+      CA.Shop.setMinBulk(Number(d.ppBulk));
+      CA.UI.Menu.render();
+      return;
     } else if (d.ppWrink) {
       CA.Settings.set('ppWrinklers', d.ppWrink);
       CA.UI.Menu.render();
