@@ -1,4 +1,4 @@
-// The store tooltip's lines are yours to choose (renamed vX.Y.Z.test.mjs when it lands): which lines
+// v3.10.0: the store tooltip's lines are yours to choose: which lines
 // CookieMgr's block under the store's tooltips shows, in what order — the built-in lines (Cookie
 // Monster's layout by default) and any value word taking the building / upgrade or nothing, read as a
 // number, a time or a chance; edited on the Payback page (add, move, rename, remove, reset) with a

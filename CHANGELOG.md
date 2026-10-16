@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 3.10.0 — 2026-10-16
+
 - **The store's tooltips, your way.** A **Store tooltips** card on the Payback page chooses which lines CookieMgr's
   block under the store's tooltips shows, in what order: the built-in lines (now also the price, and a building's
   payback at ×1 / ×10 / ×100) and any value word of the building, the upgrade or the game — renamed, read as a number,
