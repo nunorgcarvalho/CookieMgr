@@ -13,7 +13,7 @@ await gameOrSkip();
 const mods = headlessModules();
 assert(mods.length > 20 && mods.every((f) => f.startsWith('core/') || f.startsWith('features/')) && mods.includes('features/garden.js'), `the add-on's headless modules, from build.mjs (${mods.length})`);
 const staging = stagingModules();
-assert(staging.some((m) => m.name === 'Payback'), 'staging modules found (sim/mgr/staging)');
+assert(!staging.some((m) => m.name === 'Payback') && mods.includes('features/payback.js'), 'Payback promoted from staging to src/features (cm-native)');
 assert(staging.every((m) => !/CA\.UI\b/.test(m.code.replace(/\/\/.*$/gm, ''))), 'staging modules stay headless (no CA.UI), like core/ and features/');
 
 const sim = await createSim({ seed: 2 });
@@ -38,7 +38,7 @@ try {
 }
 assert(threw, 'code that doesn’t compile says where');
 
-// ---- payback (staging): asked of the game itself
+// ---- payback (src/features/payback.js, once staging): asked of the game itself
 sim.run({ seconds: 2 });
 const gain = sim.value('building.gain', 'Grandma');
 const before = Game.unbuffedCps;
