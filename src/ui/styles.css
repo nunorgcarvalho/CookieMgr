@@ -3235,17 +3235,6 @@ body.ca-has-storebar #products {
   background: linear-gradient(to bottom, #ffe39a, #e0a84a);
   box-shadow: 0 0 6px rgba(255, 210, 110, 0.5);
 }
-#CookieMgrStoreBar .ca-sb-sort.locked .ca-sb-btn {
-  color: #6d6252;
-  background: none;
-  box-shadow: none;
-}
-#CookieMgrStoreBar .ca-sb-lock {
-  position: absolute;
-  right: 3px;
-  top: 2px;
-  color: #ffb36a;
-}
 #CookieMgrStoreBar .ca-sb-round.idle:not(:hover) {
   opacity: 0.55;
 }
@@ -4339,20 +4328,6 @@ body.ca-has-storebar #products {
 
 /* ---------- v2.21: buying macros ---------- */
 
-#CookieMgrMenu .ca-mtile-warn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 7px;
-  border-radius: 5px;
-  font-size: 10.5px;
-  color: #ffcf8a;
-  background: rgba(255, 150, 60, 0.12);
-  box-shadow: inset 0 0 0 1px rgba(255, 170, 80, 0.35);
-}
-#CookieMgrMenu .ca-mtile-warn .ca-btn {
-  margin-left: auto;
-}
 #CookieMgrMenu .ca-switch[disabled] {
   opacity: 0.4;
   cursor: not-allowed;

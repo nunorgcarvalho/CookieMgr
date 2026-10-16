@@ -1,9 +1,9 @@
 // The store toolbar: a row of small icon buttons along the bottom of the store (the right-hand
 // panel), over the building rows, stretching across the panel.
 //
-//   sort        best buy first · next achievement first · game order — Cookie Monster's building
-//               sort (features/shop.js); without Cookie Monster they're locked, and a click offers
-//               to load it
+//   sort        best buy first · next achievement first · game order (features/shop.js works the
+//               order out; laySort() lays the store's building rows out in it, as Cookie Monster
+//               does: the building list as a grid, a row number per building)
 //   multiples   on/off: ×10 / ×100 buys and sells stop at a multiple of it
 //
 // Placed like the sidebar: measured from the game's panels on resize and every half second. The
@@ -18,16 +18,15 @@ CA.UI.StoreBar = (() => {
   let el = null;
 
   function html() {
-    const cm = CA.Shop.canSort();
     const cur = CA.Shop.sort();
     const bulk = Game.buyBulk === 10 || Game.buyBulk === 100 ? Game.buyBulk : 10;
     const on = CA.Shop.roundUp();
     const usable = Game.buyBulk === 10 || Game.buyBulk === 100;
     const selling = Game.buyMode === -1;
-    let h = `<div class="ca-sb-group ca-sb-sort${cm ? '' : ' locked'}"><span class="ca-sb-label">${I('sortList', 11)} sort</span>`;
+    let h = `<div class="ca-sb-group ca-sb-sort"><span class="ca-sb-label">${I('sortList', 11)} sort</span>`;
     CA.Shop.SORTS.forEach((s) => {
-      const tip = cm ? `${s.name} — ${s.desc}` : `${s.name} — needs Cookie Monster: click to load it`;
-      h += `<button type="button" class="ca-sb-btn${cur === s.id ? ' on' : ''}" data-ss-sort="${s.id}" data-tip="${CA.Util.escapeHtml(tip)}">${I(s.icon, 14)}${cm ? '' : `<span class="ca-sb-lock">${I('plug', 8)}</span>`}</button>`;
+      const tip = `${s.name} — ${s.desc}`;
+      h += `<button type="button" class="ca-sb-btn${cur === s.id ? ' on' : ''}" data-ss-sort="${s.id}" data-tip="${CA.Util.escapeHtml(tip)}">${I(s.icon, 14)}</button>`;
     });
     h += '</div>';
     h +=
@@ -79,13 +78,9 @@ CA.UI.StoreBar = (() => {
     if (sortBtn) {
       e.stopPropagation();
       CA.Util.sound('snd/tick.mp3');
-      if (!CA.Shop.canSort()) {
-        if (CA.CookieMonster.load()) CA.Util.notify('Cookie Monster', 'Loading Cookie Monster — the sort buttons unlock once it’s running.', CA.ICON, 3);
-        else CA.Util.notify('Cookie Monster', CA.CookieMonster.isLoading() ? 'Still loading…' : 'Cookie Monster is running but its settings aren’t ready yet — try again in a moment.', CA.ICON, 3);
-        return;
-      }
       CA.Shop.setSort(sortBtn.dataset.ssSort);
       render();
+      laySort();
       return;
     }
     if (e.target.closest('[data-ss-round]')) {
@@ -96,15 +91,54 @@ CA.UI.StoreBar = (() => {
     }
   }
 
+  // ---- the store's building rows, in the sort's order ------------------------------------------
+
+  let laid = false; // whether the rows carry our layout (to undo it for the game's own order)
+  let lastOrder = '';
+  function laySort() {
+    const products = document.getElementById('products');
+    if (!products) return;
+    const names = CA.Shop.order();
+    const own = CA.Shop.sort() === 'default' || Game.buyMode !== 1;
+    if (own) {
+      if (!laid) return;
+      products.style.removeProperty('display');
+      const bulk = document.getElementById('storeBulk');
+      if (bulk) bulk.style.removeProperty('grid-row');
+      Object.values(Game.Objects || {}).forEach((b) => b.l && b.l.style.removeProperty('grid-row'));
+      laid = false;
+      lastOrder = '';
+      return;
+    }
+    const key = names.join('|');
+    if (laid && key === lastOrder) return;
+    products.style.display = 'grid';
+    const bulk = document.getElementById('storeBulk');
+    if (bulk) bulk.style.gridRow = '1/1';
+    names.forEach((n, i) => {
+      const b = Game.Objects[n];
+      if (b && b.l) b.l.style.gridRow = `${i + 2}/${i + 2}`;
+    });
+    laid = true;
+    lastOrder = key;
+  }
+
   function init() {
     CA.Events.on('settings', (k) => (k === 'storeSwitch' || k === 'roundUpBulk' || k === null) && render());
-    CA.Events.on('integrations', render);
     CA.Events.on('shop', render);
     addEventListener('resize', place);
     // bulk / buy-sell mode, Cookie Monster arriving, the window resizing: cheap to redo
     setInterval(render, PLACE_MS);
+    setInterval(() => {
+      try {
+        laySort();
+      } catch (e) {
+        /* a store mid-rebuild: next time */
+      }
+    }, PLACE_MS);
+    CA.Events.on('settings', (k) => k === 'storeSort' && laySort());
     render();
   }
 
-  return { init, render };
+  return { init, render, laySort };
 })();

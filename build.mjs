@@ -48,6 +48,7 @@ const MODULES = [
   'features/history.js',
   'features/cookieMonster.js',
   'features/shop.js',
+  'features/payback.js',
   'features/autoBuy.js',
   'features/seasons.js',
   'features/script.js',

@@ -219,7 +219,6 @@ CA.UI.MacrosPage = (() => {
    */
   function tile(m) {
     const once = m.mode === 'once';
-    const noCM = m.needsCM && !CA.CookieMonster.isLoaded(); // needs Cookie Monster, which isn't running
     const fav = M().isFav(m.id);
     return (
       `<div class="ca-mtile ca-macro" data-macro-row="${esc(m.id)}">` +
@@ -228,9 +227,8 @@ CA.UI.MacrosPage = (() => {
       `<div class="ca-mtile-name"><b>${esc(m.name)}</b><span class="ca-badge ca-badge-${m.mode}">${esc(M().triggerText(m))}</span>${M().isCustomized(m.id) ? '<span class="ca-badge ca-badge-edited" data-tip="Changed from how it comes — Edit → Revert to default to undo">edited</span>' : ''}</div>` +
       (once
         ? C().button(`${I('play', 12)} Run`, `data-ca="macro-run" data-id="${esc(m.id)}"`, 'ca-btn-small ca-btn-run')
-        : C().toggle(false, `data-ca="macro-toggle" data-id="${esc(m.id)}"${noCM ? ' disabled' : ''}`, m.name)) +
+        : C().toggle(false, `data-ca="macro-toggle" data-id="${esc(m.id)}"`, m.name)) +
       '</div>' +
-      (noCM ? `<div class="ca-mtile-warn">${I('plug', 12)} Needs Cookie Monster ${C().button('Load it', 'data-ca="cm-load"', 'ca-btn-small')}</div>` : '') +
       (m.desc ? `<div class="ca-mtile-desc">${esc(m.desc)}</div>` : '') +
       (settingsOf(m).length
         ? `<div class="ca-mtile-settings${openSettings.has(m.id) ? ' open' : ''}">` +
@@ -296,7 +294,7 @@ CA.UI.MacrosPage = (() => {
 
   function actionSelect(action, path) {
     const groups = {};
-    CA.Actions.all().forEach((a) => (groups[a.group] = groups[a.group] || []).push(a));
+    CA.Actions.all().filter((a) => !a.hidden).forEach((a) => (groups[a.group] = groups[a.group] || []).push(a));
     return (
       `<select class="ca-ed-main" data-edit="${path}" data-structural>` +
       Object.keys(groups)

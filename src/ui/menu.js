@@ -141,7 +141,7 @@ CA.UI.Menu = (() => {
       tile('Recording', CA.Settings.get('trackHistory') ? 'on' : 'off', '<span data-ca-history-short></span>') +
       tile('Macros running', String(running), C.link('Macros', 'clickers')) +
       tile('Widgets placed', String(placed), C.link('Widgets', 'widgets')) +
-      tile('Cookie Monster', cm ? 'running' : 'not loaded', cm ? '' : 'needed for the store’s building sort') +
+      tile('Cookie Monster', cm ? 'running' : 'not needed', cm ? 'loaded alongside' : 'CookieMgr computes its numbers itself') +
       '</div></div>'
     );
   }
@@ -257,8 +257,7 @@ CA.UI.Menu = (() => {
       '<div class="ca-row ca-row-option">' +
       rowIcon('puzzle') +
       '<div class="ca-row-text"><div class="ca-row-name">Cookie Monster</div>' +
-      `<div class="ca-row-desc" data-ca-cm-status>${loaded ? 'Running.' : 'Not loaded.'} Loads the latest release straight from Cookie Monster's own site.</div>` +
-      `<div class="ca-row-desc">${loaded ? '' : '⚠ '}Needed for the store's building sort switch${loaded ? '' : ' (locked until it runs)'}.</div></div>` +
+      `<div class="ca-row-desc" data-ca-cm-status>${loaded ? 'Running.' : 'Not loaded.'} Optional — CookieMgr works out payback periods and the store sort itself. Loads the latest release straight from Cookie Monster's own site, if you'd like its displays too.</div></div>` +
       C.button(loaded ? 'Loaded' : 'Load now', 'data-ca="cm-load" data-ca-cm-load' + (loaded ? ' disabled' : ''), 'ca-btn-small') +
       '</div>' +
       CA.Settings.optionsIn('integrations').map(optionRow).join('') +

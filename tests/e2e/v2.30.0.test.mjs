@@ -24,7 +24,8 @@ await sleep(2200);
 assert(right.scrollTop === 800, '…every time the guard runs');
 
 // ---- the store's sorts, in order
-assert(CA.Shop.SORTS.map((s) => s.name).join() === 'Default,Bulk PP,Achievement', `sorts: ${CA.Shop.SORTS.map((s) => s.name)}`);
+// v3.5: CookieMgr's own sort — “Bulk PP” is now “Best buy” (the PP of what a click buys)
+assert(CA.Shop.SORTS.map((s) => s.name).join() === 'Default,Best buy,Achievement', `sorts: ${CA.Shop.SORTS.map((s) => s.name)}`);
 CA.UI.StoreBar.render();
 const btns = [...doc.querySelectorAll('[data-ss-sort]')].map((b) => b.dataset.ssSort);
 assert(btns.join() === 'default,value,achievement', `store bar buttons in that order (${btns})`);

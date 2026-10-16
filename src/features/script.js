@@ -873,9 +873,9 @@ CA.Script = (() => {
     const items = [];
     const sig = (id, def) => `${id}(${((def && def.params) || []).map((p) => p.key).join(', ')})`;
     const snippet = (id, def) => `${id}(${argText(def, {}) || ((def && def.params) || []).map((p) => (p.default !== undefined && p.default !== '' ? litText(p.default) : p.key)).join(', ')})`;
-    CA.Actions.all().forEach((a) => items.push({ kind: 'action', id: a.id, sig: sig(a.id, a), desc: a.name, group: a.group, icon: a.icon, insert: snippet(a.id, a) }));
+    CA.Actions.all().filter((a) => !a.hidden).forEach((a) => items.push({ kind: 'action', id: a.id, sig: sig(a.id, a), desc: a.name, group: a.group, icon: a.icon, insert: snippet(a.id, a) }));
     CA.Conditions.all().forEach((c) => items.push({ kind: 'condition', id: c.id, sig: sig(c.id, c), desc: c.name, group: 'Conditions', icon: c.icon, insert: snippet(c.id, c) }));
-    VALUES.forEach((v) => items.push({ kind: 'value', id: v.id, sig: `${v.id}(${(v.params || []).join(', ')})`, desc: v.desc, group: 'Values', icon: 'graphs', insert: `${v.id}(${(v.params || []).join(', ')})` }));
+    VALUES.filter((v) => !v.hidden).forEach((v) => items.push({ kind: 'value', id: v.id, sig: `${v.id}(${(v.params || []).join(', ')})`, desc: v.desc, group: 'Values', icon: 'graphs', insert: `${v.id}(${(v.params || []).join(', ')})` }));
     [
       ['repeat until …:', 'run the block each pass until something holds', 'repeat until cookies() >= 1e12:\n  '],
       ['while …:', 'run the block each pass while something holds', 'while buff(Frenzy):\n  '],

@@ -211,7 +211,7 @@ CA.Macros = (() => {
         edge: w.edge === 'while' ? 'while' : 'rise',
       };
     }
-    ['defaultKey', 'section', 'spell', 'needsCM', 'holdRepeat'].forEach((k) => def[k] !== undefined && (m[k] = def[k]));
+    ['defaultKey', 'section', 'spell', 'holdRepeat'].forEach((k) => def[k] !== undefined && (m[k] = def[k]));
     // built-ins can let you choose some of their steps' params right on their row (saved in prefs);
     // by default every param of their actions — worked out after every feature has registered its
     // actions (ready()), since a built-in can use an action registered after it

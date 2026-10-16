@@ -1,7 +1,8 @@
-// v2.21.0: buying macros (best building / best upgrade via Cookie Monster PP, research, cheap
-// upgrades) and petting the dragon; Cookie Monster-dependent cards; readiness tint on buttons.
+// v2.21.0: buying macros (best building / best upgrade by payback period — v3.5: CookieMgr's own, research, cheap
+// upgrades) and petting the dragon; readiness tint on buttons.
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
 import { boot, sleep, makeAssert, click } from '../harness/game.mjs';
+import { cpsModel } from '../harness/cps.mjs';
 
 const { assert, done } = makeAssert();
 const g = boot({ idb: { factory: new IDBFactory(), IDBKeyRange } });
@@ -57,33 +58,23 @@ const plastic = upgrade('Plastic mouse', 5000);
 const kitten = upgrade('Kitten helpers', 9000);
 const lucky = upgrade('Lucky day', 50);
 Game.UpgradesInStore = [plastic, kitten, lucky, upgrade('Festive biscuit', 1, 'toggle'), upgrade('Specialized chocolate chips', 10, 'tech'), upgrade('One mind', 10, 'tech')];
-// clicking: Plastic mouse adds 1% of CpS per click
-Game.cookiesPs = 1000;
-Game.cookiesPsRaw = 1000;
-Game.mouseCps = () => 1 + (plastic.bought ? Game.cookiesPs * 0.01 : 0);
+// v3.5: payback periods are CookieMgr's own (features/payback.js asks the game what each thing adds)
+// — a CpS model stands in for the game: Cursor +0.1/s, Grandma +1/s on a base of 1000; Kitten helpers
+// ×1.15, Lucky day ×1.0001; Plastic mouse: +1% of CpS per click
+cpsModel(Game, { base: 1000, each: { Cursor: 0.1, Grandma: 1 }, mults: { 'Kitten helpers': 1.15, 'Lucky day': 1.0001 }, mouse: { 'Plastic mouse': 0.01 } });
 await sleep(400);
 
-// ---- without Cookie Monster
+// ---- no Cookie Monster needed (v3.5)
 CA.UI.Menu.openPage('clickers');
 const card = (id) => doc.querySelector(`[data-page="clickers"] .ca-mtile[data-macro-row="${id}"]`);
 assert(card('cmBuildings') && card('cmUpgrades') && card('research') && card('cheapUpgrades') && card('petDragon'), 'the new built-ins');
-assert(card('cmBuildings').querySelector('.ca-mtile-warn [data-ca="cm-load"]') && card('cmBuildings').querySelector('.ca-switch[disabled]'), 'Cookie Monster ones: a warning, Load it, switch disabled');
-assert(!card('research').querySelector('.ca-mtile-warn'), 'the others don’t need it');
-
-// ---- with Cookie Monster's data (PP per building for ×1 / ×10, per upgrade)
-Game.mods.CookieMonster = {};
-w.CookieMonsterData = {
-  Objects1: { Cursor: { pp: 900, price: 15 }, Grandma: { pp: 400, price: 100 } },
-  Objects10: { Cursor: { pp: 950, price: 300 }, Grandma: { pp: 300, price: 2000 } },
-  Upgrades: { 'Kitten helpers': { pp: 350 }, 'Plastic mouse': { pp: Infinity }, 'Lucky day': { pp: Infinity } },
-};
-CA.Events.emit('integrations', 'cookieMonster');
-assert(!card('cmBuildings').querySelector('.ca-mtile-warn') && !card('cmBuildings').querySelector('.ca-switch[disabled]'), 'Cookie Monster running: unlocked');
+assert(!doc.querySelector('[data-page="clickers"] [data-ca="cm-load"]') && !card('cmBuildings').querySelector('.ca-switch[disabled]'), 'v3.5: the buyers work without Cookie Monster — no warning, switch enabled');
 
 Game.cookies = 1e6;
 const AB = CA.AutoBuy;
-assert(AB.best(['building'], false).name === 'Grandma', 'best building: lowest PP');
-assert(AB.best(['upgrade'], false).name === 'Kitten helpers', 'best upgrade: lowest PP (Plastic mouse has none and no clicking yet)');
+// PP (bank covers the price): Cursor 15 / 0.1 = 150, Grandma 100 / 1 = 100; Kitten helpers 9000 / 150 = 60, Lucky day 50 / 0.1 = 500
+assert(AB.best(['building'], false).name === 'Grandma' && Math.abs(AB.best(['building'], false).pp - 100) < 1e-6, `best building: lowest PP (${AB.best(['building'], false).pp})`);
+assert(AB.best(['upgrade'], false).name === 'Kitten helpers' && Math.abs(AB.best(['upgrade'], false).pp - 60) < 1e-6, 'best upgrade: lowest PP (Plastic mouse adds nothing without clicking)');
 // clicking: 10 clicks/s → Plastic mouse adds 10 × 1%×1000 = 100 cookies/s for 5000: PP 50
 CA.Recorder.recent = () => ({ clickRate: 10, actual: 1000 }); // v2.29: recent averages live in the Recorder
 const pm = AB.candidates(['upgrade']).find((c) => c.name === 'Plastic mouse');
@@ -99,15 +90,15 @@ assert(plastic.bought === 1, 'the best upgrade is bought');
 CA.Macros.set('cmUpgrades', false, { silent: true });
 CA.Macros.runOnce('cmBuildings');
 assert(Game.Objects.Grandma.amount === 1, 'alone, Best building buys its best');
-// round to multiples: ranked by ×10, bought up to the next multiple of 10
+// round to multiples: ranked by what reaching the next multiple of 10 is worth, bought that far
 CA.Shop.setRoundUp(true);
 CA.Macros.runOnce('cmBuildings');
 assert(Game.Objects.Grandma.amount === 10, `round to multiples: buys 9 to reach 10 (${Game.Objects.Grandma.amount})`);
 CA.Shop.setRoundUp(false);
 
-// can't afford: saves up, or skips (shift setting)
-Game.cookies = 2000; // Kitten helpers 9000 is best, Lucky day 50 affordable but no PP
-w.CookieMonsterData.Upgrades['Lucky day'] = { pp: 9000 };
+// can't afford: saves up, or skips (shift setting). At 2000: Kitten helpers (7000 / 1000 + 60 = 67) is
+// best; Lucky day (500) is all it can afford
+Game.cookies = 2000;
 assert(CA.Macros.runOnce('cmUpgrades') === 0 && !kitten.bought && !lucky.bought, 'saves up for the best by default');
 CA.Macros.shiftToggle('cmUpgrades');
 CA.Macros.runOnce('cmUpgrades');

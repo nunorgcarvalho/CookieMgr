@@ -1,11 +1,14 @@
-// The building store ("shop"; CA.Store is the IndexedDB layer): sorting the building list
-// (through Cookie Monster) and rounding bulk buys up to the next multiple.
+// The building store ("shop"; CA.Store is the IndexedDB layer): sorting the building list and
+// rounding bulk buys up to the next multiple.
 //
-// **Sort** — Cookie Monster can order the building list in the store; CookieMgr just flips its
-// setting (Game.mods.cookieMonsterFramework…settings.SortBuildings — CM re-sorts on its next loop
-// and saves it with its own settings). CM's values: 0 default order, 1 payback period of one,
-// 2 payback period of the selected bulk amount, 3 price until the building's next achievement.
-// We offer 2 (best buy for 1 / 10 / 100), 3 and 0. Without Cookie Monster the switch is disabled.
+// **Sort** — the order the store lists buildings in (ui/storeBar.js lays the rows out in it):
+//   default       the game's own order: Cursor, Grandma, Farm…
+//   value         best buy first: by payback period colour, then payback period (features/payback.js),
+//                 for what a click buys now — ×1, ×10, ×100, or to the next multiple with Round to
+//                 multiples on (Cookie Monster's "PP of selected bulk mode")
+//   achievement   cheapest to reach the building's next achievement first; buildings more than 100
+//                 away from one last, in the game's order
+// While the store sells, it's the game's order.
 //
 // **Round to multiples** — with ×10 or ×100 selected, a click stops at a multiple of it:
 //   buying, the next one up: 37 owned, ×10 → buys 3 (to 40); 40 owned → buys 10
@@ -16,36 +19,51 @@
 
 CA.Shop = (() => {
   const SORTS = [
-    { v: 0, id: 'default', name: 'Default', icon: 'sortList', desc: 'The game’s own order: Cursor, Grandma, Farm…' },
-    { v: 2, id: 'value', name: 'Bulk PP', icon: 'dollar', desc: 'Cookie Monster’s order: shortest payback period (PP) for the amount you’re buying (×1, ×10 or ×100) first.' },
-    { v: 3, id: 'achievement', name: 'Achievement', icon: 'trophy', desc: 'Cookie Monster’s order: cheapest to reach the next building-count achievement first.' },
+    { id: 'default', name: 'Default', icon: 'sortList', desc: 'The game’s own order: Cursor, Grandma, Farm…' },
+    { id: 'value', name: 'Best buy', icon: 'dollar', desc: 'Shortest payback period first, for what a click buys now (×1, ×10 or ×100).' },
+    { id: 'achievement', name: 'Achievement', icon: 'trophy', desc: 'Cheapest to reach the next building-count achievement first.' },
   ];
   const wrapped = new WeakSet();
 
-  // ---- sort (Cookie Monster) ----------------------------------------------------------------
+  // ---- sort ------------------------------------------------------------------------------
 
-  /** Cookie Monster's settings object, or null when it isn't running. */
-  function cmSettings() {
-    const f = Game.mods && Game.mods.cookieMonsterFramework;
-    const s = f && f.saveData && f.saveData.cookieMonsterMod && f.saveData.cookieMonsterMod.settings;
-    return s && typeof s === 'object' ? s : null;
-  }
-  const canSort = () => !!cmSettings();
-  /** The current sort ('value' | 'achievement' | 'default'); CM's "payback of one" shows as 'value'. */
-  function sort() {
-    const s = cmSettings();
-    if (!s) return null;
-    const v = Number(s.SortBuildings) || 0;
-    return v === 1 || v === 2 ? 'value' : v === 3 ? 'achievement' : 'default';
-  }
+  const canSort = () => true;
+  /** The current sort: 'default' | 'value' | 'achievement'. */
+  const sort = () => (SORTS.some((s) => s.id === CA.Settings.get('storeSort')) ? CA.Settings.get('storeSort') : 'default');
   function setSort(id) {
-    const s = cmSettings();
-    const def = SORTS.find((x) => x.id === id);
-    if (!s || !def) return false;
-    s.SortBuildings = def.v;
-    if (typeof Game.RefreshStore === 'function') Game.RefreshStore();
+    if (!SORTS.some((s) => s.id === id)) return false;
+    CA.Settings.set('storeSort', id);
     CA.Events.emit('shop');
     return true;
+  }
+  /** The buildings in the order the store should list them (names). */
+  function order() {
+    const all = Object.values(Game.Objects || {}).sort((a, b) => a.id - b.id);
+    const s = sort();
+    if (s === 'default' || Game.buyMode !== 1) return all.map((b) => b.name);
+    if (s === 'achievement') {
+      const price = (b) => {
+        const x = CA.Payback.nextAchievement(b.name);
+        return x.n <= 100 ? x.price : Infinity;
+      };
+      return all
+        .map((b) => ({ b, p: price(b) }))
+        .sort((a, b) => (a.p === b.p ? a.b.id - b.b.id : a.p - b.p))
+        .map((x) => x.b.name);
+    }
+    const t = CA.Payback.table();
+    const C = CA.Payback.COLOURS;
+    return all
+      .map((b) => {
+        const bulk = Game.buyBulk === 10 || Game.buyBulk === 100 ? Game.buyBulk : 1;
+        const n = amountFor(b, bulk) || 1;
+        const row = t.buildings[n] && t.buildings[n][b.name];
+        const price = row ? row.price : CA.Payback.sumPrice(b, n);
+        const v = row ? row.pp : CA.Payback.pp(price, CA.Payback.buildingBonus(b.name, n));
+        return { b, v, c: C.indexOf(row ? row.colour : t.colourOf(v, price)) };
+      })
+      .sort((a, b) => (a.c === b.c ? a.v - b.v || a.b.id - b.b.id : a.c - b.c))
+      .map((x) => x.b.name);
   }
 
   // ---- round up ---------------------------------------------------------------------------
@@ -109,12 +127,13 @@ CA.Shop = (() => {
       group: 'store',
       icon: 'toolbar',
       name: 'Store toolbar',
-      desc: 'A small toolbar along the bottom of the store: building sort (with Cookie Monster) and rounding to multiples.',
+      desc: 'A small toolbar along the bottom of the store: building sort and rounding to multiples.',
       default: true,
     });
+    CA.Settings.defineOption({ key: 'storeSort', group: 'store-hidden', name: 'Building sort', desc: '', default: 'default' });
     Object.values(Game.Objects || {}).forEach(wrap);
     CA.Events.on('settings', (k) => k === 'roundUpBulk' && refreshStore());
   }
 
-  return { init, SORTS, canSort, sort, setSort, roundUp, setRoundUp, amountFor, cmSettings };
+  return { init, SORTS, canSort, sort, setSort, order, roundUp, setRoundUp, amountFor };
 })();

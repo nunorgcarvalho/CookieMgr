@@ -4,6 +4,7 @@
 // replaces, on random states: the same things popped, harvested, bought.
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
 import { boot, sleep, makeAssert } from '../harness/game.mjs';
+import { cpsModel } from '../harness/cps.mjs';
 
 const { assert, done } = makeAssert();
 const g = boot({ idb: { factory: new IDBFactory(), IDBKeyRange } });
@@ -203,7 +204,8 @@ for (const [name, base] of [['Cursor', 15], ['Grandma', 100]]) {
 }
 Game.buyMode = 1;
 Game.buyBulk = 1;
-Game.mods.CookieMonster = {};
+// v3.5: payback periods are CookieMgr's own — a random CpS model per trial stands in for the game
+const model = cpsModel(Game, { base: 1000 });
 CA.Recorder.recent = () => ({ clickRate: 0, actual: 1000 });
 const buyNow = () => `${Game.Objects.Cursor.amount},${Game.Objects.Grandma.amount}|${Game.UpgradesInStore.map((u) => u.name).join(',')}|${Math.round(Game.cookies)}`;
 M.setEvery('cmBuildings', 60000); // the other one is switched on in some trials: no timer runs in between
@@ -214,22 +216,21 @@ for (const [id, action] of [['cmBuildings', 'cm.buyBuilding'], ['cmUpgrades', 'c
     200,
     () => {
       const amounts = [pick(15), pick(15)];
-      const pps = [100 + rnd() * 900, 100 + rnd() * 900, 100 + rnd() * 900, 100 + rnd() * 900];
+      const each = { Cursor: 0.02 + rnd() * 0.2, Grandma: 0.1 + rnd() * 2 };
+      const mults = { 'Kitten helpers': 1 + rnd() * 0.3, 'Lucky day': 1 + rnd() * 0.05 };
       const skip = rnd() < 0.5;
       const cookies = [30, 400, 5000, 1e6][pick(4)];
       M.set(other, rnd() < 0.5, { silent: true });
       M.setInput(id, 'skip', skip);
       sideBySide.params = { skip };
-      w.CookieMonsterData = {
-        Objects1: { Cursor: { pp: pps[0], price: 15 }, Grandma: { pp: pps[1], price: 100 } },
-        Objects10: { Cursor: { pp: pps[0], price: 300 }, Grandma: { pp: pps[1], price: 2000 } },
-        Upgrades: { 'Kitten helpers': { pp: pps[2] }, 'Lucky day': { pp: pps[3] } },
-      };
+      model.each = each;
+      model.mults = mults;
       const build = () => {
         Game.Objects.Cursor.amount = amounts[0];
         Game.Objects.Grandma.amount = amounts[1];
         Game.UpgradesInStore = [upgrade('Kitten helpers', 900), upgrade('Lucky day', 50)];
         Game.cookies = cookies;
+        Game.CalculateGains();
       };
       build();
       return build;
