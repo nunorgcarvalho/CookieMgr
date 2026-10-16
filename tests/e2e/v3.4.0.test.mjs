@@ -49,6 +49,7 @@ LY.pick('seeds', 'bakerWheat'); // (golden clover isn't unlocked here)
 
 // ---- a round: planted together on fertilizer, held on clay, replanted together
 M.soil = 0;
+M.nextStep = Date.now() + 10e3; // (v3.4.2: a round is planted in the last seconds before a tick)
 tend();
 assert(tiles.every(([x, y]) => at(x, y) === 'bakerWheat' && M.plot[y][x][1] === 0) && soil() === 'fertilizer', 'an empty garden: the whole layout planted at once; fertilizer while it grows');
 tiles.slice(0, 8).forEach(([x, y]) => set(x, y, 'bakerWheat', 40)); // 8 of 12 mature: under 75%
@@ -65,6 +66,7 @@ tend();
 assert(at(1, 2) === null && at(2, 2) === null && at(3, 2) === null && soil() === 'clay', 'plants that die aren’t replanted; a weed is cleared; 9 of 12 mature left: still on clay');
 set(4, 2, null); // 8 of 12 left: under 75%
 const before = M.harvestLog.length;
+M.nextStep = Date.now() + 10e3;
 tend();
 assert(tiles.every(([x, y]) => at(x, y) === 'bakerWheat' && M.plot[y][x][1] === 0) && M.harvestLog.length - before === 8 && soil() === 'fertilizer', `under 75% left: everything harvested and the whole layout replanted, fertilizer again (${M.harvestLog.length - before} harvested)`);
 

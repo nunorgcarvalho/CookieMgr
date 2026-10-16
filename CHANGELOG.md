@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 3.4.2 — 2026-10-16
+
+- **The Full-garden replanter starts a new round fertilizer first.** It switches to fertilizer as soon as a round is
+  due — which brings the next tick within 3 minutes — keeps the old plants working until then, and harvests and
+  replants the whole layout in the last `plantWindow` (15) seconds before that tick, so the new plants grow on it
+  straight away instead of sitting as seedlings until the next one. On a level-6 golden clover field: golden cookies
+  +55.8% on average instead of +55.0%, at the same number of plantings. (If the soil can't change yet — its
+  10-minute cooldown — it still replants just before the next tick.) Edited copies of the gardener keep their code.
+
 ## 3.4.1 — 2026-10-16
 
 - **Fix: a popped golden cookie was counted again while it faded out.** The game keeps a popped shimmer on screen
