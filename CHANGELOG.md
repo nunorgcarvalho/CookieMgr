@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 3.9.0 — 2026-10-16
+
 - **The next golden cookie, as statistics** (Stats page): the wait's whole distribution, exact from the game's own
   rule and checked against it — expected, median, most likely, the chance within a minute and this second, the wrath
   chance; a chart of the odds over time (density, cumulative chance, 25–75% and 10–90% bands, mean and median; hover

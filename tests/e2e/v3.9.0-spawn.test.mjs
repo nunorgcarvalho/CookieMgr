@@ -1,4 +1,4 @@
-// Release E of the in-house Cookie Monster (renamed vX.Y.Z.test.mjs when it lands):
+// v3.9.0: the next golden cookie as statistics, and timer bars on its chart — and switches out of payback:
 //   the next golden cookie as statistics — the distribution card on the Stats page (numbers, the
 //   chart with its hover readout, percentiles, what moves it and the what-if), the widget's sparkline
 //   (the distribution itself is checked against the real game in tests/sim/golden-spawn)
