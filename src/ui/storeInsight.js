@@ -111,6 +111,12 @@ CA.UI.StoreInsight = (() => {
     return s <= 0 ? 'now' : Number.isFinite(s) ? F().span(s) : 'not at this CpS';
   };
 
+  /** The tooltip's "by actual income" line, when enough is recorded. */
+  function actualRow(v) {
+    const a = P().ppActual(v);
+    if (!a) return null;
+    return ['Payback, actual income', `${ppText(a.pp)} <small>(×${a.ratio.toFixed(2)} CpS)</small>`];
+  }
   function buildingBlock(b) {
     if (!S('storeTooltips') || Game.buyMode !== 1) return '';
     const t = P().table();
@@ -120,10 +126,11 @@ CA.UI.StoreInsight = (() => {
     const rows = [
       [`Bonus income (×${r.n})`, `+${F().beautify(r.bonus)}/s${share(r.bonus)}`],
       ['Payback period', ppText(r.pp), `ca-pp-${r.colour}`],
+      actualRow(r.pp),
       ['Affordable', afford(r.price)],
       ['Share of production', `${(produce * 100).toFixed(2)}%`],
       ['Next achievement', next.n <= 100 ? `${next.n} more (${F().beautify(next.price)})` : 'none within 100'],
-    ];
+    ].filter(Boolean);
     if (r.won.length) rows.push(['Wins', esc(r.won.join(', '))]);
     return block(rows, warnings(r.price));
   }
@@ -135,6 +142,8 @@ CA.UI.StoreInsight = (() => {
     if (r.bonus) rows.push(['Bonus income', `${r.bonus > 0 ? '+' : ''}${F().beautify(r.bonus)}/s${share(r.bonus)}`]);
     if (r.mouse > 0) rows.push(['Per click', `+${F().beautify(r.mouse)} (≈ ${F().beautify(r.mouse * P().clickRate())}/s at your clicking)`]);
     rows.push(['Payback period', ppText(r.pp), `ca-pp-${r.colour}`]);
+    const ar = actualRow(r.pp);
+    if (ar) rows.push(ar);
     rows.push(['Affordable', afford(r.price)]);
     if (r.won.length) rows.push(['Wins', esc(r.won.join(', '))]);
     return block(rows, warnings(r.price));
