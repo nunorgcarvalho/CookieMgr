@@ -53,6 +53,10 @@ test what's recorded), `withPantheon`, `withGrimoire`, `localStorageSeed`, `full
 - **`contract/source.test.mjs`** — reads the source: core/ and features/ never use the UI, every file is in the
   build, no native `title` tooltips or `scrollIntoView`, and every CSS class is still produced by some code.
 - **`unit/`** — fast, table-driven checks of pure logic (the algorithmic language).
+- **`sim/`** — the simulator (`sim/`): its clock, random and headless page, the real game booting and playing
+  deterministically, CookieMgr loaded into it (actions, values, code, macros, the logs, saves), strategies compiling
+  with CookieMgr's compiler, and the garden models against the game's own numbers. They download the game's scripts
+  on first use (`sim/.game/`); offline, they pass as skipped.
 - **`e2e/vX.Y.Z.test.mjs`** — one per release: what that release added or changed, end to end. The
   CHANGELOG entry of the same version says what each one is about. v3.0.0 has several
   (`v3.0.0-stocks`, `-garden`, `-builtins`, `-pantheon`).

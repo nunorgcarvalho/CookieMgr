@@ -818,6 +818,14 @@ If you add a file, add it to `MODULES` in `build.mjs` in the right order.
 
 CI (`.github/workflows/ci.yml`) fails a push if `dist/CookieMgr.js` does not match `src/` or a test fails, so build and `npm test` before committing.
 
+## Simulator
+
+[`sim/`](sim/README.md) is a Cookie Clicker simulator for trying strategies over long timescales: the
+real game's own scripts running headless in Node, with CookieMgr's own core and features loaded into
+it, on a virtual clock. Strategies are written in CookieMgr's algorithmic code (`.cmgr` files you can
+paste into an algorithmic macro), and everything that happens is logged with CookieMgr's action ids
+and its event log. `npm run sim -- list` to start; see [sim/README.md](sim/README.md).
+
 ## License
 
 [MIT](LICENSE)

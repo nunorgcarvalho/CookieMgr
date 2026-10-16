@@ -1,0 +1,4 @@
+# The same buyer with no clicking: payback period buying and golden cookies only.
+# with: golden
+# every: 500
+buy.best(all)

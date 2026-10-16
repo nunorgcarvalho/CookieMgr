@@ -4,10 +4,10 @@ import js from '@eslint/js';
 import globals from 'globals';
 
 export default [
-  { ignores: ['dist/**', 'node_modules/**'] },
+  { ignores: ['dist/**', 'node_modules/**', 'sim/.game/**', 'sim/out/**'] },
   js.configs.recommended,
   {
-    files: ['src/**/*.js'],
+    files: ['src/**/*.js', 'sim/mgr/staging/**/*.js'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'script',
@@ -35,7 +35,7 @@ export default [
     languageOptions: { ecmaVersion: 2022, sourceType: 'script', globals: { ...globals.browser, unsafeWindow: 'readonly' } },
   },
   {
-    files: ['tests/**/*.mjs', 'build.mjs', 'eslint.config.mjs'],
+    files: ['tests/**/*.mjs', 'sim/**/*.mjs', 'build.mjs', 'eslint.config.mjs'],
     languageOptions: { ecmaVersion: 2022, sourceType: 'module', globals: { ...globals.node } },
     rules: { 'no-unused-vars': ['error', { args: 'none', caughtErrors: 'none' }] },
   },
