@@ -1,6 +1,6 @@
 # CookieMgr simulator
 
-*v0.2.0 — versioned apart from the add-on (`sim-v*` tags; `SIM_VERSION` in `sim.mjs`).*
+*v0.3.0 — versioned apart from the add-on (`sim-v*` tags; `SIM_VERSION` in `sim.mjs`).*
 
 A Cookie Clicker simulator for trying out strategies over long timescales — written in CookieMgr's
 own words, so what works here can be pasted into the add-on and run on the real game.
@@ -29,18 +29,21 @@ pinned in `game/fetch.mjs`.
 ## CookieSimMgr — the GUI
 
 `npm run sim:gui` starts CookieSimMgr at http://localhost:8091 and opens it (`--port 9000`,
-`--no-open`). It's the add-on's own UI — its stylesheet, icons, components, tooltips, chart helpers,
-code editor and library, and the code knobs, served straight from `src/` — so it looks and reads
-like CookieMgr, and stays in step with it.
+`--no-open`). It's the add-on's own UI — its stylesheet, icons, components, tooltips, plotting engine,
+**its Graphs and Events pages**, code editor and library, and the code knobs, served straight from
+`src/` — so it looks and reads like CookieMgr, and stays in step with it.
 
 - **Simulate** — start from a new game, a scenario, or your own save (paste Options → Export save),
   with a strategy (or your own code, or nothing) and a seed. Then watch it play and take part:
-  play / pause, speed (1× to as fast as it goes), *play for* 10 min … 1 day; the stats; cookies baked,
-  the bank and CpS over time (log or linear), with golden cookies marked and their effects shaded;
+  play / pause, speed (1× to as fast as it goes), *play for* 10 min … 1 day; the stats; **the
+  add-on's Graphs page** — CpS, Actual CpS by source, the cookie bank, prestige: drag across a chart
+  to zoom in, window chips, smoothing, % of total, active time, effect bands and lanes, event
+  markers, the averages tables — on what CookieMgr's recorder recorded in the simulated game;
   buildings with their share of the CpS; effects running; upgrades bought and in the store; the
   garden tile by tile; **CookieMgr's macros, switchable while it plays**; any CookieMgr action, by
   picking it; code run once, or kept running as a macro; every action CookieMgr took (by its
-  action ids, with a tally) and its event log (filterable, as the add-on's Events page has it).
+  action ids, with a tally); and **the add-on's Events page** (income outside CpS, the event log
+  with its filters, search and CSV).
   **Export save** downloads the game as it is — import it in the game, or start another
   simulation from it. Simulations keep running on the server while the page is closed; *Running*
   lists them.
@@ -60,6 +63,16 @@ The server (`gui/server.mjs`, no dependencies) runs live simulations in its own 
 a time so it stays responsive, and streams them to the page (server-sent events); comparisons and
 experiments run in child processes. The game's pictures come from its CDN once and are cached in
 `sim/.game/assets/`.
+
+**How the add-on's pages run on a simulation.** Live simulations record (`createSim({ record: true })`:
+CookieMgr's own Recorder and History running in the simulated game, on an in-memory IndexedDB). The
+server streams what they recorded — recorder frames (only what changed: new frames, and the stretch
+the recorder merges into coarser frames past 3 hours of play), golden cookie effects, events — and
+the page puts it where the add-on's code looks for it (`gui/public/mirrors.js`): the add-on's own
+recorder loads the frames (its queries are the real ones), the event log and effects are mirrored,
+and inside the add-on's code `Date.now()` is the simulated moment. Then the add-on's Graphs and
+Events pages are mounted as the add-on mounts them, and tick on each snapshot as they do on each
+recorded second in the game.
 
 ## How fast
 
