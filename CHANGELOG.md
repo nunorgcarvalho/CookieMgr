@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 3.7.2 — 2026-10-16
+
+- **Payback is much cheaper to work out.** It measures only what's asked: buying (Best building / Best upgrade,
+  `best`, `pp.best`, `buy.best`) asks for the buildings you can buy at the amount you'd buy and the store's
+  upgrades — not every building at ×1, ×10 and ×100 (locked ones too), which only the store's colours and the
+  Payback page need. An upgrade whose wait to afford alone outlasts the best building's payback period isn't measured
+  for the best buy; cookie upgrades that win nothing are worked out (CpS × their power) after one of them is measured
+  as a check. The store redraws its colours from a table up to 2 s old. Same answers — checked against Cookie
+  Monster and the full table. In the simulator a fresh game runs about 6× faster (255× real time, from 44×), a
+  big-bank game about 5× faster (19×, from 4×).
+- The parity tests against Cookie Monster wait for its numbers and allow it a refresh or two (no more flaky runs
+  when the machine is busy), and skip when Cookie Monster can't be downloaded.
+
 ## 3.7.1 — 2026-10-16
 
 - **Charts: one hover readout that follows the x axis.** Wherever the cursor is: the time; every golden-cookie
