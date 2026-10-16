@@ -1,4 +1,4 @@
-// Force the Hand of Fate's forecast and the golden cookie widgets (renamed vX.Y.Z.test.mjs when it lands):
+// v3.12.0: Force the Hand of Fate's forecast and the golden cookie widgets:
 // the forecast from the save's seed (the words, the spell's tooltip, Gambler's Fever Dream's); the
 // Golden timeline / Next golden cookie / Effect timers widgets — the Stats page's chart and bars at the
 // widget's width, the next casts, each part picked in its settings and saved. (The forecast against

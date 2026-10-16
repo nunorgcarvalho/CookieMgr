@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 3.12.0 — 2026-10-16
+
 - **Force the Hand of Fate, forecast.** The game rolls each spell cast from your save's seed and how many spells you've
   cast, so CookieMgr replays its draws: the spell's tooltip lists what the next eight casts give (and what each would be
   as a backfire), Gambler's Fever Dream's what it would cast. Any cast moves the list on — cast something cheap to skip
