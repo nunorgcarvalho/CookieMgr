@@ -7093,6 +7093,603 @@ CA.Payback = (() => {
   return { init, table, ranking, best, buy, buyBuilding, buyUpgrade, buildingBonus, upgradeWorth, pp, timeTo, sumPrice, clickRate, nextAchievement, storeUpgrades, measureAll, COLOURS, BULKS };
 })();
 
+// ---- src/features/goldenMath.js --------------------------------------
+// What golden cookies (and a few spells and plants) pay, and the bank each needs to pay its most —
+// Cookie Monster's "Lucky Cookies", "Chain Cookies", "Spells" and "Garden" statistics, from the game's
+// own formulas (main.js shimmerTypes.golden.popFunc, minigameGrimoire.js, minigameGarden.js).
+//
+//   Lucky!            mult × min(bank × 15%, CpS × 15 min) + 13   → the bank for its most: CpS × 900 / 0.15
+//                     (in a Frenzy CpS is ×7, so 7 times that bank)
+//   Cookie chain      digits of 7 (wrath: 6) growing tenfold per cookie, each capped at min(CpS × 6 h,
+//                     bank ÷ 2) × mult; the chain ends at the cap — so the bank that lets it run to the
+//                     CpS cap is twice its last payout
+//   Conjure Baked     min(bank × 15%, CpS × 30 min) (at least 7)  → bank: CpS × 1800 / 0.15
+//   Goods
+//   Spontaneous       a random building you have fewer than 400 of, fewer than of your most-owned
+//   Edifice           building, costing at most twice your bank   → bank: the most expensive of them ÷ 2
+//                     (Cookie Monster asks for twice the price — the game asks for half)
+//   Bakeberry …       a mature harvest pays min(bank × p, CpS × t): Bakeberry 3% / 30 min, Chocoroot and
+//                     White chocoroot 3% / 3 min, Queenbeet 4% / 1 h, Duketater 8% / 2 h
+//
+// "CpS" is what a golden cookie will see: no buffs (they'd be over by then — or are the point:
+// "Frenzy" figures multiply by 7), the Golden switch off (golden cookies don't come while it's on),
+// and with the Dragon's Fortune aura the cookie itself on screen. mult: Green yeast digestives,
+// Dragon fang, the Ancestral Metamorphosis (Unholy Dominion for wrath) aura, garden effects.
+
+CA.GoldenMath = (() => {
+  const has = (n) => typeof Game.Has === 'function' && !!Game.Has(n);
+  const aura = (n) => (typeof Game.auraMult === 'function' ? Game.auraMult(n) : 0);
+  const eff = (n) => (typeof Game.eff === 'function' ? Game.eff(n) : 1);
+
+  /** What a golden (or wrath) cookie multiplies its payout by. */
+  function mult(wrath) {
+    let m = 1;
+    if (has('Green yeast digestives')) m *= 1.01;
+    if (has('Dragon fang')) m *= 1.03;
+    if (wrath) m *= (1 + aura('Unholy Dominion') * 0.1) * eff('wrathCookieGain');
+    else m *= (1 + aura('Ancestral Metamorphosis') * 0.1) * eff('goldenCookieGain');
+    return m;
+  }
+
+  const buffMult = () => Object.values(Game.buffs || {}).reduce((m, b) => (b && b.multCpS !== undefined ? m * b.multCpS : m), 1);
+  /** CpS with the Golden switch off (golden cookies only come then) — asked of the game when it's on. */
+  let switchCache = { key: '', v: 0 };
+  function cpsSwitchOff() {
+    if (!has('Golden switch [off]')) return Game.cookiesPs || 0;
+    const key = `${Game.cookiesPs}|${Game.UpgradesOwned}`;
+    if (switchCache.key !== key) {
+      const u = Game.Upgrades['Golden switch [off]'];
+      const [, r] = CA.Payback.measureAll([
+        () => {
+          u.bought = 0;
+          return () => (u.bought = 1);
+        },
+      ]);
+      switchCache = { key, v: r.cps };
+    }
+    return switchCache.v;
+  }
+  /** The CpS a golden cookie's payout is worked out with (see the top). */
+  function baseCps() {
+    const b = buffMult();
+    if (!(b > 0)) return 0;
+    let cps = cpsSwitchOff() / b;
+    const golden = Game.shimmerTypes && Game.shimmerTypes.golden;
+    if (golden && golden.n === 0) cps *= 1 + aura("Dragon's Fortune") * 1.23;
+    return cps;
+  }
+
+  // ---- Lucky!, Conjure Baked Goods ------------------------------------------------------------
+
+  function lucky(frenzy = false) {
+    const cps = baseCps() * (frenzy ? 7 : 1);
+    const bank = (cps * 900) / 0.15;
+    return { bank, reward: mult(false) * cps * 900 + 13, wrathReward: mult(true) * cps * 900 + 13 };
+  }
+  function conjure(frenzy = false) {
+    const cps = baseCps() * (frenzy ? 7 : 1);
+    return { bank: (cps * 1800) / 0.15, reward: Math.max(7, cps * 1800) };
+  }
+
+  // ---- cookie chains -----------------------------------------------------------------------------
+
+  /**
+   * A chain run to the end (main.js "chain cookie"): { total, last, nextBank } — what it pays in all, its
+   * last payout, and the bank that would let it go one digit further. maxPayout: the CpS cap.
+   */
+  function chainRun(digit, maxPayout, m) {
+    let total = 0;
+    let moni = 0;
+    let next = 0;
+    let nextRequired = 0;
+    let chain = 1 + Math.max(0, Math.ceil(Math.log(Math.max(1, Game.cookies || 0)) / Math.LN10) - 10);
+    let guard = 0;
+    while (next < maxPayout * m && guard++ < 400) {
+      moni = Math.max(digit, Math.min(Math.floor((1 / 9) * Math.pow(10, chain) * digit * m), maxPayout * m));
+      next = Math.max(digit, Math.min(Math.floor((1 / 9) * Math.pow(10, chain + 1) * digit * m), maxPayout * m));
+      nextRequired = Math.floor((1 / 9) * Math.pow(10, chain + 1) * digit * m);
+      total += moni;
+      chain++;
+    }
+    return { total, last: moni, nextRequired };
+  }
+  /** A chain's most: { total, bank } — bank: what lets it run to the CpS cap (twice its last payout). */
+  function chain(wrath = false, frenzy = false) {
+    const m = mult(wrath);
+    const cap = baseCps() * 60 * 60 * 6 * (frenzy ? 7 : 1);
+    const r = chainRun(wrath ? 6 : 7, cap, m);
+    return { total: r.total, last: r.last, bank: (r.last * 2) / m, nextBank: r.nextRequired / 60 / 60 / 6 };
+  }
+
+  // ---- Spontaneous Edifice ------------------------------------------------------------------------
+
+  /** The best building Spontaneous Edifice can give and the bank it needs: { building, price, bank } (or null). */
+  function edifice() {
+    const all = Object.values(Game.Objects || {});
+    let max = 0;
+    let n = 0;
+    all.forEach((o) => {
+      if (o.amount > max) max = o.amount;
+      if (o.amount > 0) n++;
+    });
+    let best = null;
+    all.forEach((o) => {
+      const price = typeof o.getPrice === 'function' ? o.getPrice() : o.price;
+      if ((o.amount < max || n === 1) && o.amount < 400 && Number.isFinite(price) && (!best || price > best.price)) best = { building: o.name, price, bank: price / 2 };
+    });
+    return best;
+  }
+
+  // ---- plants that pay when harvested -------------------------------------------------------------
+
+  const PLANTS = { bakeberry: [0.03, 30 * 60], chocoroot: [0.03, 3 * 60], whiteChocoroot: [0.03, 3 * 60], queenbeet: [0.04, 3600], duketater: [0.08, 7200] };
+  /** A plant's harvest at its most: { bank, reward } (null for a plant that doesn't pay). Uses the game's CpS as it is. */
+  function plant(key) {
+    const p = PLANTS[key];
+    if (!p) return null;
+    const cps = Game.cookiesPs || 0;
+    return { bank: (cps * p[1]) / p[0], reward: cps * p[1] };
+  }
+
+  function init() {
+    const V = (id, desc, get, params) => CA.Script.defineValue({ id, desc, get, params });
+    V('bank.lucky', 'the bank a Lucky! needs to pay its most (15 min of CpS)', () => lucky().bank);
+    V('bank.luckyFrenzy', 'the bank a Lucky! in a Frenzy needs to pay its most', () => lucky(true).bank);
+    V('bank.conjure', 'the bank Conjure Baked Goods needs to pay its most (30 min of CpS)', () => conjure().bank);
+    V('bank.chain', 'the bank a cookie chain needs to run to its cap (6 h of CpS)', () => chain().bank);
+    V('bank.chainFrenzy', 'the bank a cookie chain in a Frenzy needs to run to its cap', () => chain(false, true).bank);
+    V('bank.edifice', 'the bank Spontaneous Edifice needs to give your most expensive eligible building', () => (edifice() || { bank: 0 }).bank);
+    V('bank.plant', 'the bank a plant’s harvest needs to pay its most (bakeberry, chocoroot, queenbeet, duketater…)', (k) => (plant(k) || { bank: 0 }).bank, ['plant']);
+    V('reward.lucky', 'what a Lucky! pays at its most', () => lucky().reward);
+    V('reward.luckyFrenzy', 'what a Lucky! in a Frenzy pays at its most', () => lucky(true).reward);
+    V('reward.chain', 'what a cookie chain pays in all, at its most', () => chain().total);
+    V('reward.conjure', 'what Conjure Baked Goods pays at its most', () => conjure().reward);
+  }
+
+  return { init, mult, baseCps, lucky, conjure, chain, chainRun, edifice, plant, PLANTS };
+})();
+
+// ---- src/features/wrinklers.js ---------------------------------------
+// Wrinklers: what popping each would give back, and what they're doing to your CpS — Cookie Monster's
+// "Wrinklers" statistics and its "calculate with wrinklers" bank, from the game's own pop formula
+// (main.js, the wrinkler's death):
+//
+//   eaten × 1.1 × 1.05 (Sacrilegious corruption) × (1 + 0.2 × Dragon Guts) × 3 (shiny)
+//         × 1.05 (Wrinklerspawn) × Skruuia (1.15 / 1.1 / 1.05 in the diamond / ruby / jade slot)
+//
+// (Cookie Monster leaves out the Dragon Guts aura — this follows the game.) Each eats 5% of your CpS
+// (× Dragon Guts, × garden effects) while it's attached; all of them can't eat more than all of it.
+
+CA.Wrinklers = (() => {
+  const has = (n) => typeof Game.Has === 'function' && !!Game.Has(n);
+  const list = () => (Game.wrinklers || []).filter((w) => w && w.phase > 0);
+
+  /** What one wrinkler has eaten comes back as this many times over. */
+  function popMult(w) {
+    let m = 1.1;
+    if (has('Sacrilegious corruption')) m *= 1.05;
+    m *= 1 + (typeof Game.auraMult === 'function' ? Game.auraMult('Dragon Guts') : 0) * 0.2;
+    if (w && w.type === 1) m *= 3;
+    if (has('Wrinklerspawn')) m *= 1.05;
+    if (Game.hasGod) {
+      const lvl = Game.hasGod('scorn');
+      if (lvl === 1) m *= 1.15;
+      else if (lvl === 2) m *= 1.1;
+      else if (lvl === 3) m *= 1.05;
+    }
+    return m;
+  }
+  /** What popping a wrinkler gives now. */
+  const reward = (w) => (w ? (w.sucked || 0) * popMult(w) : 0);
+
+  /** { total, normal, shiny, fattest: { i, reward } | null, count, shinies, eating } — eating: those attached. */
+  function summary() {
+    const s = { total: 0, normal: 0, shiny: 0, fattest: null, count: 0, shinies: 0, eating: 0 };
+    list().forEach((w) => {
+      const r = reward(w);
+      s.total += r;
+      s.count++;
+      if (w.phase === 2) s.eating++;
+      if (w.type === 1) {
+        s.shiny += r;
+        s.shinies++;
+      } else {
+        s.normal += r;
+        if (!s.fattest || r > s.fattest.reward) s.fattest = { i: w.id !== undefined ? w.id : Game.wrinklers.indexOf(w), reward: r };
+      }
+    });
+    return s;
+  }
+  /** The wrinkler bank for payback periods: 'all' (every one), 'fattest' (the fattest non-shiny), else 0. */
+  function bank(mode) {
+    const s = summary();
+    if (mode === 'all') return s.total;
+    if (mode === 'fattest') return s.fattest ? s.fattest.reward : 0;
+    return 0;
+  }
+  /** Cookies a second your wrinklers eat right now. */
+  const eatingRate = () => (Game.cookiesPs || 0) * (Game.cpsSucked || 0);
+
+  function init() {
+    const V = (id, desc, get, more) => CA.Script.defineValue({ id, desc, get, ...(more || {}) });
+    // a wrinkler is named as wrinklers() names it (gameActions.js): its id, else its place
+    const named = (k) => (Game.wrinklers || []).find((w, i) => String(w.id != null ? w.id : i) === String(k) && w.phase > 0) || null;
+    V('wrinkler.reward', 'what popping a wrinkler would give back now', (k) => reward(named(k)), { params: ['wrinkler'] });
+    V('wrinklers.reward', 'what popping every wrinkler would give back now', () => summary().total);
+    V('wrinklers.rewardFattest', 'what popping the fattest (non-shiny) wrinkler would give back', () => bank('fattest'));
+    V('wrinklers.eating', 'cookies a second your wrinklers eat', eatingRate);
+  }
+
+  return { init, popMult, reward, summary, bank, eatingRate };
+})();
+
+// ---- src/features/prestige.js ----------------------------------------
+// Prestige: what ascending now would bring — Cookie Monster's "Prestige" statistics, from the game's
+// own rules (main.js HowMuchPrestige: level = ∛(cookies baked in all runs ÷ 10¹²)):
+//
+//   gain        prestige levels you'd get if you ascended now
+//   toNext      cookies still to bake for one more
+//   perSecond   levels a second at the rate you're baking (the derivative of the cube root × cookies a
+//               second — your CpS, or what the history recorder saw you earn, clicks and golden cookies too)
+//   cpsGain     the CpS those new levels would add (+1% each × the heavenly multiplier) — asked of the
+//               game, like the payback numbers
+//   lucky…      the next total level ending in 7, 777, 777777 — what the Lucky digit, Lucky number and
+//               Lucky payout heavenly upgrades need
+// and a target of your own (prestigeTarget): the cookies it takes, and how long at this rate.
+
+CA.Prestige = (() => {
+  const levelOf = (cookies) => (typeof Game.HowMuchPrestige === 'function' ? Game.HowMuchPrestige(cookies) : Math.cbrt(cookies / 1e12));
+  const cookiesFor = (level) => (typeof Game.HowManyCookiesReset === 'function' ? Game.HowManyCookiesReset(level) : Math.pow(level, 3) * 1e12);
+  const baked = () => (Game.cookiesReset || 0) + (Game.cookiesEarned || 0);
+
+  /** Prestige levels owned (as the game counts them before this run). */
+  const owned = () => Math.floor(levelOf(Game.cookiesReset || 0));
+  /** Total level if you ascended now. */
+  const total = () => Math.floor(levelOf(baked()));
+  const gain = () => Math.max(0, total() - owned());
+  /** Cookies still to bake for the next level. */
+  const toNext = () => Math.max(0, cookiesFor(total() + 1) - baked());
+  /** Cookies baked a second: what the recorder saw over the last minute (clicks, golden cookies…), else CpS. */
+  function bakeRate() {
+    const r = CA.Recorder && typeof CA.Recorder.recent === 'function' ? CA.Recorder.recent(60) : null;
+    return r && Number.isFinite(r.actual) && r.actual > 0 ? r.actual : Game.cookiesPs || 0;
+  }
+  /** Levels a second at that rate: d∛(c/10¹²)/dc × rate. */
+  function perSecond() {
+    const c = baked();
+    if (!(c > 0)) return 0;
+    const lvl = levelOf(c);
+    return lvl > 0 ? (bakeRate() * lvl) / (3 * c) : 0;
+  }
+  /** Seconds until a total level at the current rate (0: reached). */
+  function secondsTo(level) {
+    const need = cookiesFor(level) - baked();
+    if (need <= 0) return 0;
+    const r = bakeRate();
+    return r > 0 ? need / r : Infinity;
+  }
+
+  /** The CpS the levels you'd gain would add — asked of the game (Game.prestige raised, CpS recomputed, put back). */
+  let gainCache = { key: '', v: 0 };
+  function cpsGain() {
+    const g = gain();
+    if (!g || typeof Game.CalculateGains !== 'function' || !CA.Payback) return 0;
+    const key = `${g}|${Game.cookiesPs}|${Game.prestige}`;
+    if (gainCache.key !== key) {
+      const was = Game.prestige;
+      const [base, r] = CA.Payback.measureAll([
+        () => {
+          Game.prestige = was + g;
+          return () => (Game.prestige = was);
+        },
+      ]);
+      gainCache = { key, v: r.cps - base.cps };
+    }
+    return gainCache.v;
+  }
+
+  /** The next total level (≥ now) whose digits end in `ending` (7, 777, 777777). */
+  function nextEnding(ending) {
+    const t = total();
+    const mod = Math.pow(10, String(ending).length);
+    let n = t - (t % mod) + Number(ending);
+    if (n < t) n += mod;
+    return n;
+  }
+  const LUCKY = [
+    { name: 'Lucky digit', ending: 7 },
+    { name: 'Lucky number', ending: 777 },
+    { name: 'Lucky payout', ending: 777777 },
+  ];
+  /** The Lucky heavenly upgrades: { name, owned, level (the next total level that qualifies), toGo (levels to bake) }. */
+  const lucky = () =>
+    LUCKY.map((l) => {
+      const level = nextEnding(l.ending);
+      return { name: l.name, owned: typeof Game.Has === 'function' && !!Game.Has(l.name), level, toGo: level - total() };
+    });
+
+  function init() {
+    CA.Settings.defineOption({
+      key: 'prestigeTarget',
+      group: 'prestige-hidden',
+      name: 'Prestige target',
+      desc: 'A total prestige level to bake towards (0: none) — how many cookies and how long it takes.',
+      default: 0,
+    });
+    const V = (id, desc, get, params) => CA.Script.defineValue({ id, desc, get, params });
+    V('prestige.ifAscended', 'prestige levels you’d gain if you ascended now', gain);
+    V('prestige.toNext', 'cookies still to bake for one more prestige level', toNext);
+    V('prestige.perSecond', 'prestige levels a second at the rate you’re baking', perSecond);
+    V('prestige.cpsGain', 'the CpS the levels you’d gain would add', cpsGain);
+    V('prestige.cookiesFor', 'cookies baked in all, to reach a total prestige level', (l) => cookiesFor(Number(l) || 0), ['level']);
+    V('prestige.secondsTo', 'seconds until a total prestige level at the rate you’re baking', (l) => secondsTo(Number(l) || 0), ['level']);
+  }
+
+  return { init, owned, total, gain, toNext, perSecond, secondsTo, cpsGain, cookiesFor, levelOf, nextEnding, lucky, bakeRate };
+})();
+
+// ---- src/features/timers.js ------------------------------------------
+// Timers: when things will happen — Cookie Monster's timer bar and the timing parts of its statistics,
+// worked out from the game's own rules (main.js):
+//
+//   golden cookie / reindeer   each frame without one, the timer (time) counts up; past minTime a
+//                              cookie appears with chance ((time − minTime) ÷ (maxTime − minTime))⁵
+//                              that frame (so surely by maxTime). From that, exactly: the soonest it
+//                              can come, the latest, the expected wait, the median, the chance it
+//                              comes within N seconds. (Cookie Monster only shows the min and max.)
+//   buffs                      seconds left of each effect, its multipliers
+//   sugar lump                 seconds until mature / ripe / overripe (it falls off then), its type
+//   autosave                   seconds until the game saves itself (once a minute)
+//   magic                      seconds until the Grimoire's magic is full (features/grimoire.js)
+
+CA.Timers = (() => {
+  const fps = () => Game.fps || 30;
+
+  // ---- golden cookies and reindeer ------------------------------------------------------------------
+
+  // survival curves, per (minTime, maxTime): S[k] = chance nothing spawned in frames min+1 … min+k
+  const curves = new Map();
+  function curve(min, max) {
+    const key = `${min}|${max}`;
+    if (curves.has(key)) return curves.get(key);
+    const span = Math.max(1, max - min);
+    const S = [1];
+    for (let k = 1; k <= span; k++) S.push(S[k - 1] * (1 - Math.min(1, Math.pow(k / span, 5))));
+    if (curves.size > 20) curves.clear();
+    curves.set(key, S);
+    return S;
+  }
+  /**
+   * A shimmer type's next appearance, from now: { spawned, soonest, latest, expected, median, within(s) }
+   * in seconds — or null when it can't come (no timer running: the Golden switch, out of season…).
+   */
+  function spawnOf(type) {
+    const me = Game.shimmerTypes && Game.shimmerTypes[type];
+    if (!me || !(me.maxTime > 0)) return null;
+    const on = typeof me.spawnConditions !== 'function' || me.spawnConditions();
+    if (!on) return null;
+    if (me.spawned) return { spawned: true, soonest: 0, latest: 0, expected: 0, median: 0, within: () => 1 };
+    const S = curve(me.minTime, me.maxTime);
+    const f = fps();
+    // frames since minTime already survived (time counts frames without one)
+    const done = Math.max(0, me.time - me.minTime);
+    const base = S[Math.min(done, S.length - 1)] || 1e-300;
+    const left = (k) => (done + k >= S.length - 1 ? 0 : S[done + k] / base); // P(none in the next k frames)
+    let expected = 0;
+    let median = null;
+    const toMin = Math.max(0, me.minTime - me.time);
+    for (let k = 0; done + k < S.length; k++) {
+      const p = left(k);
+      expected += p;
+      if (median === null && p <= 0.5) median = k;
+    }
+    return {
+      spawned: false,
+      soonest: toMin / f,
+      latest: Math.max(0, me.maxTime - me.time) / f,
+      expected: (toMin + expected) / f,
+      median: (toMin + (median || 0)) / f,
+      within: (secs) => {
+        const k = Math.floor(secs * f) - toMin;
+        return k <= 0 ? 0 : 1 - left(k);
+      },
+    };
+  }
+
+  // ---- buffs, the sugar lump, autosave ------------------------------------------------------------------
+
+  /** The effects running: [{ name, secs, maxSecs, cps, click }]. */
+  const buffs = () =>
+    Object.values(Game.buffs || {})
+      .filter((b) => b && b.time > 0)
+      .map((b) => ({ name: b.name, secs: b.time / fps(), maxSecs: (b.maxTime || b.time) / fps(), cps: b.multCpS !== undefined ? b.multCpS : 1, click: b.multClick !== undefined ? b.multClick : 1 }));
+
+  const LUMP_TYPES = ['normal', 'bifurcated', 'golden', 'meaty', 'caramelized'];
+  /** The sugar lump: { type, matureIn, ripeIn, fallsIn } seconds (0 once reached), or null before lumps. */
+  function lump() {
+    if (!Game.lumpT || !(Game.lumpRipeAge > 0)) return null;
+    const age = Date.now() - Game.lumpT;
+    const until = (ms) => Math.max(0, (ms - age) / 1000);
+    return { type: LUMP_TYPES[Game.lumpCurrentType] || 'normal', matureIn: until(Game.lumpMatureAge), ripeIn: until(Game.lumpRipeAge), fallsIn: until(Game.lumpOverripeAge) };
+  }
+
+  /** Seconds until the game autosaves (null when autosave is off). */
+  function autosave() {
+    if (Game.prefs && !Game.prefs.autosave) return null;
+    const period = fps() * 60;
+    return (period - (Game.OnAscend ? 0 : (Game.T || 0) % period)) / fps();
+  }
+
+  /** Seconds until the Grimoire's magic is full (0: full; null: no Grimoire). */
+  function magicFull() {
+    const M = CA.Util.minigame('Wizard tower');
+    if (!M || !CA.Grimoire || typeof CA.Grimoire.refillSeconds !== 'function') return null;
+    return M.magic >= M.magicM ? 0 : CA.Grimoire.refillSeconds(M.magic, M.magicM, M.magicM);
+  }
+
+  function init() {
+    const V = (id, desc, get, params) => CA.Script.defineValue({ id, desc, get, params });
+    const g = (k) => () => (spawnOf('golden') || { [k]: NaN })[k];
+    V('golden.soonest', 'seconds until the next golden cookie can appear (0: it can now)', g('soonest'));
+    V('golden.latest', 'seconds until the next golden cookie surely appears', g('latest'));
+    V('golden.expected', 'seconds the next golden cookie takes on average', g('expected'));
+    V('golden.chanceWithin', 'the chance the next golden cookie appears within a number of seconds (0–1)', (s) => {
+      const x = spawnOf('golden');
+      return x ? x.within(Number(s) || 0) : 0;
+    }, ['seconds']);
+    V('reindeer.expected', 'seconds the next reindeer takes on average (Christmas)', () => (spawnOf('reindeer') || { expected: NaN }).expected);
+    V('buff.timeLeft', 'seconds an effect has left (0: not running)', (n) => {
+      const b = buffs().find((x) => x.name.toLowerCase() === String(n).toLowerCase());
+      return b ? b.secs : 0;
+    }, ['effect']);
+    V('lump.ripeIn', 'seconds until the sugar lump is ripe (0: it is)', () => (lump() || { ripeIn: NaN }).ripeIn);
+    V('autosave.in', 'seconds until the game saves itself', () => autosave() ?? NaN);
+    V('magic.fullIn', 'seconds until the Grimoire’s magic is full (0: it is)', () => magicFull() ?? NaN);
+  }
+
+  return { init, spawnOf, buffs, lump, autosave, magicFull, curve, LUMP_TYPES };
+})();
+
+// ---- src/features/collection.js --------------------------------------
+// What's left to collect — Cookie Monster's "missing upgrades / achievements" lists and its "Season
+// Specials" and garden drop statistics:
+//
+//   upgrades       the ones you don't own, in the game's order, by kind: regular, cookies, heavenly
+//                  (not switches, debug or unused ones)
+//   achievements   the regular ones you haven't won (not shadow achievements)
+//   seasons        each season's drops you're missing (features/seasons.js has the lists)
+//   plant drops    the garden's rare drops (main.js, the plants that drop an upgrade when harvested)
+
+CA.Collection = (() => {
+  const PLANT_DROPS = ['Elderwort biscuits', 'Bakeberry cookies', 'Duketater cookies', 'Green yeast digestives', 'Wheat slims', 'Fern tea', 'Ichor syrup'];
+  const SKIP_POOLS = ['toggle', 'unused', 'debug'];
+  const has = (n) => typeof Game.Has === 'function' && !!Game.Has(n);
+  const hasOrUnlocked = (n) => has(n) || (typeof Game.HasUnlocked === 'function' && !!Game.HasUnlocked(n));
+
+  const byOrder = (a, b) => (a.order || 0) - (b.order || 0) || (a.id || 0) - (b.id || 0);
+  /** Upgrades you don't own: { regular, cookie, prestige } — lists of names, in the game's order. */
+  function missingUpgrades() {
+    const out = { regular: [], cookie: [], prestige: [] };
+    Object.values(Game.Upgrades || {})
+      .filter((u) => u && !u.bought && !SKIP_POOLS.includes(u.pool))
+      .sort(byOrder)
+      .forEach((u) => (u.pool === 'prestige' ? out.prestige : u.pool === 'cookie' ? out.cookie : out.regular).push(u.name));
+    return out;
+  }
+  /** Regular achievements you haven't won (names, in the game's order). */
+  const missingAchievements = () =>
+    Object.values(Game.Achievements || {})
+      .filter((a) => a && !a.won && a.pool !== 'shadow' && a.pool !== 'dungeon')
+      .sort(byOrder)
+      .map((a) => a.name);
+
+  /** Each season's drops you're missing: { christmas: [...], halloween, easter, valentines }. */
+  function missingSeasonDrops() {
+    const out = {};
+    ['christmas', 'halloween', 'easter', 'valentines'].forEach((s) => (out[s] = (CA.Seasons && CA.Seasons.dropsOf ? CA.Seasons.dropsOf(s) : []).filter((n) => !hasOrUnlocked(n))));
+    return out;
+  }
+  const missingPlantDrops = () => PLANT_DROPS.filter((n) => !hasOrUnlocked(n));
+
+  function init() {
+    const V = (id, desc, get, more) => CA.Script.defineValue({ id, desc, get, ...(more || {}) });
+    V('missing.upgrades', 'how many upgrades you don’t own yet (regular, cookies and heavenly)', () => {
+      const m = missingUpgrades();
+      return m.regular.length + m.cookie.length + m.prestige.length;
+    });
+    V('missing.achievements', 'how many regular achievements you haven’t won', () => missingAchievements().length);
+    V('missing.seasonDrops', 'how many of a season’s drops you’re missing (christmas, halloween, easter, valentines)', (s) => (missingSeasonDrops()[s] || []).length, { params: ['season'] });
+    V('missing.plantDrops', 'how many of the garden’s rare drops you’re missing', () => missingPlantDrops().length);
+  }
+
+  return { init, missingUpgrades, missingAchievements, missingSeasonDrops, missingPlantDrops, PLANT_DROPS };
+})();
+
+// ---- src/features/whatIf.js ------------------------------------------
+// What if: the CpS a change you could make would bring — Cookie Monster's pantheon and dragon aura
+// tooltips, measured the way payback periods are (features/payback.js: make the change, run the
+// game's own CpS calculation, put everything back):
+//
+//   a god in a slot      slotted as the game slots it (minigamePantheon.js slotGod: the god there
+//                        swaps places with it, or leaves)
+//   a dragon aura        switched into slot 1 or 2 — and, as the game charges for it, one of your
+//                        highest buildings (the one furthest down the store that you own) gone
+//
+// Results are CpS deltas (negative: you'd lose that much), kept until the game state changes.
+
+CA.WhatIf = (() => {
+  const temple = () => CA.Util.minigame('Temple');
+
+  const cache = { key: '', v: {} };
+  const keyNow = () => `${Game.cookiesPs}|${Game.UpgradesOwned}|${Object.values(Game.Objects || {}).map((o) => o.amount).join(',')}|${Game.dragonAura}|${Game.dragonAura2}|${(temple() || { slot: [] }).slot.join(',')}`;
+  function remember(k, fn) {
+    const key = keyNow();
+    if (cache.key !== key) {
+      cache.key = key;
+      cache.v = {};
+    }
+    if (!(k in cache.v)) cache.v[k] = fn();
+    return cache.v[k];
+  }
+  const delta = (change) => {
+    const [base, r] = CA.Payback.measureAll([change]);
+    return r.cps - base.cps;
+  };
+
+  /** The CpS change of slotting a god (its key: 'mother', 'ages'…) into slot 0 (diamond), 1 (ruby), 2 (jade) or -1 (out). */
+  function godGain(godKey, slot) {
+    const M = temple();
+    const god = M && M.gods && M.gods[godKey];
+    if (!god || typeof M.slotGod !== 'function') return 0;
+    const s = Number(slot);
+    if (god.slot === s) return 0;
+    return remember(`god|${godKey}|${s}`, () =>
+      delta(() => {
+        const slots = M.slot.slice();
+        const where = Object.values(M.godsById || M.gods).map((g) => [g, g.slot]);
+        M.slotGod(god, s);
+        return () => {
+          slots.forEach((v, i) => (M.slot[i] = v));
+          where.forEach(([g, at]) => (g.slot = at));
+        };
+      })
+    );
+  }
+
+  /** The building a new aura costs: the furthest down the store that you own (or null). */
+  function auraCost() {
+    const owned = Object.values(Game.Objects || {}).filter((o) => o.amount > 0);
+    return owned.sort((a, b) => b.id - a.id)[0] || null;
+  }
+  /** The CpS change of putting an aura (its name) in slot 1 or 2 — counting the building it costs. */
+  function auraGain(name, slot = 1) {
+    const aura = Game.dragonAurasBN && Game.dragonAurasBN[name];
+    if (!aura) return 0;
+    const key = Number(slot) === 2 ? 'dragonAura2' : 'dragonAura';
+    if (Game[key] === aura.id) return 0;
+    return remember(`aura|${name}|${key}`, () =>
+      delta(() => {
+        const was = Game[key];
+        const cost = auraCost();
+        Game[key] = aura.id;
+        if (cost) cost.amount--;
+        return () => {
+          Game[key] = was;
+          if (cost) cost.amount++;
+        };
+      })
+    );
+  }
+
+  function init() {
+    const V = (id, desc, get, params) => CA.Script.defineValue({ id, desc, get, params });
+    V('pantheon.cpsGain', 'the CpS slotting a god would bring (slot: diamond, ruby, jade or none)', (god, slot) => godGain(god, { diamond: 0, ruby: 1, jade: 2, none: -1 }[String(slot)] ?? Number(slot)), ['god', 'slot']);
+    V('dragon.auraCpsGain', 'the CpS switching to a dragon aura would bring, counting the building it costs (slot 1 or 2)', (aura, slot) => auraGain(aura, slot), ['aura', 'slot']);
+  }
+
+  return { init, godGain, auraGain, auraCost };
+})();
+
 // ---- src/features/autoBuy.js -----------------------------------------
 // Buying macros, and petting the dragon.
 //
@@ -17634,7 +18231,7 @@ const mod = {
     // logged and the rest still start.
     const failed = [];
     [
-      CA.EventLog, CA.GameActions, CA.Macros, CA.Grimoire, CA.Pantheon, CA.Garden, CA.GardenHistory, CA.Shop, CA.Payback, CA.AutoBuy, CA.Seasons,
+      CA.EventLog, CA.GameActions, CA.Macros, CA.Grimoire, CA.Pantheon, CA.Garden, CA.GardenHistory, CA.Shop, CA.Payback, CA.GoldenMath, CA.Wrinklers, CA.Prestige, CA.Timers, CA.Collection, CA.WhatIf, CA.AutoBuy, CA.Seasons,
       CA.Stocks, CA.StockLog, CA.History, CA.GameStates, CA.Recorder, CA.GameEvents, CA.NotifyTips,
       CA.UI.Graphs, CA.UI.EventsPage, CA.UI.CodeEditor, CA.UI.MacrosPage, CA.UI.Widgets, CA.UI.WizardPage, CA.UI.GardenPage,
       CA.UI.PantheonPage, CA.UI.StoreBar, CA.UI.StockGraph, CA.UI.StockPerf, CA.UI.StockLog, CA.UI.BankToolbar,
