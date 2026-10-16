@@ -88,6 +88,7 @@ const MODULES = [
   'ui/storeInsight.js',
   'ui/gardenInsight.js',
   'ui/minigameTips.js',
+  'ui/ascendTip.js',
   'ui/paybackPage.js',
   'ui/spawnView.js',
   'ui/statsPage.js',

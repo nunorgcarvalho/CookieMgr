@@ -289,14 +289,16 @@ forever:
   `reward.lucky()`, `reward.luckyFrenzy()`, `reward.chain()`, `reward.conjure()`; `golden.soonest / latest /
   expected()` (seconds), `golden.chanceWithin(seconds)` (0–1), `reindeer.expected()`.
 - **Prestige** — `prestige.ifAscended()`, `prestige.toNext()` (cookies), `prestige.perSecond()`, `prestige.cpsGain()`,
-  `prestige.cookiesFor(level)`, `prestige.secondsTo(level)`.
+  `prestige.cookiesFor(level)`, `prestige.secondsTo(level)`, `prestige.nextIn()`.
 - **Wrinklers** — `wrinkler.reward(w)`, `wrinklers.reward()`, `wrinklers.rewardFattest()`, `wrinklers.eating()`.
 - **Timers, what's left, what if** — `buff.timeLeft(effect)`, `buff.goldenChance(effect)` (a golden cookie before it ends, 0–1), `lump.ripeIn()`, `autosave.in()`, `magic.fullIn()`;
   `missing.upgrades()`, `missing.achievements()`, `missing.seasonDrops(season)`, `missing.plantDrops()`;
   `pantheon.cpsGain(god, slot)`, `dragon.auraCpsGain(aura, slot)`.
 - **Garden** — `garden.tiles()` (tiles are `"x,y"`), `garden.plantAt / wantAt / age / decay(tile)`,
   `garden.isMature / isNew / isEmpty / isOff(tile)`, `garden.seeds()`, `garden.seedCost(seed)`; `garden.harvest(tile)`,
-  `garden.plant(tile, seed)` — and the whole-plot ones the default rules use (`garden.plantEmpty()`…).
+  `garden.plant(tile, seed)` — and the whole-plot ones the default rules use (`garden.plantEmpty()`…);
+  `garden.mutationChance(x, y)`, `garden.growChance(seed)` (at the next tick, 0–1), `garden.growIn(seed)` (seconds).
+- **Minigames** — `spell.cost / waitFor / recover(spell)`, `stock.restingRatio(good)`.
 - **Shimmers & wrinklers** — `shimmers()`, `shimmer.type / isWrath / life(s)`, `shimmer.pop(s)`; `wrinklers()`,
   `wrinkler.isShiny / isFed / sucked(w)`, `wrinkler.pop(w)`.
 - **Sugar lump** — `lump.isRipe()`, `lump.isMature()`, `lump.pick()`.
@@ -432,6 +434,29 @@ checked against Cookie Monster in the real game:
 The **Golden cookies** widget is a ring that fills towards the latest the next golden cookie can come, its label the
 expected wait; hover it for a sparkline of the odds, the median, the soonest, the latest, the chance within a minute
 and the effects running — each with the chance a golden cookie comes before it ends.
+
+### In the game's own minigames
+
+CookieMgr adds to the game's own tooltips (each with its option):
+
+- **Garden — mutation odds.** Under an empty tile's tooltip: what it can grow at the next tick and how likely (a seed
+  you haven't unlocked yet starred ★), and when the next tick is; under a seed's: the chance it grows somewhere at
+  the next tick, on how many tiles, and how long that takes on average. A small chip on each empty tile shows the
+  chance it grows something — gold when a new seed could. Worked out exactly from the game's own rules: the game's
+  recipes (M.getMuts) for the tile's eight neighbours, the soil's weed multiplier and the tile's weed/fungus
+  repellent, wood chips' three tries a tick (and Supreme Intellect), and the plants the tick ages before it reaches
+  the tile — a parent that matures or dies this very tick counts as it will be. Checked against the game's own
+  ticks, thousands of them.
+- **Grimoire** — under a spell's tooltip: when you'll have the magic for it; once you can, the magic left after
+  casting it and how long it takes to come back (to where it is, and to full). Conjure Baked Goods: what it gives
+  now and the bank that gives the most; Spontaneous Edifice: the building it can give and the bank it needs.
+- **Stock market** — under a stock's tooltip: its resting value (the price it drifts back to) and how far the price
+  is from it, its trend, what you hold of what your offices can, its worth in cookies, and a share's.
+- **Pantheon** — under a spirit's tooltip: the CpS it would bring in each slot (and taking it out), measured on the
+  game itself.
+- **Legacy** — under the Legacy button's tooltip: how long the next prestige level takes at the rate you're baking,
+  levels an hour, the CpS the levels you'd gain would add (none until Heavenly chip secret), your heavenly chips after
+  ascending, and how many levels to the next one ending in 7, 777 and 777777 (the Lucky upgrades).
 
 ### Pantheon
 

@@ -96,6 +96,7 @@ CA.Prestige = (() => {
     V('prestige.perSecond', 'prestige levels a second at the rate you’re baking', perSecond);
     V('prestige.cpsGain', 'the CpS the levels you’d gain would add', cpsGain);
     V('prestige.cookiesFor', 'cookies baked in all, to reach a total prestige level', (l) => cookiesFor(Number(l) || 0), ['level']);
+    V('prestige.nextIn', 'seconds until one more prestige level at the rate you’re baking', () => secondsTo(total() + 1));
     V('prestige.secondsTo', 'seconds until a total prestige level at the rate you’re baking', (l) => secondsTo(Number(l) || 0), ['level']);
   }
 

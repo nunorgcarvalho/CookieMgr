@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- **Garden mutation odds**, in the game's own garden: under an empty tile's tooltip what it can grow at the next tick and
+  how likely (new seeds starred), under a seed's the chance it grows somewhere and how long that takes, and a chip on
+  each empty tile. Exact, from the game's own rules — its recipes (M.getMuts), soil, repellent, wood chips' extra tries,
+  the plants the tick ages first — and checked against thousands of the game's own ticks. Words
+  `garden.mutationChance(x, y)`, `garden.growChance(seed)`, `garden.growIn(seed)`.
+- **Minigame tooltips**: a spell's wait for magic and how long the magic takes to come back after casting, Conjure
+  Baked Goods' payout and Spontaneous Edifice's building; a stock's resting value, trend, holding and worth; a spirit's
+  CpS in each Pantheon slot. Words `spell.cost / waitFor / recover(spell)`, `stock.restingRatio(good)`.
+- **Legacy tooltip**: the next prestige level's wait, levels an hour, the CpS ascending would add, heavenly chips after,
+  the levels to the Lucky upgrades. Word `prestige.nextIn()`.
+- Tests: the add-on's mutation recipe list is checked against the game's M.getMuts.
+
 ## 3.10.0 — 2026-10-16
 
 - **The store's tooltips, your way.** A **Store tooltips** card on the Payback page chooses which lines CookieMgr's

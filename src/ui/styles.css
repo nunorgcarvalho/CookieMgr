@@ -5245,6 +5245,7 @@ body.ca-has-storebar #products {
 
 /* the block under the game's building / upgrade tooltips */
 #tooltip .ca-tt,
+#CookieMgrAscendTip .ca-tt,
 #CookieMgrMenu .ca-tl-preview .ca-tt {
   margin: 6px -4px -2px;
   padding: 5px 8px 6px;
@@ -5254,6 +5255,7 @@ body.ca-has-storebar #products {
   font: 11px Tahoma, Arial, sans-serif;
 }
 #tooltip .ca-tt-head,
+#CookieMgrAscendTip .ca-tt-head,
 #CookieMgrMenu .ca-tl-preview .ca-tt-head {
   margin-bottom: 3px;
   font-size: 9px;
@@ -5262,6 +5264,7 @@ body.ca-has-storebar #products {
   color: #c9a96a;
 }
 #tooltip .ca-tt-row,
+#CookieMgrAscendTip .ca-tt-row,
 #CookieMgrMenu .ca-tl-preview .ca-tt-row {
   display: flex;
   justify-content: space-between;
@@ -5269,6 +5272,7 @@ body.ca-has-storebar #products {
   color: #b8ab92;
 }
 #tooltip .ca-tt-row b,
+#CookieMgrAscendTip .ca-tt-row b,
 #CookieMgrMenu .ca-tl-preview .ca-tt-row b {
   color: #fff3d6;
   font-weight: bold;
@@ -5989,7 +5993,8 @@ body.ca-has-storebar #products {
 }
 
 /* the minigames' tooltips: CookieMgr's additions (ui/minigameTips.js) */
-#tooltip .ca-mg-ok {
+#tooltip .ca-mg-ok,
+#CookieMgrAscendTip .ca-mg-ok {
   color: #7dff7a;
 }
 #tooltip .ca-mg-bad {
@@ -5997,4 +6002,10 @@ body.ca-has-storebar #products {
 }
 #tooltip .ca-mg-wait {
   color: #ffd56a;
+}
+
+/* the Legacy button's tooltip: CookieMgr's block (ui/ascendTip.js) */
+#CookieMgrAscendTip .ca-tt {
+  margin: 0;
+  text-align: left;
 }
