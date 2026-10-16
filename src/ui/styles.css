@@ -2695,6 +2695,34 @@
 #CookieMgrMenu .ca-gdecay.hi {
   color: #ff9a8a;
 }
+/* an empty tile's odds of growing something at the next tick (gold: a seed you haven't unlocked could) */
+#CookieMgrMenu .ca-godds {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  padding: 0 2px;
+  font: bold 9px/11px Tahoma, Arial, sans-serif;
+  color: #e8dcc4;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 3px;
+  pointer-events: none;
+}
+#CookieMgrMenu .ca-godds.new {
+  color: #ffd56a;
+  box-shadow: 0 0 0 1px rgba(255, 213, 106, 0.6);
+}
+#CookieMgrMenu .ca-godds-new,
+#CookieMgrLayer .ca-godds-new {
+  font-style: normal;
+  font-size: 9px;
+  color: #ffd56a;
+}
+#CookieMgrMenu .ca-gpop-sub,
+#CookieMgrLayer .ca-gpop-sub {
+  margin-top: 4px;
+  padding-top: 3px;
+  border-top: 1px solid rgba(255, 220, 150, 0.15);
+}
 #CookieMgrMenu .ca-gnew {
   position: absolute;
   left: 1px;

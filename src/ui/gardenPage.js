@@ -37,9 +37,52 @@ CA.UI.GardenPage = (() => {
   const sprite = (me, stage, cls = '') =>
     `<i class="ca-gs ${cls}" style="background-image:url(${CA.Util.res('img/gardenPlants.png')});background-position:${-stage * 48}px ${-me.icon * 48}px"></i>`;
 
+  // ---- mutation odds: what each empty tile can grow at the next tick ------------------------------
+  //
+  // From features/mutations.js (CA.Mutations — the Cookie Monster port's engine, read only), with its
+  // options: gardenOddsTiles (a badge on each empty tile that can grow something, and the stat) and
+  // gardenOddsTips (a "Next tick" section in the tile's details) — the same switches as in the game's
+  // own garden.
+
+  const optOn = (k) => !!CA.Settings.get(k);
+  const pcOdds = (p) => (p >= 0.9995 ? '100%' : p > 0 && p < 0.0001 ? '<0.01%' : `${(p * 100).toFixed(p < 0.01 ? 2 : p < 0.1 ? 1 : 0)}%`);
+  const isLocked = (M, key) => !!(M.plants[key] && !M.plants[key].unlocked);
+  let oddsCache = { sig: '', a: null, by: {} };
+  /**
+   * Every empty tile's odds at the next tick — worked out again only when the plot, the soil or the
+   * tick changes (the engine re-reads the whole plot), not on every refresh of the page.
+   */
+  function oddsNow(M) {
+    if (!CA.Mutations || !M || !M.plot || (!optOn('gardenOddsTiles') && !optOn('gardenOddsTips'))) return null;
+    const sig = M.plot.map((r) => r.map((t) => `${t[0]}.${t[1]}`).join(',')).join(';') + `|${M.soil}|${M.nextStep}|${M.parent ? M.parent.level : ''}`;
+    if (oddsCache.sig !== sig) {
+      let a = null;
+      try {
+        a = CA.Mutations.all();
+      } catch (e) {
+        a = null;
+      }
+      const by = {};
+      if (a) a.tiles.forEach((t) => (by[`${t.x},${t.y}`] = t));
+      oddsCache = { sig, a, by };
+    }
+    return oddsCache.a ? oddsCache : null;
+  }
+  const SHOW_ODDS = 6; // plants listed in a tile's details
+  /** An empty tile's "Next tick" rows: what can grow, each with its chance (a seed you haven't unlocked marked). */
+  function oddsPop(M, o) {
+    let h = '<span class="ca-wpop-head ca-gpop-sub"><b>Next tick</b></span>';
+    if (!o.plants.length) return h + '<span class="ca-wpop-row"><span class="ca-wpop-name">Grows here</span><span class="ca-wpop-val">nothing can</span></span>';
+    o.plants.slice(0, SHOW_ODDS).forEach((p) => {
+      h += `<span class="ca-wpop-row"><span class="ca-wpop-name">${esc(p.name)}${isLocked(M, p.key) ? ' <em class="ca-godds-new">★ new seed</em>' : ''}</span><span class="ca-wpop-val">${pcOdds(p.chance)}</span></span>`;
+    });
+    if (o.plants.length > SHOW_ODDS) h += `<span class="ca-wpop-row"><span class="ca-wpop-name">${o.plants.length - SHOW_ODDS} more</span><span class="ca-wpop-val">${pcOdds(o.plants.slice(SHOW_ODDS).reduce((s, p) => s + p.chance, 0))}</span></span>`;
+    return h + `<span class="ca-wpop-row"><span class="ca-wpop-name"><b>Something grows</b></span><span class="ca-wpop-val">${pcOdds(o.any)}</span></span>`;
+  }
+
   // ---- the plot -----------------------------------------------------------------------------
 
-  function tileHtml(t, profile) {
+  function tileHtml(t, profile, odds) {
     if (!t.open) return '<div class="ca-gtile locked"></div>';
     const me = t.plant;
     let inner = '';
@@ -61,22 +104,37 @@ CA.UI.GardenPage = (() => {
       pop += '<span class="ca-wpop-head"><b>Empty</b></span>';
     }
     if (profile) pop += `<span class="ca-wpop-row"><span class="ca-wpop-name">Layout</span><span class="ca-wpop-val">${t.want ? esc(t.want.name) : 'empty'}</span></span>`;
+    // what this empty tile can grow at the next tick
+    const o = !me && odds ? odds.by[`${t.x},${t.y}`] : null;
+    if (o) {
+      const M = G().minigame();
+      if (optOn('gardenOddsTiles') && o.any >= 0.00005) inner += `<b class="ca-godds${o.plants.some((p) => isLocked(M, p.key)) ? ' new' : ''}">${pcOdds(o.any)}</b>`;
+      if (optOn('gardenOddsTips')) pop += oddsPop(M, o);
+    }
     return `<div class="ca-gtile${t.match ? '' : ' off'}" data-pop>${inner}<span class="ca-wpop ca-gpop">${pop}</span></div>`;
   }
 
-  function plotHtml(v) {
-    return v.tiles.map((t) => tileHtml(t, v.profile)).join('');
+  function plotHtml(v, odds) {
+    return v.tiles.map((t) => tileHtml(t, v.profile, odds)).join('');
   }
 
-  function statsHtml(v) {
+  function statsHtml(v, odds) {
     const { span, tile } = CA.UI.Plot.fmt;
+    // the next tick, over the whole plot: how many plants grow on average, and the chance a new seed is among them
+    let grows = '';
+    if (odds && optOn('gardenOddsTiles')) {
+      const expected = odds.a.tiles.reduce((s, t) => s + t.any, 0);
+      const fresh = 1 - odds.a.plants.filter((p) => !p.unlocked).reduce((s, p) => s * (1 - p.chance), 1);
+      grows = tile('Grows next tick', expected > 0 && expected < 0.01 ? '<0.01' : String(Math.round(expected * 100) / 100), fresh > 0 ? `new seed: ${pcOdds(fresh)}` : 'plants, on average', 'How many plants spring up on the empty tiles at the next tick, on average — and the chance one of them is a seed you haven’t unlocked');
+    }
     const off = v.profile ? v.tiles.filter((t) => t.open && !t.match).length : 0;
     const mature = v.tiles.filter((t) => t.plant && t.age >= t.plant.mature).length;
     return (
       tile('Next tick', Number.isFinite(v.next) ? span(v.next) : '—', v.step ? `every ${span(v.step)}` : '') +
       tile('Soil', v.soil ? esc(v.soil.name) : '—', esc(CA.GardenLayers.get('soil', CA.GardenLayers.picked('soil')).name)) +
       tile('Mature', String(mature), `of ${v.tiles.filter((t) => t.plant).length} plants`) +
-      tile('Off-layout', String(off), off ? 'tiles not as planned' : 'all as planned')
+      tile('Off-layout', String(off), off ? 'tiles not as planned' : 'all as planned') +
+      grows
     );
   }
 
@@ -491,10 +549,11 @@ CA.UI.GardenPage = (() => {
     if (!root || !root.isConnected) return;
     const v = G().view();
     if (!v) return;
+    const odds = oddsNow(v.M);
     const plot = root.querySelector('[data-gp-plot]');
-    if (plot) CA.UI.Dom.morph(plot, plotHtml(v));
+    if (plot) CA.UI.Dom.morph(plot, plotHtml(v, odds));
     const stats = root.querySelector('[data-gp-stats]');
-    if (stats) CA.UI.Dom.morph(stats, statsHtml(v));
+    if (stats) CA.UI.Dom.morph(stats, statsHtml(v, odds));
     const pill = root.querySelector('[data-gp-profile]');
     if (pill) pill.textContent = `layout: ${v.profile.name}`;
     const last = root.querySelector('[data-gp-last]');

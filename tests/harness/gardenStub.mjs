@@ -15,10 +15,10 @@ export function makeGarden(Game) {
     plantsById.push(plants[k]);
   });
   const soils = {
-    dirt: { name: 'Dirt', tick: 5, req: 0 },
-    fertilizer: { name: 'Fertilizer', tick: 3, req: 50 },
-    clay: { name: 'Clay', tick: 15, req: 100 },
-    woodchips: { name: 'Wood chips', tick: 5, req: 300 },
+    dirt: { name: 'Dirt', tick: 5, req: 0, weedMult: 1 },
+    fertilizer: { name: 'Fertilizer', tick: 3, req: 50, weedMult: 1.2 },
+    clay: { name: 'Clay', tick: 15, req: 100, weedMult: 1 },
+    woodchips: { name: 'Wood chips', tick: 5, req: 300, weedMult: 0.1 },
   };
   const soilsById = [];
   Object.keys(soils).forEach((k, i) => {
@@ -62,6 +62,11 @@ export function makeGarden(Game) {
       this.harvestLog.push(`${me.key}@${x},${y}${tile[1] >= me.mature ? ' mature' : ''}`);
       this.plot[y][x] = [0, 0];
       return true;
+    },
+    // what the mutation odds read (features/mutations.js); a test gives it recipes: M.getMuts
+    loopsMult: 1,
+    getTile(x, y) {
+      return x < 0 || y < 0 || x > 5 || y > 5 ? [0, 0] : this.plot[y][x];
     },
     // a click on a tile, as the game's: harvests what's there, else plants the selected seed
     seedSelected: -1,

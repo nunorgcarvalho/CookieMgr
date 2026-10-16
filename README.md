@@ -502,7 +502,11 @@ that opens this page (can be turned off in Settings).
 The **Garden** page shows your plot as it is now: every plant at its growth stage, the chance that a mature plant
 dies of old age on the coming tick (bottom-right of its tile), a red ring on tiles that don't match the
 Auto-gardener's layout, and the layout's seed faded in on empty tiles. Hover a tile for its growth, death chance and
-what the layout wants there.
+what the layout wants there. Empty tiles show their **mutation odds** too, as in the game's garden: the chance
+something grows there at the next tick (bottom-right — gold when a seed you haven't unlocked could), what exactly in
+their details (each plant with its chance, a new seed marked), and the Garden card adds **Grows next tick** — how many
+plants spring up on average, and the chance one is a new seed. The game garden's two options (*Mutation odds on
+tiles*, *Mutation odds in tooltips*) switch them here too.
 
 Beside it, the **Growth** chart shows your garden over time as stacked bars: how many of each seed were at each
 growth stage. Every seed has its own colour (close to its sprite) and its younger stages are darker shades of it, with

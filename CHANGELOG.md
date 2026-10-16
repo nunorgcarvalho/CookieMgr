@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 3.11.1 — 2026-10-16
+
+- **Mutation odds on the Garden page's own plot.** Each empty tile that can grow something at the next tick shows the
+  chance (gold when a seed you haven't unlocked could), its details list each plant with its chance (a new seed
+  marked), and the Garden card adds *Grows next tick* — how many plants spring up on average and the chance one is
+  a new seed. The odds come from the same engine as the game garden's (v3.11.0), and its two options switch them here
+  too. They're worked out again only when the plot, the soil or the tick changes.
+
 ## 3.11.0 — 2026-10-16
 
 - **Garden mutation odds**, in the game's own garden: under an empty tile's tooltip what it can grow at the next tick and
