@@ -9,6 +9,9 @@
 //   Upgrades      the store's upgrades as tiles, ringed in their colour, best first; click to buy —
 //                 switches (no payback period) only when the filter chip shows them, greyed
 //   Options       the minimum bulk, the wrinkler bank, "best = what you can afford", the cheap-enough floor
+//   Store tooltips  the lines of the store's tooltip block (ui/storeInsight.js), in order: add (a built-in
+//                 line or any value word), move, rename, remove; how a word's value reads; the bank
+//                 warnings; a live preview for a building and an upgrade
 //
 // The "actual income" chip shows every payback period by what you've actually been taking in
 // (features/payback.js ppActual) instead of by CpS; colours stay CpS's.
@@ -183,6 +186,94 @@ CA.UI.PaybackPage = (() => {
     );
   }
 
+  // ---- the store tooltip's lines ------------------------------------------------------------------
+
+  let previewOf = ''; // the building previewed ('': the best building)
+  const SI = () => CA.UI.StoreInsight;
+  const lineName = (e) => (typeof e === 'string' ? (SI().LINES.find((l) => l.id === e) || { name: e }).name : e.label || e.word);
+  function lineKind(e) {
+    if (typeof e !== 'string') return 'word';
+    const l = SI().LINES.find((x) => x.id === e) || {};
+    return l.both ? 'both' : l.building ? 'buildings' : 'upgrades';
+  }
+  function tooltipLinesHtml() {
+    const list = SI().lines();
+    const btn = (attr, i, icon, tip, off) => `<button type="button" class="ca-tl-btn" ${attr}="${i}" data-tip="${tip}"${off ? ' disabled' : ''}>${icon}</button>`;
+    const fmtSel = (e, i) =>
+      `<select class="ca-tl-fmt" data-tl-fmt="${i}" data-tip="How its value reads">${SI()
+        .FORMATS.map((f) => `<option value="${f.id}"${(e.fmt || 'auto') === f.id ? ' selected' : ''}>${esc(f.name)}</option>`)
+        .join('')}</select>`;
+    const rows = list
+      .map((e, i) => {
+        const word = typeof e !== 'string';
+        const desc = word ? ((CA.Script.VALUES.find((v) => v.id === e.word) || {}).desc || 'not a word (any more)') : (SI().LINES.find((l) => l.id === e) || {}).desc || '';
+        return (
+          `<div class="ca-tl-row" data-tip="${esc(word ? `${e.word}: ${desc}` : desc)}">` +
+          `<span class="ca-tl-n">${i + 1}</span>` +
+          (word ? `<input class="ca-tl-label" data-tl-label="${i}" value="${esc(e.label || e.word)}" spellcheck="false">` : `<span class="ca-tl-name">${esc(lineName(e))}</span>`) +
+          (word ? '' : `<span class="ca-tl-kind ${lineKind(e)}">${lineKind(e)}</span>`) +
+          (word ? fmtSel(e, i) : '') +
+          btn('data-tl-up', i, '↑', 'Move up', i === 0) +
+          btn('data-tl-down', i, '↓', 'Move down', i === list.length - 1) +
+          btn('data-tl-del', i, '✕', 'Remove') +
+          '</div>'
+        );
+      })
+      .join('');
+    const used = new Set(list.filter((e) => typeof e === 'string'));
+    const free = SI().LINES.filter((l) => !used.has(l.id));
+    const add =
+      '<select class="ca-tl-add" data-tl-add><option value="">+ add a line…</option>' +
+      (free.length ? `<optgroup label="Lines">${free.map((l) => `<option value="${l.id}">${esc(l.name)}</option>`).join('')}</optgroup>` : '') +
+      `<optgroup label="Value words (of the building / upgrade, or of the game)">${SI()
+        .words(null)
+        .map((v) => `<option value="w:${esc(v.id)}">${esc(v.id)}</option>`)
+        .join('')}</optgroup></select>`;
+    return (
+      `<div class="ca-tl-list">${rows || '<div class="ca-card-note">No lines: the block is left out.</div>'}</div>` +
+      `<div class="ca-tl-tools">${add}${SI().isDefault() ? '' : '<button type="button" class="ca-btn ca-btn-small" data-tl-reset data-tip="Back to Cookie Monster’s layout">Reset</button>'}</div>`
+    );
+  }
+  function tooltipPreviewHtml() {
+    const t = P().table();
+    const open = Object.values(Game.Objects || {}).filter((b) => !b.locked || b.amount > 0);
+    const bestB = P().ranking('building')[0];
+    const b = (previewOf && Game.Objects[previewOf]) || (bestB && Game.Objects[bestB.name]) || open[0];
+    const ups = Object.values(t.upgrades).sort((x, y) => x.pp - y.pp);
+    const u = ups.length ? (Game.Upgrades && Game.Upgrades[ups[0].name]) || (Game.UpgradesInStore || []).find((x) => x.name === ups[0].name) : null;
+    const sel = `<select class="ca-tl-pick" data-tl-b>${open.map((x) => `<option value="${esc(x.name)}"${b && x.name === b.name ? ' selected' : ''}>${esc(x.dname || x.name)}</option>`).join('')}</select>`;
+    return (
+      `<div class="ca-tl-pv"><div class="ca-tl-pvhead">${sel}</div>${b ? SI().buildingBlock(b, { force: true }) : ''}</div>` +
+      (u ? `<div class="ca-tl-pv"><div class="ca-tl-pvhead">${esc(u.dname || u.name)} <em>the best upgrade</em></div>${SI().upgradeBlock(u, { force: true })}</div>` : '')
+    );
+  }
+  function tooltipCard() {
+    const S = CA.Settings;
+    return (
+      '<div class="ca-card">' +
+      C().cardHead('Store tooltips', 'search', '<div class="ca-card-meta"><span class="ca-hint">the lines CookieMgr adds under the store’s tooltips, in order — hover a line for what it shows</span></div>') +
+      '<div class="ca-tl">' +
+      `<div data-tl-lines>${tooltipLinesHtml()}</div>` +
+      `<div class="ca-tl-preview" data-tl-preview>${tooltipPreviewHtml()}</div>` +
+      '</div>' +
+      '<div class="ca-list">' +
+      `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('bell', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Bank warnings</div><div class="ca-row-desc">Under the lines: a warning when buying would take your bank below what a Lucky! (in a Frenzy too) or Conjure Baked Goods needs to pay its most.</div></div>${C().toggle(!!S.get('storeWarnings'), 'data-pp-opt="storeWarnings"', 'Bank warnings')}</div>` +
+      `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('search', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Payback in tooltips</div><div class="ca-row-desc">The block at all (off: the game’s tooltips as they are).</div></div>${C().toggle(!!S.get('storeTooltips'), 'data-pp-opt="storeTooltips"', 'Payback in tooltips')}</div>` +
+      '</div></div>'
+    );
+  }
+  /** A change to the lines: a new list, then the card again. */
+  function editLines(fn) {
+    const list = SI().lines();
+    const next = fn(list);
+    SI().setLines(next === undefined ? list : next); // null: back to the default
+    CA.Util.sound('snd/tick.mp3');
+    const el = root && root.querySelector('[data-tl-lines]');
+    if (el) CA.UI.Dom.morph(el, tooltipLinesHtml());
+    const pv = root && root.querySelector('[data-tl-preview]');
+    if (pv) CA.UI.Dom.morph(pv, tooltipPreviewHtml());
+  }
+
   function html() {
     const t = P().table();
     return (
@@ -193,7 +284,8 @@ CA.UI.PaybackPage = (() => {
       '<div class="ca-card">' +
       C().cardHead('Upgrades', 'upgrade', `<div class="ca-card-meta"><span class="ca-hint">best first — click to buy</span><span data-pp-swchip>${switchChip(t)}</span></div>`) +
       `<div data-pp-upgrades>${upgradesHtml(t)}</div></div>` +
-      optionsCard()
+      optionsCard() +
+      tooltipCard()
     );
   }
 
@@ -206,6 +298,7 @@ CA.UI.PaybackPage = (() => {
       ['[data-pp-best]', () => bestTiles(t)],
       ['[data-pp-swchip]', () => switchChip(t)],
       ['[data-pp-actchip]', actualChip],
+      ['[data-tl-preview]', tooltipPreviewHtml],
     ];
     parts.forEach(([sel, fn]) => {
       const el = root.querySelector(sel);
@@ -214,6 +307,22 @@ CA.UI.PaybackPage = (() => {
   }
 
   function onClick(e) {
+    const tl = e.target.closest('[data-tl-up],[data-tl-down],[data-tl-del],[data-tl-reset]');
+    if (tl) {
+      e.stopPropagation();
+      const d = tl.dataset;
+      if (d.tlReset !== undefined) return editLines(() => null);
+      const i = Number(d.tlUp ?? d.tlDown ?? d.tlDel);
+      return editLines((list) => {
+        if (d.tlDel !== undefined) list.splice(i, 1);
+        else {
+          const j = d.tlUp !== undefined ? i - 1 : i + 1;
+          if (j < 0 || j >= list.length) return list;
+          [list[i], list[j]] = [list[j], list[i]];
+        }
+        return list;
+      });
+    }
     const b = e.target.closest('[data-pp-buy],[data-pp-up],[data-pp-wrink],[data-pp-opt],[data-pp-bulk]');
     if (!b) return;
     e.stopPropagation();
@@ -243,6 +352,34 @@ CA.UI.PaybackPage = (() => {
   }
   function onChange(e) {
     const el = e.target;
+    if (el.dataset && el.dataset.tlAdd !== undefined) {
+      const v = el.value;
+      if (!v) return;
+      editLines((list) => list.concat([v.startsWith('w:') ? { word: v.slice(2), fmt: 'auto' } : v]));
+      return;
+    }
+    if (el.dataset && el.dataset.tlFmt !== undefined) {
+      const i = Number(el.dataset.tlFmt);
+      editLines((list) => {
+        if (typeof list[i] === 'object') list[i] = { ...list[i], fmt: el.value };
+        return list;
+      });
+      return;
+    }
+    if (el.dataset && el.dataset.tlLabel !== undefined) {
+      const i = Number(el.dataset.tlLabel);
+      editLines((list) => {
+        if (typeof list[i] === 'object') list[i] = { ...list[i], label: el.value.trim() || list[i].word };
+        return list;
+      });
+      return;
+    }
+    if (el.dataset && el.dataset.tlB !== undefined) {
+      previewOf = el.value;
+      const pv = root && root.querySelector('[data-tl-preview]');
+      if (pv) CA.UI.Dom.morph(pv, tooltipPreviewHtml());
+      return;
+    }
     if (el.dataset && el.dataset.ppNum) {
       const v = Math.max(0, Number(el.value) || 0);
       CA.Settings.set(el.dataset.ppNum, v);

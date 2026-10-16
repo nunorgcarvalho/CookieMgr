@@ -386,8 +386,17 @@ colour for what a click buys now (×1, ×10, ×100, or to the next multiple with
 has a coloured dot in its corner, and under the game's own building and upgrade tooltips a CookieMgr block adds the
 CpS it adds (and its share of your CpS), its payback period (and by actual income, once a minute of play is
 recorded), when you can afford it, a building's share of your production and how many more win its next achievement —
-and a **warning** when buying it would take your bank below what a Lucky! (in a Frenzy too) or Conjure Baked Goods
-needs to pay its most. **Upgrades: best first** orders the store's upgrades by colour, then payback period
+and, with **Bank warnings** on, a warning when buying it would take your bank below what a Lucky! (in a Frenzy too)
+or Conjure Baked Goods needs to pay its most.
+
+**Which lines that block shows, and in what order, is yours to choose** — the **Store tooltips** card on the Payback
+page: add a line (the built-in ones — also the price, and a building's payback at ×1 / ×10 / ×100 in their colours —
+or **any value word** that takes the building or upgrade, or nothing: `building.toNextAchievement`, `clickRate`,
+`golden.expected`…), move it up or down, rename a word's line and choose how its value reads (a number, a time, a
+chance — or as it reads: a time for seconds, a chance for 0–1), remove it; **Reset** goes back to Cookie Monster's
+layout. A line with nothing to say (no wins, too little recorded) is left out; a word that doesn't fit the tooltip
+(one taking an upgrade, in a building's) too. A live preview shows any building's block and the best upgrade's.
+**Upgrades: best first** orders the store's upgrades by colour, then payback period
 (switches last). The store's **Best buy** sort ranks buildings by what a click buys — or the minimum bulk, if more.
 
 ### Stats
