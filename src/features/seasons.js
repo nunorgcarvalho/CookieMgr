@@ -12,6 +12,13 @@
 //
 // Leaving the Grandmapocalypse: the Elder Pledge appears after the Elder Pact; buying one unlocks
 // the Elder Covenant, which ends it for good (−5% CpS). "pledge" keeps re-buying the Pledge instead.
+//
+// **Plain Business Day** (option): Business day without its look. The game checks
+// Game.season === 'fools' for it in a handful of its own functions (main.js): each building's store
+// row and tooltip (business names, descriptions and icons), the golden cookie's picture and pulse,
+// the falling dollars, the news ticker, the money background — and the tab title ("Cookie Baker").
+// Those run as if no season were on; everything that counts (golden cookie timing, Everything must
+// go, Startrade, the season itself) still sees Business day.
 
 CA.Seasons = (() => {
   const SEASONS = [
@@ -100,7 +107,66 @@ CA.Seasons = (() => {
   /** SeasonCompletion's code (an algorithmic macro — features/script.js). */
   const DEFAULT_SOURCE = "# SeasonCompletion — every season's cookies and upgrades, one season after another.\n# The research starts right away, alongside: One mind starts the Grandmapocalypse,\n# and Halloween's cookies come from popping wrinklers.\nparallel:\n  branch research:\n    repeat until researchOwned() >= 9:\n      buy.research(none)\n  branch seasons:\n    # Christmas, first visit: Santa's upgrades, and Santa all the way to Final Claus\n    # (its reindeer cookies wait for a second visit, near the end)\n    switch on reindeer\n    repeat until owned(christmas, upgrades) >= total(christmas, upgrades) and santaLevel() >= 14:\n      season.keep(christmas)\n      season.buyDrops(christmas, upgrades)\n      santa.upgrade()\n    for season in [easter, halloween, valentines]:\n      if season == easter:\n        # eggs drop from golden and wrath cookies\n        switch on golden\n        switch on wrath\n      elif season == halloween:\n        # Halloween cookies drop from wrinklers that have eaten\n        switch on wrinklers\n      repeat until owned(season, all) >= total(season, all):\n        season.keep(season)\n        season.buyDrops(season, all)\n    # Christmas again, for the reindeer cookies — they don't need wrinklers, so the\n    # Grandmapocalypse can end here\n    repeat until owned(christmas, cookies) >= total(christmas, cookies):\n      season.keep(christmas)\n      season.buyDrops(christmas, cookies)\n      grandma.exit(pledge)\n    # and Business day for good, with the elders kept pledged\n    forever:\n      season.keep(fools)\n      grandma.exit(pledge)\n";
 
+  // ---- Plain Business Day ----------------------------------------------------------------------
+
+  const plain = () => !!CA.Settings.get('foolsPlain') && Game.season === 'fools';
+  /** fn, run as if no season were on while Plain Business Day applies. */
+  function unfooled(fn) {
+    const wrapped = function () {
+      if (!plain()) return fn.apply(this, arguments);
+      const was = Game.season;
+      Game.season = '';
+      try {
+        return fn.apply(this, arguments);
+      } finally {
+        Game.season = was;
+      }
+    };
+    wrapped.__caPlain = true;
+    return wrapped;
+  }
+  const wrapIn = (obj, keys) => obj && keys.forEach((k) => typeof obj[k] === 'function' && !obj[k].__caPlain && (obj[k] = unfooled(obj[k])));
+  /** The game's look-only functions, wrapped (once; again for anything new). */
+  function wrapLook() {
+    Object.values(Game.Objects || {}).forEach((o) => wrapIn(o, ['rebuild', 'tooltip']));
+    wrapIn(Game.shimmerTypes && Game.shimmerTypes.golden, ['initFunc', 'updateFunc']);
+    wrapIn(Game, ['particleAdd', 'getNewTicker', 'DrawBackground']);
+  }
+  /** The tab title: "Cookie Baker" back to "Cookie Clicker" (the game sets it in its main loop). */
+  function fixTitle() {
+    if (plain() && / - Cookie Baker$/.test(document.title)) document.title = document.title.replace(/ - Cookie Baker$/, ' - Cookie Clicker');
+  }
+  /** Redraws what shows the look now: the store's building rows (and its next refresh). */
+  function redrawLook() {
+    Object.values(Game.Objects || {}).forEach((o) => {
+      try {
+        if (typeof o.rebuild === 'function') o.rebuild();
+      } catch (e) {
+        /* a row the game hasn't built yet */
+      }
+    });
+    Game.storeToRefresh = 1;
+    fixTitle();
+  }
+
   function init() {
+    CA.Settings.defineOption({
+      key: 'foolsPlain',
+      group: 'general',
+      icon: 'calendar',
+      name: 'Plain Business Day',
+      desc: 'During Business day, keep the normal building names, descriptions and icons, golden cookies, background and news — the season’s effects stay.',
+      default: false,
+    });
+    wrapLook();
+    CA.Events.on('settings', (key) => {
+      if (key !== 'foolsPlain' && key != null) return;
+      wrapLook();
+      redrawLook();
+    });
+    // the title changes (and the <title> itself may come later): watch the head
+    const head = document.head || document.documentElement;
+    if (head && typeof MutationObserver === 'function') new MutationObserver(fixTitle).observe(head, { childList: true, characterData: true, subtree: true });
     const A = CA.Actions.register;
     const C = CA.Conditions.register;
     const seasonParam = { key: 'season', label: 'Season', type: 'select', default: 'christmas', options: () => SEASONS };

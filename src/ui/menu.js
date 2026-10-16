@@ -38,12 +38,17 @@ CA.UI.Menu = (() => {
   /** The small round icon at the start of every settings row. */
   const rowIcon = (name) => `<span class="ca-row-ico">${CA.UI.Icons.html(name || 'settings', 16)}</span>`;
 
+  /** An option's control: a switch — or, for one with choices, a dropdown of them. */
+  const optionControl = (def) =>
+    def.choices
+      ? `<select class="ca-opt-choice" data-ca-choice="${def.key}">${def.choices.map((c) => `<option value="${C.esc(c.v)}">${C.esc(c.label)}</option>`).join('')}</select>`
+      : C.toggle(false, `data-ca="option" data-key="${def.key}"`, def.name);
   function optionRow(def) {
     return (
       `<div class="ca-row ca-row-option" data-option="${def.key}">` +
       rowIcon(def.icon) +
       `<div class="ca-row-text"><div class="ca-row-name">${C.esc(def.name)}</div><div class="ca-row-desc">${C.esc(def.desc)}</div></div>` +
-      C.toggle(false, `data-ca="option" data-key="${def.key}"`, def.name) +
+      optionControl(def) +
       '</div>'
     );
   }
@@ -54,7 +59,7 @@ CA.UI.Menu = (() => {
       `<div class="ca-opt" data-option="${def.key}">` +
       `<span class="ca-opt-ico">${CA.UI.Icons.html(def.icon || 'settings', 15)}</span>` +
       `<div class="ca-opt-text"><b>${C.esc(def.name)}</b><span>${C.esc(def.desc)}</span></div>` +
-      C.toggle(false, `data-ca="option" data-key="${def.key}"`, def.name) +
+      optionControl(def) +
       '</div>'
     );
   }
@@ -354,7 +359,9 @@ CA.UI.Menu = (() => {
     if (short) short.textContent = historyInfo().split('.')[0];
 
     root.querySelectorAll('[data-option]').forEach((row) => {
-      setSwitch(row.querySelector('.ca-switch'), !!CA.Settings.get(row.dataset.option));
+      const sel = row.querySelector('[data-ca-choice]');
+      if (sel) sel.value = String(CA.Settings.get(row.dataset.option));
+      else setSwitch(row.querySelector('.ca-switch'), !!CA.Settings.get(row.dataset.option));
     });
 
     const capturing = CA.Hotkeys.capturing();
@@ -496,6 +503,14 @@ CA.UI.Menu = (() => {
     if (menu) {
       menu.addEventListener('click', onClick);
       menu.addEventListener('change', onHistoryFile);
+      // an option with choices (its dropdown)
+      menu.addEventListener('change', (e) => {
+        const sel = e.target.closest && e.target.closest('[data-ca-choice]');
+        if (!sel) return;
+        CA.Util.sound('snd/tick.mp3');
+        CA.Settings.set(sel.dataset.caChoice, sel.value);
+        render();
+      });
       // a macro row's settings, on whichever page shows the row
       menu.addEventListener('change', (e) => CA.UI.MacrosPage.handleSetting(e));
     }

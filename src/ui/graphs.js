@@ -774,6 +774,7 @@ CA.UI.Graphs = (() => {
   }
 
   function init() {
+    CA.Format.notation(); // defines the Numbers setting (Settings → General) before the Settings page draws
     S().defineOption({ key: 'graphTab', group: 'ui', name: 'Graphs tab', desc: '', default: 'cookies' });
     S().defineOption({ key: 'prestigeTargetNum', group: 'ui', name: 'Prestige target (number)', desc: '', default: 0 });
     S().defineOption({ key: 'prestigeTargetUnit', group: 'ui', name: 'Prestige target (magnitude)', desc: '', default: 0 });
