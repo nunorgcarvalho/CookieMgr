@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 3.11.0 — 2026-10-16
+
 - **Garden mutation odds**, in the game's own garden: under an empty tile's tooltip what it can grow at the next tick and
   how likely (new seeds starred), under a seed's the chance it grows somewhere and how long that takes, and a chip on
   each empty tile. Exact, from the game's own rules — its recipes (M.getMuts), soil, repellent, wood chips' extra tries,

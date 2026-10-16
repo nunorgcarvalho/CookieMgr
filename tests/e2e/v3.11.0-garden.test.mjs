@@ -1,4 +1,4 @@
-// Garden mutation odds in the game's own garden (renamed vX.Y.Z.test.mjs when it lands): under an empty
+// v3.11.0: garden mutation odds in the game's own garden: under an empty
 // tile's tooltip what it can grow at the next tick (a seed not unlocked yet starred), under a seed's the
 // chance it grows somewhere and how long that takes, a chip on each empty tile — each with its option.
 // (The odds themselves are checked against the real game's ticks in tests/sim/mutations.)

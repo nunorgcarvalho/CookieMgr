@@ -1,5 +1,5 @@
-// The minigames' and the Legacy button's tooltips, with CookieMgr's additions (renamed vX.Y.Z.test.mjs
-// when it lands): a spell's wait for magic and recovery, a stock's resting value and worth, a god's
+// v3.11.0: the minigames' and the Legacy button's tooltips, with CookieMgr's additions:
+// a spell's wait for magic and recovery, a stock's resting value and worth, a god's
 // CpS in each slot — under the game's own tooltips, each wrapped once; the Legacy tooltip's block put
 // back after the game rewrites it; each with its option. (The numbers are checked against the real
 // game in tests/sim/minigame-info.)
