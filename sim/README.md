@@ -1,6 +1,6 @@
 # CookieMgr simulator
 
-*v0.3.0 — versioned apart from the add-on (`sim-v*` tags; `SIM_VERSION` in `sim.mjs`).*
+*v0.3.1 — versioned apart from the add-on (`sim-v*` tags; `SIM_VERSION` in `sim.mjs`).*
 
 A Cookie Clicker simulator for trying out strategies over long timescales — written in CookieMgr's
 own words, so what works here can be pasted into the add-on and run on the real game.
@@ -194,6 +194,16 @@ tests/sim/           the simulator's tests (part of npm test)
   `models/garden.mjs`: over 28 simulated hours the real game averaged **+48.9%** golden cookie
   frequency, the model **+48.4%** (planting 12.5 vs 11.7 an hour — the difference is the first 20).
   30 hours of game took 400 s.
+- **The Full-garden replanter does better replanting just before a tick.** `experiment
+  garden-replant-modes` (level-6 golden clover field, 24 h × 4 seeds each, the add-on's built-ins):
+
+  | way | golden cookie frequency | (1 + bonus)² | at +60% or more | plantings/h |
+  | --- | --- | --- | --- | --- |
+  | Full-garden, a new round at once (`replantAtTick = false`, the default) | +54.8% ± 0.5 | 2.465 | 68% of the time | 19.4 |
+  | Full-garden, a new round just before the tick (`replantAtTick = true`) | **+56.0% ± 0.3** | **2.495** | 69% | 19.0 |
+  | Steady replanter | +48.7% ± 0.7 | 2.224 | 13% | 9.6 |
+
+  Seed by seed, replanting at the tick wins every time: by 1.19 ± 0.29 points.
 
 ## Not yet
 

@@ -653,6 +653,11 @@ buy.best(all)
   });
   function onSimChange(e) {
     const el = e.target;
+    // an option with choices on a hosted page (its dropdown), as the add-on's panel handles it
+    if (el.dataset && el.dataset.caChoice) {
+      CA.Settings.set(el.dataset.caChoice, el.value);
+      return rehost();
+    }
     if ('doaction' in el.dataset) {
       S.doAction = el.value;
       const card = el.closest('.ca-card');

@@ -79,17 +79,23 @@
   };
 
   // ---- the panel: what the pages ask of ui/menu.js ------------------------------------------------------
+  // as ui/menu.js has them: a switch — or, for an option with choices, a dropdown of them
+  const optionControl = (def) => {
+    if (!def.choices) return CA.UI.C.toggle(!!CA.Settings.get(def.key), `data-ca="option" data-key="${esc(def.key)}"`, def.name);
+    const cur = String(CA.Settings.get(def.key));
+    return `<select class="ca-opt-choice" data-ca-choice="${esc(def.key)}">${def.choices.map((c) => `<option value="${esc(c.v)}"${String(c.v) === cur ? ' selected' : ''}>${esc(c.label)}</option>`).join('')}</select>`;
+  };
   const optionTile = (def) =>
     `<div class="ca-opt" data-option="${esc(def.key)}">` +
     `<span class="ca-opt-ico">${CA.UI.Icons.html(def.icon || 'settings', 15)}</span>` +
     `<div class="ca-opt-text"><b>${esc(def.name)}</b><span>${esc(def.desc)}</span></div>` +
-    CA.UI.C.toggle(!!CA.Settings.get(def.key), `data-ca="option" data-key="${esc(def.key)}"`, def.name) +
+    optionControl(def) +
     '</div>';
   let onRender = () => {};
   CA.UI.Menu = {
     render: () => onRender(),
     optionsCard(title, icon, group, extra = '') {
-      const opts = CA.Settings.optionsIn(group).filter((d) => typeof d.default === 'boolean');
+      const opts = CA.Settings.optionsIn(group).filter((d) => typeof d.default === 'boolean' || d.choices);
       if (!opts.length && !extra) return '';
       return `<div class="ca-card">${CA.UI.C.cardHead(title, icon)}<div class="ca-optgrid">${opts.map(optionTile).join('')}</div>${extra}</div>`;
     },

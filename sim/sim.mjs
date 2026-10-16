@@ -15,7 +15,7 @@
 import { bootGame } from './game/boot.mjs';
 
 /** The simulator's own version (it moves apart from the add-on's: sim-v* tags). */
-export const SIM_VERSION = '0.3.0';
+export const SIM_VERSION = '0.3.1';
 import { loadCookieMgr } from './mgr/host.mjs';
 import { ensureMod } from './game/fetch.mjs';
 
@@ -74,10 +74,16 @@ export async function createSim({ seed = 1, fps = 30, start, save = null, mgr = 
   }
   const toMs = ({ ms = 0, seconds = 0, minutes = 0, hours = 0, days = 0 } = {}) => ms + 1000 * (seconds + 60 * (minutes + 60 * (hours + 24 * days)));
   /** Plays on for a while: run({ hours: 2 }), run({ seconds: 30 }), run(5) = 5 seconds. */
+  // The game moves in whole frames (1/30 s): a span that isn't a whole number of them leaves a part
+  // of a frame over, carried to the next run() — so many short runs add up to exactly their total
+  // (ten run({ ms: 125 }) are 1.25 s, not 1 s).
+  let owed = 0;
   function run(span, { onProgress } = {}) {
-    const end = clock.now + (typeof span === 'number' ? span * 1000 : toMs(span));
+    owed += typeof span === 'number' ? span * 1000 : toMs(span);
+    const step = 1000 / Game.fps;
     let lastReport = Date.now();
-    while (clock.now + 1000 / Game.fps <= end + 1e-6) {
+    while (owed >= step - 1e-6) {
+      owed -= step;
       frame();
       if (onProgress && Date.now() - lastReport > 1000) {
         lastReport = Date.now();

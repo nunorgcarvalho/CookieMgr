@@ -28,6 +28,10 @@ for (const f of files) {
   const { errors } = sim.CA.Script.compile(parseCmgr(fs.readFileSync(path.join(STRATEGIES, f), 'utf8')).source);
   assert(!errors.length, `${f} compiles with CookieMgr's own compiler${errors.length ? ` — line ${errors[0].line}: ${errors[0].message}` : ''}`);
 }
+// run() in parts of a frame: what's over is carried to the next run, so short runs add up exactly
+const t0 = sim.t;
+for (let i = 0; i < 80; i++) sim.run({ ms: 125 });
+assert(Math.abs(sim.t - t0 - 10) < 1e-3, `80 × run({ ms: 125 }) = 10 s of game, to the millisecond (${(sim.t - t0).toFixed(4)} s)`);
 const combo = await loadStrategy('golden+payback');
 assert(/golden \+ payback/.test(combo.name), 'strategies join with +');
 
