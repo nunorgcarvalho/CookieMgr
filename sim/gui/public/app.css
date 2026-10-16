@@ -579,3 +579,8 @@ body {
   border-color: rgba(255, 120, 100, 0.6);
   color: #ffc9bf;
 }
+
+/* a strategy's variables as knobs (the add-on's CA.UI.CodeKnobs) — their ⚙ settings are the add-on's, kept per macro there */
+#CookieMgrMenu .sim-strats .ca-knob-cfg {
+  display: none;
+}

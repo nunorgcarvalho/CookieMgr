@@ -26,7 +26,7 @@ const ASSETS = path.join(GAME_DIR, 'assets');
 
 // the add-on's code the page uses, in load order (no game needed: formatting, the registries and
 // the language for the code editor, icons, components, DOM helpers, tooltips, chart helpers)
-const ADDON_FILES = ['core/util.js', 'core/format.js', 'core/events.js', 'core/actions.js', 'core/conditions.js', 'features/script.js', 'ui/icons.js', 'ui/components.js', 'ui/dom.js', 'ui/tips.js', 'ui/chart.js', 'ui/codeEditor.js'];
+const ADDON_FILES = ['core/util.js', 'core/format.js', 'core/events.js', 'core/actions.js', 'core/conditions.js', 'features/script.js', 'ui/icons.js', 'ui/components.js', 'ui/dom.js', 'ui/tips.js', 'ui/chart.js', 'ui/codeEditor.js', 'ui/codeKnobs.js'];
 
 const json = (res, code, data) => {
   res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });

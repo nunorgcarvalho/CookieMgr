@@ -987,6 +987,7 @@ buy.best(all)
                 .join('')}</span>` +
               `<label class="ca-field"><span class="ca-field-label">A pass every</span><input type="number" min="50" step="50" value="${h.every}" data-severy> ms</label>` +
               `<label class="ca-field"><span class="ca-field-label">Garden profile</span><select data-sprofile><option value="">—</option>${meta.vocab.profiles.map((p) => `<option value="${esc(p.id)}"${h.profile === p.id ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select></label></div>` +
+              (CA.UI.CodeKnobs ? CA.UI.CodeKnobs.html('strat', src, {}) : '') +
               `<div class="ca-ed-layout sim-ed"><div class="ca-editor-body">${CE.html('strat', src, { title: 'Its code', hint: 'the # lines at the top set it up · Tab indents · click the library to insert' })}</div>${CE.libraryHtml('strat')}</div></div>`) +
         '</div></div>'
       );
@@ -995,12 +996,15 @@ buy.best(all)
       root.addEventListener('click', onStratClick);
       root.addEventListener('change', onStratChange);
       root.addEventListener('input', onStratChange);
+      root.addEventListener('input', onKnob);
       ST.unbind = CE.bind(root, {
         onChange: (key, src) => {
           if (key !== 'strat') return;
           const s = meta.strategies.find((x) => x.file === ST.file);
           const was = ST.draft != null && s && ST.draft !== s.source;
           ST.draft = src;
+          const kp = root.querySelector('[data-knobs="strat"]');
+          if (kp && CA.UI.CodeKnobs) morph(kp, CA.UI.CodeKnobs.inner(src, {}));
           if (was !== (s && src !== s.source)) {
             // the header's Save / "unsaved" follow the first change
             const head = root.querySelector('.ca-editor2 .ca-card-head');
@@ -1017,19 +1021,56 @@ buy.best(all)
       root.removeEventListener('click', onStratClick);
       root.removeEventListener('change', onStratChange);
       root.removeEventListener('input', onStratChange);
+      root.removeEventListener('input', onKnob);
       if (ST.unbind) ST.unbind();
     },
   };
+  /** A knob moved (or its number typed, or its switch flipped): the variable's line in the code follows. */
+  function setVar(name, value, from) {
+    const s = meta.strategies.find((x) => x.file === ST.file);
+    const src = ST.draft != null ? ST.draft : s ? s.source : '';
+    const next = CA.UI.CodeKnobs.setIn(src, name, value);
+    if (next === src) return;
+    ST.draft = next;
+    const root = main();
+    const ta = root.querySelector('[data-code-ed="strat"] [data-code]');
+    if (ta) {
+      ta.value = next;
+      CE.refresh(ta);
+    }
+    // the knob's other half (slider ↔ number box) shows the same number
+    if (from) root.querySelectorAll(`[data-knob="${name}"], [data-knob-num="${name}"]`).forEach((el) => el !== from && (el.value = from.value));
+    const head = root.querySelector('.ca-editor2 .ca-card-head');
+    const tmp = document.createElement('div');
+    tmp.innerHTML = pages.strategies.html();
+    const fresh = tmp.querySelector('.ca-editor2 .ca-card-head');
+    if (head && fresh) head.replaceWith(fresh);
+  }
+  function onKnob(e) {
+    const el = e.target;
+    if (!CA.UI.CodeKnobs || !(el.dataset.knob || el.dataset.knobNum)) return;
+    const s = meta.strategies.find((x) => x.file === ST.file);
+    const src = ST.draft != null ? ST.draft : s ? s.source : '';
+    const v = CA.UI.CodeKnobs.valueOf(el, src, {});
+    if (v != null) setVar(el.dataset.knob || el.dataset.knobNum, v, el);
+  }
   async function refreshMeta() {
     const m = await api.get('/api/meta');
     meta.strategies = m.strategies;
   }
   const onStratClick = guard(async (e) => {
-    const t = e.target.closest('[data-sfile],[data-sact],[data-swith]');
+    const t = e.target.closest('[data-sfile],[data-sact],[data-swith],[data-knob-toggle]');
     if (!t) return;
     const d = t.dataset;
     const s = meta.strategies.find((x) => x.file === ST.file);
     const src = ST.draft != null ? ST.draft : s ? s.source : '';
+    if (d.knobToggle) {
+      const v = CA.UI.CodeKnobs.scan(src).find((x) => x.name === d.knobToggle);
+      if (v) setVar(v.name, !v.value);
+      const kp = main().querySelector('[data-knobs="strat"]');
+      if (kp) morph(kp, CA.UI.CodeKnobs.inner(ST.draft, {}));
+      return;
+    }
     if (d.sfile) {
       if (ST.draft != null && s && ST.draft !== s.source && !confirm('Leave this strategy without saving?')) return;
       ST.file = d.sfile;

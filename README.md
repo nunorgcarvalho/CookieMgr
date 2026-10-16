@@ -826,7 +826,8 @@ CI (`.github/workflows/ci.yml`) fails a push if `dist/CookieMgr.js` does not mat
 real game's own scripts running headless in Node, with CookieMgr's own core and features loaded into
 it, on a virtual clock. Strategies are written in CookieMgr's algorithmic code (`.cmgr` files you can
 paste into an algorithmic macro), and everything that happens is logged with CookieMgr's action ids
-and its event log. `npm run sim -- list` to start; see [sim/README.md](sim/README.md).
+and its event log. `npm run sim:gui` opens CookieSimMgr, the simulator in your browser with the add-on's own look; `npm run sim -- list`
+for the command line; see [sim/README.md](sim/README.md).
 
 ## License
 

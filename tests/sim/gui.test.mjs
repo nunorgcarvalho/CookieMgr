@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { JSDOM, VirtualConsole } from 'jsdom';
-import { makeAssert, sleep } from '../harness/game.mjs';
+import { makeAssert, sleep, click } from '../harness/game.mjs';
 import { gameOrSkip } from '../harness/sim.mjs';
 import { startServer } from '../../sim/gui/server.mjs';
 
@@ -155,7 +155,19 @@ for (const page of ['compare', 'strategies', 'experiments', 'vocab', 'sim']) {
   w.location.hash = `#${page}`;
   await sleep(250);
   assert($('[data-sim-main]').children.length > 0 && $(`[data-nav="${page}"].selected`), `${page}: renders`);
-  if (page === 'strategies') assert($('[data-code-ed="strat"]') && $('[data-ed-lib="strat"]') && doc.querySelectorAll('[data-sfile]').length >= 3, 'strategies: the files, the code editor and its library');
+  if (page === 'strategies') {
+    assert($('[data-code-ed="strat"]') && $('[data-ed-lib="strat"]') && doc.querySelectorAll('[data-sfile]').length >= 3, 'strategies: the files, the code editor and its library');
+    // cheapest.cmgr has a top-level number (lowest = -1): the add-on's knobs show it, and moving one writes the code
+    click(w, $('[data-sfile="cheapest.cmgr"]'));
+    await sleep(100);
+    const knob = $('[data-knobs="strat"] [data-knob-num="lowest"]');
+    assert(knob, 'its variables as knobs (the add-on’s CodeKnobs)');
+    if (knob) {
+      knob.value = '-3';
+      knob.dispatchEvent(new w.Event('input', { bubbles: true }));
+      assert(/^lowest = -3/m.test($('[data-code-ed="strat"] [data-code]').value) && /unsaved/.test($('.ca-editor2 .ca-card-head').textContent), 'a knob writes its line of the code (unsaved)');
+    }
+  }
   if (page === 'vocab') assert(doc.querySelectorAll('[data-lib-insert]').length > 100 && /staging/.test($('[data-sim-main]').textContent), 'vocabulary: the library, staging words marked');
   if (page === 'compare') assert(doc.querySelectorAll('[data-cpick]').length >= 3 && $('[data-cgo]'), 'compare: strategies to pick, and Go');
   if (page === 'experiments') assert(doc.querySelectorAll('[data-ex]').length >= 3 && $('[data-exrun]'), 'experiments: the list, and Run');
