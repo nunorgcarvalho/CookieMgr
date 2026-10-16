@@ -1,0 +1,581 @@
+/* CookieSimMgr: the page around the add-on's own look (styles.css). Only layout, and the few
+   pieces the add-on has no counterpart for, live here. */
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: #102136 url(/game/img/bgBlue.jpg) repeat;
+  color: #ddd;
+  font: 12px Tahoma, Arial, sans-serif;
+}
+body {
+  --sim-nav: 64px;
+}
+/* the game's wooden beam along the top */
+#sim-top {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 52px;
+  padding: 0 18px;
+  background: url(/game/img/darkNoise.jpg), linear-gradient(#3d2716, #1f1308);
+  border-bottom: 3px solid #8a5a2b;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+}
+#sim-top .sim-logo {
+  width: 36px;
+  height: 36px;
+  background: url(/game/img/goldCookie.png) center / contain no-repeat;
+  filter: drop-shadow(0 0 6px rgba(255, 210, 90, 0.6));
+}
+#sim-top .sim-title {
+  font-family: 'Kavoon', 'Merriweather', Georgia, serif;
+  font-size: 24px;
+  color: #fff;
+  text-shadow:
+    0 1px 0 #6b3c13,
+    0 2px 4px #000,
+    0 0 10px rgba(255, 200, 100, 0.4);
+}
+#sim-top .sim-sub {
+  font-size: 11px;
+  color: #b9ab93;
+}
+#sim-top .sim-top-run {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  color: #e8d7b0;
+}
+#sim-top .sim-top-run b {
+  font-family: 'Merriweather', Georgia, serif;
+  color: #ffeab0;
+}
+
+/* the left beam: the add-on's tab items, labels always shown */
+#CookieMgrTab.sim-nav {
+  position: fixed;
+  left: 0;
+  top: 70px;
+  transform: none;
+  margin: 0;
+  z-index: 150;
+  align-items: stretch;
+  width: 168px;
+}
+#CookieMgrTab.sim-nav .ca-tab-item {
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  border-radius: 0 8px 8px 0;
+  border-left: none;
+  border-right: 1px solid #875526;
+  padding-right: 8px;
+}
+#CookieMgrTab.sim-nav .ca-tab-label {
+  max-width: 180px;
+  opacity: 1;
+  padding: 0 2px 0 6px;
+}
+#CookieMgrTab.sim-nav .ca-tab-sep {
+  height: 10px;
+}
+
+#CookieMgrMenu.sim-main {
+  margin-left: 176px;
+  padding: 6px 18px 80px 10px;
+  max-width: 1500px;
+}
+@media (max-width: 900px) {
+  #CookieMgrTab.sim-nav {
+    width: 48px;
+  }
+  #CookieMgrTab.sim-nav .ca-tab-label {
+    display: none;
+  }
+  #CookieMgrMenu.sim-main {
+    margin-left: 54px;
+  }
+}
+
+/* page title */
+#CookieMgrMenu .sim-h1 {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 14px 4px 4px;
+  font-family: 'Merriweather', Georgia, serif;
+  font-size: 22px;
+  font-weight: bold;
+  color: #fff3cf;
+  text-shadow: 0 2px 4px #000;
+}
+#CookieMgrMenu .sim-h1 small {
+  font: 12px Tahoma, Arial, sans-serif;
+  color: #b9ab93;
+  text-shadow: none;
+}
+
+/* two columns of cards */
+#CookieMgrMenu .sim-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0 6px;
+  align-items: start;
+}
+#CookieMgrMenu .sim-cols > div {
+  min-width: 0;
+}
+@media (max-width: 1150px) {
+  #CookieMgrMenu .sim-cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+#CookieMgrMenu .sim-pad {
+  padding: 10px 14px;
+}
+
+/* choices as tiles (start from…, strategies) */
+#CookieMgrMenu .sim-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 8px;
+  padding: 10px 14px;
+}
+#CookieMgrMenu .sim-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  text-align: left;
+  font: 12px Tahoma, Arial, sans-serif;
+  color: #d8cbb0;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.3);
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    box-shadow 0.15s;
+}
+#CookieMgrMenu .sim-tile:hover {
+  border-color: rgba(255, 225, 150, 0.45);
+}
+#CookieMgrMenu .sim-tile.on {
+  border-color: rgba(255, 210, 120, 0.85);
+  background: linear-gradient(to bottom right, rgba(255, 200, 100, 0.16), rgba(0, 0, 0, 0.3));
+  box-shadow: 0 0 12px rgba(255, 200, 100, 0.25);
+}
+#CookieMgrMenu .sim-tile b {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Merriweather', Georgia, serif;
+  font-size: 13px;
+  color: #fff3cf;
+}
+#CookieMgrMenu .sim-tile .ca-hint {
+  line-height: 1.35;
+}
+#CookieMgrMenu .sim-tile .sim-tile-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+/* form bits */
+#CookieMgrMenu .sim-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+  padding: 10px 14px;
+}
+#CookieMgrMenu .sim-form input[type='text'],
+#CookieMgrMenu .sim-form input[type='number'],
+#CookieMgrMenu .sim-form select,
+#CookieMgrMenu .sim-input,
+#CookieMgrMenu textarea.sim-save {
+  font: 12px Tahoma, Arial, sans-serif;
+  color: #f0e2c0;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 220, 150, 0.25);
+  border-radius: 4px;
+  padding: 4px 7px;
+}
+#CookieMgrMenu .sim-form input[type='number'] {
+  width: 76px;
+}
+#CookieMgrMenu textarea.sim-save {
+  display: block;
+  box-sizing: border-box;
+  width: calc(100% - 28px);
+  height: 70px;
+  margin: 0 14px 10px;
+  font: 11px Consolas, monospace;
+  resize: vertical;
+}
+#CookieMgrMenu .sim-go {
+  font-size: 14px;
+  padding: 6px 18px;
+}
+
+/* the run bar */
+#CookieMgrMenu .sim-runbar {
+  position: sticky;
+  top: 52px;
+  z-index: 100;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin: 10px 4px 0;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 210, 120, 0.3);
+  background: rgba(20, 12, 5, 0.92);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
+}
+#CookieMgrMenu .sim-play {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 50%;
+}
+#CookieMgrMenu .sim-clock {
+  display: flex;
+  flex-direction: column;
+  min-width: 120px;
+}
+#CookieMgrMenu .sim-clock b {
+  font-family: 'Merriweather', Georgia, serif;
+  font-size: 18px;
+  color: #ffeab0;
+  text-shadow: 0 1px 3px #000;
+}
+#CookieMgrMenu .sim-clock span {
+  font-size: 10.5px;
+  color: #93866f;
+}
+#CookieMgrMenu .sim-runbar .sim-spacer {
+  flex: 1;
+}
+#CookieMgrMenu .sim-err {
+  margin: 8px 14px;
+  padding: 8px 10px;
+  white-space: pre-wrap;
+  font: 11px Consolas, monospace;
+  color: #ffb4a8;
+  background: rgba(120, 20, 10, 0.35);
+  border: 1px solid rgba(255, 120, 100, 0.4);
+  border-radius: 4px;
+}
+
+/* the chart */
+#CookieMgrMenu .sim-chart {
+  position: relative;
+  margin: 0 8px 8px;
+}
+#CookieMgrMenu .sim-chart canvas {
+  display: block;
+  width: 100%;
+  height: 280px;
+  cursor: crosshair;
+}
+#CookieMgrMenu .sim-chart.short canvas {
+  height: 200px;
+}
+
+/* buildings */
+#CookieMgrMenu .sim-bld {
+  display: grid;
+  grid-template-columns: 30px minmax(70px, 1fr) 46px minmax(60px, 1.2fr) 70px;
+  align-items: center;
+  gap: 2px 8px;
+  padding: 3px 14px;
+  font-size: 11.5px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+#CookieMgrMenu .sim-bld.locked {
+  opacity: 0.35;
+}
+#CookieMgrMenu .sim-bld .ca-icon {
+  zoom: 0.62;
+}
+#CookieMgrMenu .sim-bld b {
+  color: #fff3cf;
+  font-family: 'Merriweather', Georgia, serif;
+  text-align: right;
+}
+#CookieMgrMenu .sim-bar {
+  height: 7px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+}
+#CookieMgrMenu .sim-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(to right, #c98a2b, #ffd36a);
+}
+#CookieMgrMenu .sim-num {
+  text-align: right;
+  color: #b9ab93;
+  white-space: nowrap;
+}
+
+/* icon grids (upgrades, buffs) */
+#CookieMgrMenu .sim-icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 8px 14px;
+}
+#CookieMgrMenu .sim-icons .ca-icon {
+  zoom: 0.62;
+}
+#CookieMgrMenu .sim-buff {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+#CookieMgrMenu .sim-buff .ca-icon {
+  zoom: 0.7;
+}
+#CookieMgrMenu .sim-buff .sim-bar {
+  flex: 1;
+}
+#CookieMgrMenu .sim-buff .sim-bar i {
+  background: linear-gradient(to right, #42a5f5, #9fd6ff);
+}
+
+/* macros */
+#CookieMgrMenu .sim-macro {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+#CookieMgrMenu .sim-macro.on {
+  background: linear-gradient(to right, rgba(255, 210, 90, 0.12), rgba(255, 210, 90, 0) 65%);
+}
+#CookieMgrMenu .sim-macro .ca-icon {
+  zoom: 0.62;
+}
+#CookieMgrMenu .sim-macro .sim-macro-name {
+  flex: 1;
+  min-width: 0;
+}
+#CookieMgrMenu .sim-macro .sim-macro-name b {
+  color: #fff3cf;
+}
+#CookieMgrMenu .sim-macro .sim-macro-name span {
+  display: block;
+  font-size: 10.5px;
+  color: #93866f;
+}
+#CookieMgrMenu .sim-macro .sim-macro-name span.bad {
+  color: #ff9a8a;
+}
+
+/* logs */
+#CookieMgrMenu .sim-log {
+  max-height: 340px;
+  overflow-y: auto;
+}
+#CookieMgrMenu .sim-tally {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  padding: 8px 14px;
+}
+#CookieMgrMenu .sim-tally .ca-chip b {
+  color: #ffeab0;
+}
+#CookieMgrMenu .sim-act-row {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) 48px;
+  gap: 8px;
+  padding: 2px 10px;
+  font: 11px Consolas, monospace;
+  color: #d8cbb0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+#CookieMgrMenu .sim-act-row span:first-child {
+  color: #93866f;
+}
+#CookieMgrMenu .sim-act-row span:last-child {
+  text-align: right;
+  color: #ffd36a;
+}
+
+/* the do-something / code console */
+#CookieMgrMenu .sim-do {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+}
+#CookieMgrMenu .sim-do select,
+#CookieMgrMenu .sim-do input {
+  font: 12px Tahoma, Arial, sans-serif;
+  color: #f0e2c0;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 220, 150, 0.25);
+  border-radius: 4px;
+  padding: 3px 6px;
+}
+#CookieMgrMenu .sim-out {
+  margin: 0 14px 10px;
+  padding: 6px 8px;
+  max-height: 160px;
+  overflow: auto;
+  white-space: pre-wrap;
+  font: 11px Consolas, monospace;
+  color: #cfe8b8;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 4px;
+}
+#CookieMgrMenu .sim-out:empty {
+  display: none;
+}
+#CookieMgrMenu pre.sim-term {
+  margin: 0;
+  padding: 10px 14px;
+  min-height: 120px;
+  max-height: 560px;
+  overflow: auto;
+  white-space: pre;
+  font: 12px Consolas, 'Cascadia Mono', monospace;
+  color: #e6f2d5;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* comparison table */
+#CookieMgrMenu table.sim-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+#CookieMgrMenu table.sim-table th,
+#CookieMgrMenu table.sim-table td {
+  padding: 6px 14px;
+  text-align: right;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  white-space: nowrap;
+}
+#CookieMgrMenu table.sim-table th {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #93866f;
+  font-weight: normal;
+}
+#CookieMgrMenu table.sim-table td:first-child,
+#CookieMgrMenu table.sim-table th:first-child {
+  text-align: left;
+}
+#CookieMgrMenu table.sim-table td b {
+  font-family: 'Merriweather', Georgia, serif;
+  color: #ffeab0;
+}
+#CookieMgrMenu table.sim-table tr.best td:first-child b::after {
+  content: ' ★';
+  color: #ffd36a;
+}
+#CookieMgrMenu .sim-progress {
+  height: 8px;
+  margin: 10px 14px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+}
+#CookieMgrMenu .sim-progress i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(to right, #6fbf4a, #b6f07a);
+  transition: width 0.3s;
+}
+
+/* the strategy editor */
+#CookieMgrMenu .sim-strats {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  gap: 0 6px;
+  align-items: start;
+}
+#CookieMgrMenu .sim-strat-item {
+  display: block;
+  width: 100%;
+  padding: 8px 14px;
+  text-align: left;
+  font: 12px Tahoma, Arial, sans-serif;
+  color: #d8cbb0;
+  background: none;
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+}
+#CookieMgrMenu .sim-strat-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+#CookieMgrMenu .sim-strat-item.on {
+  background: linear-gradient(to right, rgba(255, 210, 90, 0.16), rgba(255, 210, 90, 0));
+}
+#CookieMgrMenu .sim-strat-item b {
+  display: block;
+  color: #fff3cf;
+  font-family: 'Merriweather', Georgia, serif;
+}
+#CookieMgrMenu .sim-strat-item span {
+  display: block;
+  margin-top: 2px;
+  font-size: 10.5px;
+  color: #93866f;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#CookieMgrMenu .ca-ed-layout.sim-ed {
+  margin: 0;
+}
+
+/* toasts */
+#sim-toast {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+#sim-toast div {
+  max-width: 420px;
+  padding: 8px 12px;
+  font: 12px Tahoma, Arial, sans-serif;
+  color: #f4e6c3;
+  background: rgba(20, 12, 5, 0.95);
+  border: 1px solid rgba(255, 210, 120, 0.4);
+  border-radius: 6px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
+}
+#sim-toast div.bad {
+  border-color: rgba(255, 120, 100, 0.6);
+  color: #ffc9bf;
+}

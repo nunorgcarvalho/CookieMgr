@@ -35,6 +35,12 @@ export default [
     languageOptions: { ecmaVersion: 2022, sourceType: 'script', globals: { ...globals.browser, unsafeWindow: 'readonly' } },
   },
   {
+    // CookieSimMgr's page: browser scripts on the add-on's UI code (window.CA, from /cm.js)
+    files: ['sim/gui/public/**/*.js'],
+    languageOptions: { ecmaVersion: 2022, sourceType: 'script', globals: { ...globals.browser, CA: 'readonly', SimChart: 'writable' } },
+    rules: { 'no-unused-vars': ['error', { args: 'none', caughtErrors: 'none' }] },
+  },
+  {
     files: ['tests/**/*.mjs', 'sim/**/*.mjs', 'build.mjs', 'eslint.config.mjs'],
     languageOptions: { ecmaVersion: 2022, sourceType: 'module', globals: { ...globals.node } },
     rules: { 'no-unused-vars': ['error', { args: 'none', caughtErrors: 'none' }] },
