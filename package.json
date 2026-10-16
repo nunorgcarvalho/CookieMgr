@@ -24,7 +24,8 @@
     "lint": "eslint .",
     "watch": "node build.mjs --watch",
     "serve": "node build.mjs --watch --serve",
-    "sim": "node sim/cli.mjs"
+    "sim": "node sim/cli.mjs",
+    "sim:gui": "node sim/gui/server.mjs"
   },
   "keywords": [
     "cookie-clicker",

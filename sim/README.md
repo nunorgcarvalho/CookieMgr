@@ -1,6 +1,6 @@
 # CookieMgr simulator
 
-*v0.1.1 — versioned apart from the add-on (`sim-v*` tags; `SIM_VERSION` in `sim.mjs`).*
+*v0.2.0 — versioned apart from the add-on (`sim-v*` tags; `SIM_VERSION` in `sim.mjs`).*
 
 A Cookie Clicker simulator for trying out strategies over long timescales — written in CookieMgr's
 own words, so what works here can be pasted into the add-on and run on the real game.
@@ -13,6 +13,7 @@ garden, spells: all the game's code. Actions, values, macros, the Auto-gardener,
 CookieMgr's code.
 
 ```
+npm run sim:gui                                      # CookieSimMgr: all of it in your browser (below)
 npm run sim -- list                                  # strategies, scenarios, experiments
 npm run sim -- run payback --span 2h --seed 3        # one game, 2 simulated hours
 npm run sim -- compare payback cheapest --span 4h --seeds 5   # side by side, in parallel
@@ -24,6 +25,41 @@ npm run sim -- experiment garden-clover-cohort       # a fast model
 The game's scripts are downloaded the first time (from the game's CDN, into `sim/.game/`, which
 git ignores — they're © Orteil, not ours to commit). The version the simulator is checked against is
 pinned in `game/fetch.mjs`.
+
+## CookieSimMgr — the GUI
+
+`npm run sim:gui` starts CookieSimMgr at http://localhost:8091 and opens it (`--port 9000`,
+`--no-open`). It's the add-on's own UI — its stylesheet, icons, components, tooltips, chart helpers,
+code editor and library, and the code knobs, served straight from `src/` — so it looks and reads
+like CookieMgr, and stays in step with it.
+
+- **Simulate** — start from a new game, a scenario, or your own save (paste Options → Export save),
+  with a strategy (or your own code, or nothing) and a seed. Then watch it play and take part:
+  play / pause, speed (1× to as fast as it goes), *play for* 10 min … 1 day; the stats; cookies baked,
+  the bank and CpS over time (log or linear), with golden cookies marked and their effects shaded;
+  buildings with their share of the CpS; effects running; upgrades bought and in the store; the
+  garden tile by tile; **CookieMgr's macros, switchable while it plays**; any CookieMgr action, by
+  picking it; code run once, or kept running as a macro; every action CookieMgr took (by its
+  action ids, with a tally) and its event log (filterable, as the add-on's Events page has it).
+  **Export save** downloads the game as it is — import it in the game, or start another
+  simulation from it. Simulations keep running on the server while the page is closed; *Running*
+  lists them.
+- **Compare** — pick strategies (or combinations, `golden+payback`), how long each game plays, how many
+  seeds, where they start; they run in parallel processes and come in one by one: a table (mean,
+  spread, worst … best, final CpS, golden cookies, speed) and the mean of the seeds over time with
+  the worst–best range shaded.
+- **Strategies** — the files in `strategies/`, in CookieMgr's code editor with its library beside
+  it; the `# with:` built-ins as chips, the pass interval and garden profile as fields, the code's
+  top-level numbers as knobs (sliders that rewrite their line). Save (checked by CookieMgr's
+  compiler), new, delete, *Simulate it*, *Compare*, *Copy for the add-on*.
+- **Experiments** — each with its explanation and arguments; its output streams in as it runs.
+- **Vocabulary** — every action, value and condition a strategy can use (CookieMgr's library,
+  searchable, click to copy), staging words marked, and the built-in macros.
+
+The server (`gui/server.mjs`, no dependencies) runs live simulations in its own process, a slice at
+a time so it stays responsive, and streams them to the page (server-sent events); comparisons and
+experiments run in child processes. The game's pictures come from its CDN once and are cached in
+`sim/.game/assets/`.
 
 ## How fast
 
@@ -110,6 +146,9 @@ a few times real time with it.
 ```
 sim/
   cli.mjs            the command line (npm run sim -- …)
+  gui/
+    server.mjs       CookieSimMgr's server (npm run sim:gui): live simulations, jobs, the add-on's UI bundle
+    public/          the page: app.js (the pages), chart.js, app.css (layout on the add-on's styles)
   sim.mjs            createSim(): the game + CookieMgr + the clock, in one object
   runner.mjs         runOne / runMany (parallel) / reports
   strategy.mjs       loading strategies (.cmgr, .mjs, built-in ids)
@@ -131,9 +170,12 @@ tests/sim/           the simulator's tests (part of npm test)
 
 ## What it found so far
 
-- **The add-on's `shimmer.pop` over-counts.** A clicked golden cookie stays on screen while it
-  fades, and the action counts every call as a pop: an hour of the Golden cookies macro logged 103
-  pops for 8 golden cookies. (`if (!s || s.popped) return 0`)
+- **`shimmer.pop` could count a golden cookie twice** — a clicked one stays on screen while it
+  fades, and the action counted a call on it as a pop. Fixed in the add-on (v3.4.1: popped shimmers
+  are skipped). Careful reading the numbers, though: the game's own count of golden cookies
+  (`Game.goldenClicks`, the stats' "golden cookies") only counts the first of a **cookie storm** or
+  **chain** — its drops and links are golden cookies too, popped one by one. An hour of `payback`
+  (seed 3) pops 117 golden cookies, all distinct and live, for 8 counted by the game: a storm.
 - **The garden models hold up.** `experiment garden-exact` runs CookieMgr's Auto-gardener with the
   Golden clover field profile in the real game (level 6, the built-in soil rule) and compares it to
   `models/garden.mjs`: over 28 simulated hours the real game averaged **+48.9%** golden cookie
