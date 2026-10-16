@@ -1,4 +1,4 @@
-// Release A of the in-house Cookie Monster (renamed vX.Y.Z.test.mjs when it lands): payback periods
+// v3.5.0 (the in-house Cookie Monster, release A): payback periods
 // computed by CookieMgr itself (features/payback.js) — bonus income asked of the game (here a CpS
 // model), counting the achievements a purchase wins; bulk prices; Cookie Monster's PP formula and
 // colours; the options; the code words (pp.*, with the old cm.* names hidden but working);

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 3.5.0 — 2026-10-16
+
 - **CookieMgr no longer needs Cookie Monster.** Payback periods are CookieMgr's own: what each purchase adds is asked
   of the game itself (make the change, run the game's CpS calculation, undo), counting the achievements it would win,
   with Cookie Monster's formula and colours — checked against Cookie Monster in the real game, every building at ×1,
