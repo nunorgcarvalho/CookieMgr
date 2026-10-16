@@ -138,7 +138,14 @@ CA.UI.GardenInsight = (() => {
         /* the garden mid-rebuild: next time */
       }
     }, 1000);
-    CA.Events.on('settings', (k) => (k === 'gardenOddsTiles' || k === null) && paint());
+    CA.Events.on('settings', (k) => {
+      if (k !== 'gardenOddsTiles' && k !== null) return;
+      try {
+        paint();
+      } catch (e) {
+        /* no garden to paint */
+      }
+    });
   }
 
   return { init, tileBlock, seedBlock, paint };

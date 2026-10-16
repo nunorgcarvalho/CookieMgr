@@ -19,7 +19,11 @@
 // Words: garden.mutationChance(x, y), garden.growChance(seed), garden.growIn(seed) — see init.
 
 CA.Mutations = (() => {
-  const garden = () => CA.Util.minigame('Farm');
+  /** The garden — when it has what the odds are worked out from (the game's own functions). */
+  const garden = () => {
+    const M = CA.Util.minigame('Farm');
+    return M && M.plot && M.plants && typeof M.getMuts === 'function' && typeof M.getTile === 'function' && typeof M.isTileUnlocked === 'function' ? M : null;
+  };
   const OFFSETS = [
     [0, -1],
     [0, 1],
