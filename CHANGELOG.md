@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- **Fix: working out the garden's mutation odds changed the live garden.** It ran the game's own boost calculation
+  (what plants like Nursetulip do to their neighbours) on the garden itself, every second — so a plant that matured
+  or died since the last tick changed its neighbours' effects at once instead of at the next tick, and a game with
+  CookieMgr played differently from one without. The boosts are now worked out on a grid of CookieMgr's own (the
+  game's put back, even on an error); the odds are unchanged.
+
 ## 3.11.1 — 2026-10-16
 
 - **Mutation odds on the Garden page's own plot.** Each empty tile that can grow something at the next tick shows the

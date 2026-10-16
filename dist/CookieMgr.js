@@ -8227,13 +8227,13 @@ CA.Mutations = (() => {
    * A neighbour's possible states once the tick has aged it: [{ p, key, mature }] (key null: died).
    * `aged`: whether the tick ages it before the tile looks (above, or left on the same row).
    */
-  function states(M, nx, ny, aged) {
+  function states(M, boost, nx, ny, aged) {
     const tile = M.getTile(nx, ny);
     if (!tile || !(tile[0] > 0)) return [{ p: 1, key: null, mature: false }];
     const me = M.plantsById[tile[0] - 1];
     const age = tile[1];
     if (!aged || !M.isTileUnlocked(nx, ny)) return [{ p: 1, key: me.key, mature: age >= me.mature }];
-    const b = ((M.plotBoost && M.plotBoost[ny] && M.plotBoost[ny][nx] && M.plotBoost[ny][nx][0]) || 1) * dragonBoost();
+    const b = ((boost[ny] && boost[ny][nx] && boost[ny][nx][0]) || 1) * dragonBoost();
     const lo = me.ageTick * b;
     const hi = (me.ageTick + (me.ageTickR || 0)) * b;
     // its age after: max(age + inc, 0); immortal ones stop at mature + 1; others die at 100
@@ -8287,14 +8287,14 @@ CA.Mutations = (() => {
     if (!M || !M.plot || !M.isTileUnlocked(x, y)) return null;
     if (M.plot[y][x][0] > 0) return null;
     const c = ctx || context(M);
-    const boost2 = (M.plotBoost && M.plotBoost[y] && M.plotBoost[y][x] && M.plotBoost[y][x][2]) ?? 1;
+    const boost2 = (c.boost[y] && c.boost[y][x] && c.boost[y][x][2]) ?? 1;
     // the neighbours' states, and every combination of them (the aged ones can be in two or three)
     let combos = [{ p: 1, neighs: {}, neighsM: {}, any: 0 }];
     OFFSETS.forEach(([dx, dy]) => {
       const nx = x + dx;
       const ny = y + dy;
       const aged = ny < y || (ny === y && nx < x);
-      const st = states(M, nx, ny, aged);
+      const st = states(M, c.boost, nx, ny, aged);
       const next = [];
       combos.forEach((cb) =>
         st.forEach((s) => {
@@ -8338,13 +8338,32 @@ CA.Mutations = (() => {
     return { x, y, any: Math.min(1, plants.reduce((s, p) => s + p.chance, 0)), plants };
   }
 
-  /** What a tick reads the same for every tile: the weed multiplier, the loops, every plant at 0. */
+  /**
+   * The tiles' boosts the next tick will work with: the tick first rebuilds M.plotBoost from the plot as
+   * it is then (computeBoostPlot) — so the game's own function is run here too, but on a grid of our own:
+   * M.plotBoost is swapped for a fresh one for the call and the game's put back (whatever happens), as
+   * the game's live boosts (what plants do to their neighbours' effects) must only change at a tick.
+   */
+  function nextBoost(M) {
+    const fresh = () => Array.from({ length: 6 }, () => Array.from({ length: 6 }, () => [1, 1, 1]));
+    if (typeof M.computeBoostPlot !== 'function') return M.plotBoost ? M.plotBoost.map((r) => r.map((t) => t.slice())) : fresh();
+    const live = M.plotBoost;
+    const mine = fresh();
+    M.plotBoost = mine;
+    try {
+      M.computeBoostPlot();
+      return M.plotBoost;
+    } finally {
+      M.plotBoost = live;
+    }
+  }
+
+  /** What a tick reads the same for every tile: the boosts, the weed multiplier, the loops, every plant at 0. */
   function context(M) {
-    if (typeof M.computeBoostPlot === 'function') M.computeBoostPlot(); // what the tick works out first (from the plot as it is)
     const soil = M.soilsById && M.soilsById[M.soil];
     const zero = {};
     Object.keys(M.plants || {}).forEach((k) => (zero[k] = 0));
-    return { weedMult: soil ? soil.weedMult : 1, loops: loops(M), zero };
+    return { boost: nextBoost(M), weedMult: soil ? soil.weedMult : 1, loops: loops(M), zero };
   }
 
   /** Every empty tile's odds at the next tick, and per plant: the chance at least one tile grows it. */
@@ -8390,7 +8409,7 @@ CA.Mutations = (() => {
     V('garden.growIn', 'seconds until a seed grows somewhere, on average, at the garden’s odds now (Infinity: it can’t)', ['seed'], growIn);
   }
 
-  return { init, tile, all, growChance, growIn, atLeast, picked, loops };
+  return { init, tile, all, growChance, growIn, atLeast, picked, loops, nextBoost };
 })();
 
 // ---- src/features/minigameInfo.js ------------------------------------

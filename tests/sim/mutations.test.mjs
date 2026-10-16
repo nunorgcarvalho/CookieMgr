@@ -106,6 +106,41 @@ const got = Object.entries(counts)
   .reduce((s, [, c]) => s + c, 0);
 assert(weedTiles.length >= 30 && Math.abs(got - expected) <= 4.5 * Math.sqrt(expected) + 1, `a bare plot: ${got} meddleweeds grown in ${N * 4} ticks, ${expected.toFixed(1)} expected`);
 
+// ---- the live garden is only read (v3.11.2): the boosts plants give their neighbours change at a tick,
+// never because the odds were worked out — a nursetulip that matured since the last tick boosts nothing
+// until the next one, though the odds use what the next tick will see
+plant(['NA....', 'A.....', '......', '......', '......', '......'], { N: ['nursetulip', 1], A: mature('bakerWheat') }, 'fertilizer');
+M.computeBoostPlot(); // as the last tick left it: a young nursetulip (a tenth of its effect)
+const liveRef = M.plotBoost;
+const rows = M.plotBoost.slice();
+const before = JSON.stringify(M.plotBoost);
+M.plot[0][0][1] = Math.ceil(M.plants.nursetulip.mature) + 1; // it matured since
+M.computeEffs && M.computeEffs();
+const effsBefore = JSON.stringify(M.effs || {});
+CA.Mutations.all();
+CA.Mutations.tile(1, 1);
+CA.Mutations.growChance('thumbcorn');
+assert(M.plotBoost === liveRef && M.plotBoost.every((r, i) => r === rows[i]) && JSON.stringify(M.plotBoost) === before, 'after the odds: M.plotBoost the same arrays, the same numbers (the matured nursetulip boosts nothing yet)');
+M.computeEffs && M.computeEffs();
+assert(JSON.stringify(M.effs || {}) === effsBefore, 'and the garden’s effects as they were');
+const next = CA.Mutations.nextBoost(M);
+const eff = M.soilsById[M.soil].effMult; // the soil scales what plants do
+assert(Math.abs(next[1][1][1] - (1 + 0.2 * eff)) < 1e-9 && Math.abs(M.plotBoost[1][1][1] - (1 + 0.2 * 0.1 * eff)) < 1e-9, `the odds use the next tick's boosts (×${next[1][1][1].toFixed(2)} next to it), the game keeps its own (×${M.plotBoost[1][1][1].toFixed(3)})`);
+// even if the game's function throws, its grid is put back
+const cbp = M.computeBoostPlot;
+M.computeBoostPlot = () => {
+  M.plotBoost[0][0] = 'broken';
+  throw new Error('boom');
+};
+let threw = false;
+try {
+  CA.Mutations.nextBoost(M);
+} catch (e) {
+  threw = true;
+}
+M.computeBoostPlot = cbp;
+assert(threw && M.plotBoost === liveRef && JSON.stringify(M.plotBoost) === before, 'a failure inside: the game’s grid put back untouched');
+
 // ---- words
 const word = (id, ...a) => CA.Script.VALUES.find((v) => v.id === id).get(...a);
 plant(['AAAAAA', '......', 'BBBBBB', 'AAAAAA', '......', 'BBBBBB'], { A: mature('bakerWheat'), B: mature('thumbcorn') }, 'fertilizer');
