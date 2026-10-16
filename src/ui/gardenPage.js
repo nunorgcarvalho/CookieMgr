@@ -98,6 +98,7 @@ CA.UI.GardenPage = (() => {
 
   const L = () => CA.GardenLayers;
   const CE = () => CA.UI.CodeEditor;
+  const CK = () => CA.UI.CodeKnobs;
   const RULES_HINT = 'run from the top every second while the Auto-gardener is on · Tab indents · click the library to insert';
   const SOIL_HINT = 'run when the gardener calls garden.soilRule() · Tab indents · click the library to insert';
   const SLOTS = [
@@ -112,6 +113,7 @@ CA.UI.GardenPage = (() => {
   let brush = 'A'; // the template's brush ('' rubs out)
   let seedLetter = 'A'; // the Seeds slot's letter being picked for
   let showLocked = false; // the Seeds slot: seeds you haven't unlocked too
+  let knobOpen = null; // the variable whose ⚙ (how it shows) is open
 
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
   /** What the detail shows for a layer's item: the unsaved draft if it's this one's, else its saved data. */
@@ -225,9 +227,11 @@ CA.UI.GardenPage = (() => {
   }
 
   function codeBody(layer, it) {
+    const d = dataOf(layer, it);
     return (
       '<div class="ca-ed-layout"><div class="ca-editor-body">' +
-      CE().html('garden', dataOf(layer, it).rules, { title: layer === 'soil' ? 'The soil rule' : 'What the auto-gardener does', hint: layer === 'soil' ? SOIL_HINT : RULES_HINT }) +
+      CK().html('garden', d.rules, d.knobs, { open: knobOpen }) +
+      CE().html('garden', d.rules, { title: layer === 'soil' ? 'The soil rule' : 'What the auto-gardener does', hint: layer === 'soil' ? SOIL_HINT : RULES_HINT }) +
       '</div>' +
       CE().libraryHtml('garden', { first: ['Garden', 'Values'] }) +
       '</div>'
@@ -512,13 +516,82 @@ CA.UI.GardenPage = (() => {
     } else draft = { layer: 'seeds', id: it.id, data: { map } };
   }
 
+  // ---- knobs: the code's variables as controls (ui/codeKnobs.js) -------------------------------
+
+  /** The head follows the draft (Save lights up, "unsaved" shows) when it turns dirty or clean. */
+  function swapHead(it, was) {
+    if (was === isDirty(slot, it)) return;
+    const head = root.querySelector('[data-gp-dhead]');
+    const tmp = document.createElement('div');
+    tmp.innerHTML = detailHead(slot, it);
+    if (head && tmp.firstChild) head.replaceWith(tmp.firstChild);
+  }
+  /** The knobs follow the code. */
+  function syncKnobs() {
+    const kp = root && root.querySelector('[data-knobs]');
+    if (!kp || (slot !== 'gardener' && slot !== 'soil')) return;
+    const d = dataOf(slot, pickedItem(slot));
+    CA.UI.Dom.morph(kp, CK().inner(d.rules, d.knobs, { open: knobOpen }));
+    // an input you've moved shows its value, not its attribute: set them as the code has them
+    kp.querySelectorAll('input[data-knob], input[data-knob-num]').forEach((el) => {
+      if (el !== document.activeElement && el.value !== el.getAttribute('value')) el.value = el.getAttribute('value');
+    });
+  }
+  /** A knob moved: its line of the code takes the value (into the draft, and the editor). */
+  function knobSet(name, value) {
+    const it = pickedItem(slot);
+    const d = dataOf(slot, it);
+    const was = isDirty(slot, it);
+    const src = CK().setIn(d.rules, name, value);
+    draft = { layer: slot, id: it.id, data: { ...d, rules: src } };
+    const ta = root.querySelector('[data-code-ed="garden"] [data-code]');
+    if (ta && ta.value !== src) {
+      ta.value = src;
+      CE().refresh(ta);
+    }
+    swapHead(it, was);
+  }
+  /** How a variable shows (null: as suits its value) — part of the algorithm, so into the draft. */
+  function knobSpec(name, spec) {
+    const it = pickedItem(slot);
+    const d = dataOf(slot, it);
+    const knobs = { ...(d.knobs || {}) };
+    if (spec) knobs[name] = spec;
+    else delete knobs[name];
+    draft = { layer: slot, id: it.id, data: { ...d, knobs } };
+  }
+  /** A variable's spec as it stands (without the "custom" flag), to change one field of. */
+  function specNow(name) {
+    const d = dataOf(slot, pickedItem(slot));
+    const v = CK().scan(d.rules).find((x) => x.name === name);
+    if (!v) return null;
+    const sp = { ...CK().specOf(v, d.knobs) };
+    delete sp.custom;
+    return sp;
+  }
+  function onInput(e) {
+    const el = e.target;
+    if (!el.dataset || !el.dataset.knob) return;
+    const d = dataOf(slot, pickedItem(slot));
+    const v = CK().valueOf(el, d.rules, d.knobs);
+    if (v == null) return;
+    const num = root.querySelector(`[data-knob-num="${el.dataset.knob}"]`);
+    if (num) num.value = el.value;
+    knobSet(el.dataset.knob, v);
+  }
+
   function onClick(e) {
-    const t = e.target.closest('[data-gp-slot],[data-gp-act],[data-gp-pact],[data-gp-cell],[data-gp-brush],[data-gp-tact],[data-gp-letter],[data-gp-seedpick]');
+    const t = e.target.closest(
+      '[data-gp-slot],[data-gp-act],[data-gp-pact],[data-gp-cell],[data-gp-brush],[data-gp-tact],[data-gp-letter],[data-gp-seedpick],[data-knob-toggle],[data-knob-cfg],[data-knob-reset],[data-knob-unhide]'
+    );
     if (!t || !root.contains(t)) return;
     e.stopPropagation();
     const d = t.dataset;
     if (d.gpSlot) {
-      if (slot !== d.gpSlot) rulesError = '';
+      if (slot !== d.gpSlot) {
+        rulesError = '';
+        knobOpen = null;
+      }
       slot = d.gpSlot;
     } else if (d.gpAct) {
       if ((d.gpAct === 'revert' || d.gpAct === 'delete') && !CA.UI.Dom.armed(t)) return;
@@ -531,6 +604,13 @@ CA.UI.GardenPage = (() => {
     else if (d.gpTact) templateAct(null, d.gpTact);
     else if (d.gpLetter) seedLetter = d.gpLetter;
     else if ('gpSeedpick' in d) pickSeed(d.gpSeedpick);
+    else if (d.knobToggle) {
+      const v = CK()
+        .scan(dataOf(slot, pickedItem(slot)).rules)
+        .find((x) => x.name === d.knobToggle);
+      if (v) knobSet(v.name, !v.value);
+    } else if (d.knobCfg) knobOpen = knobOpen === d.knobCfg ? null : d.knobCfg;
+    else if (d.knobReset || d.knobUnhide) knobSpec(d.knobReset || d.knobUnhide, null);
     CA.Util.sound('snd/tick.mp3');
     CA.UI.Menu.render();
   }
@@ -543,10 +623,27 @@ CA.UI.GardenPage = (() => {
       L().pick(d.gpPick, el.value);
       draft = null;
       rulesError = '';
+      knobOpen = null;
     } else if (d.gpIname) {
       L().rename(d.gpIname, L().picked(d.gpIname), el.value);
     } else if ('gpShowlocked' in d) showLocked = el.checked;
-    else return;
+    else if (d.knobNum) {
+      // a value typed in: into the code, and the slider (its range grows to take it)
+      const src = dataOf(slot, pickedItem(slot));
+      const v = CK().valueOf(el, src.rules, src.knobs);
+      if (v == null) return;
+      knobSet(d.knobNum, v);
+      syncKnobs();
+      return;
+    } else if (d.knobKind) knobSpec(d.knobKind, { kind: el.value });
+    else if (d.knobField) {
+      const sp = specNow(d.knobOf);
+      if (!sp) return;
+      if (d.knobField === 'unit') sp.unit = el.value.trim();
+      else if (el.value.trim() === '' || !Number.isFinite(Number(el.value))) delete sp[d.knobField];
+      else sp[d.knobField] = Number(el.value) / (sp.kind === 'percent' ? 100 : 1);
+      knobSpec(d.knobOf, sp);
+    } else return;
     CA.UI.Menu.render();
   }
 
@@ -554,21 +651,17 @@ CA.UI.GardenPage = (() => {
     unmount();
     root = el;
     liveSig = '';
-    life = CA.UI.Pages.scope(el).on('click', onClick).on('change', onChange);
+    life = CA.UI.Pages.scope(el).on('click', onClick).on('change', onChange).on('input', onInput);
     life.add(
       CE().bind(root, {
         onChange: (key, src) => {
           if (key !== 'garden' || (slot !== 'gardener' && slot !== 'soil')) return;
           const it = pickedItem(slot);
           const was = isDirty(slot, it);
-          draft = { layer: slot, id: it.id, data: { rules: src } };
-          // the Save button lights up (and the "unsaved" pill shows) on the first change
-          if (was !== isDirty(slot, it)) {
-            const head = root.querySelector('[data-gp-dhead]');
-            const tmp = document.createElement('div');
-            tmp.innerHTML = detailHead(slot, it);
-            if (head && tmp.firstChild) head.replaceWith(tmp.firstChild);
-          }
+          draft = { layer: slot, id: it.id, data: { ...dataOf(slot, it), rules: src } };
+          // the Save button lights up (and the "unsaved" pill shows) on the first change; the knobs follow the code
+          swapHead(it, was);
+          syncKnobs();
         },
       })
     );

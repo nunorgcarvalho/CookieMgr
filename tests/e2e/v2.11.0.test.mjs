@@ -148,7 +148,7 @@ set(2, 3, 'bakeberry', 98); // about to die (bakeberry grows 1–2 a tick → 50
 set(3, 3, 'goldenClover', 10); // a new seed, growing
 M.soil = 0; // dirt (profile: clay)
 M.nextStep = Date.now() + 200 * 1000; // tick far off
-assert(CA.Garden.tend() === 2 && at(2, 2) === 'thumbcorn' && at(1, 2) === 'bakerWheat' && M.soil === 1, 'outside the window: plants the empty tile at once, leaves the mismatch for the tick (v2.26: and fertilizer — every plant is young)');
+assert(CA.Garden.tend() === 2 && at(2, 2) === 'thumbcorn' && at(1, 2) === 'bakerWheat' && M.soil === 2, 'outside the window: plants the empty tile at once, leaves the mismatch for the tick (v3.4: and clay — 6 of 7 young is under the 0.9 for fertilizer)');
 M.nextStep = Date.now() + 10 * 1000; // within 15s
 M.harvestLog.length = 0;
 const n = CA.Garden.tend();
@@ -158,7 +158,7 @@ assert(at(4, 2) === 'meddleweed' && !M.harvestLog.includes('meddleweed@4,2'), 'a
 assert(at(1, 2) === 'bakerWheat', 'the replanted tile stays');
 assert(at(3, 3) === 'goldenClover', 'a growing new seed is left alone');
 assert(M.harvestLog.every((h) => !h.startsWith('bakeberry')), `bakeberry at 98 (50%) kept at threshold 50% (${M.harvestLog})`);
-assert(M.soil === 1 && M.nextSoil > Date.now(), 'the soil stays (fertilizer, on its cooldown)');
+assert(M.soil === 2 && M.nextSoil > Date.now(), 'the soil stays (clay, on its cooldown)');
 assert(Game.cookies === 1e6 - 2 * M.getCost(M.plants.bakerWheat) && n === 2, `paid for the two seeds (${Game.cookies}); 2 things in the window — a pull, a replant (${n})`);
 
 CA.Settings.set('gardenThreshold', 40);

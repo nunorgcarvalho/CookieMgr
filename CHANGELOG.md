@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## 3.4.0 — 2026-10-16
+
+- **Two replanting gardeners.** The Effect maximizer is now the **Steady replanter** (each plant replaced as it
+  dies — same code, same id). New: the **Full-garden replanter** — plants the whole layout at once, grows it on
+  fertilizer, holds it on clay once most of it is mature (its soil rule, *Grow together, then clay*), doesn't
+  replant plants that die, and replants everything once fewer than `replantBelow` (75%) are left. On a level-6
+  golden clover field: golden cookies +55% on average instead of +49%, and +60% or more about 60% of the time
+  instead of 4%. The **Golden clover combos** profile loads it with Fill and Golden clover.
+- **Variables as controls.** Above a gardener's or soil rule's code, every top-level `name = number` or
+  `true/false` line is a control — a percentage slider in 5% steps, a number slider, or a switch, each with a box
+  for an exact value — in step with the code both ways. ⚙ sets how a variable shows (kind, range, step, unit, or
+  hidden), kept with the algorithm; the built-ins come with theirs.
+- **"Fertilizer, then clay" switches at 0.9** (was 0.67): with plants replanted one at a time fertilizer only
+  lowers effects (×0.75) and makes plants die sooner, so it's now kept for a freshly planted garden. Edited copies
+  keep their number.
+- New garden values: `garden.layoutTiles()`, `garden.layoutMature()`, `garden.layoutYoung()`.
+
 ## 3.3.1 — 2026-10-14
 
 - **The Seeds slot picks seeds by their icons**: a tab per letter of the template (its seed's icon and name), and

@@ -397,14 +397,15 @@ panel) is built from four layers, each picked on its own:
 
 | Layer | What it is | Built in |
 | --- | --- | --- |
-| **Gardener** | what it does: algorithmic code (the language of algorithmic macros, see [Macros](#macros)) run from the top every second | Effect maximizer, Weed collector, Mutation tracker |
-| **Soil rule** | a little code of its own that picks the soil — run when the gardener calls `garden.soilRule()` | Fertilizer, then clay · Fertilizer, then wood chips · Always fertilizer / clay / wood chips · Leave the soil |
+| **Gardener** | what it does: algorithmic code (the language of algorithmic macros, see [Macros](#macros)) run from the top every second | Steady replanter, Full-garden replanter, Weed collector, Mutation tracker |
+| **Soil rule** | a little code of its own that picks the soil — run when the gardener calls `garden.soilRule()` | Fertilizer, then clay · Grow together, then clay · Fertilizer, then wood chips · Always fertilizer / clay / wood chips · Leave the soil |
 | **Template** | where seeds go: a grid of letters (A, B, C…) — every one-seed garden is the same **Fill** template | Current garden, Fill, Bare, Checkerboard, Mutation rows, Rings |
 | **Seeds** | which seed each letter is | As planted; Golden clover, Baker's wheat, Bakeberry, Whiskerbloom, Queenbeet; every two-parent **mutation recipe** in the game (→ Cronerice = A Baker's wheat, B Thumbcorn…) |
 
 A **profile** is one of each, picked together: **Max effects · current garden** (the default), **Golden clover
-field**, **Mutation hunt** (Mutation rows on wood chips — pick the recipe in Seeds), **Juicy queenbeet** (rings of
-queenbeets) and **Weed farm** — and yours.
+field**, **Golden clover combos** (the field planted and replanted all together — the most golden cookies, in long
+high windows), **Mutation hunt** (Mutation rows on wood chips — pick the recipe in Seeds), **Juicy queenbeet** (rings
+of queenbeets) and **Weed farm** — and yours.
 
 On the Garden page the Auto-gardener's card has the **profile bar** — pick a profile, **Save** the slots into it when
 you've changed one, **Save as new**, or **From the garden**: what's planted now as a profile (it reuses a template you
@@ -413,7 +414,12 @@ and seeds you have with the same letters). Under it, four **slots** show what's 
 detail, pick another, or edit it:
 
 - **Gardener** and **Soil rule**: their code, with the library of everything you can use beside it; while the
-  gardener runs, the lines it took light up and what it did shows under the code.
+  gardener runs, the lines it took light up and what it did shows under the code. Above the code, its **variables**
+  — every top-level `name = number` or `name = true/false` line — are controls: a percentage a slider in 5% steps,
+  a number a slider over a sensible range, true/false a switch, each with a box for an exact value. Move one and its
+  line of the code changes; change the code and the control follows. **⚙** sets how a variable shows (percentage,
+  number with its range, step and unit, or hidden) and is kept with the algorithm; the built-ins come with theirs,
+  and a variable you add gets one that suits its value.
 - **Template**: a 6×6 grid — choose a letter (or *empty*) and click cells to paint; **Clear** and **Fill**. A
   template sits on your plot from its top-left unlocked tile, so one made for the full 6×6 garden fits a smaller one
   by its top-left part (cells off your plot are dimmed). The **Current garden** is live: whatever is planted, kept as
@@ -428,12 +434,18 @@ Every built-in can be edited — **Save**, and **Revert to default** brings it b
 your own to rename or delete. The Auto-gardener's card on the Macros page has the same five choices (profile, and the
 four layers).
 
-The three gardeners:
+The gardeners:
 
-- **Effect maximizer** — keeps the layout planted and its plants' effects as high as they go: plants the layout's
+- **Steady replanter** (the default; it was the Effect maximizer) — keeps the layout in full: plants the layout's
   seed on every empty tile it has one for, harvests a seed you haven't unlocked once it's mature (that unlocks it),
   runs the soil rule, and in the last seconds before a tick clears the layout's tiles of what doesn't belong and
   replants mature plants likely to die on the tick. It leaves the tiles the layout keeps empty alone.
+- **Full-garden replanter** — plants the whole layout at once and lets it grow as one round: on fertilizer while it
+  grows, clay once most of it is mature (its soil rule, *Grow together, then clay*, `clayAt` 75%), and it doesn't
+  replant plants that die; once fewer than `replantBelow` (75%) of the layout's tiles hold a mature plant, it harvests
+  everything and plants the whole layout again. Planted together, the plants are mature together — for a level-6
+  golden clover field, golden cookies +55% on average (+49% replanting one at a time) and +60% or more about 60% of
+  the time (4%), so about 12% more chances for two effects to overlap. It replants about twice as often.
 - **Weed collector** — keeps the garden bare (with *Always fertilizer*: the most weeds), so meddleweed and fungi
   spring up. Meddleweed is left to grow old, then harvested — the older it is, the likelier it leaves brown mold or
   crumbspore behind; anything you haven't unlocked grows until it's mature and is harvested; everything else is
@@ -443,7 +455,7 @@ The three gardeners:
   can mutate again); a new one is kept — every copy of it — and harvested once mature. Seeds unlocked in the last
   `keepRecentMinutes` (60) count as new, so a fresh find's other copies grow on too.
 
-The Effect maximizer's code, and the soil rule it uses by default:
+The Steady replanter's code, and the soil rule it uses by default:
 
 ```
 tickWindow = 15                  # your numbers, at the top: the last seconds before a tick,
@@ -462,12 +474,16 @@ if garden.tickIn() <= tickWindow:  # in the last seconds before a garden tick:
 ```
 
 ```
-fertilizerAbove = 0.67           # Fertilizer, then clay
+fertilizerAbove = 0.9            # Fertilizer, then clay
 if garden.youngShare() > fertilizerAbove:
-  garden.soil(fertilizer)        # fertilizer while most plants are still growing (quicker ticks),
+  garden.soil(fertilizer)        # fertilizer for a freshly planted garden (quicker ticks),
 else:
-  garden.soil(clay)              # clay (effects ×1.25) once enough of them are mature
+  garden.soil(clay)              # clay (effects ×1.25) the rest of the time
 ```
+
+Why 0.9: once plants are replanted one at a time, fertilizer doesn't help — a plant spends the same share of its
+ticks growing on either soil, at effects ×0.75 instead of ×1.25 (and dies sooner, so it's replanted more). It pays
+only while nearly everything is young, as after a fresh planting.
 
 Change a number at the top and the code follows (your old "harvest before dying at" and "seconds before the tick"
 settings fill in `dyingOver` and `tickWindow`). Soil has a 10-minute cooldown in the game; the rule simply waits for
@@ -478,7 +494,8 @@ The garden's words: actions `garden.plantEmpty()`, `garden.harvestNew()`, `garde
 `garden.harvestDying(threshold)` (0–1), `garden.harvestMature()`, `garden.soil(type)` (dirt, fertilizer, clay,
 pebbles, woodchips, or `profile` for the soil rule's), `garden.soilRule()` (runs the soil rule); the condition `garden.soilIs(type)`; values
 `garden.tickIn()` (seconds), `garden.youngShare()` / `garden.matureShare()` (0–1 of the planted tiles),
-`garden.plants()`, `garden.mature()`, `garden.empty()`, `garden.offProfile()`, `garden.layoutYoungShare()` (0–1 of
+`garden.plants()`, `garden.mature()`, `garden.empty()`, `garden.offProfile()`, `garden.layoutTiles()` / `garden.layoutMature()` / `garden.layoutYoung()` (the
+layout's tiles, and its own plants on them), `garden.layoutYoungShare()` (0–1 of
 the layout's own plants), `garden.isUnlocked(seed)`, `garden.unlockedAgo(seed)` (seconds),
 `garden.soilAvailable(soil)`. They work in any algorithmic macro too.
 

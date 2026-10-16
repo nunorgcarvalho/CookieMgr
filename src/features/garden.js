@@ -365,17 +365,19 @@ CA.Garden = (() => {
     soilRule: () => withGarden(() => runSoilRule()),
   };
 
-  /** The layout's own plants (tiles where its seed grows): { planted, young }. */
+  /** The layout's tiles (where it has a seed) and its own plants on them: { tiles, planted, young, mature }. */
   function layoutCensus() {
     const M = minigame();
-    const c = { planted: 0, young: 0 };
+    const c = { tiles: 0, planted: 0, young: 0, mature: 0 };
     if (!M) return c;
     const p = active();
     tilesOf(M).forEach(([x, y]) => {
+      if (wantAt(p, x, y)) c.tiles++;
       const me = plantAt(M, x, y);
       if (!me || me.key !== wantAt(p, x, y)) return;
       c.planted++;
-      if (!isMature(M, x, y)) c.young++;
+      if (isMature(M, x, y)) c.mature++;
+      else c.young++;
     });
     return c;
   }
@@ -545,6 +547,9 @@ CA.Garden = (() => {
     V('garden.mature', 'mature plants on the plot', () => census().mature);
     V('garden.empty', 'empty tiles', () => census().empty);
     V('garden.offProfile', 'tiles that aren’t as the layout has them', () => census().off);
+    V('garden.layoutTiles', 'tiles the layout has a seed for', () => layoutCensus().tiles);
+    V('garden.layoutMature', 'the layout’s own plants that are mature', () => layoutCensus().mature);
+    V('garden.layoutYoung', 'the layout’s own plants still growing', () => layoutCensus().young);
     V('garden.layoutYoungShare', 'share of the layout’s own plants not mature yet (0–1)', () => {
       const c = layoutCensus();
       return c.planted ? Math.round((c.young / c.planted) * 1000) / 1000 : 0;

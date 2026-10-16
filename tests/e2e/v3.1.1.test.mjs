@@ -53,15 +53,15 @@ for (let x = 1; x <= 4; x++) {
 }
 const def = G.defaultRules();
 const soilSrc = G.soilRules();
-assert(/^fertilizerAbove = 0\.67\b/m.test(soilSrc) && /^tickWindow = 15\b/m.test(def) && /^dyingOver = 0\.5\b/m.test(def), 'the numbers at the top, as variables (v3.3: the threshold in the soil rule)');
+assert(/^fertilizerAbove = 0\.9\b/m.test(soilSrc) && /^tickWindow = 15\b/m.test(def) && /^dyingOver = 0\.5\b/m.test(def), 'the numbers at the top, as variables (v3.3: the threshold in the soil rule)');
 assert(def.indexOf('garden.soilRule()') < def.indexOf('if garden.tickIn()'), 'the soil before the tick window (its effects count the whole time)');
 assert(!G.compileRules(def).errors.length, 'they compile');
 // editing the variable is all it takes
 GM.nextSoil = 0;
 GM.soil = 0;
 G.tend();
-assert(GM.soil === 1, 'all growing, over 0.67: fertilizer');
-CA.GardenLayers.set('soil', 'effects', { rules: soilSrc.replace('fertilizerAbove = 0.67', 'fertilizerAbove = 1.5') });
+assert(GM.soil === 1, 'all growing, over 0.9 (v3.4: the default): fertilizer');
+CA.GardenLayers.set('soil', 'effects', { rules: soilSrc.replace('fertilizerAbove = 0.9', 'fertilizerAbove = 1.5') });
 GM.nextSoil = 0;
 G.tend();
 assert(GM.soil === 2, 'fertilizerAbove = 1.5 (never): clay');

@@ -25,7 +25,7 @@ Game.cookies = 1e12;
 
 // ---- the built-in gardeners
 const list = CA.GardenLayers.list('gardener');
-assert(list.map((x) => x.id).join() === 'effects,weeds,mutations' && list.every((x) => x.builtin && !x.edited && x.desc), `three built-in gardeners (${list.map((x) => x.name).join(', ')})`);
+assert(list.map((x) => x.id).join() === 'effects,cohort,weeds,mutations' && list.every((x) => x.builtin && !x.edited && x.desc), `the built-in gardeners (v3.4: four) (${list.map((x) => x.name).join(', ')})`);
 list.forEach((x) => assert(G.compileRules(G.gardenerRules(x.id)).errors.length === 0, `${x.name}: its code compiles (${JSON.stringify(G.compileRules(G.gardenerRules(x.id)).errors)})`));
 assert(G.activeGardener().id === 'effects' && G.rulesOf() === G.defaultRules(), 'the Effect maximizer by default');
 
