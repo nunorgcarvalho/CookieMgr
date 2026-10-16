@@ -339,7 +339,11 @@ CA.UI.Plot = (() => {
    *   log: true|false to offer a log-scale chip (and its default); omit for linear only
    *   build(v) → { series: [{ key, name, color, type: 'bar'|'line'|'area', dash, width }],
    *                bars: [{ x0, x1, parts: { key: value }, … }], lines: { key: [{ x, v }] },
-   *                hlines: [{ v, label, color }], intervals: [{ x0, x1, color, label, tip() }],
+   *                hlines: [{ v, label, color }],
+   *                intervals: [{ x0, x1, color, label, tip(), mults: { CpS: 7, clicks: 777 }, value: 'text' }]
+   *                — effects: a lane each; the hover readout lists every one active at its x, with
+   *                what it multiplies (mults, else value) and, two or more, all of them combined;
+   *                tip() is the lane's own details, a section of the readout while it's hovered
    *                markers: [{ x, color, line, tip() }], empty: 'text', zero: true,
    *                xAxis: { x0, x1, labels: [{ x, label }], head(bar, x) } — an x axis in other units
    *                (e.g. garden ticks) for the bars, lines and markers this build returns }
@@ -800,14 +804,15 @@ CA.UI.Plot = (() => {
         laneRects.push({ iv, x0: a, x1: b, y, y1: y + LANE_H });
       });
 
-      // cut-out inactive stretches (active-time mode)
+      // cut-out inactive stretches (active-time mode): a faint dotted line each — a note in the
+      // hover readout, never more
       const gapRects = [];
       if (v.active) {
         gapsIn(v.frames, 'a', v.x0, v.x1).forEach((g) => {
           const x = Math.round(xOf(g.x)) + 0.5;
           if (x < plot.x || x > plot.x + plot.w) return;
-          ctx.strokeStyle = 'rgba(255,255,255,0.28)';
-          ctx.setLineDash([1, 3]);
+          ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+          ctx.setLineDash([1, 5]);
           ctx.beginPath();
           ctx.moveTo(x, plot.y);
           ctx.lineTo(x, plot.y + chartH);
@@ -1029,16 +1034,22 @@ CA.UI.Plot = (() => {
       return pts[lo];
     }
 
+    /**
+     * The hover readout: one box for wherever the cursor is along the x axis — the time; every
+     * effect active there (each with what it multiplies, and all of them combined); the bar's
+     * figures; then, as sections of the same box, the effect lane or event marker right under the
+     * cursor, and a short note when the game was off within that bar. A lane under the cursor is
+     * highlighted, the box stays the same.
+     */
     function drawHover(w, h) {
       const L = layout;
       const { plot, v, data } = L;
       const x = v.x0 + ((hover.x - plot.x) / plot.w) * v.W;
       const hitEv = L.evRects.find((r) => Math.abs(r.x - hover.x) < 7 && Math.abs(r.y - hover.y) < 9);
       const hitLane = L.laneRects.find((r) => hover.x >= r.x0 && hover.x <= r.x1 && hover.y >= r.y - 1 && hover.y <= r.y1 + 1);
-      const hitGap = L.gapRects.find((r) => Math.abs(r.x - hover.x) < 3);
       const bar = L.bars.find((b) => x >= b.x0 && x < b.x1) || null;
       L.hoverIv = hitLane ? hitLane.iv : null;
-      L.hoverBar = !hitEv && !hitLane ? bar : null;
+      L.hoverBar = bar;
 
       ctx.strokeStyle = 'rgba(255,255,255,0.35)';
       ctx.lineWidth = 1;
@@ -1047,15 +1058,7 @@ CA.UI.Plot = (() => {
       ctx.lineTo(Math.round(hover.x) + 0.5, plot.y + plot.h);
       ctx.stroke();
 
-      let html;
-      if (hitEv) html = hitEv.m.tip ? hitEv.m.tip() : '';
-      else if (hitLane) html = hitLane.iv.tip ? hitLane.iv.tip() : esc(hitLane.iv.label || '');
-      else if (hitGap) {
-        const g = hitGap.g;
-        html =
-          `<div class="ca-tip-head">Not running<span>${clock(g.from)} – ${clock(g.to)}</span></div>` +
-          `<div class="ca-tip-note">${span(g.away / SEC)} without the game running, left out of this axis.</div>`;
-      } else html = barTip(x, bar);
+      const html = hoverTip(x, bar, hitEv, hitLane);
 
       // hover dots on lines
       (data.series || [])
@@ -1091,17 +1094,67 @@ CA.UI.Plot = (() => {
       tipEl.style.top = Math.max(4, top) + 'px';
     }
 
-    function barTip(x, bar) {
+    const trimMult = (n) => (n >= 100 ? Math.round(n) : Math.round(n * 100) / 100);
+    /** What an effect multiplies ("×7 CpS, ×777 clicks"), from its mults (or its own value text). */
+    function multsText(mults, fallback) {
+      const bits = Object.keys(mults || {})
+        .filter((k) => Number.isFinite(mults[k]) && Math.abs(mults[k] - 1) > 0.001)
+        .map((k) => `×${trimMult(mults[k])} ${k}`);
+      return bits.length ? bits.join(', ') : fallback || '';
+    }
+    /** The effects active at x: a row each, and (two or more) what they multiply together. */
+    function effectsTip(x, hitIv) {
+      const here = (layout.data.intervals || []).filter((iv) => x >= iv.x0 && x < iv.x1).sort((a, b) => a.x0 - b.x0);
+      if (!here.length) return '';
+      let h = `<div class="ca-tip-sub">${here.length === 1 ? 'Effect' : `${here.length} effects`}</div>`;
+      const total = {};
+      let withMults = 0;
+      here.forEach((iv) => {
+        h += row(iv.color, iv.label || '', multsText(iv.mults, iv.value || (iv.mults ? 'no change' : '')), iv === hitIv);
+        if (!iv.mults) return;
+        withMults++;
+        Object.keys(iv.mults).forEach((k) => Number.isFinite(iv.mults[k]) && (total[k] = (total[k] == null ? 1 : total[k]) * iv.mults[k]));
+      });
+      if (withMults >= 2) h += row('transparent', 'Combined', multsText(total, 'no change'), true);
+      return h;
+    }
+
+    function hoverTip(x, bar, hitEv, hitLane) {
+      const effects = effectsTip(x, hitLane && hitLane.iv);
+      const body = barBody(x, bar);
+      let h = barHead(x, bar) + effects + (effects && body.html ? '<div class="ca-tip-sec"></div>' : '') + body.html;
+      if (!effects && !body.any) h += '<div class="ca-tip-note">No data here.</div>';
+      else if (body.any && layout.v.smoothMs > 0) h += `<div class="ca-tip-note">Averaged over the ${windowLabel(layout.v.smoothMs / SEC)} around this point</div>`;
+      // the lane / marker right under the cursor: its details, as a section
+      if (hitLane && hitLane.iv.tip) h += `<div class="ca-tip-sec">${hitLane.iv.tip()}</div>`;
+      if (hitEv && hitEv.m.tip) h += `<div class="ca-tip-sec">${hitEv.m.tip()}</div>`;
+      // the game off within this bar (active-time axis): one line
+      const g = gapAt(x, bar);
+      if (g) h += `<div class="ca-tip-note ca-tip-off">Game off for ${span(g.away / SEC)} here (${clock(g.from)} – ${clock(g.to)}), left out of this axis</div>`;
+      return h;
+    }
+    /** A stretch the active-time axis cut out within the hovered bar (or right at x without one). */
+    function gapAt(x, bar) {
+      const L = layout;
+      const px = L.xOf(x);
+      const r = (L.gapRects || []).find((gr) => (bar ? gr.g.x >= bar.x0 && gr.g.x < bar.x1 : Math.abs(gr.x - px) < 2));
+      return r ? r.g : null;
+    }
+
+    function barHead(x, bar) {
+      const { v } = layout;
+      if (v.custom) return `<div class="ca-tip-head">${v.custom.head ? v.custom.head(bar, x) : ''}</div>`;
+      const t = bar ? v.tAt(bar.x1) : v.tAt(x);
+      const width = bar ? (bar.x1 - bar.x0) / SEC : 0;
+      const when = bar && width >= 2 ? `${clock(v.tAt(bar.x0), width < 120)} – ${clock(t, width < 120)}` : clock(t, true);
+      const ago = (Date.now() - t) / SEC;
+      return `<div class="ca-tip-head">${when}<span>${ago > 1.5 ? span(ago) + ' ago' : 'now'}</span></div>`;
+    }
+
+    /** A bar's figures (and the lines at x, and the chart's own extra rows): { html, any }. */
+    function barBody(x, bar) {
       const { v, data } = layout;
-      let h;
-      if (v.custom) h = `<div class="ca-tip-head">${v.custom.head ? v.custom.head(bar, x) : ''}</div>`;
-      else {
-        const t = bar ? v.tAt(bar.x1) : v.tAt(x);
-        const width = bar ? (bar.x1 - bar.x0) / SEC : 0;
-        const when = bar && width >= 2 ? `${clock(v.tAt(bar.x0), width < 120)} – ${clock(t, width < 120)}` : clock(t, true);
-        const ago = (Date.now() - t) / SEC;
-        h = `<div class="ca-tip-head">${when}<span>${ago > 1.5 ? span(ago) + ' ago' : 'now'}</span></div>`;
-      }
+      let h = '';
       let any = false;
       const barSeries = (data.series || []).filter((s) => s.type === 'bar');
       let total = 0;
@@ -1158,9 +1211,7 @@ CA.UI.Plot = (() => {
           any = true;
         }
       }
-      if (!any) h += '<div class="ca-tip-note">No data here.</div>';
-      else if (v.smoothMs > 0) h += `<div class="ca-tip-note">Averaged over the ${windowLabel(v.smoothMs / SEC)} around this point</div>`;
-      return h;
+      return { html: h, any };
     }
 
     // ---- info ----
