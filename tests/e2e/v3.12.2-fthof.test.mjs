@@ -1,4 +1,4 @@
-// Force the Hand of Fate's forecast, cached (renamed vX.Y.Z.test.mjs when it lands): worked out once per state —
+// v3.12.2: Force the Hand of Fate's forecast, cached: worked out once per state —
 // the save's seed and spells cast, the backfire chance, the season's picture draw, Dragonflight, 10+ buildings —
 // so a macro asking every tick costs nothing more; the same answers as worked out afresh. (In the real game,
 // with real casts: tests/sim/fthof.)

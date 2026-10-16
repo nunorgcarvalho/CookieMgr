@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 3.12.2 — 2026-10-16
+
 - **Force the Hand of Fate's forecast is much cheaper to ask.** What the next casts give is worked out once for the
   state it depends on (the save's seed and spells cast, the backfire chance, the season's cookie picture, Dragonflight,
   10+ buildings) and kept; `fthof.castsUntil` looks only as far ahead as it needs, and the words skip what Gambler's
