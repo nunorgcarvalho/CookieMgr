@@ -1,4 +1,4 @@
-// Release C of the in-house Cookie Monster (renamed vX.Y.Z.test.mjs when it lands): the displays —
+// v3.6.0 (the in-house Cookie Monster, release C): the displays —
 // the Payback page (best buy, the building table by ×1 / ×10 / ×100 in payback colours, buying from
 // it, the upgrades, the options), the Stats page (bank meters, golden cookie odds, prestige,
 // wrinklers, timers, what's left to collect), the store (price colours, upgrade dots, a CookieMgr

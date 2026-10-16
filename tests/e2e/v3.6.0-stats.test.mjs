@@ -1,4 +1,4 @@
-// Release B of the in-house Cookie Monster (renamed vX.Y.Z.test.mjs when it lands): the statistics
+// v3.6.0 (the in-house Cookie Monster, release B): the statistics
 // back end. Cookie Monster's own numbers are matched in the real game (tests/sim/stats-parity,
 // tests/sim/whatif); here, what has no Cookie Monster counterpart or needs no game: the golden cookie
 // spawn odds (against the game's per-frame rule, played out), buffs, the sugar lump, autosave,

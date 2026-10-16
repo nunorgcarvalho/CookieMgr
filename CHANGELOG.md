@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 3.6.0 — 2026-10-16
+
 - **Cookie Monster's statistics, CookieMgr's way** — a **Stats** page and a **Payback** page, and the store shows
   what each purchase is worth. Every figure from the game's own formulas and checked against Cookie Monster in the
   real game (the simulator's parity tests: Lucky!, Conjure, chains, wrinklers, next-achievement amounts — exact).
