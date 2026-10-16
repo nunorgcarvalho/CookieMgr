@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- **CookieMgr no longer needs Cookie Monster.** Payback periods are CookieMgr's own: what each purchase adds is asked
+  of the game itself (make the change, run the game's CpS calculation, undo), counting the achievements it would win,
+  with Cookie Monster's formula and colours — checked against Cookie Monster in the real game, every building at ×1,
+  ×10 and ×100 and every store upgrade the same to the last digit.
+  - **Best building** and **Best upgrade** work without Cookie Monster (no more "Needs Cookie Monster").
+  - The store's **sort** is CookieMgr's own: Default, **Best buy** (was "Bulk PP"; with Round to multiples on, the
+    payback period of exactly what a click buys) and Achievement — never locked.
+  - New code words: `pp.best / kind / price / of / buy` (the `cm.*` names still work), `best(kind)`,
+    `buy.best(kind)`, `building.price / gain / payback`, `building.priceOf / gainOf / paybackOf(building, n)`,
+    `building.toNextAchievement`, `upgrade.gain / payback`, `timeTo(price)`, `clickRate()`,
+    `building.buy / sell(building, n)`.
+  - Loading Cookie Monster is still there under Integrations, for its displays.
+
 ## 3.4.2 — 2026-10-16
 
 - **The Full-garden replanter starts a new round fertilizer first.** It switches to fertilizer as soon as a round is

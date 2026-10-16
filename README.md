@@ -160,8 +160,8 @@ default brings the original back):
 | Sugar lump harvester   | —           | Harvests your lump when ripe — or when mature, if you pick that      |
 | Elder Pledge           | —           | Buys the Elder Pledge whenever the Grandmapocalypse is on            |
 | FtHoF on combos        | —           | An algorithmic macro: Force the Hand of Fate when two effects line up |
-| Best building          | —           | Buys the lowest-payback building (Cookie Monster)                    |
-| Best upgrade           | —           | Buys the lowest-payback upgrade (Cookie Monster)                     |
+| Best building          | —           | Buys the lowest-payback building                                     |
+| Best upgrade           | —           | Buys the lowest-payback upgrade                                      |
 | Research               | —           | Buys research as it comes (stops before One mind by default)         |
 | Cheap upgrades         | —           | Buys upgrades costing under 1s (adjustable) of production            |
 | Pet the dragon         | —           | Gets the dragon's four drops, petting only in the right quarter-hour |
@@ -286,9 +286,12 @@ forever:
 - **Shimmers & wrinklers** — `shimmers()`, `shimmer.type / isWrath / life(s)`, `shimmer.pop(s)`; `wrinklers()`,
   `wrinkler.isShiny / isFed / sucked(w)`, `wrinkler.pop(w)`.
 - **Sugar lump** — `lump.isRipe()`, `lump.isMature()`, `lump.pick()`.
-- **Buying** — `cm.best(kind, skip)` (the lowest Cookie Monster PP of building / upgrade / all), `cm.kind / price /
-  pp(thing)`, `cm.buy(thing)`; `upgrades()`, `upgrade.price(u)`, `upgrade.owned(name)`, `buy.upgrade(u)`;
-  `research.next(stopBefore)`.
+- **Buying** — `pp.best(kind, skip)` (the lowest payback period of building / upgrade / all), `pp.kind / price /
+  of(thing)`, `pp.buy(thing)` (before v3.5 these were `cm.best`, `cm.kind`, `cm.price`, `cm.pp`, `cm.buy` — code using
+  those names still works); `best(kind)`, `buy.best(kind)`; `building.price / gain / payback(building)` and, for n at
+  once, `building.priceOf / gainOf / paybackOf(building, n)`; `building.toNextAchievement(building)`;
+  `upgrade.gain / payback(u)`; `timeTo(price)`, `clickRate()`; `building.buy / sell(building, n)`; `upgrades()`,
+  `upgrade.price(u)`, `upgrade.owned(name)`, `buy.upgrade(u)`; `research.next(stopBefore)`.
 - **The dragon** — `dragon.canPet()`, `dragon.dropNow()`, `dragon.pet()`.
 - **Pantheon** — `pantheon.gods()`, `pantheon.god(slot)`, `pantheon.slotOf(god)`, `pantheon.isSlotted(god)`,
   `pantheon.swaps()`; `pantheon.slot(god, slot)` (diamond, ruby, jade, or none).
@@ -305,18 +308,29 @@ recorded value (CpS, cookies in bank, prestige, a stock price…) above or below
 complete, all research bought, the Grandmapocalypse being on — each can be negated, and
 **And…** adds more conditions that must all hold. Your macros are saved with your settings inside the game save.
 
-**Buying.** **Best building** and **Best upgrade** buy whatever has the lowest payback period (Cookie Monster's PP:
-time to afford it + price ÷ CpS it adds). Best building buys one at a time — or up to the next multiple of 10 when the
-store's Round to multiples is on (ranked by Cookie Monster's ×10 PP). Upgrades Cookie Monster gives no PP (clicking
-upgrades) are judged by what they add per click × your clicks per second. With both on, each buys only when the best
+**Buying.** **Best building** and **Best upgrade** buy whatever has the lowest payback period (PP: time to afford it
++ price ÷ the CpS it adds — see [Payback periods](#payback-periods)). Best building buys one at a time — or up to the
+next multiple of 10 when the store's Round to multiples is on (ranked by the PP of exactly that many). Upgrades that
+only make clicks stronger are judged by what they add per click × your clicks per second. With both on, each buys only when the best
 of the two is its kind, so together they always buy the lowest PP overall. By default they save up for the best; their
 **Skip what you can't afford** setting (shift-click the button) buys the best affordable one instead. **Hold** a
 buying macro's button (instead of clicking it) and it buys again and again, fast, until you let go. Their buttons
 are tinted muted green or red for whether the next purchase is affordable now (hover for what and when), and
-switching one on when it can't buy yet shakes it and says why. They need Cookie Monster: without it their cards say
-so, with a button to load it, and can't be switched on. **Research** buys the Bingo center's research as it appears,
+switching one on when it can't buy yet shakes it and says why. **Research** buys the Bingo center's research as it appears,
 stopping before the one you pick (One mind by default — it starts the Grandmapocalypse). **Cheap upgrades** buys any
 upgrade costing less than a second (adjustable) of your unbuffed production.
+
+#### Payback periods
+
+CookieMgr works payback periods out itself — the numbers Cookie Monster shows, without Cookie Monster. What a
+purchase adds is asked of the game: CookieMgr makes the change (one more building, ten, a hundred, an upgrade
+bought), runs the game's own CpS calculation, reads the result and undoes it — so the numbers are exact for any game
+version, and it counts the achievements the purchase would win (their milk makes kittens stronger), as Cookie Monster
+does. The payback period is Cookie Monster's: **time until you can afford it + price ÷ the CpS it adds**. Colours
+follow Cookie Monster's too: blue (better than the best building), green (the best building), yellow / orange / red
+(within the 10 / 20 / 30 best building payback periods, counting ×1, ×10 and ×100), purple (worse), gray (never pays
+back). It's checked against Cookie Monster itself in the real game (the simulator's parity test): every building at
+×1, ×10 and ×100 and every upgrade in the store, the same to the last digit.
 
 **Pet the dragon** gets the dragon's four drops (Dragon scale, claw, fang, teddy bear): each pet has a 1 in 20 chance,
 and which one drops depends only on the quarter of the hour, in an order fixed by your save. It works that order out,
@@ -575,13 +589,12 @@ that names an upgrade or achievement.
 A small toolbar runs along the bottom of the store, over the building rows (hover a button for what it does;
 Settings → Store can hide it). The building list gets a little extra room so its last row still scrolls clear of it.
 
-- **Sort** — **Default** (the game's own order), **Bulk PP** (Cookie Monster's payback period for the amount you're
-  buying: ×1, ×10 or ×100, best first) or **Achievement** (cheapest to reach a building's next count achievement). It flips Cookie
-  Monster's own sort setting, so it **needs Cookie Monster**: without it the buttons are locked, and clicking one
-  loads Cookie Monster.
+- **Sort** — **Default** (the game's own order), **Best buy** (the shortest payback period for what a click buys now:
+  ×1, ×10, ×100, or up to the next multiple with Round to multiples on) or **Achievement** (cheapest to reach a
+  building's next count achievement). While the store sells, it's the game's order.
 - **Round to multiples** (⌈10⌉ when buying, ⌊10⌋ when selling) — with ×10 or ×100 selected, buying stops at the next
   multiple (37 owned, ×10 buys 3, to 40) and selling at the one below (37 owned, ×10 sells 7, to 30); on a multiple
-  it's the full 10. The store's price follows (Cookie Monster's own price display shows the full bulk).
+  it's the full 10. The store's price follows.
 
 ### Settings
 
@@ -590,9 +603,9 @@ Macros, golden cookie notifications on Events, the Grimoire toolbar on Grimoire�
 CookieMgr-wide: an overview (recording, macros running, widgets placed, Cookie Monster), general options (record
 history, check for updates), the panel hotkey and resetting hotkeys, the History data card (export / import / clear),
 the Store options, and **All options** — every page's options as quick on/off chips, each group titled with a link
-to its page. Under **Integrations**, a **Load now** button loads
-the latest [Cookie Monster](https://github.com/CookieMonsterTeam/CookieMonster) release, and a toggle loads it
-automatically whenever CookieMgr starts (skipped if Cookie Monster is already running). Everything is stored in the normal Cookie Clicker
+to its page. CookieMgr doesn't need Cookie Monster; if you'd like its displays alongside, **Integrations** has a
+**Load now** button that loads the latest [Cookie Monster](https://github.com/CookieMonsterTeam/CookieMonster) release,
+and a toggle that loads it whenever CookieMgr starts (skipped if Cookie Monster is already running). Everything is stored in the normal Cookie Clicker
 save through the official mod API (`Game.registerMod`), so it survives exports and imports. Settings are also
 mirrored to localStorage the instant anything changes, since Cookie Clicker itself only autosaves once a minute and
 won't force a save on a quick refresh — without the mirror, a change made right before reloading could be lost.
@@ -729,15 +742,16 @@ src/
     stockTrader.js   the "buy fast/slow rise, sell the rest" trading logic behind the autobuyer macro
     stockLog.js      wraps buyGood/sellGood to log every trade (auto or manual) as an event
     history.js       buff intervals and golden-cookie pop events for the CpS graph
-    cookieMonster.js loads Cookie Monster on request or at start-up
+    cookieMonster.js loads Cookie Monster on request or at start-up (optional — nothing needs it)
     gameEvents.js    logs wrinkler pops, sugar lumps and achievements as events
     grimoire.js      spells as actions/macros, magic conditions, spell events, the auto-cast macro
     gardenLayers.js  the Auto-gardener's layers (gardeners, soil rules, templates, seeds) and profiles
     garden.js        the garden's building blocks, the Current garden, the Auto-gardener macro
     pantheon.js      the Pantheon's building blocks: which spirit is where, slotting them
     gardenHistory.js snapshots of the garden (seed × stage counts) for the Growth chart; seed unlock events
-    shop.js          the building store: Cookie Monster sort, rounding bulk buys up
-    autoBuy.js       buying macros (Cookie Monster PP, research, cheap upgrades) and petting the dragon
+    shop.js          the building store: its sort (best buy, next achievement), rounding bulk buys up
+    payback.js       what buying is worth: bonus income asked of the game, payback periods and colours
+    autoBuy.js       buying macros (lowest payback period, research, cheap upgrades) and petting the dragon
     seasons.js       season drops and completion, the Grandmapocalypse, SeasonCompletion's code
     script.js        the language of algorithmic macros: parsing, values, explaining conditions
     notifyTips.js    tooltips on the game's notifications about upgrades and achievements

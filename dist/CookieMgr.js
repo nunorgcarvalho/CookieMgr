@@ -6567,7 +6567,7 @@ CA.Shop = (() => {
 // ten and a hundred of each count, sixty in all); purple — worse; gray — never pays back.
 //
 // The expensive part (the bonus incomes — about 90 CpS computations) is kept until the game state
-// changes (what's owned, buffs, the store) or a second has passed with CpS moving; PPs and colours
+// changes (what's owned, buffs, the store, CpS by more than 0.1%) or a second has passed with CpS drifting; PPs and colours
 // are worked out from it on every read, so they follow your bank as it grows.
 
 CA.Payback = (() => {
@@ -6779,7 +6779,9 @@ CA.Payback = (() => {
   }
   function fresh() {
     const k = structKey();
-    if (!cache || cache.key !== k || (cache.cps !== Game.cookiesPs && Date.now() - cache.t > 1000)) cache = compute();
+    const moved = cache ? Math.abs((Game.cookiesPs || 0) - cache.cps) / Math.max(1e-9, Math.abs(cache.cps)) : 1;
+    // a real change of CpS (a god, an aura, a lump…): now; a drift (the god of Ages wobbles it every frame): once a second
+    if (!cache || cache.key !== k || moved > 1e-3 || (moved > 0 && Date.now() - cache.t > 1000)) cache = compute();
     return cache;
   }
   /** The bonus income of n of a building (×1/×10/×100 from the batch, other amounts measured as asked). */
@@ -6925,7 +6927,7 @@ CA.Payback = (() => {
   /** Buys n of a building (in buy mode, whatever the store is set to); how many it bought. */
   function buyBuilding(name, n) {
     const b = buildingNamed(name);
-    if (!b) return 0;
+    if (!b || typeof b.buy !== 'function') return 0;
     const had = b.amount;
     const mode = Game.buyMode;
     Game.buyMode = 1;

@@ -2,13 +2,14 @@
 // (features/payback.js asks the game: change something, Game.CalculateGains(), read the CpS).
 //
 //   cpsModel(Game, { base, each: { Cursor: 0.1, … }, mults: { 'Kitten helpers': 1.15, … },
-//                    mouse: { 'Plastic mouse': 0.01, … } })
+//                    mouse: { 'Plastic mouse': 0.01, … }, milk: 0.01 })
 //
 // CpS = (base + Σ amount × each) × Π mults of the upgrades bought, × the buffs' multCpS; a click is
-// worth 1 + Σ (CpS × mouse) of the upgrades bought. Buildings price like main.js (basePrice ×
-// 1.15^amount) when they have a basePrice. Returns the model (change it, then Game.CalculateGains()).
-export function cpsModel(Game, { base = 1000, each = {}, mults = {}, mouse = {} } = {}) {
-  const m = { base, each, mults, mouse };
+// worth 1 + Σ (CpS × mouse) of the upgrades bought; milk: × (1 + milk × Game.AchievementsOwned), the
+// kittens. Buildings price like main.js (basePrice × 1.15^amount) when they have a basePrice. Returns
+// the model (change it, then Game.CalculateGains()).
+export function cpsModel(Game, { base = 1000, each = {}, mults = {}, mouse = {}, milk = 0 } = {}) {
+  const m = { base, each, mults, mouse, milk };
   const bought = (name) => {
     const u = (Game.Upgrades && Game.Upgrades[name]) || (Game.UpgradesInStore || []).find((x) => x && x.name === name);
     return !!(u && u.bought);
@@ -20,6 +21,7 @@ export function cpsModel(Game, { base = 1000, each = {}, mults = {}, mouse = {} 
     Object.values(Game.Objects).forEach((b) => (s += (b.amount || 0) * (m.each[b.name] || 0)));
     let mult = 1;
     Object.keys(m.mults).forEach((n) => bought(n) && (mult *= m.mults[n]));
+    mult *= 1 + m.milk * (Game.AchievementsOwned || 0);
     Game.unbuffedCps = s * mult;
     let buffs = 1;
     Object.values(Game.buffs || {}).forEach((b) => b.multCpS !== undefined && (buffs *= b.multCpS));
