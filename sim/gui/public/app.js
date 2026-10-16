@@ -1,0 +1,1301 @@
+// CookieSimMgr — the simulator in a page. Built from the add-on's own UI pieces (window.CA, from
+// /cm.js: components, icons, DOM helpers, tooltips, chart helpers, the code editor and its
+// library) and talking to sim/gui/server.mjs, which runs the simulations.
+//
+//   Simulate      start a game (a new one, a scenario, or your own save) with a strategy, watch it
+//                 play — cookies, CpS, buildings, upgrades, effects, the garden, CookieMgr's macros,
+//                 every action it takes and every event — and take part: switch macros, do actions,
+//                 run code, export the save
+//   Compare       strategies side by side over several seeds, in parallel
+//   Strategies    the .cmgr files: CookieMgr's code editor, with its library
+//   Experiments   the fast models, run with their output
+//   Vocabulary    every word a strategy can use (CookieMgr's library)
+
+(() => {
+  const C = CA.UI.C;
+  const I = (n, s) => CA.UI.Icons.html(n, s);
+  const esc = (s) => CA.Util.escapeHtml(s);
+  const F = CA.Format;
+  const CE = CA.UI.CodeEditor;
+  const morph = (el, html) => el && CA.UI.Dom.morph(el, html);
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const store = {
+    get(k, d) {
+      try {
+        const v = localStorage.getItem(`CookieSimMgr.${k}`);
+        return v == null ? d : JSON.parse(v);
+      } catch (e) {
+        return d;
+      }
+    },
+    set(k, v) {
+      try {
+        localStorage.setItem(`CookieSimMgr.${k}`, JSON.stringify(v));
+      } catch (e) {
+        /* private mode */
+      }
+    },
+  };
+
+  // ---- the server ---------------------------------------------------------------------------------
+
+  async function call(method, url, data) {
+    const res = await fetch(url, { method, headers: data ? { 'Content-Type': 'application/json' } : {}, body: data ? JSON.stringify(data) : undefined });
+    const ct = res.headers.get('Content-Type') || '';
+    const out = ct.includes('json') ? await res.json() : await res.text();
+    if (!res.ok) throw new Error((out && out.error) || `HTTP ${res.status}`);
+    return out;
+  }
+  const api = {
+    get: (u) => call('GET', u),
+    post: (u, d) => call('POST', u, d || {}),
+    put: (u, d) => call('PUT', u, d || {}),
+    del: (u) => call('DELETE', u),
+  };
+
+  function toast(msg, bad) {
+    let box = $('#sim-toast');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'sim-toast';
+      document.body.appendChild(box);
+    }
+    const d = document.createElement('div');
+    d.className = bad ? 'bad' : '';
+    d.textContent = msg;
+    box.appendChild(d);
+    setTimeout(() => d.remove(), bad ? 7000 : 3500);
+  }
+  const guard = (fn) => (...a) =>
+    Promise.resolve()
+      .then(() => fn(...a))
+      .catch((e) => toast(e.message || String(e), true));
+
+  // ---- shared bits ------------------------------------------------------------------------------------
+
+  let meta = null;
+  const tile = (label, value, sub, tip) =>
+    `<div class="ca-stat"${tip ? ` data-tip="${esc(tip)}"` : ''}><div class="ca-stat-label">${label}</div><div class="ca-stat-value">${value}</div><div class="ca-stat-sub">${sub || '&nbsp;'}</div></div>`;
+  const span = (s) => (s < 1 ? '0s' : F.span(s));
+  const short = (n) => (Number.isFinite(n) ? F.short(n) : '—');
+  /** A macro's picture, as the add-on's macro cards draw it. */
+  function macroIcon(icon) {
+    const ic = icon || {};
+    if (ic.ico) return `<span class="ca-icon ca-icon-ico">${I(ic.ico, 24)}</span>`;
+    return C.icon({ img: ic.img, icon: ic.sprite, sheet: ic.sheet });
+  }
+  const iconAt = (xy, tip) => (Array.isArray(xy) ? `<span${tip ? ` data-tip="${esc(tip)}"` : ''}>${C.icon({ icon: xy })}</span>` : '');
+  const plantSprite = (icon, stage, cls = '') => `<i class="ca-gs ${cls}" style="background-image:url(${CA.Util.res('img/gardenPlants.png')});background-position:${-stage * 48}px ${-icon * 48}px"></i>`;
+  const stageOf = (mature, age) => (age >= mature ? 4 : age >= mature * 0.666 ? 3 : age >= mature * 0.333 ? 2 : 1);
+  const chips = (list, attr, current) =>
+    `<span class="ca-chipgroup">${list.map(([v, label, tip]) => `<button type="button" class="ca-chip${String(v) === String(current) ? ' on' : ''}" ${attr}="${esc(v)}"${tip ? ` data-tip="${esc(tip)}"` : ''}>${label}</button>`).join('')}</span>`;
+  const SPANS = [
+    ['10m', '10 min'],
+    ['30m', '30 min'],
+    ['1h', '1 h'],
+    ['4h', '4 h'],
+    ['8h', '8 h'],
+    ['24h', '1 day'],
+  ];
+  const evType = (t) => (meta.vocab.eventTypes[t] || { name: t, icon: 'log', color: '#aaa' });
+
+  /** The words, registered in the page's own registries — so the add-on's code editor colours, checks and lists them as in the game. */
+  function installVocab(v) {
+    v.actions.forEach((a) => CA.Actions.get(a.id) || CA.Actions.register({ ...a, run: () => 0 }));
+    v.conditions.forEach((c) => CA.Conditions.get(c.id) || CA.Conditions.register({ ...c, test: () => false, describe: () => c.name }));
+    v.values.forEach((x) => CA.Script.defineValue({ ...x, get: () => NaN }));
+    CA.Script.library = () => v.library;
+    CA.Script.lookups = () => v.lookups;
+  }
+
+  // ---- pages ---------------------------------------------------------------------------------------
+
+  const PAGES = [
+    { id: 'sim', label: 'Simulate', icon: 'play' },
+    { id: 'compare', label: 'Compare', icon: 'graphs' },
+    { id: 'strategies', label: 'Strategies', icon: 'edit' },
+    { id: 'experiments', label: 'Experiments', icon: 'puzzle' },
+    { id: 'vocab', label: 'Vocabulary', icon: 'log' },
+  ];
+  const pages = {};
+  let current = null;
+  const main = () => $('[data-sim-main]');
+
+  function nav() {
+    $('[data-sim-nav]').innerHTML = PAGES.map(
+      (p) =>
+        `<div class="ca-tab-item${current === p.id ? ' selected' : ''}" data-nav="${p.id}" role="button" tabindex="0">` +
+        `<span class="ca-tab-label">${esc(p.label)}</span><span class="ca-tab-icon">${I(p.icon, 18)}</span></div>`
+    ).join('');
+  }
+  function go(id) {
+    // #sim/<id>: that simulation
+    const m = String(id || '').match(/^sim\/(\w+)$/);
+    if (m) {
+      id = 'sim';
+      if (S.id !== m[1]) connect(m[1]);
+    }
+    if (!pages[id]) id = 'sim';
+    if (current && pages[current].unmount) pages[current].unmount();
+    current = id;
+    store.set('page', id);
+    if (location.hash !== `#${id}`) history.replaceState(null, '', `#${id}`);
+    nav();
+    render();
+  }
+  function render() {
+    const root = main();
+    root.innerHTML = pages[current].html();
+    if (pages[current].mount) pages[current].mount(root);
+  }
+
+  // =====================================================================================================
+  // Simulate
+  // =====================================================================================================
+
+  const TEMPLATE = `# My strategy — CookieMgr's algorithmic code, run from the top every pass.
+# with: golden, bigCookie
+# every: 500
+# Buy whatever pays itself back the quickest:
+buy.best(all)
+`;
+  const S = {
+    id: store.get('session', null),
+    setup: Object.assign({ start: 'fresh', scenario: 'garden6', save: '', strategy: 'payback', custom: TEMPLATE, seed: 1 }, store.get('setup', {})),
+    snap: null,
+    es: null,
+    samples: [],
+    actions: [],
+    events: [],
+    tally: {},
+    evOff: new Set(store.get('evOff', [])),
+    series: Object.assign({ baked: true, bank: false, cps: true, log: true }, store.get('series', {})),
+    chart: null,
+    gardenOpen: true,
+    doAction: '',
+    consoleSrc: 'for s in shimmers():\n  shimmer.pop(s)\n',
+    consoleOut: '',
+    sessions: [],
+    lastSnapAt: 0,
+  };
+  const saveSetup = () => store.set('setup', { ...S.setup, save: S.setup.save.length < 200000 ? S.setup.save : '' });
+
+  function connect(id) {
+    disconnect();
+    S.id = id;
+    store.set('session', id);
+    S.samples = [];
+    S.actions = [];
+    S.events = [];
+    S.tally = {};
+    S.snap = null;
+    if (!id) return;
+    const es = new EventSource(`/api/sessions/${id}/stream`);
+    S.es = es;
+    es.addEventListener('snap', (e) => {
+      const s = JSON.parse(e.data);
+      S.snap = s;
+      S.lastSnapAt = Date.now();
+      s.samples.forEach((x) => S.samples.push(x));
+      s.actions.forEach((a) => {
+        S.actions.push(a);
+        S.tally[a.id] = (S.tally[a.id] || 0) + (a.n || 0);
+      });
+      if (S.actions.length > 3000) S.actions.splice(0, S.actions.length - 3000);
+      s.events.forEach((x) => S.events.push(x));
+      if (S.events.length > 3000) S.events.splice(0, S.events.length - 3000);
+      if (current === 'sim') live();
+      topRun();
+    });
+    es.onerror = () => {
+      if (es.readyState === EventSource.CLOSED) {
+        disconnect();
+        S.id = null;
+        store.set('session', null);
+        if (current === 'sim') render();
+      }
+    };
+  }
+  function disconnect() {
+    if (S.es) S.es.close();
+    S.es = null;
+  }
+
+  pages.sim = {
+    html() {
+      if (!S.id) return setupHtml();
+      return (
+        `<div class="sim-runbar" data-sim-runbar>${runbarHtml()}</div>` +
+        (S.snap && S.snap.error ? `<div class="sim-err">${esc(S.snap.error)}</div>` : '') +
+        `<div class="ca-card"><div class="ca-stats" data-sim-stats>${statsHtml()}</div>` +
+        `<div class="ca-toolbar"><span class="ca-chipgroup"><span class="ca-chip-label">Show</span>${['baked', 'bank', 'cps']
+          .map((k) => `<button type="button" class="ca-chip${S.series[k] ? ' on' : ''}" data-series="${k}">${{ baked: 'Cookies baked', bank: 'Bank', cps: 'CpS' }[k]}</button>`)
+          .join('')}</span>${chips(
+          [
+            ['log', 'Log'],
+            ['lin', 'Linear'],
+          ],
+          'data-scale',
+          S.series.log ? 'log' : 'lin'
+        )}</div>` +
+        '<div class="sim-chart"><canvas data-sim-chart></canvas></div></div>' +
+        '<div class="sim-cols"><div>' +
+        `<div class="ca-card">${C.cardHead('Buildings', 'building', '<span class="ca-hint" data-sim-bldsum></span>')}<div data-sim-bld></div></div>` +
+        `<div class="ca-card">${C.cardHead('Effects', 'sparkle', '<span class="ca-hint">golden cookie buffs, as the game has them</span>')}<div data-sim-buffs></div></div>` +
+        `<div class="ca-card">${C.cardHead('Upgrades', 'upgrade', '<span class="ca-hint" data-sim-upgsum></span>')}<div data-sim-upg></div></div>` +
+        '<div data-sim-garden></div>' +
+        '</div><div>' +
+        `<div class="ca-card">${C.cardHead("CookieMgr's macros", 'bolt', '<span class="ca-hint">switch them while it plays</span>')}<div data-sim-macros></div></div>` +
+        `<div class="ca-card ca-editor2">${C.cardHead('Do something', 'play', '<span class="ca-hint">any CookieMgr action, or code — now</span>')}${doHtml()}</div>` +
+        `<div class="ca-card">${C.cardHead('Actions', 'bolt', '<span class="ca-hint">what CookieMgr did, by its action ids</span>')}<div data-sim-actions></div></div>` +
+        `<div class="ca-card">${C.cardHead('Events', 'events', '<span class="ca-hint">CookieMgr’s event log</span>')}<div class="ca-toolbar" data-sim-evfilter>${evFilterHtml()}</div><div class="sim-log" data-sim-events></div></div>` +
+        '</div></div>'
+      );
+    },
+    mount(root) {
+      if (!S.id) return mountSetup(root);
+      if (!S.es) connect(S.id);
+      S.chart = SimChart.create($('[data-sim-chart]', root));
+      root.addEventListener('click', onSimClick);
+      root.addEventListener('change', onSimChange);
+      S.unbindCE = CE.bind(root, {
+        onChange: (key, src) => {
+          if (key === 'console') S.consoleSrc = src;
+        },
+      });
+      live(true);
+    },
+    unmount() {
+      const root = main();
+      root.removeEventListener('click', onSimClick);
+      root.removeEventListener('change', onSimChange);
+      root.removeEventListener('click', onSetupClick);
+      root.removeEventListener('change', onSetupChange);
+      root.removeEventListener('input', onSetupChange);
+      if (S.unbindCE) S.unbindCE();
+      S.unbindCE = null;
+      if (S.chart) S.chart.destroy();
+      S.chart = null;
+    },
+  };
+
+  // ---- setup -------------------------------------------------------------------------------------------
+
+  function setupHtml() {
+    const st = S.setup;
+    const startTile = (k, icon, title, desc, extra = '') =>
+      `<button type="button" class="sim-tile${st.start === k ? ' on' : ''}" data-start="${k}"><b>${I(icon, 14)} ${title}</b><span class="ca-hint">${desc}</span>${extra}</button>`;
+    const sc = meta.scenarios.filter((x) => x.name !== 'fresh');
+    const strat = (s) =>
+      `<button type="button" class="sim-tile${st.strategy === s.name ? ' on' : ''}" data-strategy="${esc(s.name)}"><b>${I(s.kind === 'cmgr' ? 'edit' : 'puzzle', 13)} ${esc(s.name)}</b><span class="ca-hint">${esc(s.desc)}</span>` +
+      (s.header && (s.header.with.length || s.header.profile)
+        ? `<span class="sim-tile-tags">${s.header.with.map((w) => `<span class="ca-pill">${esc(w)}</span>`).join('')}${s.header.profile ? `<span class="ca-pill">${I('leaf', 10)} ${esc(s.header.profile)}</span>` : ''}</span>`
+        : '') +
+      '</button>';
+    return (
+      `<div class="sim-h1">Simulate <small>the real game, with CookieMgr playing it — ${esc(meta.gameVersion)} · CookieMgr ${esc(meta.addonVersion)}</small></div>` +
+      sessionsHtml() +
+      `<div class="ca-card">${C.cardHead('1 · Start from', 'save')}<div class="sim-tiles">` +
+      startTile('fresh', 'cookie', 'A new game', 'Nothing baked, nothing owned — the very start.') +
+      startTile(
+        'scenario',
+        'puzzle',
+        'A scenario',
+        'A prepared state from sim/scenarios/.',
+        `<select class="sim-input" data-scenario>${sc.map((x) => `<option value="${esc(x.name)}"${st.scenario === x.name ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select><span class="ca-hint">${esc((sc.find((x) => x.name === st.scenario) || sc[0] || {}).desc || '')}</span>`
+      ) +
+      startTile('save', 'upload', 'Your own game', 'Options → Export save in the game, then paste it below. CookieMgr’s settings, macros and gardeners come with it.') +
+      '</div>' +
+      (st.start === 'save' ? `<textarea class="sim-save" data-save placeholder="Paste your exported save here…">${esc(st.save)}</textarea>` : '') +
+      '</div>' +
+      `<div class="ca-card ca-editor2">${C.cardHead('2 · Strategy', 'bolt', '<span class="ca-hint">what CookieMgr does while it plays</span>')}<div class="sim-tiles">` +
+      meta.strategies.map(strat).join('') +
+      `<button type="button" class="sim-tile${st.strategy === ':custom' ? ' on' : ''}" data-strategy=":custom"><b>${I('plus', 13)} Your own code</b><span class="ca-hint">Write it here, in CookieMgr’s language — the same code works in an algorithmic macro in the add-on.</span></button>` +
+      `<button type="button" class="sim-tile${st.strategy === ':none' ? ' on' : ''}" data-strategy=":none"><b>${I('pause', 13)} Nothing yet</b><span class="ca-hint">Start idle; switch macros on and do things yourself once it runs.</span></button>` +
+      '</div>' +
+      (st.strategy === ':custom' ? `<div class="ca-ed-layout sim-ed"><div class="ca-editor-body">${CE.html('setup', st.custom, { title: 'Your strategy', hint: '# with: / # every: lines set it up · Tab indents · click the library to insert' })}</div>${CE.libraryHtml('setup')}</div>` : '') +
+      '</div>' +
+      `<div class="ca-card">${C.cardHead('3 · Go', 'play')}<div class="sim-form">` +
+      `<label class="ca-field"><span class="ca-field-label">Seed</span><input type="number" min="1" value="${esc(st.seed)}" data-seed> <em>same seed + same strategy = the same game</em></label>` +
+      C.button(`${I('play', 14)} Start simulation`, 'data-go', 'ca-btn-on sim-go') +
+      '</div></div>'
+    );
+  }
+  function sessionsHtml() {
+    if (!S.sessions.length) return '';
+    return (
+      `<div class="ca-card">${C.cardHead('Running', 'play', '<span class="ca-hint">simulations the server is holding</span>')}<div class="ca-list">` +
+      S.sessions
+        .map(
+          (x) =>
+            `<div class="ca-row"><div class="ca-row-text"><b>${esc(x.label)}</b> <span class="ca-hint">from ${esc(x.start)} · seed ${x.seed} · ${span(x.t)} simulated · ${short(x.cookies)} baked${x.playing ? ' · playing' : ''}</span></div>` +
+            `<div class="ca-controls">${C.button(`${I('open', 11)} Open`, `data-open="${x.id}"`, 'ca-btn-small')}${C.button('Close', `data-close="${x.id}" data-arm-label="Close it?"`, 'ca-btn-small ca-btn-off')}</div></div>`
+        )
+        .join('') +
+      '</div></div>'
+    );
+  }
+  function mountSetup(root) {
+    root.addEventListener('click', onSetupClick);
+    root.addEventListener('change', onSetupChange);
+    root.addEventListener('input', onSetupChange);
+    S.unbindCE = CE.bind(root, {
+      onChange: (key, src) => {
+        if (key === 'setup') {
+          S.setup.custom = src;
+          saveSetup();
+        }
+      },
+    });
+    api
+      .get('/api/sessions')
+      .then((list) => {
+        const had = S.sessions.length;
+        S.sessions = list;
+        if (list.length !== had && current === 'sim' && !S.id) {
+          const el = root.querySelector('.sim-h1');
+          if (el && !root.querySelector('[data-open]') && list.length) render();
+        }
+      })
+      .catch(() => {});
+  }
+  const onSetupClick = guard(async (e) => {
+    const t = e.target.closest('[data-start],[data-strategy],[data-go],[data-open],[data-close]');
+    if (!t || e.target.closest('select,textarea,input')) return;
+    const d = t.dataset;
+    if (d.start) S.setup.start = d.start;
+    else if (d.strategy) S.setup.strategy = d.strategy;
+    else if (d.open) {
+      connect(d.open);
+      return render();
+    } else if (d.close) {
+      if (!CA.UI.Dom.armed(t)) return;
+      await api.del(`/api/sessions/${d.close}`);
+      S.sessions = S.sessions.filter((x) => x.id !== d.close);
+    } else if ('go' in d) {
+      t.disabled = true;
+      t.innerHTML = `${I('refresh', 14)} Starting…`;
+      const st = S.setup;
+      const strategy = st.strategy === ':none' ? null : st.strategy === ':custom' ? { source: st.custom, name: 'Your code' } : { file: st.strategy };
+      try {
+        const { id } = await api.post('/api/sessions', { start: { kind: st.start, scenario: st.scenario, save: st.save }, strategy, seed: st.seed });
+        connect(id);
+        await api.post(`/api/sessions/${id}/control`, { playing: true, speed: store.get('speed', 60) });
+      } catch (err) {
+        t.disabled = false;
+        throw err;
+      }
+    }
+    saveSetup();
+    render();
+  });
+  function onSetupChange(e) {
+    const el = e.target;
+    const d = el.dataset;
+    if ('scenario' in d) {
+      S.setup.scenario = el.value;
+      S.setup.start = 'scenario';
+      if (e.type === 'change') render();
+    } else if ('save' in d) S.setup.save = el.value;
+    else if ('seed' in d) S.setup.seed = Math.max(1, Number(el.value) || 1);
+    else return;
+    saveSetup();
+  }
+
+  // ---- the live view -----------------------------------------------------------------------------------
+
+  const SPEEDS = [
+    [1, '1×', 'Real time'],
+    [10, '10×'],
+    [60, '60×', 'A minute a second'],
+    [600, '600×', 'Ten minutes a second'],
+    [0, 'Max', 'As fast as the computer goes (a few hundred × real time)'],
+  ];
+  function runbarHtml() {
+    const s = S.snap;
+    if (!s) return `<span class="ca-hint">${I('refresh', 12)} Connecting…</span>`;
+    const date = new Date(s.clock);
+    return (
+      C.button(I(s.playing ? 'pause' : 'play', 18), `data-ctl="${s.playing ? 'pause' : 'play'}" data-tip="${s.playing ? 'Pause' : 'Play'}"`, `sim-play${s.playing ? '' : ' ca-btn-on'}`) +
+      `<div class="sim-clock"><b>${span(s.t)}</b><span>${esc(date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }))} ${esc(date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }))} in the game · ${s.ratio ? `${Math.round(s.ratio)}× real time` : '—'}</span></div>` +
+      `<span class="ca-chipgroup"><span class="ca-chip-label">Speed</span>${SPEEDS.map(([v, l, tip]) => `<button type="button" class="ca-chip${s.speed === v ? ' on' : ''}" data-speed="${v}"${tip ? ` data-tip="${esc(tip)}"` : ''}>${l}</button>`).join('')}</span>` +
+      `<span class="ca-chipgroup"><span class="ca-chip-label">Play for</span>${SPANS.map(([v, l]) => `<button type="button" class="ca-chip" data-runfor="${v}" data-tip="Play ${esc(l)} more, then pause">${l}</button>`).join('')}</span>` +
+      (s.until ? `<span class="ca-pill">until ${span(s.until)}</span>` : '') +
+      '<span class="sim-spacer"></span>' +
+      `<span class="ca-hint">${esc(s.strategy || 'no strategy')} · from ${esc(s.start)} · seed ${s.seed}</span>` +
+      `<a class="ca-btn ca-btn-small" href="/api/sessions/${s.id}/save" data-tip="The game's save as it is now (CookieMgr's part in it) — import it in the game, or start another simulation from it">${I('download', 12)} Export save</a>` +
+      C.button(`${I('plus', 12)} New`, 'data-ctl="new"', 'ca-btn-small') +
+      C.button('Close', 'data-ctl="close" data-arm-label="Close it?"', 'ca-btn-small ca-btn-off')
+    );
+  }
+  function statsHtml() {
+    const s = S.snap;
+    if (!s) return '';
+    const st = s.stats;
+    const buffed = st.unbuffedCps && st.cps !== st.unbuffedCps ? `×${(st.cps / st.unbuffedCps).toFixed(st.cps / st.unbuffedCps < 10 ? 1 : 0)} now` : 'unbuffed';
+    return (
+      tile('Cookies', short(st.cookies), 'in the bank') +
+      tile('CpS', short(st.cps), buffed) +
+      tile('Baked', short(st.cookiesEarned), 'this ascension') +
+      tile('Buildings', String(st.buildings), `${st.upgrades} upgrades`) +
+      tile('Golden cookies', String(st.goldenClicks || 0), s.shimmers.length ? `${s.shimmers.length} on screen` : '&nbsp;') +
+      tile('Clicks', short(st.clicks), `${short(st.handmade)} handmade`) +
+      tile('Achievements', String(st.achievements), st.lumps >= 0 ? `${st.lumps} sugar lumps` : 'no lumps yet') +
+      (st.magicM ? tile('Magic', `${Math.floor(st.magic)}/${Math.floor(st.magicM)}`, 'Grimoire') : '')
+    );
+  }
+  function chartSpec() {
+    const t0 = S.snap ? S.snap.clock - S.snap.t * 1000 : 0;
+    const at = (ms) => (ms - t0) / 1000;
+    const series = [];
+    if (S.series.baked) series.push({ name: 'Cookies baked', color: '#ffd36a', points: S.samples.map((x) => [x.t, x.cookiesEarned]) });
+    if (S.series.bank) series.push({ name: 'Bank', color: '#c8b48a', dash: true, width: 1.5, points: S.samples.map((x) => [x.t, x.cookies]) });
+    if (S.series.cps) series.push({ name: 'CpS', color: '#6fc3ff', points: S.samples.map((x) => [x.t, x.cps]), fmt: (v) => `${short(v)}/s` });
+    const gold = S.events.filter((e) => e.type === 'golden' || e.type === 'wrath');
+    const bands = [];
+    gold.forEach((e) => ((e.data && e.data.effects) || []).forEach((ef) => ef.duration && bands.push({ x0: at(e.t), x1: at(e.t) + ef.duration, color: ef.multCps > 1 || ef.multClick > 1 ? '#ffd36a' : '#e5484d', label: `${ef.name}${ef.multCps !== 1 ? ` ×${ef.multCps}` : ef.multClick !== 1 ? ` ×${ef.multClick} clicks` : ''}` })));
+    const markers = gold.map((e) => ({ x: at(e.t), color: e.type === 'wrath' ? '#e5484d' : '#ffd54a', label: `${e.title}${e.data && e.data.effects && e.data.effects.length ? ': ' + e.data.effects.map((x) => x.name).join(', ') : e.text ? ': ' + e.text : ''}` }));
+    return { series, log: S.series.log, bands, markers, x1: S.snap ? S.snap.t : undefined, xFmt: span, empty: 'Press play — the chart fills as it plays' };
+  }
+  function buildingsHtml() {
+    const s = S.snap;
+    if (!s) return '';
+    const total = s.buildings.reduce((a, b) => a + b.cps, 0) || 1;
+    let locked = 0;
+    return s.buildings
+      .filter((b) => !b.locked || locked++ < 1)
+      .map(
+        (b) =>
+          `<div class="sim-bld${b.locked ? ' locked' : ''}">${C.icon({ icon: b.icon })}<span>${esc(b.name)}${b.level ? ` <span class="ca-hint">lv ${b.level}</span>` : ''}</span><b>${b.amount}</b>` +
+          `<span class="sim-bar" data-tip="${esc(`${short(b.cps)}/s — ${((b.cps / total) * 100).toFixed(1)}% of the buildings' CpS`)}"><i style="width:${((b.cps / total) * 100).toFixed(1)}%"></i></span><span class="sim-num" data-tip="Price of the next one">${short(b.price)}</span></div>`
+      )
+      .join('');
+  }
+  function buffsHtml() {
+    const s = S.snap;
+    if (!s || !s.buffs.length) return `<div class="ca-card-note">No effect running${s && s.shimmers.length ? ` — ${s.shimmers.length} golden cookie${s.shimmers.length > 1 ? 's' : ''} on screen` : ''}.</div>`;
+    return s.buffs
+      .map(
+        (b) =>
+          `<div class="sim-buff">${C.icon({ icon: b.icon })}<b>${esc(b.name)}</b><span class="ca-hint">${b.multCpS && b.multCpS !== 1 ? `CpS ×${b.multCpS}` : ''}${b.multClick && b.multClick !== 1 ? ` clicks ×${b.multClick}` : ''}</span>` +
+          `<span class="sim-bar"><i style="width:${Math.max(0, Math.min(100, (b.time / (b.maxTime || 1)) * 100)).toFixed(1)}%"></i></span><span class="sim-num">${span(b.time)}</span></div>`
+      )
+      .join('');
+  }
+  function upgradesHtml() {
+    const s = S.snap;
+    if (!s) return '';
+    return (
+      `<div class="sim-icons">${s.upgrades.length ? s.upgrades.map((u) => iconAt(u.icon, u.name)).join('') : '<span class="ca-hint">None bought yet.</span>'}</div>` +
+      (s.store.length ? `<div class="ca-card-note">In the store: </div><div class="sim-icons">${s.store.map((u) => iconAt(u.icon, `${u.name} — ${short(u.price)}`)).join('')}</div>` : '')
+    );
+  }
+  function gardenHtml() {
+    const g = S.snap && S.snap.garden;
+    if (!g) return '';
+    const tiles = g.tiles
+      .map((t) => {
+        if (!t.open) return '<div class="ca-gtile locked"></div>';
+        let inner = '';
+        let tip = '';
+        if (t.plant) {
+          const st = stageOf(t.plant.mature, t.age);
+          inner += plantSprite(t.plant.icon, st);
+          if (st === 4 && !t.plant.immortal && t.decay > 0) inner += `<b class="ca-gdecay${t.decay >= 0.5 ? ' hi' : ''}">${Math.round(t.decay * 100)}%</b>`;
+          if (!t.plant.unlocked) inner += `<b class="ca-gnew">${I('sparkle', 9)}</b>`;
+          tip = `${t.plant.name} — ${['', 'bud', 'sprout', 'bloom', 'mature'][st]} (${t.age}/${t.plant.mature})${t.want && t.want.key !== t.plant.key ? ` · the layout wants ${t.want.name}` : ''}`;
+        } else {
+          if (t.want) inner += plantSprite(t.want.icon, 0, 'ghost');
+          tip = t.want ? `Empty — the layout wants ${t.want.name}` : 'Empty';
+        }
+        const off = (t.plant ? t.plant.key : null) !== (t.want ? t.want.key : null);
+        return `<div class="ca-gtile${off ? ' off' : ''}" data-tip="${esc(tip)}">${inner}</div>`;
+      })
+      .join('');
+    const freq = g.effs && g.effs.goldenCookieFreq ? `+${((g.effs.goldenCookieFreq - 1) * 100).toFixed(1)}%` : '—';
+    return (
+      `<div class="ca-card">${C.cardHead(`Garden · level ${g.level}`, 'leaf', `<span class="ca-pill">${esc(g.layout || 'no layout')}</span>`)}` +
+      `<div class="ca-garden-wrap"><div class="ca-gplot">${tiles}</div><div class="ca-stats ca-gstats">${tile('Soil', esc(g.soil), `ticks every ${span(g.tick)}`)}${tile('Next tick', span(g.nextTick))}${tile('Golden cookies', freq, 'more often, from the garden')}${tile('Seeds', String(g.seeds), 'unlocked')}</div></div></div>`
+    );
+  }
+  function macrosHtml() {
+    const s = S.snap;
+    if (!s) return '';
+    const list = s.macros.filter((m) => m.on || !m.builtin || ['golden', 'bigCookie', 'wrath', 'reindeer', 'wrinklers', 'lumps', 'gardener', 'cmBuildings', 'cmUpgrades', 'research', 'cheapUpgrades', 'fthof', 'stockTrader'].includes(m.id));
+    return list
+      .map(
+        (m) =>
+          `<div class="sim-macro${m.on ? ' on' : ''}">${macroIcon(m.icon)}<div class="sim-macro-name"><b>${esc(m.name)}</b>${!m.builtin ? ' <span class="ca-pill">yours</span>' : ''}` +
+          `<span class="${m.problem ? 'bad' : ''}">${m.problem ? esc(m.problem) : `${m.mode === 'repeat' || m.mode === 'flow' ? `every ${m.every >= 1000 ? `${m.every / 1000}s` : `${m.every}ms`}` : esc(m.mode)}${m.runs ? ` · ran ${short(m.runs)}×` : ''}`}</span></div>` +
+          C.toggle(m.on, `data-macro="${esc(m.id)}"`, m.name) +
+          '</div>'
+      )
+      .join('');
+  }
+  function doHtml() {
+    const acts = meta.vocab.actions;
+    const groups = {};
+    acts.forEach((a) => (groups[a.group] = groups[a.group] || []).push(a));
+    const a = acts.find((x) => x.id === S.doAction) || acts[0];
+    S.doAction = a.id;
+    const field = (p) => {
+      if (p.type === 'bool') return `<label class="ca-field"><input type="checkbox" data-param="${esc(p.key)}" data-type="bool"${p.default ? ' checked' : ''}> ${esc(p.label)}</label>`;
+      if (p.type === 'number') return `<label class="ca-field">${esc(p.label)} <input type="number" step="any" data-param="${esc(p.key)}" data-type="number" value="${esc(p.default != null ? p.default : '')}"></label>`;
+      if (p.type === 'select' || (p.options && p.options.length)) return `<label class="ca-field">${esc(p.label)} <select data-param="${esc(p.key)}">${(p.options || []).map((o) => `<option value="${esc(o.v)}"${String(o.v) === String(p.default) ? ' selected' : ''}>${esc(o.label)}</option>`).join('')}</select></label>`;
+      return `<label class="ca-field">${esc(p.label)} <input type="text" data-param="${esc(p.key)}" value="${esc(p.default != null ? p.default : '')}"></label>`;
+    };
+    return (
+      `<div class="sim-do"><select data-doaction>${Object.keys(groups)
+        .map((g) => `<optgroup label="${esc(g)}">${groups[g].map((x) => `<option value="${esc(x.id)}"${x.id === a.id ? ' selected' : ''}>${esc(x.name)}${x.staging ? ' [staging]' : ''}</option>`).join('')}</optgroup>`)
+        .join('')}</select><span data-doparams>${a.params.map(field).join('')}</span>${C.button(`${I('play', 11)} Do it`, 'data-do', 'ca-btn-small ca-btn-on')}</div>` +
+      `<div class="ca-ed-layout sim-ed"><div class="ca-editor-body">${CE.html('console', S.consoleSrc, { title: 'Code', hint: 'one pass from the top, now — or keep it running as a macro' })}</div></div>` +
+      `<div class="sim-do">${C.button(`${I('play', 11)} Run once`, 'data-console="run"', 'ca-btn-small ca-btn-on')}${C.button(`${I('plus', 11)} Keep running as a macro`, 'data-console="macro"', 'ca-btn-small')}<label class="ca-field">every <input type="number" min="50" step="50" value="1000" data-console-every> ms</label></div>` +
+      `<pre class="sim-out" data-console-out>${esc(S.consoleOut)}</pre>`
+    );
+  }
+  function actionsHtml() {
+    const entries = Object.entries(S.tally).sort((a, b) => b[1] - a[1]);
+    const t0 = S.snap ? S.snap.clock - S.snap.t * 1000 : 0;
+    const rows = S.actions
+      .slice(-150)
+      .reverse()
+      .map((a) => `<div class="sim-act-row"><span>${span((a.t - t0) / 1000)}</span><span>${esc(a.id)}${a.params ? `(${esc(Object.values(a.params).join(', '))})` : '()'}</span><span>${a.n}</span></div>`)
+      .join('');
+    return (
+      `<div class="sim-tally">${entries.length ? entries.map(([k, v]) => `<span class="ca-chip" data-tip="Since this page connected">${esc(k)} <b>×${short(v)}</b></span>`).join('') : '<span class="ca-hint">No actions yet.</span>'}</div>` +
+      `<div class="sim-log">${rows}</div>`
+    );
+  }
+  function evFilterHtml() {
+    const types = Object.keys(meta.vocab.eventTypes);
+    return `<span class="ca-chipgroup">${types
+      .map((t) => {
+        const ty = evType(t);
+        return `<button type="button" class="ca-chip ca-ev-chip${S.evOff.has(t) ? '' : ' on'}" data-evtype="${esc(t)}" style="--c:${ty.color}">${I(ty.icon, 11)} ${esc(ty.name)}</button>`;
+      })
+      .join('')}</span>`;
+  }
+  function eventsHtml() {
+    const t0 = S.snap ? S.snap.clock - S.snap.t * 1000 : 0;
+    const rows = S.events.filter((e) => !S.evOff.has(e.type)).slice(-200).reverse();
+    if (!rows.length) return '<div class="ca-legend-empty ca-ev-empty">No events yet.</div>';
+    return rows
+      .map((e) => {
+        const ty = evType(e.type);
+        const eff = e.data && e.data.effects && e.data.effects.length ? e.data.effects.map((x) => `${x.name}${x.multCps !== 1 ? ` ×${x.multCps}` : x.multClick !== 1 ? ` ×${x.multClick}` : ''}`).join(', ') : e.cookies ? `${e.cookies > 0 ? '+' : ''}${short(e.cookies)}` : '';
+        return `<div class="ca-ev-row" style="--c:${ty.color}"><span class="ca-ev-ico">${I(ty.icon, 14)}</span><span class="ca-ev-time">${span((e.t - t0) / 1000)}</span><span class="ca-ev-text"><b>${esc(e.title)}</b>${e.text ? ` <span>${esc(e.text)}</span>` : ''}</span><span class="ca-ev-cookies">${esc(eff)}</span></div>`;
+      })
+      .join('');
+  }
+
+  /** Refreshes everything live (morphing, so hovers and inputs survive). */
+  let snaps = 0;
+  function live(force) {
+    const root = main();
+    if (!S.id || !root) return;
+    const bar = $('[data-sim-runbar]', root);
+    if (!bar) return;
+    morph(bar, runbarHtml());
+    morph($('[data-sim-stats]', root), statsHtml());
+    if (S.chart) S.chart.draw(chartSpec());
+    // the heavier panels every other snapshot (they come ~3 times a second)
+    if (!force && snaps++ % 2) return;
+    morph($('[data-sim-bld]', root), buildingsHtml());
+    const bs = $('[data-sim-bldsum]', root);
+    if (bs && S.snap) bs.textContent = `${S.snap.stats.buildings} owned`;
+    morph($('[data-sim-buffs]', root), buffsHtml());
+    morph($('[data-sim-upg]', root), upgradesHtml());
+    const us = $('[data-sim-upgsum]', root);
+    if (us && S.snap) us.textContent = `${S.snap.stats.upgrades} bought`;
+    morph($('[data-sim-garden]', root), gardenHtml());
+    morph($('[data-sim-macros]', root), macrosHtml());
+    morph($('[data-sim-actions]', root), actionsHtml());
+    morph($('[data-sim-events]', root), eventsHtml());
+  }
+  function topRun() {
+    const el = $('[data-sim-toprun]');
+    if (!el) return;
+    const s = S.snap;
+    el.innerHTML = s ? `${I(s.playing ? 'play' : 'pause', 12)} <b>${span(s.t)}</b> · ${short(s.stats.cookiesEarned)} baked · ${short(s.stats.cps)}/s` : '';
+  }
+
+  const ctl = (body) => api.post(`/api/sessions/${S.id}/control`, body);
+  const onSimClick = guard(async (e) => {
+    const t = e.target.closest('[data-ctl],[data-speed],[data-runfor],[data-series],[data-scale],[data-macro],[data-evtype],[data-do],[data-console]');
+    if (!t) return;
+    const d = t.dataset;
+    if (d.ctl === 'play') await ctl({ playing: true });
+    else if (d.ctl === 'pause') await ctl({ playing: false });
+    else if (d.ctl === 'new') {
+      disconnect();
+      S.id = null;
+      store.set('session', null);
+      return render();
+    } else if (d.ctl === 'close') {
+      if (!CA.UI.Dom.armed(t)) return;
+      await api.del(`/api/sessions/${S.id}`);
+      disconnect();
+      S.id = null;
+      store.set('session', null);
+      return render();
+    } else if (d.speed != null) {
+      store.set('speed', Number(d.speed));
+      await ctl({ speed: Number(d.speed), playing: true });
+    } else if (d.runfor) await ctl({ run: d.runfor });
+    else if (d.series) {
+      S.series[d.series] = !S.series[d.series];
+      store.set('series', S.series);
+      t.classList.toggle('on', S.series[d.series]);
+      S.chart.draw(chartSpec());
+    } else if (d.scale) {
+      S.series.log = d.scale === 'log';
+      store.set('series', S.series);
+      t.parentNode.querySelectorAll('[data-scale]').forEach((b) => b.classList.toggle('on', b === t));
+      S.chart.draw(chartSpec());
+    } else if (d.macro) {
+      const on = !t.classList.contains('on');
+      t.classList.toggle('on', on);
+      await api.post(`/api/sessions/${S.id}/macro`, { id: d.macro, on });
+    } else if (d.evtype) {
+      if (S.evOff.has(d.evtype)) S.evOff.delete(d.evtype);
+      else S.evOff.add(d.evtype);
+      store.set('evOff', [...S.evOff]);
+      t.classList.toggle('on', !S.evOff.has(d.evtype));
+      morph($('[data-sim-events]'), eventsHtml());
+    } else if ('do' in d) {
+      const params = {};
+      main()
+        .querySelectorAll('[data-doparams] [data-param]')
+        .forEach((el) => (params[el.dataset.param] = el.dataset.type === 'bool' ? el.checked : el.dataset.type === 'number' ? Number(el.value) : el.value));
+      const a = meta.vocab.actions.find((x) => x.id === S.doAction);
+      const r = await api.post(`/api/sessions/${S.id}/act`, { id: S.doAction, params });
+      toast(`${a ? a.name : S.doAction}: ${r.n ? `${r.n} ${a && a.unit ? a.unit : 'done'}` : 'nothing to do'}`);
+    } else if (d.console === 'run') {
+      const r = await api.post(`/api/sessions/${S.id}/code`, { source: S.consoleSrc });
+      S.consoleOut = `${r.done} thing${r.done === 1 ? '' : 's'} done${r.error ? ` · ${r.error}` : ''}\n${r.trace.join('\n')}`;
+      morph($('[data-console-out]'), esc(S.consoleOut));
+    } else if (d.console === 'macro') {
+      const every = Number(($('[data-console-every]') || {}).value) || 1000;
+      await api.post(`/api/sessions/${S.id}/macro`, { source: S.consoleSrc, every, name: 'From the console' });
+      toast(`Running as a macro, every ${every} ms — it's in CookieMgr's macros, switch it off there`);
+    }
+  });
+  function onSimChange(e) {
+    const el = e.target;
+    if ('doaction' in el.dataset) {
+      S.doAction = el.value;
+      const card = el.closest('.ca-card');
+      const tmp = document.createElement('div');
+      tmp.innerHTML = doHtml();
+      const fresh = tmp.querySelector('[data-doparams]');
+      const old = card.querySelector('[data-doparams]');
+      if (fresh && old) old.replaceWith(fresh);
+    }
+  }
+
+  // =====================================================================================================
+  // Compare
+  // =====================================================================================================
+
+  const CMP = {
+    pick: new Set(store.get('cmpPick', ['payback', 'cheapest'])),
+    seeds: store.get('cmpSeeds', 3),
+    span: store.get('cmpSpan', '1h'),
+    start: store.get('cmpStart', 'fresh'),
+    scenario: store.get('cmpScenario', 'garden6'),
+    save: '',
+    combo: '',
+    job: null, // { id, state, meta, progress, results }
+    es: null,
+    chart: null,
+    metric: 'cookiesEarned',
+  };
+  const COLORS = ['#ffd36a', '#6fc3ff', '#9be15d', '#ff8a65', '#c77dff', '#4fd6c7', '#ff8fd0', '#e8c547'];
+  function watchJob(id) {
+    if (CMP.es) CMP.es.close();
+    CMP.job = { id, state: 'running', progress: { done: 0, total: 0 }, results: [] };
+    const es = new EventSource(`/api/jobs/${id}/stream`);
+    CMP.es = es;
+    es.addEventListener('state', (e) => {
+      Object.assign(CMP.job, JSON.parse(e.data));
+      cmpLive();
+    });
+    es.addEventListener('result', (e) => {
+      CMP.job.results.push(JSON.parse(e.data));
+      cmpLive();
+    });
+    es.addEventListener('progress', (e) => {
+      CMP.job.progress = JSON.parse(e.data);
+      cmpLive();
+    });
+    es.addEventListener('done', () => {
+      CMP.job.state = 'done';
+      es.close();
+      cmpLive();
+    });
+    es.onerror = () => es.readyState === EventSource.CLOSED && cmpLive();
+  }
+  pages.compare = {
+    html() {
+      const opts = meta.strategies.map((s) => `<button type="button" class="sim-tile${CMP.pick.has(s.name) ? ' on' : ''}" data-cpick="${esc(s.name)}"><b>${I(CMP.pick.has(s.name) ? 'star' : 'starOutline', 12)} ${esc(s.name)}</b><span class="ca-hint">${esc(s.desc)}</span></button>`).join('');
+      return (
+        '<div class="sim-h1">Compare <small>strategies side by side, over several seeds — each a separate game, run in parallel</small></div>' +
+        `<div class="ca-card">${C.cardHead('Strategies', 'bolt', '<span class="ca-hint">pick two or more</span>')}<div class="sim-tiles">${opts}</div>` +
+        `<div class="sim-form"><label class="ca-field"><span class="ca-field-label">Or a combination</span><input type="text" size="34" placeholder="golden+payback, bigCookie+cheapest…" value="${esc(CMP.combo)}" data-combo></label><span class="ca-hint">strategies and built-in macros joined with +</span></div></div>` +
+        `<div class="ca-card">${C.cardHead('How', 'settings')}<div class="sim-form">` +
+        `<span class="ca-chipgroup"><span class="ca-chip-label">Each plays</span>${chips(SPANS, 'data-cspan', CMP.span)}</span>` +
+        `<label class="ca-field"><span class="ca-field-label">Seeds</span><input type="number" min="1" max="50" value="${CMP.seeds}" data-cseeds> <em>games per strategy</em></label>` +
+        `<span class="ca-chipgroup"><span class="ca-chip-label">From</span>${chips(
+          [
+            ['fresh', 'a new game'],
+            ['scenario', 'a scenario'],
+            ['save', 'your save'],
+          ],
+          'data-cstart',
+          CMP.start
+        )}</span>` +
+        (CMP.start === 'scenario' ? `<select class="sim-input" data-cscenario>${meta.scenarios.filter((x) => x.name !== 'fresh').map((x) => `<option${x.name === CMP.scenario ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select>` : '') +
+        C.button(`${I('play', 13)} Compare`, 'data-cgo', 'ca-btn-on sim-go') +
+        '</div>' +
+        (CMP.start === 'save' ? `<textarea class="sim-save" data-csave placeholder="Paste your exported save here…">${esc(CMP.save)}</textarea>` : '') +
+        '</div>' +
+        '<div data-cresult></div>'
+      );
+    },
+    mount(root) {
+      root.addEventListener('click', onCmpClick);
+      root.addEventListener('change', onCmpChange);
+      root.addEventListener('input', onCmpChange);
+      const keep = store.get('cmpJob', null);
+      if (!CMP.job && keep) watchJob(keep);
+      cmpLive();
+    },
+    unmount() {
+      const root = main();
+      root.removeEventListener('click', onCmpClick);
+      root.removeEventListener('change', onCmpChange);
+      root.removeEventListener('input', onCmpChange);
+      if (CMP.chart) CMP.chart.destroy();
+      CMP.chart = null;
+    },
+  };
+  function stats(xs) {
+    const m = xs.reduce((a, b) => a + b, 0) / (xs.length || 1);
+    const sd = Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / Math.max(1, xs.length - 1));
+    return { m, sd, min: Math.min(...xs), max: Math.max(...xs) };
+  }
+  function cmpRows() {
+    const by = new Map();
+    CMP.job.results.forEach((r) => {
+      if (!by.has(r.strategy)) by.set(r.strategy, []);
+      by.get(r.strategy).push(r);
+    });
+    return [...by].map(([name, rs], i) => {
+      const ok = rs.filter((r) => !r.failed);
+      return {
+        name,
+        color: COLORS[i % COLORS.length],
+        runs: ok,
+        failed: rs.length - ok.length,
+        baked: stats(ok.map((r) => r.final.cookiesEarned)),
+        cps: stats(ok.map((r) => r.final.cps)),
+        golden: stats(ok.map((r) => r.final.goldenClicks || 0)),
+        buildings: stats(ok.map((r) => r.final.buildings)),
+        speed: stats(ok.map((r) => r.simSeconds / (r.wallMs / 1000))),
+      };
+    });
+  }
+  function cmpLive() {
+    const box = $('[data-cresult]');
+    if (!box || current !== 'compare') return;
+    const j = CMP.job;
+    if (!j) return morph(box, '');
+    const rows = cmpRows().sort((a, b) => b.baked.m - a.baked.m);
+    const pct = j.progress.total ? (j.progress.done / j.progress.total) * 100 : 0;
+    const m = j.meta || {};
+    if (!box.querySelector('[data-cchart]')) {
+      box.innerHTML =
+        `<div class="ca-card">${C.cardHead('Result', 'graphs', '<span class="ca-hint" data-cmeta></span>')}<div class="sim-progress" data-cprog><i></i></div><div data-ctable></div>` +
+        `<div class="ca-toolbar">${chips(
+          [
+            ['cookiesEarned', 'Cookies baked'],
+            ['cps', 'CpS'],
+          ],
+          'data-cmetric',
+          CMP.metric
+        )}<span class="ca-hint">the mean of the seeds, and the range between the worst and the best</span></div>` +
+        '<div class="sim-chart"><canvas data-cchart></canvas></div><div data-cfail></div></div>';
+      CMP.chart = SimChart.create($('[data-cchart]', box));
+    }
+    $('[data-cmeta]', box).textContent = `${(m.strategies || []).length} strategies × ${m.seeds || '?'} seeds · ${m.span || ''} each · from ${m.start || 'a new game'}${j.state === 'running' ? ` · ${j.progress.done}/${j.progress.total} done` : ' · done'}`;
+    const prog = $('[data-cprog]', box);
+    prog.style.display = j.state === 'running' ? '' : 'none';
+    prog.firstChild.style.width = `${pct}%`;
+    const best = rows.length ? rows[0].name : null;
+    morph(
+      $('[data-ctable]', box),
+      rows.length
+        ? '<table class="sim-table"><tr><th>Strategy</th><th>Games</th><th>Baked (mean)</th><th>± sd</th><th>Worst … best</th><th>Final CpS</th><th>Golden cookies</th><th>Buildings</th><th>Speed</th></tr>' +
+            rows
+              .map(
+                (r) =>
+                  `<tr class="${r.name === best && rows.length > 1 && j.state !== 'running' ? 'best' : ''}"><td><i class="ca-sw" style="background:${r.color}"></i> <b>${esc(r.name)}</b></td><td>${r.runs.length}${r.failed ? ` <span class="ca-pill ca-pill-warn">${r.failed} failed</span>` : ''}</td><td><b>${short(r.baked.m)}</b></td><td>${short(r.baked.sd)}</td><td>${short(r.baked.min)} … ${short(r.baked.max)}</td><td>${short(r.cps.m)}/s</td><td>${r.golden.m.toFixed(1)}</td><td>${Math.round(r.buildings.m)}</td><td>${Math.round(r.speed.m)}×</td></tr>`
+              )
+              .join('') +
+            '</table>'
+        : '<div class="ca-card-note">The first games are playing…</div>'
+    );
+    // the chart: per strategy, the mean over its seeds at each sampled minute, with the min–max range
+    const series = rows.map((r) => {
+      const n = Math.min(...r.runs.map((x) => x.samples.length));
+      const pts = [];
+      const band = [];
+      for (let i = 0; i < n; i++) {
+        const vs = r.runs.map((x) => x.samples[i][CMP.metric]);
+        const s = stats(vs);
+        const t = r.runs[0].samples[i].t;
+        pts.push([t, s.m]);
+        band.push([t, s.min, s.max]);
+      }
+      return { name: r.name, color: r.color, points: pts, band, fmt: CMP.metric === 'cps' ? (v) => `${short(v)}/s` : short };
+    });
+    CMP.chart.draw({ series, log: true, xFmt: span, empty: 'Waiting for the first results…' });
+    const failed = j.results.filter((r) => r.failed);
+    morph($('[data-cfail]', box), failed.length ? `<div class="sim-err">${esc(failed[0].strategy)} (seed ${failed[0].seed}) failed:\n${esc(failed[0].error || '')}</div>` : '');
+  }
+  const onCmpClick = guard(async (e) => {
+    const t = e.target.closest('[data-cpick],[data-cspan],[data-cstart],[data-cgo],[data-cmetric]');
+    if (!t) return;
+    const d = t.dataset;
+    if (d.cpick) {
+      if (CMP.pick.has(d.cpick)) CMP.pick.delete(d.cpick);
+      else CMP.pick.add(d.cpick);
+      store.set('cmpPick', [...CMP.pick]);
+    } else if (d.cspan) {
+      CMP.span = d.cspan;
+      store.set('cmpSpan', CMP.span);
+    } else if (d.cstart) {
+      CMP.start = d.cstart;
+      store.set('cmpStart', CMP.start);
+    } else if (d.cmetric) {
+      CMP.metric = d.cmetric;
+      t.parentNode.querySelectorAll('[data-cmetric]').forEach((b) => b.classList.toggle('on', b === t));
+      return cmpLive();
+    } else if ('cgo' in d) {
+      const strategies = [...CMP.pick].concat(CMP.combo.split(/[,\s]+/).filter(Boolean));
+      if (!strategies.length) throw new Error('Pick at least one strategy');
+      const { id } = await api.post('/api/compare', { strategies, seeds: CMP.seeds, span: CMP.span, start: { kind: CMP.start, scenario: CMP.scenario, save: CMP.save } });
+      store.set('cmpJob', id);
+      if (CMP.chart) CMP.chart.destroy();
+      CMP.chart = null;
+      const box = $('[data-cresult]');
+      if (box) box.innerHTML = '';
+      watchJob(id);
+      toast(`${strategies.length * CMP.seeds} games started`);
+      return;
+    }
+    const y = window.scrollY;
+    const res = $('[data-cresult]');
+    const kept = res ? [...res.childNodes] : [];
+    render();
+    const box = $('[data-cresult]');
+    if (box && kept.length) {
+      box.replaceChildren(...kept);
+    }
+    window.scrollTo(0, y);
+  });
+  function onCmpChange(e) {
+    const el = e.target;
+    const d = el.dataset;
+    if ('cseeds' in d) store.set('cmpSeeds', (CMP.seeds = Math.max(1, Math.min(50, Number(el.value) || 1))));
+    else if ('combo' in d) CMP.combo = el.value;
+    else if ('csave' in d) CMP.save = el.value;
+    else if ('cscenario' in d) store.set('cmpScenario', (CMP.scenario = el.value));
+  }
+
+  // =====================================================================================================
+  // Strategies
+  // =====================================================================================================
+
+  const ST = { file: store.get('stratFile', null), draft: null, error: '', newName: '' };
+  const builtinMacros = () => meta.vocab.macros.filter((m) => m.mode !== 'group');
+  /** The # with: / # every: / # profile: lines of a .cmgr, read and written. */
+  function headerOf(src) {
+    const h = { every: 1000, with: [], profile: '' };
+    for (const line of String(src).split('\n')) {
+      const m = line.match(/^#\s*(every|with|profile)\s*:\s*(.*?)\s*$/i);
+      if (m) {
+        const k = m[1].toLowerCase();
+        if (k === 'every') h.every = Number(m[2].replace(/ms$/, '')) || 1000;
+        else if (k === 'with') h.with = m[2].split(/[,\s]+/).filter(Boolean);
+        else h.profile = m[2];
+      } else if (line.trim() && !line.trim().startsWith('#')) break;
+    }
+    return h;
+  }
+  function withHeader(src, h) {
+    const lines = String(src).split('\n');
+    let firstCode = lines.findIndex((l) => l.trim() && !l.trim().startsWith('#'));
+    if (firstCode < 0) firstCode = lines.length;
+    const head = lines.slice(0, firstCode).filter((l) => !/^#\s*(every|with|profile)\s*:/i.test(l));
+    const rest = lines.slice(firstCode);
+    const add = [];
+    if (h.with.length) add.push(`# with: ${h.with.join(', ')}`);
+    if (h.every && h.every !== 1000) add.push(`# every: ${h.every}`);
+    if (h.profile) add.push(`# profile: ${h.profile}`);
+    const at = head.length && head[0].startsWith('#') ? 1 : 0;
+    head.splice(at, 0, ...add);
+    return head.concat(rest).join('\n');
+  }
+  pages.strategies = {
+    html() {
+      const list = meta.strategies;
+      if (!ST.file || !list.some((s) => s.file === ST.file)) ST.file = (list[0] || {}).file || null;
+      const s = list.find((x) => x.file === ST.file);
+      const src = ST.draft != null ? ST.draft : s ? s.source : '';
+      const dirty = s && ST.draft != null && ST.draft !== s.source;
+      const h = headerOf(src);
+      return (
+        '<div class="sim-h1">Strategies <small>sim/strategies/ — CookieMgr’s algorithmic code: paste one into an algorithmic macro in the add-on and it does the same there</small></div>' +
+        '<div class="sim-strats"><div>' +
+        `<div class="ca-card">${C.cardHead('Files', 'save')}${list
+          .map((x) => `<button type="button" class="sim-strat-item${x.file === ST.file ? ' on' : ''}" data-sfile="${esc(x.file)}"><b>${I(x.kind === 'cmgr' ? 'edit' : 'puzzle', 11)} ${esc(x.name)}</b><span>${esc(x.desc || x.file)}</span></button>`)
+          .join('')}` +
+        `<div class="sim-do"><input type="text" class="sim-input" size="14" placeholder="new-name" value="${esc(ST.newName)}" data-snew>${C.button(`${I('plus', 11)} New`, 'data-sact="new"', 'ca-btn-small')}</div></div>` +
+        '</div><div>' +
+        (!s
+          ? '<div class="ca-card"><div class="ca-card-note">No strategy yet — make one on the left.</div></div>'
+          : s.kind === 'mjs'
+            ? `<div class="ca-card">${C.cardHead(esc(s.file), 'puzzle', '<span class="ca-pill">JavaScript</span>')}<div class="ca-card-note">A .mjs strategy sets the simulation up in code (sim.* — see sim/README.md). Edit it in your editor; it runs here as it is.</div><pre class="sim-term">${esc(s.source)}</pre>` +
+              `<div class="sim-do">${C.button(`${I('play', 11)} Simulate it`, 'data-sact="run"', 'ca-btn-small ca-btn-on')}</div></div>`
+            : `<div class="ca-card ca-editor2">${C.cardHead(
+                esc(s.file),
+                'edit',
+                `<div class="ca-card-meta">${dirty ? '<span class="ca-pill ca-pill-warn">unsaved</span>' : ''}` +
+                  C.button(`${I('save', 12)} Save`, 'data-sact="save"', `ca-btn-small${dirty ? ' ca-btn-on' : ''}`) +
+                  (dirty ? C.button('Discard', 'data-sact="discard"', 'ca-btn-small') : '') +
+                  C.button(`${I('play', 12)} Simulate it`, 'data-sact="run"', 'ca-btn-small') +
+                  C.button(`${I('graphs', 12)} Compare`, 'data-sact="compare"', 'ca-btn-small') +
+                  C.button(`${I('open', 12)} Copy for the add-on`, 'data-sact="copy"', 'ca-btn-small', '') +
+                  C.button('Delete', 'data-sact="delete" data-arm-label="Delete the file?"', 'ca-btn-small ca-btn-off') +
+                  '</div>'
+              )}` +
+              (ST.error ? `<div class="ca-editor-error">${esc(ST.error)}</div>` : '') +
+              `<div class="sim-form"><span class="ca-chipgroup"><span class="ca-chip-label">With</span>${builtinMacros()
+                .filter((m) => ['golden', 'bigCookie', 'wrath', 'reindeer', 'wrinklers', 'lumps', 'gardener', 'fortune', 'research', 'cheapUpgrades', 'petDragon', 'fthof', 'stockTrader', 'elderPledge'].includes(m.id) || h.with.includes(m.id))
+                .map((m) => `<button type="button" class="ca-chip${h.with.includes(m.id) ? ' on' : ''}" data-swith="${esc(m.id)}" data-tip="${esc(m.desc || m.name)}">${esc(m.name)}</button>`)
+                .join('')}</span>` +
+              `<label class="ca-field"><span class="ca-field-label">A pass every</span><input type="number" min="50" step="50" value="${h.every}" data-severy> ms</label>` +
+              `<label class="ca-field"><span class="ca-field-label">Garden profile</span><select data-sprofile><option value="">—</option>${meta.vocab.profiles.map((p) => `<option value="${esc(p.id)}"${h.profile === p.id ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select></label></div>` +
+              (CA.UI.CodeKnobs ? CA.UI.CodeKnobs.html('strat', src, {}) : '') +
+              `<div class="ca-ed-layout sim-ed"><div class="ca-editor-body">${CE.html('strat', src, { title: 'Its code', hint: 'the # lines at the top set it up · Tab indents · click the library to insert' })}</div>${CE.libraryHtml('strat')}</div></div>`) +
+        '</div></div>'
+      );
+    },
+    mount(root) {
+      root.addEventListener('click', onStratClick);
+      root.addEventListener('change', onStratChange);
+      root.addEventListener('input', onStratChange);
+      root.addEventListener('input', onKnob);
+      ST.unbind = CE.bind(root, {
+        onChange: (key, src) => {
+          if (key !== 'strat') return;
+          const s = meta.strategies.find((x) => x.file === ST.file);
+          const was = ST.draft != null && s && ST.draft !== s.source;
+          ST.draft = src;
+          const kp = root.querySelector('[data-knobs="strat"]');
+          if (kp && CA.UI.CodeKnobs) morph(kp, CA.UI.CodeKnobs.inner(src, {}));
+          if (was !== (s && src !== s.source)) {
+            // the header's Save / "unsaved" follow the first change
+            const head = root.querySelector('.ca-editor2 .ca-card-head');
+            const tmp = document.createElement('div');
+            tmp.innerHTML = pages.strategies.html();
+            const fresh = tmp.querySelector('.ca-editor2 .ca-card-head');
+            if (head && fresh) head.replaceWith(fresh);
+          }
+        },
+      });
+    },
+    unmount() {
+      const root = main();
+      root.removeEventListener('click', onStratClick);
+      root.removeEventListener('change', onStratChange);
+      root.removeEventListener('input', onStratChange);
+      root.removeEventListener('input', onKnob);
+      if (ST.unbind) ST.unbind();
+    },
+  };
+  /** A knob moved (or its number typed, or its switch flipped): the variable's line in the code follows. */
+  function setVar(name, value, from) {
+    const s = meta.strategies.find((x) => x.file === ST.file);
+    const src = ST.draft != null ? ST.draft : s ? s.source : '';
+    const next = CA.UI.CodeKnobs.setIn(src, name, value);
+    if (next === src) return;
+    ST.draft = next;
+    const root = main();
+    const ta = root.querySelector('[data-code-ed="strat"] [data-code]');
+    if (ta) {
+      ta.value = next;
+      CE.refresh(ta);
+    }
+    // the knob's other half (slider ↔ number box) shows the same number
+    if (from) root.querySelectorAll(`[data-knob="${name}"], [data-knob-num="${name}"]`).forEach((el) => el !== from && (el.value = from.value));
+    const head = root.querySelector('.ca-editor2 .ca-card-head');
+    const tmp = document.createElement('div');
+    tmp.innerHTML = pages.strategies.html();
+    const fresh = tmp.querySelector('.ca-editor2 .ca-card-head');
+    if (head && fresh) head.replaceWith(fresh);
+  }
+  function onKnob(e) {
+    const el = e.target;
+    if (!CA.UI.CodeKnobs || !(el.dataset.knob || el.dataset.knobNum)) return;
+    const s = meta.strategies.find((x) => x.file === ST.file);
+    const src = ST.draft != null ? ST.draft : s ? s.source : '';
+    const v = CA.UI.CodeKnobs.valueOf(el, src, {});
+    if (v != null) setVar(el.dataset.knob || el.dataset.knobNum, v, el);
+  }
+  async function refreshMeta() {
+    const m = await api.get('/api/meta');
+    meta.strategies = m.strategies;
+  }
+  const onStratClick = guard(async (e) => {
+    const t = e.target.closest('[data-sfile],[data-sact],[data-swith],[data-knob-toggle]');
+    if (!t) return;
+    const d = t.dataset;
+    const s = meta.strategies.find((x) => x.file === ST.file);
+    const src = ST.draft != null ? ST.draft : s ? s.source : '';
+    if (d.knobToggle) {
+      const v = CA.UI.CodeKnobs.scan(src).find((x) => x.name === d.knobToggle);
+      if (v) setVar(v.name, !v.value);
+      const kp = main().querySelector('[data-knobs="strat"]');
+      if (kp) morph(kp, CA.UI.CodeKnobs.inner(ST.draft, {}));
+      return;
+    }
+    if (d.sfile) {
+      if (ST.draft != null && s && ST.draft !== s.source && !confirm('Leave this strategy without saving?')) return;
+      ST.file = d.sfile;
+      ST.draft = null;
+      ST.error = '';
+      store.set('stratFile', ST.file);
+    } else if (d.swith) {
+      const h = headerOf(src);
+      h.with = h.with.includes(d.swith) ? h.with.filter((x) => x !== d.swith) : h.with.concat(d.swith);
+      ST.draft = withHeader(src, h);
+    } else if (d.sact === 'save') {
+      ST.error = '';
+      try {
+        await api.put(`/api/strategies/${ST.file}`, { source: src });
+      } catch (err) {
+        ST.error = err.message;
+        return render();
+      }
+      await refreshMeta();
+      ST.draft = null;
+      toast(`${ST.file} saved`);
+    } else if (d.sact === 'discard') {
+      ST.draft = null;
+      ST.error = '';
+    } else if (d.sact === 'delete') {
+      if (!CA.UI.Dom.armed(t)) return;
+      await api.del(`/api/strategies/${ST.file}`);
+      await refreshMeta();
+      ST.file = null;
+      ST.draft = null;
+    } else if (d.sact === 'new') {
+      const name = (ST.newName || '').trim().replace(/\.cmgr$/, '');
+      if (!/^[\w-]+$/.test(name)) throw new Error('A name of letters, digits, - and _');
+      if (meta.strategies.some((x) => x.name === name)) throw new Error(`${name} exists already`);
+      await api.put(`/api/strategies/${name}.cmgr`, { source: TEMPLATE.replace('My strategy', name) });
+      await refreshMeta();
+      ST.file = `${name}.cmgr`;
+      ST.newName = '';
+      ST.draft = null;
+      store.set('stratFile', ST.file);
+    } else if (d.sact === 'copy') {
+      await navigator.clipboard.writeText(src);
+      toast('Copied — in the add-on: Macros → New → Algorithmic, and paste. The “# with:” lines are just comments there: switch those built-ins on yourself.');
+      return;
+    } else if (d.sact === 'run') {
+      if (ST.draft != null && s.kind === 'cmgr' && ST.draft !== s.source) {
+        S.setup.strategy = ':custom';
+        S.setup.custom = ST.draft;
+      } else S.setup.strategy = s.name;
+      saveSetup();
+      disconnect();
+      S.id = null;
+      return go('sim');
+    } else if (d.sact === 'compare') {
+      CMP.pick.add(s.name);
+      store.set('cmpPick', [...CMP.pick]);
+      return go('compare');
+    }
+    render();
+  });
+  function onStratChange(e) {
+    const el = e.target;
+    const d = el.dataset;
+    if ('snew' in d) {
+      ST.newName = el.value;
+      return;
+    }
+    if (e.type !== 'change') return;
+    const s = meta.strategies.find((x) => x.file === ST.file);
+    const src = ST.draft != null ? ST.draft : s ? s.source : '';
+    const h = headerOf(src);
+    if ('severy' in d) h.every = Math.max(50, Number(el.value) || 1000);
+    else if ('sprofile' in d) h.profile = el.value;
+    else return;
+    ST.draft = withHeader(src, h);
+    render();
+  }
+
+  // =====================================================================================================
+  // Experiments
+  // =====================================================================================================
+
+  const EX = { name: store.get('exName', null), args: {}, job: null, out: '', es: null, state: '' };
+  const defaultsOf = (usage) =>
+    (usage.match(/\[([^\]]+)\]/g) || [])
+      .map((x) => x.slice(1, -1))
+      .join(' ');
+  pages.experiments = {
+    html() {
+      const list = meta.experiments;
+      if (!EX.name || !list.some((x) => x.name === EX.name)) EX.name = (list[0] || {}).name;
+      const x = list.find((y) => y.name === EX.name);
+      if (x && EX.args[x.name] == null) EX.args[x.name] = defaultsOf(x.usage);
+      return (
+        '<div class="sim-h1">Experiments <small>sim/experiments/ — questions answered with the fast models and the simulator</small></div>' +
+        `<div class="ca-card"><div class="sim-tiles">${list.map((y) => `<button type="button" class="sim-tile${y.name === EX.name ? ' on' : ''}" data-ex="${esc(y.name)}"><b>${I('puzzle', 13)} ${esc(y.name)}</b><span class="ca-hint">${esc(y.desc)}</span></button>`).join('')}</div></div>` +
+        (x
+          ? `<div class="ca-card">${C.cardHead(esc(x.name), 'puzzle')}` +
+            (x.about ? `<div class="ca-card-note" style="white-space:pre-wrap">${esc(x.about)}</div>` : '') +
+            `<div class="sim-form"><label class="ca-field"><span class="ca-field-label">Arguments</span><input type="text" size="48" value="${esc(EX.args[x.name])}" data-exargs></label>` +
+            C.button(EX.state === 'running' ? `${I('refresh', 13)} Running…` : `${I('play', 13)} Run`, `data-exrun${EX.state === 'running' ? ' disabled' : ''}`, 'ca-btn-on sim-go') +
+            (EX.state === 'running' ? C.button('Stop', 'data-exstop', 'ca-btn-small ca-btn-off') : '') +
+            `<span class="ca-hint">${esc(x.usage)}</span></div>` +
+            `<pre class="sim-term" data-exout>${esc(EX.out || 'Its output shows here as it runs.')}</pre></div>`
+          : '')
+      );
+    },
+    mount(root) {
+      root.addEventListener('click', onExClick);
+      root.addEventListener('input', onExInput);
+    },
+    unmount() {
+      const root = main();
+      root.removeEventListener('click', onExClick);
+      root.removeEventListener('input', onExInput);
+    },
+  };
+  const onExClick = guard(async (e) => {
+    const t = e.target.closest('[data-ex],[data-exrun],[data-exstop]');
+    if (!t) return;
+    const d = t.dataset;
+    if (d.ex) {
+      EX.name = d.ex;
+      store.set('exName', EX.name);
+    } else if ('exrun' in d) {
+      const { id } = await api.post(`/api/experiments/${EX.name}`, { args: EX.args[EX.name] });
+      EX.job = id;
+      EX.out = '';
+      EX.state = 'running';
+      if (EX.es) EX.es.close();
+      const es = new EventSource(`/api/jobs/${id}/stream`);
+      EX.es = es;
+      const show = () => {
+        const pre = $('[data-exout]');
+        if (pre && current === 'experiments') {
+          pre.textContent = EX.out;
+          pre.scrollTop = pre.scrollHeight;
+        }
+      };
+      es.addEventListener('out', (ev) => {
+        // progress lines rewrite themselves with \r: keep the last version of a line
+        EX.out = (EX.out + JSON.parse(ev.data)).replace(/[^\n]*\r(?!\n)/g, '');
+        show();
+      });
+      es.addEventListener('done', (ev) => {
+        EX.state = JSON.parse(ev.data).code === 0 ? 'done' : 'failed';
+        es.close();
+        if (current === 'experiments') render();
+      });
+    } else if ('exstop' in d) {
+      await api.del(`/api/jobs/${EX.job}`);
+      EX.state = 'stopped';
+      EX.out += '\n(stopped)';
+    }
+    render();
+  });
+  function onExInput(e) {
+    if ('exargs' in e.target.dataset) EX.args[EX.name] = e.target.value;
+  }
+
+  // =====================================================================================================
+  // Vocabulary
+  // =====================================================================================================
+
+  pages.vocab = {
+    html() {
+      const v = meta.vocab;
+      const staged = v.library.filter((x) => x.staging).length;
+      return (
+        '<div class="sim-h1">Vocabulary <small>the words a strategy is written in — CookieMgr’s own, as its code editor lists them</small></div>' +
+        `<div class="ca-card"><div class="ca-stats">${tile('Actions', String(v.actions.length), 'things it can do')}${tile('Values', String(v.values.length), 'things it can read')}${tile('Conditions', String(v.conditions.length), 'things it can check')}${tile('Built-in macros', String(v.macros.length), 'ready to switch on')}${tile('Staging', String(staged), 'sim-only words, on their way into the add-on')}</div>` +
+        '<div class="ca-card-note">Click a word to copy it. Words marked <span class="ca-pill">staging</span> come from sim/mgr/staging/ — the simulator has them; the add-on gets them when they’re promoted.</div></div>' +
+        `<div class="ca-card sim-vocab">${CE.libraryHtml('vocab')}</div>` +
+        `<div class="ca-card">${C.cardHead('Built-in macros', 'bolt')}<div class="ca-list">${v.macros
+          .map((m) => `<div class="ca-row">${macroIcon(m.icon)}<div class="ca-row-text"><b>${esc(m.name)}</b> <code class="ca-hint">${esc(m.id)}</code><div class="ca-hint">${esc(m.desc || '')}</div></div>${m.needsCM ? '<span class="ca-pill">needs Cookie Monster</span>' : ''}</div>`)
+          .join('')}</div></div>`
+      );
+    },
+    mount(root) {
+      // mark the staging words in the library
+      const v = meta.vocab;
+      root.querySelectorAll('[data-lib-insert]').forEach((b) => {
+        const it = v.library[Number(b.dataset.libInsert)];
+        if (it && it.staging) b.insertAdjacentHTML('beforeend', ' <span class="ca-pill">staging</span>');
+      });
+      pages.vocab.unbind = CE.bind(root, {
+        onPick: (key, it) => {
+          navigator.clipboard.writeText(it.insert || it.sig).then(() => toast(`Copied ${it.insert || it.sig}`));
+          return true;
+        },
+      });
+    },
+    unmount() {
+      if (pages.vocab.unbind) pages.vocab.unbind();
+    },
+  };
+
+  // ---- start ---------------------------------------------------------------------------------------
+
+  async function start() {
+    // anything that goes wrong in the page says so (once per message)
+    const seen = new Set();
+    const report = (msg) => {
+      if (seen.has(msg)) return;
+      seen.add(msg);
+      toast(`Page error: ${msg}`, true);
+    };
+    window.addEventListener('error', (e) => report(e.message || String(e.error)));
+    window.addEventListener('unhandledrejection', (e) => report((e.reason && e.reason.message) || String(e.reason)));
+    try {
+      meta = await api.get('/api/meta');
+    } catch (e) {
+      main().innerHTML = `<div class="ca-card"><div class="sim-err">Couldn't reach the simulator: ${esc(e.message)}</div></div>`;
+      return;
+    }
+    installVocab(meta.vocab);
+    CE.init();
+    CA.UI.Tips.init();
+    $('[data-sim-versions]').textContent = `the simulator ${meta.simVersion} · CookieMgr ${meta.addonVersion} · Cookie Clicker ${meta.gameVersion}`;
+    $('[data-sim-nav]').addEventListener('click', (e) => {
+      const t = e.target.closest('[data-nav]');
+      if (t) go(t.dataset.nav);
+    });
+    window.addEventListener('hashchange', () => go(location.hash.slice(1)));
+    go(location.hash.slice(1) || store.get('page', 'sim'));
+  }
+  start();
+})();
