@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+- **Cookie Monster's statistics, CookieMgr's way** — a **Stats** page and a **Payback** page, and the store shows
+  what each purchase is worth. Every figure from the game's own formulas and checked against Cookie Monster in the
+  real game (the simulator's parity tests: Lucky!, Conjure, chains, wrinklers, next-achievement amounts — exact).
+  - **Payback** page: the best buy; every building at ×1 / ×10 / ×100 in its payback colour with its payback
+    period, CpS added and price — click to buy; the next achievement; upgrades best first; the payback options.
+  - **Stats** page: the bank golden cookies and spells need to pay their most (Lucky!, Frenzy, chains, Conjure Baked
+    Goods, Spontaneous Edifice) as meters; the next golden cookie's odds, worked out exactly; prestige; wrinklers;
+    timers; what if (Pantheon spirits, dragon auras — the CpS each would bring); what's left to collect.
+  - **The store**: prices in their payback colour, a dot on each upgrade, and a CookieMgr block under the game's
+    tooltips — bonus income, payback period, when you can afford it, share of production, next achievement, and a
+    warning when buying would drop your bank below a Lucky! / Frenzy / Conjure bank. Each can be turned off
+    (Settings → Store).
+  - A **Golden cookies** widget: the next golden cookie's expected wait.
+  - Where the game and Cookie Monster differ, this follows the game: Spontaneous Edifice needs half the price in the
+    bank (not twice it); the Dragon Guts aura makes wrinklers pay 20% more.
+  - 36 new code words: `bank.*`, `reward.*`, `golden.*`, `prestige.*`, `wrinklers.*`, `missing.*`,
+    `buff.timeLeft`, `lump.ripeIn`, `magic.fullIn`, `autosave.in`, `pantheon.cpsGain`, `dragon.auraCpsGain`.
+
 ## 3.5.0 — 2026-10-16
 
 - **CookieMgr no longer needs Cookie Monster.** Payback periods are CookieMgr's own: what each purchase adds is asked

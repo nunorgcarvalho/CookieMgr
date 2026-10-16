@@ -13,7 +13,8 @@ const near = (a, b, tol = 1e-6) => Math.abs(a - b) <= tol * Math.max(1, Math.abs
 // ---- sidebar order
 await sleep(400);
 const items = [...doc.querySelectorAll('#CookieMgrTab [data-tab-item]')].map((i) => i.dataset.tabItem);
-assert(items.join() === 'events,graphs,garden,stocks,pantheon,wizard,clickers,widgets,settings', `sidebar: Events on top, Macros above Widgets (${items})`);
+// v3.6: + Stats, Payback (data pages, after Graphs)
+assert(items.join() === 'events,graphs,stats,payback,garden,stocks,pantheon,wizard,clickers,widgets,settings', `sidebar: Events on top, Macros above Widgets (${items})`);
 
 // ---- a busy game: production, clicks, a Frenzy + Click frenzy, drops, trades, buildings, upgrades, wrinklers
 Game.cookies = 1e7;

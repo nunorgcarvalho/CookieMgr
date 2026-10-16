@@ -20,7 +20,8 @@ await sleep(3500);
 // ---- sidebar: data | minigames | customization
 const tab = doc.getElementById('CookieMgrTab');
 const order = [...tab.children].map((el) => (el.classList.contains('ca-tab-gap') ? '|' : el.dataset.tabItem)).join(',');
-assert(order === 'events,graphs,|,garden,stocks,pantheon,wizard,|,clickers,widgets,settings', `sidebar (${order})`);
+// v3.6: + Stats, Payback
+assert(order === 'events,graphs,stats,payback,|,garden,stocks,pantheon,wizard,|,clickers,widgets,settings', `sidebar (${order})`);
 assert(tab.querySelector('[data-tab-item="wizard"] .ca-tab-label').textContent === 'Grimoire', 'Wizard tower page is now “Grimoire”');
 
 // ---- Pantheon page

@@ -66,7 +66,8 @@ assert(page('clickers').querySelector('.ca-list .ca-row.ca-macro'), 'your macros
 // ---- widgets: gallery
 CA.UI.Menu.openPage('widgets');
 const cards = page('widgets').querySelectorAll('.ca-wgallery .ca-wcard');
-assert(cards.length === 8, `widget gallery: macro buttons + 7 kinds (${cards.length})`);
+// v3.6: + the Golden cookies widget
+assert(cards.length === 9, `widget gallery: macro buttons + 8 kinds (${cards.length})`);
 click(w, page('widgets').querySelector('.ca-wcard [data-w-page-add="pantheon"]'));
 assert(CA.UI.Widgets.has('pantheon') && page('widgets').querySelector('.ca-wcard.placed [data-w-page-remove="pantheon"]'), 'Add from a card; it shows placed');
 

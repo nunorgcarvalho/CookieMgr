@@ -10,7 +10,8 @@ const doc = w.document;
 await sleep(300);
 
 const items = [...doc.querySelectorAll('#CookieMgrTab [data-tab-item]')].map((i) => i.dataset.tabItem);
-assert(items.join() === 'events,graphs,garden,stocks,pantheon,wizard,clickers,widgets,settings', `sidebar (${items})`);
+// v3.6: + Stats, Payback
+assert(items.join() === 'events,graphs,stats,payback,garden,stocks,pantheon,wizard,clickers,widgets,settings', `sidebar (${items})`);
 
 // ---- built-in spell macros
 const spellMacros = CA.Grimoire.SPELLS.map((s) => CA.Macros.get(s.id));

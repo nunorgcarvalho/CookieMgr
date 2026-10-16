@@ -123,7 +123,8 @@ CA.Macros.set('bigCookie', false);
 // widgets page
 CA.UI.Menu.openPage('widgets');
 const pg = doc.querySelector('[data-page="widgets"]');
-assert(pg.querySelectorAll('[data-w-page-add], [data-w-page-remove]').length === 7 && /Macro buttons/.test(pg.textContent), 'Widgets page: seven types + macro buttons explained');
+// v3.6: + the Golden cookies widget
+assert(pg.querySelectorAll('[data-w-page-add], [data-w-page-remove]').length === 8 && /Macro buttons/.test(pg.textContent), 'Widgets page: eight types + macro buttons explained');
 
 // ---- moving average
 const MA = CA.UI.Plot.movingAverage;

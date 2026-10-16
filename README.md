@@ -24,7 +24,7 @@ The same words mean the same things everywhere in the add-on and this README:
 ## Features (v3.1)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
-the data pages **Events** and **Graphs**; the minigames **Garden**, **Stock market**, **Pantheon** and **Grimoire**;
+the data pages **Events**, **Graphs**, **Stats** and **Payback**; the minigames **Garden**, **Stock market**, **Pantheon** and **Grimoire**;
 then **Macros**, **Widgets** and **Settings** — a small gap between each kind. Hovering an icon slides its name out to
 the left. Wherever a page mentions another (a Macros section, a "Macros page" hint), the name is a link to it, and
 each minigame page has an **Open in game** button that closes the panel and takes you to the minigame.
@@ -280,6 +280,16 @@ forever:
   `stock.brokers()`, `stock.maxBrokers()`, `stock.brokerPrice()`; `stock.buy(good, n)`, `stock.sell(good, n)`,
   `stocks.hireBrokers()`. A stock is its symbol (CRL), its building (Farm) or its number; modes: 0 stable, 1 slow rise,
   2 slow fall, 3 fast rise, 4 fast fall, 5 chaotic.
+- **Golden cookies and the bank** — `bank.lucky()`, `bank.luckyFrenzy()`, `bank.conjure()`, `bank.chain()`,
+  `bank.chainFrenzy()`, `bank.edifice()`, `bank.plant(plant)` (the bank each needs to pay its most);
+  `reward.lucky()`, `reward.luckyFrenzy()`, `reward.chain()`, `reward.conjure()`; `golden.soonest / latest /
+  expected()` (seconds), `golden.chanceWithin(seconds)` (0–1), `reindeer.expected()`.
+- **Prestige** — `prestige.ifAscended()`, `prestige.toNext()` (cookies), `prestige.perSecond()`, `prestige.cpsGain()`,
+  `prestige.cookiesFor(level)`, `prestige.secondsTo(level)`.
+- **Wrinklers** — `wrinkler.reward(w)`, `wrinklers.reward()`, `wrinklers.rewardFattest()`, `wrinklers.eating()`.
+- **Timers, what's left, what if** — `buff.timeLeft(effect)`, `lump.ripeIn()`, `autosave.in()`, `magic.fullIn()`;
+  `missing.upgrades()`, `missing.achievements()`, `missing.seasonDrops(season)`, `missing.plantDrops()`;
+  `pantheon.cpsGain(god, slot)`, `dragon.auraCpsGain(aura, slot)`.
 - **Garden** — `garden.tiles()` (tiles are `"x,y"`), `garden.plantAt / wantAt / age / decay(tile)`,
   `garden.isMature / isNew / isEmpty / isOff(tile)`, `garden.seeds()`, `garden.seedCost(seed)`; `garden.harvest(tile)`,
   `garden.plant(tile, seed)` — and the whole-plot ones the default rules use (`garden.plantEmpty()`…).
@@ -345,6 +355,51 @@ it has done and when it last did something (or that it can't run right now).
 it). Modifiers work (`Shift + G`): click a key chip and press the new key (`Esc` cancels, `Backspace` clears).
 
 **Favourites** — the ★ on a macro gives it its own button on the left panel (see Widgets).
+
+### Payback
+
+The **Payback** page lays out what every purchase is worth (see [Payback periods](#payback-periods)): the **best buy**
+of all (building or upgrade), the best building and the best upgrade, and when you can afford each; then every
+building with a cell for **×1**, **×10** and **×100** — coloured by its payback colour, with its payback period, the
+CpS it adds and its price (hover for the achievements it would win; **click a cell to buy that many**) — and how many
+more win its next achievement; the store's upgrades as tiles ringed in their colour, best first (click to buy); and
+its options: count your wrinklers in the bank (none, all, the fattest), "best = what you can afford", and a
+"cheap enough to just buy" floor in seconds of CpS.
+
+In the **store** itself (Settings → Store, each can be turned off): each building's price shows in its payback
+colour for what a click buys now (×1, ×10, ×100, or to the next multiple with Round to multiples on), each upgrade
+has a coloured dot in its corner, and under the game's own building and upgrade tooltips a CookieMgr block adds the
+CpS it adds (and its share of your CpS), its payback period, when you can afford it, a building's share of your
+production and how many more win its next achievement — and a **warning** when buying it would take your bank below
+what a Lucky! (in a Frenzy too) or Conjure Baked Goods needs to pay its most.
+
+### Stats
+
+The **Stats** page is Cookie Monster's statistics, CookieMgr's way — every figure from the game's own formulas, and
+checked against Cookie Monster in the real game:
+
+- **Bank** — a meter for each thing that pays out of your bank: **Lucky!** (15% of the bank, up to 15 minutes of
+  CpS), **Lucky! in a Frenzy**, a **cookie chain** (up to 6 hours of CpS), a chain in a Frenzy, **Conjure Baked
+  Goods** (up to 30 minutes) and **Spontaneous Edifice** (the most expensive building it can give) — the bank it
+  needs to pay its most, how full yours is, how long until it's there, and what it pays. (Spontaneous Edifice needs
+  half the building's price — Cookie Monster asks for twice it; this follows the game.)
+- **Golden cookies** — when the next one comes, worked out exactly from the game's odds (each frame past its
+  minimum time it appears with chance ((time − min) ÷ (max − min))⁵): the expected wait, the soonest and latest,
+  the chance within a minute and within five, and a strip of the odds over time. At Christmas, the next reindeer
+  too.
+- **Prestige** — the levels you'd gain by ascending now, how long until the next and how many cookies it takes,
+  levels an hour, the CpS the new levels would add, and the total level the Lucky digit / number / payout heavenly
+  upgrades need.
+- **Wrinklers** — what popping them all would give back (the game's own formula — Dragon Guts included, which
+  Cookie Monster leaves out), the fattest, what they eat each second.
+- **Timers** — the sugar lump (its type, mature, ripe), the Grimoire's magic, the autosave, the effects running.
+- **What if** — every Pantheon spirit in each slot and every dragon aura you can pick: the CpS it would bring (an
+  aura counting the building it costs), measured on the game itself and put back.
+- **Still to collect** — the upgrades, cookies, heavenly upgrades and achievements you're missing, each season's
+  drops, the garden's rare drops — as icons (hover for names).
+
+The **Golden cookies** widget is a ring that fills towards the latest the next golden cookie can come, its label the
+expected wait; hover it for the soonest, the latest, the chance within a minute and the effects running.
 
 ### Pantheon
 
@@ -751,6 +806,12 @@ src/
     gardenHistory.js snapshots of the garden (seed × stage counts) for the Growth chart; seed unlock events
     shop.js          the building store: its sort (best buy, next achievement), rounding bulk buys up
     payback.js       what buying is worth: bonus income asked of the game, payback periods and colours
+    goldenMath.js    what golden cookies, spells and plants pay at their most, and the bank each needs
+    wrinklers.js     what popping wrinklers gives back (the game's formula), the wrinkler bank
+    prestige.js      levels if you ascended now, the next one, the rate, the CpS they'd add
+    timers.js        golden cookie / reindeer odds (exact), buffs, sugar lump, autosave, magic
+    collection.js    what's left to collect: upgrades, achievements, season and plant drops
+    whatIf.js        the CpS a Pantheon spirit or a dragon aura would bring, asked of the game
     autoBuy.js       buying macros (lowest payback period, research, cheap upgrades) and petting the dragon
     seasons.js       season drops and completion, the Grandmapocalypse, SeasonCompletion's code
     script.js        the language of algorithmic macros: parsing, values, explaining conditions
@@ -773,6 +834,9 @@ src/
     codeEditor.js    the code editor (colouring, line numbers, problems, live lines) and its library
     gardenPage.js    the Garden page: the plot against the active profile, the auto-gardener: profiles, its four layers and their editors
     storeBar.js      the store toolbar (building sort, rounding to multiples)
+    storeInsight.js  the store with payback colours, and a CookieMgr block under the game's tooltips
+    paybackPage.js   the Payback page: best buy, every building ×1/×10/×100, upgrades, options
+    statsPage.js     the Stats page: bank meters, golden cookie odds, prestige, wrinklers, what if, collection
     stockGraph.js    the Stock market page charts: portfolio value / per-stock prices, rolling performance
     stockLog.js      the trade ticker + transaction history table, also on the Stock market page
     bankToolbar.js   Sell all / autobuyer / CookieMgr buttons inside the Bank minigame

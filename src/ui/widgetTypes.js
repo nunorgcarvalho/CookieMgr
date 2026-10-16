@@ -233,10 +233,10 @@ CA.UI.WidgetTypes = (() => {
    * One round widget: a ring filled to `frac`, an icon in the middle, a short label under it, and
    * a styled popup (rows of [label, value]) on hover. Clicking opens `building`'s minigame.
    */
-  function orb({ theme, building, icon, frac, label, extra, pop, mark, ready }) {
+  function orb({ theme, building, page, icon, frac, label, extra, pop, mark, ready }) {
     const f = Math.max(0, Math.min(1, Number.isFinite(frac) ? frac : 0));
     return (
-      `<div class="ca-orb ca-orb-${theme}${ready ? ' ready' : ''}" data-w-open-mg="${esc(building)}" data-pop>` +
+      `<div class="ca-orb ca-orb-${theme}${ready ? ' ready' : ''}" ${page ? `data-w-open="${esc(page)}"` : `data-w-open-mg="${esc(building)}"`} data-pop>` +
       '<svg class="ca-orb-ring" viewBox="0 0 44 44" aria-hidden="true">' +
       `<circle class="ca-orb-track" cx="22" cy="22" r="${RING_R}"/>` +
       `<circle class="ca-orb-fill" cx="22" cy="22" r="${RING_R}" stroke-dasharray="${RING_C.toFixed(2)}" stroke-dashoffset="${(RING_C * (1 - f)).toFixed(2)}"/>` +
@@ -318,6 +318,35 @@ CA.UI.WidgetTypes = (() => {
     );
     const next = M.nextStep ? Math.max(0, (M.nextStep - Date.now()) / 1000) : null;
     return { counts, next, step: M.stepT || 0 };
+  }
+
+  /** The next golden cookie (features/timers.js): the ring fills towards the latest it can come; the label is the expected wait. */
+  function goldenHtml() {
+    const { span } = F();
+    const s = CA.Timers.spawnOf('golden');
+    const me = Game.shimmerTypes && Game.shimmerTypes.golden;
+    const buffs = CA.Timers.buffs();
+    const when = (x) => (x <= 0 ? 'now' : span(x));
+    const rows = s
+      ? s.spawned
+        ? [['Golden cookie', 'on screen!']]
+        : [
+            ['Soonest', when(s.soonest)],
+            ['Expected', when(s.expected)],
+            ['Latest', when(s.latest)],
+            ['Within a minute', `${Math.round(s.within(60) * 100)}%`],
+          ]
+      : [['Golden cookies', 'not coming (Golden switch)']];
+    return orb({
+      theme: 'golden',
+      page: 'stats',
+      icon: I('sparkle', 18),
+      frac: s && !s.spawned && me && me.maxTime ? me.time / me.maxTime : s && s.spawned ? 1 : 0,
+      ready: !!(s && s.spawned),
+      label: !s ? 'off' : s.spawned ? 'now!' : span(s.expected),
+      extra: buffs.length ? `<span class="ca-orb-dots ca-wt"><span class="s3"><i></i>${buffs.length}</span></span>` : '',
+      pop: [[null, '<b>Next golden cookie</b>']].concat(rows, buffs.map((b) => [b.name, span(b.secs)])),
+    });
   }
 
   function gardenHtml() {
@@ -460,6 +489,7 @@ CA.UI.WidgetTypes = (() => {
         { key: 'targetMagic', label: 'Fixed amount', type: 'number', min: 1, max: 5000, default: 80, unit: 'magic (when “A fixed amount” is picked)' },
       ],
     });
+    D({ id: 'golden', name: 'Golden cookies', icon: 'sparkle', desc: 'The ring fills towards the latest the next golden cookie can come; the label is how long it takes on average (worked out from the game’s own odds). Hover for the soonest, the latest, the chance within a minute and the effects running; click it for the Stats page.', bare: true, single: true, resize: 'scale', html: goldenHtml });
     D({ id: 'garden', name: 'Garden', icon: 'leaf', desc: 'The ring counts down to the next garden tick; the dots under it are your plants by stage (bud, sprout, bloom, mature). Click it to open the Garden.', bare: true, single: true, resize: 'scale', html: gardenHtml });
     D({ id: 'market', name: 'Stock market', icon: 'stocks', desc: 'The ring counts down to the next market tick; the label is what the last tick did to the stocks you held. Click it to open the Stock market.', bare: true, single: true, resize: 'scale', html: marketHtml });
     D({ id: 'pantheon', name: 'Pantheon', icon: 'pantheon', desc: 'Your three slotted spirits, and a ring counting down to the next worship swap. Click it to open the Pantheon.', bare: true, single: true, resize: 'scale', html: pantheonHtml });

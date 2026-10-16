@@ -13,10 +13,11 @@ const CA = w.CookieMgr;
 
 // ---- sidebar -------------------------------------------------------------------------
 const items = $$('#CookieMgrTab [data-tab-item]');
-assert(items.length === 9, `sidebar has one item per page (9), got ${items.length}`);
+// v3.6: Stats and Payback (the in-house Cookie Monster) join the data pages
+assert(items.length === 11, `sidebar has one item per page (11), got ${items.length}`);
 assert(
   JSON.stringify(items.map((i) => i.querySelector('.ca-tab-label').textContent)) ===
-    JSON.stringify(['Events', 'Graphs', 'Garden', 'Stock market', 'Pantheon', 'Grimoire', 'Macros', 'Widgets', 'Settings']),
+    JSON.stringify(['Events', 'Graphs', 'Stats', 'Payback', 'Garden', 'Stock market', 'Pantheon', 'Grimoire', 'Macros', 'Widgets', 'Settings']),
   'sidebar labels in page order, CPS renamed to Graphs'
 );
 assert(items.every((i) => i.querySelector('.ca-tab-icon .ca-ico')), 'every sidebar item has an icon');
@@ -30,7 +31,7 @@ for (const item of items) {
   assert(item.classList.contains('selected'), `"${id}" sidebar item is highlighted`);
   await sleep(300); // let charts/logs tick while mounted
 }
-click(w, items[8]); // settings again -> closes
+click(w, items[10]); // settings again -> closes
 assert(Game.onMenu === '', 'clicking the open page again closes the panel');
 assert(!items.some((i) => i.classList.contains('selected')), 'no sidebar item highlighted once closed');
 
