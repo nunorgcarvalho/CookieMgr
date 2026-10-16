@@ -1,4 +1,4 @@
-// Alerts (the in-house Cookie Monster, release D; renamed vX.Y.Z.test.mjs when it lands): conditions
+// v3.7.0 — alerts (the in-house Cookie Monster, release D): conditions
 // (fortune, lumpRipe), actions (alert.flash / sound / notify — the event log, the game, the desktop),
 // the built-in "When…" alerts (once per appearance, not again while it stays), their card choices,
 // and the tab's title and icon while a golden cookie is on screen.
