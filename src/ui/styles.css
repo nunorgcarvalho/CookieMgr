@@ -5244,7 +5244,8 @@ body.ca-has-storebar #products {
 }
 
 /* the block under the game's building / upgrade tooltips */
-#tooltip .ca-tt {
+#tooltip .ca-tt,
+#CookieMgrMenu .ca-tl-preview .ca-tt {
   margin: 6px -4px -2px;
   padding: 5px 8px 6px;
   border-top: 1px solid rgba(255, 220, 150, 0.25);
@@ -5252,27 +5253,151 @@ body.ca-has-storebar #products {
   border-radius: 0 0 4px 4px;
   font: 11px Tahoma, Arial, sans-serif;
 }
-#tooltip .ca-tt-head {
+#tooltip .ca-tt-head,
+#CookieMgrMenu .ca-tl-preview .ca-tt-head {
   margin-bottom: 3px;
   font-size: 9px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #c9a96a;
 }
-#tooltip .ca-tt-row {
+#tooltip .ca-tt-row,
+#CookieMgrMenu .ca-tl-preview .ca-tt-row {
   display: flex;
   justify-content: space-between;
   gap: 12px;
   color: #b8ab92;
 }
-#tooltip .ca-tt-row b {
+#tooltip .ca-tt-row b,
+#CookieMgrMenu .ca-tl-preview .ca-tt-row b {
   color: #fff3d6;
   font-weight: bold;
   text-align: right;
 }
-#tooltip .ca-tt-warn {
+#tooltip .ca-tt-warn,
+#CookieMgrMenu .ca-tl-preview .ca-tt-warn {
   margin-top: 4px;
   color: #ffb36a;
+}
+
+/* the Payback page's Store tooltips card: the lines, the preview */
+#CookieMgrMenu .ca-tl {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 260px);
+  gap: 10px 14px;
+  padding: 8px 12px;
+}
+@media (max-width: 760px) {
+  #CookieMgrMenu .ca-tl {
+    grid-template-columns: 1fr;
+  }
+}
+#CookieMgrMenu .ca-tl-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+#CookieMgrMenu .ca-tl-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 11px;
+  color: #e8dcc4;
+}
+#CookieMgrMenu .ca-tl-n {
+  width: 14px;
+  color: #8a7d68;
+  text-align: right;
+}
+#CookieMgrMenu .ca-tl-name,
+#CookieMgrMenu .ca-tl-label {
+  flex: 1;
+  min-width: 0;
+}
+#CookieMgrMenu .ca-tl-label {
+  width: auto;
+  min-width: 70px;
+  flex: 1 1 70px;
+  height: auto;
+  margin: 0;
+  padding: 1px 4px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.3);
+  color: #fff3d6;
+  font: inherit;
+}
+#CookieMgrMenu .ca-tl-kind {
+  flex: 0 1 auto;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 5px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #a89a83;
+  font-size: 9px;
+}
+#CookieMgrMenu .ca-tl-btn {
+  flex: none;
+  width: 20px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #e8dcc4;
+  cursor: pointer;
+}
+#CookieMgrMenu .ca-tl-btn:hover:not([disabled]) {
+  background: rgba(255, 224, 102, 0.25);
+}
+#CookieMgrMenu .ca-tl-btn[disabled] {
+  opacity: 0.3;
+  cursor: default;
+}
+#CookieMgrMenu .ca-tl-fmt,
+#CookieMgrMenu .ca-tl-add,
+#CookieMgrMenu .ca-tl-pick {
+  flex: none;
+  max-width: 76px;
+  background: #1e1a14;
+  color: #e8dcc4;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  font-size: 11px;
+}
+#CookieMgrMenu .ca-tl-tools {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+#CookieMgrMenu .ca-tl-pick {
+  max-width: none;
+}
+#CookieMgrMenu .ca-tl-add {
+  max-width: none;
+  flex: 1;
+  min-width: 0;
+}
+#CookieMgrMenu .ca-tl-pv {
+  margin-bottom: 8px;
+  padding: 4px 6px 2px;
+  border-radius: 4px;
+  background: #0e0c09;
+  border: 1px solid rgba(255, 220, 150, 0.15);
+}
+#CookieMgrMenu .ca-tl-pvhead {
+  font-size: 11px;
+  color: #fff3d6;
+}
+#CookieMgrMenu .ca-tl-pvhead em {
+  color: #8a7d68;
+  font-size: 10px;
 }
 
 /* the Payback page */

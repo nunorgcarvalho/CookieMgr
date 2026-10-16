@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 3.10.0 — 2026-10-16
+
+- **The store's tooltips, your way.** A **Store tooltips** card on the Payback page chooses which lines CookieMgr's
+  block under the store's tooltips shows, in what order: the built-in lines (now also the price, and a building's
+  payback at ×1 / ×10 / ×100) and any value word of the building, the upgrade or the game — renamed, read as a number,
+  a time or a chance — with a live preview. Reset goes back to Cookie Monster's layout (the default).
+- **Bank warnings are off by default** (Cookie Monster's layout, without them); switch them on in Settings → Store or
+  on the card.
+
 ## 3.9.1 — 2026-10-16
 
 - **Fix: the Full-garden replanter left an empty plot unplanted** until the next tick (up to a 15-minute clay tick,

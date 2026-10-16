@@ -2,10 +2,11 @@
 //
 //   colours    each building's price in its payback colour, for what a click buys now (×1, ×10,
 //              ×100, or to the next multiple), and a small dot in each upgrade's corner
-//   tooltips   under the game's own building and upgrade tooltips, a CookieMgr block: the CpS it
-//              adds (and what share of your CpS that is), its payback period and colour, when you can
-//              afford it, the achievements it wins; a building's share of your production, and how
-//              many more win its next achievement
+//   tooltips   under the game's own building and upgrade tooltips, a CookieMgr block — by default
+//              Cookie Monster's: the CpS it adds (and what share of your CpS that is), its payback period
+//              and colour (and by actual income), when you can afford it, the achievements it wins; a
+//              building's share of your production, and how many more win its next achievement. Which
+//              lines, in what order — any value word too — is chosen on the Payback page.
 //   warnings   in the same block: buying it would take your bank below what a Lucky! (or a Lucky! in
 //              a Frenzy, or Conjure Baked Goods) needs to pay its most
 //
@@ -111,42 +112,154 @@ CA.UI.StoreInsight = (() => {
     return s <= 0 ? 'now' : Number.isFinite(s) ? F().span(s) : 'not at this CpS';
   };
 
-  /** The tooltip's "by actual income" line, when enough is recorded. */
-  function actualRow(v) {
-    const a = P().ppActual(v);
-    if (!a) return null;
-    return ['Payback, actual income', `${ppText(a.pp)} <small>(×${a.ratio.toFixed(2)} CpS)</small>`];
+  // ---- the block's lines ------------------------------------------------------------------------
+  //
+  // Which lines the block shows, in what order, is yours to choose (the Payback page's Store tooltips
+  // card; option storeTooltipLines): any of the lines below, and any value word — one taking a
+  // building (an upgrade, in an upgrade's tooltip) or nothing — shown as a number, a time, a chance or
+  // as it comes. A line with nothing to say (no wins, nothing recorded yet) is left out. The default is
+  // Cookie Monster's layout. Each line: (c) → [label, value html, class?] or null, where c is
+  // { kind, b | u, r (the payback row), t (the table) }.
+  const LINES = [
+    {
+      id: 'bonus',
+      name: 'Bonus income',
+      desc: 'the CpS it adds, and its share of your CpS',
+      building: (c) => [`Bonus income (×${c.r.n})`, `+${F().beautify(c.r.bonus)}/s${share(c.r.bonus)}`],
+      upgrade: (c) => (c.r.bonus ? ['Bonus income', `${c.r.bonus > 0 ? '+' : ''}${F().beautify(c.r.bonus)}/s${share(c.r.bonus)}`] : null),
+    },
+    {
+      id: 'click',
+      name: 'Per click',
+      desc: 'what a clicking upgrade adds per click, and per second at your clicking',
+      upgrade: (c) => (c.r.mouse > 0 ? ['Per click', `+${F().beautify(c.r.mouse)} (≈ ${F().beautify(c.r.mouse * P().clickRate())}/s at your clicking)`] : null),
+    },
+    { id: 'payback', name: 'Payback period', desc: 'in its payback colour', both: (c) => ['Payback period', ppText(c.r.pp), `ca-pp-${c.r.colour}`] },
+    {
+      id: 'actual',
+      name: 'Payback, actual income',
+      desc: 'the payback period by what you’ve really been taking in (once a minute of play is recorded)',
+      both: (c) => {
+        const a = P().ppActual(c.r.pp);
+        return a ? ['Payback, actual income', `${ppText(a.pp)} <small>(×${a.ratio.toFixed(2)} CpS)</small>`] : null;
+      },
+    },
+    {
+      id: 'bulks',
+      name: 'Payback ×1 / ×10 / ×100',
+      desc: 'the payback period of one, ten and a hundred more, each in its colour',
+      building: (c) => {
+        const cells = [1, 10, 100].map((n) => {
+          const x = c.t.buildings[n] && c.t.buildings[n][c.b.name];
+          return x ? `<span class="ca-pp-${x.colour}">${ppText(x.pp)}</span>` : '—';
+        });
+        return ['Payback ×1 / 10 / 100', cells.join(' · ')];
+      },
+    },
+    { id: 'price', name: 'Price', desc: 'what it costs (what a click buys)', both: (c) => ['Price', F().beautify(c.r.price)] },
+    { id: 'afford', name: 'Affordable', desc: 'when you can afford it at your CpS', both: (c) => ['Affordable', afford(c.r.price)] },
+    {
+      id: 'share',
+      name: 'Share of production',
+      desc: 'what share of your CpS the building makes',
+      building: (c) => {
+        const b = c.b;
+        const produce = b.storedTotalCps && Game.cookiesPs ? (b.storedTotalCps * (Game.globalCpsMult || 1)) / Game.cookiesPs : 0;
+        return ['Share of production', `${(produce * 100).toFixed(2)}%`];
+      },
+    },
+    {
+      id: 'next',
+      name: 'Next achievement',
+      desc: 'how many more win the next achievement, and for how much',
+      building: (c) => {
+        const next = P().nextAchievement(c.b.name);
+        return ['Next achievement', next.n <= 100 ? `${next.n} more (${F().beautify(next.price)})` : 'none within 100'];
+      },
+    },
+    { id: 'wins', name: 'Wins', desc: 'the achievements buying it wins', both: (c) => (c.r.won.length ? ['Wins', esc(c.r.won.join(', '))] : null) },
+  ];
+  const LINE = Object.fromEntries(LINES.map((l) => [l.id, l]));
+  /** Cookie Monster's layout (its bank warnings are their own option). */
+  const DEFAULT_LINES = ['bonus', 'click', 'payback', 'actual', 'afford', 'share', 'next', 'wins'];
+  /** How a word's value is shown. */
+  const FORMATS = [
+    { id: 'auto', name: 'as it reads', desc: 'a time for seconds, a chance for 0–1, else a number' },
+    { id: 'number', name: 'number' },
+    { id: 'time', name: 'time (seconds)' },
+    { id: 'chance', name: 'chance (0–1)' },
+  ];
+
+  /** The block's lines, in order: built-in ids and { word, fmt, label } entries. */
+  function lines() {
+    const v = S('storeTooltipLines');
+    if (!Array.isArray(v)) return DEFAULT_LINES.slice();
+    return v.filter((x) => (typeof x === 'string' ? !!LINE[x] : x && typeof x.word === 'string'));
   }
-  function buildingBlock(b) {
-    if (!S('storeTooltips') || Game.buyMode !== 1) return '';
+  function setLines(list) {
+    CA.Settings.set('storeTooltipLines', Array.isArray(list) ? list.slice() : null);
+  }
+  const isDefault = () => !Array.isArray(S('storeTooltipLines'));
+
+  const valueWord = (id) => (CA.Script && CA.Script.VALUES ? CA.Script.VALUES.find((v) => v.id === id) : null);
+  /** Whether a word can be a line in a tooltip of this kind: it takes a building / an upgrade, or nothing. */
+  function wordFits(v, kind) {
+    const ps = v.params || [];
+    return ps.length === 0 || (ps.length === 1 && ps[0] === kind);
+  }
+  /** The words a line could be, for a kind ('building' | 'upgrade' | null: either). */
+  function words(kind) {
+    return ((CA.Script && CA.Script.VALUES) || []).filter((v) => (kind ? wordFits(v, kind) : wordFits(v, 'building') || wordFits(v, 'upgrade'))).sort((a, b) => a.id.localeCompare(b.id));
+  }
+  function fmtValue(x, fmt, desc) {
+    if (typeof x === 'boolean') return x ? 'yes' : 'no';
+    if (typeof x === 'string') return esc(x) || '—';
+    if (typeof x !== 'number' || Number.isNaN(x)) return '—';
+    let f = fmt || 'auto';
+    if (f === 'auto') f = /\bseconds\b/.test(desc || '') ? 'time' : /0–1|0-1/.test(desc || '') ? 'chance' : 'number';
+    if (f === 'time') return !Number.isFinite(x) ? 'never' : x <= 0 ? 'now' : F().span(x);
+    if (f === 'chance') return `${(x * 100).toFixed(x < 0.1 ? 1 : 0)}%`;
+    return Number.isFinite(x) ? F().beautify(x) : '∞';
+  }
+  /** One entry's line for this tooltip, or null. */
+  function lineFor(entry, c) {
+    if (typeof entry === 'string') {
+      const l = LINE[entry];
+      const fn = l && (l[c.kind] || l.both);
+      return fn ? fn(c) : null;
+    }
+    const v = valueWord(entry.word);
+    if (!v || !wordFits(v, c.kind)) return null;
+    const ps = v.params || [];
+    const x = ps.length ? v.get(c.kind === 'building' ? c.b.name : c.u.name) : v.get();
+    return [esc(entry.label || entry.word), fmtValue(x, entry.fmt, v.desc)];
+  }
+  function rowsFor(c) {
+    const out = [];
+    lines().forEach((e) => {
+      try {
+        const row = lineFor(e, c);
+        if (row) out.push(row);
+      } catch (err) {
+        /* a word that fails here: left out */
+      }
+    });
+    return out;
+  }
+
+  /** The block under a building's tooltip (opts.force: whatever the options and buy mode — the editor's preview). */
+  function buildingBlock(b, opts = {}) {
+    if (!opts.force && (!S('storeTooltips') || Game.buyMode !== 1)) return '';
     const t = P().table();
     const r = rowFor(b, t);
-    const next = P().nextAchievement(b.name);
-    const produce = b.storedTotalCps && Game.cookiesPs ? (b.storedTotalCps * (Game.globalCpsMult || 1)) / Game.cookiesPs : 0;
-    const rows = [
-      [`Bonus income (×${r.n})`, `+${F().beautify(r.bonus)}/s${share(r.bonus)}`],
-      ['Payback period', ppText(r.pp), `ca-pp-${r.colour}`],
-      actualRow(r.pp),
-      ['Affordable', afford(r.price)],
-      ['Share of production', `${(produce * 100).toFixed(2)}%`],
-      ['Next achievement', next.n <= 100 ? `${next.n} more (${F().beautify(next.price)})` : 'none within 100'],
-    ].filter(Boolean);
-    if (r.won.length) rows.push(['Wins', esc(r.won.join(', '))]);
-    return block(rows, warnings(r.price));
+    return block(rowsFor({ kind: 'building', b, r, t }), warnings(r.price));
   }
-  function upgradeBlock(u) {
-    if (!S('storeTooltips')) return '';
-    const r = P().table().upgrades[u.name];
+  function upgradeBlock(u, opts = {}) {
+    if (!opts.force && !S('storeTooltips')) return '';
+    const t = P().table();
+    const r = t.upgrades[u.name];
     if (!r) return '';
-    const rows = [];
-    if (r.bonus) rows.push(['Bonus income', `${r.bonus > 0 ? '+' : ''}${F().beautify(r.bonus)}/s${share(r.bonus)}`]);
-    if (r.mouse > 0) rows.push(['Per click', `+${F().beautify(r.mouse)} (≈ ${F().beautify(r.mouse * P().clickRate())}/s at your clicking)`]);
-    rows.push(['Payback period', ppText(r.pp), `ca-pp-${r.colour}`]);
-    const ar = actualRow(r.pp);
-    if (ar) rows.push(ar);
-    rows.push(['Affordable', afford(r.price)]);
-    if (r.won.length) rows.push(['Wins', esc(r.won.join(', '))]);
-    return block(rows, warnings(r.price));
+    return block(rowsFor({ kind: 'upgrade', u, r, t }), warnings(r.price));
   }
 
   const wrapped = new WeakSet();
@@ -183,7 +296,9 @@ CA.UI.StoreInsight = (() => {
     D('storeColours', 'drop', 'Payback colours', 'Each building’s price in its payback colour (for what a click buys), and a dot in each upgrade’s corner — blue better than the best building, green the best, then yellow, orange, red, purple; gray never pays back.');
     D('storeTooltips', 'search', 'Payback in tooltips', 'Under the game’s building and upgrade tooltips: the CpS it adds, its payback period, when you can afford it, its share of production, the next achievement.');
     CA.Settings.defineOption({ key: 'storeUpgradeSort', group: 'store', icon: 'sortList', name: 'Upgrades: best first', desc: 'The store lists its upgrades by payback period (best first, in colour groups) instead of by price.', default: false });
-    D('storeWarnings', 'bell', 'Bank warnings', 'In those tooltips: a warning when buying would take your bank below what a Lucky! (in a Frenzy too) or Conjure Baked Goods needs to pay its most.');
+    CA.Settings.defineOption({ key: 'storeTooltipLines', group: 'store-hidden', name: 'Tooltip lines', desc: '', default: null });
+    // off by default since the tooltip's lines became yours to choose: Cookie Monster's layout, without them)
+    CA.Settings.defineOption({ key: 'storeWarnings', group: 'store', icon: 'bell', name: 'Bank warnings', desc: 'In those tooltips: a warning when buying would take your bank below what a Lucky! (in a Frenzy too) or Conjure Baked Goods needs to pay its most.', default: false });
     wrapTooltips();
     setInterval(() => {
       try {
@@ -196,5 +311,5 @@ CA.UI.StoreInsight = (() => {
     CA.Events.on('settings', (k) => (k === 'storeColours' || k === 'storeUpgradeSort' || k === null) && paint());
   }
 
-  return { init, paint, buildingBlock, upgradeBlock, warnings };
+  return { init, paint, buildingBlock, upgradeBlock, warnings, LINES, DEFAULT_LINES, FORMATS, lines, setLines, isDefault, words };
 })();

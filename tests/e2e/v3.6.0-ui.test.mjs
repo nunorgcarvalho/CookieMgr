@@ -93,7 +93,8 @@ assert(crate.querySelector('.ca-pp-updot.ca-pp-bg-blue'), 'an upgrade’s corner
 const tip = Game.Objects.Grandma.tooltip();
 assert(/<div class="name">Grandma<\/div>/.test(tip) && /ca-tt/.test(tip) && /Bonus income/.test(tip) && /Payback period/.test(tip) && /Next achievement/.test(tip), 'the building tooltip: the game’s, then CookieMgr’s block');
 assert(/Payback period/.test(Game.crateTooltip(kitten, 'store')) && !/ca-tt/.test(Game.crateTooltip(kitten, 'stats')), 'the upgrade tooltip in the store (not elsewhere)');
-// a purchase that takes the bank below what a Lucky! needs
+// a purchase that takes the bank below what a Lucky! needs (warnings: off by default since the tooltip's lines became yours to choose)
+CA.Settings.set('storeWarnings', true);
 Game.cookies = lucky + Game.Objects['Wizard tower'].getPrice() * 0.5;
 const wiz = Game.Objects['Wizard tower'].tooltip();
 assert(Game.cookies < Game.Objects['Wizard tower'].getPrice() || /ca-tt-warn/.test(wiz), 'a warning when buying would take the bank below the Lucky! bank');
