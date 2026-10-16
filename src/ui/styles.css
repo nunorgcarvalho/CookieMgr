@@ -5987,3 +5987,14 @@ body.ca-has-storebar #products {
   color: #ffd56a;
   box-shadow: 0 0 0 1px rgba(255, 213, 106, 0.6);
 }
+
+/* the minigames' tooltips: CookieMgr's additions (ui/minigameTips.js) */
+#tooltip .ca-mg-ok {
+  color: #7dff7a;
+}
+#tooltip .ca-mg-bad {
+  color: #ff8a80;
+}
+#tooltip .ca-mg-wait {
+  color: #ffd56a;
+}
