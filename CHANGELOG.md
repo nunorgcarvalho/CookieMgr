@@ -48,7 +48,7 @@
 
 - **Fix: a popped golden cookie was counted again while it faded out.** The game keeps a popped shimmer on screen
   (marked popped) for a moment, and the Golden cookies macro — every 100 ms — popped it again each time: nothing
-  happened in the game, but its count and the logs went up (103 pops for 8 golden cookies in an hour).
+  happened in the game, but its count and the logs went up.
   `shimmers()`, `shimmer.pop` and "a golden cookie is on screen" now skip popped ones.
 
 ## 3.4.0 — 2026-10-16
