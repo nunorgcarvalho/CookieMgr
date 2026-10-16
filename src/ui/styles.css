@@ -5688,6 +5688,43 @@ body.ca-has-storebar #products {
   stroke: rgba(0, 0, 0, 0.85);
   stroke-width: 3px;
 }
+/* the timer bars under the spawn chart */
+#CookieMgrMenu .ca-sp-lane .track {
+  fill: rgba(255, 255, 255, 0.04);
+}
+#CookieMgrMenu .ca-sp-lane .wait {
+  fill: rgba(255, 255, 255, 0.1);
+}
+#CookieMgrMenu .ca-sp-lane .open {
+  fill: rgba(224, 168, 74, 0.55);
+}
+#CookieMgrMenu .ca-sp-lane line {
+  stroke: #7dff7a;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+#CookieMgrMenu .ca-sp-lane .left {
+  fill: rgba(160, 160, 160, 0.5);
+}
+#CookieMgrMenu .ca-sp-lane.up .left {
+  fill: rgba(125, 255, 122, 0.45);
+}
+#CookieMgrMenu .ca-sp-lane.click .left {
+  fill: rgba(196, 140, 255, 0.55);
+}
+#CookieMgrMenu .ca-sp-lane.down .left {
+  fill: rgba(255, 110, 110, 0.5);
+}
+#CookieMgrMenu .ca-sp-chart .ca-sp-lane text {
+  font-size: 9px;
+  fill: #fff3d6;
+  paint-order: stroke;
+  stroke: rgba(0, 0, 0, 0.8);
+  stroke-width: 2.5px;
+}
+#CookieMgrMenu .ca-sp-legend .lane {
+  background: rgba(125, 255, 122, 0.45);
+}
 #CookieMgrMenu .ca-sp-legend {
   display: flex;
   flex-wrap: wrap;

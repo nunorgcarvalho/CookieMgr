@@ -56,6 +56,40 @@ CA.UI.Widgets.tick();
 const orb = doc.querySelector('#CookieMgrWidgets .ca-orb-golden');
 assert(orb && orb.querySelector('.ca-sp-spark rect') && /Median/.test(orb.textContent) && /Within a minute/.test(orb.textContent), 'the widget’s popup: a sparkline, the median, the chance within a minute');
 
+// ---- the timer bars, on the chart's axis, and the chance of a golden cookie before each effect ends
+Game.buffs = {
+  Frenzy: { name: 'Frenzy', time: 30 * 60, maxTime: 30 * 77, multCpS: 7 },
+  'Click frenzy': { name: 'Click frenzy', time: 30 * 10, maxTime: 30 * 13, multClick: 777 },
+  Clot: { name: 'Clot', time: 30 * 2000, maxTime: 30 * 2000, multCpS: 0.5 },
+};
+const bw = CA.Timers.distribution('golden').wait;
+const eff = CA.Timers.buffsWithGolden();
+const fr = eff.find((b) => b.name === 'Frenzy');
+assert(fr && Math.abs(fr.golden - bw.within(60)) < 1e-12 && fr.golden > 0 && fr.golden < 1, `Frenzy, 60 s left: a golden cookie before it ends ${(fr.golden * 100).toFixed(1)}% (the chance within 60 s)`);
+assert(eff.find((b) => b.name === 'Clot').golden > 0.999, 'an effect outlasting the latest: surely one comes first');
+assert(Math.abs(V('buff.goldenChance', 'frenzy') - fr.golden) < 1e-12 && V('buff.goldenChance', 'Dragonflight') === 0, 'the word buff.goldenChance (0 when not running)');
+CA.UI.Menu.render();
+const lanes = [...card().querySelectorAll('[data-sp-chart="golden"] .ca-sp-lane')];
+assert(lanes.length === 4 && lanes[0].classList.contains('next') && lanes.some((l) => l.classList.contains('up')) && lanes.some((l) => l.classList.contains('click')) && lanes.some((l) => l.classList.contains('down')), `the bars: the next golden cookie, then each effect (boost, click, malus) — ${lanes.map((l) => l.getAttribute('class')).join(' | ')}`);
+const svgG = card().querySelector('[data-sp-chart="golden"]');
+const ax = (s) => {
+  const x0 = 8;
+  return x0 + ((640 - 16) * Math.min(bw.range, s)) / bw.range;
+};
+const frPc = `${(fr.golden * 100).toFixed(fr.golden < 0.1 ? 1 : 0)}%`;
+const frLane = lanes.find((l) => /Frenzy/.test(l.textContent));
+const frW = Number(frLane.querySelector('.left').getAttribute('width'));
+assert(Math.abs(8 + frW - ax(60)) < 0.05, `the Frenzy bar ends at 60 s on the chart's own axis (x ${(8 + frW).toFixed(1)} vs ${ax(60).toFixed(1)})`);
+assert(/golden cookie before it ends/.test(frLane.textContent) && frLane.textContent.includes(frPc), 'the bar says the chance');
+assert(/→/.test(lanes.find((l) => /Clot/.test(l.textContent)).textContent), 'a bar past the chart’s end: an arrow');
+assert(Number(svgG.getAttribute('viewBox').split(' ')[3]) === 150 + 4 * 14, 'the chart grows a lane per bar');
+CA.UI.Widgets.render();
+CA.UI.Widgets.tick();
+const orb2 = doc.querySelector('#CookieMgrWidgets .ca-orb-golden');
+assert(new RegExp(`Frenzy[^]*GC ${frPc}`).test(orb2.textContent), `the widget’s popup: each effect with its chance of a golden cookie (${(orb2.textContent.match(/Frenzy[^%]*%/) || [''])[0]})`);
+Game.buffs = {};
+CA.UI.Menu.render();
+
 // ---- switches out of payback
 const spec = { Cursor: [15, 0.1], Grandma: [100, 1] };
 Object.keys(spec).forEach((n, i) => Object.assign(Game.Objects[n], { id: i, basePrice: spec[n][0], free: 0, amount: 5 }));

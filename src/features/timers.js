@@ -6,7 +6,8 @@
 //                              that frame (so surely by maxTime). From that, exactly: the soonest it
 //                              can come, the latest, the expected wait, the median, the chance it
 //                              comes within N seconds. (Cookie Monster only shows the min and max.)
-//   buffs                      seconds left of each effect, its multipliers
+//   buffs                      seconds left of each effect, its multipliers — and the chance a golden
+//                              cookie comes before it ends
 //   sugar lump                 seconds until mature / ripe / overripe (it falls off then), its type
 //   autosave                   seconds until the game saves itself (once a minute)
 //   magic                      seconds until the Grimoire's magic is full (features/grimoire.js)
@@ -225,6 +226,15 @@ CA.Timers = (() => {
       .filter((b) => b && b.time > 0)
       .map((b) => ({ name: b.name, secs: b.time / fps(), maxSecs: (b.maxTime || b.time) / fps(), cps: b.multCpS !== undefined ? b.multCpS : 1, click: b.multClick !== undefined ? b.multClick : 1 }));
 
+  /**
+   * The effects running, each with the chance a golden cookie appears before it ends (golden: 0–1; 1
+   * while one's on screen, 0 with none coming) — what a Frenzy can still be stacked with.
+   */
+  function buffsWithGolden() {
+    const s = spawnOf('golden');
+    return buffs().map((b) => ({ ...b, golden: s ? s.within(b.secs) : 0 }));
+  }
+
   const LUMP_TYPES = ['normal', 'bifurcated', 'golden', 'meaty', 'caramelized'];
   /** The sugar lump: { type, matureIn, ripeIn, fallsIn } seconds (0 once reached), or null before lumps. */
   function lump() {
@@ -263,10 +273,14 @@ CA.Timers = (() => {
       const b = buffs().find((x) => x.name.toLowerCase() === String(n).toLowerCase());
       return b ? b.secs : 0;
     }, ['effect']);
+    V('buff.goldenChance', 'the chance a golden cookie appears before an effect ends (0–1; 0: not running)', (n) => {
+      const b = buffsWithGolden().find((x) => x.name.toLowerCase() === String(n).toLowerCase());
+      return b ? b.golden : 0;
+    }, ['effect']);
     V('lump.ripeIn', 'seconds until the sugar lump is ripe (0: it is)', () => (lump() || { ripeIn: NaN }).ripeIn);
     V('autosave.in', 'seconds until the game saves itself', () => autosave() ?? NaN);
     V('magic.fullIn', 'seconds until the Grimoire’s magic is full (0: it is)', () => magicFull() ?? NaN);
   }
 
-  return { init, spawnOf, distribution, waitFrom, meanWithout, goldenFactors, reindeerFactors, buffs, lump, autosave, magicFull, curve, LUMP_TYPES };
+  return { init, spawnOf, distribution, waitFrom, meanWithout, goldenFactors, reindeerFactors, buffs, buffsWithGolden, lump, autosave, magicFull, curve, LUMP_TYPES };
 })();
