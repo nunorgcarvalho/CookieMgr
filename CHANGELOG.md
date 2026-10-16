@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 3.10.1 — 2026-10-16
+
+- **The Full-garden replanter replants at the tick by default** (`replantAtTick = true`): a new round goes on
+  fertilizer first, the old plants keep working, and everything is replanted in the last seconds before the tick.
+  The simulator's sweep — the real game, a level-6 golden clover field, 24 h × 4 seeds, the first hour left out —
+  has it ahead on every seed: golden cookie frequency +56.0% ± 0.3 against +54.8% ± 0.5 planting at once (+1.19 ±
+  0.29 points), +60% or more 69.4% of the time against 68.3%. An empty plot, or a round fertilizer can't come for, is
+  still planted at once. A copy you edited keeps its own setting.
+
 ## 3.10.0 — 2026-10-16
 
 - **The store's tooltips, your way.** A **Store tooltips** card on the Payback page chooses which lines CookieMgr's
