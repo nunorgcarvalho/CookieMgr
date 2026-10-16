@@ -6,13 +6,10 @@
 // Spontaneous Edifice (the game needs half the price in the bank; Cookie Monster asks for twice it),
 // the Dragon Guts aura on wrinklers (Cookie Monster leaves it out).
 import { makeAssert } from '../harness/game.mjs';
-import { gameOrSkip } from '../harness/sim.mjs';
-import { createSim } from '../../sim/sim.mjs';
+import { simWithCookieMonster, settle } from '../harness/cmSim.mjs';
 
 const { assert, done } = makeAssert();
-await gameOrSkip();
-
-const sim = await createSim({ seed: 11, cookieMonster: true });
+const sim = await simWithCookieMonster({ seed: 11 }); // v3.7.2: waits for Cookie Monster's numbers; skips if it can't be downloaded
 const { Game, CA } = sim;
 const W = sim.game.ctx;
 sim.run({ seconds: 3 });
@@ -30,8 +27,11 @@ Game.UpgradesInStore.slice(0, 60).forEach((x) => x.pool !== 'toggle' && x.pool !
 Game.cookies = 3e13;
 
 function compare(label) {
-  Game.recalculateGains = 1;
-  sim.run({ seconds: 6 });
+  // v3.7.2: given up to three refreshes (settle) — Cookie Monster refreshes on its own schedule
+  const bad = settle(sim, differences);
+  assert(!bad.length, `${label}: Lucky, Conjure, chains, wrinklers, next achievements match Cookie Monster${bad.length ? ` — ${bad.length} differ: ${bad.slice(0, 6).join('; ')}` : ''}`);
+}
+function differences() {
   const C = W.CookieMonsterData.Cache;
   const G = CA.GoldenMath;
   const bad = [];
@@ -55,7 +55,7 @@ function compare(label) {
   check('fattest wrinkler', s.fattest ? s.fattest.reward : 0, C.WrinklersFattest[0]);
   const next = C.ObjectsNextAchievement || {};
   Object.keys(next).forEach((n) => check(`${n} to next achievement`, CA.Payback.nextAchievement(n).n, next[n].AmountNeeded, 0));
-  assert(!bad.length, `${label}: Lucky, Conjure, chains, wrinklers, next achievements match Cookie Monster${bad.length ? ` — ${bad.length} differ: ${bad.slice(0, 6).join('; ')}` : ''}`);
+  return bad;
 }
 
 compare('mid game');

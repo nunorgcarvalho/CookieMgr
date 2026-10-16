@@ -857,6 +857,27 @@
   font-style: italic;
   color: #a89a83;
 }
+/* the chart hover readout's parts: a small heading, a divider before a section, the game-off note */
+#CookieMgrLayer .ca-tip-sub {
+  margin: 2px 0 1px;
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #8f8270;
+}
+#CookieMgrLayer .ca-tip-sec {
+  margin-top: 5px;
+  padding-top: 5px;
+  border-top: 1px solid rgba(255, 220, 150, 0.15);
+}
+#CookieMgrLayer .ca-tip-sec:empty {
+  padding-top: 0;
+}
+#CookieMgrLayer .ca-tip-off {
+  margin-top: 5px;
+  font-size: 10px;
+  color: #8f8270;
+}
 
 #CookieMgrMenu .ca-legend {
   display: flex;

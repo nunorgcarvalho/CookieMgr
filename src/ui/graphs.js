@@ -84,6 +84,8 @@ CA.UI.Graphs = (() => {
       label: iv.label,
       icon: iv.icon,
       tip: () => intervalTip(iv),
+      // what it multiplies, for the hover readout (combined with the others active there)
+      mults: { CpS: iv.multCps, clicks: iv.multClick },
       iv,
     }));
   }

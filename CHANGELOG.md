@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+## 3.7.2 — 2026-10-16
+
+- **Payback is much cheaper to work out.** It measures only what's asked: buying (Best building / Best upgrade,
+  `best`, `pp.best`, `buy.best`) asks for the buildings you can buy at the amount you'd buy and the store's
+  upgrades — not every building at ×1, ×10 and ×100 (locked ones too), which only the store's colours and the
+  Payback page need. An upgrade whose wait to afford alone outlasts the best building's payback period isn't measured
+  for the best buy; cookie upgrades that win nothing are worked out (CpS × their power) after one of them is measured
+  as a check. The store redraws its colours from a table up to 2 s old. Same answers — checked against Cookie
+  Monster and the full table. In the simulator a fresh game runs about 6× faster (255× real time, from 44×), a
+  big-bank game about 5× faster (19×, from 4×).
+- The parity tests against Cookie Monster wait for its numbers and allow it a refresh or two (no more flaky runs
+  when the machine is busy), and skip when Cookie Monster can't be downloaded.
+
+## 3.7.1 — 2026-10-16
+
+- **Charts: one hover readout that follows the x axis.** Wherever the cursor is: the time; every golden-cookie
+  effect active there, each with what it multiplies, and — two or more — all of them combined (the overall boost to
+  CpS and clicks); then the bar's production figures. Over an effect lane (it's highlighted) or an event marker,
+  that one's details are added as a section of the same box instead of replacing it.
+- **Game-off stretches are quiet.** On the Active time axis their dotted lines are much fainter, the cursor no longer
+  snaps to them, and a stretch within the hovered bar is a one-line note ("Game off for 1h 20m here").
+- Charts: an effect interval can say what it multiplies (`mults`), for the readout to combine.
+
 ## 3.7.0 — 2026-10-16
 
 - **Alerts** (Cookie Monster's notifications, CookieMgr's way): built-in "When…" macros for a golden cookie, a wrath

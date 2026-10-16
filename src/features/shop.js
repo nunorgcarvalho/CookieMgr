@@ -51,7 +51,7 @@ CA.Shop = (() => {
         .sort((a, b) => (a.p === b.p ? a.b.id - b.b.id : a.p - b.p))
         .map((x) => x.b.name);
     }
-    const t = CA.Payback.table();
+    const t = CA.Payback.table({ staleMs: 2000 }); // redrawn every half second: a table up to 2 s old will do
     const C = CA.Payback.COLOURS;
     return all
       .map((b) => {

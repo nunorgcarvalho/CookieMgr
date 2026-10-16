@@ -41,7 +41,7 @@ The Graphs page has two tabs — **Cookies** and **Prestige** — of charts draw
 - **Window:** 1m, 5m, 15m, 1h, 3h, 12h, 1d, 7d or All. Older history is coarser (see Recorded history), and bars simply
   get wider where it is.
 - **Active time:** leaves out time the game wasn't running (tab closed, computer asleep, background throttling) — a 1h
-  window then covers an hour of actual play. A faint dotted line marks each cut-out stretch (hover it for how long);
+  window then covers an hour of actual play. A faint dotted line marks each cut-out stretch (the hover readout says how long);
   axis labels still show the wall-clock time. One toggle for all charts, also in Settings.
 - **Smooth:** Off, 5s, 15s, 1m, 5m, 15m or 1h — a centered moving average: each point becomes the average of the
   stretch of time around it (weighted by time, so a smoothed rate is exactly the cookies over that stretch ÷ its
@@ -57,7 +57,11 @@ The Graphs page has two tabs — **Cookies** and **Prestige** — of charts draw
 - **Scrollable:** shift-drag (or scroll sideways) to look back; **Pause** / **Jump to live**. Every choice is remembered.
 - **Effect shading** behind the chart for every golden-cookie effect (Frenzy, Click frenzy, Elder frenzy, Dragonflight,
   Clot, …), stacked in lanes (each with the effect's own icon) when they overlap, and **event markers** for golden/wrath cookies, reindeer, stock trades
-  and ascensions. Hover anything for details.
+  and ascensions.
+- **One hover readout** that follows the x axis: the time; every effect active there, each with what it multiplies,
+  and — two or more — all of them combined (the overall boost to CpS and clicks); then the bar's figures. Over an
+  effect lane (highlighted) or an event marker its details are added as a section of the same box, and a stretch the
+  game was off within that bar is a one-line note.
 
 **Cookies tab**
 
