@@ -1,7 +1,7 @@
 // v3.4.1: a popped shimmer isn't counted again. The game leaves a popped golden cookie in
 // Game.shimmers (popped = true) while it fades out, and its pop() does nothing the second time —
-// shimmers(), shimmer.pop and "a golden cookie is on screen" now skip it (the simulator logged
-// 103 pops for 8 golden cookies in an hour).
+// shimmers(), shimmer.pop and "a golden cookie is on screen" now skip it. (Pops can still outnumber
+// Game.goldenClicks — it counts only the "lead" golden cookie, not storm drops or chain links.)
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
 import { boot, sleep, makeAssert } from '../harness/game.mjs';
 
