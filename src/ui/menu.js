@@ -97,7 +97,7 @@ CA.UI.Menu = (() => {
 
   /** A page's options card: its options as a grid of tiles (nothing when the group has none). */
   function optionsCard(title, icon, group, extra = '') {
-    const opts = CA.Settings.optionsIn(group).filter((d) => typeof d.default === 'boolean');
+    const opts = CA.Settings.optionsIn(group).filter((d) => typeof d.default === 'boolean' || d.choices); // switches, and dropdowns for options with choices
     if (!opts.length && !extra) return '';
     return `<div class="ca-card">${cardHead(title, icon)}<div class="ca-optgrid">${opts.map(optionTile).join('')}</div>${extra}</div>`;
   }

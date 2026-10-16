@@ -10,6 +10,11 @@
 //                 away from one last, in the game's order
 // While the store sells, it's the game's order.
 //
+// **Minimum bulk** — what CookieMgr's buyers (Best building, buy.best, the Payback page's ranking, the
+// store's Best buy sort) buy a building in: ×1, ×10 or ×100 — single purchases out, if you like to buy
+// in tens. With Round to multiples on, up to the next multiple of it (37 owned, ×10 → 3, to 40); off,
+// exactly that many. "auto" (the default): ×10 with Round to multiples on, else ×1 — as before.
+//
 // **Round to multiples** — with ×10 or ×100 selected, a click stops at a multiple of it:
 //   buying, the next one up: 37 owned, ×10 → buys 3 (to 40); 40 owned → buys 10
 //   selling, the next one down: 37 owned, ×10 → sells 7 (to 30); 40 owned → sells 10
@@ -55,7 +60,8 @@ CA.Shop = (() => {
     const C = CA.Payback.COLOURS;
     return all
       .map((b) => {
-        const bulk = Game.buyBulk === 10 || Game.buyBulk === 100 ? Game.buyBulk : 1;
+        // what a click buys — or the minimum bulk, when one is set and it's more
+        const bulk = Math.max(Game.buyBulk === 10 || Game.buyBulk === 100 ? Game.buyBulk : 1, Number(CA.Settings.get('minBulk')) || 1);
         const n = amountFor(b, bulk) || 1;
         const row = t.buildings[n] && t.buildings[n][b.name];
         const price = row ? row.price : CA.Payback.sumPrice(b, n);
@@ -69,6 +75,18 @@ CA.Shop = (() => {
   // ---- round up ---------------------------------------------------------------------------
 
   const roundUp = () => !!CA.Settings.get('roundUpBulk');
+  /** The minimum bulk CookieMgr's buyers buy in: 1, 10 or 100. */
+  function minBulk() {
+    const v = Number(CA.Settings.get('minBulk'));
+    if (v === 1 || v === 10 || v === 100) return v;
+    return roundUp() ? 10 : 1; // auto
+  }
+  /** How many of a building one purchase by CookieMgr's buyers takes (minimum bulk, rounded up with Round to multiples). */
+  function buyAmount(b) {
+    const m = minBulk();
+    if (m === 1) return 1;
+    return roundUp() ? m - ((b && b.amount) || 0) % m : m;
+  }
   /** How many a store click buys (or sells) now: the bulk amount, or what it takes to reach a multiple of it. */
   function amountFor(b, bulk = Game.buyBulk) {
     if (!roundUp() || (bulk !== 10 && bulk !== 100)) return bulk;
@@ -112,6 +130,11 @@ CA.Shop = (() => {
   function setRoundUp(on) {
     CA.Settings.set('roundUpBulk', !!on);
   }
+  const MIN_BULKS = [0, 1, 10, 100];
+  /** Sets the minimum bulk: 0 (auto), 1, 10 or 100. */
+  function setMinBulk(v) {
+    CA.Settings.set('minBulk', MIN_BULKS.includes(Number(v)) ? Number(v) : 0);
+  }
 
   function init() {
     CA.Settings.defineOption({
@@ -121,6 +144,20 @@ CA.Shop = (() => {
       name: 'Round to multiples',
       desc: 'With ×10 or ×100 selected, buying stops at the next multiple (37 → 40, not 47) and selling at the one below (37 → 30). Also on the store toolbar.',
       default: false,
+    });
+    CA.Settings.defineOption({
+      key: 'minBulk',
+      group: 'store',
+      icon: 'building',
+      name: 'Minimum bulk',
+      desc: 'What CookieMgr’s buyers buy a building in (Best building, the Payback page’s ranking, the Best buy sort): ×1, ×10 or ×100 — with Round to multiples on, up to the next multiple. Auto: ×10 with Round to multiples, else ×1.',
+      default: 0,
+      choices: [
+        { v: 0, label: 'auto' },
+        { v: 1, label: '×1' },
+        { v: 10, label: '×10' },
+        { v: 100, label: '×100' },
+      ],
     });
     CA.Settings.defineOption({
       key: 'storeSwitch',
@@ -133,7 +170,8 @@ CA.Shop = (() => {
     CA.Settings.defineOption({ key: 'storeSort', group: 'store-hidden', name: 'Building sort', desc: '', default: 'default' });
     Object.values(Game.Objects || {}).forEach(wrap);
     CA.Events.on('settings', (k) => k === 'roundUpBulk' && refreshStore());
+    CA.Events.on('settings', (k) => k === 'minBulk' && CA.Events.emit('shop'));
   }
 
-  return { init, SORTS, canSort, sort, setSort, order, roundUp, setRoundUp, amountFor };
+  return { init, SORTS, canSort, sort, setSort, order, roundUp, setRoundUp, amountFor, minBulk, buyAmount, setMinBulk, MIN_BULKS };
 })();

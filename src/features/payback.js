@@ -169,8 +169,17 @@ CA.Payback = (() => {
     return () => (b.amount -= n);
   };
   /** Whether an upgrade can be measured: unbought and unlocked (not heavenly), or a switch. */
-  const measurable = (u) => !!u && (u.pool === 'toggle' || (!u.bought && u.unlocked !== 0 && u.unlocked !== false && u.pool !== 'prestige'));
-  /** The change "buy an upgrade" (a switch flips; "… [on]" turns its "[off]" twin off). */
+  /**
+   * Switches: the game's toggle upgrades (main.js pool 'toggle') — Elder Pledge, Elder Covenant and
+   * its revoking, the Golden switch, Shimmering veil, Sugar frenzy, the season biscuits, the milk /
+   * background / sound selectors, the Jukebox. Things you flip, not things you own: they get no
+   * payback period, no colour, no place in the rankings — never "the best buy". (A Chocolate egg is a
+   * real upgrade — owned once, it pays out once — so it isn't one: it just adds no CpS.)
+   */
+  const isSwitch = (u) => !!u && u.pool === 'toggle';
+  /** Whether an upgrade can be measured: unbought, unlocked, not heavenly, not a switch. */
+  const measurable = (u) => !!u && !isSwitch(u) && !u.bought && u.unlocked !== 0 && u.unlocked !== false && u.pool !== 'prestige';
+  /** The change "buy an upgrade" (a switch flips; "… [on]" turns its "[off]" twin off — switches aren't measured now, see isSwitch, but code can still ask). */
   const buyUpgradeChange = (u) => (win) => {
     const twin = /\[on\]$/.test(u.name) ? upgradeNamed(u.name.replace('[on]', '[off]')) : null;
     const target = twin && (u.name === 'Golden switch [on]' || u.name === 'Shimmering veil [on]') ? twin : u;
@@ -326,7 +335,7 @@ CA.Payback = (() => {
   /** An upgrade's measured worth: { bonus, mouse, gain } — gain counts its clicks at your click rate. */
   function upgradeWorth(name, c = fresh()) {
     const u = upgradeNamed(name);
-    if (!u) return null;
+    if (!u || isSwitch(u)) return null;
     ensure(c, [], [u.name]);
     const e = c.u[u.name];
     if (!e) return null;
@@ -389,13 +398,15 @@ CA.Payback = (() => {
     };
     BULKS.forEach((n) => Object.values(rows[n]).forEach((r) => (r.colour = colourOf(r.pp, r.price))));
     const upgrades = {};
+    const switches = [];
     (Game.UpgradesInStore || []).forEach((u) => {
+      if (isSwitch(u)) return switches.push(u.name);
       const w = upgradeWorth(u.name, c);
       const price = upgradePrice(u);
       const v = w ? pp(price, w.gain) : Infinity;
       upgrades[u.name] = { name: u.name, price, bonus: w ? w.bonus : 0, mouse: w ? w.mouse : 0, gain: w ? w.gain : 0, pp: v, colour: colourOf(v, price), won: w ? w.won : [] };
     });
-    return { buildings: rows, upgrades, min, minBulk, colourOf };
+    return { buildings: rows, upgrades, switches, min, minBulk, colourOf };
   }
 
   // ---- the best thing to buy -----------------------------------------------------------------------
@@ -408,8 +419,9 @@ CA.Payback = (() => {
   }
   /**
    * What to buy, lowest PP first: [{ kind, name, n, label, price, pp, bonus, colour }]. kind
-   * 'building' | 'upgrade' | 'all'; opts.bulk: 1 (default) or 'round' — buildings to the next
-   * multiple of 10 (the store's Round to multiples); opts.skip: only what you can afford now;
+   * 'building' | 'upgrade' | 'all'; opts.bulk: 1 (default), 10, 100, 'round' (to the next multiple of 10)
+   * or 'auto' — what CookieMgr's buyers buy (CA.Shop.buyAmount: the minimum bulk, rounded up with
+   * Round to multiples); opts.skip: only what you can afford now;
    * opts.top: only the best has to be right (best()) — what can't beat it isn't measured: an upgrade
    * whose wait to afford alone is longer than the best building's payback period (a payback period is
    * at least that wait), anything you can't afford when skipping.
@@ -422,7 +434,7 @@ CA.Payback = (() => {
         ? []
         : objects()
             .filter((b) => !b.locked)
-            .map((b) => [b.name, opts.bulk === 'round' ? Math.max(1, 10 - ((b.amount || 0) % 10)) : opts.bulk === 10 || opts.bulk === 100 ? opts.bulk : 1]);
+            .map((b) => [b.name, opts.bulk === 'auto' ? (CA.Shop ? CA.Shop.buyAmount(b) : 1) : opts.bulk === 'round' ? Math.max(1, 10 - ((b.amount || 0) % 10)) : opts.bulk === 10 || opts.bulk === 100 ? opts.bulk : 1]);
     let us = kind === 'building' ? [] : storeUpgrades();
     const affordable = (price) => price <= Game.cookies;
     if (opts.skip && opts.top) {
@@ -460,8 +472,57 @@ CA.Payback = (() => {
     });
     return out.filter((x) => Number.isFinite(x.pp) && (!opts.skip || x.price <= Game.cookies)).sort((a, b) => a.pp - b.pp);
   }
-  /** The lowest PP: { kind, name, n, price, pp, … } or null. */
-  const best = (kind = 'all', opts = {}) => ranking(kind, { ...opts, top: true })[0] || null;
+  /** The lowest PP: { kind, name, n, price, pp, … } or null — buildings in the minimum bulk unless opts.bulk says otherwise. */
+  const best = (kind = 'all', opts = {}) => ranking(kind, { bulk: 'auto', ...opts, top: true })[0] || null;
+
+  // ---- by actual income ------------------------------------------------------------------------
+  // A payback period counts in CpS: what the game says you make. What you actually take in — the
+  // Recorder's baked cookies: clicking, golden cookies, wrinklers, everything — can be more (an
+  // active player) or less. The payback period by actual income scales it by that:
+  //   PPa = PP × CpS ÷ A(W)      A(W): the actual income averaged over the last W seconds of play
+  // (both the wait to afford and the earning back go at A instead of CpS), with W the period itself —
+  // what you made over a stretch as long as the wait is the best guess for it — and at least 5
+  // minutes: W = max(300 s, PPa), worked out by iterating. A(W) comes from the Recorder, in windows
+  // 25% apart (300 s, 375 s, 469 s…), each read at most every 5 s. History is only read.
+  const ACTUAL_MIN = 300;
+  const ACTUAL_STEP = 1.25;
+  const ACTUAL_STALE_MS = 5000;
+  let actualMemo = { at: -Infinity, m: new Map() };
+  const windowBucket = (secs) => Math.max(0, Math.ceil(Math.log(Math.max(secs, ACTUAL_MIN) / ACTUAL_MIN) / Math.log(ACTUAL_STEP) - 1e-9));
+  /** The actual income over (about) the last secs seconds of play: { actual, secs (recorded), window } or null — under a minute recorded. */
+  function actualIncome(secs) {
+    const R = CA.Recorder;
+    if (!R || typeof R.recent !== 'function') return null;
+    const now = Date.now();
+    if (now - actualMemo.at > ACTUAL_STALE_MS) actualMemo = { at: now, m: new Map() };
+    const k = windowBucket(secs);
+    if (!actualMemo.m.has(k)) {
+      const window = ACTUAL_MIN * ACTUAL_STEP ** k;
+      const r = R.recent(window);
+      actualMemo.m.set(k, r && r.secs >= 60 && Number.isFinite(r.actual) ? { actual: r.actual, secs: r.secs, window } : null);
+    }
+    return actualMemo.m.get(k);
+  }
+  /**
+   * A payback period by actual income: { pp, ratio (actual ÷ CpS), actual, window, secs } — or null
+   * when there's too little recorded (under a minute) or no CpS. ∞ stays ∞.
+   */
+  function ppActual(ppc) {
+    const C = Game.cookiesPs;
+    if (!(C > 0) || Number.isNaN(ppc)) return null;
+    let W = Math.max(ACTUAL_MIN, Number.isFinite(ppc) ? ppc : ACTUAL_MIN);
+    let r = null;
+    let v = NaN;
+    for (let i = 0; i < 16; i++) {
+      r = actualIncome(W);
+      if (!r) return null;
+      v = r.actual > 0 ? (ppc * C) / r.actual : Infinity;
+      const next = Math.max(ACTUAL_MIN, Number.isFinite(v) ? v : W);
+      if (windowBucket(next) === windowBucket(W)) break;
+      W = next;
+    }
+    return { pp: Number.isFinite(ppc) ? v : ppc, ratio: r.actual / C, actual: r.actual, window: r.window, secs: r.secs };
+  }
 
   // ---- buying ------------------------------------------------------------------------------
 
@@ -543,6 +604,14 @@ CA.Payback = (() => {
       ],
     });
     CA.Settings.defineOption({
+      key: 'ppActual',
+      group: 'payback',
+      icon: 'graphs',
+      name: 'Payback by actual income',
+      desc: 'The Payback page shows payback periods by what you’ve actually been taking in (clicking, golden cookies, wrinklers — the Recorder’s baked cookies) instead of by CpS.',
+      default: false,
+    });
+    CA.Settings.defineOption({
       key: 'ppOnlyBuyable',
       group: 'payback',
       icon: 'dollar',
@@ -550,6 +619,7 @@ CA.Payback = (() => {
       desc: 'The best (green) building is the lowest payback period you can afford right now; anything you can’t afford yet shows red.',
       default: false,
     });
+    CA.Settings.defineOption({ key: 'ppShowSwitches', group: 'payback', icon: 'filter', name: 'Show switches on the Payback page', desc: 'Switches (Elder Pledge, the Golden switch, season biscuits…) have no payback period; this shows them anyway, greyed.', default: false });
     CA.Settings.defineOption({
       key: 'ppSecondsLowerLimit',
       group: 'payback',
@@ -620,16 +690,20 @@ CA.Payback = (() => {
       return b1(n) ? pp(sumPrice(b1(n), m), buildingBonus(n, m)) : Infinity;
     });
     V('building.toNextAchievement', 'how many more of a building win an achievement (101: none within 100)', ['building'], (n) => nextAchievement(n).n);
-    V('upgrade.gain', 'the CpS an upgrade adds (clicks counted at your click rate)', ['upgrade'], (n) => (upgradeWorth(n) || { gain: 0 }).gain);
-    V('upgrade.payback', 'the payback period of an upgrade (seconds)', ['upgrade'], (n) => {
+    // a switch has neither: NaN
+    V('upgrade.gain', 'the CpS an upgrade adds (clicks counted at your click rate; NaN for a switch)', ['upgrade'], (n) => (isSwitch(upgradeNamed(n)) ? NaN : (upgradeWorth(n) || { gain: 0 }).gain));
+    V('upgrade.payback', 'the payback period of an upgrade (seconds; NaN for a switch)', ['upgrade'], (n) => {
       const u = upgradeNamed(n);
+      if (isSwitch(u)) return NaN;
       const w = upgradeWorth(n);
       return u && w ? pp(upgradePrice(u), w.gain) : Infinity;
     });
     V('best', 'what has the lowest payback period ("" when nothing does): kind building, upgrade or all', ['kind'], (k) => (best(k || 'all') || {}).name || '');
     V('clickRate', 'big cookie clicks per second (last 10 s)', [], clickRate);
     V('timeTo', 'seconds until you can afford a price at your CpS (0: now)', ['price'], (p) => timeTo(Number(p)));
+    V('paybackActual', 'a payback period by actual income: the period × CpS ÷ what you took in over a stretch as long (NaN: too little recorded)', ['seconds'], (p) => (ppActual(Number(p)) || { pp: NaN }).pp);
+    V('actualIncome', 'cookies a second you actually took in over about the last seconds of play (at least 5 minutes; NaN: too little recorded)', ['seconds'], (p) => (actualIncome(Number(p) || 0) || { actual: NaN }).actual);
   }
 
-  return { init, calls: () => calls, table, ranking, best, buy, buyBuilding, buyUpgrade, buildingBonus, upgradeWorth, pp, timeTo, sumPrice, clickRate, nextAchievement, storeUpgrades, measureAll, COLOURS, BULKS };
+  return { init, isSwitch, ppActual, actualIncome, calls: () => calls, table, ranking, best, buy, buyBuilding, buyUpgrade, buildingBonus, upgradeWorth, pp, timeTo, sumPrice, clickRate, nextAchievement, storeUpgrades, measureAll, COLOURS, BULKS };
 })();

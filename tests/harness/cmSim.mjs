@@ -11,6 +11,12 @@ import { ensureGame, ensureMod } from '../../sim/game/fetch.mjs';
 import { createSim } from '../../sim/sim.mjs';
 
 function skip(why) {
+  // in CI (GitHub Actions sets CI=true) a parity test that can't run is a failure, not a pass: a gate
+  // that silently skips isn't one
+  if (process.env.CI) {
+    console.log(`FAIL: ${why} — in CI the parity tests must run`);
+    process.exit(1);
+  }
   console.log(`skipped: ${why}`);
   console.log('\nALL CHECKS PASSED');
   process.exit(0);

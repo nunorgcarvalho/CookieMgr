@@ -5,6 +5,7 @@
 //               order out; laySort() lays the store's building rows out in it, as Cookie Monster
 //               does: the building list as a grid, a row number per building)
 //   multiples   on/off: ×10 / ×100 buys and sells stop at a multiple of it
+//   min bulk    auto → ×1 → ×10 → ×100: what CookieMgr's buyers buy a building in (features/shop.js)
 //
 // Placed like the sidebar: measured from the game's panels on resize and every half second. The
 // building list gets a little room at the bottom so its last row can scroll clear of the toolbar.
@@ -34,7 +35,12 @@ CA.UI.StoreBar = (() => {
       `data-tip="${CA.Util.escapeHtml(
         `Round to multiples: ${on ? 'on' : 'off'} — with ×10 or ×100, buying stops at the next multiple (37 → 40) and selling at the one below (37 → 30).${usable ? '' : ' Select ×10 or ×100 to use it.'}`
       )}">` +
-      `<span class="ca-sb-txt">${selling ? '⌊' : '⌈'}${bulk}${selling ? '⌋' : '⌉'}</span></button></div>`;
+      `<span class="ca-sb-txt">${selling ? '⌊' : '⌈'}${bulk}${selling ? '⌋' : '⌉'}</span></button>`;
+    const mb = Number(CA.Settings.get('minBulk')) || 0;
+    h +=
+      `<button type="button" class="ca-sb-btn ca-sb-min${mb ? ' on' : ''}" data-ss-min data-tip="${CA.Util.escapeHtml(
+        `Minimum bulk: ${mb ? `×${mb}` : `auto (×${CA.Shop.minBulk()})`} — what CookieMgr’s buyers (Best building, buy.best, the Payback page) buy a building in${CA.Shop.roundUp() ? ', up to the next multiple of it' : ''}. Click for the next: auto, ×1, ×10, ×100.`
+      )}"><span class="ca-sb-txt">≥${CA.Shop.minBulk()}</span></button></div>`;
     return h;
   }
 
@@ -83,6 +89,15 @@ CA.UI.StoreBar = (() => {
       laySort();
       return;
     }
+    if (e.target.closest('[data-ss-min]')) {
+      e.stopPropagation();
+      CA.Util.sound('snd/tick.mp3');
+      const all = CA.Shop.MIN_BULKS;
+      CA.Shop.setMinBulk(all[(all.indexOf(Number(CA.Settings.get('minBulk')) || 0) + 1) % all.length]);
+      render();
+      laySort();
+      return;
+    }
     if (e.target.closest('[data-ss-round]')) {
       e.stopPropagation();
       CA.Util.sound(CA.Shop.roundUp() ? 'snd/clickOff2.mp3' : 'snd/clickOn2.mp3');
@@ -124,7 +139,7 @@ CA.UI.StoreBar = (() => {
   }
 
   function init() {
-    CA.Events.on('settings', (k) => (k === 'storeSwitch' || k === 'roundUpBulk' || k === null) && render());
+    CA.Events.on('settings', (k) => (k === 'storeSwitch' || k === 'roundUpBulk' || k === 'minBulk' || k === null) && render());
     CA.Events.on('shop', render);
     addEventListener('resize', place);
     // bulk / buy-sell mode, Cookie Monster arriving, the window resizing: cheap to redo

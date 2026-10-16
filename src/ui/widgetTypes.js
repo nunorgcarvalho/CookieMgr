@@ -325,16 +325,17 @@ CA.UI.WidgetTypes = (() => {
     const { span } = F();
     const s = CA.Timers.spawnOf('golden');
     const me = Game.shimmerTypes && Game.shimmerTypes.golden;
-    const buffs = CA.Timers.buffs();
+    const buffs = CA.Timers.buffsWithGolden ? CA.Timers.buffsWithGolden() : CA.Timers.buffs();
     const when = (x) => (x <= 0 ? 'now' : span(x));
     const rows = s
       ? s.spawned
         ? [['Golden cookie', 'on screen!']]
         : [
-            ['Soonest', when(s.soonest)],
+            [null, CA.UI.SpawnView.sparkline('golden')],
             ['Expected', when(s.expected)],
-            ['Latest', when(s.latest)],
+            ['Median', when(s.median)],
             ['Within a minute', `${Math.round(s.within(60) * 100)}%`],
+            ['Soonest – latest', `${when(s.soonest)} – ${when(s.latest)}`],
           ]
       : [['Golden cookies', 'not coming (Golden switch)']];
     return orb({
@@ -345,7 +346,7 @@ CA.UI.WidgetTypes = (() => {
       ready: !!(s && s.spawned),
       label: !s ? 'off' : s.spawned ? 'now!' : span(s.expected),
       extra: buffs.length ? `<span class="ca-orb-dots ca-wt"><span class="s3"><i></i>${buffs.length}</span></span>` : '',
-      pop: [[null, '<b>Next golden cookie</b>']].concat(rows, buffs.map((b) => [b.name, span(b.secs)])),
+      pop: [[null, '<b>Next golden cookie</b>']].concat(rows, buffs.map((b) => [b.name, s && !s.spawned && b.golden !== undefined ? `${span(b.secs)} · GC ${(b.golden * 100).toFixed(b.golden < 0.1 ? 1 : 0)}%` : span(b.secs)])),
     });
   }
 

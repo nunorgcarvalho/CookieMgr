@@ -5520,23 +5520,6 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-meter.ok .ca-meter-sub span:first-child {
   color: #7dff7a;
 }
-#CookieMgrMenu .ca-strip {
-  display: flex;
-  align-items: flex-end;
-  gap: 1px;
-  height: 26px;
-  margin: 3px 0 1px;
-}
-#CookieMgrMenu .ca-strip i {
-  flex: 1;
-  min-width: 1px;
-  max-height: 100%;
-  border-radius: 1px 1px 0 0;
-  background: linear-gradient(to top, #c98a2e, #ffe39a);
-}
-#CookieMgrMenu .ca-spawn-strip {
-  grid-column: span 2;
-}
 #CookieMgrMenu .ca-wi-head {
   padding: 10px 12px 4px;
   font-size: 10px;
@@ -5658,4 +5641,193 @@ body.ca-has-storebar #products {
   to {
     opacity: 0;
   }
+}
+
+/* ---------- the next golden cookie, as statistics (ui/spawnView.js) ---------- */
+#CookieMgrMenu .ca-sp-chart {
+  display: block;
+  width: calc(100% - 24px);
+  height: 150px;
+  margin: 8px 12px 0;
+  cursor: crosshair;
+}
+#CookieMgrMenu .ca-sp-band {
+  fill: rgba(255, 224, 102, 0.07);
+}
+#CookieMgrMenu .ca-sp-band2 {
+  fill: rgba(255, 224, 102, 0.12);
+}
+#CookieMgrMenu .ca-sp-pdf rect {
+  fill: #e0a84a;
+}
+#CookieMgrMenu .ca-sp-cdf {
+  fill: none;
+  stroke: #fff3d6;
+  stroke-width: 1.6;
+  vector-effect: non-scaling-stroke;
+}
+#CookieMgrMenu .ca-sp-mean line,
+#CookieMgrMenu .ca-sp-median line,
+#CookieMgrMenu .ca-sp-hover line,
+#CookieMgrMenu .ca-sp-axis {
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+#CookieMgrMenu .ca-sp-mean line {
+  stroke: #7dff7a;
+  stroke-dasharray: 4 3;
+}
+#CookieMgrMenu .ca-sp-median line {
+  stroke: #6ec3ff;
+}
+#CookieMgrMenu .ca-sp-axis {
+  stroke: rgba(255, 255, 255, 0.25);
+}
+#CookieMgrMenu .ca-sp-chart text {
+  font: 10px Tahoma, Arial, sans-serif;
+  fill: #a89a83;
+}
+#CookieMgrMenu .ca-sp-mean text {
+  fill: #7dff7a;
+}
+#CookieMgrMenu .ca-sp-median text {
+  fill: #6ec3ff;
+}
+#CookieMgrMenu .ca-sp-hover line {
+  stroke: #fff3d6;
+}
+#CookieMgrMenu .ca-sp-hover text {
+  fill: #fff3d6;
+  font-weight: bold;
+  paint-order: stroke;
+  stroke: rgba(0, 0, 0, 0.85);
+  stroke-width: 3px;
+}
+/* the timer bars under the spawn chart */
+#CookieMgrMenu .ca-sp-lane .track {
+  fill: rgba(255, 255, 255, 0.04);
+}
+#CookieMgrMenu .ca-sp-lane .wait {
+  fill: rgba(255, 255, 255, 0.1);
+}
+#CookieMgrMenu .ca-sp-lane .open {
+  fill: rgba(224, 168, 74, 0.55);
+}
+#CookieMgrMenu .ca-sp-lane line {
+  stroke: #7dff7a;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+#CookieMgrMenu .ca-sp-lane .left {
+  fill: rgba(160, 160, 160, 0.5);
+}
+#CookieMgrMenu .ca-sp-lane.up .left {
+  fill: rgba(125, 255, 122, 0.45);
+}
+#CookieMgrMenu .ca-sp-lane.click .left {
+  fill: rgba(196, 140, 255, 0.55);
+}
+#CookieMgrMenu .ca-sp-lane.down .left {
+  fill: rgba(255, 110, 110, 0.5);
+}
+#CookieMgrMenu .ca-sp-chart .ca-sp-lane text {
+  font-size: 9px;
+  fill: #fff3d6;
+  paint-order: stroke;
+  stroke: rgba(0, 0, 0, 0.8);
+  stroke-width: 2.5px;
+}
+#CookieMgrMenu .ca-sp-legend .lane {
+  background: rgba(125, 255, 122, 0.45);
+}
+#CookieMgrMenu .ca-sp-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  padding: 4px 12px 0;
+  font-size: 10px;
+  color: #a89a83;
+}
+#CookieMgrMenu .ca-sp-legend span {
+  display: inline-block;
+  width: 10px;
+  height: 8px;
+  margin-left: 6px;
+  border-radius: 2px;
+}
+#CookieMgrMenu .ca-sp-legend .pdf {
+  background: #e0a84a;
+}
+#CookieMgrMenu .ca-sp-legend .cdf {
+  height: 2px;
+  background: #fff3d6;
+}
+#CookieMgrMenu .ca-sp-legend .band {
+  background: rgba(255, 224, 102, 0.24);
+}
+#CookieMgrMenu .ca-sp-legend .band2 {
+  background: rgba(255, 224, 102, 0.12);
+}
+#CookieMgrMenu .ca-sp-chips,
+#CookieMgrMenu .ca-sp-factors {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px 0;
+  font-size: 11px;
+  color: #a89a83;
+}
+#CookieMgrMenu .ca-sp-chip,
+#CookieMgrMenu .ca-sp-factor {
+  padding: 2px 7px;
+  border-radius: 10px;
+  color: #e8dcc0;
+  background: rgba(0, 0, 0, 0.3);
+}
+#CookieMgrMenu .ca-sp-chip b,
+#CookieMgrMenu .ca-sp-factor b {
+  color: #ffe066;
+}
+#CookieMgrMenu .ca-sp-factor {
+  border: 1px solid rgba(255, 224, 102, 0.3);
+  font: 11px Tahoma, Arial, sans-serif;
+  cursor: pointer;
+}
+#CookieMgrMenu .ca-sp-factor.off {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+#CookieMgrMenu .ca-sp-note {
+  padding: 6px 12px 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #a89a83;
+}
+#CookieMgrMenu .ca-sp-note b {
+  color: #fff3d6;
+}
+#CookieMgrMenu .ca-sp {
+  padding-bottom: 12px;
+}
+/* the widget popup's sparkline */
+.ca-sp-spark {
+  display: block;
+  width: 120px;
+  height: 24px;
+}
+.ca-sp-spark rect {
+  fill: #e0a84a;
+}
+.ca-sp-spark line {
+  stroke: #7dff7a;
+  stroke-width: 1;
+}
+/* a switch on the Payback page: no payback period, greyed */
+#CookieMgrMenu .ca-pp-up.ca-pp-switch {
+  cursor: default;
+  opacity: 0.4;
+  filter: grayscale(1);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
 }

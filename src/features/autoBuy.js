@@ -1,8 +1,8 @@
 // Buying macros, and petting the dragon.
 //
-//   Best building                    buys the building with the lowest payback period (PP) — one at
-//                                    a time, or up to the next multiple of 10 when the store's
-//                                    "Round to multiples" is on (ranked by the PP of exactly that many)
+//   Best building                    buys the building with the lowest payback period (PP) — in the
+//                                    store's minimum bulk (×1, ×10, ×100; up to the next multiple of it
+//                                    when "Round to multiples" is on), ranked by the PP of exactly that many
 //   Best upgrade                     buys the upgrade with the lowest PP; an upgrade that only makes
 //                                    clicks stronger is worth what it adds per click × your clicks
 //                                    per second
@@ -40,7 +40,7 @@ CA.AutoBuy = (() => {
   function candidates(kinds, opts = {}) {
     const pass = CA.Macros.passKey();
     if (pass == null) return candidatesNow(kinds, opts);
-    const key = `${kinds.join(',')}|${!!opts.top}|${!!opts.skip}|${CA.Shop.roundUp()}|${Game.cookies}`;
+    const key = `${kinds.join(',')}|${!!opts.top}|${!!opts.skip}|${CA.Shop.roundUp()}|${CA.Shop.minBulk()}|${Game.cookies}`;
     if (!memo || memo.pass !== pass) memo = { pass, lists: new Map() };
     if (!memo.lists.has(key)) memo.lists.set(key, candidatesNow(kinds, opts));
     return memo.lists.get(key);
@@ -48,7 +48,7 @@ CA.AutoBuy = (() => {
   function candidatesNow(kinds, opts = {}) {
     const kind = kinds.length > 1 ? 'all' : kinds[0];
     return P()
-      .ranking(kind, { bulk: CA.Shop.roundUp() ? 'round' : 1, top: !!opts.top, skip: !!opts.skip })
+      .ranking(kind, { bulk: 'auto', top: !!opts.top, skip: !!opts.skip })
       .map((x) => ({ ...x, buy: () => P().buy(x) }));
   }
 

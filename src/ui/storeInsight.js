@@ -9,7 +9,9 @@
 //   warnings   in the same block: buying it would take your bank below what a Lucky! (or a Lucky! in
 //              a Frenzy, or Conjure Baked Goods) needs to pay its most
 //
-// Options (Settings → Store): storeColours, storeTooltips, storeWarnings.
+//   sort       optionally, the upgrades in payback order (colour group, then payback period)
+//
+// Options (Settings → Store): storeColours, storeTooltips, storeWarnings, storeUpgradeSort.
 
 CA.UI = CA.UI || {};
 
@@ -43,9 +45,24 @@ CA.UI.StoreInsight = (() => {
       COLOURS.forEach((c) => el.classList.remove(`ca-pp-${c}`));
       if (on) el.classList.add(`ca-pp-${rowFor(b, t).colour}`);
     });
+    // the upgrades in payback order (colour group, then payback period) — or the game's
+    const sorted = S('storeUpgradeSort') && Game.buyMode === 1;
+    const tu = sorted ? t || P().table() : null;
+    const rank = sorted
+      ? (Game.UpgradesInStore || [])
+          .map((u) => ({ u, r: tu.upgrades[u.name] }))
+          .sort((a, b) => {
+            const ca = COLOURS.indexOf(a.r ? a.r.colour : 'gray');
+            const cb = COLOURS.indexOf(b.r ? b.r.colour : 'gray');
+            return ca - cb || (a.r ? a.r.pp : Infinity) - (b.r ? b.r.pp : Infinity);
+          })
+          .map((x) => x.u)
+      : null;
     (Game.UpgradesInStore || []).forEach((u, i) => {
       const el = document.getElementById(`upgrade${i}`);
       if (!el) return;
+      if (sorted) el.style.order = String(rank.indexOf(u) + 1);
+      else if (el.style.order) el.style.removeProperty('order');
       let dot = el.querySelector('.ca-pp-updot');
       if (!on) {
         if (dot) dot.remove();
@@ -94,6 +111,12 @@ CA.UI.StoreInsight = (() => {
     return s <= 0 ? 'now' : Number.isFinite(s) ? F().span(s) : 'not at this CpS';
   };
 
+  /** The tooltip's "by actual income" line, when enough is recorded. */
+  function actualRow(v) {
+    const a = P().ppActual(v);
+    if (!a) return null;
+    return ['Payback, actual income', `${ppText(a.pp)} <small>(×${a.ratio.toFixed(2)} CpS)</small>`];
+  }
   function buildingBlock(b) {
     if (!S('storeTooltips') || Game.buyMode !== 1) return '';
     const t = P().table();
@@ -103,10 +126,11 @@ CA.UI.StoreInsight = (() => {
     const rows = [
       [`Bonus income (×${r.n})`, `+${F().beautify(r.bonus)}/s${share(r.bonus)}`],
       ['Payback period', ppText(r.pp), `ca-pp-${r.colour}`],
+      actualRow(r.pp),
       ['Affordable', afford(r.price)],
       ['Share of production', `${(produce * 100).toFixed(2)}%`],
       ['Next achievement', next.n <= 100 ? `${next.n} more (${F().beautify(next.price)})` : 'none within 100'],
-    ];
+    ].filter(Boolean);
     if (r.won.length) rows.push(['Wins', esc(r.won.join(', '))]);
     return block(rows, warnings(r.price));
   }
@@ -118,6 +142,8 @@ CA.UI.StoreInsight = (() => {
     if (r.bonus) rows.push(['Bonus income', `${r.bonus > 0 ? '+' : ''}${F().beautify(r.bonus)}/s${share(r.bonus)}`]);
     if (r.mouse > 0) rows.push(['Per click', `+${F().beautify(r.mouse)} (≈ ${F().beautify(r.mouse * P().clickRate())}/s at your clicking)`]);
     rows.push(['Payback period', ppText(r.pp), `ca-pp-${r.colour}`]);
+    const ar = actualRow(r.pp);
+    if (ar) rows.push(ar);
     rows.push(['Affordable', afford(r.price)]);
     if (r.won.length) rows.push(['Wins', esc(r.won.join(', '))]);
     return block(rows, warnings(r.price));
@@ -156,6 +182,7 @@ CA.UI.StoreInsight = (() => {
     const D = (key, icon, name, desc) => CA.Settings.defineOption({ key, group: 'store', icon, name, desc, default: true });
     D('storeColours', 'drop', 'Payback colours', 'Each building’s price in its payback colour (for what a click buys), and a dot in each upgrade’s corner — blue better than the best building, green the best, then yellow, orange, red, purple; gray never pays back.');
     D('storeTooltips', 'search', 'Payback in tooltips', 'Under the game’s building and upgrade tooltips: the CpS it adds, its payback period, when you can afford it, its share of production, the next achievement.');
+    CA.Settings.defineOption({ key: 'storeUpgradeSort', group: 'store', icon: 'sortList', name: 'Upgrades: best first', desc: 'The store lists its upgrades by payback period (best first, in colour groups) instead of by price.', default: false });
     D('storeWarnings', 'bell', 'Bank warnings', 'In those tooltips: a warning when buying would take your bank below what a Lucky! (in a Frenzy too) or Conjure Baked Goods needs to pay its most.');
     wrapTooltips();
     setInterval(() => {
@@ -166,7 +193,7 @@ CA.UI.StoreInsight = (() => {
         /* a store mid-rebuild: next time */
       }
     }, 500);
-    CA.Events.on('settings', (k) => (k === 'storeColours' || k === null) && paint());
+    CA.Events.on('settings', (k) => (k === 'storeColours' || k === 'storeUpgradeSort' || k === null) && paint());
   }
 
   return { init, paint, buildingBlock, upgradeBlock, warnings };

@@ -291,7 +291,7 @@ forever:
 - **Prestige** — `prestige.ifAscended()`, `prestige.toNext()` (cookies), `prestige.perSecond()`, `prestige.cpsGain()`,
   `prestige.cookiesFor(level)`, `prestige.secondsTo(level)`.
 - **Wrinklers** — `wrinkler.reward(w)`, `wrinklers.reward()`, `wrinklers.rewardFattest()`, `wrinklers.eating()`.
-- **Timers, what's left, what if** — `buff.timeLeft(effect)`, `lump.ripeIn()`, `autosave.in()`, `magic.fullIn()`;
+- **Timers, what's left, what if** — `buff.timeLeft(effect)`, `buff.goldenChance(effect)` (a golden cookie before it ends, 0–1), `lump.ripeIn()`, `autosave.in()`, `magic.fullIn()`;
   `missing.upgrades()`, `missing.achievements()`, `missing.seasonDrops(season)`, `missing.plantDrops()`;
   `pantheon.cpsGain(god, slot)`, `dragon.auraCpsGain(aura, slot)`.
 - **Garden** — `garden.tiles()` (tiles are `"x,y"`), `garden.plantAt / wantAt / age / decay(tile)`,
@@ -304,7 +304,8 @@ forever:
   of(thing)`, `pp.buy(thing)` (before v3.5 these were `cm.best`, `cm.kind`, `cm.price`, `cm.pp`, `cm.buy` — code using
   those names still works); `best(kind)`, `buy.best(kind)`; `building.price / gain / payback(building)` and, for n at
   once, `building.priceOf / gainOf / paybackOf(building, n)`; `building.toNextAchievement(building)`;
-  `upgrade.gain / payback(u)`; `timeTo(price)`, `clickRate()`; `building.buy / sell(building, n)`; `upgrades()`,
+  `upgrade.gain / payback(u)` (NaN for a switch); `paybackActual(seconds)`, `actualIncome(seconds)`;
+  `timeTo(price)`, `clickRate()`; `building.buy / sell(building, n)`; `upgrades()`,
   `upgrade.price(u)`, `upgrade.owned(name)`, `buy.upgrade(u)`; `research.next(stopBefore)`.
 - **The dragon** — `dragon.canPet()`, `dragon.dropNow()`, `dragon.pet()`.
 - **Pantheon** — `pantheon.gods()`, `pantheon.god(slot)`, `pantheon.slotOf(god)`, `pantheon.isSlotted(god)`,
@@ -323,8 +324,11 @@ complete, all research bought, the Grandmapocalypse being on — each can be neg
 **And…** adds more conditions that must all hold. Your macros are saved with your settings inside the game save.
 
 **Buying.** **Best building** and **Best upgrade** buy whatever has the lowest payback period (PP: time to afford it
-+ price ÷ the CpS it adds — see [Payback periods](#payback-periods)). Best building buys one at a time — or up to the
-next multiple of 10 when the store's Round to multiples is on (ranked by the PP of exactly that many). Upgrades that
++ price ÷ the CpS it adds — see [Payback periods](#payback-periods)). Best building buys in the store's **Minimum
+bulk** (Settings → Store, the store toolbar, or the Payback page): ×1, ×10 or ×100 at a time — up to the next multiple
+of it when Round to multiples is on (37 owned, ×10: 3, to 40) — ranked by the PP of exactly that many; auto (the
+default) is ×10 with Round to multiples on, else ×1. Switches (Elder Pledge, the Golden switch, season biscuits…)
+have no payback period: they're never the best buy and never bought. Upgrades that
 only make clicks stronger are judged by what they add per click × your clicks per second. With both on, each buys only when the best
 of the two is its kind, so together they always buy the lowest PP overall. By default they save up for the best; their
 **Skip what you can't afford** setting (shift-click the button) buys the best affordable one instead. **Hold** a
@@ -367,15 +371,24 @@ of all (building or upgrade), the best building and the best upgrade, and when y
 building with a cell for **×1**, **×10** and **×100** — coloured by its payback colour, with its payback period, the
 CpS it adds and its price (hover for the achievements it would win; **click a cell to buy that many**) — and how many
 more win its next achievement; the store's upgrades as tiles ringed in their colour, best first (click to buy); and
-its options: count your wrinklers in the bank (none, all, the fattest), "best = what you can afford", and a
-"cheap enough to just buy" floor in seconds of CpS.
+its options: the minimum bulk, count your wrinklers in the bank (none, all, the fattest), "best = what you can
+afford", and a "cheap enough to just buy" floor in seconds of CpS. Switches show among the upgrades only when their
+filter chip is on, greyed.
+
+The **actual income** chip shows every payback period by what you've actually been taking in instead of by CpS —
+clicking, golden cookies, wrinklers, everything baked, as the Recorder measures it (the chip says how it compares:
+×1.42 your CpS). By actual income, a payback period is **PP × CpS ÷ A**, A your actual income over the last stretch
+of play as long as the period itself (at least 5 minutes) — what you made over a wait that long is the best guess for
+it. An active player's purchases pay back sooner than CpS says; one away from the game, later. The colours stay CpS's.
 
 In the **store** itself (Settings → Store, each can be turned off): each building's price shows in its payback
 colour for what a click buys now (×1, ×10, ×100, or to the next multiple with Round to multiples on), each upgrade
 has a coloured dot in its corner, and under the game's own building and upgrade tooltips a CookieMgr block adds the
-CpS it adds (and its share of your CpS), its payback period, when you can afford it, a building's share of your
-production and how many more win its next achievement — and a **warning** when buying it would take your bank below
-what a Lucky! (in a Frenzy too) or Conjure Baked Goods needs to pay its most.
+CpS it adds (and its share of your CpS), its payback period (and by actual income, once a minute of play is
+recorded), when you can afford it, a building's share of your production and how many more win its next achievement —
+and a **warning** when buying it would take your bank below what a Lucky! (in a Frenzy too) or Conjure Baked Goods
+needs to pay its most. **Upgrades: best first** orders the store's upgrades by colour, then payback period
+(switches last). The store's **Best buy** sort ranks buildings by what a click buys — or the minimum bulk, if more.
 
 ### Stats
 
@@ -387,10 +400,15 @@ checked against Cookie Monster in the real game:
   Goods** (up to 30 minutes) and **Spontaneous Edifice** (the most expensive building it can give) — the bank it
   needs to pay its most, how full yours is, how long until it's there, and what it pays. (Spontaneous Edifice needs
   half the building's price — Cookie Monster asks for twice it; this follows the game.)
-- **Golden cookies** — when the next one comes, worked out exactly from the game's odds (each frame past its
-  minimum time it appears with chance ((time − min) ÷ (max − min))⁵): the expected wait, the soonest and latest,
-  the chance within a minute and within five, and a strip of the odds over time. At Christmas, the next reindeer
-  too.
+- **Next golden cookie** — when it comes, as statistics, worked out exactly from the game's odds (each frame past
+  its minimum time it appears with chance ((time − min) ÷ (max − min))⁵; checked against the game itself): the
+  expected wait, the median, the most likely moment, the chance within a minute and in this second, the wrath
+  chance; a chart of how likely each moment is and the chance it has come by then (the 25–75% and 10–90% bands
+  shaded, hover for any moment); percentiles and the chance within 10 s, 30 s, 1 min, 5 min; this cycle's bounds.
+  Under the chart, on its time axis, **timer bars**: the next one's window (can't come yet · could come · the
+  mean) and each effect running, with how long it has left and **the chance a golden cookie comes before it ends**
+  (whether a Frenzy can still be stacked). What makes them come sooner (Lucky day, Serendipity, golden clovers,
+  spirits, the dragon…) as chips — click one for the wait without it. At Christmas, the next reindeer too.
 - **Prestige** — the levels you'd gain by ascending now, how long until the next and how many cookies it takes,
   levels an hour, the CpS the new levels would add, and the total level the Lucky digit / number / payout heavenly
   upgrades need.
@@ -403,7 +421,8 @@ checked against Cookie Monster in the real game:
   drops, the garden's rare drops — as icons (hover for names).
 
 The **Golden cookies** widget is a ring that fills towards the latest the next golden cookie can come, its label the
-expected wait; hover it for the soonest, the latest, the chance within a minute and the effects running.
+expected wait; hover it for a sparkline of the odds, the median, the soonest, the latest, the chance within a minute
+and the effects running — each with the chance a golden cookie comes before it ends.
 
 ### Pantheon
 
