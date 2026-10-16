@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 3.7.1 — 2026-10-16
+
+- **Charts: one hover readout that follows the x axis.** Wherever the cursor is: the time; every golden-cookie
+  effect active there, each with what it multiplies, and — two or more — all of them combined (the overall boost to
+  CpS and clicks); then the bar's production figures. Over an effect lane (it's highlighted) or an event marker,
+  that one's details are added as a section of the same box instead of replacing it.
+- **Game-off stretches are quiet.** On the Active time axis their dotted lines are much fainter, the cursor no longer
+  snaps to them, and a stretch within the hovered bar is a one-line note ("Game off for 1h 20m here").
+- Charts: an effect interval can say what it multiplies (`mults`), for the readout to combine.
+
 ## 3.7.0 — 2026-10-16
 
 - **Alerts** (Cookie Monster's notifications, CookieMgr's way): built-in "When…" macros for a golden cookie, a wrath
