@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, sim]
   pull_request:
 
 jobs:
@@ -15,6 +15,11 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # the game's scripts, for the simulator's tests (tests/sim) — downloaded once per pinned version
+      - uses: actions/cache@v4
+        with:
+          path: sim/.game
+          key: game-${{ hashFiles('sim/game/fetch.mjs') }}
       - name: dist/CookieMgr.js is up to date
         run: npm run check
       - name: Bundle parses

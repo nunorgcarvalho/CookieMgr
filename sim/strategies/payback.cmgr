@@ -1,0 +1,5 @@
+# Buys whatever has the lowest payback period, buildings and upgrades alike — and clicks, and pops golden cookies.
+# with: bigCookie, golden
+# every: 500
+# (buy.best is a staging action: sim/mgr/staging/payback.js)
+buy.best(all)

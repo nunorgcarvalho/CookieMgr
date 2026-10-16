@@ -23,7 +23,8 @@
     "test": "node tests/run.mjs",
     "lint": "eslint .",
     "watch": "node build.mjs --watch",
-    "serve": "node build.mjs --watch --serve"
+    "serve": "node build.mjs --watch --serve",
+    "sim": "node sim/cli.mjs"
   },
   "keywords": [
     "cookie-clicker",

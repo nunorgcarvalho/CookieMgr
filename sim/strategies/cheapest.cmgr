@@ -1,0 +1,11 @@
+# A naive baseline: buys the cheapest building it can afford, never an upgrade (clicks, pops golden cookies).
+# with: bigCookie, golden
+# every: 500
+pick = ""
+lowest = -1
+for b in buildings():
+  if lowest < 0 or building.price(b) < lowest:
+    lowest = building.price(b)
+    pick = b
+if pick != "" and lowest <= cookies():
+  building.buy(pick, 1)
