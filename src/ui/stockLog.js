@@ -20,7 +20,7 @@ CA.UI.StockLog = (() => {
   let life = null; // mounted (CA.UI.Pages.scope)
   let lastCount = -1;
 
-  const beautify = (v, floats) => (typeof Beautify === 'function' ? Beautify(v, floats == null ? 1 : floats) : Math.round(v).toString());
+  const beautify = (v, floats) => CA.Format.beautify(v, floats);
   // Trades are priced in the Bank minigame's own "$" units (good.val, same as its own "for $X
   // each" tooltip) — not raw cookies, which would scale with CpS and quickly overflow a tile.
   const dollars = (v, floats) => '$' + beautify(v, floats);

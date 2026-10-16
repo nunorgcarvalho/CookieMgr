@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 3.8.0 — 2026-10-16
+
+- **Numbers in Cookie Monster's notations, everywhere.** A **Numbers** setting (Settings → General): short scale,
+  abbreviated — the default, 1.23M, 45.6B, 1.23Qa — short scale (1.23 M, 4.56 Quadr), metric, scientific, engineering,
+  or the game's own. Three significant digits (999.96K rounds up to 1M), numbers under a million in full; every
+  number CookieMgr shows follows it (the event log's and the stock trader's texts, which used the game's formatter
+  directly, too).
+- **Plain Business Day**: an option to keep the normal building names, descriptions and icons, golden cookies,
+  news, background and tab title during Business day — its effects stay. Takes effect at once, kept in the save.
+- Settings: an option with choices shows as a dropdown.
+
 ## 3.7.2 — 2026-10-16
 
 - **Payback is much cheaper to work out.** It measures only what's asked: buying (Best building / Best upgrade,

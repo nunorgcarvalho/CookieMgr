@@ -206,7 +206,7 @@ CA.History = (() => {
           const cpsGain = mult !== 1 ? cpsBefore * (mult - 1) : 0;
           addEvent({ type, title, text, cookies, data: { effects, boost, cpsGain } });
           if (CA.Settings.get('goldenNotify')) {
-            const beautify = (v) => (typeof Beautify === 'function' ? Beautify(v) : Math.round(v).toString());
+            const beautify = (v) => CA.Format.beautify(v);
             const desc = text || (Math.abs(cookies) >= 1 ? `${cookies >= 0 ? '+' : '−'}${beautify(Math.abs(cookies))} cookies` : '');
             CA.Util.notify(title, desc, EVENT_ICON[type] || CA.ICON, 1.5);
           }

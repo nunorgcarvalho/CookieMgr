@@ -54,12 +54,14 @@ assert(tip.querySelector('.ca-tip-row.strong') && /Frenzy/.test([...tip.querySel
 
 // ---- an event marker: a section, not a takeover
 CA.EventLog.add({ type: 'reindeer', title: 'Reindeer popped', text: 'test', cookies: 1000 });
-await sleep(50);
+// (a second or so old, so it isn't at the very right edge of the plot)
+await sleep(1500);
 CA.UI.Graphs.tick();
 L = P.layout();
-const ev = L.evRects[L.evRects.length - 1];
+const ev = L.evRects.find((r) => /Reindeer popped/.test(r.m.tip ? r.m.tip() : ''));
 assert(ev, '(a reindeer marker on the chart)');
-hoverAt(ev.x, ev.y);
+// (just inside the plot: a marker at now sits on its right edge — within its hit width)
+hoverAt(Math.min(ev.x, L.plot.x + L.plot.w - 1), ev.y);
 assert(/Reindeer popped/.test(text()) && /Production/.test(text()) && tip.querySelectorAll('.ca-tip-sec').length >= 1, 'on a marker: its details as a section of the same readout');
 
 // ---- a stretch the game was off (active-time axis): a quiet note
