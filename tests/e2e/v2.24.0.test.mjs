@@ -76,7 +76,9 @@ log.length = 0;
 Game.cookies = 2500;
 mine.every = 100;
 M.set(mine.id, true, { silent: true });
-await sleep(450);
+// (waits for what it waits on, not a fixed time — a busy machine runs passes late)
+await waitFor(() => log.join('') === 'abb' && M.flowStatus(mine.id) && M.flowStatus(mine.id).lines.includes(4), 4000);
+await sleep(250); // …and a few more passes: the wait holds
 assert(log.join('') === 'abb' && M.isOn(mine.id), `branches side by side, the wait holding one (${log.join('')})`);
 let f = M.flowStatus(mine.id);
 assert(f.at.some((a) => /^line 4: waiting until cookies\(\) = 2,?500 ≥ 9,?000 ✗/.test(a)) && f.lines.includes(4), `status: the line and what it saw (${f.at})`);
@@ -85,7 +87,7 @@ CA.UI.MacrosPage.sync(doc.querySelector('[data-page="clickers"]'));
 assert(ed().querySelector('[data-code-gutter] span:nth-child(4)').classList.contains('run') && /waiting until/.test(ed().querySelector('[data-code-live]').textContent), 'editing it while it runs: its line lights up');
 click(w, ed().querySelector('[data-edit-act="cancel"]'));
 Game.cookies = 9500;
-await sleep(450);
+await waitFor(() => !M.isOn(mine.id), 4000);
 f = M.flowStatus(mine.id);
 assert(log.join('') === 'abbcyes' && !M.isOn(mine.id), `then on, the if taking “yes”, stop ending it (${log.join('')})`);
 assert(f === null || true, '');
@@ -152,7 +154,8 @@ Game.cookies = 1e20; // Santa's last level alone costs 14^14 ≈ 1e16
 ['A festive hat', 'Santa gift', 'Reindeer cookie', 'Skull cookies', 'Chicken egg', 'Pure heart biscuits'].forEach((n) => (Game.Upgrades[n].unlocked = 1));
 M.setEvery('seasonCompletion', 100);
 M.set('seasonCompletion', true, { silent: true });
-await sleep(400);
+// Christmas's upgrades bought (Santa's 14 levels take more passes than that)
+await waitFor(() => Game.season === 'christmas' && Game.Upgrades['Santa gift'].bought && (M.flowStatus('seasonCompletion') || { at: [] }).at.some((x) => /owned\(christmas, upgrades\) = 2 /.test(x)), 4000);
 assert(Game.season === 'christmas' && Game.Upgrades['Santa gift'].bought && !Game.Upgrades['Reindeer cookie'].bought, 'Christmas first: its upgrades, not yet the reindeer cookies');
 let st = M.flowStatus('seasonCompletion');
 assert(st.at.some((a) => /owned\(christmas, upgrades\) = 2 ≥ total\(christmas, upgrades\) = 2 ✓ and santaLevel\(\) = \d+ ≥ 14 ✗/.test(a)), `shows the counts it checks (${st.at.join(' | ')})`);

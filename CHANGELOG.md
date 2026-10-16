@@ -9,6 +9,19 @@
 - **Bank warnings are off by default** (Cookie Monster's layout, without them); switch them on in Settings → Store or
   on the card.
 
+## 3.9.1 — 2026-10-16
+
+- **Fix: the Full-garden replanter left an empty plot unplanted** until the next tick (up to a 15-minute clay tick,
+  longer while the soil couldn't change). An empty plot — the first round, or every plant dead — is planted at once.
+- **When a new round is planted is a knob, `replantAtTick`:** off (the new default) — the plants still alive
+  harvested and the whole layout planted at once, on fertilizer; on (what v3.4.2 did) — fertilizer first, the old
+  plants kept working until the last `plantWindow` seconds before the tick, then everything replanted. Even then it
+  plants at once when there's nothing to keep working, or no quick tick to wait for (fertilizer on its cooldown).
+- **Numbers: Cookie Monster's own suffixes and spacing** — copied from its source: …No, De, UDe, DDe… SpDe, ODe, NDe,
+  Vi… up to UCt (1e306), with a space before the name (1.23 M). Compact numbers on chart axes stay unspaced (1.23K).
+- Tests: the runner runs half the cores' worth of files at once (at most 6; `--jobs=N` or `TEST_JOBS`); v2.23.0,
+  v2.5.0, v2.16.0, v2.24.0 and v3.3.1 wait for what they wait on instead of fixed times.
+
 ## 3.9.0 — 2026-10-16
 
 - **The next golden cookie, as statistics** (Stats page): the wait's whole distribution, exact from the game's own

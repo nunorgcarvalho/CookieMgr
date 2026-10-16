@@ -6,6 +6,7 @@
 //   npm test -- garden v2.26     only files whose path contains one of the words
 //   npm test -- --verbose        print every check, not just the failures
 //   npm test -- --no-build       test dist/ as it is
+//   npm test -- --jobs=4         how many files run at once (default: half the cores, at most 6; or TEST_JOBS)
 //   npm test -- --no-retry       a file that fails counts as failed (by default it gets one more
 //                                run, alone, after the others — passing then, it's reported as flaky)
 //
@@ -24,7 +25,10 @@ const args = process.argv.slice(2);
 const verbose = args.includes('--verbose');
 const filters = args.filter((a) => !a.startsWith('--')).map((a) => a.toLowerCase());
 const TIMEOUT_MS = 180 * 1000;
-const JOBS = Math.max(2, Math.min(8, os.cpus().length));
+// how many files at once: half the cores (6 at most) — jsdom games and the simulator's real one are
+// CPU-heavy, and timing-sensitive tests flaked with every core busy. --jobs=N or TEST_JOBS=N to choose.
+const jobsArg = (args.find((a) => a.startsWith('--jobs=')) || '').slice(7) || process.env.TEST_JOBS;
+const JOBS = Math.max(1, Number(jobsArg) || Math.max(2, Math.min(6, Math.floor(os.cpus().length / 2))));
 
 function find(dir) {
   return fs

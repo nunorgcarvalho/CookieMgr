@@ -2,7 +2,7 @@
 // buy fast; wrinklers popped once fed (shift-click); tooltips on notifications; SeasonCompletion
 // keeps pledging.
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
-import { boot, sleep, makeAssert, click } from '../harness/game.mjs';
+import { boot, sleep, waitFor, makeAssert, click } from '../harness/game.mjs';
 
 const { assert, done } = makeAssert();
 const g = boot({ idb: { factory: new IDBFactory(), IDBKeyRange } });
@@ -66,7 +66,8 @@ const cbtn = () => W().querySelector('[data-w-trigger="cheapUpgrades"]');
 cbtn().dispatchEvent(new w.MouseEvent('mousedown', { bubbles: true, button: 0, clientX: 5, clientY: 5 }));
 await sleep(200);
 assert(bought === 0, 'a short press doesn’t buy');
-await sleep(500);
+// (repeats come every so often: wait for three of them, not a fixed time — a busy machine is slower)
+await waitFor(() => bought >= 3, 4000);
 assert(bought >= 3 && cbtn().classList.contains('ca-holding'), `holding: buys again and again (${bought})`);
 w.dispatchEvent(new w.MouseEvent('mouseup', { bubbles: true }));
 const after = bought;

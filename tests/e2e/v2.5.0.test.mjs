@@ -2,7 +2,7 @@
 // axes that fit only what's shown (hidden lines, inactive bars), prestige ETA from the chart window,
 // full-width panel / fixed tables.
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
-import { boot, sleep, makeAssert, click } from '../harness/game.mjs';
+import { boot, sleep, waitFor, makeAssert, click } from '../harness/game.mjs';
 
 const { assert, done } = makeAssert();
 const g = boot({ idb: { factory: new IDBFactory(), IDBKeyRange } });
@@ -12,23 +12,30 @@ const doc = w.document;
 Game.cookiesReset = 1e21;
 
 // production + 10 clicks/s, then a Frenzy (×7 CpS) with a Click frenzy (×777 clicks)
+const clickTimes = []; // when the loop actually clicked (a busy machine runs it late)
 const loop = setInterval(() => {
   const p = Game.cookiesPs / 10;
   Game.cookies += p;
   Game.cookiesEarned += p;
   Game.ClickCookie();
+  clickTimes.push(Date.now());
   Game.cookies -= 30; // a little spending
 }, 100);
 await sleep(2300);
 Game.buffs.Frenzy = { name: 'Frenzy', time: 3000, maxTime: 3000, multCpS: 7 };
 Game.buffs['Click frenzy'] = { name: 'Click frenzy', time: 3000, maxTime: 3000, multClick: 777 };
 Game.cookiesPs = 7000; // buffed; unbuffedCps stays 1000
-await sleep(2300);
+// recorded with the buffs on (and a couple of seconds of clicking under them)
+const lastFrame = () => CA.Recorder.frames()[CA.Recorder.frames().length - 1];
+await waitFor(() => lastFrame() && Math.abs(lastFrame().perClick - (10 + 7000 * 0.01) * 777) < 1e-6, 6000);
+await sleep(2000);
 
 // ---- raw clicking
 const fr = CA.Recorder.frames();
 const f = fr[fr.length - 1];
-assert(Math.abs(f.clickRate - 10) < 2.5, `clicks per second measured (${f.clickRate})`);
+// against the rate the loop really clicked at over the last 2 s (10/s on an idle machine)
+const real = clickTimes.filter((t) => t > Date.now() - 2000).length / 2;
+assert(Math.abs(f.clickRate - real) < 2.5, `clicks per second measured (${f.clickRate}, the loop clicked ${real}/s)`);
 assert(Math.abs(f.perClickRaw - (10 + 1000 * 0.01)) < 1e-9, `a click's worth with no effects, from the game's own formula (${f.perClickRaw})`);
 assert(Math.abs(f.perClick - (10 + 7000 * 0.01) * 777) < 1e-6, `actual per-click value (${f.perClick})`);
 assert(Math.abs(f.clickRaw - f.clickRate * f.perClickRaw) < 1e-9, 'raw clicking = clicks/s × raw per click');

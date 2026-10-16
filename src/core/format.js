@@ -2,9 +2,11 @@
 // them as CA.UI.Plot.fmt).
 //
 // Long numbers follow the **Numbers** setting (Settings → General), Cookie Monster's notations:
-//   abbr     short scale, abbreviated — 1.23M, 45.6B, 789T, 1.23Qa, 4.56Qi, Sx, Sp, Oc, No, Dc, UDc…
-//   short    short scale — 1.23 M, 45.6 B, 789 Tr, 1.23 Quadr, 4.56 Quint, Sext…
-//   metric   1.23M, 45.6G, 789T, 1.23P, E, Z, Y, R, Q
+//   abbr     short scale, abbreviated — 1.23 M, 45.6 B, 789 T, 1.23 Qa, Qi, Sx, Sp, Oc, No, De, UDe…
+//            SpDe, ODe, NDe, Vi… up to UCt (1e303)
+//   short    short scale — 1.23 M, 45.6 B, 789 Tr, 1.23 Quadr, Quint, Sext… up to Quattuorvigint
+//   metric   1.23 M, 45.6 G, 789 T, 1.23 P, E, Z, Y
+// (Cookie Monster's own suffix lists and spacing.)
 //   sci      scientific — 1.23e15
 //   eng      engineering — 1.23e15, 12.3e15, 123e15 (exponents in threes)
 //   game     the game's own (its Numbers preference, full illion names)
@@ -14,15 +16,18 @@
 // the decimals of a number under 1000.
 
 CA.Format = (() => {
-  const ABBR = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc', 'UDc', 'DDc', 'TDc', 'QaDc', 'QiDc', 'SxDc', 'SpDc', 'OcDc', 'NoDc', 'Vg', 'UVg', 'DVg', 'TVg', 'QaVg', 'QiVg', 'SxVg', 'SpVg', 'OcVg', 'NoVg', 'Tg', 'UTg', 'DTg', 'TTg', 'QaTg', 'QiTg', 'SxTg', 'SpTg', 'OcTg', 'NoTg', 'Qd'];
-  const WORDS = ['', ' K', ' M', ' B', ' Tr', ' Quadr', ' Quint', ' Sext', ' Sept', ' Oct', ' Non', ' Dec', ' Undec', ' Duodec', ' Tredec', ' Quattuordec', ' Quindec', ' Sexdec', ' Septendec', ' Octodec', ' Novemdec', ' Vigint', ' Unvigint', ' Duovigint', ' Trevigint', ' Quattuorvigint', ' Quinvigint', ' Sexvigint', ' Septenvigint', ' Octovigint', ' Novemvigint', ' Trigint'];
-  const METRIC = ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y', 'R', 'Q'];
+  // Cookie Monster's own lists, as its source has them (dist/CookieMonster.js: Lt, Dt, Ot) — index =
+  // the power of 1000; its long-name and metric lists leave the thousands blank (it writes numbers
+  // under its cut-off in full), short() fills in K / k
+  const ABBR = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'De', 'UDe', 'DDe', 'TDe', 'QaDe', 'QiDe', 'SxDe', 'SpDe', 'ODe', 'NDe', 'Vi', 'UVi', 'DVi', 'TVi', 'QaVi', 'QiVi', 'SxVi', 'SpVi', 'OVi', 'NVi', 'Tr', 'UTr', 'DTr', 'TTr', 'QaTr', 'QiTr', 'SxTr', 'SpTr', 'OTr', 'NTr', 'Qaa', 'UQa', 'DQa', 'TQa', 'QaQa', 'QiQa', 'SxQa', 'SpQa', 'OQa', 'NQa', 'Qia', 'UQi', 'DQi', 'TQi', 'QaQi', 'QiQi', 'SxQi', 'SpQi', 'OQi', 'NQi', 'Sxa', 'USx', 'DSx', 'TSx', 'QaSx', 'QiSx', 'SxSx', 'SpSx', 'OSx', 'NSx', 'Spa', 'USp', 'DSp', 'TSp', 'QaSp', 'QiSp', 'SxSp', 'SpSp', 'OSp', 'NSp', 'Oco', 'UOc', 'DOc', 'TOc', 'QaOc', 'QiOc', 'SxOc', 'SpOc', 'OOc', 'NOc', 'Noa', 'UNo', 'DNo', 'TNo', 'QaNo', 'QiNo', 'SxNo', 'SpNo', 'ONo', 'NNo', 'Ct', 'UCt'];
+  const WORDS = ['', '', 'M', 'B', 'Tr', 'Quadr', 'Quint', 'Sext', 'Sept', 'Oct', 'Non', 'Dec', 'Undec', 'Duodec', 'Tredec', 'Quattuordec', 'Quindec', 'Sexdec', 'Septendec', 'Octodec', 'Novemdec', 'Vigint', 'Unvigint', 'Duovigint', 'Trevigint', 'Quattuorvigint'];
+  const METRIC = ['', '', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
   const SCALES = { abbr: ABBR, short: WORDS, metric: METRIC };
   /** The notations, for the Numbers setting. */
   const FORMATS = [
-    { v: 'abbr', label: 'Short scale, abbreviated — 1.23M, 4.56Qa' },
+    { v: 'abbr', label: 'Short scale, abbreviated — 1.23 M, 4.56 Qa' },
     { v: 'short', label: 'Short scale — 1.23 M, 4.56 Quadr' },
-    { v: 'metric', label: 'Metric — 1.23M, 4.56P' },
+    { v: 'metric', label: 'Metric — 1.23 M, 4.56 P' },
     { v: 'sci', label: 'Scientific — 1.23e15' },
     { v: 'eng', label: 'Engineering — 123e12' },
     { v: 'game', label: 'The game’s own (its Numbers setting)' },
@@ -78,13 +83,17 @@ CA.Format = (() => {
     }
     return `${sig(m)}e${e}`;
   }
-  /** |v| ≥ 1000 in a notation (scales past their last name: scientific). */
-  function big(v, k) {
+  /**
+   * |v| ≥ 1000 in a notation, the name after a space as Cookie Monster writes it ("1.23 M"); compact
+   * (short(), axes): no space, K / k for the thousands. Past a scale's last name: scientific.
+   */
+  function big(v, k, compact) {
     if (k === 'sci' || k === 'eng') return scientific(v, k === 'eng');
     const names = SCALES[k] || ABBR;
     const { m, e } = thousands(v);
     if (e >= names.length) return scientific(v, false);
-    return sig(m) + names[e];
+    const name = names[e] || (e === 1 ? (k === 'metric' ? 'k' : 'K') : '');
+    return sig(m) + (compact ? '' : ' ') + name;
   }
   /** |v| under 1000: as it is, with `floats` decimals at most (trailing zeros dropped); tiny: scientific. */
   function small(v, floats) {
@@ -107,7 +116,7 @@ CA.Format = (() => {
     v = Math.abs(v);
     const k = kind();
     if (v < 1000) return sign + (v < 10 ? small(v, v < 1 ? 2 : 1) : String(Math.round(v)));
-    return sign + big(v, k === 'game' ? 'abbr' : k);
+    return sign + big(v, k === 'game' ? 'abbr' : k, true);
   }
   /**
    * A number as the Numbers setting writes it: under a million in full (1,234,567 → 1.23M),

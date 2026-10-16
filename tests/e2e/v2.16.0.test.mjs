@@ -1,7 +1,7 @@
 // v2.16.0: the Garden growth chart — snapshots of seed × stage counts, stacked bars coloured by
 // seed and shaded by stage, the Show choice, merged tooltip rows, unlock markers, persistence.
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
-import { boot, sleep, makeAssert } from '../harness/game.mjs';
+import { boot, sleep, waitFor, makeAssert } from '../harness/game.mjs';
 import { makeGarden } from '../harness/gardenStub.mjs';
 
 const { assert, done } = makeAssert();
@@ -15,7 +15,7 @@ const set = (x, y, key, age) => (M.plot[y][x] = key ? [M.plants[key].id + 1, age
 set(1, 2, 'bakerWheat', 5); // bud
 set(2, 2, 'bakerWheat', 40); // mature
 set(3, 2, 'thumbcorn', 10); // bloom (20 × .5)
-await sleep(1600);
+await waitFor(() => CA.GardenHistory.list().length >= 1, 6000); // (its first sample, within a second or so)
 
 // ---- snapshots
 const H = CA.GardenHistory;
@@ -78,7 +78,7 @@ const savedN = H.list().length;
 await H.flush();
 const g2 = boot({ idb: browser });
 makeGarden(g2.Game);
-await sleep(600);
+await waitFor(() => g2.window.CookieMgr.GardenHistory.list().length === savedN, 5000);
 assert(g2.window.CookieMgr.GardenHistory.list().length === savedN, `history restored (${g2.window.CookieMgr.GardenHistory.list().length})`);
 
 assert(g.errors.length + g2.errors.length === 0, 'no runtime errors' + (g.errors.length ? `: ${g.errors.slice(0, 3).join(' | ')}` : ''));

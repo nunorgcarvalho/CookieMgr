@@ -39,6 +39,12 @@ done();
 process.exit();
 ```
 
+**Wait for what you're waiting on, not for a time.** The runner runs several files at once (half the cores, at
+most 6 — `npm test -- --jobs=N` or `TEST_JOBS=N` to choose), so timers fire late on a busy machine: a check
+after `await sleep(450)` that a macro has run three passes passes alone and flakes in the full run. Use
+`await waitFor(() => condition, ms)` (it polls, and gives up after `ms`) for anything a timer or a macro does;
+keep `sleep` for "nothing should happen in this time" (a short press doesn't buy; a wait holds).
+
 `boot()` options: `save` (a CookieMgr save string), `idb` (fake IndexedDB — share one between boots to
 test what's recorded), `withPantheon`, `withGrimoire`, `localStorageSeed`, `fullDate`. It returns
 `{ window, Game, M (bank), G (grimoire), P (pantheon), goods, calls (notify / sounds / spells / loadMod), errors }`.

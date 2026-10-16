@@ -543,10 +543,12 @@ The gardeners:
   replants mature plants likely to die on the tick. It leaves the tiles the layout keeps empty alone.
 - **Full-garden replanter** — plants the whole layout at once and lets it grow as one round: on fertilizer while it
   grows, clay once most of it is mature (its soil rule, *Grow together, then clay*, `clayAt` 75%), and it doesn't
-  replant plants that die; once fewer than `replantBelow` (75%) of the layout's tiles hold a mature plant, it starts a
-  new round — fertilizer first (the next tick comes within 3 minutes, and the old plants keep working until then),
-  then everything harvested and the whole layout replanted in the last `plantWindow` (15) seconds before that tick, so
-  the new plants grow on it straight away. Planted together, the plants are mature together — for a level-6
+  replant plants that die during a round; once fewer than `replantBelow` (75%) of the layout's tiles hold a mature
+  plant, a new round: the plants still alive harvested and the whole layout planted at once, on fertilizer. With
+  `replantAtTick` on, a new round waits instead: fertilizer first (the next tick within 3 minutes, the old plants
+  working until then), then everything harvested and replanted in the last `plantWindow` (15) seconds before that
+  tick, so the new plants grow on it straight away (about +1 point of golden cookies in the simulation). Either way an
+  empty plot — the first round, or every plant dead — is planted at once. Planted together, the plants are mature together — for a level-6
   golden clover field, golden cookies +56% on average (+49% replanting one at a time) and +60% or more about 60% of
   the time (4%), so about 12% more chances for two effects to overlap. It replants about twice as often.
 - **Weed collector** — keeps the garden bare (with *Always fertilizer*: the most weeds), so meddleweed and fungi
@@ -709,9 +711,9 @@ The mirror is restored even when the game save holds no CookieMgr data yet (the 
 once it has autosaved with it).
 
 **Numbers** — how CookieMgr writes long numbers, in Cookie Monster's notations: **short scale, abbreviated** (the
-default: 1.23M, 45.6B, 789T, 1.23Qa, Qi, Sx, Sp, Oc, No, Dc, UDc…), **short scale** (1.23 M, 4.56 Quadr), **metric**
-(1.23M, 4.56P), **scientific** (1.23e15), **engineering** (123e12) or **the game's own** (its Numbers preference). Always
-three significant digits — 999.96K rounds up to 1M, never "1000K" — and numbers under a million in full (999,999);
+default: 1.23 M, 45.6 B, 789 T, 1.23 Qa, Qi, Sx, Sp, Oc, No, De, UDe… SpDe, ODe, NDe, Vi… up to UCt), **short scale**
+(1.23 M, 4.56 Quadr… Quattuorvigint), **metric** (1.23 M, 4.56 P… Y) — Cookie Monster's own suffix lists and spacing — **scientific** (1.23e15), **engineering** (123e12) or **the game's own** (its Numbers preference). Always
+three significant digits — 999.96 M rounds up to 1 B, never "1000 M" — and numbers under a million in full (999,999);
 past a scale's last name, scientific. Every number on every CookieMgr page follows it.
 
 **Plain Business Day** — Business day (the April Fools season) without its look: the normal building names,

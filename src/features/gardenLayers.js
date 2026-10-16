@@ -106,13 +106,13 @@ if garden.tickIn() <= tickWindow:
 `;
   const COHORT_GARDENER = `# Full-garden replanter: plants the whole layout at once and lets it grow as one round — on
 # fertilizer while it grows, clay once most of it is mature (its soil rule, "Grow together, then
-# clay") — and doesn't replant plants that die. Once too few mature plants are left, it starts a new
-# round: fertilizer first (the next tick comes within 3 minutes; the old plants keep working till
-# then), and the whole layout harvested and replanted in the last seconds before that tick, so the
-# new plants grow on it straight away. Planted together, the plants are mature together: the
-# effects stay near their best for most of each round, and a new round grows fast.
+# clay") — and doesn't replant plants that die during a round. Once too few mature plants are
+# left, a new round: the plants still alive harvested, the whole layout planted again, fertilizer.
+# Planted together, the plants are mature together: the effects stay near their best for most of
+# each round, and a new round grows fast.
 replantBelow = 0.75   # start a new round once fewer than this share of the layout's tiles hold a mature plant
-plantWindow = 15   # a new round is planted in the last seconds before a tick, so it grows on it at once
+replantAtTick = false   # when a new round is planted — false: at once; true: fertilizer first, the old plants kept working until the next tick, everything replanted in its last plantWindow seconds
+plantWindow = 15   # (replantAtTick only) the last seconds before the tick, when the new round is planted
 unlockNewSeeds = true   # a seed you haven't unlocked yet: let it grow, harvest it once mature (that unlocks it)
 if unlockNewSeeds:
   garden.harvestNew()
@@ -122,10 +122,14 @@ for tile in garden.tiles():
     garden.harvest(tile)
 # a new round is due: nothing of the layout growing, and too few of its plants mature
 if garden.layoutYoung() == 0 and garden.layoutMature() < replantBelow * garden.layoutTiles():
-  # fertilizer first: it brings the next tick within 3 minutes
+  # fertilizer: the next tick within 3 minutes, and quick ticks while the round grows
   garden.soil(fertilizer)
-  # then, just before that tick: harvest everything and plant the whole layout
-  if garden.tickIn() <= plantWindow:
+  # Planted now — or, with replantAtTick, in the last seconds before that tick. Even then it plants
+  # at once when there's nothing to keep working (an empty plot: the first round, or every plant
+  # dead) or no quick tick to wait for (fertilizer held back by its cooldown, or not unlocked).
+  # Otherwise the empty tiles wait with the rest (at most ~3 minutes): planted early they'd be a
+  # tick ahead of the round — and seedlings among the old plants would make the round look started.
+  if not replantAtTick or garden.layoutMature() == 0 or not garden.soilIs(fertilizer) or garden.tickIn() <= plantWindow:
     for tile in garden.tiles():
       if garden.wantAt(tile) != "" and not garden.isEmpty(tile):
         garden.harvest(tile)
@@ -146,8 +150,8 @@ if garden.layoutYoung() > 0 and garden.layoutMature() == 0:
     {
       id: 'cohort',
       name: 'Full-garden replanter',
-      desc: 'Plants the whole layout together, grows it on fertilizer, holds it on clay, and once too few are left, switches to fertilizer and replants everything just before the next tick — so the plants are mature together. The most golden cookies from a golden clover field, in high windows.',
-      data: () => ({ rules: COHORT_GARDENER, knobs: { replantBelow: PCT, plantWindow: SECONDS, unlockNewSeeds: TOGGLE } }),
+      desc: 'Plants the whole layout together, grows it on fertilizer, holds it on clay, and once too few are left, replants everything together on fertilizer (at once, or just before the next tick) — so the plants are mature together. The most golden cookies from a golden clover field, in high windows.',
+      data: () => ({ rules: COHORT_GARDENER, knobs: { replantBelow: PCT, replantAtTick: TOGGLE, plantWindow: SECONDS, unlockNewSeeds: TOGGLE } }),
     },
     { id: 'weeds', name: 'Weed collector', desc: 'Keeps the garden bare so weeds and fungi spring up; harvests old meddleweed (for brown mold and crumbspore) and new seeds once mature, clears everything else. Plants nothing.', data: () => ({ rules: WEED_GARDENER, knobs: { oldWeedOver: PCT } }) },
     {

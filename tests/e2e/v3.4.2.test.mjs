@@ -24,19 +24,16 @@ Game.cookies = 1e12;
 LY.pick('profile', 'goldenCombos');
 LY.pick('seeds', 'bakerWheat');
 assert(/^plantWindow = 15\b/m.test(G.rulesOf()) && LY.get('gardener', 'cohort').data.knobs.plantWindow.unit === 's', 'plantWindow: a variable (with its knob, in seconds)');
+// (v3.9.1: replanting at the tick is the replantAtTick mode — what this release made the way)
+LY.set('gardener', 'cohort', { ...LY.get('gardener', 'cohort').data, rules: G.rulesOf().replace('replantAtTick = false', 'replantAtTick = true') });
+assert(/^replantAtTick = true/m.test(G.rulesOf()), '(replantAtTick on)');
 
-// ---- an empty garden: fertilizer first, planted just before the tick
+// ---- an empty garden: nothing to keep working — planted at once (v3.9.1; it used to wait for the tick)
 M.soil = 2; // clay
 tickIn(600);
 M.nextSoil = 0;
 G.tend();
-assert(soil() === 'fertilizer' && young() === 0, 'a round due, the tick far off: fertilizer first, nothing planted yet');
-tickIn(170); // (the game brings the tick within 3 minutes on fertilizer)
-G.tend();
-assert(young() === 0, '…still more than 15 s before the tick: waits');
-tickIn(10);
-G.tend();
-assert(young() === 12 && soil() === 'fertilizer', 'in the last 15 s before the tick: the whole layout planted (it grows on that tick)');
+assert(soil() === 'fertilizer' && young() === 12, 'an empty plot, the tick far off: fertilizer, and the whole layout planted at once');
 
 // ---- the end of a round: the old plants keep working until the tick
 tiles.forEach(([x, y]) => set(x, y, 'bakerWheat', 60));
@@ -47,21 +44,21 @@ M.nextSoil = 0;
 const before = M.harvestLog.length;
 G.tend();
 assert(soil() === 'fertilizer' && M.harvestLog.length === before && tiles.filter(([x, y]) => at(x, y)).length === 8, 'too few left: fertilizer at once, the 8 mature plants kept (not harvested yet)');
+tickIn(170); // (the game brings the tick within 3 minutes on fertilizer)
+G.tend();
+assert(M.harvestLog.length === before && young() === 0, '…still more than 15 s before the tick: waits');
 tickIn(10);
 G.tend();
 assert(M.harvestLog.length - before === 8 && young() === 12 && soil() === 'fertilizer', 'just before the tick: all harvested, the whole layout replanted');
 
-// ---- fertilizer held back (the game's 10-minute soil cooldown): it still replants before the next tick
+// ---- fertilizer held back (the game's 10-minute soil cooldown): no quick tick to wait for — at once
 tiles.forEach(([x, y]) => set(x, y, 'bakerWheat', 60));
 [[1, 2], [2, 2], [3, 2], [4, 2]].forEach(([x, y]) => set(x, y, null));
 M.soil = 2;
 M.nextSoil = Date.now() + 5 * 60e3;
 tickIn(400);
 G.tend();
-assert(soil() === 'clay' && young() === 0, 'no fertilizer yet (cooldown): the old plants keep working on clay');
-tickIn(10);
-G.tend();
-assert(young() === 12, '…and the round is planted before the next tick anyway');
+assert(soil() === 'clay' && young() === 12, 'no fertilizer yet (cooldown): the round planted at once (v3.9.1)');
 
 // ---- mid-round: as before (the soil rule)
 tiles.forEach(([x, y]) => set(x, y, 'bakerWheat', 60));
