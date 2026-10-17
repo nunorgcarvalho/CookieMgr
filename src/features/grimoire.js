@@ -65,6 +65,28 @@ forever:
         spell.cast("haggler's charm")
 `;
 
+  /**
+   * Why the combo macro may never fire: every combo starts with a golden cookie's Frenzy or building
+   * special, and the second effect comes from the next golden cookie — when the soonest it can come
+   * (a fresh cycle at today's upgrades, CA.Timers) is after the longest of those effects has ended,
+   * two can't overlap. The upgrades that help, not owned yet: Serendipity and Lucky day (sooner
+   * golden cookies), Get lucky (effects twice as long). '' when combos can happen.
+   */
+  function comboHint() {
+    const T = CA.Timers;
+    if (!T || typeof T.effectDuration !== 'function' || typeof T.distribution !== 'function') return '';
+    const d = T.distribution('golden');
+    if (!d || !d.next || !(d.next.min > 0)) return '';
+    const frenzy = T.effectDuration('frenzy');
+    const special = T.effectDuration('building special');
+    const longest = Math.max(frenzy || 0, special || 0);
+    if (!(longest > 0) || d.next.min <= longest) return '';
+    const has = (n) => typeof Game.Has === 'function' && !!Game.Has(n);
+    const want = ['Lucky day', 'Serendipity', 'Get lucky'].filter((n) => !has(n));
+    const span = CA.Format.span;
+    return `combos unlikely: the next golden cookie can’t come before ${span(d.next.min)}, and a Frenzy lasts ${span(frenzy)}${want.length ? ` — get ${want.join(', ')}` : ''}`;
+  }
+
   function minigame() {
     const m = CA.Util.minigame('Wizard tower');
     return m && m.spells && typeof m.castSpell === 'function' ? m : null;
@@ -250,6 +272,8 @@ forever:
       mode: 'flow',
       every: 250,
       defaultSource: COMBO_SOURCE,
+      // on its card, when combos can't happen with today's upgrades (and which would help)
+      hint: comboHint,
       // its choices on its card: variables in its code
       inputs: [
         {
@@ -276,5 +300,5 @@ forever:
     watch();
   }
 
-  return { init, minigame, spells, magicNow, secondsUntil, refillSeconds, SPELLS, AUTO_ID, COMBO_SOURCE };
+  return { init, minigame, spells, magicNow, secondsUntil, refillSeconds, SPELLS, AUTO_ID, COMBO_SOURCE, comboHint };
 })();

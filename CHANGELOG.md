@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## 3.12.5 — 2026-10-16
+
+- **Force the Hand of Fate on combos says when combos can’t happen.** Every combo needs a second golden cookie
+  before the first one’s Frenzy (or building special) ends; when the soonest the next one can come is later than
+  that — with Lucky day alone, 2m 30s against a 77 s Frenzy — its card says so, and names which of Lucky day,
+  Serendipity and Get lucky you don’t have yet. (From CA.Timers: the next golden cookie’s soonest, and
+  effectDuration.)
+- Macros: a built-in can give its card a hint (hint(inputs) → text, shown under its status, on or off).
+
+## 3.12.4 — 2026-10-16
+
+- **How long a golden cookie's effect lasts, with your upgrades**: `golden.effectDuration(effect)` — Frenzy, a building
+  special, Click frenzy, Dragonflight, Dragon Harvest, Everything must go, Cookie storm, and the wrath ones (Clot,
+  Cursed finger, Elder frenzy), as the game times them: Get lucky, Lasting fortune, the Lucky upgrades, Green yeast
+  digestives, Epoch Manipulator and Vomitrax counted. Checked against the effects the game grants.
+
 ## 3.12.3 — 2026-10-16
 
 - **Fix: Force the Hand of Fate on combos stalled for good in Forecast mode.** The forecast only moves when something

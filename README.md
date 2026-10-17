@@ -291,7 +291,7 @@ forever:
 - **Prestige** — `prestige.ifAscended()`, `prestige.toNext()` (cookies), `prestige.perSecond()`, `prestige.cpsGain()`,
   `prestige.cookiesFor(level)`, `prestige.secondsTo(level)`, `prestige.nextIn()`.
 - **Wrinklers** — `wrinkler.reward(w)`, `wrinklers.reward()`, `wrinklers.rewardFattest()`, `wrinklers.eating()`.
-- **Timers, what's left, what if** — `buff.timeLeft(effect)`, `buff.goldenChance(effect)` (a golden cookie before it ends, 0–1), `lump.ripeIn()`, `autosave.in()`, `magic.fullIn()`;
+- **Timers, what's left, what if** — `buff.timeLeft(effect)`, `buff.goldenChance(effect)` (a golden cookie before it ends, 0–1), `golden.effectDuration(effect)` (seconds an effect lasts if it starts now, with your upgrades), `lump.ripeIn()`, `autosave.in()`, `magic.fullIn()`;
   `missing.upgrades()`, `missing.achievements()`, `missing.seasonDrops(season)`, `missing.plantDrops()`;
   `pantheon.cpsGain(god, slot)`, `dragon.auraCpsGain(aura, slot)`.
 - **Garden** — `garden.tiles()` (tiles are `"x,y"`), `garden.plantAt / wantAt / age / decay(tile)`,
@@ -504,7 +504,9 @@ The **Grimoire** page (Wizard tower minigame) is the Grimoire, CookieMgr-style:
   **Skip ahead** caps that (0: no limit, the default) — a cap can stall it when the next good cast is further away. In
   the simulator (`sim/experiments/fthof-forecast.mjs`: the real game, 24 h × 4 seeds, no buying) Forecast on with no
   limit baked +79% ± 30% more than off with a 90-magic bar (higher on every seed) and +917% ± 535% with 299 — skewed by
-  rare stacked combos — while a limit of 1–10 casts stalled on most seeds. Its code is yours to change (Edit on its card; Revert to default
+  rare stacked combos — while a limit of 1–10 casts stalled on most seeds. Its card says when combos can’t happen with your
+  upgrades — the next golden cookie can’t come before a Frenzy ends (with Lucky day alone: 2m 30s at the soonest, a
+  77 s Frenzy) — and which of Lucky day, Serendipity and Get lucky would help. Its code is yours to change (Edit on its card; Revert to default
   brings these back). Pair it with the Golden cookies macro to pop the cookie it summons. Your own macros that cast spells are listed here too.
 - **Spell combos** — **New combo** starts a "once" macro that casts several spells in order (Force the Hand of Fate,
   then Stretch Time, by default); combos get a Run button, a hotkey and a ★ like any macro.

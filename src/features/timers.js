@@ -220,6 +220,60 @@ CA.Timers = (() => {
 
   // ---- buffs, the sugar lump, autosave ------------------------------------------------------------------
 
+  // ---- how long a golden cookie's effect lasts ---------------------------------------------------
+  // main.js golden popFunc: an effect lasts ceil(base × effectDurMod) seconds — Get lucky ×2, Lasting
+  // fortune ×1.1, Lucky digit / number / payout and Green yeast digestives ×1.01 each, Epoch Manipulator
+  // (+5% × its aura strength), the golden (or wrath) cookie effect-duration effects (Game.eff), and Vomitrax
+  // (the spirit of decadence) slotted: ×1.07 diamond, ×1.05 ruby, ×1.02 jade.
+  const EFFECTS = {
+    frenzy: { base: 77 },
+    'building special': { base: 30 },
+    'click frenzy': { base: 13 },
+    dragonflight: { base: 10 },
+    'dragon harvest': { base: 60 },
+    'everything must go': { base: 8 },
+    'cookie storm': { base: 7 },
+    'blood frenzy': { base: 6, wrath: true },
+    clot: { base: 66, wrath: true },
+    'cursed finger': { base: 10, wrath: true },
+  };
+  const EFFECT_ALIASES = { 'elder frenzy': 'blood frenzy', 'building buff': 'building special', 'building debuff': 'building special', 'cookie storm drop': 'cookie storm' };
+  const effectKey = (name) => {
+    const k = String(name || '').toLowerCase();
+    return EFFECTS[k] ? k : EFFECT_ALIASES[k] || null;
+  };
+  /** The multiplier on a golden (or wrath) cookie's effect durations now (popFunc's effectDurMod). */
+  function effectDurMod(wrath = false) {
+    const has = (n) => typeof Game.Has === 'function' && !!Game.Has(n);
+    let m = 1;
+    if (has('Get lucky')) m *= 2;
+    if (has('Lasting fortune')) m *= 1.1;
+    if (has('Lucky digit')) m *= 1.01;
+    if (has('Lucky number')) m *= 1.01;
+    if (has('Green yeast digestives')) m *= 1.01;
+    if (has('Lucky payout')) m *= 1.01;
+    m *= 1 + (typeof Game.auraMult === 'function' ? Game.auraMult('Epoch Manipulator') : 0) * 0.05;
+    if (typeof Game.eff === 'function') m *= Game.eff(wrath ? 'wrathCookieEffDur' : 'goldenCookieEffDur');
+    if (typeof Game.hasGod === 'function') {
+      const lvl = Game.hasGod('decadence');
+      if (lvl === 1) m *= 1.07;
+      else if (lvl === 2) m *= 1.05;
+      else if (lvl === 3) m *= 1.02;
+    }
+    return m;
+  }
+  /**
+   * Seconds a golden cookie's effect lasts when it starts now (frenzy, building special, click frenzy,
+   * dragonflight, dragon harvest, everything must go, cookie storm; from wrath cookies: clot, cursed finger,
+   * elder frenzy) — NaN for anything else. wrath: from a wrath cookie (default: the effects only those give).
+   */
+  function effectDuration(name, wrath) {
+    const k = effectKey(name);
+    if (!k) return NaN;
+    const w = wrath === undefined ? !!EFFECTS[k].wrath : !!wrath;
+    return Math.ceil(EFFECTS[k].base * effectDurMod(w));
+  }
+
   /** The effects running: [{ name, secs, maxSecs, cps, click }]. */
   const buffs = () =>
     Object.values(Game.buffs || {})
@@ -269,6 +323,7 @@ CA.Timers = (() => {
       return x ? x.within(Number(s) || 0) : 0;
     }, ['seconds']);
     V('reindeer.expected', 'seconds the next reindeer takes on average (Christmas)', () => (spawnOf('reindeer') || { expected: NaN }).expected);
+    V('golden.effectDuration', 'seconds a golden cookie’s effect lasts if it starts now, with your upgrades (frenzy, building special, click frenzy, dragonflight, clot…; NaN for others)', (n) => effectDuration(n), ['effect']);
     V('buff.timeLeft', 'seconds an effect has left (0: not running)', (n) => {
       const b = buffs().find((x) => x.name.toLowerCase() === String(n).toLowerCase());
       return b ? b.secs : 0;
@@ -282,5 +337,5 @@ CA.Timers = (() => {
     V('magic.fullIn', 'seconds until the Grimoire’s magic is full (0: it is)', () => magicFull() ?? NaN);
   }
 
-  return { init, spawnOf, distribution, waitFrom, meanWithout, goldenFactors, reindeerFactors, buffs, buffsWithGolden, lump, autosave, magicFull, curve, LUMP_TYPES };
+  return { init, spawnOf, distribution, waitFrom, meanWithout, goldenFactors, reindeerFactors, buffs, buffsWithGolden, effectDuration, effectDurMod, EFFECTS, lump, autosave, magicFull, curve, LUMP_TYPES };
 })();
