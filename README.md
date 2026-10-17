@@ -498,10 +498,13 @@ The **Grimoire** page (Wizard tower minigame) is the Grimoire, CookieMgr-style:
   The combos: Frenzy + Dragonflight, Frenzy + Click frenzy, Frenzy + a building special, a building special +
   Dragonflight, a building special + Click frenzy (a combo that starts when you're short of magic still gets its cast
   once the magic is there). With **Forecast** on (its card), it reads what the next cast gives (the forecast, fthof.*)
-  and casts only on a click frenzy or a building special — or a frenzy, for a combo without one; **Skip ahead** (a
-  number of casts) spends spare magic on Haggler's Charm to bring a good cast closer, never dipping below what Force
-  the Hand of Fate costs. In the simulator (the real game, 24 Frenzy + Dragonflight combos) Forecast off cast 24 times
-  for 1 good outcome; on, it cast once — that one. Its code is yours to change (Edit on its card; Revert to default
+  and casts only on a click frenzy or a building special — or a frenzy, for a combo without one. Meanwhile, while the
+  next cast isn't good, it spends spare magic on Haggler's Charm to skip it (never dipping below what Force the Hand of
+  Fate costs): the forecast only moves when something is cast, so it keeps skipping however far the next good cast is.
+  **Skip ahead** caps that (0: no limit, the default) — a cap can stall it when the next good cast is further away. In
+  the simulator (`sim/experiments/fthof-forecast.mjs`: the real game, 24 h × 4 seeds, no buying) Forecast on with no
+  limit baked +79% ± 30% more than off with a 90-magic bar (higher on every seed) and +917% ± 535% with 299 — skewed by
+  rare stacked combos — while a limit of 1–10 casts stalled on most seeds. Its code is yours to change (Edit on its card; Revert to default
   brings these back). Pair it with the Golden cookies macro to pop the cookie it summons. Your own macros that cast spells are listed here too.
 - **Spell combos** — **New combo** starts a "once" macro that casts several spells in order (Force the Hand of Fate,
   then Stretch Time, by default); combos get a Run button, a hotkey and a ★ like any macro.

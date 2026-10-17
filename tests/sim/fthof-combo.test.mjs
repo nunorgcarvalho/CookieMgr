@@ -1,7 +1,7 @@
 // Force the Hand of Fate on combos, Forecast on (v3.12.1), in the real game: combo after combo
 // (Frenzy + Dragonflight), the macro running on the game's clock — every Force the Hand of Fate it
 // casts gives a click frenzy or a building special, Skip ahead (Haggler's Charm) brings good casts
-// closer, and the same combos with Forecast off get whatever comes (some bad).
+// closer — with no limit (v3.12.3) as with a cap — and the same combos with Forecast off get whatever comes (some bad).
 import { makeAssert } from '../harness/game.mjs';
 import { gameOrSkip } from '../harness/sim.mjs';
 import { createSim } from '../../sim/sim.mjs';
@@ -75,6 +75,12 @@ const on = combos(24);
 const onBad = on.forces.filter((f) => !GOOD.includes(f));
 assert(on.forces.length > 0 && onBad.length === 0, `Forecast on: every Force the Hand of Fate a click frenzy or a building special (${on.forces.length} casts: ${on.forces.join(', ')})`);
 assert(on.hagglers > 0, `Skip ahead: Haggler’s Charm moved the forecast on toward good casts (${on.hagglers} times)`);
+
+// ---- Skip ahead 0 (v3.12.3: no limit, the default) — never stalls: at least as many good casts, all good
+CA.Macros.setInput(id, 'skipAhead', 0);
+const free = combos(24);
+const freeBad = free.forces.filter((f) => !GOOD.includes(f));
+assert(freeBad.length === 0 && free.forces.length >= on.forces.length && free.hagglers >= on.hagglers, `no limit: ${free.forces.length} casts, all good (${free.forces.join(', ')}), ${free.hagglers} skips — capped at 1: ${on.forces.length} casts, ${on.hagglers} skips`);
 
 assert(sim.errors().length === 0, 'no errors in the game' + (sim.errors().length ? `: ${sim.errors().slice(0, 3).join(' | ')}` : ''));
 done();

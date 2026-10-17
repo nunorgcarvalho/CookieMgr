@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 3.12.3 — 2026-10-16
+
+- **Fix: Force the Hand of Fate on combos stalled for good in Forecast mode.** The forecast only moves when something
+  is cast, so once the next cast was bad and no good one was within Skip ahead's reach, it never cast again. Now, while
+  the next cast isn't good, it keeps skipping with Haggler's Charm (spare magic only — never below what Force the Hand
+  of Fate costs), however far the good one is, even past the forecast's 100-cast reach. **Skip ahead** is now a cap:
+  0 — no limit, the default (it used to mean never); a number stops at that many casts, and can stall.
+- The simulator's experiment (`sim/experiments/fthof-forecast.mjs`; the real game, 24 h × 4 seeds, paired, no buying):
+  with no limit, Forecast mode baked +79.0% ± 29.5% more than Forecast off with 90 magic (21.5 casts and 80.5 skips a
+  day, every seed ahead), +917% ± 535% with 299 magic (skewed by rare stacked combos); limits of 1–10 casts stalled.
+  Forecast stays off by default.
+
 ## 3.12.2 — 2026-10-16
 
 - **Force the Hand of Fate's forecast is much cheaper to ask.** What the next casts give is worked out once for the

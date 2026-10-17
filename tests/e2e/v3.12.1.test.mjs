@@ -58,7 +58,9 @@ assert(fthofs(await run('FD', ['clot'])) === 1, 'Forecast off: casts on a combo 
 
 // ---- Forecast: only on a good cast
 M.setInput(id, 'forecast', 'good');
-assert(fthofs(await run('FD', ['clot', 'click frenzy'])) === 0, 'Forecast on, Frenzy + Dragonflight, the next a Clot: no cast');
+// (v3.12.3: skipping has no limit by default — capped at 1 here, the good casts out of its reach)
+M.setInput(id, 'skipAhead', 1);
+assert(fthofs(await run('FD', ['clot', 'clot', 'click frenzy'])) === 0, 'Forecast on, Frenzy + Dragonflight, the next a Clot: no cast');
 assert(fthofs(await run('FD', ['click frenzy'])) === 1, '…the next a Click frenzy: cast');
 assert(fthofs(await run('FD', ['building special'])) === 1, '…a building special: cast');
 assert(fthofs(await run('FD', ['frenzy'])) === 0, '…a Frenzy, with a Frenzy on already: no cast');
