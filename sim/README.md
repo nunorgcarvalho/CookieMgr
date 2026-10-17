@@ -1,6 +1,6 @@
 # CookieMgr simulator
 
-*v0.3.1 — versioned apart from the add-on (`sim-v*` tags; `SIM_VERSION` in `sim.mjs`).*
+*v0.3.2 — versioned apart from the add-on (`sim-v*` tags; `SIM_VERSION` in `sim.mjs`).*
 
 A Cookie Clicker simulator for trying out strategies over long timescales — written in CookieMgr's
 own words, so what works here can be pasted into the add-on and run on the real game.
@@ -204,6 +204,29 @@ tests/sim/           the simulator's tests (part of npm test)
   | Steady replanter | +48.7% ± 0.7 | 2.224 | 13% | 9.6 |
 
   Seed by seed, replanting at the tick wins every time: by 1.19 ± 0.29 points.
+- **Force the Hand of Fate on combos pays to read the forecast only if it skips ahead without a
+  limit.** `experiment fthof-forecast`: 24 h × 4 seeds each, the same economy (6 h of `payback`,
+  then Wizard towers given), clicking 20/s, golden cookies popped, nothing bought; cookies baked,
+  each seed against `off`:
+
+  | forecast | max magic 90 | FtHoF casts | max magic 299 | FtHoF casts |
+  | --- | --- | --- | --- | --- |
+  | off (every combo) | 2.82Qa | 31 | 32.8Qa | 15 |
+  | good, skipAhead 0, 1 or 2 | −50.4% ± 9.5 | 0 | −26.9% ± 18.9 | 0 |
+  | good, skipAhead 3 | −51.2% ± 9.1 | 0.8 | −12.9% ± 32.7 | 0.8 |
+  | good, skipAhead 10 | −11.9% ± 26.4 | 8.5 | +155% ± 142 | 5.5 |
+  | good, skipAhead 100 | **+79.0% ± 29.5** (every seed) | 21.5 | **+917% ± 535** | 10.8 |
+
+  The forecast only moves when a spell is cast. So once the next cast is a bad one and no good one is
+  within skipAhead casts, "good" waits for good. skipAhead 0–2 never cast once in a day. Skipping
+  without a limit (Haggler's Charm with spare magic) means fewer casts, but better ones: the biggest
+  minute is 1.5× off's at 90 magic and 19× at 299 (134Qa — a building special and a click frenzy on
+  a frenzy). The gain at high magic is heavy-tailed.
+  Two more things it showed:
+  - Combos need **Serendipity and Get lucky**. Without them the next golden cookie comes 150 s at
+    the soonest, and a Frenzy lasts 77 s, so cookies popped on sight never overlap.
+  - `fthof.castsUntil` was 13× too slow for a macro, which asks it several times a tick. It has
+    been cached since add-on v3.12.2.
 
 ## Not yet
 
