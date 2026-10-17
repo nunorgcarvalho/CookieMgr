@@ -751,6 +751,14 @@ CA.UI.MacrosPage = (() => {
           // running: what each of its steps has done (morphed, so nothing flickers)
           CA.UI.Dom.morph(st, `<div class="ca-status-up">on for ${CA.UI.Plot.fmt.span((Date.now() - M().since(id)) / 1000)}${n ? ` · ${n.toLocaleString()} done` : ''}</div>${stepLines(m)}`);
         } else st.textContent = on ? `Running · ${CA.UI.Plot.fmt.span((Date.now() - M().since(id)) / 1000)}` : s && s.lastRun ? `Last ran ${ago(s.lastRun)}` : '';
+        // a built-in's hint (why it may not do anything now), on or off
+        let hint = '';
+        try {
+          hint = typeof m.hint === 'function' ? m.hint(M().inputsOf(m)) || '' : '';
+        } catch (e) {
+          hint = '';
+        }
+        if (hint) st.insertAdjacentHTML('beforeend', `<div class="ca-status-hint">⚠ ${esc(hint)}</div>`);
       }
     });
     if (draft && draft.id && el.querySelector('[data-macro-editor] [data-code-ed]')) {

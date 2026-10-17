@@ -2723,6 +2723,12 @@
   padding-top: 3px;
   border-top: 1px solid rgba(255, 220, 150, 0.15);
 }
+/* a built-in macro's hint on its card (why it may not do anything now) */
+#CookieMgrMenu .ca-status-hint {
+  margin-top: 3px;
+  font-size: 11px;
+  color: #ffd56a;
+}
 #CookieMgrMenu .ca-gnew {
   position: absolute;
   left: 1px;

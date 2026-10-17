@@ -195,7 +195,7 @@ CA.Macros = (() => {
       if (def.pass) m.pass = true;
       // a built-in whose code comes from elsewhere (the active gardener's code), that only
       // runs when it can (ready), reports each pass (afterPass), and is edited on its own page (editAt)
-      if (def.builtin) ['sourceFrom', 'ready', 'afterPass', 'readiness'].forEach((k) => typeof def[k] === 'function' && (m[k] = def[k]));
+      if (def.builtin) ['sourceFrom', 'ready', 'afterPass', 'readiness', 'hint'].forEach((k) => typeof def[k] === 'function' && (m[k] = def[k]));
       if (def.builtin && def.editAt) m.editAt = def.editAt;
     }
     if (mode === 'when') {
