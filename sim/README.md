@@ -217,6 +217,9 @@ tests/sim/           the simulator's tests (part of npm test)
   | good, skipAhead 10 | −11.9% ± 26.4 | 8.5 | +155% ± 142 | 5.5 |
   | good, skipAhead 100 | **+79.0% ± 29.5** (every seed) | 21.5 | **+917% ± 535** | 10.8 |
 
+  (skipAhead as it was before add-on v3.12.3, where 0 meant never skip. Since v3.12.3, 0 means no
+  limit and is the default. Rerun on v3.12.3, good with skipAhead 0 matches the skipAhead 100 row
+  above run for run.)
   The forecast only moves when a spell is cast. So once the next cast is a bad one and no good one is
   within skipAhead casts, "good" waits for good. skipAhead 0–2 never cast once in a day. Skipping
   without a limit (Haggler's Charm with spare magic) means fewer casts, but better ones: the biggest
