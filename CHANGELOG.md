@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **How long a golden cookie's effect lasts, with your upgrades**: `golden.effectDuration(effect)` — Frenzy, a building
+  special, Click frenzy, Dragonflight, Dragon Harvest, Everything must go, Cookie storm, and the wrath ones (Clot,
+  Cursed finger, Elder frenzy), as the game times them: Get lucky, Lasting fortune, the Lucky upgrades, Green yeast
+  digestives, Epoch Manipulator and Vomitrax counted. Checked against the effects the game grants.
+
 ## 3.12.3 — 2026-10-16
 
 - **Fix: Force the Hand of Fate on combos stalled for good in Forecast mode.** The forecast only moves when something
