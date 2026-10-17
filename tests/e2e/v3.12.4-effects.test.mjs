@@ -1,4 +1,4 @@
-// How long a golden cookie's effect lasts with your upgrades (renamed vX.Y.Z.test.mjs when it lands):
+// v3.12.4: how long a golden cookie's effect lasts with your upgrades:
 // CA.Timers.effectDuration and the word golden.effectDuration — ceil(base × the game's effectDurMod).
 // (Against the durations the real game grants: tests/sim/effect-duration.)
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';

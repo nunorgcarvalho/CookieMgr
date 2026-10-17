@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 3.12.4 — 2026-10-16
+
 - **How long a golden cookie's effect lasts, with your upgrades**: `golden.effectDuration(effect)` — Frenzy, a building
   special, Click frenzy, Dragonflight, Dragon Harvest, Everything must go, Cookie storm, and the wrath ones (Clot,
   Cursed finger, Elder frenzy), as the game times them: Get lucky, Lasting fortune, the Lucky upgrades, Green yeast
