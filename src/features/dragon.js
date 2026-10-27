@@ -16,7 +16,7 @@
 //                Three come seeded, with stable ids a macro can count on even after a rename:
 //                  drops        Mind Over Matter + Dragon Guts (random drops, wrinklers)
 //                  dropsFlight  Mind Over Matter + Dragonflight
-//                  golden       Dragonflight + Reaper of Fields
+//                  dragonFlightHarvest  Dragonflight + Reaper of Fields
 //
 //   For algorithmic code:
 //     dragon.level()                 the dragon's level (0–27)
@@ -34,7 +34,7 @@ CA.Dragon = (() => {
   const SEEDS = [
     { id: 'drops', name: 'Drops', auras: ['Mind Over Matter', 'Dragon Guts'] },
     { id: 'dropsFlight', name: 'Drops & flight', auras: ['Mind Over Matter', 'Dragonflight'] },
-    { id: 'golden', name: 'Golden', auras: ['Dragonflight', 'Reaper of Fields'] },
+    { id: 'dragonFlightHarvest', name: 'Dragonflight & Harvest', auras: ['Dragonflight', 'Reaper of Fields'] },
   ];
   let profiles = SEEDS.map((p) => ({ ...p, auras: p.auras.slice() }));
 
@@ -300,7 +300,7 @@ CA.Dragon = (() => {
       icon: 'dragon',
       group: 'Dragon',
       unit: 'switched',
-      params: [{ key: 'profile', label: 'Profile', type: 'select', default: 'golden', options: profileOptions }],
+      params: [{ key: 'profile', label: 'Profile', type: 'select', default: 'dragonFlightHarvest', options: profileOptions }],
       available: () => slots() > 0,
       describe: (p) => `Use the dragon aura profile ${(find(p.profile) || { name: p.profile }).name}`,
       ready: (p) => {

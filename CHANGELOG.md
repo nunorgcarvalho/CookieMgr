@@ -5,7 +5,9 @@
 ## 3.32.0 — 2026-10-27
 
 - **The Dragon page**, in the minigames under the Grimoire: Krumblor's level, the aura in each slot and what it does,
-  what the next level takes, and a **Train** button.
+  what the next level takes, and a **Train** button. Click a slot to switch its aura.
+- **The aura picker**: every aura with the game's own icon and description, like the game's aura menu — the ones not
+  trained yet dimmed with the level that trains them. It opens for a dragon slot or a profile's aura.
 - **Auto dragon**, a built-in macro (with the seasons and lumps ones, and on the Dragon page): trains the dragon
   whenever you can afford its next level — buys A crumbly egg, chips and hatches the egg, trains each aura (100 of a
   building each), bakes the dragon cookie and trains the second aura slot (50 and 200 of every building). Its
@@ -15,8 +17,8 @@
   in use (or how many switches it needs), **Use** and **Delete**; **New profile** and **From current auras**. Using one
   puts its auras in the way the game's own switch does (each changed slot costs one of your highest buildings): with
   one slot, its first aura you've trained; with two, both, in either slot. Three come with it — **Drops** (Mind Over
-  Matter + Dragon Guts), **Drops & flight** (Mind Over Matter + Dragonflight) and **Golden** (Dragonflight + Reaper of
-  Fields) — and like yours they can be renamed or deleted; macros call them by id (`drops`, `dropsFlight`, `golden`),
+  Matter + Dragon Guts), **Drops & flight** (Mind Over Matter + Dragonflight) and **Dragonflight & Harvest** (Dragonflight +
+  Reaper of Fields) — and like yours they can be renamed or deleted; macros call them by id (`drops`, `dropsFlight`, `dragonFlightHarvest`),
   which a rename doesn't change. Saved with the game.
 - For macros: actions `dragon.train(buildings)`, `dragon.setAura(aura, slot)`, `dragon.profile(profile)`; values
   `dragon.level()`, `dragon.aura(slot)`, `dragon.canTrain(buildings)`, `dragon.profileActive(profile)`,
