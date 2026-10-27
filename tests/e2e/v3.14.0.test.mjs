@@ -44,7 +44,9 @@ assert(Math.abs(nowX() - X(360)) < 0.05, `the now line at 6 min of 15 (x ${nowX(
 const half = svg().querySelector('.ca-sp-half');
 const y0 = 150 - 22;
 const y1 = 10;
-assert(Math.abs(Number(half.getAttribute('y1')) - (y0 - (y0 - y1) * 0.5)) < 0.05 && /50%/.test(svg().textContent), 'the dashed line at 50%');
+// (v3.19.1: the dashed line across sits at the curve's height at the expected moment, not 50%)
+const hp = d.cycle.cdf(d.cycle.elapsed + d.wait.mean);
+assert(Math.abs(Number(half.getAttribute('y1')) - (y0 - (y0 - y1) * hp)) < 0.05 && svg().textContent.includes(`${(hp * 100).toFixed(hp < 0.1 ? 1 : 0)}%`), `the dashed line across, at the expected moment's height (${(hp * 100).toFixed(1)}%)`);
 const ticks = [...svg().querySelectorAll('.ca-sp-ticks text')].map((t) => t.textContent);
 assert(ticks[0] === '0' && ticks[ticks.length - 1] === CA.Format.span(900), `the axis: 0 → the latest (${ticks.join(', ')})`);
 assert(/Expected wait/.test(text()) && text().includes(CA.Format.span(d.wait.mean)) && /Odds so far/.test(text()) && /Wrath chance/.test(text()), 'the numbers: expected wait, odds so far, wrath chance');

@@ -6156,7 +6156,7 @@ body.ca-has-storebar #products {
 }
 #CookieMgrMenu .ca-sp-half,
 #CookieMgrWidgets .ca-sp-half {
-  stroke: rgba(255, 255, 255, 0.35);
+  stroke: rgba(125, 255, 122, 0.6);
   stroke-width: 1;
   stroke-dasharray: 4 3;
   vector-effect: non-scaling-stroke;
@@ -6166,6 +6166,12 @@ body.ca-has-storebar #products {
   stroke: #ffe066;
   stroke-width: 1.5;
   vector-effect: non-scaling-stroke;
+}
+#CookieMgrMenu .ca-sp-now .ca-sp-nowh,
+#CookieMgrWidgets .ca-sp-now .ca-sp-nowh {
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  opacity: 0.7;
 }
 #CookieMgrMenu .ca-sp-now circle,
 #CookieMgrWidgets .ca-sp-now circle {
@@ -6178,6 +6184,42 @@ body.ca-has-storebar #products {
   paint-order: stroke;
   stroke: rgba(0, 0, 0, 0.85);
   stroke-width: 3px;
+}
+/* this cycle's chart: the expected moment, and the time since the last one at the now line's foot */
+#CookieMgrMenu .ca-sp-expect line,
+#CookieMgrWidgets .ca-sp-expect line {
+  stroke: #7dff7a;
+  stroke-width: 1.2;
+  stroke-dasharray: 4 3;
+  vector-effect: non-scaling-stroke;
+}
+#CookieMgrMenu .ca-sp-chart .ca-sp-expect text,
+#CookieMgrWidgets .ca-sp-chart .ca-sp-expect text {
+  fill: #7dff7a;
+  font-weight: bold;
+  paint-order: stroke;
+  stroke: rgba(0, 0, 0, 0.85);
+  stroke-width: 3px;
+}
+#CookieMgrMenu .ca-sp-chart .ca-sp-ylab,
+#CookieMgrWidgets .ca-sp-chart .ca-sp-ylab {
+  paint-order: stroke;
+  stroke: rgba(0, 0, 0, 0.85);
+  stroke-width: 3px;
+}
+#CookieMgrMenu .ca-sp-chart .ca-sp-hp,
+#CookieMgrWidgets .ca-sp-chart .ca-sp-hp {
+  fill: #7dff7a;
+  font-weight: bold;
+}
+#CookieMgrMenu .ca-sp-chart .ca-sp-now .ca-sp-since,
+#CookieMgrWidgets .ca-sp-chart .ca-sp-now .ca-sp-since {
+  font-weight: normal;
+}
+/* an effect that has ended (this cycle's chart keeps it) */
+#CookieMgrMenu .ca-sp-lane.ended,
+#CookieMgrWidgets .ca-sp-lane.ended {
+  opacity: 0.45;
 }
 /* the timer bars under the spawn chart */
 #CookieMgrMenu .ca-sp-lane .track,
@@ -6381,7 +6423,7 @@ body.ca-has-storebar #products {
   color: #ffd56a;
 }
 
-/* ---------- v3.20.0: ☆ widget stars, the Chart widget, Golden cookie frequency ---------- */
+/* ---------- v3.21.0: ☆ widget stars, the Chart widget, Golden cookie frequency ---------- */
 
 /* a page's ☆ (CA.UI.C.widgetStar): the macros' favourite star, a touch smaller in card heads */
 #CookieMgrMenu .ca-wstar {

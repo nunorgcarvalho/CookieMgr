@@ -1,4 +1,4 @@
-// v3.20.0: ☆ stars that put a ready-made widget on the left panel — the Garden page's two charts
+// v3.21.0: ☆ stars that put a ready-made widget on the left panel — the Garden page's two charts
 // (a Chart widget: a live copy of the chart) and the Stats page's golden cookie frequency (a Golden
 // cookie frequency widget); a second click takes it away, and every star follows the widgets.
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';

@@ -8,7 +8,7 @@
 //                              comes within N seconds. (Cookie Monster only shows the min and max.)
 //   buffs                      seconds left of each effect, its multipliers — what it multiplies your
 //                              income by, clicking counted — and the chance a golden cookie comes
-//                              before it ends
+//                              before it ends; the ones that ran lately, ended ones kept an hour
 //   sugar lump                 seconds until mature / ripe / overripe (it falls off then), its type
 //   autosave                   seconds until the game saves itself (once a minute)
 //   magic                      seconds until the Grimoire's magic is full (features/grimoire.js)
@@ -182,6 +182,7 @@ CA.Timers = (() => {
    * Everything about a shimmer type's next appearance — null when it can't come (no timer running:
    * the Golden switch, out of season): { type, spawned, cycle: { min, max, elapsed (seconds, as fixed
    * when the last one left), cdf(secs since it left) → the chance one has come by then, by (cdf now) }, wait (waitFrom — from now), factors (what's making them more frequent now),
+   * frequency (how many times more often than with no factors at all — 1 / Π factors),
    * next: { min, max, mean } (a fresh cycle at today's factors), override ('chain' | 'hoard' | ''),
    * wrathChance (the next golden cookie being a wrath cookie) }.
    */
@@ -208,6 +209,8 @@ CA.Timers = (() => {
       cycle: { min: me.minTime / f, max: me.maxTime / f, elapsed: me.time / f, cdf: cycleCdf(me), by: cycleCdf(me)(me.time / f) },
       wait: me.spawned ? null : waitFrom(me, bins),
       factors,
+      // how many times more often they come than with nothing at all (no upgrades, garden, spirits, aura…)
+      frequency: 1 / factors.reduce((a, x) => a * x.k, 1),
       next: { min: nmin / f, max: nmax / f, mean: waitFrom({ time: 0, minTime: nmin, maxTime: nmax }, 2).mean },
       override,
       wrathChance,
@@ -350,6 +353,47 @@ CA.Timers = (() => {
     return { mult, cps, click, rate };
   }
 
+  // Effects seen, ended ones kept a while — so a chart over the time since the last golden cookie can
+  // show what ran in it. Wall-clock ms; sampled each second (and on every ask), as the game drops a
+  // buff from Game.buffs the moment it ends.
+  const log = []; // { name, type, icon, cps, click, mult, rate, start, end }
+  function sampleEffects() {
+    const now = Date.now();
+    const live = buffs();
+    live.forEach((b) => {
+      const start = now - Math.max(0, b.maxSecs - b.secs) * 1000;
+      // the same effect while it runs on (a recast stretches it); after a gap, a new one
+      let e = log.find((x) => x.name === b.name && x.end >= now - 1500);
+      if (!e) log.push((e = { name: b.name, start }));
+      const em = effectiveMult(b.name);
+      Object.assign(e, { type: b.type, icon: b.icon, cps: b.cps, click: b.click, mult: em ? em.mult : b.cps, rate: em ? em.rate : 0, start: Math.min(e.start, start), end: now + b.secs * 1000 });
+    });
+    // gone before its time (cancelled, or the save reloaded): it ended now
+    log.forEach((e) => {
+      if (e.end > now && !live.some((b) => b.name === e.name)) e.end = now;
+    });
+    while (log.length && (log[0].end < now - 3600e3 || log.length > 200)) log.shift();
+  }
+  /**
+   * The effects that ran within the last `secs` seconds, oldest first — running and ended — each
+   * { name, type, icon, cps, click, mult (effectiveMult's, as last seen), rate, running, startedAgo,
+   * endsIn (seconds; < 0: ended that long ago), secs (left), maxSecs }.
+   */
+  function effectsSince(secs) {
+    sampleEffects();
+    const now = Date.now();
+    const live = new Set(buffs().map((b) => b.name));
+    return log
+      .filter((e) => e.end > now - secs * 1000)
+      .sort((a, b) => a.start - b.start)
+      .map((e) => {
+        const running = live.has(e.name) && e.end > now;
+        const startedAgo = (now - e.start) / 1000;
+        const endsIn = (e.end - now) / 1000;
+        return { ...e, running, startedAgo, endsIn, secs: Math.max(0, endsIn), maxSecs: startedAgo + Math.max(0, endsIn) };
+      });
+  }
+
   const LUMP_TYPES = ['normal', 'bifurcated', 'golden', 'meaty', 'caramelized'];
   /** The sugar lump: { type, matureIn, ripeIn, fallsIn } seconds (0 once reached), or null before lumps. */
   function lump() {
@@ -374,6 +418,13 @@ CA.Timers = (() => {
   }
 
   function init() {
+    setInterval(() => {
+      try {
+        sampleEffects();
+      } catch (e) {
+        /* a half-loaded game: next second */
+      }
+    }, 1000);
     const V = (id, desc, get, params) => CA.Script.defineValue({ id, desc, get, params });
     const g = (k) => () => (spawnOf('golden') || { [k]: NaN })[k];
     V('golden.soonest', 'seconds until the next golden cookie can appear (0: it can now)', g('soonest'));
@@ -383,6 +434,7 @@ CA.Timers = (() => {
       const x = spawnOf('golden');
       return x ? x.within(Number(s) || 0) : 0;
     }, ['seconds']);
+    V('golden.frequency', 'how many times more often golden cookies come than with nothing helping (no upgrades, garden, spirits, aura…): 2 with Lucky day', () => (distribution('golden', 2) || { frequency: NaN }).frequency);
     V('reindeer.expected', 'seconds the next reindeer takes on average (Christmas)', () => (spawnOf('reindeer') || { expected: NaN }).expected);
     V('golden.effectDuration', 'seconds a golden cookie’s effect lasts if it starts now, with your upgrades (frenzy, building special, click frenzy, dragonflight, clot…; NaN for others)', (n) => effectDuration(n), ['effect']);
     V('buff.timeLeft', 'seconds an effect has left (0: not running)', (n) => {
@@ -399,5 +451,5 @@ CA.Timers = (() => {
     V('magic.fullIn', 'seconds until the Grimoire’s magic is full (0: it is)', () => magicFull() ?? NaN);
   }
 
-  return { init, spawnOf, distribution, waitFrom, meanWithout, goldenFactors, reindeerFactors, buffs, buffsWithGolden, effectiveMult, effectDuration, effectDurMod, EFFECTS, lump, autosave, magicFull, curve, LUMP_TYPES };
+  return { init, spawnOf, distribution, waitFrom, meanWithout, goldenFactors, reindeerFactors, buffs, buffsWithGolden, effectsSince, effectiveMult, effectDuration, effectDurMod, EFFECTS, lump, autosave, magicFull, curve, LUMP_TYPES };
 })();
