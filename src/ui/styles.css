@@ -7103,3 +7103,94 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-st-paste {
   border-bottom: none;
 }
+
+/* v3.29: warnings as statistics — tags in any colour, the Tooltips page's warning list */
+#tooltip .ca-tt-bank-green,
+#CookieMgrMenu .ca-tl-preview .ca-tt-bank-green,
+#CookieMgrMenu .ca-se-result .ca-tt-bank-green {
+  color: #9dff9a;
+  background: rgba(125, 255, 122, 0.12);
+}
+#tooltip .ca-tt-bank-blue,
+#CookieMgrMenu .ca-tl-preview .ca-tt-bank-blue,
+#CookieMgrMenu .ca-se-result .ca-tt-bank-blue {
+  color: #8fd0ff;
+  background: rgba(110, 195, 255, 0.14);
+}
+#tooltip .ca-tt-bank-purple,
+#CookieMgrMenu .ca-tl-preview .ca-tt-bank-purple,
+#CookieMgrMenu .ca-se-result .ca-tt-bank-purple {
+  color: #d6b3ff;
+  background: rgba(201, 155, 255, 0.14);
+}
+#tooltip .ca-tt-bank-gray,
+#CookieMgrMenu .ca-tl-preview .ca-tt-bank-gray,
+#CookieMgrMenu .ca-se-result .ca-tt-bank-gray {
+  color: #bdbdbd;
+  background: rgba(154, 154, 154, 0.14);
+}
+#CookieMgrMenu .ca-se-result .ca-tt-bank {
+  display: inline-block;
+  padding: 0 5px;
+  border-radius: 3px;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+  font-weight: bold;
+}
+#CookieMgrMenu .ca-se-result .ca-tt-bank small {
+  font-weight: normal;
+  opacity: 0.85;
+}
+#CookieMgrMenu .ca-se-result .ca-tt-bank-red {
+  color: #ff8a8a;
+  background: rgba(255, 107, 107, 0.15);
+}
+#CookieMgrMenu .ca-se-result .ca-tt-bank-orange {
+  color: #ffb36a;
+  background: rgba(255, 170, 77, 0.15);
+}
+#CookieMgrMenu .ca-se-result .ca-tt-bank-yellow {
+  color: #ffe066;
+  background: rgba(255, 224, 102, 0.12);
+}
+#CookieMgrMenu .ca-se-warn > span {
+  color: #ffb36a;
+}
+#CookieMgrMenu .ca-tl-warns {
+  padding: 0 10px 10px;
+}
+#CookieMgrMenu .ca-tl-warns.off {
+  opacity: 0.5;
+}
+#CookieMgrMenu .ca-tw-row {
+  cursor: default;
+}
+#CookieMgrMenu .ca-tl-colour.red {
+  color: #ff8a8a;
+  background: rgba(255, 107, 107, 0.15);
+}
+#CookieMgrMenu .ca-tl-colour.orange {
+  color: #ffb36a;
+  background: rgba(255, 170, 77, 0.15);
+}
+#CookieMgrMenu .ca-tl-colour.yellow {
+  color: #ffe066;
+  background: rgba(255, 224, 102, 0.12);
+}
+#CookieMgrMenu .ca-tl-colour.green {
+  color: #9dff9a;
+  background: rgba(125, 255, 122, 0.12);
+}
+#CookieMgrMenu .ca-tl-colour.blue {
+  color: #8fd0ff;
+  background: rgba(110, 195, 255, 0.14);
+}
+#CookieMgrMenu .ca-tl-colour.purple {
+  color: #d6b3ff;
+  background: rgba(201, 155, 255, 0.14);
+}
+#CookieMgrMenu .ca-tl-colour.gray,
+#CookieMgrMenu .ca-tl-colour.payback {
+  color: #bdbdbd;
+  background: rgba(154, 154, 154, 0.14);
+}

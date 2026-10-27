@@ -8,19 +8,19 @@
 //              building's share of your production, and how many more win its next achievement. Every
 //              line is a statistic (features/stats.js); which, in what order — any value word too — is
 //              chosen on the Payback page.
-//   warnings   buying it would take your bank below what a Lucky! (Conjure Baked Goods, a Lucky! in a
-//              Frenzy) needs to pay its most: a small coloured mark on the item in the store, and one
-//              line in the block naming the banks it breaks and by how much
+//   warnings   warning statistics (features/stats.js, warn) — by default, buying it would take your bank
+//              below what a Lucky! (Conjure Baked Goods, a Lucky! in a Frenzy) needs to pay its most:
+//              a small mark on the item in the store, in the colour of the first that warns, and one
+//              line in the block with a tag for each (option storeWarningList: which, in what order)
 //
 //   sort       optionally, the upgrades in payback order (colour group, then payback period)
 //
-// Options (Settings → Store): storeColours, storeTooltips, storeWarnings, storeUpgradeSort.
+// Options (Settings → Store): storeColours, storeTooltips, storeWarnings, storeUpgradeSort (and,
+// chosen on the Tooltips page: storeTooltipLines, storeWarningList).
 
 CA.UI = CA.UI || {};
 
 CA.UI.StoreInsight = (() => {
-  const esc = (s) => CA.Util.escapeHtml(s);
-  const F = () => CA.Format;
   const P = () => CA.Payback;
   const COLOURS = ['blue', 'green', 'yellow', 'orange', 'red', 'purple', 'gray'];
   const S = (k) => CA.Settings.get(k);
@@ -39,7 +39,7 @@ CA.UI.StoreInsight = (() => {
     return { name: b.name, n, price, bonus, pp, colour: t.colourOf(pp, price), won: [] };
   }
 
-  /** An item's bank mark in the store: the colour of the smallest bank buying it breaks (or none). */
+  /** An item's mark in the store: the colour of its first warning (or none). */
   function mark(host, warns) {
     let el = host.querySelector(':scope > .ca-bank-mark');
     if (!warns.length) {
@@ -56,15 +56,15 @@ CA.UI.StoreInsight = (() => {
 
   function paint() {
     const on = S('storeColours') && Game.buyMode === 1;
-    const t = on ? P().table({ staleMs: 2000 }) : null;
-    const bk = Game.buyMode === 1 ? banks() : [];
+    const warn = Game.buyMode === 1 && warningsOn();
+    const t = on || warn ? P().table({ staleMs: 2000 }) : null;
     Object.values(Game.Objects || {}).forEach((b) => {
       const el = document.getElementById(`productPrice${b.id}`);
       if (!el) return;
       COLOURS.forEach((c) => el.classList.remove(`ca-pp-${c}`));
       if (on) el.classList.add(`ca-pp-${rowFor(b, t).colour}`);
       const host = document.getElementById(`product${b.id}`);
-      if (host) mark(host, bk.length ? warnings(t ? rowFor(b, t).price : P().sumPrice(b, clickAmount(b)), bk) : []);
+      if (host) mark(host, warn ? warnings({ kind: 'building', name: b.name, r: rowFor(b, t), t }) : []);
     });
     // the upgrades in payback order (colour group, then payback period) — or the game's
     const sorted = S('storeUpgradeSort') && Game.buyMode === 1;
@@ -84,7 +84,8 @@ CA.UI.StoreInsight = (() => {
       if (!el) return;
       if (sorted) el.style.order = String(rank.indexOf(u) + 1);
       else if (el.style.order) el.style.removeProperty('order');
-      mark(el, bk.length ? warnings(typeof u.getPrice === 'function' ? u.getPrice() : u.basePrice || u.price || 0, bk) : []);
+      const ur = warn && t.upgrades[u.name];
+      mark(el, ur ? warnings({ kind: 'upgrade', name: u.name, r: ur, t }) : []);
       let dot = el.querySelector('.ca-pp-updot');
       if (!on) {
         if (dot) dot.remove();
@@ -102,33 +103,42 @@ CA.UI.StoreInsight = (() => {
 
   // ---- tooltips ----------------------------------------------------------------------------------
 
-  // Bank warnings: the banks a golden cookie (or a spell) needs to pay its most, smallest first —
-  // the one you'd want to keep the most. Each has its colour, on the store's marks and in the tooltip.
-  const BANKS = [
-    { id: 'lucky', name: 'Lucky!', colour: 'red', need: (G) => G.lucky().bank },
-    { id: 'conjure', name: 'Conjure', full: 'Conjure Baked Goods', colour: 'orange', need: (G) => G.conjure().bank },
-    { id: 'luckyFrenzy', name: 'Frenzy Lucky!', full: 'Lucky! in a Frenzy', colour: 'yellow', need: (G) => G.lucky(true).bank },
-  ];
-  /** The banks as they stand now: [{ id, name, colour, need }] (none with the option off). */
-  function banks() {
-    if (!S('storeWarnings') || !CA.GoldenMath) return [];
-    return BANKS.map((k) => ({ id: k.id, name: k.name, full: k.full || k.name, colour: k.colour, need: k.need(CA.GoldenMath) }));
+  // Warnings: warning statistics (features/stats.js), in the order chosen (option storeWarningList,
+  // ids — by default the three bank warnings, smallest bank first: the one you'd most want to keep).
+  const DEFAULT_WARNINGS = ['warnLucky', 'warnConjure', 'warnFrenzy'];
+  /** The warnings, in order: statistic ids (only warning statistics that still exist). */
+  function warningList() {
+    const v = S('storeWarningList');
+    return (Array.isArray(v) ? v : DEFAULT_WARNINGS).filter((id) => typeof id === 'string' && (ST().get(id) || {}).warn);
   }
+  function setWarnings(list) {
+    CA.Settings.set('storeWarningList', Array.isArray(list) ? list.slice() : null);
+  }
+  const warningsDefault = () => !Array.isArray(S('storeWarningList'));
+  const warningsOn = () => !!S('storeWarnings') && warningList().length > 0;
   /**
-   * The banks buying for `price` takes you below — only those you have now — smallest first:
-   * [{ id, name, colour, need, short }] (short: how much under it you'd be).
+   * The warnings about an item (a context: { kind, name, r, t }), in order: [{ id, label, html,
+   * colour }] — none with the option off (opts.force: whatever the option).
    */
-  function warnings(price, list) {
-    const have = Game.cookies || 0;
-    const after = have - price;
-    return (list || banks()).filter((k) => have >= k.need && after < k.need).map((k) => ({ ...k, short: k.need - after }));
+  function warnings(c, opts = {}) {
+    if (!c || (!opts.force && !S('storeWarnings'))) return [];
+    const out = [];
+    warningList().forEach((id) => {
+      try {
+        const w = ST().warning(ST().get(id), c);
+        if (w) out.push(w);
+      } catch (e) {
+        /* a warning that fails here: left out */
+      }
+    });
+    return out;
   }
 
-  /** The tooltip's one warning line: the banks it breaks, as coloured tags with how far under. */
+  /** The tooltip's one warning line: a coloured tag for each warning, with what it shows. */
   function warnLine(warns) {
     if (!warns.length) return '';
-    const tags = warns.map((w) => `<span class="ca-tt-bank ca-tt-bank-${w.colour}">${esc(w.name)} <small>−${F().beautify(w.short)}</small></span>`);
-    return `<div class="ca-tt-row ca-tt-warn"><span>⚠ Drops bank below</span><b>${tags.join('')}</b></div>`;
+    const tags = warns.map((w) => `<span class="ca-tt-bank ca-tt-bank-${w.colour}">${w.label} <small>${w.html}</small></span>`);
+    return `<div class="ca-tt-row ca-tt-warn"><span>⚠</span><b>${tags.join('')}</b></div>`;
   }
 
   function block(rows, warns) {
@@ -150,7 +160,7 @@ CA.UI.StoreInsight = (() => {
   // about the other kind, is left out. The default is Cookie Monster's layout.
   const ST = () => CA.Stats;
   /** The built-in lines, for the editor: [{ id, name, desc, scope }]. */
-  const LINES = CA.Stats.BUILTINS.map((b) => ({ id: b.id, name: b.name, desc: b.desc, scope: b.scope }));
+  const LINES = CA.Stats.BUILTINS.filter((b) => !b.warn).map((b) => ({ id: b.id, name: b.name, desc: b.desc, scope: b.scope }));
   const LINE = Object.fromEntries(LINES.map((l) => [l.id, l]));
   /** Cookie Monster's layout (its bank warnings are their own option). */
   const DEFAULT_LINES = ['bonus', 'click', 'payback', 'actual', 'afford', 'share', 'next', 'wins'];
@@ -201,15 +211,16 @@ CA.UI.StoreInsight = (() => {
   function buildingBlock(b, opts = {}) {
     if (!opts.force && (!S('storeTooltips') || Game.buyMode !== 1)) return '';
     const t = P().table();
-    const r = rowFor(b, t);
-    return block(rowsFor({ kind: 'building', name: b.name, r, t }), warnings(r.price));
+    const c = { kind: 'building', name: b.name, r: rowFor(b, t), t };
+    return block(rowsFor(c), warnings(c, opts));
   }
   function upgradeBlock(u, opts = {}) {
     if (!opts.force && !S('storeTooltips')) return '';
     const t = P().table();
     const r = t.upgrades[u.name];
     if (!r) return '';
-    return block(rowsFor({ kind: 'upgrade', name: u.name, r, t }), warnings(r.price));
+    const c = { kind: 'upgrade', name: u.name, r, t };
+    return block(rowsFor(c), warnings(c, opts));
   }
 
   const wrapped = new WeakSet();
@@ -248,7 +259,8 @@ CA.UI.StoreInsight = (() => {
     CA.Settings.defineOption({ key: 'storeUpgradeSort', group: 'store', icon: 'sortList', name: 'Upgrades: best first', desc: 'The store lists its upgrades by payback period (best first, in colour groups) instead of by price.', default: false });
     CA.Settings.defineOption({ key: 'storeTooltipLines', group: 'store-hidden', name: 'Tooltip lines', desc: '', default: null });
     // off by default since the tooltip's lines became yours to choose: Cookie Monster's layout, without them)
-    CA.Settings.defineOption({ key: 'storeWarnings', group: 'store', icon: 'bell', name: 'Bank warnings', desc: 'A small coloured “!” on anything whose purchase would take your bank below what a Lucky! (red), Conjure Baked Goods (orange) or a Lucky! in a Frenzy (yellow) needs to pay its most — and one line in its tooltip saying which, and by how much.', default: false });
+    CA.Settings.defineOption({ key: 'storeWarnings', group: 'store', icon: 'bell', name: 'Warnings', desc: 'A small coloured “!” on anything a warning is about — by default, whose purchase would take your bank below what a Lucky! (red), Conjure Baked Goods (orange) or a Lucky! in a Frenzy (yellow) needs to pay its most — and one line in its tooltip saying which, and by how much. Which warnings: the Tooltips page.', default: false });
+    CA.Settings.defineOption({ key: 'storeWarningList', group: 'store-hidden', name: 'Warnings', desc: '', default: null });
     wrapTooltips();
     setInterval(() => {
       try {
@@ -258,8 +270,9 @@ CA.UI.StoreInsight = (() => {
         /* a store mid-rebuild: next time */
       }
     }, 500);
-    CA.Events.on('settings', (k) => (k === 'storeColours' || k === 'storeUpgradeSort' || k === 'storeWarnings' || k === null) && paint());
+    CA.Events.on('settings', (k) => (k === 'storeColours' || k === 'storeUpgradeSort' || k === 'storeWarnings' || k === 'storeWarningList' || k === null) && paint());
+    CA.Events.on('stats', () => paint());
   }
 
-  return { init, paint, buildingBlock, upgradeBlock, warnings, banks, LINES, DEFAULT_LINES, FORMATS, lines, setLines, isDefault, words, statOf };
+  return { init, paint, buildingBlock, upgradeBlock, warnings, warningList, setWarnings, warningsDefault, DEFAULT_WARNINGS, LINES, DEFAULT_LINES, FORMATS, lines, setLines, isDefault, words, statOf };
 })();

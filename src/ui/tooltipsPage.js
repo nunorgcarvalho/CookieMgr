@@ -4,9 +4,11 @@
 //                          columns: its name, what it's about, its value now, how a word reads, ↑ ↓ ✕
 //                          (or drag a row); add a built-in, one of yours or any value word; Reset — and
 //                          two live previews drawn by the tooltip's own code: a building you pick, and
-//                          the best upgrade. The block's two switches (Payback in tooltips, Bank warnings).
+//                          the best upgrade. The block's switch (Payback in tooltips); the warnings
+//                          (ui/storeInsight.js): a switch, and which warning statistics, in order.
 //   Statistics             the catalog (features/stats.js): a card per statistic with its value for the
-//                          previewed item, what it is, its code; add it to the tooltip in one click,
+//                          previewed item, what it is, its code; add it to the tooltip (a warning: to
+//                          the warnings) in one click,
 //                          duplicate it (yours, to change), ☆ put it on the left
 //                          panel as a Statistic widget. Filter by group, yours, on screen; search.
 //                          New, Edit / Customise, Paste: the statistic editor (ui/statEditor.js) opens
@@ -121,7 +123,7 @@ CA.UI.TooltipsPage = (() => {
     const free = SI().LINES.filter((l) => !used.has(l.id));
     const yours = ST()
       .all()
-      .filter((s) => !s.builtin && !used.has(s.id));
+      .filter((s) => !s.builtin && !s.warn && !used.has(s.id));
     const add =
       '<select class="ca-tl-add" data-tl-add><option value="">+ add a line…</option>' +
       (free.length
@@ -154,6 +156,56 @@ CA.UI.TooltipsPage = (() => {
     );
   }
 
+  // ---- the warnings ---------------------------------------------------------------------------------
+
+  /** A warning's colour: its own, the item's payback colour, or red. */
+  const warnColour = (s) => (s.colour === 'payback' ? 'payback' : ST().COLOURS.includes(s.colour) ? s.colour : 'red');
+  const COLOUR_TAG = (s) =>
+    `<span class="ca-tl-kind ca-tl-colour ${warnColour(s)}" data-tip="Its colour (the store’s “!” takes the first warning’s)">${warnColour(s) === 'payback' ? 'payback colour' : warnColour(s)}</span>`;
+  function warnsHtml() {
+    const list = SI().warningList();
+    const btn = (attr, i, icon, tip, off) =>
+      `<button type="button" class="ca-tl-btn" ${attr}="${i}" data-tip="${tip}"${off ? ' disabled' : ''}>${icon}</button>`;
+    const rows = list
+      .map((id, i) => {
+        const s = ST().get(id);
+        const [v, cls] = valueNow(s);
+        return (
+          `<div class="ca-tl-row ca-tw-row" data-tw-row="${i}" data-tip="${esc(s.desc || '')}">` +
+          '<span></span>' +
+          `<span class="ca-tl-n">${i + 1}</span>` +
+          `<span class="ca-tl-name">${esc(s.label)}</span>` +
+          COLOUR_TAG(s) +
+          `<span class="ca-tl-val ${cls}" data-tw-val="${i}">${v}</span>` +
+          '<span></span>' +
+          btn('data-tw-up', i, '↑', 'Move up', i === 0) +
+          btn('data-tw-down', i, '↓', 'Move down', i === list.length - 1) +
+          btn('data-tw-del', i, '✕', 'Remove') +
+          '</div>'
+        );
+      })
+      .join('');
+    const free = ST()
+      .all()
+      .filter((s) => s.warn && !list.includes(s.id));
+    const add = free.length
+      ? `<select class="ca-tl-add" data-tw-add><option value="">+ add a warning…</option>${free.map((s) => `<option value="${esc(s.id)}">${esc(s.label)}${s.builtin ? '' : ' (yours)'}</option>`).join('')}</select>`
+      : '<span class="ca-hint">Every warning is in. Write your own: New, then “Shows as: a warning”.</span>';
+    return (
+      `<div class="ca-tl-list">${rows || '<div class="ca-card-note">No warnings: nothing is marked.</div>'}</div>` +
+      `<div class="ca-tl-tools">${add}${SI().warningsDefault() ? '' : '<button type="button" class="ca-btn ca-btn-small" data-tw-reset data-tip="Back to the three bank warnings">Reset</button>'}</div>`
+    );
+  }
+  /** A change to the warnings: a new list (null: the default), then the page again. */
+  function editWarnings(fn) {
+    const list = SI().warningList();
+    const next = fn(list);
+    SI().setWarnings(next === undefined ? list : next);
+    CA.Util.sound('snd/tick.mp3');
+    refresh();
+  }
+  const isWarning = (id) => SI().warningList().includes(id);
+
   function layoutCard() {
     const S = CA.Settings;
     return (
@@ -169,8 +221,10 @@ CA.UI.TooltipsPage = (() => {
       '</div>' +
       '<div class="ca-list">' +
       `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('search', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Payback in tooltips</div><div class="ca-row-desc">The block at all (off: the game’s tooltips as they are).</div></div>${C().toggle(!!S.get('storeTooltips'), 'data-tl-opt="storeTooltips"', 'Payback in tooltips')}</div>` +
-      `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('bell', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Bank warnings</div><div class="ca-row-desc">A coloured “!” on items whose purchase would take your bank below what a Lucky! (red), Conjure (orange) or a Frenzy Lucky! (yellow) needs, and one line under these naming which.</div></div>${C().toggle(!!S.get('storeWarnings'), 'data-tl-opt="storeWarnings"', 'Bank warnings')}</div>` +
-      '</div></div>'
+      `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('bell', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Warnings</div><div class="ca-row-desc">A coloured “!” on the store’s items a warning is about (in the first one’s colour), and a ⚠ line in their tooltips with a tag for each. Warnings are statistics too: by default, a purchase that would take your bank below what a Lucky! (red), Conjure (orange) or a Frenzy Lucky! (yellow) needs.</div></div>${C().toggle(!!S.get('storeWarnings'), 'data-tl-opt="storeWarnings"', 'Warnings')}</div>` +
+      '</div>' +
+      `<div class="ca-tl-warns${S.get('storeWarnings') ? '' : ' off'}" data-tl-warns>${warnsHtml()}</div>` +
+      '</div>'
     );
   }
 
@@ -200,6 +254,7 @@ CA.UI.TooltipsPage = (() => {
       .filter((s) => {
         if (filter === 'yours' && s.builtin) return false;
         if (filter === 'onscreen' && !onScreen(s)) return false;
+        if (filter === 'warnings' && !s.warn) return false;
         if (ST().GROUPS.includes(filter) && s.group !== filter) return false;
         return matchesQuery(`${s.label} ${s.key} ${s.desc} ${s.source}`);
       });
@@ -215,17 +270,19 @@ CA.UI.TooltipsPage = (() => {
   function cardHtml(s) {
     const [v, cls] = valueNow(s);
     const c = ctxFor(s.scope);
-    const inTt = inTooltip(s.id);
+    const inTt = s.warn ? isWarning(s.id) : inTooltip(s.id);
     const star = C().widgetStar(widgetPreset(s), s.label);
     const call = `stat.${s.key}(${s.scope === 'game' ? '' : 'item'})`;
     return (
       `<div class="ca-st-card${s.builtin ? '' : ' yours'}" data-st-card="${esc(s.id)}">` +
-      `<div class="ca-st-head"><b class="ca-st-name">${esc(s.label)}</b>${kindTag(s.scope)}${s.builtin ? (s.customized ? '<span class="ca-tl-kind yours" data-tip="A built-in you’ve changed (Edit → Reset brings back the original)">changed</span>' : '') : '<span class="ca-tl-kind yours">yours</span>'}${star}</div>` +
+      `<div class="ca-st-head"><b class="ca-st-name">${esc(s.label)}</b>${kindTag(s.scope)}${s.warn ? `<span class="ca-tl-kind ca-tl-colour ${warnColour(s)}" data-tip="A warning: it marks items in the store">⚠ warning</span>` : ''}${s.builtin ? (s.customized ? '<span class="ca-tl-kind yours" data-tip="A built-in you’ve changed (Edit → Reset brings back the original)">changed</span>' : '') : '<span class="ca-tl-kind yours">yours</span>'}${star}</div>` +
       `<div class="ca-st-live"><span>${c ? esc(aboutName(c)) : 'the game'}</span><b class="${cls}" data-st-val="${esc(s.id)}">${v}</b></div>` +
       `<div class="ca-st-desc">${esc(s.desc || '')}</div>` +
       codeHtml(s.source) +
       '<div class="ca-st-actions">' +
-      `<button type="button" class="ca-chip${inTt ? ' on' : ''}" data-st-tt="${esc(s.id)}" data-tip="${inTt ? 'Take it out of the store tooltip' : 'Add it to the store tooltip, at the end'}">${inTt ? '✓ in the tooltip' : '+ add to the tooltip'}</button>` +
+      (s.warn
+        ? `<button type="button" class="ca-chip${inTt ? ' on' : ''}" data-st-tt="${esc(s.id)}" data-tip="${inTt ? 'Stop this warning' : 'Use this warning (at the end of the list)'}">${inTt ? '✓ warning on' : '+ use as a warning'}</button>`
+        : `<button type="button" class="ca-chip${inTt ? ' on' : ''}" data-st-tt="${esc(s.id)}" data-tip="${inTt ? 'Take it out of the store tooltip' : 'Add it to the store tooltip, at the end'}">${inTt ? '✓ in the tooltip' : '+ add to the tooltip'}</button>`) +
       `<button type="button" class="ca-chip" data-st-edit="${esc(s.id)}" data-tip="${s.builtin ? 'Change it: its label, code, how it reads (Reset brings back the original)' : 'Change it'}">${I('edit', 11)} ${s.builtin ? 'Customise' : 'Edit'}</button>` +
       `<button type="button" class="ca-chip" data-st-dup="${esc(s.id)}" data-tip="A copy that’s yours to change">${I('plus', 11)} Duplicate</button>` +
       (s.builtin
@@ -253,6 +310,12 @@ CA.UI.TooltipsPage = (() => {
         )
         .join('') +
       chip(
+        'warnings',
+        'Warnings',
+        n((s) => s.warn),
+        'Statistics that mark items in the store'
+      ) +
+      chip(
         'yours',
         'Yours',
         n((s) => !s.builtin)
@@ -264,7 +327,7 @@ CA.UI.TooltipsPage = (() => {
   function catalogHtml() {
     const list = statsShown();
     if (!list.length)
-      return `<div class="ca-card-note">${filter === 'yours' && !query ? 'None of yours yet: + New, or duplicate a statistic.' : filter === 'onscreen' && !query ? 'None on the left panel: ☆ a statistic to put it there.' : 'No statistic matches.'}</div>`;
+      return `<div class="ca-card-note">${filter === 'yours' && !query ? 'None of yours yet: + New, or duplicate a statistic.' : filter === 'warnings' && !query ? 'No warnings.' : filter === 'onscreen' && !query ? 'None on the left panel: ☆ a statistic to put it there.' : 'No statistic matches.'}</div>`;
     return `<div class="ca-st-grid">${list.map(cardHtml).join('')}</div>`;
   }
 
@@ -372,6 +435,7 @@ CA.UI.TooltipsPage = (() => {
     [
       ['[data-tl-lines]', linesHtml],
       ['[data-tl-preview]', previewHtml],
+      ['[data-tl-warns]', warnsHtml],
       ['[data-st-chips]', chipsHtml],
       ['[data-st-body]', () => (tab === 'stats' ? catalogHtml() : valuesHtml())],
     ].forEach(([sel, fn]) => {
@@ -391,6 +455,12 @@ CA.UI.TooltipsPage = (() => {
       if (el.innerHTML !== v) el.innerHTML = v;
       el.className = `ca-tl-val ${cls}`;
     });
+    const wl = SI().warningList();
+    root.querySelectorAll('[data-tw-val]').forEach((el) => {
+      const [v, cls] = valueNow(ST().get(wl[Number(el.dataset.twVal)]));
+      if (el.innerHTML !== v) el.innerHTML = v;
+      el.className = `ca-tl-val ${cls}`;
+    });
     root.querySelectorAll('[data-st-val]').forEach((el) => {
       const [v, cls] = valueNow(ST().get(el.dataset.stVal));
       if (el.innerHTML !== v) el.innerHTML = v;
@@ -407,6 +477,22 @@ CA.UI.TooltipsPage = (() => {
   }
 
   function onClick(e) {
+    const tw = e.target.closest('[data-tw-up],[data-tw-down],[data-tw-del],[data-tw-reset]');
+    if (tw) {
+      e.stopPropagation();
+      const d = tw.dataset;
+      if (d.twReset !== undefined) return editWarnings(() => null);
+      const i = Number(d.twUp ?? d.twDown ?? d.twDel);
+      return editWarnings((list) => {
+        if (d.twDel !== undefined) list.splice(i, 1);
+        else {
+          const j = d.twUp !== undefined ? i - 1 : i + 1;
+          if (j < 0 || j >= list.length) return list;
+          [list[i], list[j]] = [list[j], list[i]];
+        }
+        return list;
+      });
+    }
     const tl = e.target.closest('[data-tl-up],[data-tl-down],[data-tl-del],[data-tl-reset]');
     if (tl) {
       e.stopPropagation();
@@ -469,6 +555,7 @@ CA.UI.TooltipsPage = (() => {
     else if (d.stTt) {
       const s = ST().get(d.stTt);
       if (!s) return;
+      if (s.warn) return editWarnings((list) => (list.includes(s.id) ? list.filter((x) => x !== s.id) : list.concat([s.id])));
       const on = inTooltip(s.id);
       return editLines((list) => (on ? list.filter((x) => (statOf(x) || {}).id !== s.id) : list.concat([entryFor(s)])));
     } else if (d.stDup) {
@@ -486,6 +573,7 @@ CA.UI.TooltipsPage = (() => {
           .lines()
           .filter((x) => (statOf(x) || {}).id !== d.stDel || isWord(x))
       );
+      if (isWarning(d.stDel)) SI().setWarnings(SI().warningList().filter((x) => x !== d.stDel));
       ST().remove(d.stDel);
     }
     refresh();
@@ -494,6 +582,11 @@ CA.UI.TooltipsPage = (() => {
   function onChange(e) {
     const el = e.target;
     const d = el.dataset || {};
+    if (d.twAdd !== undefined) {
+      const v = el.value;
+      if (!v) return;
+      return editWarnings((list) => list.concat([v]));
+    }
     if (d.tlAdd !== undefined) {
       const v = el.value;
       if (!v) return;

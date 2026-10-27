@@ -1,7 +1,7 @@
 // Statistics: named bits of algorithmic code (features/script.js) that work out one thing to show —
 // the lines under the store's tooltips (ui/storeInsight.js) are statistics, and so are yours.
 //
-//   a statistic   { id, key, label, desc, scope, format, colour, source, group }
+//   a statistic   { id, key, label, desc, scope, format, colour, source, group, warn }
 //                 scope: 'building' | 'upgrade' | 'item' (either) | 'game' — what it's about; in a
 //                 statistic about an item, `item` is the name of the building / upgrade, and the
 //                 item.* words read it (its price, what it adds, its payback period…)
@@ -10,8 +10,11 @@
 //                 label instead of its own), `note` (small print after the value) and `colour` (a
 //                 payback colour for the value — or a list of them, one per item of a list)
 //                 format: how the value reads — auto, number, time, chance, payback, text
-//                 colour: 'payback' — the value in the item's payback colour (or none)
+//                 colour: 'payback' — the value in the item's payback colour; or one colour (red…)
 //                 group: the catalog's shelf (GROUPS: Payback, Production, Achievements, Bank)
+//                 warn: a warning, not a line — when it has something to show about an item, the
+//                 item gets a "!" in the store in its colour (red when it has none) and a tag in the
+//                 tooltip's ⚠ line (ui/storeInsight.js: which warnings, in what order)
 //   built-ins     the lines CookieMgr shows, written in the language like any other (BUILTINS)
 //   yours         saved in the "stats" part of the save: { v, mine: [statistic…], builtin: { id:
 //                 { label, source, format, colour } } (your changes to a built-in), favs: [id…] }
@@ -137,6 +140,29 @@ if n > 100:
 return n + " more (" + fmt.number(building.priceOf(item, n)) + ")"`,
     },
     { id: 'wins', group: 'Achievements', name: 'Wins', label: 'Wins', desc: 'the achievements buying it wins', scope: 'item', format: 'text', source: 'return item.wins()' },
+    // the bank warnings: buying it would take your bank below what a golden cookie (or a spell) needs
+    // to pay its most — only when you have that bank now; keep: how many times that bank to keep
+    ...[
+      ['warnLucky', 'Lucky! bank', 'a Lucky!', 'bank.lucky', 'red'],
+      ['warnConjure', 'Conjure bank', 'Conjure Baked Goods', 'bank.conjure', 'orange'],
+      ['warnFrenzy', 'Frenzy Lucky! bank', 'a Lucky! in a Frenzy', 'bank.luckyFrenzy', 'yellow'],
+    ].map(([id, label, what, word, colour]) => ({
+      id,
+      group: 'Bank',
+      name: label,
+      label,
+      desc: `warns when buying it would take your bank below what ${what} needs to pay its most, and by how much`,
+      scope: 'item',
+      format: 'text',
+      colour,
+      warn: true,
+      source: `# a warning when buying it takes your bank below what ${what} needs
+keep = 1   # times that bank
+need = ${word}() * keep
+after = cookies() - item.price()
+if cookies() >= need and after < need:
+  return "−" + fmt.number(need - after)`,
+    })),
   ].map((b) => ({ ...b, key: b.id, builtin: true, colour: b.colour || 'none' }));
   const BUILTIN = Object.fromEntries(BUILTINS.map((b) => [b.id, b]));
 
@@ -177,9 +203,10 @@ return n + " more (" + fmt.number(building.priceOf(item, n)) + ")"`,
     s.desc = String(s.desc || '');
     s.scope = SCOPES.includes(s.scope) ? s.scope : 'item';
     s.format = FORMATS.some((f) => f.id === s.format) ? s.format : 'auto';
-    s.colour = s.colour === 'payback' ? 'payback' : 'none';
+    s.colour = s.colour === 'payback' || COLOURS.includes(s.colour) ? s.colour : 'none';
     s.source = String(s.source || '');
     s.group = GROUPS.includes(s.group) ? s.group : '';
+    s.warn = (s.warn === true || s.warn === 'yes' || s.warn === 'true') && s.scope !== 'game';
     return s;
   }
   /** A key no other statistic has: paybackVsBest, paybackVsBest2… */
@@ -243,8 +270,8 @@ return n + " more (" + fmt.number(building.priceOf(item, n)) + ")"`,
   function duplicate(id) {
     const s = get(id);
     if (!s) return null;
-    const { label, desc, scope, format, colour, source, group } = s;
-    return add({ label: `${label} (copy)`, desc, scope, format, colour, source, group });
+    const { label, desc, scope, format, colour, source, group, warn } = s;
+    return add({ label: `${label} (copy)`, desc, scope, format, colour, source, group, warn });
   }
 
   // ---- running one ------------------------------------------------------------------------------
@@ -367,7 +394,7 @@ return n + " more (" + fmt.number(building.priceOf(item, n)) + ")"`,
     if (v === undefined || v === null || (v === '' && !s.showEmpty) || (Array.isArray(v) && !v.length)) return null;
     const vars = r.vars || {};
     const label = typeof vars.label === 'string' || typeof vars.label === 'number' ? String(vars.label) : s.label;
-    let colour = vars.colour !== undefined ? vars.colour : s.colour === 'payback' && c && c.r ? c.r.colour : '';
+    let colour = vars.colour !== undefined ? vars.colour : s.colour === 'payback' ? (c && c.r ? c.r.colour : '') : s.colour;
     let html;
     let cls = '';
     if (Array.isArray(v)) {
@@ -385,6 +412,17 @@ return n + " more (" + fmt.number(building.priceOf(item, n)) + ")"`,
     }
     if (vars.note !== undefined && vars.note !== '') html += ` <small>${esc(String(vars.note))}</small>`;
     return [esc(label), html, cls];
+  }
+
+  /**
+   * A warning statistic about `c`, when it has something to show: { id, label, html, colour } — the
+   * colour it set, or its own (red when none); null when it doesn't warn (or fails).
+   */
+  function warning(s, c) {
+    const row = line(s, c);
+    if (!row) return null;
+    const colour = (row[2].match(/^ca-pp-(\w+)$/) || [])[1] || 'red';
+    return { id: s.id, label: row[0], html: row[1], colour };
   }
 
   // ---- a value word as a statistic (a tooltip line that's one word: { word, fmt, label }) -----------
@@ -411,10 +449,11 @@ return n + " more (" + fmt.number(building.priceOf(item, n)) + ")"`,
   // ---- as text: to share one (copy, paste) -----------------------------------------------------
 
   const TEXT_HEAD = '# CookieMgr statistic';
-  const TEXT_KEYS = ['label', 'key', 'desc', 'scope', 'format', 'colour', 'group'];
+  const TEXT_KEYS = ['label', 'key', 'desc', 'scope', 'format', 'colour', 'group', 'warn'];
   /** A statistic as text: a few "# field: value" lines, then its code. */
   function toText(s) {
-    return [TEXT_HEAD, ...TEXT_KEYS.filter((k) => s[k] !== undefined && s[k] !== '').map((k) => `# ${k}: ${String(s[k]).replace(/\n/g, ' ')}`), s.source].join('\n');
+    const val = (k) => (k === 'warn' ? (s.warn ? 'yes' : '') : s[k]);
+    return [TEXT_HEAD, ...TEXT_KEYS.filter((k) => val(k) !== undefined && val(k) !== '').map((k) => `# ${k}: ${String(val(k)).replace(/\n/g, ' ')}`), s.source].join('\n');
   }
   /** Text (toText's, or just code) as a statistic to add: { label, key, …, source } — null when there's nothing in it. */
   function fromText(text) {
@@ -499,7 +538,7 @@ return n + " more (" + fmt.number(building.priceOf(item, n)) + ")"`,
 
   function serialize() {
     if (!mine.length && !Object.keys(overrides).length && !favs.length) return undefined;
-    return { v: 1, mine: mine.map((s) => ({ id: s.id, key: s.key, label: s.label, desc: s.desc, scope: s.scope, format: s.format, colour: s.colour, source: s.source, group: s.group || undefined })), builtin: overrides, favs };
+    return { v: 1, mine: mine.map((s) => ({ id: s.id, key: s.key, label: s.label, desc: s.desc, scope: s.scope, format: s.format, colour: s.colour, source: s.source, group: s.group || undefined, warn: s.warn || undefined })), builtin: overrides, favs };
   }
   function load(data) {
     mine.forEach((s) => CA.Script.removeValue(`stat.${s.key}`));
@@ -534,5 +573,5 @@ return n + " more (" + fmt.number(building.priceOf(item, n)) + ")"`,
     CA.Settings.registerSection('stats', { serialize, load, event: 'stats' });
   }
 
-  return { init, all, get, byKey, add, update, remove, duplicate, toText, fromText, run, line, format, fromWord, compiled, contextOf, bestOf, pick, about, keyOf: camel, favs: () => favs.slice(), BUILTINS, FORMATS, SCOPES, GROUPS };
+  return { init, all, get, byKey, add, update, remove, duplicate, toText, fromText, run, line, warning, format, fromWord, compiled, contextOf, bestOf, pick, about, keyOf: camel, favs: () => favs.slice(), BUILTINS, FORMATS, SCOPES, GROUPS, COLOURS };
 })();
