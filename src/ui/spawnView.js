@@ -202,8 +202,10 @@ CA.UI.SpawnView = (() => {
         : '';
       const label = `${esc(b.name)} · ×${mx(m)} income · ${when(b.secs)}${end > span + 0.5 ? ' →' : ''}`;
       const tx = Math.min(X(from) + 3, x1 - 150);
+      // in the effect's own colour, as the Effect timers widget draws it (ui/effectTimers.js)
+      const tint = CA.UI.EffectTimers ? ` ca-sp-tinted" style="--c:${CA.UI.EffectTimers.colorOf(b)}` : '';
       bars +=
-        `<g class="ca-sp-lane ${buffKind(b)}" data-tip="${esc(`${b.name}: ×${mx(m)} your income${why}; ${when(b.secs)} left`)}">` +
+        `<g class="ca-sp-lane ${buffKind(b)}${tint}" data-tip="${esc(`${b.name}: ×${mx(m)} your income${why}; ${when(b.secs)} left`)}">` +
         `<rect class="track" x="${x0}" y="${y}" width="${x1 - x0}" height="${bh}"/>` +
         `<rect class="left" x="${X(from).toFixed(2)}" y="${y}" width="${Math.max(1, X(end) - X(from)).toFixed(2)}" height="${bh}"/>` +
         `<text x="${Math.max(x0 + 3, tx).toFixed(2)}" y="${y + bh - 2}">${label}</text></g>`;

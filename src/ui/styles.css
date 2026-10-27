@@ -6156,6 +6156,16 @@ body.ca-has-storebar #products {
 #CookieMgrWidgets .ca-sp-lane.down .left {
   fill: rgba(255, 110, 110, 0.5);
 }
+/* the cycle chart's effects: each in its own colour (ui/effectTimers.js's), bad ones striped there, faded here */
+#CookieMgrMenu .ca-sp-lane.ca-sp-tinted .left,
+#CookieMgrWidgets .ca-sp-lane.ca-sp-tinted .left {
+  fill: var(--c);
+  fill-opacity: 0.75;
+}
+#CookieMgrMenu .ca-sp-lane.ca-sp-tinted.down .left,
+#CookieMgrWidgets .ca-sp-lane.ca-sp-tinted.down .left {
+  fill-opacity: 0.45;
+}
 #CookieMgrMenu .ca-sp-chart .ca-sp-lane text,
 #CookieMgrWidgets .ca-sp-chart .ca-sp-lane text {
   font-size: 9px;

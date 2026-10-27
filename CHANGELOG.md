@@ -16,6 +16,7 @@
   or None. See-through boxes keep their text outlined in black so it reads over the game, and the box fades in, its
   title bar floating just above it, while you hover. Effect timers starts see-through. A widget type can start
   see-through too (`defineType({ bg: 0 })`).
+- The golden cookie chart's effect bars (Stats page, Next golden cookie widget) take the same colours.
 - `CA.Timers.buffs()` gives each effect's buff `type` and `icon` too.
 
 ## 3.14.0 — 2026-10-27

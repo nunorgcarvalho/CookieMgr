@@ -51,6 +51,12 @@ const gc = CA.Timers.buffsWithGolden().find((b) => b.name === 'Click frenzy').go
 assert(r1.querySelector('.ca-et-gc').textContent === `${Math.round(gc * 100)}%`, 'the chance a golden cookie comes before it ends (CA.Timers)');
 assert(/golden cookie comes before it ends/.test(r1.dataset.tip) && /×777 clicks/.test(r1.dataset.tip), 'its tip says it all in words');
 
+// ---- the golden cookie chart's effect bars: the same colours
+const cyc = doc.createElement('div');
+cyc.innerHTML = CA.UI.SpawnView.cycleChart('golden', CA.Timers.distribution('golden', 60), CA.Timers.buffs());
+const lane = [...cyc.querySelectorAll('.ca-sp-lane.ca-sp-tinted')].find((g) => /Frenzy/.test(g.textContent) && !/Click/.test(g.textContent));
+assert(lane && lane.style.getPropertyValue('--c') === CA.UI.EffectTimers.COLORS.frenzy, 'the cycle chart tints each effect in its Effect timers colour');
+
 // ---- settings: what to show, the order
 inst.stats = ['mult'];
 CA.UI.Widgets.tick();
