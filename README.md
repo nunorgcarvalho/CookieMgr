@@ -400,6 +400,27 @@ or **any value word** that takes the building or upgrade, or nothing: `building.
 chance — or as it reads: a time for seconds, a chance for 0–1), remove it; **Reset** goes back to Cookie Monster's
 layout. A line with nothing to say (no wins, too little recorded) is left out; a word that doesn't fit the tooltip
 (one taking an upgrade, in a building's) too. A live preview shows any building's block and the best upgrade's.
+
+**Every line is a statistic**: a few lines of algorithmic code (the language of [Macros](#macros)) that only read the
+game and end with `return` — in a tooltip, `item` is the building or upgrade hovered and the `item.*` words read it
+(`item.price()`, `item.gain()`, `item.payback()`, `item.colour()`, `item.bulk()`, `item.wins()`, `item.share()`,
+`item.paybackOf(n)`…). The built-in lines are written that way; for example, *Affordable* is
+
+```
+s = timeTo(item.price())
+if s <= 0:
+  return "now"
+if finite(s):
+  return fmt.time(s)
+return "not at this CpS"
+```
+
+A statistic may set `label` (its line's label), `note` (small print after the value) and `colour` (a payback colour,
+or a list of them for a list of values); with no `return` it shows nothing. It can't act, wait or loop without end
+(no actions, `wait`, `while`, `repeat until`, `forever`, `parallel`, `stop`) and stops after 5,000 steps. Every
+statistic is also a value word — `stat.payback(Farm)`, `stat.next(item)` — that macros and other statistics can use.
+Text words build what a line says: `fmt.number(x)`, `fmt.short(x)`, `fmt.time(s)`, `fmt.pct(x, 2)`, `fmt.fixed(x, 2)`;
+`finite(x)` and `known(x)` are yes / no. (A page to browse, write and pick statistics is coming.)
 **Upgrades: best first** orders the store's upgrades by colour, then payback period
 (switches last). The store's **Best buy** sort ranks buildings by what a click buys — or the minimum bulk, if more.
 

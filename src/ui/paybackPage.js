@@ -190,11 +190,13 @@ CA.UI.PaybackPage = (() => {
 
   let previewOf = ''; // the building previewed ('': the best building)
   const SI = () => CA.UI.StoreInsight;
-  const lineName = (e) => (typeof e === 'string' ? (SI().LINES.find((l) => l.id === e) || { name: e }).name : e.label || e.word);
+  /** A line's statistic (built-in, yours, or a word's). */
+  const statOf = (e) => SI().statOf(e);
+  const lineName = (e) => (typeof e === 'string' ? (SI().LINES.find((l) => l.id === e) || { name: e }).name : e.word ? e.label || e.word : (statOf(e) || { label: 'a deleted statistic' }).label);
+  const KIND = { item: 'both', building: 'buildings', upgrade: 'upgrades', game: 'both' };
   function lineKind(e) {
-    if (typeof e !== 'string') return 'word';
-    const l = SI().LINES.find((x) => x.id === e) || {};
-    return l.both ? 'both' : l.building ? 'buildings' : 'upgrades';
+    if (e && typeof e === 'object' && e.word) return 'word';
+    return KIND[(statOf(e) || {}).scope] || 'both';
   }
   function tooltipLinesHtml() {
     const list = SI().lines();
@@ -205,8 +207,8 @@ CA.UI.PaybackPage = (() => {
         .join('')}</select>`;
     const rows = list
       .map((e, i) => {
-        const word = typeof e !== 'string';
-        const desc = word ? ((CA.Script.VALUES.find((v) => v.id === e.word) || {}).desc || 'not a word (any more)') : (SI().LINES.find((l) => l.id === e) || {}).desc || '';
+        const word = typeof e !== 'string' && !!e.word;
+        const desc = word ? ((CA.Script.VALUES.find((v) => v.id === e.word) || {}).desc || 'not a word (any more)') : (statOf(e) || {}).desc || '';
         return (
           `<div class="ca-tl-row" data-tip="${esc(word ? `${e.word}: ${desc}` : desc)}">` +
           `<span class="ca-tl-n">${i + 1}</span>` +
