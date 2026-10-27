@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## 3.25.0 — 2026-10-27
+
+- **A Tooltips page** (next to Macros) for the store tooltip's block and its statistics:
+  - **In the store tooltip**: the layout in fixed columns — the line, what it's about, **its value now**, how a value
+    word reads, ↑ ↓ ✕ — and rows you can **drag** into place; add a built-in, one of your statistics or any value
+    word; Reset. Live previews of a building you pick and the best upgrade, and the block's two switches.
+  - **Statistics**: every statistic as a card with its live value, what it shows, its code (coloured) and how to call
+    it from a macro (`stat.payback(item)`). Filter by group (Payback, Production, Achievements, Bank), Yours or On
+    screen; search. Add to the tooltip (or take out) in one click; **Duplicate** a statistic to make it yours (the
+    editor comes next); delete yours; ☆ puts one on the left panel as a widget.
+  - **Values**: every word a statistic can read, with its signature, what it is and its value now.
+- **Statistic widget**: one statistic, live, about the best building / upgrade / buy or an item you pick. Its own
+  shelf, Statistics, in Add a widget. Add as many as you like.
+- The Payback page's Store tooltips card keeps its two switches and links to the new page.
+- For other code: `CA.Stats.duplicate(id)`, `bestOf(scope)`, `about(context, fn)`, `GROUPS`; a statistic has a
+  `group`. A widget type can name each widget itself (`nameOf(inst)`).
+
 ## 3.23.0 — 2026-10-27
 
 - **Statistics.** The lines under the store's tooltips are now **statistics**: a few lines of algorithmic code — the

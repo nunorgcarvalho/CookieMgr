@@ -31,6 +31,8 @@
 //     for another 48px sheet (img/gardenPlants.png) — without one the `icon` is drawn instead; short = a one-line
 //     summary under the name; ring = the colour of a round (bare) widget's ring on its tile (default gold).
 //   CA.UI.Widgets.defineGroup({ id, name, sprite, order })   a shelf of the picker; shelves sort by order
+//
+// nameOf(inst) on a type: a name of its own per widget (a Statistic widget's: its statistic's).
 
 CA.UI = CA.UI || {};
 
@@ -46,7 +48,7 @@ CA.UI.Widgets = (() => {
   const FONT_MAX = 200;
   const MIN_W = 140;
   const MIN_H = 60;
-  const SAVED = ['count', 'types', 'stats', 'nums', 'font', 'title', 'target', 'targetMagic', 'bg', 'sort', 'barScale']; // per-widget settings that are saved
+  const SAVED = ['stat', 'item', 'count', 'types', 'stats', 'nums', 'font', 'title', 'target', 'targetMagic', 'bg', 'sort', 'barScale']; // per-widget settings that are saved
   const BG = [[100, 'Solid'], [40, 'Faint'], [0, 'None']]; // background opacity (%) while not hovered
   const S = () => CA.Settings;
   const I = (n, s) => CA.UI.Icons.html(n, s);
@@ -182,7 +184,9 @@ CA.UI.Widgets = (() => {
       const m = CA.Macros.get(w.macro);
       return m ? m.name : 'Macro button';
     }
-    return (typeById[w.type] || {}).name || w.type;
+    const t = typeById[w.type];
+    if (t && t.nameOf) return t.nameOf(w) || t.name;
+    return (t || {}).name || w.type;
   }
 
   // ---- rendering ------------------------------------------------------------------------------
@@ -727,6 +731,8 @@ CA.UI.Widgets = (() => {
         if (Number.isFinite(w.h)) out.h = Math.max(MIN_H, w.h);
         if (Number.isFinite(w.count)) out.count = w.count;
         if (typeof w.target === 'string') out.target = w.target.slice(0, 40);
+        if (typeof w.stat === 'string') out.stat = w.stat.slice(0, 60);
+        if (typeof w.item === 'string') out.item = w.item.slice(0, 120);
         if (Number.isFinite(w.targetMagic)) out.targetMagic = w.targetMagic;
         if (Number.isFinite(w.font)) out.font = Math.max(FONT_MIN, Math.min(FONT_MAX, w.font));
         if (typeof w.title === 'string') out.title = w.title.slice(0, 40);

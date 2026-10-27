@@ -5221,6 +5221,7 @@ body.ca-has-storebar #products {
 /* the colours: blue better than the best building · green the best · yellow / orange / red the 10 / 20 /
    30 best · purple further · gray never pays back */
 #CookieMgrMenu,
+#CookieMgrWidgets,
 #products,
 #tooltip {
   --pp-blue: #6ec3ff;
@@ -5232,31 +5233,59 @@ body.ca-has-storebar #products {
   --pp-gray: #9a9a9a;
 }
 #products .price.ca-pp-blue,
-#tooltip .ca-pp-blue {
+#tooltip .ca-pp-blue,
+#CookieMgrMenu .ca-tl-val.ca-pp-blue,
+#CookieMgrMenu .ca-tl-preview .ca-pp-blue,
+#CookieMgrMenu .ca-st-live .ca-pp-blue,
+#CookieMgrWidgets .ca-w-stat .ca-pp-blue {
   color: var(--pp-blue) !important;
 }
 #products .price.ca-pp-green,
-#tooltip .ca-pp-green {
+#tooltip .ca-pp-green,
+#CookieMgrMenu .ca-tl-val.ca-pp-green,
+#CookieMgrMenu .ca-tl-preview .ca-pp-green,
+#CookieMgrMenu .ca-st-live .ca-pp-green,
+#CookieMgrWidgets .ca-w-stat .ca-pp-green {
   color: var(--pp-green) !important;
 }
 #products .price.ca-pp-yellow,
-#tooltip .ca-pp-yellow {
+#tooltip .ca-pp-yellow,
+#CookieMgrMenu .ca-tl-val.ca-pp-yellow,
+#CookieMgrMenu .ca-tl-preview .ca-pp-yellow,
+#CookieMgrMenu .ca-st-live .ca-pp-yellow,
+#CookieMgrWidgets .ca-w-stat .ca-pp-yellow {
   color: var(--pp-yellow) !important;
 }
 #products .price.ca-pp-orange,
-#tooltip .ca-pp-orange {
+#tooltip .ca-pp-orange,
+#CookieMgrMenu .ca-tl-val.ca-pp-orange,
+#CookieMgrMenu .ca-tl-preview .ca-pp-orange,
+#CookieMgrMenu .ca-st-live .ca-pp-orange,
+#CookieMgrWidgets .ca-w-stat .ca-pp-orange {
   color: var(--pp-orange) !important;
 }
 #products .price.ca-pp-red,
-#tooltip .ca-pp-red {
+#tooltip .ca-pp-red,
+#CookieMgrMenu .ca-tl-val.ca-pp-red,
+#CookieMgrMenu .ca-tl-preview .ca-pp-red,
+#CookieMgrMenu .ca-st-live .ca-pp-red,
+#CookieMgrWidgets .ca-w-stat .ca-pp-red {
   color: var(--pp-red) !important;
 }
 #products .price.ca-pp-purple,
-#tooltip .ca-pp-purple {
+#tooltip .ca-pp-purple,
+#CookieMgrMenu .ca-tl-val.ca-pp-purple,
+#CookieMgrMenu .ca-tl-preview .ca-pp-purple,
+#CookieMgrMenu .ca-st-live .ca-pp-purple,
+#CookieMgrWidgets .ca-w-stat .ca-pp-purple {
   color: var(--pp-purple) !important;
 }
 #products .price.ca-pp-gray,
-#tooltip .ca-pp-gray {
+#tooltip .ca-pp-gray,
+#CookieMgrMenu .ca-tl-val.ca-pp-gray,
+#CookieMgrMenu .ca-tl-preview .ca-pp-gray,
+#CookieMgrMenu .ca-st-live .ca-pp-gray,
+#CookieMgrWidgets .ca-w-stat .ca-pp-gray {
   color: var(--pp-gray) !important;
 }
 /* an upgrade's corner dot in the store */
@@ -5390,7 +5419,7 @@ body.ca-has-storebar #products {
   pointer-events: none;
 }
 
-/* the Payback page's Store tooltips card: the lines, the preview */
+/* the Tooltips page: the layout (fixed columns), the previews */
 #CookieMgrMenu .ca-tl {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 260px);
@@ -5407,8 +5436,10 @@ body.ca-has-storebar #products {
   flex-direction: column;
   gap: 3px;
 }
-#CookieMgrMenu .ca-tl-row {
-  display: flex;
+#CookieMgrMenu .ca-tl-row,
+#CookieMgrMenu .ca-tl-cols {
+  display: grid;
+  grid-template-columns: 10px 16px minmax(0, 1fr) 62px 92px 76px 20px 20px 20px;
   align-items: center;
   gap: 6px;
   padding: 3px 6px;
@@ -5441,8 +5472,8 @@ body.ca-has-storebar #products {
   font: inherit;
 }
 #CookieMgrMenu .ca-tl-kind {
-  flex: 0 1 auto;
-  max-width: 120px;
+  justify-self: start;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -5508,6 +5539,253 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-tl-pvhead em {
   color: #8a7d68;
   font-size: 10px;
+}
+#CookieMgrMenu .ca-tl-cols {
+  padding: 0 6px 2px;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8a7d68;
+}
+#CookieMgrMenu .ca-tl-cols em {
+  font-style: normal;
+  text-transform: none;
+  letter-spacing: 0;
+}
+#CookieMgrMenu .ca-tl-cols span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+#CookieMgrMenu .ca-tl-row {
+  cursor: grab;
+}
+#CookieMgrMenu .ca-tl-row.dragging {
+  opacity: 0.4;
+}
+#CookieMgrMenu .ca-tl-row.drop-above {
+  box-shadow: inset 0 2px 0 #ffd54a;
+}
+#CookieMgrMenu .ca-tl-row.drop-below {
+  box-shadow: inset 0 -2px 0 #ffd54a;
+}
+#CookieMgrMenu .ca-tl-grip {
+  color: #6b604f;
+  line-height: 0;
+}
+#CookieMgrMenu .ca-tl-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+#CookieMgrMenu .ca-tl-val {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: right;
+  color: #fff3d6;
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+}
+#CookieMgrMenu .ca-tl-val small {
+  font-weight: normal;
+  color: #a89a83;
+}
+#CookieMgrMenu .ca-tl-val.ca-st-none,
+#CookieMgrMenu .ca-st-live .ca-st-none {
+  color: #6b604f;
+  font-weight: normal;
+}
+#CookieMgrMenu .ca-tl-kind.building {
+  color: #ffcf8a;
+}
+#CookieMgrMenu .ca-tl-kind.upgrade {
+  color: #9fd4ff;
+}
+#CookieMgrMenu .ca-tl-kind.game {
+  color: #b9e89b;
+}
+#CookieMgrMenu .ca-tl-kind.yours {
+  color: #ffd54a;
+  background: rgba(255, 213, 74, 0.12);
+}
+
+/* the Tooltips page: the catalog of statistics, the values */
+#CookieMgrMenu .ca-st-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 8px;
+  padding: 4px 12px 12px;
+}
+#CookieMgrMenu .ca-st-card {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 220, 150, 0.12);
+}
+#CookieMgrMenu .ca-st-card.yours {
+  border-color: rgba(255, 213, 74, 0.3);
+}
+#CookieMgrMenu .ca-st-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 22px;
+}
+#CookieMgrMenu .ca-st-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: #fff3d6;
+  font-size: 12px;
+}
+#CookieMgrMenu .ca-st-live {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: #0e0c09;
+  font-size: 11px;
+  color: #8a7d68;
+}
+#CookieMgrMenu .ca-st-live b {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: #fff3d6;
+  font-variant-numeric: tabular-nums;
+}
+#CookieMgrMenu .ca-st-live b small {
+  font-weight: normal;
+  color: #a89a83;
+}
+#CookieMgrMenu .ca-st-desc {
+  font-size: 11px;
+  color: #b8ab92;
+}
+#CookieMgrMenu .ca-code-hl.ca-st-code {
+  position: static;
+  min-height: 0;
+  overflow-x: auto;
+  padding: 5px 8px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.35);
+  font: 11px/1.45 Consolas, 'Cascadia Mono', Menlo, Monaco, monospace;
+}
+#CookieMgrMenu .ca-st-more summary {
+  list-style: none;
+  cursor: pointer;
+}
+#CookieMgrMenu .ca-st-more summary::-webkit-details-marker {
+  display: none;
+}
+#CookieMgrMenu .ca-st-more summary > span {
+  display: block;
+  padding: 2px 8px 0;
+  font-size: 10px;
+  color: #c9a96a;
+}
+#CookieMgrMenu .ca-st-more[open] summary > span {
+  display: none;
+}
+#CookieMgrMenu .ca-st-more[open] summary .ca-st-code {
+  border-radius: 4px 4px 0 0;
+  padding-bottom: 0;
+}
+#CookieMgrMenu .ca-st-more[open] > .ca-st-code {
+  border-radius: 0 0 4px 4px;
+  padding-top: 0;
+}
+#CookieMgrMenu .ca-st-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: auto;
+}
+#CookieMgrMenu .ca-st-call {
+  margin-left: auto;
+  font: 10px Consolas, 'Cascadia Mono', Menlo, Monaco, monospace;
+  color: #6fe6ef;
+  opacity: 0.8;
+}
+#CookieMgrMenu .ca-chip-danger:hover,
+#CookieMgrMenu .ca-chip-danger.ca-armed {
+  color: #ff8a8a;
+  border-color: rgba(255, 107, 107, 0.5);
+}
+#CookieMgrMenu .ca-chip em {
+  font-style: normal;
+  opacity: 0.6;
+}
+#CookieMgrMenu .ca-vl {
+  padding: 2px 12px 12px;
+  max-height: 520px;
+  overflow-y: auto;
+}
+#CookieMgrMenu .ca-vl-group {
+  position: sticky;
+  top: 0;
+  padding: 8px 0 3px;
+  background: #17120c;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #c9a96a;
+}
+#CookieMgrMenu .ca-vl-group em {
+  font-style: normal;
+  opacity: 0.6;
+}
+#CookieMgrMenu .ca-vl-row {
+  display: grid;
+  grid-template-columns: minmax(0, 220px) minmax(0, 1fr) 100px;
+  gap: 10px;
+  align-items: baseline;
+  padding: 3px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+}
+#CookieMgrMenu .ca-vl-row:nth-child(even) {
+  background: rgba(255, 255, 255, 0.03);
+}
+#CookieMgrMenu .ca-vl-row code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 11px Consolas, 'Cascadia Mono', Menlo, Monaco, monospace;
+  color: #6fe6ef;
+}
+#CookieMgrMenu .ca-vl-desc {
+  color: #b8ab92;
+}
+#CookieMgrMenu .ca-vl-row b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+  color: #fff3d6;
+  font-variant-numeric: tabular-nums;
+}
+#CookieMgrWidgets .ca-w-stat-about {
+  padding-top: 1px;
+  font-size: 9px;
+  color: #93866f;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+#CookieMgrWidgets .ca-w-stat small {
+  color: #93866f;
 }
 
 /* the Payback page */

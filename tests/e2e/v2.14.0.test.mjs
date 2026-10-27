@@ -21,7 +21,8 @@ await sleep(3500);
 const tab = doc.getElementById('CookieMgrTab');
 const order = [...tab.children].map((el) => (el.classList.contains('ca-tab-gap') ? '|' : el.dataset.tabItem)).join(',');
 // v3.6: + Stats, Payback
-assert(order === 'events,graphs,stats,payback,|,garden,stocks,pantheon,wizard,|,clickers,widgets,settings', `sidebar (${order})`);
+// v3.25: + Tooltips
+assert(order === 'events,graphs,stats,payback,|,garden,stocks,pantheon,wizard,|,clickers,tooltips,widgets,settings', `sidebar (${order})`);
 assert(tab.querySelector('[data-tab-item="wizard"] .ca-tab-label').textContent === 'Grimoire', 'Wizard tower page is now “Grimoire”');
 
 // ---- Pantheon page

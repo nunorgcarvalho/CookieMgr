@@ -1,7 +1,7 @@
 // Statistics: named bits of algorithmic code (features/script.js) that work out one thing to show —
 // the lines under the store's tooltips (ui/storeInsight.js) are statistics, and so are yours.
 //
-//   a statistic   { id, key, label, desc, scope, format, colour, source }
+//   a statistic   { id, key, label, desc, scope, format, colour, source, group }
 //                 scope: 'building' | 'upgrade' | 'item' (either) | 'game' — what it's about; in a
 //                 statistic about an item, `item` is the name of the building / upgrade, and the
 //                 item.* words read it (its price, what it adds, its payback period…)
@@ -11,6 +11,7 @@
 //                 payback colour for the value — or a list of them, one per item of a list)
 //                 format: how the value reads — auto, number, time, chance, payback, text
 //                 colour: 'payback' — the value in the item's payback colour (or none)
+//                 group: the catalog's shelf (GROUPS: Payback, Production, Achievements, Bank)
 //   built-ins     the lines CookieMgr shows, written in the language like any other (BUILTINS)
 //   yours         saved in the "stats" part of the save: { v, mine: [statistic…], builtin: { id:
 //                 { label, source, format, colour } } (your changes to a built-in), favs: [id…] }
@@ -18,6 +19,9 @@
 // Every statistic is a value word too — stat.<key>(item) (or stat.<key>() for one about the game) —
 // so macros and other statistics can use it. Formatting words (fmt.number(x), fmt.time(s)…) build
 // text; finite(x) and known(x) are yes / no.
+//
+// bestOf(scope) is the best item to show one about (the Tooltips page's cards, a Statistic widget
+// set to "the best"); about(c, fn) runs fn with the item words about c.
 //
 // Nothing here reads the seed: statistics see what the value words see.
 
@@ -35,12 +39,15 @@ CA.Stats = (() => {
     { id: 'text', name: 'text', desc: 'as written (numbers as numbers)' },
   ];
   const MAX_DEPTH = 8;
+  /** The catalog's groups (a statistic of yours keeps the group of the one it was duplicated from). */
+  const GROUPS = ['Payback', 'Production', 'Achievements', 'Bank'];
 
   // ---- the built-ins: Cookie Monster's lines -----------------------------------------------------
 
   const BUILTINS = [
     {
       id: 'bonus',
+      group: 'Production',
       name: 'Bonus income',
       label: 'Bonus income',
       desc: 'the CpS it adds, and its share of your CpS',
@@ -63,6 +70,7 @@ return sign + fmt.number(gain) + "/s" + share`,
     },
     {
       id: 'click',
+      group: 'Production',
       name: 'Per click',
       label: 'Per click',
       desc: 'what a clicking upgrade adds per click, and per second at your clicking',
@@ -72,9 +80,10 @@ return sign + fmt.number(gain) + "/s" + share`,
 if m > 0:
   return "+" + fmt.number(m) + " (≈ " + fmt.number(m * clickRate()) + "/s at your clicking)"`,
     },
-    { id: 'payback', name: 'Payback period', label: 'Payback period', desc: 'in its payback colour', scope: 'item', format: 'payback', colour: 'payback', source: 'return item.payback()' },
+    { id: 'payback', group: 'Payback', name: 'Payback period', label: 'Payback period', desc: 'in its payback colour', scope: 'item', format: 'payback', colour: 'payback', source: 'return item.payback()' },
     {
       id: 'actual',
+      group: 'Payback',
       name: 'Payback, actual income',
       label: 'Payback, actual income',
       desc: 'the payback period by what you’ve really been taking in (once a minute of play is recorded)',
@@ -87,6 +96,7 @@ if known(a):
     },
     {
       id: 'bulks',
+      group: 'Payback',
       name: 'Payback ×1 / ×10 / ×100',
       label: 'Payback ×1 / 10 / 100',
       desc: 'the payback period of one, ten and a hundred more, each in its colour',
@@ -95,9 +105,10 @@ if known(a):
       source: `colour = [item.colourOf(1), item.colourOf(10), item.colourOf(100)]
 return [item.paybackOf(1), item.paybackOf(10), item.paybackOf(100)]`,
     },
-    { id: 'price', name: 'Price', label: 'Price', desc: 'what it costs (what a click buys)', scope: 'item', format: 'number', source: 'return item.price()' },
+    { id: 'price', group: 'Bank', name: 'Price', label: 'Price', desc: 'what it costs (what a click buys)', scope: 'item', format: 'number', source: 'return item.price()' },
     {
       id: 'afford',
+      group: 'Bank',
       name: 'Affordable',
       label: 'Affordable',
       desc: 'when you can afford it at your CpS',
@@ -110,9 +121,10 @@ if finite(s):
   return fmt.time(s)
 return "not at this CpS"`,
     },
-    { id: 'share', name: 'Share of production', label: 'Share of production', desc: 'what share of your CpS the building makes', scope: 'building', format: 'text', source: 'return fmt.pct(item.share(), 2)' },
+    { id: 'share', group: 'Production', name: 'Share of production', label: 'Share of production', desc: 'what share of your CpS the building makes', scope: 'building', format: 'text', source: 'return fmt.pct(item.share(), 2)' },
     {
       id: 'next',
+      group: 'Achievements',
       name: 'Next achievement',
       label: 'Next achievement',
       desc: 'how many more win the next achievement, and for how much',
@@ -123,7 +135,7 @@ if n > 100:
   return "none within 100"
 return n + " more (" + fmt.number(building.priceOf(item, n)) + ")"`,
     },
-    { id: 'wins', name: 'Wins', label: 'Wins', desc: 'the achievements buying it wins', scope: 'item', format: 'text', source: 'return item.wins()' },
+    { id: 'wins', group: 'Achievements', name: 'Wins', label: 'Wins', desc: 'the achievements buying it wins', scope: 'item', format: 'text', source: 'return item.wins()' },
   ].map((b) => ({ ...b, key: b.id, builtin: true, colour: b.colour || 'none' }));
   const BUILTIN = Object.fromEntries(BUILTINS.map((b) => [b.id, b]));
 
@@ -166,6 +178,7 @@ return n + " more (" + fmt.number(building.priceOf(item, n)) + ")"`,
     s.format = FORMATS.some((f) => f.id === s.format) ? s.format : 'auto';
     s.colour = s.colour === 'payback' ? 'payback' : 'none';
     s.source = String(s.source || '');
+    s.group = GROUPS.includes(s.group) ? s.group : '';
     return s;
   }
   /** A key no other statistic has: paybackVsBest, paybackVsBest2… */
@@ -225,6 +238,14 @@ return n + " more (" + fmt.number(building.priceOf(item, n)) + ")"`,
     changed();
   }
 
+  /** A copy of any statistic, yours to change: "Payback period (copy)". */
+  function duplicate(id) {
+    const s = get(id);
+    if (!s) return null;
+    const { label, desc, scope, format, colour, source, group } = s;
+    return add({ label: `${label} (copy)`, desc, scope, format, colour, source, group });
+  }
+
   // ---- running one ------------------------------------------------------------------------------
   //
   // A context: what a statistic is about — { kind: 'building' | 'upgrade', name, r, t }: r its row of
@@ -274,6 +295,32 @@ return n + " more (" + fmt.number(building.priceOf(item, n)) + ")"`,
     const r = t.upgrades[name];
     return r ? { kind: 'upgrade', name, r, t } : null;
   }
+  /**
+   * The best item a statistic of this scope could be about, as a context: the building or the store
+   * upgrade with the lowest payback period (an item's: the lower of the two) — or null.
+   */
+  function bestOf(scope) {
+    const t = CA.Payback.table();
+    const low = (rows, kind) =>
+      Object.keys(rows || {}).reduce((m, name) => {
+        const r = rows[name];
+        return r && Number.isFinite(r.pp) && (!m || r.pp < m.r.pp) ? { kind, name, r, t } : m;
+      }, null);
+    const b = scope === 'upgrade' ? null : low(t.buildings[1], 'building');
+    const u = scope === 'building' ? null : low(t.upgrades, 'upgrade');
+    return b && u ? (u.r.pp < b.r.pp ? u : b) : b || u;
+  }
+  /** fn() with the item words about `c` (the Values list's live values). */
+  function about(c, fn) {
+    const prev = cur;
+    cur = c;
+    try {
+      return fn();
+    } finally {
+      cur = prev;
+    }
+  }
+
   /** A statistic's value, as a value word gives it (NaN: nothing to show). */
   function valueOf(s, name) {
     const r = run(s, s.scope === 'game' ? cur : contextOf(String(name), s.scope));
@@ -414,7 +461,7 @@ return n + " more (" + fmt.number(building.priceOf(item, n)) + ")"`,
 
   function serialize() {
     if (!mine.length && !Object.keys(overrides).length && !favs.length) return undefined;
-    return { v: 1, mine: mine.map((s) => ({ id: s.id, key: s.key, label: s.label, desc: s.desc, scope: s.scope, format: s.format, colour: s.colour, source: s.source })), builtin: overrides, favs };
+    return { v: 1, mine: mine.map((s) => ({ id: s.id, key: s.key, label: s.label, desc: s.desc, scope: s.scope, format: s.format, colour: s.colour, source: s.source, group: s.group || undefined })), builtin: overrides, favs };
   }
   function load(data) {
     mine.forEach((s) => CA.Script.removeValue(`stat.${s.key}`));
@@ -449,5 +496,5 @@ return n + " more (" + fmt.number(building.priceOf(item, n)) + ")"`,
     CA.Settings.registerSection('stats', { serialize, load, event: 'stats' });
   }
 
-  return { init, all, get, byKey, add, update, remove, run, line, format, fromWord, compiled, contextOf, favs: () => favs.slice(), BUILTINS, FORMATS, SCOPES };
+  return { init, all, get, byKey, add, update, remove, duplicate, run, line, format, fromWord, compiled, contextOf, bestOf, about, favs: () => favs.slice(), BUILTINS, FORMATS, SCOPES, GROUPS };
 })();
