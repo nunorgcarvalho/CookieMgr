@@ -16,10 +16,11 @@
 //                                    your unbuffed production
 //   Pet the dragon                   the dragon drops one of four upgrades when petted (1 in 20 per
 //                                    pet, dragon level 8+, "Pet the dragon" bought); which one
-//                                    depends only on the quarter of the hour, in an order fixed by
-//                                    your save's seed (main.js ClickSpecialPic). It works that order
-//                                    out, and in a quarter whose drop you're missing it opens the
-//                                    dragon, pets it until it drops, and closes it again.
+//                                    depends only on the quarter of the hour, in an order fixed per
+//                                    run (main.js ClickSpecialPic). It learns that order by petting
+//                                    (never from the seed), and in a quarter that can still give one
+//                                    you're missing it opens the dragon, pets it until it drops, and
+//                                    closes it again.
 //
 // Payback periods come from features/payback.js (CookieMgr's own, the way Cookie Monster computes
 // them — Cookie Monster doesn't have to be loaded).
@@ -111,64 +112,71 @@ CA.AutoBuy = (() => {
   // ---- the dragon ---------------------------------------------------------------------------
 
   const DROPS = ['Dragon scale', 'Dragon claw', 'Dragon fang', 'Dragon teddy bear'];
-  let order = null; // the drops in quarter-hour order, as the game shuffles them for this save
-  let orderSeed = null;
-
-  /** Which drop each quarter of the hour gives (the game's own shuffle with this save's seed). */
-  function dropOrder() {
-    if (order && orderSeed === Game.seed) return order;
-    if (typeof Math.seedrandom !== 'function' || typeof shuffle !== 'function') return null;
-    Math.seedrandom(`${Game.seed}/dragonTime`);
-    try {
-      order = shuffle(DROPS.slice());
-    } finally {
-      Math.seedrandom();
-    }
-    orderSeed = Game.seed;
-    return order;
-  }
+  // Which drop a pet can give depends on the quarter of the hour, in an order the game fixes per run.
+  // CookieMgr doesn't read that order (it comes from the save's seed): it learns it by petting. Per
+  // quarter: the drop that dropped there, OWNED when 200 pets gave nothing (its drop is one you have;
+  // at 1 in 20 a pet, 200 misses happen 0.004% of the time), or null — not tried yet. Forgotten when
+  // the run changes (an ascension or a new game shuffles the order anew).
+  const OWNED = 'owned';
+  const PETS = 200;
+  let learned = { run: null, quarters: [null, null, null, null] };
   const has = (n) => (typeof Game.Has === 'function' && Game.Has(n)) || (typeof Game.HasUnlocked === 'function' && Game.HasUnlocked(n));
   const missingDrops = () => DROPS.filter((d) => !has(d));
   const canPet = () => Game.dragonLevel >= 8 && typeof Game.Has === 'function' && Game.Has('Pet the dragon');
+  const quarterNow = () => Math.floor(new Date().getMinutes() / 15);
+  function quarters() {
+    const run = `${Game.resets || 0}/${Game.fullDate || ''}`;
+    if (learned.run !== run) learned = { run, quarters: [null, null, null, null] };
+    return learned.quarters;
+  }
+  /** Whether petting in quarter q can still give something: not tried yet, or its drop's still missing. */
+  const open = (q) => {
+    const x = quarters()[q];
+    return x === null || (x !== OWNED && !has(x));
+  };
 
-  /** For each missing drop: when its quarter of the hour comes next ({ name, inSec, now }). */
+  /**
+   * The quarters of the hour as learned so far: [{ q, drop (its drop; '' not known yet), open (petting
+   * there can still give something), now, inSec (until it starts; 0 now) }] — [] once all four are yours.
+   */
   function petSchedule() {
-    const ord = dropOrder();
+    if (!missingDrops().length) return [];
     const d = new Date();
     const secIntoHour = d.getMinutes() * 60 + d.getSeconds();
-    return missingDrops().map((name) => {
-      if (!ord) return { name, inSec: 0, now: true };
-      const q = ord.indexOf(name);
-      const start = q * 900;
-      const now = secIntoHour >= start && secIntoHour < start + 900;
-      return { name, now, inSec: now ? 0 : (start - secIntoHour + 3600) % 3600 };
+    const qs = quarters();
+    return qs.map((x, q) => {
+      const now = q === quarterNow();
+      return { q, drop: x && x !== OWNED ? x : '', open: open(q), now, inSec: now ? 0 : (q * 900 - secIntoHour + 3600) % 3600 };
     });
   }
 
-  /** Pets the dragon if this quarter-hour's drop is one you're missing; returns 1 when it dropped. */
+  /** Pets the dragon if this quarter-hour can still give a drop you're missing; returns 1 when one dropped. */
   function pet() {
-    if (!canPet()) return 0;
-    const due = petSchedule().find((x) => x.now);
-    if (!due) return 0;
-    // open the dragon (quietly), pet until it drops, put things back
+    if (!canPet() || !missingDrops().length) return 0;
+    const q = quarterNow();
+    if (!open(q)) return 0;
+    const before = missingDrops();
+    const got = () => before.find((n) => has(n));
+    // open the dragon (quietly), pet until something drops, put things back
     const prevTab = Game.specialTab;
     const vol = Game.volume;
     const parts = Game.prefs && Game.prefs.particles;
     Game.volume = 0;
     if (Game.prefs) Game.prefs.particles = 0;
-    let got = 0;
+    let drop;
     try {
       Game.specialTab = 'dragon';
       if (typeof Game.ToggleSpecialMenu === 'function') Game.ToggleSpecialMenu(1);
-      for (let i = 0; i < 80 && !has(due.name); i++) Game.ClickSpecialPic();
-      got = has(due.name) ? 1 : 0;
+      for (let i = 0; i < PETS && !(drop = got()); i++) Game.ClickSpecialPic();
+      drop = got();
     } finally {
       Game.specialTab = prevTab;
       if (typeof Game.ToggleSpecialMenu === 'function') Game.ToggleSpecialMenu(prevTab ? 1 : 0);
       Game.volume = vol;
       if (Game.prefs) Game.prefs.particles = parts;
     }
-    return got;
+    quarters()[q] = drop || OWNED;
+    return drop ? 1 : 0;
   }
 
   // ---- building blocks -----------------------------------------------------------------------
@@ -181,7 +189,7 @@ CA.AutoBuy = (() => {
   //   upgrades()              a list: the store's upgrades, cheapest first
   //   upgrade.price(u) · upgrade.owned(name) · buy.upgrade(u)
   //   research.next(stopBefore)  the next research to buy ("": none — or only what's at / after stopBefore)
-  //   dragon.canPet() · dragon.dropNow() (this quarter-hour's drop, if you're missing it) · dragon.pet()
+  //   dragon.canPet() · dragon.dropNow() (this quarter-hour's drop if you're missing it, "?" not tried yet) · dragon.pet()
 
   const KINDS = { building: ['building'], upgrade: ['upgrade'], all: ['building', 'upgrade'] };
   const thingKey = (c) => `${c.kind}:${c.name}`;
@@ -215,7 +223,10 @@ CA.AutoBuy = (() => {
     V('upgrade.owned', 'whether you own an upgrade', (n) => has(n), { params: ['upgrade'], bool: true });
     V('research.next', 'the next research to buy, stopping before stopBefore ("": none)', (stop) => (researchPick(stop) || {}).name || '', { params: ['stopBefore'] });
     V('dragon.canPet', 'whether you can pet the dragon (level 8, “Pet the dragon”)', () => canPet(), { bool: true });
-    V('dragon.dropNow', 'this quarter-hour’s dragon drop, if you’re missing it ("": none)', () => (petSchedule().find((x) => x.now) || {}).name || '');
+    V('dragon.dropNow', 'whether petting the dragon this quarter-hour can still give a drop you’re missing (learned by petting: its drop, or "?" not tried yet; "": none)', () => {
+      const x = petSchedule().find((y) => y.now);
+      return x && x.open ? x.drop || '?' : '';
+    });
     const A = CA.Actions.register;
     const buyThing = (hidden) => ({
       id: hidden ? 'cm.buy' : 'pp.buy',
@@ -325,9 +336,10 @@ CA.AutoBuy = (() => {
         if (!canPet()) return { ok: false, text: 'needs dragon level 8 and “Pet the dragon”' };
         const s = petSchedule();
         if (!s.length) return { ok: true, text: 'all four drops found' };
-        const now = s.find((x) => x.now);
-        const next = s.slice().sort((a, b) => a.inSec - b.inSec)[0];
-        return { ok: !!now, text: now ? `${now.name} drops this quarter-hour` : `${next.name} in ${CA.Format.span(next.inSec)}` };
+        const now = s.find((x) => x.now && x.open);
+        const next = s.filter((x) => x.open).sort((a, b) => a.inSec - b.inSec)[0];
+        if (now) return { ok: true, text: now.drop ? `${now.drop} drops this quarter-hour` : 'this quarter-hour’s drop: not tried yet' };
+        return { ok: false, text: next ? `${next.drop || 'an untried quarter-hour'} in ${CA.Format.span(next.inSec)}` : 'all four drops found' };
       },
       run: () => pet(),
     });
@@ -391,15 +403,15 @@ CA.AutoBuy = (() => {
     M.addBuiltin({
       id: 'petDragon',
       name: 'Pet the dragon',
-      desc: 'Gets the dragon’s four drops: works out which quarter of the hour gives which, and in a quarter whose drop you’re missing opens the dragon, pets it until it drops, and closes it. Needs dragon level 8 and the “Pet the dragon” upgrade.',
+      desc: 'Gets the dragon’s four drops: learns by petting which quarter of the hour gives which, and in a quarter that can still give one you’re missing opens the dragon, pets it until it drops, and closes it. Needs dragon level 8 and the “Pet the dragon” upgrade.',
       icon: { sprite: [30, 12] },
       mode: 'flow',
       every: 30000,
-      defaultSource: "# Get the dragon's four drops: in a quarter of the hour whose drop you're missing, pet it until it\n# drops (dragon level 8 and the \"Pet the dragon\" upgrade).\nforever:\n  if dragon.canPet() and dragon.dropNow() != \"\":\n    dragon.pet()\n",
+      defaultSource: "# Get the dragon's four drops: in a quarter of the hour that can still give one you're missing (or\n# not tried yet), pet it until it drops (dragon level 8 and the \"Pet the dragon\" upgrade).\nforever:\n  if dragon.canPet() and dragon.dropNow() != \"\":\n    dragon.pet()\n",
       readiness: () => CA.Actions.get('dragon.pet').ready({}),
       section: 'upkeep',
     });
   }
 
-  return { init, best, candidates, readiness, petSchedule, dropOrder, cheapUpgrades, researchPick, RESEARCH, DROPS };
+  return { init, best, candidates, readiness, petSchedule, cheapUpgrades, researchPick, RESEARCH, DROPS };
 })();

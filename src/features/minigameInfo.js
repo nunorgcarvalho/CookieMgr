@@ -111,6 +111,9 @@ CA.MinigameInfo = (() => {
       const x = spell(s);
       return x && x.recover !== null ? x.recover : NaN;
     });
+    V('spell.failChance', 'a spell’s chance to backfire now (0–1)', ['spell'], (s) => (spell(s) || { fail: NaN }).fail);
+    // (its name from v3.12's Force the Hand of Fate words — kept: macros use it)
+    V('fthof.backfireChance', 'Force the Hand of Fate’s chance to backfire now (0–1)', [], () => (spell('hand of fate') || { fail: NaN }).fail);
     V('stock.restingRatio', 'a stock’s price ÷ its resting value (below 1: under where it drifts back to)', ['good'], (g) => (stock(g) || { ratio: NaN }).ratio);
   }
 

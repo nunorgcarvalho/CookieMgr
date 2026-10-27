@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## 3.13.0 — 2026-10-27
+
+- **Removed: the Force the Hand of Fate forecast.** CookieMgr no longer reads your save's seed to say what a spell cast
+  will give: knowing the dice before they roll isn't the game. It works with odds, expected values and what has
+  happened. Gone: the next casts under Force the Hand of Fate's and Gambler's Fever Dream's tooltips, the
+  *Force the Hand of Fate, the next casts* part of the Golden timeline widget (a widget saved with it shows the rest),
+  the words `fthof.next`, `fthof.nextIs`, `fthof.after` and `fthof.castsUntil`, and the combo macro's **Forecast** and
+  **Skip ahead** choices — **Force the Hand of Fate on combos** casts on every combo again. A copy of a macro you
+  edited to use those words will show a compile error on its card. The simulator's `fthof-forecast` experiment is gone too.
+- **Pet the dragon learns the drop order by petting.** Which drop a pet can give depends on the quarter of the hour,
+  in an order the game shuffles from your save's seed; CookieMgr used to work that order out from the seed. Now it
+  pets in any quarter it hasn't tried (or whose drop you're still missing) and remembers what dropped there —
+  200 pets with nothing means that quarter's drop is one you have. Learned anew each run. `dragon.dropNow()` gives
+  `"?"` for a quarter not tried yet.
+- Kept, as they're odds and not predictions: `fthof.backfireChance()`, and a new `spell.failChance(spell)` for any spell.
+
 ## 3.12.5 — 2026-10-16
 
 - **Force the Hand of Fate on combos says when combos can’t happen.** Every combo needs a second golden cookie
