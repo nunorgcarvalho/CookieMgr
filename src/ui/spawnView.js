@@ -168,7 +168,7 @@ CA.UI.SpawnView = (() => {
       `<path class="ca-sp-swept" d="${area}"/>` +
       `<line class="ca-sp-half" x1="${x0}" x2="${x1}" y1="${Y(0.5).toFixed(2)}" y2="${Y(0.5).toFixed(2)}"/>` +
       `<text class="ca-sp-ylab" x="${x0 + 2}" y="${(Y(0.5) - 3).toFixed(2)}">50%</text>` +
-      `<text class="ca-sp-ylab" x="${x0 + 2}" y="${(y1 + 8).toFixed(2)}">100%</text>` +
+      (y0 - y1 >= 60 ? `<text class="ca-sp-ylab" x="${x0 + 2}" y="${(y1 + 8).toFixed(2)}">100%</text>` : '') + // a short chart (a widget): 50% alone
       `<path class="ca-sp-cdf" d="${line}"/>` +
       `<line class="ca-sp-axis" x1="${x0}" x2="${x1}" y1="${y0}" y2="${y0}"/>` +
       `<g class="ca-sp-now"><line x1="${nx.toFixed(2)}" x2="${nx.toFixed(2)}" y1="${y1}" y2="${y0 + effects.length * LN}"/>` +
