@@ -1,6 +1,7 @@
 // v3.9.0: the next golden cookie as statistics, and timer bars on its chart — and switches out of payback:
 //   the next golden cookie as statistics — the distribution card on the Stats page (numbers, the
-//   chart with its hover readout, percentiles, what moves it and the what-if), the widget's sparkline
+//   chart with its hover readout, percentiles, what moves it and the what-if) (v3.19: the Golden
+//   cookies widget and its sparkline are gone)
 //   (the distribution itself is checked against the real game in tests/sim/golden-spawn)
 //   switches out of payback — no payback period, never the best buy, never bought by the buyers;
 //   the Payback page shows them only on request, greyed; the store gives them no block and sorts them last
@@ -48,14 +49,6 @@ Game.shimmerTypes.reindeer = Object.assign(Game.shimmerTypes.reindeer || {}, { t
 CA.UI.Menu.render();
 assert(doc.querySelector('[data-page="stats"] [data-st-reindeer] [data-sp-chart="reindeer"]'), 'at Christmas: the next reindeer too');
 Game.season = '';
-// the widget
-CA.UI.Widgets.add('golden');
-CA.Settings.set('widgetsShown', true);
-CA.UI.Widgets.render();
-CA.UI.Widgets.tick();
-const orb = doc.querySelector('#CookieMgrWidgets .ca-orb-golden');
-assert(orb && orb.querySelector('.ca-sp-spark rect') && /Median/.test(orb.textContent) && /Within a minute/.test(orb.textContent), 'the widget’s popup: a sparkline, the median, the chance within a minute');
-
 // ---- the timer bars, on the chart's axis, and the chance of a golden cookie before each effect ends
 Game.buffs = {
   Frenzy: { name: 'Frenzy', time: 30 * 60, maxTime: 30 * 77, multCpS: 7 },
@@ -73,7 +66,6 @@ const lanes = [...card().querySelectorAll('[data-sp-chart="golden"] .ca-sp-lane'
 assert(lanes.length === 3 && lanes.some((l) => l.classList.contains('up')) && lanes.some((l) => l.classList.contains('click')) && lanes.some((l) => l.classList.contains('down')), `the bars: each effect (boost, click, malus) — ${lanes.map((l) => l.getAttribute('class')).join(' | ')}`);
 const svgG = card().querySelector('[data-sp-chart="golden"]');
 const ax = (s) => 8 + ((640 - 16) * Math.min(900, s)) / 900; // this cycle's axis: 0 → 15 min since the last
-const frPc = `${(fr.golden * 100).toFixed(fr.golden < 0.1 ? 1 : 0)}%`;
 const frLane = lanes.find((l) => /Frenzy/.test(l.textContent));
 const frW = Number(frLane.querySelector('.left').getAttribute('width'));
 const frX = Number(frLane.querySelector('.left').getAttribute('x'));
@@ -82,10 +74,6 @@ assert(Math.abs(frX - ax(313)) < 0.05 && Math.abs(frX + frW - ax(390)) < 0.05, `
 assert(/×7 income/.test(frLane.textContent) && !/golden cookie before it ends/.test(frLane.textContent), 'the bar says its multiplier');
 assert(/→/.test(lanes.find((l) => /Clot/.test(l.textContent)).textContent), 'a bar past the chart’s end: an arrow');
 assert(Number(svgG.getAttribute('viewBox').split(' ')[3]) === 150 + 3 * 14, 'the chart grows a lane per bar');
-CA.UI.Widgets.render();
-CA.UI.Widgets.tick();
-const orb2 = doc.querySelector('#CookieMgrWidgets .ca-orb-golden');
-assert(new RegExp(`Frenzy[^]*GC ${frPc}`).test(orb2.textContent), `the widget’s popup: each effect with its chance of a golden cookie (${(orb2.textContent.match(/Frenzy[^%]*%/) || [''])[0]})`);
 Game.buffs = {};
 CA.UI.Menu.render();
 
