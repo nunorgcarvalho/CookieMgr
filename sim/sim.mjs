@@ -15,7 +15,7 @@
 import { bootGame } from './game/boot.mjs';
 
 /** The simulator's own version (it moves apart from the add-on's: sim-v* tags). */
-export const SIM_VERSION = '0.3.2';
+export const SIM_VERSION = '0.4.0';
 import { loadCookieMgr } from './mgr/host.mjs';
 import { ensureMod } from './game/fetch.mjs';
 
@@ -157,6 +157,8 @@ export async function createSim({ seed = 1, fps = 30, start, save = null, mgr = 
     stats,
     samples,
     actions: host ? host.actions : [],
+    /** CookieMgr modules whose init() threw ("Name: message"); empty when all of them started. */
+    failed: host ? host.failed : [],
     events: (types) => (CA ? CA.EventLog.list(types) : []),
     /** The game's save (as Options → Export save gives it), CookieMgr's part included. */
     exportSave: () => Game.WriteSave(1),

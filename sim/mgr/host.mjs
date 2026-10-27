@@ -33,8 +33,17 @@ export function stagingModules() {
 /** Only what runs without a screen: core/ and features/ (not ui/, not main.js). */
 export const headlessModules = () => moduleList().filter((f) => f.startsWith('core/') || f.startsWith('features/'));
 
-/** The modules main.js starts, in its order — minus the UI's (and the update check / Cookie Monster loader). */
-const START = ['EventLog', 'GameActions', 'Macros', 'Grimoire', 'Pantheon', 'Garden', 'GardenHistory', 'Shop', 'Payback', 'GoldenMath', 'Wrinklers', 'Prestige', 'Timers', 'Collection', 'WhatIf', 'Mutations', 'MinigameInfo', 'Alerts', 'AutoBuy', 'Seasons', 'Stocks', 'StockLog', 'History', 'GameStates', 'Recorder', 'GameEvents', 'NotifyTips', 'Hotkeys', 'Ascension'];
+/**
+ * The modules src/main.js starts, in its order — minus the UI's (CA.UI.*) and the update check /
+ * Cookie Monster loader (main.js's second list). Read from main.js, so a module the add-on starts
+ * is started here too.
+ */
+export function startList() {
+  const main = fs.readFileSync(path.join(ROOT, 'src', 'main.js'), 'utf8');
+  const block = main.match(/\[([^\]]*)\]\.forEach\(\(m, i\) =>/);
+  if (!block) throw new Error('src/main.js: no init list ([CA.EventLog, …].forEach((m, i) => …))');
+  return [...block[1].matchAll(/\bCA\.(\w+)\b(?!\.)/g)].map((m) => m[1]);
+}
 /** Ones that only record history for the add-on's charts — off by default (they cost time, nothing reads them here). History stays on: it logs golden cookies and buffs into the event log. */
 export const RECORDING = ['Recorder', 'GardenHistory', 'StockLog'];
 
@@ -65,7 +74,7 @@ export function loadCookieMgr(game, { save = '', record = false, logAll = false 
     return n;
   };
 
-  const start = START.filter((k) => record || !RECORDING.includes(k)).concat(staging.map((m) => m.name).filter(Boolean));
+  const start = startList().filter((k) => record || !RECORDING.includes(k)).concat(staging.map((m) => m.name).filter(Boolean));
   const failed = [];
   const mod = {
     init() {

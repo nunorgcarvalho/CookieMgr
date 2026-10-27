@@ -19,6 +19,9 @@ assert(staging.every((m) => !/CA\.UI\b/.test(m.code.replace(/\/\/.*$/gm, ''))), 
 const sim = await createSim({ seed: 2 });
 const { Game, CA } = sim;
 assert(CA && CA.VERSION && Game.mods.CookieMgr, `CookieMgr ${CA.VERSION} registered with the game (Game.registerMod)`);
+assert(!sim.failed.length, `every module main.js starts (but the UI's) started${sim.failed.length ? ` — not: ${sim.failed.join('; ')}` : ''}`);
+assert(CA.Actions.get('dragon.train') && CA.Macros.get('autoDragon') && sim.value('dragon.level') === 0, 'the dragon’s words and Auto dragon (CA.Dragon, started since sim v0.4.0)');
+assert(CA.Stats.all().length > 0 && Number(sim.value('stat.price', 'Cursor')) > 0, 'the statistics’ words (CA.Stats, started since sim v0.4.0)');
 assert(CA.Actions.get('click.bigCookie') && CA.Actions.get('garden.plant') && CA.Actions.get('building.buy') && CA.Macros.get('golden') && CA.Macros.get('gardener'), 'its actions and built-in macros, and the staging ones');
 
 // ---- actions, values, code

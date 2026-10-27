@@ -62,7 +62,9 @@ test what's recorded), `withPantheon`, `withGrimoire`, `localStorageSeed`, `full
 - **`sim/`** — the simulator (`sim/`): its clock, random and headless page, the real game booting and playing
   deterministically, CookieMgr loaded into it (actions, values, code, macros, the logs, saves), strategies compiling
   with CookieMgr's compiler, and the garden models against the game's own numbers. They download the game's scripts
-  on first use (`sim/.game/`); offline, they pass as skipped.
+  on first use (`sim/.game/`); where they can't be downloaded the files say SKIPPED and the runner lists
+  them as skipped (not passed) — in CI that's a failure. `sim/host.test.mjs` needs no game: what the simulator starts
+  of CookieMgr is read from `src/main.js`'s init list.
 - **`e2e/vX.Y.Z.test.mjs`** — one per release: what that release added or changed, end to end. The
   CHANGELOG entry of the same version says what each one is about. v3.0.0 has several
   (`v3.0.0-stocks`, `-garden`, `-builtins`, `-pantheon`).
