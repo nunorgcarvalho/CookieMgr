@@ -9,6 +9,7 @@
 //                 — and take part: switch macros, do actions, run code, export the save
 //   Compare       strategies side by side over several seeds, in parallel
 //   Strategies    the .cmgr files: CookieMgr's code editor, with its library
+//   Garden        golden cookie frequency over game time, gardener by gardener: a histogram each
 //   Experiments   the fast models, run with their output
 //   Vocabulary    every word a strategy can use (CookieMgr's library)
 
@@ -114,6 +115,7 @@
     { id: 'sim', label: 'Simulate', icon: 'play' },
     { id: 'compare', label: 'Compare', icon: 'graphs' },
     { id: 'strategies', label: 'Strategies', icon: 'edit' },
+    { id: 'garden', label: 'Garden', icon: 'leaf' },
     { id: 'experiments', label: 'Experiments', icon: 'puzzle' },
     { id: 'vocab', label: 'Vocabulary', icon: 'log' },
   ];
@@ -1204,6 +1206,229 @@ buy.best(all)
   });
   function onExInput(e) {
     if ('exargs' in e.target.dataset) EX.args[EX.name] = e.target.value;
+  }
+
+  // =====================================================================================================
+  // Garden: golden cookie frequency over game time, gardener by gardener (experiments/garden-frequency.mjs)
+  // =====================================================================================================
+
+  const GD = Object.assign({ level: 8, tulips: [4, 8], hours: 1000, seeds: 3 }, store.get('garden', {}), { study: null, error: '', loading: false, at: null });
+  const PLANT_ICON = { G: 5, N: 13 }; // gardenPlants.png rows: golden clover, nursetulip
+  const PLOTS = { 1: '2×2', 2: '3×2', 3: '3×3', 4: '4×3', 5: '4×4', 6: '5×4', 7: '5×5', 8: '6×5', 9: '6×6' };
+  const pc = (x, d = 1) => `${(x * 100).toFixed(d)}%`;
+  const bonus = (x) => `+${Math.round(x * 100)}%`;
+  const hrs = (h) => (h < 1 ? `${Math.round(h * 60)} min` : `${h.toFixed(1)} h`);
+  /** The share of the time at `x` or more. */
+  const atLeast = (r, x, bin) => r.bins.reduce((a, v, k) => a + (k * bin >= x - 1e-9 ? v : 0), 0);
+
+  function gardenLayoutHtml(layout, w) {
+    return (
+      `<div class="sim-mini-plot" style="grid-template-columns:repeat(${w},22px)">` +
+      layout
+        .split('')
+        .map((k) => `<div class="ca-gtile">${PLANT_ICON[k] != null ? plantSprite(PLANT_ICON[k], 4, 'sim-mini') : ''}</div>`)
+        .join('') +
+      '</div>'
+    );
+  }
+
+  /** One gardener's histogram: an SVG on the shared scales (x: bonus, y: share of the time). */
+  const HW = 460;
+  const HH = 190;
+  const HP = { l: 40, r: 10, t: 14, b: 26 };
+  function histogramSvg(r, scale, bin) {
+    const iw = HW - HP.l - HP.r;
+    const ih = HH - HP.t - HP.b;
+    const X = (v) => HP.l + (v / scale.x) * iw;
+    const Y = (v) => HP.t + ih - (v / scale.y) * ih;
+    let g = '';
+    for (const t of scale.yTicks) g += `<line class="sim-h-grid" x1="${HP.l}" x2="${HW - HP.r}" y1="${Y(t)}" y2="${Y(t)}"/><text class="sim-h-tick" x="${HP.l - 5}" y="${Y(t) + 3}" text-anchor="end">${Math.round(t * 100)}%</text>`;
+    scale.xTicks.forEach((t, i) => (g += `<text class="sim-h-tick" x="${X(t)}" y="${HH - HP.b + 15}" text-anchor="${i === scale.xTicks.length - 1 ? 'end' : 'middle'}">${bonus(t)}</text>`));
+    let bars = '';
+    r.bins.forEach((v, k) => {
+      if (v < 1e-6) return;
+      const x0 = X(k * bin) + 1;
+      const w = Math.max(1, X((k + 1) * bin) - X(k * bin) - 2);
+      const y = Y(Math.min(v, scale.y));
+      bars += `<rect class="sim-h-bar" data-k="${k}" x="${x0.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${(HP.t + ih - y).toFixed(1)}" rx="1.5"/>`;
+    });
+    const mx = X(r.mean);
+    return (
+      `<svg class="sim-hist" viewBox="0 0 ${HW} ${HH}" preserveAspectRatio="xMidYMid meet" data-hist="${esc(r.id)}">` +
+      g +
+      `<line class="sim-h-axis" x1="${HP.l}" x2="${HW - HP.r}" y1="${HP.t + ih}" y2="${HP.t + ih}"/>` +
+      `<rect class="sim-h-shade" data-shade x="${HW - HP.r}" y="${HP.t}" width="0" height="${ih}"/>` +
+      `<g data-bars>${bars}</g>` +
+      `<line class="sim-h-mean" x1="${mx}" x2="${mx}" y1="${HP.t - 4}" y2="${HP.t + ih}"/>` +
+      `<text class="sim-h-meanlabel" x="${mx + (mx > HW - 110 ? -4 : 4)}" y="${HP.t + 6}" text-anchor="${mx > HW - 110 ? 'end' : 'start'}">mean ${bonus(r.mean)}</text>` +
+      `<line class="sim-h-cursor" data-cursor x1="0" x2="0" y1="${HP.t - 4}" y2="${HP.t + ih}" style="display:none"/>` +
+      `<rect class="sim-h-hit" x="${HP.l}" y="0" width="${iw}" height="${HH}" data-hit/>` +
+      '</svg>'
+    );
+  }
+  function gardenScale(results, bin) {
+    const top = Math.max(...results.map((r) => r.bins.length)) * bin;
+    const x = Math.max(0.5, Math.ceil(top / 0.25) * 0.25);
+    const ymax = Math.max(...results.map((r) => Math.max(...r.bins)));
+    const step = [0.02, 0.05, 0.1, 0.2, 0.25].find((s) => ymax / s <= 5) || 0.25;
+    const y = Math.ceil(ymax / step) * step;
+    const yTicks = [];
+    for (let t = step; t <= y + 1e-9; t += step) yTicks.push(t);
+    const xTicks = [];
+    const xs = x > 1.5 ? 0.5 : 0.25;
+    for (let t = 0; t <= x + 1e-9; t += xs) xTicks.push(t);
+    return { x, y, yTicks, xTicks };
+  }
+
+  function gardenCardHtml(r, st, scale) {
+    const z = r.zone;
+    return (
+      `<div class="ca-card sim-gcard" data-gcard="${esc(r.id)}">${C.cardHead(esc(r.name), 'leaf')}` +
+      `<div class="sim-gcard-top">${gardenLayoutHtml(r.layout, st.w)}<div class="ca-hint">${esc(r.desc)}</div></div>` +
+      histogramSvg(r, scale, st.bin) +
+      `<div class="sim-h-read" data-read>${gardenReadHtml(r, null, st.bin)}</div>` +
+      `<div class="ca-stats sim-gstats">` +
+      tile('Mean', bonus(r.mean), `best ${bonus(r.peak)}`, 'The golden cookie frequency bonus, averaged over game time') +
+      tile('≥ +100%', pc(atLeast(r, 1, st.bin), 0), 'of the time', 'Golden cookies at least twice as often') +
+      tile('CpS', `×${r.cps.toFixed(3)}`, r.cps < 1 ? 'the nursetulips' : 'nothing taken', 'The CpS multiplier, averaged over game time: a grown nursetulip takes 2% (on clay, 2.5%)') +
+      (z
+        ? tile('Golden zone', pc(z.share, 0), `${hrs(z.stretch)} at a stretch`, `Every nursetulip fully grown — the clovers around them boosted all they can be. The first after ${hrs(z.first)}; every clover mature as well ${pc(z.cloversMax, 0)} of that time.`) +
+          tile('Clovers at max', pc(z.cloversMax, 0), 'of the zone', 'Of the golden zone, the share with every golden clover mature too')
+        : tile('Fertilizer', pc(r.fert, 0), 'of the time', 'Quicker ticks, but plant effects ×0.75')) +
+      '</div></div>'
+    );
+  }
+  /** Under a histogram: at the hovered bonus, the share of the time at it or above (and in its bar). */
+  function gardenReadHtml(r, x, bin) {
+    if (x == null) return `<span class="ca-hint">Hover the chart: the share of the time at that bonus or more.</span> <b>${pc(atLeast(r, 1, bin), 0)}</b> of the time at +100% or more.`;
+    const k = Math.round(x / bin);
+    return `<b>${pc(atLeast(r, x, bin))}</b> of the time at <b>${bonus(x)}</b> or more <span class="ca-hint">· ${bonus(k * bin)} to ${bonus((k + 1) * bin)}: ${pc(r.bins[k] || 0)}</span>`;
+  }
+
+  function gardenSummaryHtml(st) {
+    const best = Math.max(...st.results.map((r) => r.mean));
+    return (
+      '<table class="sim-table"><tr><th>Gardener</th><th>Mean</th><th>≥ +50%</th><th>≥ +100%</th><th>≥ +125%</th><th>CpS</th><th>Golden zone</th><th>Plantings / h</th></tr>' +
+      st.results
+        .map(
+          (r) =>
+            `<tr class="${r.mean === best ? 'best' : ''}"><td><b>${esc(r.name)}</b></td><td>${bonus(r.mean)}</td><td>${pc(atLeast(r, 0.5, st.bin), 0)}</td><td>${pc(atLeast(r, 1, st.bin), 0)}</td><td>${pc(atLeast(r, 1.25, st.bin), 0)}</td><td>×${r.cps.toFixed(3)}</td>` +
+            `<td>${r.zone ? `${pc(r.zone.share, 0)} · ${hrs(r.zone.stretch)} at a stretch` : '—'}</td><td>${(r.plantings.G + r.plantings.N).toFixed(1)}</td></tr>`
+        )
+        .join('') +
+      '</table>'
+    );
+  }
+
+  pages.garden = {
+    html() {
+      const st = GD.study;
+      const controls =
+        `<div class="sim-form">` +
+        `<label class="ca-field"><span class="ca-field-label">Farm level</span>${chips([6, 7, 8, 9].map((l) => [l, `${l} <small>${PLOTS[l]}</small>`]), 'data-glevel', GD.level)}</label>` +
+        `<label class="ca-field"><span class="ca-field-label">Nursetulips</span><span class="ca-chipgroup">${[2, 4, 6, 8]
+          .map((k) => `<button type="button" class="ca-chip${GD.tulips.includes(k) ? ' on' : ''}" data-gtulips="${k}">${k}</button>`)
+          .join('')}</span></label>` +
+        `<label class="ca-field"><span class="ca-field-label">Game time</span>${chips([[250, '250 h'], [1000, '1,000 h'], [4000, '4,000 h']], 'data-ghours', GD.hours)}</label>` +
+        `<label class="ca-field"><span class="ca-field-label">Gardens</span>${chips([[1, '1'], [3, '3'], [10, '10']], 'data-gseeds', GD.seeds)}</label>` +
+        (GD.loading ? `<span class="ca-hint">${I('refresh', 12)} Growing gardens…</span>` : '') +
+        '</div>';
+      const scale = st && st.results.length ? gardenScale(st.results, st.bin) : null;
+      return (
+        `<div class="sim-h1">Garden <small>golden cookie frequency over game time, gardener by gardener</small></div>` +
+        `<div class="ca-card">${C.cardHead('Golden clovers and nursetulips', 'leaf', st ? `<span class="ca-pill">level ${st.level} · ${st.w}×${st.h}</span>` : '')}` +
+        `<div class="ca-card-note">Each gardener keeps a golden clover garden the way CookieMgr’s built-in gardeners do, for ${GD.hours.toLocaleString()} hours of game time × ${GD.seeds} garden${GD.seeds > 1 ? 's' : ''}; each histogram is how that time splits by the garden’s golden cookie frequency bonus (5-point bars), the line is its mean. All the charts share their scales, so they compare side by side; hover one to read the share of the time at that bonus or more — on every chart at once. The garden’s rules are the game’s, run in a fast model (models/gardenFrequency.mjs) rather than the whole game.</div>` +
+        controls +
+        (GD.error ? `<div class="sim-err">${esc(GD.error)}</div>` : '') +
+        (st ? gardenSummaryHtml(st) : '') +
+        '</div>' +
+        (st ? `<div class="sim-gcards">${st.results.map((r) => gardenCardHtml(r, st, scale)).join('')}</div>` : '')
+      );
+    },
+    mount(root) {
+      root.addEventListener('click', onGardenClick);
+      root.addEventListener('mousemove', onGardenHover);
+      root.addEventListener('mouseleave', onGardenHover);
+      if (!GD.study && !GD.loading && !GD.error) loadGarden();
+    },
+    unmount() {
+      const root = main();
+      root.removeEventListener('click', onGardenClick);
+      root.removeEventListener('mousemove', onGardenHover);
+      root.removeEventListener('mouseleave', onGardenHover);
+    },
+  };
+  async function loadGarden() {
+    const ask = { level: GD.level, tulips: GD.tulips.slice().sort((a, b) => a - b), hours: GD.hours, seeds: GD.seeds };
+    store.set('garden', ask);
+    GD.loading = true;
+    GD.error = '';
+    if (current === 'garden') render();
+    try {
+      const st = await api.post('/api/garden/frequency', ask);
+      if (JSON.stringify(ask) !== JSON.stringify({ level: GD.level, tulips: GD.tulips.slice().sort((a, b) => a - b), hours: GD.hours, seeds: GD.seeds })) return;
+      GD.study = st;
+    } catch (e) {
+      GD.error = e.message;
+    } finally {
+      GD.loading = false;
+      if (current === 'garden') render();
+    }
+  }
+  const onGardenClick = guard((e) => {
+    const t = e.target.closest('[data-glevel],[data-gtulips],[data-ghours],[data-gseeds]');
+    if (!t) return;
+    const d = t.dataset;
+    if (d.glevel) GD.level = Number(d.glevel);
+    if (d.gtulips) {
+      const k = Number(d.gtulips);
+      GD.tulips = GD.tulips.includes(k) ? GD.tulips.filter((x) => x !== k) : [...GD.tulips, k];
+    }
+    if (d.ghours) GD.hours = Number(d.ghours);
+    if (d.gseeds) GD.seeds = Number(d.gseeds);
+    loadGarden();
+  });
+  /** Hovering a histogram: the same bonus marked on every one, each saying its share of the time at it or more. */
+  function onGardenHover(e) {
+    const st = GD.study;
+    if (!st) return;
+    const hit = e.type === 'mousemove' && e.target.closest && e.target.closest('[data-hit]');
+    let x = null;
+    // off the charts (or out of the page): no bonus marked
+    if (hit) {
+      const svg = hit.ownerSVGElement;
+      const box = svg.getBoundingClientRect();
+      if (!box.width) return;
+      const sx = ((e.clientX - box.left) / box.width) * HW;
+      const scale = gardenScale(st.results, st.bin);
+      x = Math.max(0, Math.min(scale.x, Math.round((((sx - HP.l) / (HW - HP.l - HP.r)) * scale.x) / st.bin) * st.bin));
+    }
+    if (x === GD.hover) return;
+    GD.hover = x;
+    showGardenHover(x);
+  }
+  function showGardenHover(x) {
+    const st = GD.study;
+    const scale = gardenScale(st.results, st.bin);
+    const X = (v) => HP.l + (v / scale.x) * (HW - HP.l - HP.r);
+    st.results.forEach((r) => {
+      const card = main().querySelector(`[data-gcard="${CSS.escape(r.id)}"]`);
+      if (!card) return;
+      const cur = card.querySelector('[data-cursor]');
+      const shade = card.querySelector('[data-shade]');
+      if (x == null) {
+        cur.style.display = 'none';
+        shade.setAttribute('width', 0);
+      } else {
+        cur.style.display = '';
+        cur.setAttribute('x1', X(x));
+        cur.setAttribute('x2', X(x));
+        shade.setAttribute('x', X(x));
+        shade.setAttribute('width', Math.max(0, HW - HP.r - X(x)));
+      }
+      card.querySelectorAll('[data-k]').forEach((b) => b.classList.toggle('on', x != null && Number(b.dataset.k) * st.bin >= x - 1e-9));
+      card.querySelector('[data-read]').innerHTML = gardenReadHtml(r, x, st.bin);
+    });
   }
 
   // =====================================================================================================

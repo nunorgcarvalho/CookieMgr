@@ -1,6 +1,6 @@
 # CookieMgr simulator
 
-*v0.4.0 (in step with add-on v3.34.0) — versioned apart from the add-on (`sim-v*` tags; `SIM_VERSION` in `sim.mjs`; [CHANGELOG](CHANGELOG.md)).*
+*v0.5.0 (in step with add-on v3.34.0) — versioned apart from the add-on (`sim-v*` tags; `SIM_VERSION` in `sim.mjs`; [CHANGELOG](CHANGELOG.md)).*
 
 A Cookie Clicker simulator for trying out strategies over long timescales — written in CookieMgr's
 own words, so what works here can be pasted into the add-on and run on the real game.
@@ -35,7 +35,7 @@ pinned in `game/fetch.mjs`.
 ## CookieSimMgr — the GUI
 
 `npm run sim:gui` starts CookieSimMgr at http://localhost:8091 and opens it (`--port 9000`,
-`--no-open`). It's the add-on's own UI — its stylesheet, icons, components, tooltips, plotting engine,
+`--no-open`). It looks like Cookie Clicker (the game's framed panels, headings, beams and buttons, from its own pictures) and is the add-on's own UI — its stylesheet, icons, components, tooltips, plotting engine,
 **its Graphs and Events pages**, code editor and library, and the code knobs, served straight from
 `src/` — so it looks and reads like CookieMgr, and stays in step with it.
 
@@ -61,6 +61,13 @@ pinned in `game/fetch.mjs`.
   it; the `# with:` built-ins as chips, the pass interval and garden profile as fields, the code's
   top-level numbers as knobs (sliders that rewrite their line). Save (checked by CookieMgr's
   compiler), new, delete, *Simulate it*, *Compare*, *Copy for the add-on*.
+- **Garden** — golden cookie frequency over game time, gardener by gardener, on a Farm level's plot
+  (8 by default): a histogram each of how the time splits by the garden's golden cookie frequency bonus,
+  a line at its mean, and — hover any chart — the share of the time at that bonus or more, on all of
+  them at once. Golden clovers alone (replanted one by one, or all together) and with 2–8 nursetulips
+  (left to grow at their own pace, fertilizer for the clovers only or for the tulips too, or replanted
+  together), with their golden zone: how long every nursetulip is fully grown. A fast model
+  (`models/gardenFrequency.mjs`, the `garden-frequency` experiment), so thousands of hours take seconds.
 - **Experiments** — each with its explanation and arguments; its output streams in as it runs.
 - **Vocabulary** — every action, value and condition a strategy can use (CookieMgr's library,
   searchable, click to copy), staging words marked, and the built-in macros.
