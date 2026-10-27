@@ -57,7 +57,6 @@ const MODULES = [
   'features/whatIf.js',
   'features/mutations.js',
   'features/minigameInfo.js',
-  'features/fthof.js',
   'features/alerts.js',
   'features/autoBuy.js',
   'features/seasons.js',
