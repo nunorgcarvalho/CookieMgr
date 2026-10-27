@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 3.19.0 — 2026-10-27
+
+- **The Golden cookies widget is gone** — the small ring that filled towards the latest the next golden cookie could
+  come. The **Next golden cookie** widget (the chart, the expected wait, the median, the chance within a minute and
+  the effects running) and the **Golden timeline** do everything it did. A saved layout that still has it loads
+  without it; everything else on the panel stays where it was. The Golden cookies *macro* (which pops them) stays.
+
 ## 3.18.0 — 2026-10-27
 
 - **Bank warnings, compact.** The warnings that a purchase would take your bank below what a Lucky!, Conjure Baked
