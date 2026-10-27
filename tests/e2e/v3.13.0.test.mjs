@@ -3,6 +3,7 @@
 // tooltips or the Golden timeline (a widget saved with them shows its default parts), and Force the Hand
 // of Fate on combos casts on every combo, with no Forecast or Skip ahead on its card. The backfire chance
 // (a probability, not a prediction) stays: fthof.backfireChance, and spell.failChance for any spell.
+// Pet the dragon learns which quarter-hour gives which drop by petting, instead of from the seed.
 import fs from 'node:fs';
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
 import { boot, sleep, makeAssert, BUNDLE } from '../harness/game.mjs';
@@ -15,6 +16,7 @@ const doc = w.document;
 G.spellTooltip = () => () => '<div class="name">Spell</div>';
 await sleep(400);
 const word = (id) => CA.Script.VALUES.find((v) => v.id === id);
+const AB = () => CA.AutoBuy;
 
 // ---- the forecast is gone
 assert(CA.Fthof === undefined, 'no CA.Fthof');
@@ -59,6 +61,27 @@ assert(box().querySelector('.ca-tl-nums') && box().querySelector('.ca-sp-chart')
 inst.stats = ['numbers', 'fthof'];
 CA.UI.Widgets.tick();
 assert(box().querySelector('.ca-tl-nums') && !box().querySelector('.ca-sp-chart') && !box().querySelector('.ca-tl-cast'), 'saved with numbers + the forecast: the numbers');
+
+// ---- Pet the dragon learns by petting, never from the seed
+assert(!/dragonTime/.test(bundle), 'the bundle never works out the dragon’s drop order from the seed');
+let seeded = 0;
+w.Math.seedrandom = () => seeded++;
+Game.dragonLevel = 8;
+const owned = new Set(['Pet the dragon']);
+Game.Has = (n) => owned.has(n);
+Game.HasUnlocked = () => false;
+let pets = 0;
+Game.ClickSpecialPic = () => pets++; // this quarter's drop is one you already have: nothing drops
+const dropNow = () => word('dragon.dropNow').get();
+assert(dropNow() === '?', 'dragon.dropNow: "?" — this quarter not tried yet');
+assert(CA.Macros.runOnce('petDragon') === 0 && pets === 200, `nothing drops: gives up after 200 pets (${pets})`);
+assert(dropNow() === '' && AB().petSchedule().find((x) => x.now).open === false, '…and knows this quarter gives nothing new');
+pets = 0;
+CA.Macros.runOnce('petDragon');
+assert(pets === 0, 'so it doesn’t pet again this quarter');
+Game.resets = (Game.resets || 0) + 1;
+assert(dropNow() === '?', 'a new run (an ascension): learned anew');
+assert(seeded === 0, 'never seeds the game’s generator');
 
 assert(g.errors.length === 0, 'no runtime errors' + (g.errors.length ? `: ${g.errors.slice(0, 3).join(' | ')}` : ''));
 done();

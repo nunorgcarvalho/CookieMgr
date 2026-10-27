@@ -168,7 +168,7 @@ default brings the original back):
 | Best upgrade           | —           | Buys the lowest-payback upgrade                                      |
 | Research               | —           | Buys research as it comes (stops before One mind by default)         |
 | Cheap upgrades         | —           | Buys upgrades costing under 1s (adjustable) of production            |
-| Pet the dragon         | —           | Gets the dragon's four drops, petting only in the right quarter-hour |
+| Pet the dragon         | —           | Gets the dragon's four drops, learning by petting which quarter-hour gives which |
 
 The autobuyer is the same switch as on the Stock market page and in the Bank minigame toolbar. (A group macro is
 the way to switch several at once.)
@@ -354,9 +354,10 @@ back). It's checked against Cookie Monster itself in the real game (the simulato
 ×1, ×10 and ×100 and every upgrade in the store, the same to the last digit.
 
 **Pet the dragon** gets the dragon's four drops (Dragon scale, claw, fang, teddy bear): each pet has a 1 in 20 chance,
-and which one drops depends only on the quarter of the hour, in an order fixed by your save. It works that order out,
-and in a quarter whose drop you're missing it opens the dragon, pets it until it drops, and closes it again; its button
-says which drop is due and when the next one comes. Needs dragon level 8 and the "Pet the dragon" upgrade.
+and which one drops depends only on the quarter of the hour, in an order fixed per run. It learns that order by petting
+(it never reads your save's seed): in a quarter it hasn't tried, or whose drop you're still missing, it opens the dragon,
+pets it until something drops (200 pets with nothing: that quarter's drop is one you have), and closes it again; its
+button says what this quarter-hour gives, as far as it knows, and when the next quarter worth trying comes. Needs dragon level 8 and the "Pet the dragon" upgrade.
 
 **Running** at the top of the page is a strip with a chip per running macro (warmer the busier it is — click one to
 find its card, × to stop it) and **Stop all**. A running macro's card shows, for each of its actions, how many things
