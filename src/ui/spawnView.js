@@ -1,6 +1,6 @@
 // When the next golden cookie (or reindeer) comes, as statistics (features/timers.js — exact, from the
-// game's own rule), drawn and summed up. Used by the Stats page (a card per type), the Next golden
-// cookie widget (its chart) and the Golden cookies widget (a sparkline in its popup).
+// game's own rule), drawn and summed up. Used by the Stats page (a card per type) and the Next golden
+// cookie widget (its chart).
 //
 //   the numbers   the expected wait (from now), how far along this cycle's odds it is (the curve's
 //                 height at now: 0% → 100%), the chance the next golden cookie is a wrath cookie
@@ -277,17 +277,6 @@ CA.UI.SpawnView = (() => {
     );
   }
 
-  /** A sparkline of the wait's density, for the widget's popup. */
-  function sparkline(type) {
-    const d = T().distribution(type, 40);
-    if (!d || d.spawned) return '';
-    const w = d.wait;
-    const maxP = Math.max(...w.pdf, 1e-12);
-    const bars = w.pdf.map((p, i) => `<rect x="${i * 3}" y="${(24 - (22 * p) / maxP).toFixed(1)}" width="2.4" height="${((22 * p) / maxP).toFixed(1)}"/>`).join('');
-    const mx = (w.mean / Math.max(1e-9, w.range)) * 120;
-    return `<svg class="ca-sp-spark" viewBox="0 0 120 24" preserveAspectRatio="none">${bars}<line x1="${mx.toFixed(1)}" x2="${mx.toFixed(1)}" y1="0" y2="24"/></svg>`;
-  }
-
   // ---- interaction (the page that shows it passes its events here) --------------------------------
 
   /** Pointer over a chart: remember where (rendered on the next sync). Returns whether it was a chart. */
@@ -315,5 +304,5 @@ CA.UI.SpawnView = (() => {
     return true;
   }
 
-  return { html, chart, cycleChart, sparkline, onMove, onLeave, onClick };
+  return { html, chart, cycleChart, onMove, onLeave, onClick };
 })();

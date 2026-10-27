@@ -5833,12 +5833,6 @@ body.ca-has-storebar #products {
   opacity: 1;
 }
 
-/* the golden cookie widget */
-#CookieMgrWidgets .ca-orb-golden {
-  --ring: #ffe066;
-  --glow: rgba(255, 220, 90, 0.6);
-  --bg: rgba(64, 46, 8, 0.92);
-}
 /* the Stats / Payback tiles: their sub-lines wrap rather than clip */
 #CookieMgrMenu [data-pp-best] .ca-stat-sub,
 #CookieMgrMenu [data-st-prestige] .ca-stat-sub,
@@ -6289,19 +6283,6 @@ body.ca-has-storebar #products {
 }
 #CookieMgrMenu .ca-sp {
   padding-bottom: 12px;
-}
-/* the widget popup's sparkline */
-.ca-sp-spark {
-  display: block;
-  width: 120px;
-  height: 24px;
-}
-.ca-sp-spark rect {
-  fill: #e0a84a;
-}
-.ca-sp-spark line {
-  stroke: #7dff7a;
-  stroke-width: 1;
 }
 /* a switch on the Payback page: no payback period, greyed */
 #CookieMgrMenu .ca-pp-up.ca-pp-switch {
