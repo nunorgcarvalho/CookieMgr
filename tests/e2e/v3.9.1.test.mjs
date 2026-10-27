@@ -68,6 +68,7 @@ atTick(true);
 assert(!LY.get('gardener', 'cohort').edited, '(back to the built-in)');
 
 // ---- Cookie Monster's suffixes (its own lists), with its space
+CA.Settings.set('numberFormat', 'abbr'); // the default until v3.17.0
 const eq = (got, want, what) => assert(got === want, `${what}: ${JSON.stringify(got)}${got === want ? '' : ` (wanted ${JSON.stringify(want)})`}`);
 eq(F.beautify(1.5e6), '1.5 M', 'a space before the suffix');
 eq(F.beautify(1e33), '1 De', 'decillion: De');

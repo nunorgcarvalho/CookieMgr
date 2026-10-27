@@ -15,8 +15,8 @@ const F = CA.Format;
 const S = CA.Settings;
 const eq = (got, want, what) => assert(got === want, `${what}: ${JSON.stringify(got)}${got === want ? '' : ` (wanted ${JSON.stringify(want)})`}`);
 
-// ---- the default: short scale, abbreviated
-eq(S.get('numberFormat'), 'abbr', 'the default notation');
+// ---- short scale, abbreviated (the default until v3.17.0, which starts on the short scale)
+S.set('numberFormat', 'abbr');
 eq(F.beautify(0), '0', 'zero');
 eq(F.beautify(7), '7', 'a small whole number');
 eq(F.beautify(2.567, 2), '2.57', 'floats: decimals under 1000');
@@ -74,7 +74,7 @@ eq(F.beautify(999.96e15), '1e18', 'engineering: 999.96e15 rolls over to 1e18');
 as('game');
 eq(F.beautify(1.5e7), w.Beautify(1.5e7, 1), 'the game’s own: its Beautify');
 as('bogus');
-eq(F.beautify(1.5e15), '1.5 Qa', 'an unknown notation: the default');
+eq(F.beautify(1.5e15), '1.5 Quadr', 'an unknown notation: the default (v3.17.0: the short scale)');
 as('abbr');
 eq(CA.UI.Plot.fmt.beautify(2.5e9), '2.5 B', 'charts write numbers the same way (CA.UI.Plot.fmt)');
 

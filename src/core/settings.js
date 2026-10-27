@@ -10,7 +10,7 @@
 // options defined later (by a page that defines them lazily) still get their saved values.
 
 CA.Settings = (() => {
-  const SAVE_VERSION = 1;
+  const SAVE_VERSION = 2;
 
   const optionDefs = []; // { key, name, desc, group, default }
   const options = {};
@@ -121,12 +121,20 @@ CA.Settings = (() => {
     }
   };
 
+  // Up to v3.16 the Numbers option started on the abbreviated short scale (ODe), which every save
+  // kept; v3.17 starts on Cookie Monster's default, the short scale (Octodec), saves before it too.
+  function migrateOptions(saved, v) {
+    const out = { ...saved };
+    if (!(v >= 2) && out.numberFormat === 'abbr') out.numberFormat = 'short';
+    return out;
+  }
+
   /** Options and hotkeys from parsed save data. */
   function applyBasics(data) {
     if (data.options && typeof data.options === 'object' && !Array.isArray(data.options)) {
-      savedOptions = { ...data.options };
+      savedOptions = migrateOptions(data.options, data.v);
       optionDefs.forEach((d) => {
-        if (typeof data.options[d.key] === typeof d.default) options[d.key] = data.options[d.key];
+        if (typeof savedOptions[d.key] === typeof d.default) options[d.key] = savedOptions[d.key];
       });
     }
     if (data.hotkeys && typeof data.hotkeys === 'object') {
