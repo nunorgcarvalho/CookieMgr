@@ -22,6 +22,8 @@
   expected line meets the curve, labelled with that height (how likely one has come by the expected moment).
 - **Next golden cookie widget: pick its numbers.** Its settings list each number (next in, median, chance within a
   minute, window, frequency) to switch on or off; all on by default, saved with the widget.
+- The chart's labels (the percentages, the times, “expected”) are drawn over its lines, curve and bars, with a dark
+  outline.
 ## 3.16.0 — 2026-10-27
 
 - **Miscellaneous**, a new card on the Settings page, now holds **Plain Business Day** (it was under General):
