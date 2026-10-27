@@ -6,8 +6,8 @@
 //                       its time left and the chance a golden cookie comes before it ends
 //   Next golden cookie  the countdown and the odds: expected, median, the chance within a minute — and the
 //                       chart: this cycle's cumulative chance, a line sweeping across it at now
-//   Effect timers       a bar per effect running, its time left, the chance of a golden cookie before it ends
 //
+// (Effect timers, a bar per effect running, is its own widget: ui/effectTimers.js.)
 // Each shows what you tick in its settings (numbers, chart, effect bars), resizes freely
 // (the chart is drawn at the widget's width), and opens the Stats page from its numbers.
 
@@ -26,7 +26,6 @@ CA.UI.TimelineWidget = (() => {
   const TYPES = {
     goldenTimeline: { width: 300, parts: ['numbers', 'chart', 'bars'] },
     goldenNext: { width: 260, parts: ['numbers', 'chart'] },
-    effectTimers: { width: 240, parts: ['bars'] },
   };
 
   // (a part saved that's gone — v3.12's Force the Hand of Fate forecast — is left out)
@@ -87,7 +86,6 @@ CA.UI.TimelineWidget = (() => {
       });
     D('goldenTimeline', 'Golden timeline', 'sparkle', 'Everything golden on one time axis from now: the odds of the next golden cookie, each effect running with its time left and the chance a golden cookie comes before it ends. Pick what to show in its settings.');
     D('goldenNext', 'Next golden cookie', 'sparkle', 'When the next golden cookie comes: on average, the median, the chance within a minute, its window — and this cycle’s odds as a chart, a line sweeping across it as time passes (the Stats page’s).');
-    D('effectTimers', 'Effect timers', 'clock', 'A bar per effect running (Frenzy, Click frenzy, building specials…): its time left, and the chance a golden cookie comes before it ends.');
   }
 
   return { init, html, PARTS };

@@ -693,8 +693,13 @@ always grab them again). Drag them anywhere; hover for × and ⚙ (its settings)
   chance a golden cookie comes before it ends, and what Force the Hand of Fate gives over your next casts (green: a
   good one, red: a backfire; hover for each). Its settings pick the parts and how many casts ahead.
 - **Next golden cookie** — the countdown in numbers (on average, the median, the chance within a minute, its window)
-  over the Stats page's chart of this cycle's odds, a line sweeping across it. **Effect timers** — the effect bars alone. Both are the Golden timeline with fewer parts — tick
-  more in their settings. Click the numbers for the Stats page.
+  over the Stats page's chart of this cycle's odds, a line sweeping across it — the Golden timeline with fewer parts;
+  tick more in its settings. Click the numbers for the Stats page.
+- **Effect timers** — a slim bar per effect running (Frenzy, Click frenzy, building specials, Dragon Harvest, Clot…),
+  each in its own colour with the game's own icon, draining as it runs out: its name, what it multiplies (×7 CpS,
+  ×777 clicks), the time left, and (ticked in its settings) the chance a golden cookie comes before it ends. Bad effects are striped.
+  One line of text per effect, so a big combo stays short; it starts see-through. Its settings pick what to show and
+  the order (as they started, or ending soonest first).
 
 Framed boxes (Quick stats, Latest events) are dragged by their title bar and folded with ▾. **Resize** any widget
 from its bottom-right corner: buttons, round widgets and the status bar scale up or down keeping their shape, framed
@@ -702,7 +707,8 @@ boxes take any width and height.
 
 **Settings:** a widget's ⚙ opens its settings on the Widgets page, scrolled into view, in the widget's own colour —
 **Place** (a grid that snaps it to a corner, an edge or the middle of the left panel), **Look** (text size and size,
-with S / M / L / XL presets, or a title) and
+with S / M / L / XL presets, or a title and a **Background**: Solid, Faint or None — see-through boxes keep their text
+outlined so it reads over the game, and fade in, title bar too, while you hover them) and
 **Shows** (whatever that widget adds: which Quick stats, how many events, the Grimoire's target…). Changes apply at
 once, and the widget glows on the left panel while its settings are open.
 
@@ -983,7 +989,7 @@ If you add a file, add it to `MODULES` in `build.mjs` in the right order.
   `kind` is `gauge` (a level, like CpS), `counter` (a running total) or `flow` (an amount per frame, from `ctx.dt`).
   Read it back with `CA.Recorder.series(id)`.
 - **A new event type:** `CA.EventLog.defineType(type, { name, icon, color, income })`, then `CA.EventLog.add({ type, title, text, cookies, data })`.
-- **A new widget:** `CA.UI.Widgets.defineType({ id, name, icon, desc, width, single, bare, resize, settings, html(instance) })`
+- **A new widget:** `CA.UI.Widgets.defineType({ id, name, icon, desc, width, single, bare, resize, bg, settings, html(instance) })`
   in `ui/widgetTypes.js` — it appears on the Widgets page; `html` is re-rendered twice a second and patched in place.
   `settings` (`{ key, label, type: 'number' | 'multi', … }`) appear in its settings editor and are saved on the instance.
 - **A new page:** `CA.UI.Pages.register({ id, label, icon, order, html, mount, unmount, tick })` (or `parts: [a, b]` for a

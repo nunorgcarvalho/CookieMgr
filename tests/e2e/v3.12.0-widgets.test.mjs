@@ -29,7 +29,7 @@ assert(tl.querySelector('.ca-tl-nums').textContent.includes(CA.Format.span(d.wai
 const nx = el('goldenNext');
 assert(nx && nx.querySelector('.ca-sp-cycle .ca-sp-now') && !nx.querySelector('.ca-sp-lane.up'), 'Next golden cookie: numbers and chart, no effects');
 const et = el('effectTimers');
-assert(et && et.querySelector('.ca-sp-lane.up') && !et.querySelector('.ca-sp-pdf') && /GC/.test(et.textContent), 'Effect timers: the bars alone, with the chance of a golden cookie');
+assert(et && et.querySelector('.ca-et') && !et.querySelector('.ca-sp-pdf'), 'Effect timers: the bars alone');
 // parts, by its settings
 const inst = CA.UI.Widgets.list().find((x) => x.type === 'goldenTimeline');
 inst.stats = ['numbers'];

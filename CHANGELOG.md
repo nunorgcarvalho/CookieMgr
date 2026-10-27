@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## 3.15.0 — 2026-10-27
+
+- **Effect timers, redrawn.** One slim bar per effect running, in the effect's own colour (Frenzy amber, Click frenzy
+  blue, Dragonflight purple, Dragon Harvest orange, building specials green, Elder frenzy red…) with the game's own
+  icon, draining as it runs out. On the bar: its name, what it multiplies (×7 CpS, ×777 clicks) and the time left
+  (2:21, 37s); beside it, if you tick it in its settings, the chance a golden cookie comes before it ends. Bad effects (Clot, Cursed finger,
+  a building's debuff…) are striped, and the time turns pink in its last 5 seconds. Every row is one line of text
+  tall, so a stack of eight effects is shorter than the old widget with four. Its settings pick what to show (icon,
+  multiplier, golden cookie chance — off by default) and the order (as they started, or ending soonest first). It's its own widget now
+  (`ui/effectTimers.js`); the Golden timeline keeps its chart-axis bars.
+- **See-through widgets.** Every framed widget's Look settings have a **Background**: Solid (as before), Faint (40%)
+  or None. See-through boxes keep their text outlined in black so it reads over the game, and the box fades in, its
+  title bar floating just above it, while you hover. Effect timers starts see-through. A widget type can start
+  see-through too (`defineType({ bg: 0 })`).
+- `CA.Timers.buffs()` gives each effect's buff `type` and `icon` too.
+
 ## 3.14.0 — 2026-10-27
 
 - **The next golden cookie, as this cycle's odds.** The Stats page's chart is now the time since the last golden

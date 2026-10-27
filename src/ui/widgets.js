@@ -8,8 +8,12 @@
 // shape), framed boxes take any width and height.
 //
 // Settings: every widget's ⚙ opens its own settings on the Widgets page (also reachable from the
-// list of placed widgets there): text size for all, size for bare ones, a title for framed ones,
-// and whatever its type adds (which Quick stats, how many events…).
+// list of placed widgets there): text size for all, size for bare ones, a title and a background for
+// framed ones, and whatever its type adds (which Quick stats, how many events…).
+//
+// Background: framed boxes are solid by default; Faint or None makes them see-through — the text gets
+// a dark outline to stay readable over the game, and the box (title bar too) fades in while hovered.
+// A type can start see-through (bg: 0).
 //
 // Positions are fractions of the panel, applied with CSS percentages (left: x·100% plus a
 // translate of −x·100% of the widget's own size), so a widget follows the panel's layout by
@@ -20,7 +24,7 @@
 // Content refreshes twice a second by patching the existing DOM (morph()), never replacing it, so
 // whatever is under the mouse — and its popup — stays put.
 //
-//   CA.UI.Widgets.defineType({ id, name, icon, desc, bare, width, single, hidden, resize, settings, html(inst) })
+//   CA.UI.Widgets.defineType({ id, name, icon, desc, bare, width, single, hidden, resize, bg, settings, html(inst) })
 
 CA.UI = CA.UI || {};
 
@@ -36,14 +40,15 @@ CA.UI.Widgets = (() => {
   const FONT_MAX = 200;
   const MIN_W = 140;
   const MIN_H = 60;
-  const SAVED = ['count', 'types', 'stats', 'font', 'title', 'target', 'targetMagic']; // per-widget settings that are saved
+  const SAVED = ['count', 'types', 'stats', 'font', 'title', 'target', 'targetMagic', 'bg', 'sort']; // per-widget settings that are saved
+  const BG = [[100, 'Solid'], [40, 'Faint'], [0, 'None']]; // background opacity (%) while not hovered
   const S = () => CA.Settings;
   const I = (n, s) => CA.UI.Icons.html(n, s);
   const esc = (s) => CA.Util.escapeHtml(s);
 
   const types = [];
   const typeById = {};
-  let widgets = []; // { id, type, x, y, collapsed, macro?, scale?, w?, h?, count?, types?, stats?, font?, title? }
+  let widgets = []; // { id, type, x, y, collapsed, macro?, scale?, w?, h?, count?, types?, stats?, font?, title?, bg?, sort? }
   let layer = null;
   let press = null; // { w, el, sx, sy, dx, dy, moved }
   let swallowClick = false;
@@ -182,6 +187,11 @@ CA.UI.Widgets = (() => {
 
   const RESIZE = '<span class="ca-w-resize" data-w-resize aria-label="Resize"></span>';
   const fontOf = (w) => Math.max(FONT_MIN, Math.min(FONT_MAX, w.font || 100)) / 100;
+  /** A framed widget's background opacity while not hovered, 0–1 (its own setting, else its type's: solid). */
+  const bgOf = (w) => {
+    const v = w.bg !== undefined ? w.bg : (typeById[w.type] || {}).bg;
+    return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 1;
+  };
 
   // glowing: hovered on the Widgets page, or its settings open there
   const glow = (w) => (w.id === linked || (w.id === editing && pageRoot) ? ' ca-w-linked' : '');
@@ -199,8 +209,9 @@ CA.UI.Widgets = (() => {
         '</div>'
       );
     }
+    const bg = bgOf(w);
     return (
-      `<div class="ca-w${w.collapsed ? ' collapsed' : ''}${w.h ? ' sized' : ''}${glow(w)}" data-widget="${w.id}" style="${fs};width:${w.w || t.width}px${w.h && !w.collapsed ? `;height:${w.h}px` : ''}">` +
+      `<div class="ca-w${w.collapsed ? ' collapsed' : ''}${w.h ? ' sized' : ''}${bg < 1 ? ' ca-w-clear' : ''}${glow(w)}" data-widget="${w.id}" style="${fs}${bg < 1 ? `;--wbg:${bg}` : ''};width:${w.w || t.width}px${w.h && !w.collapsed ? `;height:${w.h}px` : ''}">` +
       '<div class="ca-w-head" data-w-drag>' +
       `${I(t.icon, 12)}<span class="ca-w-title">${esc(nameOf(w))}</span>` +
       `<button type="button" class="ca-w-btn" data-w-settings aria-label="Settings">${I('settings', 10)}</button>` +
@@ -491,7 +502,10 @@ CA.UI.Widgets = (() => {
       const sc = Math.round(scaleOf(w) * 100);
       look += field('Size', presets('scale', [[75, 'S'], [100, 'M'], [150, 'L'], [200, 'XL']], sc) + range('scale', SCALE_MIN * 100, SCALE_MAX * 100, sc, 'percent'), 'or drag its corner');
     }
-    else look += field('Title', `<input type="text" maxlength="40" value="${esc(w.title || '')}" placeholder="${esc(t.name)}" data-w-opt="title" data-type="text">`);
+    else {
+      look += field('Title', `<input type="text" maxlength="40" value="${esc(w.title || '')}" placeholder="${esc(t.name)}" data-w-opt="title" data-type="text">`);
+      look += field('Background', presets('bg', BG, bgOf(w) * 100), 'see-through ones show it when you hover them; the text keeps a dark outline');
+    }
     let shows = '';
     (t.settings || []).forEach((s) => {
       const cur = w[s.key] !== undefined ? w[s.key] : s.default;
@@ -699,6 +713,8 @@ CA.UI.Widgets = (() => {
         if (Number.isFinite(w.targetMagic)) out.targetMagic = w.targetMagic;
         if (Number.isFinite(w.font)) out.font = Math.max(FONT_MIN, Math.min(FONT_MAX, w.font));
         if (typeof w.title === 'string') out.title = w.title.slice(0, 40);
+        if (Number.isFinite(w.bg)) out.bg = Math.max(0, Math.min(1, w.bg));
+        if (typeof w.sort === 'string') out.sort = w.sort.slice(0, 20);
         if (Array.isArray(w.types)) out.types = w.types.map(String);
         if (Array.isArray(w.stats)) out.stats = w.stats.map(String);
         return out;
@@ -783,6 +799,7 @@ CA.UI.Widgets = (() => {
       if (!w) return;
       if (pre.dataset.wPreset === 'font') w.font = Number(pre.dataset.val);
       else if (pre.dataset.wPreset === 'scale') w.scale = Number(pre.dataset.val) / 100;
+      else if (pre.dataset.wPreset === 'bg') w.bg = Number(pre.dataset.val) / 100;
       else if (pre.dataset.wSnap) {
         const [x, y] = pre.dataset.wSnap.split(',').map(Number);
         w.x = x;
