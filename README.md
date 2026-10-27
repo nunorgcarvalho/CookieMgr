@@ -751,8 +751,8 @@ Settings → Store can hide it). The building list gets a little extra room so i
 Every option lives on the page of the feature it changes, in an **Options** card at the bottom (macro options on
 Macros, golden cookie notifications on Events, the Grimoire toolbar on Grimoire…). The **Settings** page keeps what's
 CookieMgr-wide: an overview (recording, macros running, widgets placed, Cookie Monster), general options (record
-history, check for updates, **Numbers**, **Plain Business Day** — below), the panel hotkey and resetting hotkeys, the History data card (export / import / clear),
-the Store options, and **All options** — every page's options as quick on/off chips, each group titled with a link
+history, check for updates, **Numbers** — below), the panel hotkey and resetting hotkeys, the History data card (export / import / clear),
+the Store options, **Miscellaneous** (**Plain Business Day** — below), and **All options** — every page's options as quick on/off chips, each group titled with a link
 to its page. CookieMgr doesn't need Cookie Monster; if you'd like its displays alongside, **Integrations** has a
 **Load now** button that loads the latest [Cookie Monster](https://github.com/CookieMonsterTeam/CookieMonster) release,
 and a toggle that loads it whenever CookieMgr starts (skipped if Cookie Monster is already running). Everything is stored in the normal Cookie Clicker
@@ -770,8 +770,9 @@ past a scale's last name, scientific. Every number on every CookieMgr page follo
 
 **Plain Business Day** — Business day (the April Fools season) without its look: the normal building names,
 descriptions and icons in the store, normal golden cookies, falling cookies instead of dollars, the usual news and
-background, and "Cookie Clicker" in the tab title. Its effects stay (golden cookie timing, Everything must go,
-Startrade). Off by default; switching it takes effect at once.
+background, "Cookie Clicker" in the tab title, and no cookie dollars or TV seasons in Stats. Its effects stay
+(golden cookie timing, Everything must go, Startrade). Off by default; switching it takes effect at once, golden
+cookies already on screen included.
 
 Every golden/wrath cookie and reindeer pop is also recorded with which buff(s) it granted (name, duration,
 multipliers) as structured data, not just a text summary — for future use.

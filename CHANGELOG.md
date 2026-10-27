@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## 3.15.1 — 2026-10-27
+## 3.16.1 — 2026-10-27
 
 - **The next golden cookie chart keeps effects that ended.** An effect that ran since the last golden cookie left
   keeps its bar after it ends, dimmed and marked “ended”, on the same axis, with the multiplier it had — so a
@@ -18,6 +18,14 @@
   Selebrak…) multiplied together. A tile on the Stats page, in the Next golden cookie widget's numbers, and the
   word `golden.frequency`. (The game fixes a cycle's timing when the last cookie leaves, so it counts from the next.)
   The frequency effects' chips read the same way now: Lucky day ×2 (twice as often), not ×0.5 (the time between).
+## 3.16.0 — 2026-10-27
+
+- **Miscellaneous**, a new card on the Settings page, now holds **Plain Business Day** (it was under General):
+  Business day without its corporate theme — the normal building names, descriptions and icons, golden cookies,
+  background, news and tab title — while the season and its effects stay.
+- Plain Business Day goes further: switching it re-skins the golden cookies already on screen (they used to keep
+  their spam look until they faded), and the Stats menu leaves out its business lines (cookie dollars, TV show
+  seasons produced).
 
 ## 3.15.0 — 2026-10-27
 

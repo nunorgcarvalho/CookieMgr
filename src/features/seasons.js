@@ -18,7 +18,8 @@
 // row and tooltip (business names, descriptions and icons), the golden cookie's picture and pulse,
 // the falling dollars, the news ticker, the money background — and the tab title ("Cookie Baker").
 // Those run as if no season were on; everything that counts (golden cookie timing, Everything must
-// go, Startrade, the season itself) still sees Business day.
+// go, Startrade, the season itself) still sees Business day. Switching it re-skins the golden cookies
+// already on screen, and the Stats menu drops its two business lines (cookie dollars, TV seasons).
 
 CA.Seasons = (() => {
   const SEASONS = [
@@ -136,6 +137,36 @@ CA.Seasons = (() => {
   function fixTitle() {
     if (plain() && / - Cookie Baker$/.test(document.title)) document.title = document.title.replace(/ - Cookie Baker$/, ' - Cookie Clicker');
   }
+  /** The Stats menu's business lines ("cookie dollars", "TV show seasons produced"), gone. */
+  function plainStats() {
+    if (!plain() || Game.onMenu !== 'stats') return;
+    document.querySelectorAll('#menu .listing').forEach((el) => {
+      if (/cookie dollars$|^TV show seasons produced/.test(el.textContent.trim())) el.remove();
+    });
+  }
+  function wrapMenu() {
+    const fn = Game.UpdateMenu;
+    if (typeof fn !== 'function' || fn.__caPlainStats) return;
+    Game.UpdateMenu = function () {
+      const r = fn.apply(this, arguments);
+      plainStats();
+      return r;
+    };
+    Game.UpdateMenu.__caPlainStats = true;
+  }
+  /** The golden cookies on screen, in the look that applies now (they pick it when they spawn). */
+  function reskinGolden() {
+    if (Game.season !== 'fools') return;
+    (Game.shimmers || []).forEach((me) => {
+      if (me.type !== 'golden' || !me.l || !me.l.style) return;
+      const size = plain() ? 96 : 128;
+      const pic = plain() ? (me.wrath ? 'wrathCookie.png' : 'goldCookie.png') : 'spamCookies.gif';
+      const x = plain() ? 0 : Math.floor(Math.random() * 4);
+      me.l.style.width = me.l.style.height = size + 'px';
+      me.l.style.backgroundImage = `url(${Game.resPath}img/${pic})`;
+      me.l.style.backgroundPosition = `${-x * size}px ${plain() ? 0 : -(me.wrath ? 1 : 0) * size}px`;
+    });
+  }
   /** Redraws what shows the look now: the store's building rows (and its next refresh). */
   function redrawLook() {
     Object.values(Game.Objects || {}).forEach((o) => {
@@ -146,22 +177,26 @@ CA.Seasons = (() => {
       }
     });
     Game.storeToRefresh = 1;
+    reskinGolden();
+    if (Game.onMenu === 'stats' && typeof Game.UpdateMenu === 'function') Game.UpdateMenu();
     fixTitle();
   }
 
   function init() {
     CA.Settings.defineOption({
       key: 'foolsPlain',
-      group: 'general',
+      group: 'misc',
       icon: 'calendar',
       name: 'Plain Business Day',
-      desc: 'During Business day, keep the normal building names, descriptions and icons, golden cookies, background and news — the season’s effects stay.',
+      desc: 'Turns off Business day’s corporate theme: the normal building names, descriptions and icons, golden cookies, background, news and title. The season and its effects stay.',
       default: false,
     });
     wrapLook();
+    wrapMenu();
     CA.Events.on('settings', (key) => {
       if (key !== 'foolsPlain' && key != null) return;
       wrapLook();
+      wrapMenu();
       redrawLook();
     });
     // the title changes (and the <title> itself may come later): watch the head
