@@ -174,6 +174,7 @@ CA.UI.Menu = (() => {
       '</div>' +
       historyCard() +
       optionsCard('Store', 'dollar', 'store') +
+      optionsCard('Miscellaneous', 'calendar', 'misc') +
       integrationsCard() +
       indexCard() +
       '<div class="ca-footer">' +

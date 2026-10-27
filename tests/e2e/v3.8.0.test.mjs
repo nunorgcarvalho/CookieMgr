@@ -109,7 +109,7 @@ Game.getTimeMod = () => (Game.season === 'fools' ? 0.95 : 1); // a real effect: 
 cursor.rebuild();
 eq(cursor.shownName, 'Rolling pin', 'option off: Business day looks as the game has it');
 const opt = S.definitions().find((d) => d.key === 'foolsPlain');
-assert(opt && opt.default === false && opt.group === 'general', 'Plain Business Day: an option, off by default (Settings → General)');
+assert(opt && opt.default === false && opt.group === 'misc', 'Plain Business Day: an option, off by default (Settings → Miscellaneous)');
 S.set('foolsPlain', true);
 eq(cursor.shownName, 'Cursor', 'turned on: the store row is redrawn at once with the normal name');
 eq(cursor.tooltip(), 'Cursor: autoclicks', 'the building tooltip');
