@@ -3901,6 +3901,25 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-garden-row .ca-garden-wrap {
   flex-direction: column;
 }
+/* under the plot: the stats fill the card's width, three to a row, instead of one narrow column */
+#CookieMgrMenu .ca-garden-row .ca-gstats {
+  flex: 0 0 auto;
+  align-self: stretch;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+/* a short last row: its last tile takes the rest of the row (no empty cell) */
+#CookieMgrMenu .ca-garden-row .ca-gstats > .ca-stat:last-child:nth-child(3n + 1) {
+  grid-column: span 3;
+}
+#CookieMgrMenu .ca-garden-row .ca-gstats > .ca-stat:last-child:nth-child(3n + 2) {
+  grid-column: span 2;
+}
+#CookieMgrMenu .ca-gcost.pos {
+  color: #9be89b;
+}
+#CookieMgrMenu .ca-gcost.neg {
+  color: #ff9a8a;
+}
 #CookieMgrMenu .ca-legend-stages {
   color: #a39477;
 }

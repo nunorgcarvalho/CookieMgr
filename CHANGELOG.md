@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 3.33.0 — 2026-10-27
+
+- **Garden stats, tidied.** On the Garden page the stats under the plot (Next tick, Soil, Mature, Off-layout, Grows
+  next tick) now sit three to a row across the card instead of one narrow column.
+- **Garden cost.** A new stat there: what planting every tile of the current layout costs at today's seed prices
+  (they go up with your CpS), **green** if your bank covers it and **red** if not. Under it, smaller: what the tiles
+  still missing their planned seed would cost (*all planted* when none are).
+
 ## 3.31.0 — 2026-10-27
 
 - **Pantheon profiles.** On the Pantheon page, a **Profiles** card: named combinations of the three slots, a row
