@@ -9,9 +9,10 @@
 //                 `return <value>` (no return, or "": nothing to show). It may set `label` (the line's
 //                 label instead of its own), `note` (small print after the value) and `colour` (a
 //                 payback colour for the value — or a list of them, one per item of a list)
-//                 format: how the value reads — auto, number, time, chance, payback, text
+//                 format: how the value reads — auto, number, time, chance, payback, text, upgrade
+//                 (an upgrade's name: its icon and name, its info card on hover — ui/upgradeTip.js)
 //                 colour: 'payback' — the value in the item's payback colour; or one colour (red…)
-//                 group: the catalog's shelf (GROUPS: Payback, Production, Achievements, Bank)
+//                 group: the catalog's shelf (GROUPS: Payback, Production, Achievements, Upgrades, Bank)
 //                 warn: a warning, not a line — when it has something to show about an item, the
 //                 item gets a "!" in the store in its colour (red when it has none) and a tag in the
 //                 tooltip's ⚠ line (ui/storeInsight.js: which warnings, in what order)
@@ -41,10 +42,11 @@ CA.Stats = (() => {
     { id: 'chance', name: 'chance (0–1)' },
     { id: 'payback', name: 'payback period', desc: 'seconds, short, ∞ when it never pays back' },
     { id: 'text', name: 'text', desc: 'as written (numbers as numbers)' },
+    { id: 'upgrade', name: 'an upgrade', desc: 'an upgrade’s name: its icon and name, its info on hover' },
   ];
   const MAX_DEPTH = 8;
   /** The catalog's groups (a statistic of yours keeps the group of the one it was duplicated from). */
-  const GROUPS = ['Payback', 'Production', 'Achievements', 'Bank'];
+  const GROUPS = ['Payback', 'Production', 'Achievements', 'Upgrades', 'Bank'];
 
   // ---- the built-ins: Cookie Monster's lines -----------------------------------------------------
 
@@ -109,18 +111,32 @@ if known(a):
       source: `colour = [item.colourOf(1), item.colourOf(10), item.colourOf(100)]
 return [item.paybackOf(1), item.paybackOf(10), item.paybackOf(100)]`,
     },
-    { id: 'price', group: 'Bank', name: 'Price', label: 'Price', desc: 'what it costs (what a click buys)', scope: 'item', format: 'number', source: 'return item.price()' },
+    {
+      id: 'price',
+      group: 'Bank',
+      name: 'Price',
+      label: 'Price',
+      desc: 'what it costs (what a click buys) — green when you can afford it, red when not',
+      scope: 'item',
+      format: 'number',
+      source: `colour = "red"
+if timeTo(item.price()) <= 0:
+  colour = "green"
+return item.price()`,
+    },
     {
       id: 'afford',
       group: 'Bank',
       name: 'Affordable',
       label: 'Affordable',
-      desc: 'when you can afford it at your CpS',
+      desc: 'when you can afford it at your CpS — green when you can now, red when not',
       scope: 'item',
       format: 'text',
       source: `s = timeTo(item.price())
 if s <= 0:
+  colour = "green"
   return "now"
+colour = "red"
 if finite(s):
   return fmt.time(s)
 return "not at this CpS"`,
@@ -131,15 +147,32 @@ return "not at this CpS"`,
       group: 'Achievements',
       name: 'Next achievement',
       label: 'Next achievement',
-      desc: 'how many more win the next achievement, and for how much',
+      desc: 'how many more win the next achievement, and for how much — in the payback colour of buying that many',
       scope: 'building',
       format: 'text',
       source: `n = building.toNextAchievement(item)
 if n > 100:
   return "none within 100"
+# buying that many, the achievement's milk counted: is its payback period good enough?
+colour = item.colourOf(n)
 return n + " more (" + fmt.number(building.priceOf(item, n)) + ")"`,
     },
-    { id: 'wins', group: 'Achievements', name: 'Wins', label: 'Wins', desc: 'the achievements buying it wins', scope: 'item', format: 'text', source: 'return item.wins()' },
+    {
+      id: 'nextUpgrade',
+      group: 'Upgrades',
+      name: 'Next upgrade',
+      label: 'Next upgrade',
+      desc: 'the next upgrade buying more of the building unlocks, how many more that takes, and for how much',
+      scope: 'building',
+      format: 'upgrade',
+      source: `u = building.nextUpgrade(item)
+if u == "":
+  return
+n = building.toNextUpgrade(item)
+note = n + " more (" + fmt.number(building.priceOf(item, n)) + ")"
+return u`,
+    },
+    { id: 'wins', group: 'Achievements', name: 'Wins', label: 'Wins', desc: 'the achievements buying it wins, in its payback colour', scope: 'item', format: 'text', colour: 'payback', source: 'return item.wins()' },
     // the bank warnings: buying it would take your bank below what a golden cookie (or a spell) needs
     // to pay its most — only when you have that bank now; keep: how many times that bank to keep
     ...[
@@ -372,6 +405,7 @@ if cookies() >= need and after < need:
   /** One value as HTML, in a format; `desc` (a value word's) tells `auto` seconds and chances apart. */
   function format(x, fmt, desc) {
     if (typeof x === 'boolean') return x ? 'yes' : 'no';
+    if (typeof x === 'string' && fmt === 'upgrade') return x ? CA.UpgradeInfo.ref(x) : '—';
     if (typeof x === 'string') return esc(x) || '—';
     if (typeof x !== 'number' || Number.isNaN(x)) return '—';
     let f = fmt || 'auto';

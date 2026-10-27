@@ -163,7 +163,7 @@ assert(/changed/.test(page().querySelector('[data-st-card="price"] .ca-st-head')
 click(w, page().querySelector('[data-st-edit="price"]'));
 click(w, ed().querySelector('[data-se-act="reset"]'));
 click(w, ed().querySelector('[data-se-act="reset"]'));
-assert(!SE.isOpen() && !ST.get('price').customized && ST.get('price').label === 'Price' && ST.get('price').source === 'return item.price()', 'Reset: the original');
+assert(!SE.isOpen() && !ST.get('price').customized && ST.get('price').label === 'Price' && ST.get('price').source === ST.BUILTINS.find((b) => b.id === 'price').source, 'Reset: the original');
 
 assert(g.errors.length === 0, 'no runtime errors' + (g.errors.length ? `: ${g.errors.slice(0, 3).join(' | ')}` : ''));
 done();

@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+## 3.35.0 — 2026-10-27
+
+- **Upgrade info cards.** Hover an upgrade anywhere CookieMgr shows one and a card tells you about it: its icon and
+  name, whether you own it, it's in the store or still locked, what it does (the game's own description), what it
+  costs (green when you can afford it, red when not), the CpS it would add and its payback period in its colour
+  (for a locked one, as if you had it now), the achievements it wins, and **how the game unlocks it** — "25 farms
+  (12 of 25)", "15 mines and a grandma", "13 achievements (50% milk)", "1 billion cookies baked this ascension"…
+  — shown even once it's unlocked, for knowledge's sake. On the Stats page's missing upgrades (and season and
+  plant drops), on the Payback page's upgrade tiles, and on any statistic that names an upgrade.
+- **Next upgrade**, a new line in building tooltips (and a built-in statistic, on the Tooltips page's new
+  Upgrades shelf): the next upgrade buying more of the building unlocks — its tier upgrade, its grandma, a
+  synergy once the other building is there — with how many more that takes and what they cost. In a widget or
+  on the Tooltips page, hover its name for the upgrade's card. (If you've chosen your own tooltip lines, add it
+  from the Tooltips page.) For macros: `building.nextUpgrade(building)`, `building.toNextUpgrade(building)`.
+- **The tooltip lines in colour**: **Affordable** and **Price** green when you can afford it now, red when not;
+  **Next achievement** in the payback colour of buying that many (the achievement's milk counted), so you can see
+  whether going for it pays; **Wins** in the item's payback colour.
+- Statistics can show an upgrade: the new format **an upgrade** turns an upgrade's name into its icon and name, with
+  its card on hover.
+
 ## 3.34.0 — 2026-10-27
 
 - **SeasonCompletion sets the dragon and the Pantheon for each stage**, from their profiles (the Dragon page's aura

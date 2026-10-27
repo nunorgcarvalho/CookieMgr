@@ -163,7 +163,7 @@ CA.UI.StoreInsight = (() => {
   const LINES = CA.Stats.BUILTINS.filter((b) => !b.warn).map((b) => ({ id: b.id, name: b.name, desc: b.desc, scope: b.scope }));
   const LINE = Object.fromEntries(LINES.map((l) => [l.id, l]));
   /** Cookie Monster's layout (its bank warnings are their own option). */
-  const DEFAULT_LINES = ['bonus', 'click', 'payback', 'actual', 'afford', 'share', 'next', 'wins'];
+  const DEFAULT_LINES = ['bonus', 'click', 'payback', 'actual', 'afford', 'share', 'next', 'nextUpgrade', 'wins'];
   /** How a word's value is shown. */
   const FORMATS = CA.Stats.FORMATS.filter((f) => ['auto', 'number', 'time', 'chance'].includes(f.id));
 

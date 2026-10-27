@@ -129,7 +129,8 @@ CA.UI.PaybackPage = (() => {
           const s = shown(r.pp);
           const what = r.bonus > 0 ? `adds ${F().beautify(r.bonus)}/s` : r.mouse > 0 ? `adds ${F().beautify(r.mouse)} a click (≈ ${F().beautify(r.gain)}/s at your clicking)` : 'adds no CpS';
           return (
-            `<button type="button" class="ca-pp-up ${r.colour}${can ? ' can' : ''}" data-pp-up="${esc(r.name)}" data-tip="${esc(`${u.dname || r.name}: PP ${ppText(r.pp)} (${COLOUR_NAMES[r.colour]})${s.note} · ${what} · ${F().beautify(r.price)}${can ? ' — click to buy' : ''}`)}">` +
+            // its info card on hover (ui/upgradeTip.js): what it does, costs, adds, its payback period, how it unlocked
+            `<button type="button" class="ca-pp-up ${r.colour}${can ? ' can' : ''}" data-pp-up="${esc(r.name)}" ${CA.UpgradeInfo.attrs(r.name)} aria-label="${esc(`${u.dname || r.name}: PP ${ppText(r.pp)} (${COLOUR_NAMES[r.colour]})${s.note} · ${what} · ${F().beautify(r.price)}${can ? ' — click to buy' : ''}`)}">` +
             (u.icon ? sprite(u.icon) : '') +
             `<span>${ppText(s.v)}</span></button>`
           );
