@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## 3.31.0 — 2026-10-27
+## 3.32.0 — 2026-10-27
 
 - **The Dragon page**, in the minigames under the Grimoire: Krumblor's level, the aura in each slot and what it does,
   what the next level takes, and a **Train** button.
@@ -21,6 +21,19 @@
 - For macros: actions `dragon.train(buildings)`, `dragon.setAura(aura, slot)`, `dragon.profile(profile)`; values
   `dragon.level()`, `dragon.aura(slot)`, `dragon.canTrain(buildings)`, `dragon.profileActive(profile)`,
   `dragon.activeProfile()`, `dragon.profiles()`. For other code: `CA.Dragon` (`apply`, `isActive`, `status`, `train`…).
+
+- **Pantheon profiles.** On the Pantheon page, a **Profiles** card: named combinations of the three slots, a row
+  each — its name (rename it there), a spirit (or empty) per slot, whether it's in use or how many worship swaps it
+  still takes, **Use** and **Delete**; **New profile** and **From current** (what's slotted now) under them. Saved
+  with the game. Two to start with, ordinary ones you can change or delete: **Wrinklers** (Skruuia, Spirit of Scorn,
+  in the diamond slot, the others empty) and **Golden** (Vomitrax, Spirit of Decadence · Selebrak, Spirit of
+  Festivities · Muridal, Spirit of Labor).
+- Using one puts in its spirits diamond first, a swap each while swaps last (one already slotted elsewhere trades
+  places, as in the Temple), then empties the slots it leaves empty (free). Without enough swaps it does what it
+  can; using it again finishes it as swaps come back.
+- For macros: the action **Use a Pantheon profile** — `pantheon.profile(golden)` (its id or its name) — and the
+  values `pantheon.profileActive(p)`, `pantheon.profileSwaps(p)`, `pantheon.activeProfile()`, `pantheon.profiles()`.
+  The two to start with keep their ids (`wrinklers`, `golden`) when renamed.
 
 ## 3.30.0 — 2026-10-27
 
