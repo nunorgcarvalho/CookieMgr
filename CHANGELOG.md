@@ -19,6 +19,29 @@
   `paybackActualRatio(seconds)`. `return` is a statistic's keyword.
 - Your own statistics (and your changes to the built-ins) are saved in a new part of the save, `stats`, and a tooltip
   line can be one of them (`{ stat: id }`). Writing and browsing them gets its own page next.
+## 3.19.1 — 2026-10-27
+
+- **The next golden cookie chart keeps effects that ended.** An effect that ran since the last golden cookie left
+  keeps its bar after it ends, dimmed and marked “ended”, on the same axis, with the multiplier it had — so a
+  cycle's Frenzy, Click frenzy and the rest stay visible until the next golden cookie resets the axis. (CookieMgr
+  remembers the effects it saw for an hour: `CA.Timers.effectsSince(secs)`; ones that ran while it wasn't loaded
+  can't show.)
+- **The expected moment, on the chart**: a dashed green line at now + the expected wait, labelled with how long
+  until it, and the yellow now line labelled with the time since the last golden cookie — on the Stats page and the
+  Next golden cookie widget.
+- **Golden cookie frequency**: how many times more often golden cookies come than with nothing helping — every
+  factor the game's spawn timer uses (Lucky day, Serendipity, Golden goose egg, Heavenly luck, Green yeast
+  digestives, the Arcane aura, Sugar blessing, the season's star upgrade, garden plants, Muridal, Mokalsium,
+  Selebrak…) multiplied together. A tile on the Stats page, in the Next golden cookie widget's numbers, and the
+  word `golden.frequency`. (The game fixes a cycle's timing when the last cookie leaves, so it counts from the next.)
+  The frequency effects' chips read the same way now: Lucky day ×2 (twice as often), not ×0.5 (the time between).
+- **Dashed lines across at both moments**: instead of a fixed 50%, a green one where the expected line meets the
+  curve (its percentage at the right edge, under the line) and a yellow one at the curve's height now (its
+  percentage at the left edge, over the line).
+- **Next golden cookie widget: pick its numbers.** Its settings list each number (next in, median, chance within a
+  minute, window, frequency) to switch on or off; all on by default, saved with the widget.
+- The chart's labels (the percentages, the times, “expected”) are drawn over its lines, curve and bars, with a dark
+  outline.
 ## 3.19.0 — 2026-10-27
 
 - **The Golden cookies widget is gone** — the small ring that filled towards the latest the next golden cookie could
