@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 3.18.0 — 2026-10-27
+
+- **Bank warnings, compact.** The warnings that a purchase would take your bank below what a Lucky!, Conjure Baked
+  Goods or a Lucky! in a Frenzy needs to pay its most were up to three long sentences under the store's tooltips.
+  Now anything whose purchase would do it gets a small coloured **!** in the corner of its store button, in the
+  colour of the smallest bank it breaks: red for Lucky!, orange for Conjure, yellow for Frenzy Lucky!. Its tooltip
+  says which in one line of tags, each with how far under you'd be (`⚠ Drops bank below  Lucky! −456 M  Conjure
+  −1.2 B`). Banks you're already under don't warn. Still the **Bank warnings** option (Settings → Store, the Payback
+  page), off by default; `warnings(price)` returns the banks as data (id, name, colour, need, short).
+
 ## 3.16.0 — 2026-10-27
 
 - **Miscellaneous**, a new card on the Settings page, now holds **Plain Business Day** (it was under General):
