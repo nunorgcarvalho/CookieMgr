@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## 3.33.0 — 2026-10-27
+## 3.32.0 — 2026-10-27
 
 - **Garden stats, tidied.** On the Garden page the stats under the plot (Next tick, Soil, Mature, Off-layout, Grows
   next tick) now sit three to a row across the card instead of one narrow column.

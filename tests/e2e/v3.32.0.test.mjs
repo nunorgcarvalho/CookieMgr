@@ -1,4 +1,4 @@
-// v3.33.0: the Garden page's stats sit in rows of three under the plot (not one narrow column), and a new
+// v3.32.0: the Garden page's stats sit in rows of three under the plot (not one narrow column), and a new
 // Garden cost tile: what planting the whole layout costs at today's seed prices (they scale with CpS), green if
 // the bank covers it, red if not, with what the planned tiles still missing their seed would cost under it.
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
