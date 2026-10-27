@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 3.25.0 — 2026-10-27
+
+- **Add a widget: tiles and widgets light up together.** Hover a tile in the picker and every widget of that kind
+  glows on the left panel (hover a widget there and its tile lights up), the way the map and chips of Your widgets
+  already do.
+- **A placed tile removes.** Once a kind is placed, hovering its tile offers **Remove** instead of Add (a one-only
+  widget goes; a kind that takes several loses the newest), and a small **+ Add** button under the tile places
+  another.
 ## 3.24.0 — 2026-10-27
 
 - **☆ stars put a ready-made widget on the left panel**, as a macro's ★ gives it a button: one click adds it (and

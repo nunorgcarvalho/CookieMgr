@@ -52,10 +52,10 @@ click(w, tile('pantheon'));
 assert(!CA.UI.Widgets.has('pantheon') && !tile('pantheon').classList.contains('placed'), 'clicking a placed single tile removes it');
 
 click(w, tile('events'));
-click(w, tile('events'));
+click(w, tile('events').querySelector('.ca-wtile-add')); // v3.25: a placed tile removes; its small Add button adds another
 eq(CA.UI.Widgets.list().filter((x) => x.type === 'events').length, 2, 'a multi type adds another each click');
 eq(tile('events').querySelector('.ca-wtag').textContent, '×2', 'multi badge counts');
-eq(tile('events').querySelector('.ca-wadd').textContent, '+ Add', 'multi pill still adds');
+eq(tile('events').querySelector('.ca-wadd').textContent, 'Remove', 'multi pill removes (v3.25)');
 assert(/2 placed/.test(tile('events').querySelector('.ca-wtip-act').textContent), 'action line counts');
 
 // ---- Macro buttons badge counts starred macros
