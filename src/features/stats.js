@@ -21,7 +21,8 @@
 // text; finite(x) and known(x) are yes / no.
 //
 // bestOf(scope) is the best item to show one about (the Tooltips page's cards, a Statistic widget
-// set to "the best"); about(c, fn) runs fn with the item words about c.
+// set to "the best"); about(c, fn) runs fn with the item words about c. toText / fromText: one as
+// text to share (a few "# field: value" lines, then the code).
 //
 // Nothing here reads the seed: statistics see what the value words see.
 
@@ -258,16 +259,17 @@ return n + " more (" + fmt.number(building.priceOf(item, n)) + ")"`,
   function compiled(s) {
     const item = s.scope !== 'game';
     const k = `${s.scope}|${s.source}`;
+    if (cache.size > 300) cache.clear(); // the editor compiles every keystroke
     if (!cache.has(k)) cache.set(k, CA.Script.compile(s.source, { mode: 'stat', item, vars: item ? ['item'] : [] }));
     return cache.get(k);
   }
   const fits = (s, kind) => s.scope === 'game' || s.scope === 'item' || s.scope === kind;
 
   /**
-   * Works a statistic out, about `c` (a context, or null): { returned, value, vars, error }. A
+   * Works a statistic out, about `c` (opts.trace: what each line did, too — CA.Script.runStat) (a context, or null): { returned, value, vars, error }. A
    * statistic about an item of the other kind (a building's, for an upgrade) returns nothing.
    */
-  function run(s, c) {
+  function run(s, c, opts = {}) {
     if (!s) return { returned: false, error: 'no such statistic' };
     if (s.scope !== 'game' && !(c && fits(s, c.kind))) return { returned: false };
     const comp = compiled(s);
@@ -277,7 +279,7 @@ return n + " more (" + fmt.number(building.priceOf(item, n)) + ")"`,
     cur = c;
     depth++;
     try {
-      return CA.Script.runStat(comp.flow, s.scope === 'game' ? {} : { item: c.name });
+      return CA.Script.runStat(comp.flow, s.scope === 'game' ? {} : { item: c.name }, opts);
     } finally {
       cur = prev;
       depth--;
@@ -309,6 +311,17 @@ return n + " more (" + fmt.number(building.priceOf(item, n)) + ")"`,
     const b = scope === 'upgrade' ? null : low(t.buildings[1], 'building');
     const u = scope === 'building' ? null : low(t.upgrades, 'upgrade');
     return b && u ? (u.r.pp < b.r.pp ? u : b) : b || u;
+  }
+  /**
+   * What a statistic of this scope shows about, by a pick: 'best' (bestOf), 'b:<building>' or
+   * 'u:<upgrade>' (one that doesn't fit the scope: the best) — null for one about the game.
+   */
+  function pick(scope, item) {
+    if (scope === 'game') return null;
+    const it = String(item || 'best');
+    if (it.startsWith('b:') && scope !== 'upgrade') return contextOf(it.slice(2), 'building');
+    if (it.startsWith('u:') && scope !== 'building') return contextOf(it.slice(2), 'upgrade');
+    return bestOf(scope);
   }
   /** fn() with the item words about `c` (the Values list's live values). */
   function about(c, fn) {
@@ -393,6 +406,31 @@ return n + " more (" + fmt.number(building.priceOf(item, n)) + ")"`,
     }
     wordCache.set(k, s);
     return s;
+  }
+
+  // ---- as text: to share one (copy, paste) -----------------------------------------------------
+
+  const TEXT_HEAD = '# CookieMgr statistic';
+  const TEXT_KEYS = ['label', 'key', 'desc', 'scope', 'format', 'colour', 'group'];
+  /** A statistic as text: a few "# field: value" lines, then its code. */
+  function toText(s) {
+    return [TEXT_HEAD, ...TEXT_KEYS.filter((k) => s[k] !== undefined && s[k] !== '').map((k) => `# ${k}: ${String(s[k]).replace(/\n/g, ' ')}`), s.source].join('\n');
+  }
+  /** Text (toText's, or just code) as a statistic to add: { label, key, …, source } — null when there's nothing in it. */
+  function fromText(text) {
+    const lines = String(text || '').replace(/\r/g, '').split('\n');
+    const def = {};
+    let i = 0;
+    if (lines[0] && lines[0].trim() === TEXT_HEAD) {
+      for (i = 1; i < lines.length; i++) {
+        const m = lines[i].match(/^#\s*(\w+):\s?(.*)$/);
+        if (!m || !TEXT_KEYS.includes(m[1])) break;
+        def[m[1]] = m[2].trim();
+      }
+    }
+    def.source = lines.slice(i).join('\n').replace(/\s+$/, '');
+    if (!def.source.trim() && !def.label) return null;
+    return clean(def);
   }
 
   // ---- words ---------------------------------------------------------------------------------
@@ -496,5 +534,5 @@ return n + " more (" + fmt.number(building.priceOf(item, n)) + ")"`,
     CA.Settings.registerSection('stats', { serialize, load, event: 'stats' });
   }
 
-  return { init, all, get, byKey, add, update, remove, duplicate, run, line, format, fromWord, compiled, contextOf, bestOf, about, favs: () => favs.slice(), BUILTINS, FORMATS, SCOPES, GROUPS };
+  return { init, all, get, byKey, add, update, remove, duplicate, toText, fromText, run, line, format, fromWord, compiled, contextOf, bestOf, pick, about, keyOf: camel, favs: () => favs.slice(), BUILTINS, FORMATS, SCOPES, GROUPS };
 })();

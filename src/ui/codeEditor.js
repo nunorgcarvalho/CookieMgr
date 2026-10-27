@@ -5,9 +5,12 @@
 //   CA.UI.CodeEditor.html(key, source, { title, hint })   the editor: numbered, coloured lines, the
 //                                                          problems under it, what it's doing when it
 //                                                          runs, and a "how it reads" crib sheet
-//   CA.UI.CodeEditor.libraryHtml(key, { first })           every action / condition / value / keyword,
+//   CA.UI.CodeEditor.libraryHtml(key, { first, mode })     every action / condition / value / keyword,
 //                                                          searchable, ★ to pin; `first`: group names
-//                                                          (or prefixes) to list first
+//                                                          (or prefixes) to list first; mode 'stat': a
+//                                                          statistic's (CA.Script.library)
+//   html(…, { mode: 'stat', item })                        the code is a statistic's (about an item, or
+//                                                          the game): checked as one
 //   CA.UI.CodeEditor.bind(root, { onChange(key, source), onPick(key, item) })
 //                                                          listens on `root`; onPick may handle a
 //                                                          library click itself (return true), else
@@ -64,7 +67,7 @@ CA.UI.CodeEditor = (() => {
   }
 
   function libraryHtml(key, opts = {}) {
-    libItems = CA.Script.library();
+    libItems = CA.Script.library({ mode: opts.mode });
     const pins = favs();
     const fk = (it) => `${it.kind}:${it.id}`;
     const row = (it, i) =>
@@ -85,7 +88,7 @@ CA.UI.CodeEditor = (() => {
     };
     const names = Object.keys(groups).sort((a, b) => rank(a) - rank(b));
     return (
-      `<aside class="ca-ed-lib" data-ed-lib="${esc(key)}" data-first="${esc(first.join('|'))}">` +
+      `<aside class="ca-ed-lib" data-ed-lib="${esc(key)}" data-first="${esc(first.join('|'))}"${opts.mode ? ` data-mode="${esc(opts.mode)}"` : ''}>` +
       `<div class="ca-lib-head">${I('search', 12)}<input type="search" placeholder="Actions, conditions, values, names…" data-lib-search></div>` +
       '<div class="ca-lib-tabs">' +
       `<button type="button" class="ca-chip on" data-lib-tab="words">${I('bolt', 11)} Library</button>` +
@@ -132,9 +135,10 @@ CA.UI.CodeEditor = (() => {
     return out;
   }
 
-  function view(src, vars) {
+  /** The code's lines, coloured; its problems. copts: how it compiles ({ mode: 'stat', item } for a statistic's). */
+  function view(src, vars, copts = {}) {
     const lines = String(src || '').split('\n');
-    const { errors } = CA.Script.compile(src, { vars });
+    const { errors } = CA.Script.compile(src, { ...copts, vars });
     const bad = new Set(errors.map((e) => e.line));
     return {
       gutter: lines.map((_, i) => `<span class="${bad.has(i + 1) ? 'err' : ''}">${i + 1}</span>`).join(''),
@@ -169,9 +173,9 @@ CA.UI.CodeEditor = (() => {
 
   function html(key, source, opts = {}) {
     const vars = opts.vars || [];
-    const v = view(source, vars);
+    const v = view(source, vars, compileOpts(opts.mode, opts.item));
     return (
-      `<div class="ca-ed-sec ca-ed-code" data-code-ed="${esc(key)}"${vars.length ? ` data-code-vars="${esc(vars.join(','))}"` : ''}><div class="ca-ed-sec-head">${I('edit', 12)} ${esc(opts.title || 'Algorithm')} <span class="ca-hint">${esc(
+      `<div class="ca-ed-sec ca-ed-code" data-code-ed="${esc(key)}"${vars.length ? ` data-code-vars="${esc(vars.join(','))}"` : ''}${opts.mode ? ` data-code-mode="${esc(opts.mode)}"` : ''}${opts.item ? ' data-code-item' : ''}><div class="ca-ed-sec-head">${I('edit', 12)} ${esc(opts.title || 'Algorithm')} <span class="ca-hint">${esc(
         opts.hint || 'indent a block under a line ending in “:” · Tab indents · click the library to insert'
       )}</span></div>` +
       '<div class="ca-code">' +
@@ -186,12 +190,13 @@ CA.UI.CodeEditor = (() => {
   }
 
   const editorOf = (el) => el && el.closest && el.closest('[data-code-ed]');
+  const compileOpts = (mode, item) => (mode ? { mode, item: !!item } : {});
 
   /** After typing: the colouring, the line numbers and the problems follow the code. */
   function refresh(ta) {
     const ed = editorOf(ta);
     if (!ed) return;
-    const v = view(ta.value, (ed.dataset.codeVars || '').split(',').filter(Boolean));
+    const v = view(ta.value, (ed.dataset.codeVars || '').split(',').filter(Boolean), compileOpts(ed.dataset.codeMode, ed.dataset.codeItem !== undefined));
     const hl = ed.querySelector('[data-code-hl]');
     if (hl) hl.innerHTML = v.hl;
     const gut = ed.querySelector('[data-code-gutter]');
@@ -316,7 +321,7 @@ CA.UI.CodeEditor = (() => {
           // redraw this library (keeping its search)
           const q = (lib.querySelector('[data-lib-search]') || {}).value || '';
           const tmp = document.createElement('div');
-          tmp.innerHTML = libraryHtml(key, { first: (lib.dataset.first || '').split('|').filter(Boolean) });
+          tmp.innerHTML = libraryHtml(key, { first: (lib.dataset.first || '').split('|').filter(Boolean), mode: lib.dataset.mode });
           const next = tmp.firstChild;
           lib.replaceWith(next);
           const s = next.querySelector('[data-lib-search]');

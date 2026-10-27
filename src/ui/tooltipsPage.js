@@ -7,8 +7,10 @@
 //                          the best upgrade. The block's two switches (Payback in tooltips, Bank warnings).
 //   Statistics             the catalog (features/stats.js): a card per statistic with its value for the
 //                          previewed item, what it is, its code; add it to the tooltip in one click,
-//                          duplicate it (yours, to change — the editor is next), ☆ put it on the left
+//                          duplicate it (yours, to change), ☆ put it on the left
 //                          panel as a Statistic widget. Filter by group, yours, on screen; search.
+//                          New, Edit / Customise, Paste: the statistic editor (ui/statEditor.js) opens
+//                          in place of the catalog.
 //   Values                 every value word a statistic can use (CA.Script.library, as the code editor
 //                          lists them), with its signature, what it is and its value now.
 
@@ -30,6 +32,9 @@ CA.UI.TooltipsPage = (() => {
   let filter = 'all'; // 'all', a group, 'yours', 'onscreen'
   let query = '';
   let dragFrom = -1;
+  let pasting = false; // the Paste panel open
+  let pasteError = '';
+  const SE = () => CA.UI.StatEditor;
 
   const KIND = { item: 'either', building: 'building', upgrade: 'upgrade', game: 'game' };
   const kindTag = (scope) => `<span class="ca-tl-kind ${scope}">${KIND[scope] || scope}</span>`;
@@ -70,7 +75,12 @@ CA.UI.TooltipsPage = (() => {
 
   const statOf = (e) => SI().statOf(e);
   const isWord = (e) => !!e && typeof e === 'object' && !!e.word;
-  const lineName = (e) => (typeof e === 'string' ? (SI().LINES.find((l) => l.id === e) || { name: e }).name : isWord(e) ? e.label || e.word : (statOf(e) || { label: 'a deleted statistic' }).label);
+  const lineName = (e) =>
+    typeof e === 'string'
+      ? (SI().LINES.find((l) => l.id === e) || { name: e }).name
+      : isWord(e)
+        ? e.label || e.word
+        : (statOf(e) || { label: 'a deleted statistic' }).label;
   function lineScope(e) {
     const s = statOf(e);
     return s ? s.scope : 'item';
@@ -78,7 +88,8 @@ CA.UI.TooltipsPage = (() => {
 
   function linesHtml() {
     const list = SI().lines();
-    const btn = (attr, i, icon, tip, off) => `<button type="button" class="ca-tl-btn" ${attr}="${i}" data-tip="${tip}"${off ? ' disabled' : ''}>${icon}</button>`;
+    const btn = (attr, i, icon, tip, off) =>
+      `<button type="button" class="ca-tl-btn" ${attr}="${i}" data-tip="${tip}"${off ? ' disabled' : ''}>${icon}</button>`;
     const fmtSel = (e, i) =>
       `<select class="ca-tl-fmt" data-tl-fmt="${i}" data-tip="How its value reads">${SI()
         .FORMATS.map((f) => `<option value="${f.id}"${(e.fmt || 'auto') === f.id ? ' selected' : ''}>${esc(f.name)}</option>`)
@@ -87,13 +98,15 @@ CA.UI.TooltipsPage = (() => {
       .map((e, i) => {
         const word = isWord(e);
         const s = statOf(e);
-        const desc = word ? ((CA.Script.VALUES.find((v) => v.id === e.word) || {}).desc || 'not a word (any more)') : (s || {}).desc || '';
+        const desc = word ? (CA.Script.VALUES.find((v) => v.id === e.word) || {}).desc || 'not a word (any more)' : (s || {}).desc || '';
         const [v, cls] = valueNow(s);
         return (
           `<div class="ca-tl-row" draggable="true" data-tl-row="${i}" data-tip="${esc(word ? `${e.word}: ${desc}` : desc)}">` +
           `<span class="ca-tl-grip">${I('grip', 10)}</span>` +
           `<span class="ca-tl-n">${i + 1}</span>` +
-          (word ? `<input class="ca-tl-label" data-tl-label="${i}" value="${esc(e.label || e.word)}" spellcheck="false">` : `<span class="ca-tl-name">${esc(lineName(e))}</span>`) +
+          (word
+            ? `<input class="ca-tl-label" data-tl-label="${i}" value="${esc(e.label || e.word)}" spellcheck="false">`
+            : `<span class="ca-tl-name">${esc(lineName(e))}</span>`) +
           kindTag(word ? lineScope(e) : (s || { scope: 'item' }).scope) +
           `<span class="ca-tl-val ${cls}" data-tl-val="${i}">${v}</span>` +
           (word ? fmtSel(e, i) : '<span></span>') +
@@ -111,8 +124,12 @@ CA.UI.TooltipsPage = (() => {
       .filter((s) => !s.builtin && !used.has(s.id));
     const add =
       '<select class="ca-tl-add" data-tl-add><option value="">+ add a line…</option>' +
-      (free.length ? `<optgroup label="Lines">${free.map((l) => `<option value="${l.id}">${esc(l.name)}</option>`).join('')}</optgroup>` : '') +
-      (yours.length ? `<optgroup label="Your statistics">${yours.map((s) => `<option value="s:${esc(s.id)}">${esc(s.label)}</option>`).join('')}</optgroup>` : '') +
+      (free.length
+        ? `<optgroup label="Lines">${free.map((l) => `<option value="${l.id}">${esc(l.name)}</option>`).join('')}</optgroup>`
+        : '') +
+      (yours.length
+        ? `<optgroup label="Your statistics">${yours.map((s) => `<option value="s:${esc(s.id)}">${esc(s.label)}</option>`).join('')}</optgroup>`
+        : '') +
       `<optgroup label="Value words (of the building / upgrade, or of the game)">${SI()
         .words(null)
         .map((v) => `<option value="w:${esc(v.id)}">${esc(v.id)}</option>`)
@@ -131,7 +148,9 @@ CA.UI.TooltipsPage = (() => {
     const sel = `<select class="ca-tl-pick" data-tl-b>${open.map((x) => `<option value="${esc(x.name)}"${b && x.name === b.name ? ' selected' : ''}>${esc(x.dname || x.name)}</option>`).join('')}</select>`;
     return (
       `<div class="ca-tl-pv"><div class="ca-tl-pvhead">${sel}</div>${b ? SI().buildingBlock(b, { force: true }) : ''}</div>` +
-      (u ? `<div class="ca-tl-pv"><div class="ca-tl-pvhead">${esc(u.dname || u.name)} <em>the best upgrade</em></div>${SI().upgradeBlock(u, { force: true })}</div>` : '')
+      (u
+        ? `<div class="ca-tl-pv"><div class="ca-tl-pvhead">${esc(u.dname || u.name)} <em>the best upgrade</em></div>${SI().upgradeBlock(u, { force: true })}</div>`
+        : '')
     );
   }
 
@@ -139,7 +158,11 @@ CA.UI.TooltipsPage = (() => {
     const S = CA.Settings;
     return (
       '<div class="ca-card">' +
-      C().cardHead('In the store tooltip', 'search', '<div class="ca-card-meta"><span class="ca-hint">the lines CookieMgr adds under the store’s tooltips, in order — drag a row, or hover it for what it shows</span></div>') +
+      C().cardHead(
+        'In the store tooltip',
+        'search',
+        '<div class="ca-card-meta"><span class="ca-hint">the lines CookieMgr adds under the store’s tooltips, in order — drag a row, or hover it for what it shows</span></div>'
+      ) +
       '<div class="ca-tl">' +
       `<div data-tl-lines>${linesHtml()}</div>` +
       `<div class="ca-tl-preview" data-tl-preview>${previewHtml()}</div>` +
@@ -159,7 +182,10 @@ CA.UI.TooltipsPage = (() => {
     CA.Util.sound('snd/tick.mp3');
     refresh();
   }
-  const inTooltip = (id) => SI().lines().some((e) => (statOf(e) || {}).id === id);
+  const inTooltip = (id) =>
+    SI()
+      .lines()
+      .some((e) => (statOf(e) || {}).id === id);
   const entryFor = (s) => (s.builtin ? s.id : { stat: s.id });
 
   // ---- the catalog --------------------------------------------------------------------------------
@@ -194,14 +220,17 @@ CA.UI.TooltipsPage = (() => {
     const call = `stat.${s.key}(${s.scope === 'game' ? '' : 'item'})`;
     return (
       `<div class="ca-st-card${s.builtin ? '' : ' yours'}" data-st-card="${esc(s.id)}">` +
-      `<div class="ca-st-head"><b class="ca-st-name">${esc(s.label)}</b>${kindTag(s.scope)}${s.builtin ? '' : '<span class="ca-tl-kind yours">yours</span>'}${star}</div>` +
+      `<div class="ca-st-head"><b class="ca-st-name">${esc(s.label)}</b>${kindTag(s.scope)}${s.builtin ? (s.customized ? '<span class="ca-tl-kind yours" data-tip="A built-in you’ve changed (Edit → Reset brings back the original)">changed</span>' : '') : '<span class="ca-tl-kind yours">yours</span>'}${star}</div>` +
       `<div class="ca-st-live"><span>${c ? esc(aboutName(c)) : 'the game'}</span><b class="${cls}" data-st-val="${esc(s.id)}">${v}</b></div>` +
       `<div class="ca-st-desc">${esc(s.desc || '')}</div>` +
       codeHtml(s.source) +
       '<div class="ca-st-actions">' +
       `<button type="button" class="ca-chip${inTt ? ' on' : ''}" data-st-tt="${esc(s.id)}" data-tip="${inTt ? 'Take it out of the store tooltip' : 'Add it to the store tooltip, at the end'}">${inTt ? '✓ in the tooltip' : '+ add to the tooltip'}</button>` +
+      `<button type="button" class="ca-chip" data-st-edit="${esc(s.id)}" data-tip="${s.builtin ? 'Change it: its label, code, how it reads (Reset brings back the original)' : 'Change it'}">${I('edit', 11)} ${s.builtin ? 'Customise' : 'Edit'}</button>` +
       `<button type="button" class="ca-chip" data-st-dup="${esc(s.id)}" data-tip="A copy that’s yours to change">${I('plus', 11)} Duplicate</button>` +
-      (s.builtin ? '' : `<button type="button" class="ca-chip ca-chip-danger" data-st-del="${esc(s.id)}" data-arm-label="Delete it?" data-tip="Delete this statistic (its tooltip lines go too)">${I('trash', 11)} Delete</button>`) +
+      (s.builtin
+        ? ''
+        : `<button type="button" class="ca-chip ca-chip-danger" data-st-del="${esc(s.id)}" data-arm-label="Delete it?" data-tip="Delete this statistic (its tooltip lines go too)">${I('trash', 11)} Delete</button>`) +
       `<code class="ca-st-call" data-tip="Use it in a macro or another statistic">${esc(call)}</code>` +
       '</div></div>'
     );
@@ -210,20 +239,32 @@ CA.UI.TooltipsPage = (() => {
   function chipsHtml() {
     const all = ST().all();
     const n = (f) => all.filter(f).length;
-    const chip = (id, label, count, tip) => `<button type="button" class="ca-chip${filter === id ? ' on' : ''}" data-st-filter="${id}"${tip ? ` data-tip="${tip}"` : ''}>${label} <em>${count}</em></button>`;
+    const chip = (id, label, count, tip) =>
+      `<button type="button" class="ca-chip${filter === id ? ' on' : ''}" data-st-filter="${id}"${tip ? ` data-tip="${tip}"` : ''}>${label} <em>${count}</em></button>`;
     return (
       chip('all', 'All', all.length) +
       ST()
-        .GROUPS.map((g) => chip(g, g, n((s) => s.group === g)))
+        .GROUPS.map((g) =>
+          chip(
+            g,
+            g,
+            n((s) => s.group === g)
+          )
+        )
         .join('') +
-      chip('yours', 'Yours', n((s) => !s.builtin)) +
+      chip(
+        'yours',
+        'Yours',
+        n((s) => !s.builtin)
+      ) +
       chip('onscreen', `${I('star', 11)} On screen`, n(onScreen), 'Statistics on the left panel as widgets')
     );
   }
 
   function catalogHtml() {
     const list = statsShown();
-    if (!list.length) return `<div class="ca-card-note">${filter === 'yours' && !query ? 'None of yours yet: duplicate a statistic to make one.' : filter === 'onscreen' && !query ? 'None on the left panel: ☆ a statistic to put it there.' : 'No statistic matches.'}</div>`;
+    if (!list.length)
+      return `<div class="ca-card-note">${filter === 'yours' && !query ? 'None of yours yet: + New, or duplicate a statistic.' : filter === 'onscreen' && !query ? 'None on the left panel: ☆ a statistic to put it there.' : 'No statistic matches.'}</div>`;
     return `<div class="ca-st-grid">${list.map(cardHtml).join('')}</div>`;
   }
 
@@ -266,7 +307,10 @@ CA.UI.TooltipsPage = (() => {
           (g) =>
             `<div class="ca-vl-group">${esc(g)} <em>${by[g].length}</em></div>` +
             by[g]
-              .map((v) => `<div class="ca-vl-row"><code>${esc(`${v.id}(${(v.params || []).join(', ')})`)}</code><span class="ca-vl-desc">${esc(v.desc || '')}</span><b data-vl-val="${esc(v.id)}">${wordNow(v)}</b></div>`)
+              .map(
+                (v) =>
+                  `<div class="ca-vl-row"><code>${esc(`${v.id}(${(v.params || []).join(', ')})`)}</code><span class="ca-vl-desc">${esc(v.desc || '')}</span><b data-vl-val="${esc(v.id)}">${wordNow(v)}</b></div>`
+              )
               .join('')
         )
         .join('') +
@@ -274,11 +318,36 @@ CA.UI.TooltipsPage = (() => {
     );
   }
 
+  function pasteHtml() {
+    return (
+      '<div class="ca-se-share ca-st-paste">' +
+      '<textarea spellcheck="false" placeholder="Paste a statistic copied as text (or just its code)…" data-st-pastetext></textarea>' +
+      (pasteError ? `<div class="ca-editor-error">${esc(pasteError)}</div>` : '') +
+      `<div class="ca-st-actions">${C().button(`${I('edit', 12)} Open in the editor`, 'data-st-pasteopen', 'ca-btn-small ca-btn-on')}${C().button('Cancel', 'data-st-paste', 'ca-btn-small')}</div>` +
+      '</div>'
+    );
+  }
+
   function browseCard() {
-    const tabChip = (id, label, icon) => `<button type="button" class="ca-chip${tab === id ? ' on' : ''}" data-st-tab="${id}">${I(icon, 11)} ${label}</button>`;
+    if (SE().isOpen()) return SE().html();
+    const tabChip = (id, label, icon) =>
+      `<button type="button" class="ca-chip${tab === id ? ' on' : ''}" data-st-tab="${id}">${I(icon, 11)} ${label}</button>`;
     return (
       '<div class="ca-card">' +
-      C().cardHead('Statistics', 'graphs', `<div class="ca-card-meta"><span class="ca-chipgroup">${tabChip('stats', 'Statistics', 'graphs')}${tabChip('values', 'Values', 'tag')}</span></div>`) +
+      C().cardHead(
+        'Statistics',
+        'graphs',
+        '<div class="ca-card-meta">' +
+          `<span class="ca-chipgroup">${tabChip('stats', 'Statistics', 'graphs')}${tabChip('values', 'Values', 'tag')}</span>` +
+          C().button(`${I('plus', 12)} New`, 'data-st-new data-tip="Write a statistic of your own"', 'ca-btn-small ca-btn-on') +
+          C().button(
+            `${I('download', 12)} Paste`,
+            'data-st-paste data-tip="Add a statistic copied as text"',
+            `ca-btn-small${pasting ? ' ca-btn-on' : ''}`
+          ) +
+          '</div>'
+      ) +
+      (pasting ? pasteHtml() : '') +
       '<div class="ca-toolbar">' +
       (tab === 'stats' ? `<div class="ca-chipgroup" data-st-chips>${chipsHtml()}</div>` : '') +
       `<label class="ca-search">${I('search', 13)}<input type="search" placeholder="${tab === 'stats' ? 'Search statistics…' : 'Search values…'}" data-st-search value="${esc(query)}"></label>` +
@@ -313,6 +382,7 @@ CA.UI.TooltipsPage = (() => {
   /** The live parts: values and previews (not the selects or inputs). */
   function sync() {
     if (!root || !root.isConnected) return;
+    SE().sync(root);
     const pv = root.querySelector('[data-tl-preview]');
     if (pv && !pv.contains(document.activeElement)) CA.UI.Dom.morph(pv, previewHtml());
     const list = SI().lines();
@@ -353,7 +423,9 @@ CA.UI.TooltipsPage = (() => {
         return list;
       });
     }
-    const b = e.target.closest('[data-tl-opt],[data-st-tab],[data-st-filter],[data-st-tt],[data-st-dup],[data-st-del]');
+    const b = e.target.closest(
+      '[data-tl-opt],[data-st-tab],[data-st-filter],[data-st-tt],[data-st-dup],[data-st-del],[data-st-edit],[data-st-new],[data-st-paste],[data-st-pasteopen]'
+    );
     if (!b) return;
     e.stopPropagation();
     const d = b.dataset;
@@ -365,6 +437,31 @@ CA.UI.TooltipsPage = (() => {
     CA.Util.sound('snd/tick.mp3');
     if (d.stTab) {
       tab = d.stTab;
+      CA.UI.Menu.render();
+      return;
+    }
+    // the editor (ui/statEditor.js), in place of the catalog
+    if (d.stEdit !== undefined || d.stNew !== undefined || d.stPasteopen !== undefined) {
+      if (d.stEdit !== undefined) SE().open(d.stEdit);
+      else if (d.stNew !== undefined) SE().openNew();
+      else {
+        const def = ST().fromText((root.querySelector('[data-st-pastetext]') || {}).value);
+        if (!def) {
+          pasteError = 'Nothing to add: paste a statistic copied as text, or some code.';
+          CA.UI.Menu.render();
+          return;
+        }
+        SE().openNew(def);
+      }
+      pasting = false;
+      pasteError = '';
+      CA.UI.Menu.render();
+      CA.Util.scrollInPanel(root.querySelector('[data-stat-editor]'), 'start');
+      return;
+    }
+    if (d.stPaste !== undefined) {
+      pasting = !pasting;
+      pasteError = '';
       CA.UI.Menu.render();
       return;
     }
@@ -384,7 +481,11 @@ CA.UI.TooltipsPage = (() => {
       }
     } else if (d.stDel) {
       if (!CA.UI.Dom.armed(b)) return;
-      SI().setLines(SI().lines().filter((x) => (statOf(x) || {}).id !== d.stDel || isWord(x)));
+      SI().setLines(
+        SI()
+          .lines()
+          .filter((x) => (statOf(x) || {}).id !== d.stDel || isWord(x))
+      );
       ST().remove(d.stDel);
     }
     refresh();
@@ -396,7 +497,9 @@ CA.UI.TooltipsPage = (() => {
     if (d.tlAdd !== undefined) {
       const v = el.value;
       if (!v) return;
-      return editLines((list) => list.concat([v.startsWith('w:') ? { word: v.slice(2), fmt: 'auto' } : v.startsWith('s:') ? { stat: v.slice(2) } : v]));
+      return editLines((list) =>
+        list.concat([v.startsWith('w:') ? { word: v.slice(2), fmt: 'auto' } : v.startsWith('s:') ? { stat: v.slice(2) } : v])
+      );
     }
     if (d.tlFmt !== undefined) {
       const i = Number(d.tlFmt);
@@ -431,7 +534,10 @@ CA.UI.TooltipsPage = (() => {
     return r ? Number(r.dataset.tlRow) : -1;
   }
   function clearDrop() {
-    if (root) root.querySelectorAll('.ca-tl-row.drop-above,.ca-tl-row.drop-below,.ca-tl-row.dragging').forEach((x) => x.classList.remove('drop-above', 'drop-below', 'dragging'));
+    if (root)
+      root
+        .querySelectorAll('.ca-tl-row.drop-above,.ca-tl-row.drop-below,.ca-tl-row.dragging')
+        .forEach((x) => x.classList.remove('drop-above', 'drop-below', 'dragging'));
   }
   function onDragStart(e) {
     if (e.target.closest && e.target.closest('input,select')) return;
@@ -490,6 +596,7 @@ CA.UI.TooltipsPage = (() => {
       .on('dragend', onDragEnd)
       .every(SYNC_MS, sync);
     life.add(CA.Events.on('stats', refresh));
+    life.add(SE().bind(el));
     // a ☆ clicked (here, or a widget taken away on the panel): the On screen count, and its list
     life.add(
       CA.Events.on('widgets', () => {
@@ -510,24 +617,18 @@ CA.UI.TooltipsPage = (() => {
   // { stat: id, item }: item is 'best' (the best of the statistic's kind: building, upgrade or either),
   // 'b:<building>' or 'u:<upgrade>'; a statistic about the game needs none.
 
-  function widgetCtx(s, item) {
-    if (s.scope === 'game') return null;
-    const it = String(item || 'best');
-    if (it.startsWith('b:') && s.scope !== 'upgrade') return ST().contextOf(it.slice(2), 'building');
-    if (it.startsWith('u:') && s.scope !== 'building') return ST().contextOf(it.slice(2), 'upgrade');
-    return ST().bestOf(s.scope);
-  }
   function widgetHtml(w) {
     const s = ST().get(w.stat || 'payback');
     if (!s) return '<div class="ca-w-stat ca-st-gone"><span>This statistic is gone (deleted).</span></div>';
-    const c = widgetCtx(s, w.item);
+    const c = ST().pick(s.scope, w.item);
     let row = null;
     try {
       row = ST().line(s, c);
     } catch (e) {
       row = null;
     }
-    const about = s.scope === 'game' ? '' : c ? `${(w.item || 'best') === 'best' ? 'the best: ' : ''}${esc(aboutName(c))}` : 'nothing to show it about';
+    const about =
+      s.scope === 'game' ? '' : c ? `${(w.item || 'best') === 'best' ? 'the best: ' : ''}${esc(aboutName(c))}` : 'nothing to show it about';
     return (
       `<div class="ca-w-stat"><span>${row ? row[0] : esc(s.label)}</span><b class="${row ? row[2] : ''}">${row ? row[1] : '—'}</b></div>` +
       (about ? `<div class="ca-w-stat-about">${about}</div>` : '')
@@ -537,7 +638,11 @@ CA.UI.TooltipsPage = (() => {
     const bs = Object.values(Game.Objects || {}).filter((b) => !b.locked || b.amount > 0);
     return [{ v: 'best', label: 'The best (lowest payback period)' }]
       .concat(bs.map((b) => ({ v: `b:${b.name}`, label: b.dname || b.name })))
-      .concat((Game.UpgradesInStore || []).filter((u) => !P().isSwitch(u)).map((u) => ({ v: `u:${u.name}`, label: `${u.dname || u.name} (upgrade)` })));
+      .concat(
+        (Game.UpgradesInStore || [])
+          .filter((u) => !P().isSwitch(u))
+          .map((u) => ({ v: `u:${u.name}`, label: `${u.dname || u.name} (upgrade)` }))
+      );
   }
   function defineWidget() {
     CA.UI.Widgets.defineType({
@@ -553,7 +658,16 @@ CA.UI.TooltipsPage = (() => {
       nameOf: (w) => (ST().get(w.stat || 'payback') || {}).label,
       html: widgetHtml,
       settings: [
-        { key: 'stat', label: 'Statistic', type: 'select', default: 'payback', options: () => ST().all().map((s) => ({ v: s.id, label: `${s.label}${s.builtin ? '' : ' (yours)'}` })) },
+        {
+          key: 'stat',
+          label: 'Statistic',
+          type: 'select',
+          default: 'payback',
+          options: () =>
+            ST()
+              .all()
+              .map((s) => ({ v: s.id, label: `${s.label}${s.builtin ? '' : ' (yours)'}` })),
+        },
         { key: 'item', label: 'About (not for one about the game)', type: 'select', default: 'best', options: itemOptions },
       ],
     });

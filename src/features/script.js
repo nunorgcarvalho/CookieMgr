@@ -933,41 +933,63 @@ CA.Script = (() => {
   // ---- running a statistic --------------------------------------------------------------------------
 
   const STEP_LIMIT = 5000;
+  const TRACE_MAX = 300;
+  /** A value, short, for a trace: 1.25e+6, "text", yes, [1, 2, 3]. */
+  function brief(x) {
+    if (typeof x === 'boolean') return x ? 'yes' : 'no';
+    if (typeof x === 'string') return JSON.stringify(x.length > 40 ? `${x.slice(0, 40)}…` : x);
+    if (typeof x === 'number') return Number.isFinite(x) ? String(Number(x.toPrecision(6))) : String(x);
+    if (Array.isArray(x)) return `[${x.slice(0, 5).map(brief).join(', ')}${x.length > 5 ? ', …' : ''}]`;
+    return x === undefined ? 'nothing' : String(x);
+  }
   /**
    * Runs a statistic's blocks (compiled with { mode: 'stat' }) start to finish. `env`: its variables
    * to start with (item). → { returned, value, vars, steps, error } — vars: every variable as it ended
-   * (a statistic may set label, note, colour); error: what stopped it (the step limit).
+   * (a statistic may set label, note, colour); error: what stopped it (the step limit). opts.trace:
+   * also → trace, what each line did in order ([{ line, text }], the first TRACE_MAX), for the editor.
    */
-  function runStat(flow, env = {}) {
+  function runStat(flow, env = {}, opts = {}) {
     const vars = { ...env };
     let steps = 0;
     const DONE = {};
     let out = { returned: false, value: undefined };
+    const trace = opts.trace ? [] : null;
+    const note = (n, text) => trace && trace.length < TRACE_MAX && trace.push({ line: n.line || 0, text });
     const run = (nodes) => {
       (nodes || []).forEach((n) => {
         if (++steps > STEP_LIMIT) throw new Error(`still going after ${STEP_LIMIT} steps — a loop too long?`);
-        if (n.type === 'set') vars[n.name] = n.cond ? evaluate(n.cond, vars).ok : valueOf(n.e, vars);
-        else if (n.type === 'if') run(evaluate(n.cond, vars).ok ? n.then : n.else);
-        else if (n.type === 'times') for (let i = 0; i < n.n; i++) run(n.body);
+        if (n.type === 'set') {
+          vars[n.name] = n.cond ? evaluate(n.cond, vars).ok : valueOf(n.e, vars);
+          note(n, `${n.name} = ${brief(vars[n.name])}`);
+        } else if (n.type === 'if') {
+          const ok = evaluate(n.cond, vars).ok;
+          note(n, ok ? 'if: yes' : 'if: no');
+          run(ok ? n.then : n.else);
+        } else if (n.type === 'times') {
+          note(n, `repeat ${n.n} times`);
+          for (let i = 0; i < n.n; i++) run(n.body);
+        }
         else if (n.type === 'each') {
           const list = valueOf(n.list, vars);
-          (Array.isArray(list) ? list.slice() : []).forEach((it) => {
+          const items = Array.isArray(list) ? list.slice() : [];
+          note(n, `for ${n.name}: ${items.length} item${items.length === 1 ? '' : 's'}`);
+          items.forEach((it) => {
             vars[n.name] = it;
             run(n.body);
           });
         } else if (n.type === 'return') {
           out = { returned: true, value: n.cond ? evaluate(n.cond, vars).ok : n.e ? valueOf(n.e, vars) : undefined };
+          note(n, `return ${brief(out.value)}`);
           throw DONE;
-        }
-        // log: nothing to write to here
+        } else if (n.type === 'log') note(n, `log ${n.e ? brief(valueOf(n.e, vars)) : n.text}`);
       });
     };
     try {
       run(flow);
     } catch (e) {
-      if (e !== DONE) return { returned: false, value: undefined, vars, steps, error: String(e.message || e) };
+      if (e !== DONE) return { returned: false, value: undefined, vars, steps, error: String(e.message || e), trace };
     }
-    return { ...out, vars, steps };
+    return { ...out, vars, steps, trace };
   }
 
   // ---- the library beside the editor ------------------------------------------------------------
@@ -980,7 +1002,7 @@ CA.Script = (() => {
     const snippet = (id, def) => `${id}(${argText(def, {}) || ((def && def.params) || []).map((p) => (p.default !== undefined && p.default !== '' ? litText(p.default) : p.key)).join(', ')})`;
     if (!stat) CA.Actions.all().filter((a) => !a.hidden).forEach((a) => items.push({ kind: 'action', id: a.id, sig: sig(a.id, a), desc: a.name, group: a.group, icon: a.icon, insert: snippet(a.id, a) }));
     CA.Conditions.all().forEach((c) => items.push({ kind: 'condition', id: c.id, sig: sig(c.id, c), desc: c.name, group: 'Conditions', icon: c.icon, insert: snippet(c.id, c) }));
-    VALUES.filter((v) => !v.hidden && (stat || !v.context)).forEach((v) => items.push({ kind: 'value', id: v.id, sig: `${v.id}(${(v.params || []).join(', ')})`, desc: v.desc, group: 'Values', icon: 'graphs', insert: `${v.id}(${(v.params || []).join(', ')})` }));
+    VALUES.filter((v) => !v.hidden && (stat || !v.context)).forEach((v) => items.push({ kind: 'value', id: v.id, sig: `${v.id}(${(v.params || []).join(', ')})`, desc: v.desc, group: v.group ? `Values · ${v.group}` : 'Values', icon: 'graphs', insert: `${v.id}(${(v.params || []).join(', ')})` }));
     [
       ['repeat until …:', 'run the block each pass until something holds', 'repeat until cookies() >= 1e12:\n  '],
       ['while …:', 'run the block each pass while something holds', 'while buff(Frenzy):\n  '],
