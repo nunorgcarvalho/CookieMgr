@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## 3.25.0 — 2026-10-27
+## 3.26.0 — 2026-10-27
 
 - **See-through widgets, easier to read.** With a widget's Background on Faint or None, its muted text — the Next
   golden cookie's “next in”, “median”, “frequency” labels, the Quick stats names, notes, “Nothing has happened yet”,

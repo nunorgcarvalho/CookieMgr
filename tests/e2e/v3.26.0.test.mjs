@@ -1,4 +1,4 @@
-// v3.25.0: see-through widgets (Background Faint or None) brighten their muted text — labels, notes, chart axes —
+// v3.26.0: see-through widgets (Background Faint or None) brighten their muted text — labels, notes, chart axes —
 // and outline it like the rest; Solid ones keep the dark beige.
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
 import { boot, sleep, makeAssert } from '../harness/game.mjs';
