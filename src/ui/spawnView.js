@@ -265,7 +265,7 @@ CA.UI.SpawnView = (() => {
     const name = LABEL[type];
     if (!d) return `<div class="ca-card-note">No ${name} coming: ${type === 'golden' ? 'the Golden switch is on (switch it off and they come again).' : 'reindeer only run at Christmas.'}</div>`;
     const { tile } = CA.UI.Plot.fmt;
-    // as frequencies (×2: twice as often), as the Frequency tile multiplies them; the game's own numbers
+    // as frequencies (×2: twice as often), as the Multiplier tile multiplies them; the game's own numbers
     // are the times between (×0.5)
     const fmtF = (x) => `×${Math.round(1000 / x.k) / 1000}`;
     const fmtT = (x) => `×${Math.round(x.k * 1000) / 1000}`;
@@ -290,7 +290,9 @@ CA.UI.SpawnView = (() => {
         ? `<div class="ca-sp-factors"><span>${type === 'golden' ? 'Golden cookie' : 'Reindeer'} frequency effects:</span>${factors || '<em class="ca-sp-none">none yet</em>'}${star}</div>${whatIfLine}`
         : '';
     const wrath = type === 'golden' ? tile('Wrath chance', pc(d.wrathChance), 'that it’s a wrath cookie') : '';
-    const freqTile = tile('Frequency', `×${mx(d.frequency)}`, d.factors.length ? 'vs nothing helping' : 'nothing helping yet');
+    const freqTile =
+      tile('Multiplier', `×${mx(d.frequency)}`, d.factors.length ? 'vs nothing helping' : 'nothing helping yet') +
+      tile('Frequency', when(d.next.mean), `between ${type === 'golden' ? 'golden cookies' : 'reindeer'}, on average`);
     if (d.spawned)
       return (
         `<div class="ca-stats">${tile(`Next ${name}`, 'on screen', 'pop it! — the timer starts again when it leaves')}${freqTile}${wrath}</div>` +
