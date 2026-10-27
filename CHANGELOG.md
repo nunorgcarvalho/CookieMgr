@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## 3.21.0 — 2026-10-27
+## 3.20.0 — 2026-10-27
 
 - **Statistics.** The lines under the store's tooltips are now **statistics**: a few lines of algorithmic code — the
   macro language — that only read the game and end with `return`. In a tooltip, `item` is the building or upgrade
