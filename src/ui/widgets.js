@@ -31,6 +31,13 @@
 //     for another 48px sheet (img/gardenPlants.png) — without one the `icon` is drawn instead; short = a one-line
 //     summary under the name; ring = the colour of a round (bare) widget's ring on its tile (default gold).
 //   CA.UI.Widgets.defineGroup({ id, name, sprite, order })   a shelf of the picker; shelves sort by order
+//
+// iconOf(inst): an icon of its own per widget (a chart's: its chart's).
+// live(inst, body) runs after each render and refresh, for a widget that draws into its own nodes
+// (a chart's canvas); removed(inst) when it's taken away.
+//
+// Stars: a page's ☆ (CA.UI.C.widgetStar) adds a ready-made widget — a preset, its type and the
+// settings that make it that one — and takes it away again; hasPreset() says whether it's there.
 
 CA.UI = CA.UI || {};
 
@@ -46,7 +53,7 @@ CA.UI.Widgets = (() => {
   const FONT_MAX = 200;
   const MIN_W = 140;
   const MIN_H = 60;
-  const SAVED = ['count', 'types', 'stats', 'nums', 'font', 'title', 'target', 'targetMagic', 'bg', 'sort', 'barScale']; // per-widget settings that are saved
+  const SAVED = ['plot', 'count', 'types', 'stats', 'nums', 'font', 'title', 'target', 'targetMagic', 'bg', 'sort', 'barScale']; // per-widget settings that are saved
   const BG = [[100, 'Solid'], [40, 'Faint'], [0, 'None']]; // background opacity (%) while not hovered
   const S = () => CA.Settings;
   const I = (n, s) => CA.UI.Icons.html(n, s);
@@ -164,12 +171,57 @@ CA.UI.Widgets = (() => {
       return;
     }
     widgets.splice(widgets.indexOf(w), 1);
+    const t = typeById[w.type];
+    if (t && t.removed) t.removed(w);
     changed();
   }
 
   function changed() {
     render();
+    syncStars();
     CA.Events.emit('widgets');
+  }
+
+  // ---- stars: ready-made widgets from the pages --------------------------------------------------
+
+  const matches = (w, preset) => Object.keys(preset).every((k) => w[k] === preset[k]);
+  const hasPreset = (preset) => widgets.some((w) => matches(w, preset));
+  const presetOf = (el) => {
+    try {
+      const p = JSON.parse(el.dataset.wStar);
+      return p && typeof p.type === 'string' ? p : null;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  /** A star was clicked: adds its widget (showing widgets if they were hidden), or takes it away. */
+  function toggleStar(el) {
+    const preset = presetOf(el);
+    if (!preset || !typeById[preset.type]) return;
+    const name = el.dataset.name || nameOf(preset);
+    if (hasPreset(preset)) {
+      widgets.filter((w) => matches(w, preset)).forEach((w) => remove(w.id));
+      return;
+    }
+    const { type, ...extra } = preset;
+    add(type, null, extra);
+    if (!S().get('widgetsShown')) S().set('widgetsShown', true);
+    CA.Util.notify(name, 'Added as a widget on the left panel — drag it wherever you like.', CA.ICON, 2);
+  }
+
+  /** Every star on screen shows whether its widget is there. */
+  function syncStars() {
+    document.querySelectorAll('[data-w-star]').forEach((el) => {
+      const preset = presetOf(el);
+      if (!preset) return;
+      const on = hasPreset(preset);
+      if (el.classList.contains('on') === on) return;
+      el.classList.toggle('on', on);
+      el.setAttribute('aria-pressed', String(on));
+      el.dataset.tip = CA.UI.C.starTip(on, el.dataset.name || '');
+      el.innerHTML = I(on ? 'star' : 'starOutline', 14);
+    });
   }
 
   const list = () => widgets.slice();
@@ -181,6 +233,11 @@ CA.UI.Widgets = (() => {
     if (w.type === 'macro') {
       const m = CA.Macros.get(w.macro);
       return m ? m.name : 'Macro button';
+    }
+    // a page's chart: its name ("Garden growth")
+    if (w.type === 'chart') {
+      const p = CA.UI.Plot.widgetable().find((x) => x.id === w.plot);
+      if (p) return p.title;
     }
     return (typeById[w.type] || {}).name || w.type;
   }
@@ -229,7 +286,7 @@ CA.UI.Widgets = (() => {
     return (
       `<div class="ca-w${w.collapsed ? ' collapsed' : ''}${w.h ? ' sized' : ''}${bg < 1 ? ' ca-w-clear' : ''}${glow(w)}" data-widget="${w.id}" style="${fs}${bg < 1 ? `;--wbg:${bg}` : ''};width:${w.w || t.width}px${w.h && !w.collapsed ? `;height:${w.h}px` : ''}">` +
       '<div class="ca-w-head" data-w-drag>' +
-      `${I(t.icon, 12)}<span class="ca-w-title">${esc(nameOf(w))}</span>` +
+      `${I(t.iconOf ? t.iconOf(w) : t.icon, 12)}<span class="ca-w-title">${esc(nameOf(w))}</span>` +
       `<button type="button" class="ca-w-btn" data-w-settings aria-label="Settings">${I('settings', 10)}</button>` +
       `<button type="button" class="ca-w-btn" data-w-collapse aria-label="${w.collapsed ? 'Expand' : 'Collapse'}">${w.collapsed ? '▸' : '▾'}</button>` +
       `<button type="button" class="ca-w-btn" data-w-remove aria-label="Remove widget">${I('close', 10)}</button>` +
@@ -291,6 +348,20 @@ CA.UI.Widgets = (() => {
       const el = layer.querySelector(`[data-widget="${w.id}"]`);
       if (el) place(el, w);
     });
+    widgets.forEach(live);
+  }
+
+  /** A type that draws into its own nodes (a chart) gets its body after every render and refresh. */
+  function live(w) {
+    const t = typeById[w.type];
+    if (!t || !t.live || w.collapsed || !layer) return;
+    const body = layer.querySelector(`[data-widget="${w.id}"] [data-w-body]`);
+    if (!body) return;
+    try {
+      t.live(w, body);
+    } catch (e) {
+      /* drawn again next refresh */
+    }
   }
 
   /** Refreshes each widget's content in place (positions untouched). */
@@ -302,6 +373,7 @@ CA.UI.Widgets = (() => {
       const body = layer.querySelector(`[data-widget="${w.id}"] [data-w-body]`);
       const t = typeById[w.type];
       if (body && t) CA.UI.Dom.morph(body, safeHtml(t, w));
+      live(w);
     });
   }
 
@@ -728,6 +800,7 @@ CA.UI.Widgets = (() => {
         // ids go into attributes and selectors: only plain ones are kept
         const out = { id: /^[\w-]{1,40}$/.test(String(w.id)) ? String(w.id) : newId(), type: w.type, x: w.x, y: w.y, collapsed: !!w.collapsed };
         if (w.macro) out.macro = String(w.macro);
+        if (typeof w.plot === 'string') out.plot = w.plot.slice(0, 40);
         if (Number.isFinite(w.scale)) out.scale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, w.scale));
         if (Number.isFinite(w.w)) out.w = Math.max(MIN_W, w.w);
         if (Number.isFinite(w.h)) out.h = Math.max(MIN_H, w.h);
@@ -917,6 +990,7 @@ CA.UI.Widgets = (() => {
     else if ('wEditDone' in d) editing = null;
     else if ('wPageClear' in d) {
       if (!CA.UI.Dom.armed(t)) return;
+      widgets.forEach((w) => w.type !== 'macro' && typeById[w.type] && typeById[w.type].removed && typeById[w.type].removed(w));
       widgets = widgets.filter((w) => w.type === 'macro');
       widgets.forEach((w) => CA.Macros.setFav(w.macro, false));
       editing = null;
@@ -975,5 +1049,5 @@ CA.UI.Widgets = (() => {
     render();
   }
 
-  return { init, defineType, defineGroup, types: () => types.slice(), add, remove, list, get, has, serialize, load, render, tick, reconcile, openSettings, editing: () => editing };
+  return { init, defineType, defineGroup, types: () => types.slice(), add, remove, toggleStar, hasPreset, syncStars, list, get, has, serialize, load, render, tick, reconcile, openSettings, editing: () => editing };
 })();

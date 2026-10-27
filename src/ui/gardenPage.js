@@ -6,6 +6,7 @@
 //   Garden          your plot as it is now, against the layout: each tile's plant and growth
 //                   stage, the layout's seed faded in on empty tiles, a red ring on tiles that don't
 //                   match, and the chance a mature plant dies on the coming tick; hover a tile for details
+//   (Growth and Effects each have a ☆ that puts the chart on the left panel as a widget.)
 //   Auto-gardener   its on/off switch (★ for its button on the left panel); the profile bar (a profile
 //                   picks all four layers — features/gardenLayers.js); four slots showing what's picked
 //                   — Gardener, Soil rule, Template, Seeds — and the selected one in detail, to pick
@@ -852,6 +853,8 @@ CA.UI.GardenPage = (() => {
     plot = CA.UI.Plot.create({
       id: 'garden',
       title: 'Growth',
+      widget: true, // its ☆: a Chart widget on the left panel
+      widgetName: 'Garden growth',
       icon: 'leaf',
       height: 210,
       windows: [3600, 6 * 3600, 86400, 3 * 86400, 0],
@@ -957,6 +960,8 @@ CA.UI.GardenPage = (() => {
       id: 'gardenEffects',
       settingsOf: 'garden', // same window and x axis as the growth chart
       title: 'Effects',
+      widget: true,
+      widgetName: 'Garden effects',
       icon: 'sparkle',
       note: 'What your plants do, as the game’s Garden information adds it up (soil, growth stage and tile boosts included).',
       height: 190,
