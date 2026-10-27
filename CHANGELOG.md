@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## 3.17.1 — 2026-10-27
+## 3.18.1 — 2026-10-27
 
 - **The next golden cookie chart keeps effects that ended.** An effect that ran since the last golden cookie left
   keeps its bar after it ends, dimmed and marked “ended”, on the same axis, with the multiplier it had — so a
@@ -25,6 +25,16 @@
   minute, window, frequency) to switch on or off; all on by default, saved with the widget.
 - The chart's labels (the percentages, the times, “expected”) are drawn over its lines, curve and bars, with a dark
   outline.
+## 3.18.0 — 2026-10-27
+
+- **Bank warnings, compact.** The warnings that a purchase would take your bank below what a Lucky!, Conjure Baked
+  Goods or a Lucky! in a Frenzy needs to pay its most were up to three long sentences under the store's tooltips.
+  Now anything whose purchase would do it gets a small coloured **!** in the corner of its store button, in the
+  colour of the smallest bank it breaks: red for Lucky!, orange for Conjure, yellow for Frenzy Lucky!. Its tooltip
+  says which in one line of tags, each with how far under you'd be (`⚠ Drops bank below  Lucky! −456 M  Conjure
+  −1.2 B`). Banks you're already under don't warn. Still the **Bank warnings** option (Settings → Store, the Payback
+  page), off by default; `warnings(price)` returns the banks as data (id, name, colour, need, short).
+
 ## 3.17.0 — 2026-10-27
 
 - **Numbers start on Cookie Monster's own default, the short scale**: 1.23 M, 4.56 B, 7.8 Tr, 1.5 Quadr… 2.3 Dec,
