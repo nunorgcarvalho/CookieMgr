@@ -53,7 +53,8 @@ async function casts(keys) {
   return calls.spells.filter((s) => s === 'Force the Hand of Fate').length;
 }
 for (const combo of ['FD', 'FC', 'FB', 'BD', 'BC']) assert((await casts(combo)) === 1, `casts on ${combo.split('').map((k) => BUFFS[k].name).join(' + ')}`);
-for (const no of ['', 'F', 'C', 'D', 'B', 'DC', 'E', 'FE']) assert((await casts(no)) === 0, `not on ${no ? no.split('').map((k) => BUFFS[k].name).join(' + ') : 'nothing'}`);
+// (v3.35: Elder frenzy is a combo of its own now — the Regular combos tier, on a full bar)
+for (const no of ['', 'F', 'C', 'D', 'B', 'DC']) assert((await casts(no)) === 0, `not on ${no ? no.split('').map((k) => BUFFS[k].name).join(' + ') : 'nothing'}`);
 // not enough magic: waits, then casts during the same combo
 Game.buffs = { Frenzy: { ...BUFFS.F }, Dragonflight: { ...BUFFS.D } };
 calls.spells.length = 0;

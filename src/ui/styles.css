@@ -7568,3 +7568,415 @@ body.ca-has-storebar #products {
   border-bottom: 0;
   cursor: inherit;
 }
+
+/* ---------- Cast tiers (Grimoire page: when Force the Hand of Fate on combos casts) ---------- */
+#CookieMgrMenu .ca-ct-profiles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px 6px;
+}
+#CookieMgrMenu .ca-ct-lbl {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: bold;
+  color: #93866f;
+}
+#CookieMgrMenu .ca-ct-prof {
+  padding: 4px 13px;
+  border-radius: 14px;
+  cursor: pointer;
+  font: bold 13px 'Merriweather', Georgia, serif;
+  color: #b9ac94;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+}
+#CookieMgrMenu .ca-ct-prof:hover {
+  color: #fff;
+  border-color: rgba(242, 207, 115, 0.55);
+}
+#CookieMgrMenu .ca-ct-prof.on {
+  color: #241806;
+  text-shadow: none;
+  background: linear-gradient(#f6dc8e, #d4a845);
+  border-color: #f6e7a8;
+  box-shadow: 0 0 10px rgba(242, 207, 115, 0.35);
+}
+#CookieMgrMenu .ca-ct-acts {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+#CookieMgrMenu .ca-ct-setup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 2px 14px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+#CookieMgrMenu .ca-ct-setup .ca-gname {
+  width: 160px;
+  font-weight: bold;
+}
+#CookieMgrMenu .ca-ct-setup code {
+  font-size: 10px;
+  color: #93866f;
+}
+#CookieMgrMenu .ca-ct-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font-size: 12px;
+  color: #b9ac94;
+}
+#CookieMgrMenu .ca-ct-left input {
+  width: 120px;
+  accent-color: #f2cf73;
+}
+#CookieMgrMenu .ca-ct-left output {
+  min-width: 2.4em;
+  font-weight: bold;
+  color: #f2cf73;
+  font-variant-numeric: tabular-nums;
+}
+
+/* the magic bar, a mark per tier */
+#CookieMgrMenu .ca-ct-meter-block {
+  padding: 14px 18px 4px;
+}
+#CookieMgrMenu .ca-ct-meter {
+  position: relative;
+  height: 22px;
+  border-radius: 11px;
+  background: rgba(0, 0, 0, 0.5);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(179, 136, 255, 0.35);
+}
+#CookieMgrMenu .ca-ct-clip {
+  position: absolute;
+  inset: 0;
+  border-radius: 11px;
+  overflow: hidden;
+}
+#CookieMgrMenu .ca-ct-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: linear-gradient(to bottom, #c9a6ff, #7c4dff);
+  box-shadow: 0 0 10px rgba(179, 136, 255, 0.7);
+  transition: width 0.4s;
+}
+#CookieMgrMenu .ca-ct-cost {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0 6px, transparent 6px 12px);
+  border-right: 1px dashed rgba(255, 255, 255, 0.4);
+}
+#CookieMgrMenu .ca-ct-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: bold;
+  text-shadow: 0 1px 2px #000;
+  pointer-events: none;
+}
+#CookieMgrMenu .ca-ct-tick {
+  position: absolute;
+  top: -6px;
+  bottom: -6px;
+  width: 3px;
+  margin-left: -1.5px;
+  border-radius: 2px;
+  background: var(--c);
+  box-shadow: 0 0 6px var(--c);
+}
+#CookieMgrMenu .ca-ct-lane,
+#CookieMgrMenu .ca-ct-scale {
+  position: relative;
+  height: 18px;
+  margin-top: 4px;
+}
+#CookieMgrMenu .ca-ct-lane span,
+#CookieMgrMenu .ca-ct-scale span {
+  position: absolute;
+  top: 0;
+  white-space: nowrap;
+}
+#CookieMgrMenu .ca-ct-tlabel {
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: bold;
+  color: var(--c);
+}
+#CookieMgrMenu .ca-ct-tlabel.left {
+  transform: translateX(-100%);
+}
+#CookieMgrMenu .ca-ct-tlabel.right {
+  transform: none;
+}
+#CookieMgrMenu .ca-ct-scale {
+  margin-top: 0;
+  font-size: 10px;
+  color: #93866f;
+  font-variant-numeric: tabular-nums;
+}
+#CookieMgrMenu .ca-ct-scale .mid {
+  transform: translateX(-50%);
+}
+#CookieMgrMenu .ca-ct-scale b {
+  color: #ddd;
+}
+
+/* tiers */
+#CookieMgrMenu .ca-ct-tier {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 5px solid var(--c);
+  transition: background 0.2s;
+}
+#CookieMgrMenu .ca-ct-tier.firing {
+  background: linear-gradient(90deg, rgba(95, 211, 154, 0.12), transparent 60%);
+}
+#CookieMgrMenu .ca-ct-tier.drop {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--c) 22%, transparent), transparent 70%);
+  outline: 1px dashed var(--c);
+  outline-offset: -3px;
+}
+#CookieMgrMenu .ca-ct-body {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 10px 14px 12px;
+  min-width: 0;
+}
+#CookieMgrMenu .ca-ct-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+#CookieMgrMenu .ca-ct-tname {
+  width: 150px;
+  padding: 2px 6px;
+  font: bold 14px 'Merriweather', Georgia, serif;
+  color: #f0e2c0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+#CookieMgrMenu .ca-ct-tname:hover,
+#CookieMgrMenu .ca-ct-tname:focus {
+  outline: none;
+  background: rgba(0, 0, 0, 0.35);
+  border-color: rgba(255, 220, 150, 0.25);
+}
+#CookieMgrMenu .ca-ct-thresh {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 280px;
+  min-width: 0;
+}
+#CookieMgrMenu .ca-ct-thresh input {
+  flex: 1;
+  min-width: 80px;
+  accent-color: var(--c);
+}
+#CookieMgrMenu .ca-ct-thresh output {
+  min-width: 3em;
+  text-align: right;
+  font-weight: bold;
+  color: var(--c);
+  font-variant-numeric: tabular-nums;
+}
+#CookieMgrMenu .ca-ct-abs {
+  min-width: 7em;
+  font-size: 11px;
+  color: #93866f;
+  font-variant-numeric: tabular-nums;
+}
+#CookieMgrMenu .ca-ct-recharge {
+  font-size: 11px;
+  font-weight: bold;
+  white-space: nowrap;
+  padding: 2px 8px;
+  border-radius: 10px;
+  color: var(--c);
+  background: color-mix(in srgb, var(--c) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--c) 35%, transparent);
+  font-variant-numeric: tabular-nums;
+}
+#CookieMgrMenu .ca-ct-recharge:empty {
+  display: none;
+}
+#CookieMgrMenu .ca-pill.ca-ct-wait {
+  color: #c9a6ff;
+  border-color: rgba(179, 136, 255, 0.45);
+}
+#CookieMgrMenu .ca-ct-combos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+#CookieMgrMenu .ca-ct-combo {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  padding: 2px 2px 2px 5px;
+  border-radius: 16px;
+  cursor: grab;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+#CookieMgrMenu .ca-ct-combo.match {
+  border-color: #5fd39a;
+  background: rgba(95, 211, 154, 0.14);
+  box-shadow: 0 0 10px rgba(95, 211, 154, 0.3);
+}
+#CookieMgrMenu .ca-ct-combo.dragging {
+  opacity: 0.35;
+}
+#CookieMgrMenu .ca-ct-fx {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+}
+#CookieMgrMenu .ca-ct-fx .ca-god-ico {
+  zoom: 0.5;
+}
+#CookieMgrMenu .ca-ct-fx b {
+  font-size: 10px;
+  color: #f0e2c0;
+}
+#CookieMgrMenu .ca-ct-plus {
+  padding: 0 2px;
+  font-size: 11px;
+  font-weight: bold;
+  color: #93866f;
+}
+#CookieMgrMenu .ca-ct-x {
+  width: 18px;
+  height: 18px;
+  margin-left: 2px;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  color: #93866f;
+  background: transparent;
+}
+#CookieMgrMenu .ca-ct-x:hover {
+  color: #fff;
+  background: rgba(229, 72, 77, 0.55);
+}
+#CookieMgrMenu .ca-ct-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 16px;
+  cursor: pointer;
+  font-size: 11px;
+  color: #93866f;
+  background: transparent;
+  border: 1px dashed rgba(255, 255, 255, 0.22);
+}
+#CookieMgrMenu .ca-ct-add:hover {
+  color: #f0e2c0;
+  border-color: #f2cf73;
+}
+
+/* the effect picker */
+#CookieMgrMenu .ca-ct-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(242, 207, 115, 0.35);
+}
+#CookieMgrMenu .ca-ct-picker-head,
+#CookieMgrMenu .ca-ct-picker-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+#CookieMgrMenu .ca-ct-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 6px;
+}
+#CookieMgrMenu .ca-ct-tile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  text-align: left;
+  cursor: pointer;
+  color: #ddd;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+#CookieMgrMenu .ca-ct-tile .ca-god-ico {
+  zoom: 0.65;
+}
+#CookieMgrMenu .ca-ct-tile:hover {
+  border-color: rgba(242, 207, 115, 0.55);
+}
+#CookieMgrMenu .ca-ct-tile.on {
+  border-color: #f2cf73;
+  background: rgba(242, 207, 115, 0.12);
+}
+#CookieMgrMenu .ca-ct-tile-text {
+  flex: 1;
+  min-width: 0;
+}
+#CookieMgrMenu .ca-ct-tile b {
+  display: block;
+  font-size: 12px;
+}
+#CookieMgrMenu .ca-ct-tile small {
+  display: block;
+  font-size: 10px;
+  color: #93866f;
+}
+#CookieMgrMenu .ca-ct-tile em {
+  font-style: normal;
+  font-weight: bold;
+  color: #f2cf73;
+}
+#CookieMgrMenu .ca-ct-preview {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+#CookieMgrMenu .ca-ct-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+#CookieMgrMenu .ca-ct-foot .ca-hint {
+  flex: 1 1 300px;
+}

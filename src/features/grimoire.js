@@ -4,7 +4,8 @@
 //   conditions  spellAffordable {spell}        there's enough magic for that spell right now
 //               magicPct {op, value}           magic as a % of the maximum
 //   macros      one built-in "Cast …" macro per spell (buttons, hotkeys, shortcut widgets), and the
-//               built-in "Force the Hand of Fate on combos" (algorithmic: COMBO_SOURCE)
+//               built-in "Force the Hand of Fate on combos" (algorithmic: COMBO_SOURCE; when it casts
+//               is the cast tiers', features/castTiers.js)
 //   events      'spell' — every cast (yours, a macro's, or the Grimoire's own buttons), and whether
 //               it backfired
 //
@@ -34,17 +35,13 @@ CA.Grimoire = (() => {
   SPELLS.forEach((s) => (byKey[s.key] = s));
   const AUTO_ID = 'fthofOnClickFrenzy'; // its id from when it cast on Click frenzy alone (kept: saves use it)
 
-  /** The auto-cast's code: Force the Hand of Fate when two effects line up. */
-  const COMBO_SOURCE = `# Force the Hand of Fate when two effects line up — its golden cookie can stack a third on top.
-# The combos: Frenzy + Dragonflight, Frenzy + Click frenzy, Frenzy + a building special,
-# a building special + Dragonflight, a building special + Click frenzy.
+  /** The auto-cast's code: Force the Hand of Fate when a cast tier says so (features/castTiers.js). */
+  const COMBO_SOURCE = `# Force the Hand of Fate when a combo is on and magic has reached its tier — the combos, tiers and
+# profiles are on the Grimoire page (Cast tiers). Its golden cookie can stack a third effect on top.
 # Pair it with the Golden cookies macro, so the cookie it brings gets popped.
 forever:
-  if spellAffordable("hand of fate"):
-    if buff(Frenzy) and (buff(Dragonflight) or buff("Click frenzy") or buildingSpecial()):
-      spell.cast("hand of fate")
-    elif buildingSpecial() and (buff(Dragonflight) or buff("Click frenzy")):
-      spell.cast("hand of fate")
+  if grimoire.fthofReady():
+    spell.cast("hand of fate")
 `;
 
   /**
@@ -249,7 +246,7 @@ forever:
     CA.Macros.addBuiltin({
       id: AUTO_ID,
       name: 'Force the Hand of Fate on combos',
-      desc: 'While on: casts Force the Hand of Fate as soon as two effects line up and there’s enough magic — Frenzy with Dragonflight, Click frenzy or a building special, or a building special with Dragonflight or Click frenzy — so its golden cookie can stack a third. Pair it with the Golden cookies macro to pop it. Its code is yours to change.',
+      desc: 'While on: casts Force the Hand of Fate when a combo is on and magic has reached its tier — the strongest combos the moment it’s affordable, the regular ones on a full bar (the Cast tiers card on the Grimoire page) — so its golden cookie can stack a third effect. Pair it with the Golden cookies macro to pop it. Its code is yours to change.',
       icon: { sprite: [22, 11] },
       mode: 'flow',
       every: 250,

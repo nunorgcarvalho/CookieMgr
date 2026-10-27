@@ -6,6 +6,8 @@
 //                  affordable), ★ for its own button on the left panel — each is a built-in macro
 //   Auto-cast      the built-in "Force the Hand of Fate on combos" macro, and any of your
 //                  own repeat/when macros that cast spells
+//   Cast tiers     when the auto-cast casts: combos in tiers, each at a share of the magic bar, as
+//                  Grimoire profiles (ui/castTiersCard.js)
 //   Spell combos   your "once" macros that cast spells — New combo starts one in the editor
 //   Magic          magic over time, with every cast marked
 //
@@ -85,6 +87,7 @@ CA.UI.WizardPage = (() => {
       C().cardHead('Auto-cast', 'bolt', '<div class="ca-card-meta"><button type="button" class="ca-btn ca-btn-small" data-ca="open-macros">All macros</button></div>') +
       `<div class="ca-list">${auto.map(CA.UI.MacrosPage.row).join('')}</div>` +
       '</div>' +
+      CA.UI.CastTiers.html() +
       '<div class="ca-card">' +
       C().cardHead('Spell combos', 'sparkle', `<div class="ca-card-meta">${C().button(`${I('plus', 12)} New combo`, 'data-wiz-newcombo', 'ca-btn-small')}</div>`) +
       (combos.length
@@ -138,10 +141,15 @@ CA.UI.WizardPage = (() => {
         fav.innerHTML = I(on ? 'star' : 'starOutline', 14);
       }
     });
+    const ct = root.querySelector('[data-ct]');
+    const p = CA.CastTiers.current();
+    if (ct && p && ct.dataset.ctProfile !== p.id) return CA.UI.Menu.render(); // a macro switched profiles
+    CA.UI.CastTiers.sync(root);
     CA.UI.MacrosPage.sync(root);
   }
 
   function onClick(e) {
+    if (CA.UI.CastTiers.onClick(e)) return;
     if (!e.target.closest('[data-wiz-newcombo]')) return;
     e.stopPropagation();
     CA.Util.sound('snd/tick.mp3');
@@ -160,6 +168,7 @@ CA.UI.WizardPage = (() => {
     unmount();
     root = el;
     life = CA.UI.Pages.scope(el).on('click', onClick).child(plot);
+    CA.UI.CastTiers.bind(life);
     sync();
     life.every(SYNC_MS, sync);
   }
@@ -242,7 +251,8 @@ CA.UI.WizardPage = (() => {
     const auto = bar.querySelector('[data-cm-gt="auto"]');
     auto.innerHTML = `${I('bolt', 12)}Auto FtHoF on combos: ${on ? 'on' : 'off'}`;
     auto.classList.toggle('on', on);
-    auto.dataset.tip = 'Casts Force the Hand of Fate as soon as two effects line up (Frenzy, Click frenzy, Dragonflight, building specials) and there’s enough magic — same switch as on the CookieMgr page';
+    const d = on && CA.CastTiers.decide();
+    auto.dataset.tip = `Casts Force the Hand of Fate when a combo is on and magic has reached its tier (Cast tiers on the CookieMgr Grimoire page) — same switch as there${d ? ` · now: ${CA.CastTiers.comboName(d.combo)}, ${d.ready ? 'casting' : `waits for ${d.tier.name} at ${d.tier.pct}%`}` : ''}`;
   }
 
   function init() {
