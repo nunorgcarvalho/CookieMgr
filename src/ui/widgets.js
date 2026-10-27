@@ -699,6 +699,7 @@ CA.UI.Widgets = (() => {
     // v2.1 had one Shortcuts widget for all favourites; its buttons now start where it was
     const old = data.find((w) => ok(w) && w.type === 'shortcuts');
     anchor = old ? { x: old.x, y: old.y } : null;
+    // a type that's gone is dropped (v3.19: the Golden cookies ring, now the Next golden cookie widget)
     widgets = data
       .filter((w) => ok(w) && typeById[w.type])
       .map((w) => {

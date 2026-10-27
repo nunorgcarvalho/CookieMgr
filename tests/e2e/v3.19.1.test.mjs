@@ -1,4 +1,4 @@
-// v3.18.1: the next golden cookie chart keeps the effects that ended since the last golden cookie
+// v3.19.1: the next golden cookie chart keeps the effects that ended since the last golden cookie
 // left — dimmed, on the same axis, with their multiplier as last seen (CA.Timers.effectsSince);
 // those that ended before it don't show. A dashed line at the expected moment with how long until it,
 // and the time since the last one on the now line; the golden cookie frequency (× vs nothing helping) —

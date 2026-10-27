@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## 3.18.1 — 2026-10-27
+## 3.19.1 — 2026-10-27
 
 - **The next golden cookie chart keeps effects that ended.** An effect that ran since the last golden cookie left
   keeps its bar after it ends, dimmed and marked “ended”, on the same axis, with the multiplier it had — so a
@@ -25,6 +25,13 @@
   minute, window, frequency) to switch on or off; all on by default, saved with the widget.
 - The chart's labels (the percentages, the times, “expected”) are drawn over its lines, curve and bars, with a dark
   outline.
+## 3.19.0 — 2026-10-27
+
+- **The Golden cookies widget is gone** — the small ring that filled towards the latest the next golden cookie could
+  come. The **Next golden cookie** widget (the chart, the expected wait, the median, the chance within a minute and
+  the effects running) and the **Golden timeline** do everything it did. A saved layout that still has it loads
+  without it; everything else on the panel stays where it was. The Golden cookies *macro* (which pops them) stays.
+
 ## 3.18.0 — 2026-10-27
 
 - **Bank warnings, compact.** The warnings that a purchase would take your bank below what a Lucky!, Conjure Baked
