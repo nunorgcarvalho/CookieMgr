@@ -7,6 +7,10 @@
 //   const p = CA.UI.Plot.create({ id, title, icon, windows, build(v) { return { series, bars, lines } } });
 //   page html: p.html()   mount: p.mount(pageRoot)   tick: p.tick()   unmount: p.unmount()
 //
+// A spec with `widget: true` gets a ☆ in its card head that puts the chart on the left panel
+// (the Chart widget, ui/widgetTypes.js); the widget draws a copy of it — mini(id, key) — with only
+// the chart and its legend, sharing the page chart's window and choices.
+//
 // The x axis is either wall-clock time (frame.t) or **active play time** (frame.a, see
 // core/recorder.js) — the global "Active time" toggle (setting graphActiveTime). In active-time
 // mode stretches where the game wasn't running simply don't exist on the axis; a thin dashed
@@ -410,10 +414,14 @@ CA.UI.Plot = (() => {
     const boolChip = (fullKey, label, title) => chip(label, `data-plot-toggle="${fullKey}" data-pressed-key="${fullKey}"`, title);
 
     function html() {
+      // a widget's copy: the chart and its legend, both drawn by this module (morph leaves them be)
+      if (spec.compact)
+        return `<div class="ca-graph-mini" data-plot="${id}"><canvas class="ca-graph" data-plot-canvas data-keep></canvas><div class="ca-legend" data-plot-legend data-keep></div></div>`;
       const wins = spec.windows || [300];
+      const star = spec.widget ? CA.UI.C.widgetStar({ type: 'chart', plot: id }, spec.widgetName || spec.title) : '';
       let h =
         `<div class="ca-card ca-graph-card" data-plot="${id}">` +
-        CA.UI.C.cardHead(spec.title, spec.icon, '<div class="ca-card-meta"><span class="ca-live" data-plot-live></span></div>') +
+        CA.UI.C.cardHead(spec.title, spec.icon, `<div class="ca-card-meta">${star}<span class="ca-live" data-plot-live></span></div>`) +
         (spec.note ? `<div class="ca-card-note">${spec.note}</div>` : '') +
         (spec.stats ? '<div class="ca-stats" data-plot-stats></div>' : '') +
         '<div class="ca-toolbar">' +
@@ -1289,7 +1297,7 @@ CA.UI.Plot = (() => {
       tipEl = CA.UI.Tips.float('ca-tip');
       tipEl.dataset.plotTip = id;
       ctx = canvas.getContext('2d');
-      root.addEventListener('click', onClick);
+      if (!spec.compact) root.addEventListener('click', onClick);
       canvas.addEventListener('mousemove', (e) => {
         const r = canvas.getBoundingClientRect();
         hover = { x: e.clientX - r.left, y: e.clientY - r.top };
@@ -1305,6 +1313,11 @@ CA.UI.Plot = (() => {
       if (window.ResizeObserver) {
         observer = new ResizeObserver(() => draw());
         observer.observe(canvas);
+      }
+      // a widget's copy only hovers: dragging on it moves the widget, not the chart
+      if (spec.compact) {
+        tick();
+        return;
       }
       panCtl = view.attachPan(
         canvas,
@@ -1406,6 +1419,26 @@ CA.UI.Plot = (() => {
     return inst;
   }
 
+  /**
+   * A widget's copy of chart `id` (one per `key`, made the first time): the same spec, drawn
+   * without the card around it, sharing its window and choices. Null when there's no such chart.
+   */
+  function mini(id, key) {
+    const src = all.get(id);
+    if (!src || src.spec.compact) return null;
+    const mid = `${id}~${key}`;
+    return all.get(mid) || create({ ...src.spec, id: mid, settingsOf: src.spec.settingsOf || id, compact: true, widget: false });
+  }
+  /** Lets go of a widget's copy (its widget was removed). */
+  function dropMini(id, key) {
+    const p = all.get(`${id}~${key}`);
+    if (!p) return;
+    p.unmount();
+    all.delete(`${id}~${key}`);
+  }
+  /** The charts that can go on the left panel as a widget: [{ id, title, icon }]. */
+  const widgetable = () => [...all.values()].filter((p) => p.spec.widget).map((p) => ({ id: p.id, title: p.spec.widgetName || p.spec.title, icon: p.spec.icon }));
+
   // Switching between wall-clock and active time invalidates every frozen view position.
   function init() {
     S().defineOption({
@@ -1425,6 +1458,9 @@ CA.UI.Plot = (() => {
   return {
     init,
     create,
+    mini,
+    dropMini,
+    widgetable,
     get: (id) => all.get(id),
     bucketize,
     movingAverage,

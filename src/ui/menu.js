@@ -413,6 +413,10 @@ CA.UI.Menu = (() => {
         CA.Util.sound('snd/tick.mp3');
         openPage(t.dataset.page);
         break;
+      case 'widget-star':
+        CA.Util.sound('snd/tick.mp3');
+        CA.UI.Widgets.toggleStar(t);
+        break;
       case 'open-mg':
         CA.Util.sound('snd/tick.mp3');
         CA.UI.WidgetTypes.openMinigame(t.dataset.building);
