@@ -603,3 +603,297 @@ body {
   color: #b9ab93;
   text-shadow: none;
 }
+
+/* the Garden page: a histogram per gardener, two to a row */
+#CookieMgrMenu .sim-gcards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  gap: 0 12px;
+}
+#CookieMgrMenu .sim-gcard-top {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 6px;
+}
+#CookieMgrMenu .sim-gcard-top .ca-hint {
+  line-height: 1.45;
+}
+#CookieMgrMenu .sim-mini-plot {
+  flex: none;
+  display: grid;
+  grid-auto-rows: 22px;
+  gap: 1px;
+  padding: 3px;
+  border-radius: 4px;
+  background: rgba(40, 26, 12, 0.6);
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.7);
+}
+#CookieMgrMenu .sim-mini-plot .ca-gtile {
+  border-radius: 2px;
+}
+#CookieMgrMenu .ca-gs.sim-mini {
+  zoom: 0.4583;
+}
+#CookieMgrMenu svg.sim-hist {
+  display: block;
+  width: 100%;
+  height: auto;
+  font: 10px Tahoma, Arial, sans-serif;
+}
+.sim-hist .sim-h-grid {
+  stroke: rgba(255, 255, 255, 0.08);
+}
+.sim-hist .sim-h-axis {
+  stroke: rgba(255, 255, 255, 0.35);
+}
+.sim-hist .sim-h-tick {
+  fill: #a99f8c;
+}
+.sim-hist .sim-h-bar {
+  fill: #d9a531;
+}
+.sim-hist .sim-h-bar.on {
+  fill: #ffe08a;
+}
+.sim-hist .sim-h-shade {
+  fill: rgba(255, 224, 138, 0.07);
+}
+.sim-hist .sim-h-mean {
+  stroke: #fff;
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+}
+.sim-hist .sim-h-meanlabel {
+  fill: #fff;
+  font-weight: bold;
+  paint-order: stroke;
+  stroke: #000;
+  stroke-width: 3px;
+}
+.sim-hist .sim-h-cursor {
+  stroke: #ffe08a;
+  stroke-width: 1.5;
+}
+.sim-hist .sim-h-hit {
+  fill: transparent;
+  cursor: crosshair;
+}
+#CookieMgrMenu .sim-gcard .sim-gcard-top,
+#CookieMgrMenu .sim-gcard svg.sim-hist {
+  padding: 0 12px;
+  box-sizing: border-box;
+}
+#CookieMgrMenu .sim-h-read {
+  min-height: 18px;
+  margin: 2px 0 6px;
+  padding: 0 14px;
+  font-size: 12px;
+  color: #ddd;
+}
+#CookieMgrMenu .sim-h-read b {
+  color: #ffe08a;
+}
+#CookieMgrMenu .sim-gstats .ca-stat {
+  min-width: 0;
+}
+
+/* ---- Cookie Clicker's own look, over the add-on's: the game's framed panels (frameBorder.png
+   round a dark-noise panel with soft shaded edges), its section titles (small capitals between two
+   fading rules, a warm glow), its wooden beams (panelHorizontal / panelVertical), its store tiles
+   for the left menu and its option buttons for chips and buttons. Pictures from the game's CDN. */
+#sim-top {
+  background: url(/game/img/darkNoiseTopBar.jpg) repeat-x bottom, #000;
+  border-bottom: none;
+}
+#sim-top::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -16px;
+  height: 16px;
+  background: url(/game/img/panelGradientLeft.png) no-repeat top left, url(/game/img/panelGradientRight.png) no-repeat top right, url(/game/img/panelHorizontal.png) repeat-x;
+  pointer-events: none;
+}
+#sim-top .sim-title {
+  font-family: 'Merriweather', Georgia, serif;
+  font-variant: small-caps;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  text-shadow:
+    0 -2px 6px rgba(255, 255, 200, 0.6),
+    0 1px 0 #646464,
+    0 2px 4px #000;
+}
+/* the menu: store tiles on a wooden pillar */
+#CookieMgrTab.sim-nav {
+  top: 68px;
+  bottom: 0;
+  width: 176px;
+  padding: 10px 16px 0 0;
+  background: url(/game/img/panelGradientTop.png) no-repeat top right, url(/game/img/panelVertical.png) repeat-y right;
+  gap: 2px;
+}
+#CookieMgrTab.sim-nav .ca-tab-item {
+  height: 40px;
+  border: none;
+  border-radius: 0;
+  background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url(/game/img/storeTile.jpg) 0 0;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.6);
+  opacity: 0.85;
+  transition: opacity 0.1s;
+}
+#CookieMgrTab.sim-nav .ca-tab-item:nth-child(2n) {
+  background-position: 0 0, 0 -64px;
+}
+#CookieMgrTab.sim-nav .ca-tab-item:hover {
+  opacity: 1;
+}
+#CookieMgrTab.sim-nav .ca-tab-item.selected {
+  opacity: 1;
+  background: linear-gradient(rgba(60, 30, 0, 0.15), rgba(60, 30, 0, 0.15)), url(/game/img/storeTile.jpg) 0 -128px;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 235, 160, 0.55),
+    inset 0 0 18px rgba(255, 220, 120, 0.35);
+}
+#CookieMgrTab.sim-nav .ca-tab-label {
+  font-family: 'Merriweather', Georgia, serif;
+  font-variant: small-caps;
+  font-size: 15px;
+  color: #fff;
+  text-shadow:
+    0 0 4px #000,
+    0 1px 0 #000,
+    0 2px 2px #000;
+}
+#CookieMgrTab.sim-nav .ca-tab-item.selected .ca-tab-label {
+  text-shadow:
+    0 -1px 6px rgba(255, 255, 200, 0.7),
+    0 1px 0 #000,
+    0 2px 3px #000;
+}
+#CookieMgrMenu.sim-main {
+  margin-left: 184px;
+  padding-top: 14px;
+}
+@media (max-width: 900px) {
+  #CookieMgrTab.sim-nav {
+    width: 56px;
+  }
+  #CookieMgrMenu.sim-main {
+    margin-left: 62px;
+  }
+}
+/* a page's title: the game's section heading */
+#CookieMgrMenu .sim-h1 {
+  position: relative;
+  display: block;
+  margin: 10px 4px 6px;
+  padding: 0 16px;
+  text-align: center;
+  font-variant: small-caps;
+  font-weight: normal;
+  font-size: 28px;
+  color: #fff;
+  background: linear-gradient(to right, transparent, transparent, rgba(0, 0, 0, 0.5), transparent, transparent);
+  text-shadow:
+    0 -2px 6px rgba(255, 255, 200, 0.6),
+    0 1px 0 #646464,
+    0 2px 4px #000;
+}
+#CookieMgrMenu .sim-h1::before,
+#CookieMgrMenu .sim-h1::after {
+  content: '';
+  display: block;
+  height: 1px;
+  margin: 6px 0;
+  background: linear-gradient(to right, transparent, transparent, rgba(255, 255, 255, 0.25), transparent, transparent);
+}
+#CookieMgrMenu .sim-h1 small {
+  display: block;
+  font-variant: normal;
+  margin-top: 2px;
+}
+/* a card: the game's framed panel */
+#CookieMgrMenu.sim-main .ca-card {
+  border: 3px solid transparent;
+  border-image: url(/game/img/frameBorder.png) 3 round;
+  border-radius: 2px;
+  background:
+    url(/game/img/shadedBordersSoft.png) 0 0 / 100% 100%,
+    #000 url(/game/img/darkNoise.jpg);
+  box-shadow:
+    0 0 1px 2px rgba(0, 0, 0, 0.5),
+    0 2px 4px rgba(0, 0, 0, 0.25),
+    inset 0 0 6px 1px rgba(0, 0, 0, 0.5);
+  color: #ccc;
+  text-shadow: 0 1px 1px #000;
+}
+#CookieMgrMenu.sim-main .ca-card-head {
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.5), transparent 60%);
+  border-bottom: none;
+  box-shadow: none;
+}
+#CookieMgrMenu.sim-main .ca-card-head::after {
+  content: '';
+  position: absolute;
+}
+#CookieMgrMenu.sim-main .ca-card-title {
+  font-size: 19px;
+  text-shadow:
+    0 -2px 4px rgba(255, 255, 200, 0.4),
+    0 1px 0 #646464,
+    0 2px 4px #000;
+}
+#CookieMgrMenu.sim-main .ca-stat {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+#CookieMgrMenu.sim-main .ca-stat-value {
+  font-family: 'Merriweather', Georgia, serif;
+  color: #fff;
+  text-shadow:
+    0 -1px 4px rgba(255, 255, 200, 0.35),
+    0 1px 2px #000;
+}
+/* chips and buttons: the game's option buttons */
+#CookieMgrMenu.sim-main .ca-chip,
+#CookieMgrMenu.sim-main .ca-btn,
+#CookieMgrMenu.sim-main .sim-tile {
+  border: 1px solid;
+  border-color: #ece2b6 #875526 #733726 #dfbc9a;
+  border-radius: 2px;
+  background: #000 url(/game/img/darkNoise.jpg);
+  color: #ccc;
+  text-shadow: 0 1px 1px #000;
+  box-shadow:
+    0 0 1px 2px rgba(0, 0, 0, 0.5),
+    inset 0 0 2px 2px #000,
+    inset 0 1px 0 1px rgba(255, 255, 255, 0.35);
+}
+#CookieMgrMenu.sim-main .ca-chip:hover,
+#CookieMgrMenu.sim-main .ca-btn:hover,
+#CookieMgrMenu.sim-main .sim-tile:hover {
+  color: #fff;
+  background-color: #222;
+  background-blend-mode: lighten;
+}
+#CookieMgrMenu.sim-main .ca-chip.on,
+#CookieMgrMenu.sim-main .ca-btn.ca-btn-on,
+#CookieMgrMenu.sim-main .sim-tile.on {
+  color: #fff;
+  border-color: #fff6d0 #c08a3e #a4663e #f0d8b0;
+  background: url(/game/img/shadedBordersGold.png) 0 0 / 100% 100%, #2a1a06 url(/game/img/darkNoise.jpg);
+  text-shadow:
+    0 0 4px rgba(255, 220, 120, 0.8),
+    0 1px 1px #000;
+}
+#CookieMgrMenu.sim-main table.sim-table th {
+  font-variant: small-caps;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  color: #b9ab93;
+}

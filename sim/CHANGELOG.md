@@ -3,6 +3,25 @@
 The simulator is versioned apart from the add-on (`SIM_VERSION` in `sim.mjs`, `sim-v*` tags). Each entry
 says which add-on version it was brought in step with.
 
+## 0.5.0 — 2026-10-27 (add-on v3.34.0)
+
+- **CookieSimMgr's Garden page: golden cookie frequency over game time, gardener by gardener.** For a
+  Farm level (8 by default: the 6×5 plot), each gardener's histogram of the time by its golden cookie
+  frequency bonus (5-point bars), a line at its mean, and — hovering any of them — the share of the
+  time at that bonus or more, on every chart at once (they share their scales, so they compare side by
+  side). The gardeners: the Golden clover field, Golden clover combos, and nursetulips with clover
+  combos (left to grow at their own pace, fertilizer for the clovers only), the same with fertilizer for
+  the nursetulips too, and the nursetulips replanted together; 2, 4, 6 or 8 nursetulips, placed where
+  they boost the most clovers. With nursetulips, the golden zone: how much of the time every one of
+  them is fully grown, for how long at a stretch, and how much of it has every clover mature as well.
+  A summary table above. `/api/garden/frequency` serves it.
+- A fast model for it, `models/gardenFrequency.mjs` (the game's garden rules as `models/garden.mjs`
+  has them, the built-in gardeners' policies, a time-weighted histogram), and the experiment
+  `garden-frequency` that prints the same.
+- **CookieSimMgr looks like Cookie Clicker**: the game's framed panels for cards, its section
+  headings for page titles, its wooden beams along the top and down the menu, store tiles for the menu
+  and its option buttons for chips and buttons — all with the game's own pictures.
+
 ## 0.4.0 — 2026-10-27 (add-on v3.34.0)
 
 - **CookieMgr starts in the simulator as it does in the game.** Which modules start is read from the

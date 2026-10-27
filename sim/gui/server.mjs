@@ -642,6 +642,19 @@ async function route(req, res) {
     return json(res, 200, { id: j.id });
   }
 
+  // --- the Garden page: golden cookie frequency, gardener by gardener (experiments/garden-frequency.mjs --json)
+  if (method === 'POST' && p === '/api/garden/frequency') {
+    const b = await body(req);
+    const n = (v, d, lo, hi) => Math.max(lo, Math.min(hi, Math.round(Number(v)) || d));
+    const args = ['--level', n(b.level, 8, 1, 9), '--hours', n(b.hours, 1000, 10, 20000), '--seeds', n(b.seeds, 3, 1, 20), '--tulips', (Array.isArray(b.tulips) ? b.tulips : [4, 8]).map((k) => n(k, 0, 0, 36)).join(',') || '0'].map(String);
+    const key = args.join(' ');
+    if (!gardenStudies.has(key)) {
+      gardenStudies.set(key, gardenStudy(args));
+      gardenStudies.get(key).catch(() => gardenStudies.delete(key));
+    }
+    return json(res, 200, await gardenStudies.get(key));
+  }
+
   if (parts[1] === 'jobs' && parts[2]) {
     const j = jobs.get(parts[2]);
     if (!j) return fail(res, 404, 'No such job');
@@ -659,6 +672,24 @@ async function route(req, res) {
     }
   }
   return fail(res, 404, 'not found');
+}
+const gardenStudies = new Map(); // its arguments → the study (a promise), so the page asks once
+function gardenStudy(args) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [path.join(ROOT, 'sim', 'cli.mjs'), 'experiment', 'garden-frequency', ...args, '--json'], { cwd: ROOT });
+    let out = '';
+    let err = '';
+    child.stdout.on('data', (d) => (out += d));
+    child.stderr.on('data', (d) => (err += d));
+    child.on('close', (code) => {
+      try {
+        if (code !== 0) throw new Error(err.trim().split('\n').pop() || `garden-frequency exited with ${code}`);
+        resolve(JSON.parse(out));
+      } catch (e) {
+        reject(e);
+      }
+    });
+  });
 }
 function parseSpanSeconds(s) {
   const sp = parseSpan(s);

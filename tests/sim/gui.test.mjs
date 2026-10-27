@@ -85,6 +85,8 @@ assert(/event: result/.test(cmp) && /event: done/.test(cmp) && /"strategy":"chea
 const ex = await post('/api/experiments/garden-clover-cohort', { args: '--hours 50' });
 const exOut = await readStream(`/api/jobs/${ex.id}/stream`, (t) => /event: done/.test(t));
 assert(/steady/.test(exOut) && /cohort/.test(exOut), 'an experiment runs and streams its output');
+const gf = await post('/api/garden/frequency', { level: 8, tulips: [4], hours: 100, seeds: 1 });
+assert(gf.w === 6 && gf.h === 5 && gf.results.length === 5 && gf.results.every((r) => r.bins.length && Math.abs(r.bins.reduce((a, b) => a + b, 0) - 1) < 1e-6), `the Garden page's study: a level-8 plot (6×5), a histogram per gardener (${gf.results && gf.results.map((r) => r.id)})`);
 
 // ---- the page: its real scripts in jsdom, against this server
 const errors = [];
@@ -147,7 +149,7 @@ for (const s of streams) await s.push();
 await sleep(600);
 for (const s of streams) await s.push();
 await sleep(300);
-assert(/the simulator/.test($('[data-sim-versions]').textContent) && doc.querySelectorAll('[data-nav]').length === 5, 'the page: versions, five pages on the beam');
+assert(/the simulator/.test($('[data-sim-versions]').textContent) && doc.querySelectorAll('[data-nav]').length === 6, 'the page: versions, six pages on the beam');
 assert($('[data-sim-runbar]') && /Speed/.test($('[data-sim-runbar]').textContent) && $('[data-sim-stats] .ca-stat'), 'Simulate: the run bar and the stats tiles');
 assert(doc.querySelectorAll('[data-sim-bld] .sim-bld').length >= 2 && /Cursor/.test($('[data-sim-bld]').textContent), `the buildings (${doc.querySelectorAll('[data-sim-bld] .sim-bld').length})`);
 assert(doc.querySelectorAll('[data-sim-macros] .sim-macro').length >= 3 && $('[data-sim-macros] .ca-switch'), 'CookieMgr’s macros, with switches');
@@ -180,7 +182,7 @@ await sleep(250);
 for (const s of streams) await s.push();
 await sleep(200);
 assert(doc.querySelectorAll('[data-ctable] tr').length === 2 && /cheapest/.test($('[data-ctable]').textContent) && $('[data-cchart]'), 'compare: a finished comparison — its table and chart');
-for (const page of ['compare', 'strategies', 'experiments', 'vocab', 'sim']) {
+for (const page of ['compare', 'strategies', 'garden', 'experiments', 'vocab', 'sim']) {
   w.location.hash = `#${page}`;
   await sleep(250);
   assert($('[data-sim-main]').children.length > 0 && $(`[data-nav="${page}"].selected`), `${page}: renders`);
@@ -199,6 +201,12 @@ for (const page of ['compare', 'strategies', 'experiments', 'vocab', 'sim']) {
   }
   if (page === 'vocab') assert(doc.querySelectorAll('[data-lib-insert]').length > 100 && /staging/.test($('[data-sim-main]').textContent), 'vocabulary: the library, staging words marked');
   if (page === 'compare') assert(doc.querySelectorAll('[data-cpick]').length >= 3 && $('[data-cgo]'), 'compare: strategies to pick, and Go');
+  if (page === 'garden') {
+    for (let i = 0; i < 120 && !$('[data-gcard]'); i++) await sleep(250);
+    const cards = doc.querySelectorAll('[data-gcard]');
+    assert(cards.length >= 4 && cards[0].querySelector('svg.sim-hist .sim-h-bar') && cards[0].querySelector('.sim-h-mean') && /level 8/.test($('[data-sim-main]').textContent), `garden: a histogram per gardener, with its mean, on the level-8 plot (${cards.length})`);
+    assert(doc.querySelectorAll('.sim-table tr').length === cards.length + 1, 'garden: the summary table, a row per gardener');
+  }
   if (page === 'experiments') assert(doc.querySelectorAll('[data-ex]').length >= 3 && $('[data-exrun]'), 'experiments: the list, and Run');
 }
 assert(errors.length === 0, `no errors in the page${errors.length ? ': ' + errors.slice(0, 3).join(' | ') : ''}`);
