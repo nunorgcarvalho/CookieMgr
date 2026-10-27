@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## 3.18.0 — 2026-10-27
+## 3.21.0 — 2026-10-27
 
 - **Statistics.** The lines under the store's tooltips are now **statistics**: a few lines of algorithmic code — the
   macro language — that only read the game and end with `return`. In a tooltip, `item` is the building or upgrade
@@ -19,6 +19,22 @@
   `paybackActualRatio(seconds)`. `return` is a statistic's keyword.
 - Your own statistics (and your changes to the built-ins) are saved in a new part of the save, `stats`, and a tooltip
   line can be one of them (`{ stat: id }`). Writing and browsing them gets its own page next.
+## 3.19.0 — 2026-10-27
+
+- **The Golden cookies widget is gone** — the small ring that filled towards the latest the next golden cookie could
+  come. The **Next golden cookie** widget (the chart, the expected wait, the median, the chance within a minute and
+  the effects running) and the **Golden timeline** do everything it did. A saved layout that still has it loads
+  without it; everything else on the panel stays where it was. The Golden cookies *macro* (which pops them) stays.
+
+## 3.18.0 — 2026-10-27
+
+- **Bank warnings, compact.** The warnings that a purchase would take your bank below what a Lucky!, Conjure Baked
+  Goods or a Lucky! in a Frenzy needs to pay its most were up to three long sentences under the store's tooltips.
+  Now anything whose purchase would do it gets a small coloured **!** in the corner of its store button, in the
+  colour of the smallest bank it breaks: red for Lucky!, orange for Conjure, yellow for Frenzy Lucky!. Its tooltip
+  says which in one line of tags, each with how far under you'd be (`⚠ Drops bank below  Lucky! −456 M  Conjure
+  −1.2 B`). Banks you're already under don't warn. Still the **Bank warnings** option (Settings → Store, the Payback
+  page), off by default; `warnings(price)` returns the banks as data (id, name, colour, need, short).
 
 ## 3.17.0 — 2026-10-27
 

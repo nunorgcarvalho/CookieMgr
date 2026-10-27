@@ -455,10 +455,6 @@ checked against Cookie Monster in the real game:
 - **Still to collect** — the upgrades, cookies, heavenly upgrades and achievements you're missing, each season's
   drops, the garden's rare drops — as icons (hover for names).
 
-The **Golden cookies** widget is a ring that fills towards the latest the next golden cookie can come, its label the
-expected wait; hover it for a sparkline of the odds, the median, the soonest, the latest, the chance within a minute
-and the effects running — each with the chance a golden cookie comes before it ends.
-
 ### In the game's own minigames
 
 CookieMgr adds to the game's own tooltips (each with its option):

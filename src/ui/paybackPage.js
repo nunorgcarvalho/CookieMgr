@@ -259,7 +259,7 @@ CA.UI.PaybackPage = (() => {
       `<div class="ca-tl-preview" data-tl-preview>${tooltipPreviewHtml()}</div>` +
       '</div>' +
       '<div class="ca-list">' +
-      `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('bell', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Bank warnings</div><div class="ca-row-desc">Under the lines: a warning when buying would take your bank below what a Lucky! (in a Frenzy too) or Conjure Baked Goods needs to pay its most.</div></div>${C().toggle(!!S.get('storeWarnings'), 'data-pp-opt="storeWarnings"', 'Bank warnings')}</div>` +
+      `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('bell', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Bank warnings</div><div class="ca-row-desc">A coloured “!” on items whose purchase would take your bank below what a Lucky! (red), Conjure (orange) or a Frenzy Lucky! (yellow) needs, and one line under these naming which.</div></div>${C().toggle(!!S.get('storeWarnings'), 'data-pp-opt="storeWarnings"', 'Bank warnings')}</div>` +
       `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('search', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Payback in tooltips</div><div class="ca-row-desc">The block at all (off: the game’s tooltips as they are).</div></div>${C().toggle(!!S.get('storeTooltips'), 'data-pp-opt="storeTooltips"', 'Payback in tooltips')}</div>` +
       '</div></div>'
     );
