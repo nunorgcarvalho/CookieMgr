@@ -12,6 +12,13 @@
   −1.2 B`). Banks you're already under don't warn. Still the **Bank warnings** option (Settings → Store, the Payback
   page), off by default; `warnings(price)` returns the banks as data (id, name, colour, need, short).
 
+## 3.17.0 — 2026-10-27
+
+- **Numbers start on Cookie Monster's own default, the short scale**: 1.23 M, 4.56 B, 7.8 Tr, 1.5 Quadr… 2.3 Dec,
+  4.56 Septendec, 7.89 Octodec, up to Quattuorvigint (1e75; scientific past it, as Cookie Monster), instead of the
+  abbreviated 7.89 ODe. Saves from before this version, which all kept the old default, move over to it; one on
+  another notation keeps it, and the abbreviated scale is still in Settings → General → Numbers.
+
 ## 3.16.0 — 2026-10-27
 
 - **Miscellaneous**, a new card on the Settings page, now holds **Plain Business Day** (it was under General):
