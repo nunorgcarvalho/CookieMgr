@@ -171,13 +171,13 @@ CA.UI.SpawnView = (() => {
     // the part swept so far, shaded under the curve
     const swept = pts.filter(([x]) => x <= nx);
     const area = `M${x0},${y0}` + swept.map(([x, y]) => `L${x.toFixed(2)},${y.toFixed(2)}`).join('') + `L${nx.toFixed(2)},${ny.toFixed(2)}L${nx.toFixed(2)},${y0}Z`;
-    const right = nx > x0 + (x1 - x0) * 0.75; // the label left of the line near the end
     const expAt = d.wait && Number.isFinite(d.wait.mean) ? c.elapsed + d.wait.mean : null; // the expected moment
     const hp = expAt !== null ? c.cdf(expAt) : 0.5;
     // the lines and shapes first, every label after them all (drawn on top: SVG paints in order)
     let labels =
-      `<text class="ca-sp-ylab ca-sp-hp" x="${x0 + 2}" y="${(Y(hp) - 3).toFixed(2)}">${pc(hp)}</text>` +
-      (y0 - y1 >= 60 && Y(hp) - y1 > 20 ? `<text class="ca-sp-ylab" x="${x0 + 2}" y="${(y1 + 8).toFixed(2)}">100%</text>` : ''); // a short chart (a widget): the dashed line's alone
+      // the expected moment's height: far right, under its line
+      `<text class="ca-sp-ylab ca-sp-hp" x="${x1 - 2}" y="${(Y(hp) + 11).toFixed(2)}" text-anchor="end">${pc(hp)}</text>` +
+      (y0 - y1 >= 60 && Y(c.by) - y1 > 24 ? `<text class="ca-sp-ylab" x="${x0 + 2}" y="${(y1 + 8).toFixed(2)}">100%</text>` : ''); // a short chart (a widget): the dashed line's alone
     let plotSvg =
       `<path class="ca-sp-swept" d="${area}"/>` +
       // dashed, across: the curve's height at the expected moment (where the expected line meets it)
@@ -189,8 +189,8 @@ CA.UI.SpawnView = (() => {
       `<line class="ca-sp-nowh" x1="${x0}" x2="${x1}" y1="${ny.toFixed(2)}" y2="${ny.toFixed(2)}"/>` +
       `<circle cx="${nx.toFixed(2)}" cy="${ny.toFixed(2)}" r="3"/></g>`;
     labels +=
-      // its height: right of the now line, just under the dashed line across (over it when that's at the bottom)
-      `<g class="ca-sp-now"><text x="${(nx + (right ? -5 : 5)).toFixed(2)}" y="${(ny + 11 > y0 - 2 ? ny - 4 : ny + 11).toFixed(2)}" text-anchor="${right ? 'end' : 'start'}">${pc(c.by)}</text>` +
+      // its height: far left, over its dashed line across
+      `<g class="ca-sp-now"><text x="${x0 + 2}" y="${(ny - 4).toFixed(2)}">${pc(c.by)}</text>` +
       // the time since the last one left, at its top, on the side away from the expected line
       `<text class="ca-sp-since" x="${(nx + (nx < x0 + 50 ? 4 : -4)).toFixed(2)}" y="${(y1 + 9).toFixed(2)}" text-anchor="${nx < x0 + 50 ? 'start' : 'end'}">${c.elapsed < 1 ? '0s' : F().span(c.elapsed)}</text></g>`;
     // the expected moment (now + the mean wait from now), dashed, with how long until it

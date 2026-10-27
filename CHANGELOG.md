@@ -19,8 +19,8 @@
   word `golden.frequency`. (The game fixes a cycle's timing when the last cookie leaves, so it counts from the next.)
   The frequency effects' chips read the same way now: Lucky day ×2 (twice as often), not ×0.5 (the time between).
 - **Dashed lines across at both moments**: instead of a fixed 50%, a green one where the expected line meets the
-  curve (its percentage on the left, over the line) and a yellow one at the curve's height now (its percentage just
-  right of the now line, under it).
+  curve (its percentage at the right edge, under the line) and a yellow one at the curve's height now (its
+  percentage at the left edge, over the line).
 - **Next golden cookie widget: pick its numbers.** Its settings list each number (next in, median, chance within a
   minute, window, frequency) to switch on or off; all on by default, saved with the widget.
 - The chart's labels (the percentages, the times, “expected”) are drawn over its lines, curve and bars, with a dark
