@@ -110,7 +110,7 @@ CA.UI.CodeKnobs = (() => {
     );
   }
 
-  /** The knobs for code `src` (inside the panel). opts.open: the variable whose ⚙ is open. */
+  /** The knobs for code `src` (inside the panel). opts.open: the variable whose ⚙ is open; opts.fixed: no ⚙ (each shows as suits its value). */
   function inner(src, knobs, opts = {}) {
     const vars = scan(src);
     if (!vars.length) return '';
@@ -127,7 +127,7 @@ CA.UI.CodeKnobs = (() => {
             `<div class="ca-knob${open ? ' open' : ''}" data-knob-row="${esc(v.name)}">` +
             `<span class="ca-knob-label"${v.comment ? ` data-tip="${esc(v.comment)}"` : ''}>${esc(humanize(v.name))}<code>${esc(v.name)}</code></span>` +
             `<span class="ca-knob-ctl">${controlHtml(v, sp)}</span>` +
-            `<button type="button" class="ca-knob-cfg${sp.custom ? ' custom' : ''}" data-knob-cfg="${esc(v.name)}" data-tip="How it shows: kind, range, step">${I('settings', 11)}</button>` +
+            (opts.fixed ? '' : `<button type="button" class="ca-knob-cfg${sp.custom ? ' custom' : ''}" data-knob-cfg="${esc(v.name)}" data-tip="How it shows: kind, range, step">${I('settings', 11)}</button>`) +
             (open ? cfgHtml(v, sp) : '') +
             '</div>'
           );

@@ -436,10 +436,28 @@ The **Tooltips** page (next to Macros) is the store tooltip's block and every st
   for the best upgrade), what it shows, its code (coloured, as in the editor) and how to call it
   (`stat.payback(item)`). Filter by group (Payback, Production, Achievements, Bank), **Yours** or **On screen**, and
   search labels, descriptions and code. One click adds a statistic to the tooltip or takes it out; **Duplicate** makes
-  a copy that's yours (the editor for changing it is next); yours can be deleted (its tooltip lines go too); ☆ puts it
-  on the left panel as a widget.
+  a copy that's yours; yours can be deleted (its tooltip lines go too); ☆ puts it on the left panel as a widget.
+  **New**, **Edit** (yours) and **Customise** (a built-in) open the editor; **Paste** adds one copied as text.
 - **Values**: every word a statistic can read — the `item.*` words first, then statistics, text, and the game's —
   with its signature, what it is and its value now (for the previewed building).
+
+**The statistic editor** opens in place of the catalog, the way the macro editor does, and shares its parts:
+
+- the label and what it shows; its **code name** (`stat.<name>(item)` in macros and other statistics — from the label
+  until you give it one, and kept when you rename it), what it's **about** (a building, an upgrade, either, the game),
+  how its value **reads** (as it reads, a number, a time, a chance, a payback period, text), its **colour** (the
+  item's payback colour, or none) and its **group**;
+- the **code**, checked as a statistic as you type (no actions or waits; `item.*` only in one about an item), with
+  the **library** beside it listing what a statistic can use (the item's words first) and **knobs** for its top-level
+  `name = 0.5` lines;
+- **what it shows**, now, about the best item or one you pick — exactly as its tooltip line would — and **what it
+  did**: each line it ran and what came of it (`gain = 157.5`, `if: no`, `return "+157.5/s"`); click a line number
+  to go to it.
+
+**Save** (refused while the code has a problem), **Cancel**, **As text** (copies it — a few `# label: …` lines, then the
+code — to share or keep; **Paste** on the page adds it back), **Delete** (yours), and for a built-in **Reset** (back
+to the original: a built-in keeps its code name, what it's about and its group; its label, code, format and colour are
+yours to change).
 
 A **Statistic widget** (on the **Data** shelf of Add a widget, beside Quick stats and Latest events) shows one statistic live, as its tooltip line
 would: about **the best** (the best building, the best upgrade or the best buy, as the statistic is about), or a
@@ -996,6 +1014,7 @@ src/
     paybackPage.js   the Payback page: best buy, every building ×1/×10/×100, upgrades, options
     tooltipsPage.js  the Tooltips page: the tooltip's layout and previews, the statistics catalog, the Values
                      list; the Statistic widget
+    statEditor.js    the statistic editor (on the Tooltips page): fields, code, library, knobs, result, trace
     statsPage.js     the Stats page: bank meters, golden cookie odds, prestige, wrinklers, what if, collection
     stockGraph.js    the Stock market page charts: portfolio value / per-stock prices, rolling performance
     stockLog.js      the trade ticker + transaction history table, also on the Stock market page

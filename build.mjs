@@ -91,6 +91,7 @@ const MODULES = [
   'ui/minigameTips.js',
   'ui/ascendTip.js',
   'ui/paybackPage.js',
+  'ui/statEditor.js',
   'ui/tooltipsPage.js',
   'ui/spawnView.js',
   'ui/timelineWidget.js',

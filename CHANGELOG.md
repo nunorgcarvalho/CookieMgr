@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+## 3.28.0 — 2026-10-27
+
+- **The statistic editor.** On the Tooltips page, **New**, **Edit** (yours) and **Customise** (a built-in) open it in
+  place of the catalog, sharing the macro editor's parts:
+  - the label, what it shows, its **code name** (`stat.<name>(item)`; from the label until you give it one), what it's
+    about, how it reads, its colour and its group;
+  - the **code**, checked as a statistic as you type, the **library** of what a statistic can use beside it (the
+    item's words first) and **knobs** for its top-level `name = 0.5` lines;
+  - **what it shows** now about the best item or one you pick, as its tooltip line would, and **what it did** — each
+    line it ran and what came of it; click a line number to go to it.
+  - **Save** (not while the code has a problem), Cancel, **As text** (copy it to share), Delete, and **Reset** for a
+    built-in you've changed (its card says "changed"). **Paste** on the page adds one copied as text.
+- The library lists values **by group** (Values · This item, · Statistics, · Text…), in the macro editor too, where
+  your statistics are words (`stat.priceInCps(Farm)`).
+- For other code: `CA.Script.runStat(flow, env, { trace: true })` → `trace`; `CA.Stats.toText(s)`, `fromText(text)`,
+  `pick(scope, item)`, `keyOf(label)`, `run(s, c, { trace })`; `CodeEditor.html(…, { mode: 'stat', item })`,
+  `libraryHtml(key, { mode })`; `CodeKnobs.inner(…, { fixed })`.
+
 ## 3.27.0 — 2026-10-27
 
 - **A Tooltips page** (next to Macros) for the store tooltip's block and its statistics:
