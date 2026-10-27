@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## 3.29.0 — 2026-10-27
+
+- **Warnings are statistics.** The bank warnings — a purchase that would take your bank below what a Lucky! (red),
+  Conjure Baked Goods (orange) or a Lucky! in a Frenzy (yellow) needs — are now built-in statistics (*Lucky! bank*,
+  *Conjure bank*, *Frenzy Lucky! bank*, in the Bank group) with a **`keep`** knob: how many times that bank to keep.
+  Customise one like any other built-in (Reset brings it back).
+- **Your own warnings**: in the editor, **Shows as: a warning**. When it has something to show about an item, the item
+  gets a "!" in the store in its colour and a tag in the tooltip's ⚠ line with what it returned. Colours: any payback
+  colour (red, orange, yellow, green, blue, purple, gray) or the item's own; a line can take one too.
+- On the Tooltips page, **Warnings**: the switch (Settings → Store → Warnings, was Bank warnings) and the warnings in
+  use, in order — the store's "!" takes the first one's colour; ↑ ↓ ✕, add one, Reset. The catalog has a **Warnings**
+  filter, and a warning's button uses it or stops it. Saved in option `storeWarningList` (null: the three bank
+  warnings).
+- The ⚠ line's tags read "Lucky! bank −1.2M" (was "Drops bank below: Lucky! −1.2M").
+- For other code: `StoreInsight.warnings(context)` → `[{ id, label, html, colour }]` (was `warnings(price)`; `banks()`
+  is gone), `warningList()`, `setWarnings(list)`; `Stats.warning(s, c)`; a statistic's `warn`.
+
 ## 3.28.0 — 2026-10-27
 
 - **The statistic editor.** On the Tooltips page, **New**, **Edit** (yours) and **Customise** (a built-in) open it in

@@ -6,7 +6,8 @@
 //   head      the label, what it shows; Save, Cancel — Reset (a built-in you've changed: back to the
 //             original), Delete (yours), Copy as text
 //   fields    its code name (stat.<name>(item)), what it's about, how its value reads, its colour,
-//             its group — a built-in keeps its name, what it's about and its group
+//             its group, whether it shows as a tooltip line or as a warning (a "!" in the store, a tag
+//             in the ⚠ line) — a built-in keeps its name, what it's about, its group and how it shows
 //   code      the statistic's code, checked as a statistic as you type; the library beside it lists
 //             what a statistic can use, the item's words first
 //   result    what it shows, now, about an item you pick (the best, by default) — as its tooltip line
@@ -28,6 +29,7 @@ CA.UI.StatEditor = (() => {
   const COLOURS = [
     ['none', 'none'],
     ['payback', 'its payback colour'],
+    ...['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'].map((c) => [c, c]),
   ];
   const SCOPE_NAMES = { item: 'a building or an upgrade', building: 'a building', upgrade: 'an upgrade', game: 'the game' };
   const NEW_SOURCE = '# what it works out about the building or upgrade (item)\nreturn item.price() / cps()';
@@ -52,6 +54,7 @@ CA.UI.StatEditor = (() => {
     format: s.format || 'auto',
     colour: s.colour || 'none',
     group: s.group || '',
+    warn: !!s.warn,
     source: s.source || '',
   });
 
@@ -109,17 +112,23 @@ CA.UI.StatEditor = (() => {
       return '<div class="ca-se-none">Nothing to work it out about: no building or upgrade in the store fits.</div>';
     let r;
     let row = null;
+    let w = null;
     try {
       r = ST().run(s, c, { trace: true });
       row = r.error ? null : ST().line(s, c);
+      w = row && s.warn ? ST().warning(s, c) : null;
     } catch (e) {
       r = { error: String(e.message || e), trace: [] };
     }
     const shows = r.error
       ? `<div class="ca-se-bad">${I('close', 11)} ${esc(r.error)}</div>`
-      : row
-        ? `<div class="ca-se-line"><span>${row[0]}</span><b class="${row[2]}">${row[1]}</b></div>`
-        : `<div class="ca-se-none">${r.returned ? 'It returned nothing to show (empty), so its line is left out.' : 'No return: its line is left out.'}</div>`;
+      : w
+        ? `<div class="ca-se-line ca-se-warn"><span>⚠ It warns</span><b><span class="ca-tt-bank ca-tt-bank-${w.colour}">${w.label} <small>${w.html}</small></span></b></div>`
+        : row
+          ? `<div class="ca-se-line"><span>${row[0]}</span><b class="${row[2]}">${row[1]}</b></div>`
+          : s.warn
+            ? `<div class="ca-se-none">No warning about this item (${r.returned ? 'it returned nothing to show' : 'no return'}).</div>`
+            : `<div class="ca-se-none">${r.returned ? 'It returned nothing to show (empty), so its line is left out.' : 'No return: its line is left out.'}</div>`;
     const lines = s.source.split('\n');
     const trace = (r.trace || [])
       .map(
@@ -149,9 +158,20 @@ CA.UI.StatEditor = (() => {
     return (
       '<div class="ca-se-fields">' +
       `<label class="ca-field"><span>Code name</span><input type="text" maxlength="40" spellcheck="false" data-se="key" value="${esc(d.key)}" placeholder="from the label"${off}></label>` +
+      `<label class="ca-field"><span>Shows as</span>${sel(
+        'warn',
+        [
+          ['', 'a tooltip line'],
+          ['yes', 'a warning'],
+        ],
+        d.warn ? 'yes' : '',
+        `${off} data-tip="A warning marks the store’s items it has something to show about, with a “!” in its colour, and a tag in their tooltips"`
+      )}</label>` +
       `<label class="ca-field"><span>About</span>${sel(
         'scope',
-        ST().SCOPES.map((x) => [x, SCOPE_NAMES[x]]),
+        ST()
+          .SCOPES.filter((x) => !d.warn || x !== 'game')
+          .map((x) => [x, SCOPE_NAMES[x]]),
         d.scope,
         off
       )}</label>` +
@@ -282,6 +302,7 @@ CA.UI.StatEditor = (() => {
       format: d.format,
       colour: d.colour,
       group: d.group,
+      warn: d.warn,
       source: d.source,
     };
     if (d.builtin) {
@@ -290,14 +311,20 @@ CA.UI.StatEditor = (() => {
       if (same)
         ST().remove(d.id); // as it came: no version of yours
       else ST().update(d.id, def);
-    } else if (d.id) ST().update(d.id, def);
-    else ST().add(def);
+      return true;
+    }
+    const was = d.id ? !!(ST().get(d.id) || {}).warn : false;
+    const s = d.id ? ST().update(d.id, def) : ST().add(def);
+    // a new warning of yours (or one that just became one) is used straight away
+    const SI = CA.UI.StoreInsight;
+    if (s && s.warn && !was && !SI.warningList().includes(s.id)) SI.setWarnings(SI.warningList().concat([s.id]));
     return true;
   }
 
   function removeIt(id) {
     const SI = CA.UI.StoreInsight;
     SI.setLines(SI.lines().filter((x) => (SI.statOf(x) || {}).id !== id || (x && typeof x === 'object' && x.word)));
+    if (SI.warningList().includes(id)) SI.setWarnings(SI.warningList().filter((x) => x !== id));
     ST().remove(id);
   }
 
@@ -376,6 +403,14 @@ CA.UI.StatEditor = (() => {
       return;
     }
     if (!d.se) return;
+    if (d.se === 'warn') {
+      draft.warn = el.value === 'yes';
+      if (draft.warn && draft.scope === 'game') draft.scope = 'item';
+      if (draft.warn && draft.colour === 'none') draft.colour = 'red';
+      item = 'best';
+      redraw();
+      return;
+    }
     if (d.se === 'scope') {
       draft.scope = el.value;
       item = 'best';

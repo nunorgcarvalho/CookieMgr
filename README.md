@@ -390,8 +390,10 @@ colour for what a click buys now (×1, ×10, ×100, or to the next multiple with
 has a coloured dot in its corner, and under the game's own building and upgrade tooltips a CookieMgr block adds the
 CpS it adds (and its share of your CpS), its payback period (and by actual income, once a minute of play is
 recorded), when you can afford it, a building's share of your production and how many more win its next achievement —
-and, with **Bank warnings** on, a warning when buying it would take your bank below what a Lucky! (in a Frenzy too)
-or Conjure Baked Goods needs to pay its most.
+and, with **Warnings** on, a coloured "!" on the item and a ⚠ line in its tooltip when a warning applies: by default,
+when buying it would take your bank below what a Lucky! (in a Frenzy too) or Conjure Baked Goods needs to pay its
+most. Warnings are statistics too (below): change a bank warning's `keep` (how many times that bank to keep), turn
+one off, or write your own.
 
 **Which lines that block shows, and in what order, is yours to choose** — on the **Tooltips** page (see
 [Tooltips](#tooltips)): add a line (a built-in statistic, one of yours, or **any value word** that takes the building
@@ -421,6 +423,18 @@ statistic is also a value word — `stat.payback(Farm)`, `stat.next(item)` — t
 Text words build what a line says: `fmt.number(x)`, `fmt.short(x)`, `fmt.time(s)`, `fmt.pct(x, 2)`, `fmt.fixed(x, 2)`;
 `finite(x)` and `known(x)` are yes / no.
 
+**A warning is a statistic that shows as a warning**: when it has something to show about an item, the item gets a
+"!" in the store (in the colour of the first warning that applies, in the order you chose) and a tag in its tooltip's
+⚠ line with what it returned. The built-in *Lucky! bank* is
+
+```
+keep = 1   # times that bank
+need = bank.lucky() * keep
+after = cookies() - item.price()
+if cookies() >= need and after < need:
+  return "−" + fmt.number(need - after)
+```
+
 **Upgrades: best first** orders the store's upgrades by colour, then payback period
 (switches last). The store's **Best buy** sort ranks buildings by what a click buys — or the minimum bulk, if more.
 
@@ -431,11 +445,13 @@ The **Tooltips** page (next to Macros) is the store tooltip's block and every st
 - **In the store tooltip**: the block's lines in order, in fixed columns: the line, what it's about (a building, an
   upgrade, either, the game), **its value now** for the previewed building, how a value word reads, and ↑ ↓ ✕ — or drag
   a row. Beside it, two live previews drawn by the tooltip's own code: a building you pick, and the best upgrade. The
-  block's switches (Payback in tooltips, Bank warnings) are here too.
+  block's switch (Payback in tooltips) is here too, and **Warnings**: a switch, and the warnings in use in order (each
+  with its colour and value now; ↑ ↓ ✕, add one, **Reset** to the three bank warnings).
 - **Statistics**: a card per statistic — built-in and yours — with its value for the previewed building (an upgrade's:
   for the best upgrade), what it shows, its code (coloured, as in the editor) and how to call it
-  (`stat.payback(item)`). Filter by group (Payback, Production, Achievements, Bank), **Yours** or **On screen**, and
-  search labels, descriptions and code. One click adds a statistic to the tooltip or takes it out; **Duplicate** makes
+  (`stat.payback(item)`). Filter by group (Payback, Production, Achievements, Bank), **Warnings**, **Yours** or **On
+  screen**, and search labels, descriptions and code. One click adds a statistic to the tooltip or takes it out (a
+  warning: uses it or stops it); **Duplicate** makes
   a copy that's yours; yours can be deleted (its tooltip lines go too); ☆ puts it on the left panel as a widget.
   **New**, **Edit** (yours) and **Customise** (a built-in) open the editor; **Paste** adds one copied as text.
 - **Values**: every word a statistic can read — the `item.*` words first, then statistics, text, and the game's —
