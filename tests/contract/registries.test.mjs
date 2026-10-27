@@ -110,11 +110,11 @@ const strip = (x) =>
       return v;
     })
   );
-const roundTrip = (src, vars) => {
-  const a = CA.Script.compile(src, { vars });
+const roundTrip = (src, vars, more = {}) => {
+  const a = CA.Script.compile(src, { vars, ...more });
   if (a.errors.length) return `compile: line ${a.errors[0].line} ${a.errors[0].message}`;
   const back = CA.Script.decompile(a.flow);
-  const b = CA.Script.compile(back, { vars });
+  const b = CA.Script.compile(back, { vars, ...more });
   if (b.errors.length) return `recompile: line ${b.errors[0].line} ${b.errors[0].message}\n${back}`;
   return JSON.stringify(strip(a.flow)) === JSON.stringify(strip(b.flow)) ? true : `decompiled code compiles differently:\n${back}`;
 };
@@ -141,6 +141,13 @@ every('built-in’s code view compiles to what it runs', builtins.filter((m) => 
   return norm(r.flow) === norm(CA.Macros.programOf(m)) ? true : `runs something else than its code says:\n${code}`;
 });
 every('garden profile’s default rules round-trip', [{ id: 'default rules' }], () => roundTrip(CA.Garden.defaultRules()));
+// ---- statistics: the built-ins compile as statistics and round-trip; the statistic library compiles
+every('built-in statistic compiles and round-trips', CA.Stats.BUILTINS, (st) => roundTrip(st.source, st.scope === 'game' ? [] : ['item'], { mode: 'stat', item: st.scope !== 'game' }));
+every('statistic library entry compiles in a statistic', CA.Script.library({ mode: 'stat' }), (it) => {
+  const code = it.kind === 'value' ? `return ${it.insert}` : it.kind === 'condition' ? `return ${it.insert}` : asCode(it).replace(/^return $/m, 'return 1');
+  const { errors } = CA.Script.compile(code, { mode: 'stat', item: true, vars: ['item'] });
+  return errors.length ? `${it.kind} ${it.id}: line ${errors[0].line} ${errors[0].message}\n${code}` : true;
+});
 k0 = g.errors.length;
 every('repeat / once built-in runs once without throwing', builtins.filter((m) => m.mode === 'repeat' || m.mode === 'once'), (m) => {
   CA.Macros.runOnce(m.id);

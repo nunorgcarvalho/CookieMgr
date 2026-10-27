@@ -27,9 +27,15 @@
 // Values: see VALUES below (and any recorded state: state(cookies)).
 //
 // Every block keeps the line it came from, so a running macro can show where it is.
+//
+// **Statistics** (features/stats.js) are written in the same language, compiled with { mode: 'stat' }:
+// they only read the game (no actions, waits, switches, parallel, stop, forever, while or repeat until),
+// may build lists ([a, b, c]) and end with `return <value>` (no return: nothing to show). runStat() runs
+// one at once, start to finish, with a step limit. Words marked `context` (item.price()…) only exist
+// in a statistic about an item.
 
 CA.Script = (() => {
-  const KEYWORDS = ['if', 'elif', 'else', 'for', 'in', 'repeat', 'until', 'while', 'times', 'forever', 'parallel', 'branch', 'wait', 'seconds', 'second', 'minutes', 'minute', 'stop', 'log', 'switch', 'on', 'off', 'and', 'or', 'not', 'def'];
+  const KEYWORDS = ['if', 'elif', 'else', 'for', 'in', 'repeat', 'until', 'while', 'times', 'forever', 'parallel', 'branch', 'wait', 'seconds', 'second', 'minutes', 'minute', 'stop', 'log', 'switch', 'on', 'off', 'and', 'or', 'not', 'def', 'return'];
   const SUFFIX = { k: 1e3, m: 1e6, b: 1e9, t: 1e12, qa: 1e15, qi: 1e18 };
 
   // ---- values: numbers a condition can compare -------------------------------------------------
@@ -199,7 +205,7 @@ CA.Script = (() => {
 
   // what the source being compiled names: its variables (anything assigned, a for over a live list,
   // a named block's options, a macro's inputs) and its named blocks (def)
-  const freshCtx = (vars) => ({ vars: new Set(vars || []), defs: {}, depth: 0 });
+  const freshCtx = (vars, opts = {}) => ({ vars: new Set(vars || []), defs: {}, depth: 0, mode: opts.mode || 'macro', item: !!opts.item });
   let ctx = freshCtx();
   const CMP = ['>=', '<=', '==', '!=', '>', '<'];
 
@@ -314,10 +320,28 @@ CA.Script = (() => {
     }
     return operand(c);
   }
+  /** A word that only means something in a statistic about an item (item.price()…): here? */
+  function contextOk(def) {
+    if (!def || !def.context) return;
+    if (ctx.mode !== 'stat') throw new Err(`${def.id}() is for statistics — it reads the building or upgrade a tooltip is about`);
+    if (!ctx.item) throw new Err(`${def.id}() needs an item, and this statistic is about the whole game`);
+  }
   function operand(c) {
     const t = c.peek();
     if (!t) throw new Err('expected something to compare');
     if (t.t === 'num' || t.t === 'str') return { v: 'lit', x: c.next().v };
+    // a list: [a, b, c]
+    if (t.t === 'p' && t.v === '[') {
+      c.next();
+      const items = [];
+      while (!c.is('p', ']')) {
+        items.push(sum(c));
+        if (c.is('p', ',')) c.next();
+        else if (!c.is('p', ']')) throw new Err('items are separated by commas');
+      }
+      c.next();
+      return { v: 'list', items };
+    }
     if (t.t === 'id') {
       c.next();
       if (c.is('p', '(')) {
@@ -325,11 +349,15 @@ CA.Script = (() => {
         const a = args(c);
         const def = valueById[t.v];
         if (!def) throw new Err(`“${t.v}” isn’t a value (values: ${VALUES.map((v) => v.id).join(', ')})`);
+        contextOk(def);
         return { v: 'fn', id: t.v, args: a.pos.concat(Object.values(a.named)).map((x) => (x && x.$e ? x.$e : { v: 'lit', x })) };
       }
       if (isVar(t)) return { v: 'var', name: t.v };
       if (t.v === 'true' || t.v === 'false') return { v: 'lit', x: t.v === 'true' };
-      if (valueById[t.v] && !t.sub) return { v: 'fn', id: t.v, args: [] };
+      if (valueById[t.v] && !t.sub) {
+        contextOk(valueById[t.v]);
+        return { v: 'fn', id: t.v, args: [] };
+      }
       return { v: 'lit', x: t.v };
     }
     throw new Err(`expected something to compare, found “${t.v}”`);
@@ -623,6 +651,16 @@ CA.Script = (() => {
       if (!/^(second|seconds|s|sec|secs|minute|minutes|min|mins|m)$/.test(unit)) throw new Err('a time is in seconds or minutes');
       return { node: { type: 'sleep', secs: /^m/.test(unit) ? n * 60 : n, line } };
     }
+    if (kw === 'return') {
+      if (ctx.mode !== 'stat') throw new Err('“return” is for statistics — a macro ends with “stop”');
+      c.next();
+      if (c.done()) return { node: { type: 'return', line } };
+      const e = expr(c);
+      if (!c.done()) throw new Err('something extra at the end of the line');
+      if (e.t === 'val') return { node: { type: 'return', e: e.e, line } };
+      checkCond(e);
+      return { node: { type: 'return', cond: e, line } };
+    }
     if (kw === 'stop') {
       c.next();
       return { node: { type: 'stop', line } };
@@ -702,14 +740,37 @@ CA.Script = (() => {
     root.children.forEach(walk);
   }
 
-  /** Source → { flow: blocks, errors: [{ line, message }] }. opts.vars: names that are variables from the start (a macro's inputs). */
+  // what a statistic can't do: it only reads the game, and has to finish at once
+  const NOT_IN_STATS = {
+    do: 'a statistic only reads the game — it can’t act (that’s for macros)',
+    wait: 'a statistic is worked out at once — it can’t wait',
+    sleep: 'a statistic is worked out at once — it can’t wait',
+    until: 'a statistic is worked out at once — “while” and “repeat until” could run on and on (use for, or repeat N times)',
+    forever: 'a statistic is worked out at once — “forever” never ends',
+    parallel: 'a statistic is worked out at once — it has no branches side by side',
+    stop: 'a statistic ends with “return” (or with nothing to show)',
+  };
+  function checkStat(nodes, errors) {
+    (nodes || []).forEach((n) => {
+      if (NOT_IN_STATS[n.type]) errors.push({ line: n.line || 0, message: NOT_IN_STATS[n.type] });
+      ['then', 'else', 'body'].forEach((k) => checkStat(n[k], errors));
+      (n.branches || []).forEach((b) => checkStat(b, errors));
+    });
+  }
+
+  /**
+   * Source → { flow: blocks, errors: [{ line, message }] }. opts.vars: names that are variables from
+   * the start (a macro's inputs; a statistic's `item`); opts.mode: 'macro' (the default) or 'stat';
+   * opts.item: a statistic about an item (its words, item.price()…, allowed).
+   */
   function compile(source, opts = {}) {
     const { root, errors } = lineTree(source);
     let flow = [];
-    ctx = freshCtx(opts.vars);
+    ctx = freshCtx(opts.vars, opts);
     try {
       prescan(root, errors);
       flow = block(root.children, {}, errors);
+      if (opts.mode === 'stat') checkStat(flow, errors);
     } catch (e) {
       errors.push({ line: 0, message: String(e.message || e) });
     } finally {
@@ -734,6 +795,7 @@ CA.Script = (() => {
     if (o.v === 'lit') return o.x;
     if (o.v === 'var') return env && Object.prototype.hasOwnProperty.call(env, o.name) ? env[o.name] : undefined;
     if (o.v === 'neg') return -num(valueOf(o.a, env));
+    if (o.v === 'list') return o.items.map((x) => valueOf(x, env));
     if (o.v === 'bin') {
       const a = valueOf(o.a, env);
       const b = valueOf(o.b, env);
@@ -820,6 +882,7 @@ CA.Script = (() => {
     // inside a call's brackets a word is always text: no quotes needed there
     if (o.v === 'fn') return `${o.id}(${(o.args || []).map((a) => (a.v === 'lit' ? litText(a.x) : exprText(a))).join(', ')})`;
     if (o.v === 'neg') return `-${exprText(o.a, 3)}`;
+    if (o.v === 'list') return `[${o.items.map((x) => exprText(x)).join(', ')}]`;
     const p = PREC[o.op] || 1;
     const s = `${exprText(o.a, p)} ${o.op} ${exprText(o.b, p, true)}`;
     return p < outer || (right && p === outer) ? `(${s})` : s;
@@ -857,6 +920,7 @@ CA.Script = (() => {
         if (n.type === 'each') return `${pad}for ${n.name} in ${exprText(n.list)}:\n${decompile(n.body, depth + 1)}`;
         if (n.type === 'set') return `${pad}${n.name} = ${n.cond ? condText(n.cond) : exprText(n.e)}`;
         if (n.type === 'stop') return `${pad}stop`;
+        if (n.type === 'return') return `${pad}return${n.cond ? ` ${condText(n.cond)}` : n.e ? ` ${exprText(n.e)}` : ''}`;
         if (n.type === 'log') return n.e ? `${pad}log ${exprText(n.e)}` : `${pad}log "${n.text}"`;
         if (n.type === 'if') return `${pad}if ${condText(n.cond)}:\n${decompile(n.then, depth + 1)}${n.else && n.else.length ? `\n${pad}else:\n${decompile(n.else, depth + 1)}` : ''}`;
         if (n.type === 'parallel') return `${pad}parallel:\n${(n.branches || []).map((b, i) => `${pad}  branch${n.labels && n.labels[i] ? ` ${n.labels[i]}` : ''}:\n${decompile(b, depth + 2)}`).join('\n')}`;
@@ -866,16 +930,57 @@ CA.Script = (() => {
       .join('\n');
   }
 
+  // ---- running a statistic --------------------------------------------------------------------------
+
+  const STEP_LIMIT = 5000;
+  /**
+   * Runs a statistic's blocks (compiled with { mode: 'stat' }) start to finish. `env`: its variables
+   * to start with (item). → { returned, value, vars, steps, error } — vars: every variable as it ended
+   * (a statistic may set label, note, colour); error: what stopped it (the step limit).
+   */
+  function runStat(flow, env = {}) {
+    const vars = { ...env };
+    let steps = 0;
+    const DONE = {};
+    let out = { returned: false, value: undefined };
+    const run = (nodes) => {
+      (nodes || []).forEach((n) => {
+        if (++steps > STEP_LIMIT) throw new Error(`still going after ${STEP_LIMIT} steps — a loop too long?`);
+        if (n.type === 'set') vars[n.name] = n.cond ? evaluate(n.cond, vars).ok : valueOf(n.e, vars);
+        else if (n.type === 'if') run(evaluate(n.cond, vars).ok ? n.then : n.else);
+        else if (n.type === 'times') for (let i = 0; i < n.n; i++) run(n.body);
+        else if (n.type === 'each') {
+          const list = valueOf(n.list, vars);
+          (Array.isArray(list) ? list.slice() : []).forEach((it) => {
+            vars[n.name] = it;
+            run(n.body);
+          });
+        } else if (n.type === 'return') {
+          out = { returned: true, value: n.cond ? evaluate(n.cond, vars).ok : n.e ? valueOf(n.e, vars) : undefined };
+          throw DONE;
+        }
+        // log: nothing to write to here
+      });
+    };
+    try {
+      run(flow);
+    } catch (e) {
+      if (e !== DONE) return { returned: false, value: undefined, vars, steps, error: String(e.message || e) };
+    }
+    return { ...out, vars, steps };
+  }
+
   // ---- the library beside the editor ------------------------------------------------------------
 
-  /** Everything you can write, for the side table: [{ kind, id, sig, desc, group, insert }]. */
-  function library() {
+  /** Everything you can write, for the side table: [{ kind, id, sig, desc, group, insert }]. opts.mode 'stat': a statistic's (words about its item too, no actions). */
+  function library(opts = {}) {
+    const stat = opts.mode === 'stat';
     const items = [];
     const sig = (id, def) => `${id}(${((def && def.params) || []).map((p) => p.key).join(', ')})`;
     const snippet = (id, def) => `${id}(${argText(def, {}) || ((def && def.params) || []).map((p) => (p.default !== undefined && p.default !== '' ? litText(p.default) : p.key)).join(', ')})`;
-    CA.Actions.all().filter((a) => !a.hidden).forEach((a) => items.push({ kind: 'action', id: a.id, sig: sig(a.id, a), desc: a.name, group: a.group, icon: a.icon, insert: snippet(a.id, a) }));
+    if (!stat) CA.Actions.all().filter((a) => !a.hidden).forEach((a) => items.push({ kind: 'action', id: a.id, sig: sig(a.id, a), desc: a.name, group: a.group, icon: a.icon, insert: snippet(a.id, a) }));
     CA.Conditions.all().forEach((c) => items.push({ kind: 'condition', id: c.id, sig: sig(c.id, c), desc: c.name, group: 'Conditions', icon: c.icon, insert: snippet(c.id, c) }));
-    VALUES.filter((v) => !v.hidden).forEach((v) => items.push({ kind: 'value', id: v.id, sig: `${v.id}(${(v.params || []).join(', ')})`, desc: v.desc, group: 'Values', icon: 'graphs', insert: `${v.id}(${(v.params || []).join(', ')})` }));
+    VALUES.filter((v) => !v.hidden && (stat || !v.context)).forEach((v) => items.push({ kind: 'value', id: v.id, sig: `${v.id}(${(v.params || []).join(', ')})`, desc: v.desc, group: 'Values', icon: 'graphs', insert: `${v.id}(${(v.params || []).join(', ')})` }));
     [
       ['repeat until …:', 'run the block each pass until something holds', 'repeat until cookies() >= 1e12:\n  '],
       ['while …:', 'run the block each pass while something holds', 'while buff(Frenzy):\n  '],
@@ -892,7 +997,10 @@ CA.Script = (() => {
       ['switch on / off …', 'switch another macro', 'switch on golden'],
       ['stop', 'end the macro here', 'stop'],
       ['log …', 'write to its trace (text, or a value)', 'log "here"'],
-    ].forEach(([s, d, ins]) => items.push({ kind: 'keyword', id: s, sig: s, desc: d, group: 'Keywords', icon: 'edit', insert: ins }));
+      ['return …', 'a statistic’s result (no return: nothing to show)', 'return '],
+    ]
+      .filter(([s]) => (stat ? !/^(repeat until|while|forever|parallel|wait|switch|stop)/.test(s) : s !== 'return …'))
+      .forEach(([s, d, ins]) => items.push({ kind: 'keyword', id: s, sig: s, desc: d, group: 'Keywords', icon: 'edit', insert: ins }));
     return items;
   }
 
@@ -952,7 +1060,14 @@ CA.Script = (() => {
     valueById[v.id] = v;
     return v;
   }
+  /** Takes a value away again (a statistic deleted or renamed). */
+  function removeValue(id) {
+    const v = valueById[id];
+    if (!v) return;
+    delete valueById[id];
+    VALUES.splice(VALUES.indexOf(v), 1);
+  }
   const isValue = (id) => !!valueById[id];
 
-  return { compile, evaluate, value: valueOf, resolve, exprText, decompile, library, lookups, defineLookup, litText, defineValue, isValue, VALUES, KEYWORDS, tokenize };
+  return { compile, evaluate, value: valueOf, resolve, exprText, decompile, library, lookups, defineLookup, litText, defineValue, removeValue, isValue, runStat, VALUES, KEYWORDS, tokenize };
 })();
