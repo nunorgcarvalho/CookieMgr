@@ -67,7 +67,7 @@ assert(page('clickers').querySelector('.ca-list .ca-row.ca-macro'), 'your macros
 CA.UI.Menu.openPage('widgets');
 const cards = page('widgets').querySelectorAll('.ca-wpick .ca-wtile');
 // v3.6: + the Golden cookies widget
-assert(cards.length === 12, `widget gallery: macro buttons + 11 kinds (${cards.length})`); // v3.12: + Golden timeline, Next golden cookie, Effect timers; v3.19: − Golden cookies; v3.25: + Statistic
+assert(cards.length === 14, `widget gallery: macro buttons + 13 kinds (${cards.length})`); // v3.12: + Golden timeline, Next golden cookie, Effect timers; v3.19: − Golden cookies; v3.24: + Chart, Golden cookie frequency; v3.27: + Statistic
 click(w, page('widgets').querySelector('.ca-wtile[data-w-page-add="pantheon"]'));
 assert(CA.UI.Widgets.has('pantheon') && page('widgets').querySelector('.ca-wtile.placed[data-w-page-remove="pantheon"]'), 'Add from a card; it shows placed');
 

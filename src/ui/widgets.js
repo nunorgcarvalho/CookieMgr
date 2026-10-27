@@ -32,7 +32,13 @@
 //     summary under the name; ring = the colour of a round (bare) widget's ring on its tile (default gold).
 //   CA.UI.Widgets.defineGroup({ id, name, sprite, order })   a shelf of the picker; shelves sort by order
 //
-// nameOf(inst) on a type: a name of its own per widget (a Statistic widget's: its statistic's).
+// iconOf(inst): an icon of its own per widget (a chart's: its chart's); nameOf(inst): a name of its own
+// (a Statistic widget's: its statistic's).
+// live(inst, body) runs after each render and refresh, for a widget that draws into its own nodes
+// (a chart's canvas); removed(inst) when it's taken away.
+//
+// Stars: a page's ☆ (CA.UI.C.widgetStar) adds a ready-made widget — a preset, its type and the
+// settings that make it that one — and takes it away again; hasPreset() says whether it's there.
 
 CA.UI = CA.UI || {};
 
@@ -48,7 +54,7 @@ CA.UI.Widgets = (() => {
   const FONT_MAX = 200;
   const MIN_W = 140;
   const MIN_H = 60;
-  const SAVED = ['stat', 'item', 'count', 'types', 'stats', 'nums', 'font', 'title', 'target', 'targetMagic', 'bg', 'sort', 'barScale']; // per-widget settings that are saved
+  const SAVED = ['plot', 'stat', 'item', 'count', 'types', 'stats', 'nums', 'font', 'title', 'target', 'targetMagic', 'bg', 'sort', 'barScale']; // per-widget settings that are saved
   const BG = [[100, 'Solid'], [40, 'Faint'], [0, 'None']]; // background opacity (%) while not hovered
   const S = () => CA.Settings;
   const I = (n, s) => CA.UI.Icons.html(n, s);
@@ -166,12 +172,57 @@ CA.UI.Widgets = (() => {
       return;
     }
     widgets.splice(widgets.indexOf(w), 1);
+    const t = typeById[w.type];
+    if (t && t.removed) t.removed(w);
     changed();
   }
 
   function changed() {
     render();
+    syncStars();
     CA.Events.emit('widgets');
+  }
+
+  // ---- stars: ready-made widgets from the pages --------------------------------------------------
+
+  const matches = (w, preset) => Object.keys(preset).every((k) => w[k] === preset[k]);
+  const hasPreset = (preset) => widgets.some((w) => matches(w, preset));
+  const presetOf = (el) => {
+    try {
+      const p = JSON.parse(el.dataset.wStar);
+      return p && typeof p.type === 'string' ? p : null;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  /** A star was clicked: adds its widget (showing widgets if they were hidden), or takes it away. */
+  function toggleStar(el) {
+    const preset = presetOf(el);
+    if (!preset || !typeById[preset.type]) return;
+    const name = el.dataset.name || nameOf(preset);
+    if (hasPreset(preset)) {
+      widgets.filter((w) => matches(w, preset)).forEach((w) => remove(w.id));
+      return;
+    }
+    const { type, ...extra } = preset;
+    add(type, null, extra);
+    if (!S().get('widgetsShown')) S().set('widgetsShown', true);
+    CA.Util.notify(name, 'Added as a widget on the left panel — drag it wherever you like.', CA.ICON, 2);
+  }
+
+  /** Every star on screen shows whether its widget is there. */
+  function syncStars() {
+    document.querySelectorAll('[data-w-star]').forEach((el) => {
+      const preset = presetOf(el);
+      if (!preset) return;
+      const on = hasPreset(preset);
+      if (el.classList.contains('on') === on) return;
+      el.classList.toggle('on', on);
+      el.setAttribute('aria-pressed', String(on));
+      el.dataset.tip = CA.UI.C.starTip(on, el.dataset.name || '');
+      el.innerHTML = I(on ? 'star' : 'starOutline', 14);
+    });
   }
 
   const list = () => widgets.slice();
@@ -183,6 +234,11 @@ CA.UI.Widgets = (() => {
     if (w.type === 'macro') {
       const m = CA.Macros.get(w.macro);
       return m ? m.name : 'Macro button';
+    }
+    // a page's chart: its name ("Garden growth")
+    if (w.type === 'chart') {
+      const p = CA.UI.Plot.widgetable().find((x) => x.id === w.plot);
+      if (p) return p.title;
     }
     const t = typeById[w.type];
     if (t && t.nameOf) return t.nameOf(w) || t.name;
@@ -214,7 +270,7 @@ CA.UI.Widgets = (() => {
   };
 
   // glowing: hovered on the Widgets page, or its settings open there
-  const glow = (w) => (w.id === linked || (w.id === editing && pageRoot) ? ' ca-w-linked' : '');
+  const glow = (w) => (isLinked(w) || (w.id === editing && pageRoot) ? ' ca-w-linked' : '');
 
   function frameHtml(w) {
     const t = typeById[w.type];
@@ -233,7 +289,7 @@ CA.UI.Widgets = (() => {
     return (
       `<div class="ca-w${w.collapsed ? ' collapsed' : ''}${w.h ? ' sized' : ''}${bg < 1 ? ' ca-w-clear' : ''}${glow(w)}" data-widget="${w.id}" style="${fs}${bg < 1 ? `;--wbg:${bg}` : ''};width:${w.w || t.width}px${w.h && !w.collapsed ? `;height:${w.h}px` : ''}">` +
       '<div class="ca-w-head" data-w-drag>' +
-      `${I(t.icon, 12)}<span class="ca-w-title">${esc(nameOf(w))}</span>` +
+      `${I(t.iconOf ? t.iconOf(w) : t.icon, 12)}<span class="ca-w-title">${esc(nameOf(w))}</span>` +
       `<button type="button" class="ca-w-btn" data-w-settings aria-label="Settings">${I('settings', 10)}</button>` +
       `<button type="button" class="ca-w-btn" data-w-collapse aria-label="${w.collapsed ? 'Expand' : 'Collapse'}">${w.collapsed ? '▸' : '▾'}</button>` +
       `<button type="button" class="ca-w-btn" data-w-remove aria-label="Remove widget">${I('close', 10)}</button>` +
@@ -295,6 +351,20 @@ CA.UI.Widgets = (() => {
       const el = layer.querySelector(`[data-widget="${w.id}"]`);
       if (el) place(el, w);
     });
+    widgets.forEach(live);
+  }
+
+  /** A type that draws into its own nodes (a chart) gets its body after every render and refresh. */
+  function live(w) {
+    const t = typeById[w.type];
+    if (!t || !t.live || w.collapsed || !layer) return;
+    const body = layer.querySelector(`[data-widget="${w.id}"] [data-w-body]`);
+    if (!body) return;
+    try {
+      t.live(w, body);
+    } catch (e) {
+      /* drawn again next refresh */
+    }
   }
 
   /** Refreshes each widget's content in place (positions untouched). */
@@ -306,6 +376,7 @@ CA.UI.Widgets = (() => {
       const body = layer.querySelector(`[data-widget="${w.id}"] [data-w-body]`);
       const t = typeById[w.type];
       if (body && t) CA.UI.Dom.morph(body, safeHtml(t, w));
+      live(w);
     });
   }
 
@@ -581,18 +652,24 @@ CA.UI.Widgets = (() => {
 
   // ---- linking: a widget on the page ⇄ the same widget on the left panel ------------------
 
-  let linked = null; // the widget hovered on either side
+  let linked = null; // the widget hovered on either side (its id), or every widget of a kind: 'type:<id>' (a picker tile)
+
+  const isLinked = (w) => !!w && (w.id === linked || (!!linked && linked === `type:${w.type}`));
 
   /** Puts the glow on the widgets that should have it (without redrawing them). */
   function refreshGlow() {
-    if (layer) layer.querySelectorAll('[data-widget]').forEach((el) => el.classList.toggle('ca-w-linked', el.dataset.widget === linked || (el.dataset.widget === editing && !!pageRoot)));
+    if (layer) layer.querySelectorAll('[data-widget]').forEach((el) => el.classList.toggle('ca-w-linked', isLinked(get(el.dataset.widget)) || (el.dataset.widget === editing && !!pageRoot)));
   }
 
   function setLinked(id) {
     if (id === linked) return;
     linked = id;
     refreshGlow();
-    if (pageRoot) pageRoot.querySelectorAll('[data-wlink]').forEach((el) => el.classList.toggle('linked', el.dataset.wlink === id));
+    if (pageRoot) {
+      pageRoot.querySelectorAll('[data-wlink]').forEach((el) => el.classList.toggle('linked', isLinked(get(el.dataset.wlink))));
+      // a tile lights up with its widgets: hovered itself, or one of them hovered on the panel
+      pageRoot.querySelectorAll('[data-wlink-type]').forEach((el) => el.classList.toggle('linked', linked === `type:${el.dataset.wlinkType}` || (!!linked && (get(linked) || {}).type === el.dataset.wlinkType)));
+    }
   }
 
   /** Where each widget sits on the left panel, in % of it (measured; from its saved place when it can't be). */
@@ -632,7 +709,7 @@ CA.UI.Widgets = (() => {
           const t = typeById[w.type];
           const icon = w.type === 'macro' && CA.Macros.get(w.macro) ? CA.UI.MacrosPage.icon(CA.Macros.get(w.macro), true) : I(t.icon, 12);
           return (
-            `<button type="button" class="ca-wmap-item${t.bare ? ' bare' : ''}${w.id === linked ? ' linked' : ''}${w.id === editing ? ' editing' : ''}" data-wlink="${esc(w.id)}" data-w-page-edit="${esc(w.id)}" ` +
+            `<button type="button" class="ca-wmap-item${t.bare ? ' bare' : ''}${isLinked(w) ? ' linked' : ''}${w.id === editing ? ' editing' : ''}" data-wlink="${esc(w.id)}" data-w-page-edit="${esc(w.id)}" ` +
             `style="left:${p.l.toFixed(2)}%;top:${p.t.toFixed(2)}%;width:${p.w.toFixed(2)}%;height:${p.h.toFixed(2)}%" data-tip="${esc(nameOf(w))} — click for its settings">${icon}</button>`
           );
         })
@@ -649,7 +726,7 @@ CA.UI.Widgets = (() => {
         const t = typeById[w.type];
         const icon = w.type === 'macro' && CA.Macros.get(w.macro) ? CA.UI.MacrosPage.icon(CA.Macros.get(w.macro), true) : I(t.icon, 13);
         return (
-          `<span class="ca-wchip${w.id === editing ? ' editing' : ''}${w.id === linked ? ' linked' : ''}" data-wlink="${esc(w.id)}">` +
+          `<span class="ca-wchip${w.id === editing ? ' editing' : ''}${isLinked(w) ? ' linked' : ''}" data-wlink="${esc(w.id)}">` +
           `<button type="button" class="ca-wchip-main" data-w-page-edit="${esc(w.id)}" data-tip="Settings">${icon}<b>${esc(nameOf(w))}</b>${I('settings', 11)}</button>` +
           `<button type="button" class="ca-wchip-x" data-w-page-del="${esc(w.id)}" data-tip="Remove">${I('close', 9)}</button></span>`
         );
@@ -726,6 +803,7 @@ CA.UI.Widgets = (() => {
         // ids go into attributes and selectors: only plain ones are kept
         const out = { id: /^[\w-]{1,40}$/.test(String(w.id)) ? String(w.id) : newId(), type: w.type, x: w.x, y: w.y, collapsed: !!w.collapsed };
         if (w.macro) out.macro = String(w.macro);
+        if (typeof w.plot === 'string') out.plot = w.plot.slice(0, 40);
         if (Number.isFinite(w.scale)) out.scale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, w.scale));
         if (Number.isFinite(w.w)) out.w = Math.max(MIN_W, w.w);
         if (Number.isFinite(w.h)) out.h = Math.max(MIN_H, w.h);
@@ -763,12 +841,13 @@ CA.UI.Widgets = (() => {
     if (o.link) {
       act = 'Click to open the Macros page';
       pill = 'Open';
-    } else if (o.single && n) {
-      act = 'Placed — click to remove it';
+    } else if (n) {
+      act = o.single ? 'Placed — click to remove it' : `${n} placed — click to remove the newest; + Add places another`;
       pill = 'Remove';
-    } else if (n) act = `${n} placed — click to add another`;
+    }
     const cls = `ca-wtile${n || o.badge ? ' placed' : ''}${o.single ? ' single' : ''}`;
-    const attr = o.single && n ? `data-w-page-remove="${o.id}"` : o.link ? 'data-ca="open-macros"' : `data-w-page-add="${o.id}"`;
+    const attr = (n && !o.link ? `data-w-page-remove="${o.id}"` : o.link ? 'data-ca="open-macros"' : `data-w-page-add="${o.id}"`) + (o.link ? '' : ` data-wlink-type="${o.id}"`);
+    const more = n && !o.single && !o.link ? `<button type="button" class="ca-btn ca-btn-small ca-wtile-add" data-w-page-add="${o.id}">${I('plus', 10)} Add</button>` : '';
     const tag = o.link ? o.badge : n ? (o.single ? '✓' : `×${n}`) : '';
     let ico;
     if (o.sprite) ico = `<i class="${o.sheet ? 'ca-wcrate-plant' : ''}" style="${spriteVar(o.sprite)}"></i>`;
@@ -780,6 +859,7 @@ CA.UI.Widgets = (() => {
       `<span class="ca-wadd${pill === 'Remove' ? ' remove' : ''}">${pill}</span></div>` +
       `<div class="ca-wtile-name">${esc(o.name)}</div>` +
       (o.short ? `<div class="ca-wtile-sub">${esc(o.short)}</div>` : '') +
+      more +
       `<div class="ca-wpop ca-wtip"><div class="ca-wtip-head">${esc(o.name)}<span class="ca-wshape">${shape}</span></div>${o.descHtml || esc(o.desc || '')}<div class="ca-wtip-act">${act}</div></div>` +
       '</div>'
     );
@@ -866,8 +946,8 @@ CA.UI.Widgets = (() => {
 
   let pageRoot = null;
   function onPageHover(e) {
-    const el = e.target.closest && e.target.closest('[data-wlink]');
-    setLinked(el ? el.dataset.wlink : null);
+    const el = e.target.closest && e.target.closest('[data-wlink],[data-wlink-type]');
+    setLinked(el ? el.dataset.wlink || `type:${el.dataset.wlinkType}` : null);
   }
   function onLayerHover(e) {
     const el = e.target.closest && e.target.closest('[data-widget]');
@@ -900,7 +980,11 @@ CA.UI.Widgets = (() => {
     if ('wPageAdd' in d) {
       add(d.wPageAdd);
       if (!S().get('widgetsShown')) S().set('widgetsShown', true);
-    } else if ('wPageRemove' in d) widgets.filter((w) => w.type === d.wPageRemove).forEach((w) => remove(w.id));
+    } else if ('wPageRemove' in d) {
+      const of = widgets.filter((w) => w.type === d.wPageRemove);
+      const t = typeById[d.wPageRemove];
+      (t && t.single ? of : of.slice(-1)).forEach((w) => remove(w.id));
+    }
     else if ('wPageEdit' in d) {
       editing = d.wPageEdit;
       CA.UI.Menu.render();
@@ -911,6 +995,7 @@ CA.UI.Widgets = (() => {
     else if ('wEditDone' in d) editing = null;
     else if ('wPageClear' in d) {
       if (!CA.UI.Dom.armed(t)) return;
+      widgets.forEach((w) => w.type !== 'macro' && typeById[w.type] && typeById[w.type].removed && typeById[w.type].removed(w));
       widgets = widgets.filter((w) => w.type === 'macro');
       widgets.forEach((w) => CA.Macros.setFav(w.macro, false));
       editing = null;
@@ -969,5 +1054,5 @@ CA.UI.Widgets = (() => {
     render();
   }
 
-  return { init, defineType, defineGroup, types: () => types.slice(), add, remove, list, get, has, serialize, load, render, tick, reconcile, openSettings, editing: () => editing };
+  return { init, defineType, defineGroup, types: () => types.slice(), add, remove, toggleStar, hasPreset, syncStars, list, get, has, serialize, load, render, tick, reconcile, openSettings, editing: () => editing };
 })();

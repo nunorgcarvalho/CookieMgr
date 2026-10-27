@@ -165,7 +165,7 @@ CA.UI.TooltipsPage = (() => {
   // ---- the catalog --------------------------------------------------------------------------------
 
   const widgetPreset = (s) => ({ type: 'statistic', stat: s.id });
-  const onScreen = (s) => CA.UI.Widgets.list().some((w) => w.type === 'statistic' && w.stat === s.id);
+  const onScreen = (s) => CA.UI.Widgets.hasPreset(widgetPreset(s));
   const matchesQuery = (hay) => !query || hay.toLowerCase().includes(query.toLowerCase());
 
   function statsShown() {
@@ -190,7 +190,7 @@ CA.UI.TooltipsPage = (() => {
     const [v, cls] = valueNow(s);
     const c = ctxFor(s.scope);
     const inTt = inTooltip(s.id);
-    const star = C().widgetStar ? C().widgetStar(widgetPreset(s), s.label) : '';
+    const star = C().widgetStar(widgetPreset(s), s.label);
     const call = `stat.${s.key}(${s.scope === 'game' ? '' : 'item'})`;
     return (
       `<div class="ca-st-card${s.builtin ? '' : ' yours'}" data-st-card="${esc(s.id)}">` +
@@ -490,6 +490,14 @@ CA.UI.TooltipsPage = (() => {
       .on('dragend', onDragEnd)
       .every(SYNC_MS, sync);
     life.add(CA.Events.on('stats', refresh));
+    // a ☆ clicked (here, or a widget taken away on the panel): the On screen count, and its list
+    life.add(
+      CA.Events.on('widgets', () => {
+        const chips = root && root.querySelector('[data-st-chips]');
+        if (chips) CA.UI.Dom.morph(chips, chipsHtml());
+        if (filter === 'onscreen') refresh();
+      })
+    );
   }
   function unmount() {
     if (life) life.close();

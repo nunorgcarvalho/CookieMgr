@@ -13,7 +13,7 @@ const CA = w.CookieMgr;
 
 // ---- sidebar -------------------------------------------------------------------------
 const items = $$('#CookieMgrTab [data-tab-item]');
-// v3.6: Stats and Payback (the in-house Cookie Monster) join the data pages; v3.25: Tooltips
+// v3.6: Stats and Payback (the in-house Cookie Monster) join the data pages; v3.27: Tooltips
 assert(items.length === 12, `sidebar has one item per page (12), got ${items.length}`);
 assert(
   JSON.stringify(items.map((i) => i.querySelector('.ca-tab-label').textContent)) ===

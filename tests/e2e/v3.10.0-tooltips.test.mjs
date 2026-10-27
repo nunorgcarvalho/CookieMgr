@@ -73,7 +73,7 @@ CA.Settings.set('storeWarnings', false);
 assert(!/ca-tt-warn/.test(tip('Grandma')), 'off: none');
 Game.cookies = 1e4;
 
-// ---- the layout card (v3.25: on the Tooltips page)
+// ---- the layout card (v3.27: on the Tooltips page)
 SI.setLines(null);
 CA.UI.Menu.openPage('tooltips');
 await sleep(50);

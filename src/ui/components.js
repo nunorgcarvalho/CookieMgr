@@ -47,6 +47,21 @@ CA.UI.C = (() => {
     return `<div class="ca-card-head"><div class="ca-card-title">${ico}${title}</div>${meta}</div>`;
   }
 
+  /**
+   * ☆ / ★: puts a ready-made widget on the left panel, or takes it away again — as a macro's star
+   * gives it a button. `preset` is the widget: its type and the settings that make it this one
+   * ({ type: 'chart', plot: 'garden' }); `name` is what the tip calls it. menu.js handles the
+   * click (CA.UI.Widgets.toggleStar), and every star on screen follows the widgets (syncStars).
+   */
+  function widgetStar(preset, name) {
+    const on = CA.UI.Widgets.hasPreset(preset);
+    return (
+      `<button type="button" class="ca-iconbtn ca-fav ca-wstar${on ? ' on' : ''}" data-ca="widget-star" data-w-star="${esc(JSON.stringify(preset))}" data-name="${esc(name)}" ` +
+      `data-tip="${esc(starTip(on, name))}" aria-pressed="${on}">${CA.UI.Icons.html(on ? 'star' : 'starOutline', 14)}</button>`
+    );
+  }
+  const starTip = (on, name) => (on ? `On the left panel as a widget — click to take it away` : `Put “${name}” on the left panel as a widget`);
+
   /** A link to another CookieMgr page (menu.js handles data-ca="goto"). */
   const link = (label, page) => `<a class="ca-link" data-ca="goto" data-page="${esc(page)}" role="link" tabindex="0">${label}</a>`;
 
@@ -54,5 +69,5 @@ CA.UI.C = (() => {
   const gameLink = (building, label = 'Open in game') =>
     `<button type="button" class="ca-btn ca-btn-small ca-btn-game" data-ca="open-mg" data-building="${esc(building)}">${CA.UI.Icons.html('open', 12)} ${label}</button>`;
 
-  return { icon, toggle, hotkey, button, cardHead, esc, link, gameLink };
+  return { icon, toggle, hotkey, button, cardHead, esc, link, gameLink, widgetStar, starTip };
 })();
