@@ -5789,6 +5789,221 @@ body.ca-has-storebar #products {
   white-space: normal;
 }
 
+/* ---------- v3.15: see-through widgets (ui/widgets.js), the Effect timers widget (ui/effectTimers.js) ---------- */
+
+/* Background: Faint / None — the box is drawn by ::before at --wbg, and fades in while hovered */
+#CookieMgrWidgets .ca-w.ca-w-clear {
+  background: none;
+  border-color: transparent;
+  box-shadow: none;
+}
+#CookieMgrWidgets .ca-w.ca-w-clear::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  pointer-events: none;
+  border: 1px solid;
+  border-color: #ece2b6 #875526 #733726 #dfbc9a;
+  border-radius: 6px;
+  background:
+    linear-gradient(to bottom, rgba(70, 45, 22, 0.92), rgba(28, 18, 9, 0.92)),
+    #1c120a;
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  opacity: var(--wbg, 0);
+  transition: opacity 0.2s;
+}
+#CookieMgrWidgets .ca-w.ca-w-clear:hover::before,
+#CookieMgrWidgets .ca-w.ca-w-clear.dragging::before,
+#CookieMgrWidgets .ca-w.ca-w-clear.resizing::before,
+#CookieMgrWidgets .ca-w.ca-w-clear.ca-w-linked::before {
+  opacity: 1;
+}
+/* its title bar takes no room: it floats just above the box (below it near the top of the panel), shown on hover */
+#CookieMgrWidgets .ca-w.ca-w-clear:not(.collapsed) > .ca-w-head {
+  position: absolute;
+  left: -1px;
+  right: -1px;
+  bottom: 100%;
+  border: 1px solid #875526;
+  border-radius: 6px 6px 0 0;
+  background: linear-gradient(to bottom, rgba(84, 55, 27, 0.97), rgba(46, 30, 15, 0.97));
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+#CookieMgrWidgets .ca-w.ca-w-clear.pop-below:not(.collapsed) > .ca-w-head {
+  bottom: auto;
+  top: 100%;
+  border-radius: 0 0 6px 6px;
+}
+#CookieMgrWidgets .ca-w.ca-w-clear:hover > .ca-w-head,
+#CookieMgrWidgets .ca-w.ca-w-clear.dragging > .ca-w-head,
+#CookieMgrWidgets .ca-w.ca-w-clear.ca-w-linked > .ca-w-head {
+  opacity: 1;
+}
+#CookieMgrWidgets.locked .ca-w.ca-w-clear > .ca-w-head {
+  display: none;
+}
+#CookieMgrWidgets .ca-w.ca-w-clear > .ca-w-body {
+  padding: 4px;
+  text-shadow:
+    0 0 2px #000,
+    0 0 2px #000,
+    0 1px 2px #000;
+}
+
+/* Effect timers: one slim bar per effect, in its colour (--c); its icon (.ca-et-ico) is shared with other views */
+#CookieMgrWidgets .ca-et-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+#CookieMgrWidgets .ca-et {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 16px;
+}
+.ca-et-ico {
+  position: relative;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  overflow: hidden;
+  filter: drop-shadow(0 0 1px #000);
+}
+.ca-et-ico i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 48px;
+  height: 48px;
+  transform: scale(0.3333);
+  transform-origin: 0 0;
+}
+.ca-et-ico.none i {
+  left: 4px;
+  top: 4px;
+  width: 8px;
+  height: 8px;
+  transform: none;
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6);
+}
+#CookieMgrWidgets .ca-et-bar {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.5);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.18),
+    0 1px 2px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--c) 60%, transparent),
+    0 1px 2px rgba(0, 0, 0, 0.5);
+}
+#CookieMgrWidgets .ca-et-bar > i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: var(--c);
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--c) 65%, #fff), var(--c) 50%, color-mix(in srgb, var(--c) 75%, #000));
+  transition: width 0.5s linear;
+}
+/* bad effects (Clot, Cursed finger, a building's debuff…): striped */
+#CookieMgrWidgets .ca-et.bad .ca-et-bar > i {
+  background-image:
+    repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.32) 0 4px, transparent 4px 8px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--c) 65%, #fff), var(--c) 50%, color-mix(in srgb, var(--c) 75%, #000));
+}
+/* more left than a full bar stands for (A full bar is: a fresh Frenzy's length): full, outlined */
+#CookieMgrWidgets .ca-et.over .ca-et-bar {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.9),
+    0 0 0 1px #fff,
+    0 0 5px 1px var(--c);
+}
+#CookieMgrWidgets .ca-et-txt {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+  padding: 0 5px;
+  font-size: 11px;
+  line-height: 1;
+  color: #fff;
+  text-shadow:
+    0 0 2px #000,
+    0 0 2px #000,
+    0 1px 1px #000;
+  white-space: nowrap;
+}
+#CookieMgrWidgets .ca-et-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: bold;
+}
+#CookieMgrWidgets .ca-et-name em {
+  font-style: normal;
+  font-weight: normal;
+  font-size: 10px;
+  color: #fff3d6;
+}
+#CookieMgrWidgets .ca-et-time {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+#CookieMgrWidgets .ca-et.ending .ca-et-time {
+  color: #ffc9c2;
+}
+/* the chance a golden cookie comes before it ends */
+#CookieMgrWidgets .ca-et-gc {
+  flex: none;
+  min-width: 38px;
+  font-size: 10px;
+  font-weight: bold;
+  line-height: 1;
+  text-align: right;
+  color: #f3d27a;
+  text-shadow:
+    0 0 2px #000,
+    0 0 2px #000,
+    0 1px 1px #000;
+}
+#CookieMgrWidgets .ca-et-gc i {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 2px;
+  vertical-align: -1px;
+  background: center / contain no-repeat;
+  filter: drop-shadow(0 0 1px #000);
+}
+#CookieMgrWidgets .ca-et-gc.lo i {
+  opacity: 0.55;
+}
+#CookieMgrWidgets .ca-et-gc.hi {
+  color: #ffe066;
+}
+#CookieMgrWidgets .ca-et-gc.lo {
+  color: #b5a78f;
+}
+#CookieMgrWidgets .ca-et-none {
+  font-size: 11px;
+  color: #b5a78f;
+  text-shadow: 0 0 2px #000, 0 1px 1px #000;
+}
+
 /* ---------- alerts: a screen flash (features/alerts.js) ---------- */
 .ca-alert-flash {
   position: fixed;
@@ -5947,6 +6162,16 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-sp-lane.down .left,
 #CookieMgrWidgets .ca-sp-lane.down .left {
   fill: rgba(255, 110, 110, 0.5);
+}
+/* the cycle chart's effects: each in its own colour (ui/effectTimers.js's), bad ones striped there, faded here */
+#CookieMgrMenu .ca-sp-lane.ca-sp-tinted .left,
+#CookieMgrWidgets .ca-sp-lane.ca-sp-tinted .left {
+  fill: var(--c);
+  fill-opacity: 0.75;
+}
+#CookieMgrMenu .ca-sp-lane.ca-sp-tinted.down .left,
+#CookieMgrWidgets .ca-sp-lane.ca-sp-tinted.down .left {
+  fill-opacity: 0.45;
 }
 #CookieMgrMenu .ca-sp-chart .ca-sp-lane text,
 #CookieMgrWidgets .ca-sp-chart .ca-sp-lane text {

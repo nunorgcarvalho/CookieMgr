@@ -288,11 +288,20 @@ CA.Timers = (() => {
     return Math.ceil(EFFECTS[k].base * effectDurMod(w));
   }
 
-  /** The effects running: [{ name, secs, maxSecs, cps, click }]. */
+  /** The effects running: [{ name, secs, maxSecs, cps, click, type, icon }] — type: the game's buff type ('frenzy',
+   *  'click frenzy', 'building buff'…), icon: its picture in img/icons.png ([x, y], or [x, y, sheet]). */
   const buffs = () =>
     Object.values(Game.buffs || {})
       .filter((b) => b && b.time > 0)
-      .map((b) => ({ name: b.name, secs: b.time / fps(), maxSecs: (b.maxTime || b.time) / fps(), cps: b.multCpS !== undefined ? b.multCpS : 1, click: b.multClick !== undefined ? b.multClick : 1 }));
+      .map((b) => ({
+        name: b.name,
+        secs: b.time / fps(),
+        maxSecs: (b.maxTime || b.time) / fps(),
+        cps: b.multCpS !== undefined ? b.multCpS : 1,
+        click: b.multClick !== undefined ? b.multClick : 1,
+        type: (b.type && b.type.name) || String(b.name || '').toLowerCase(),
+        icon: Array.isArray(b.icon) ? b.icon : null,
+      }));
 
   /**
    * The effects running, each with the chance a golden cookie appears before it ends (golden: 0–1; 1

@@ -92,6 +92,7 @@ const MODULES = [
   'ui/paybackPage.js',
   'ui/spawnView.js',
   'ui/timelineWidget.js',
+  'ui/effectTimers.js',
   'ui/statsPage.js',
   'ui/menu.js',
   'main.js',
