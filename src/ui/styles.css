@@ -5923,6 +5923,13 @@ body.ca-has-storebar #products {
     repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.32) 0 4px, transparent 4px 8px),
     linear-gradient(to bottom, color-mix(in srgb, var(--c) 65%, #fff), var(--c) 50%, color-mix(in srgb, var(--c) 75%, #000));
 }
+/* more left than a full bar stands for (A full bar is: a fresh Frenzy's length): full, outlined */
+#CookieMgrWidgets .ca-et.over .ca-et-bar {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.9),
+    0 0 0 1px #fff,
+    0 0 5px 1px var(--c);
+}
 #CookieMgrWidgets .ca-et-txt {
   position: relative;
   display: flex;

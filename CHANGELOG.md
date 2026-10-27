@@ -10,7 +10,9 @@
   (2:21, 37s); beside it, if you tick it in its settings, the chance a golden cookie comes before it ends. Bad effects (Clot, Cursed finger,
   a building's debuff…) are striped, and the time turns pink in its last 5 seconds. Every row is one line of text
   tall, so a stack of eight effects is shorter than the old widget with four. Its settings pick what to show (icon,
-  multiplier, golden cookie chance — off by default) and the order (as they started, or ending soonest first). It's its own widget now
+  multiplier, golden cookie chance — off by default), what a full bar is (the effect's own length, or a fresh
+  Frenzy's with your upgrades for every bar, so the bars compare; an effect with more left than that fills its bar
+  and gets a white outline, its timer still the real time left) and the order (as they started, or ending soonest first). It's its own widget now
   (`ui/effectTimers.js`); the Golden timeline keeps its chart-axis bars.
 - **See-through widgets.** Every framed widget's Look settings have a **Background**: Solid (as before), Faint (40%)
   or None. See-through boxes keep their text outlined in black so it reads over the game, and the box fades in, its

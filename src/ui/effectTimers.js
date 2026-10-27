@@ -2,8 +2,10 @@
 // Elder frenzy, Clot…), in the effect's own colour with the game's own icon, draining as it runs out.
 // On the bar: its name, what it multiplies (×7 CpS, ×777 clicks) and the time left; beside it, the
 // chance a golden cookie comes before it ends (CA.Timers.buffsWithGolden; off unless ticked in its
-// settings) — whether it can still be stacked. Bad effects (Clot, Cursed finger…) are striped. A row is one line of text tall, so a
-// stack of effects stays short; it starts see-through (the Widgets engine's Background setting),
+// settings) — whether it can still be stacked. A full bar is the effect's own length, or (a setting)
+// a fresh Frenzy's for every bar, so they compare — longer ones then fill theirs and are outlined.
+// Bad effects (Clot, Cursed finger…) are striped. A row is one line of text tall, so a stack of
+// effects stays short; it starts see-through (the Widgets engine's Background setting),
 // the text outlined so it reads over the game.
 //
 // Shared with other views of the effects: colorOf(buff) (its colour), iconHtml(buff) (its 16 px game
@@ -45,6 +47,15 @@ CA.UI.EffectTimers = (() => {
     { v: 'golden', label: 'The chance a golden cookie comes before it ends' },
   ];
   const DEFAULT = ['icon', 'mult'];
+  const FRENZY_BASE = 77; // a Frenzy's length with no upgrades, if CA.Timers can't say
+  const frenzySecs = () => {
+    const s = CA.Timers.effectDuration ? CA.Timers.effectDuration('frenzy') : NaN;
+    return Number.isFinite(s) && s > 0 ? s : FRENZY_BASE;
+  };
+  const SCALES = () => [
+    { v: 'own', label: 'Its own length (full when it starts)' },
+    { v: 'frenzy', label: `A fresh Frenzy’s length (${F().span(frenzySecs())} with your upgrades)` },
+  ];
   const SORTS = [
     { v: 'start', label: 'As they started' },
     { v: 'end', label: 'Ending soonest first' },
@@ -87,15 +98,20 @@ CA.UI.EffectTimers = (() => {
     return `<span class="ca-et-ico"><i style="background-image:url(${esc(sheet)});background-position:${-b.icon[0] * 48}px ${-b.icon[1] * 48}px"></i></span>`;
   }
 
-  function rowHtml(b, show, golden) {
-    const frac = b.maxSecs > 0 ? Math.max(0, Math.min(1, b.secs / b.maxSecs)) : 1;
+  /** full: the seconds a full bar stands for — the effect's own length, or one fixed for every bar (a
+   *  fresh Frenzy's); an effect with more left than that fills its bar and is outlined (.over). */
+  function rowHtml(b, show, golden, full) {
+    const len = full || b.maxSecs;
+    const frac = len > 0 ? Math.max(0, Math.min(1, b.secs / len)) : 1;
+    const over = !!full && b.secs > full;
     const m = multText(b);
     const g = golden ? b.golden : null;
     const tip =
       `${b.name}: ${F().span(b.secs)} left of ${F().span(b.maxSecs)}${m ? ` — ${m}` : ''}.` +
+      (over ? ` Longer than a fresh Frenzy (${F().span(full)}): its bar is full and outlined.` : '') +
       (g === null ? '' : ` The chance a golden cookie comes before it ends: ${pc(g)}.`);
     return (
-      `<div class="ca-et${isBad(b) ? ' bad' : ''}${b.secs < 5 ? ' ending' : ''}" style="--c:${colorOf(b)}" data-tip="${esc(tip)}">` +
+      `<div class="ca-et${isBad(b) ? ' bad' : ''}${b.secs < 5 ? ' ending' : ''}${over ? ' over' : ''}" style="--c:${colorOf(b)}" data-tip="${esc(tip)}">` +
       (show.has('icon') ? iconHtml(b) : '') +
       `<div class="ca-et-bar"><i style="width:${(frac * 100).toFixed(2)}%"></i>` +
       `<span class="ca-et-txt"><span class="ca-et-name">${esc(b.name)}${show.has('mult') && m ? ` <em>${esc(m)}</em>` : ''}</span><b class="ca-et-time">${clock(b.secs)}</b></span></div>` +
@@ -119,7 +135,8 @@ CA.UI.EffectTimers = (() => {
     // the chance column only while a golden cookie can still come (not with the Golden switch on, nor one on screen)
     const s = CA.Timers.spawnOf('golden');
     const golden = show.has('golden') && !!s && !s.spawned;
-    return `<div class="ca-et-list">${list.map((b) => rowHtml(b, show, golden)).join('')}</div>`;
+    const full = inst.barScale === 'frenzy' ? frenzySecs() : 0;
+    return `<div class="ca-et-list">${list.map((b) => rowHtml(b, show, golden, full)).join('')}</div>`;
   }
 
   function init() {
@@ -135,6 +152,7 @@ CA.UI.EffectTimers = (() => {
       html,
       settings: [
         { key: 'stats', label: 'Show', type: 'multi', default: DEFAULT, options: () => SHOW },
+        { key: 'barScale', label: 'A full bar is', type: 'select', default: 'own', options: SCALES },
         { key: 'sort', label: 'Order', type: 'select', default: 'start', options: () => SORTS },
       ],
     });

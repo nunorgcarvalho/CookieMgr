@@ -40,7 +40,7 @@ CA.UI.Widgets = (() => {
   const FONT_MAX = 200;
   const MIN_W = 140;
   const MIN_H = 60;
-  const SAVED = ['count', 'types', 'stats', 'font', 'title', 'target', 'targetMagic', 'bg', 'sort']; // per-widget settings that are saved
+  const SAVED = ['count', 'types', 'stats', 'font', 'title', 'target', 'targetMagic', 'bg', 'sort', 'barScale']; // per-widget settings that are saved
   const BG = [[100, 'Solid'], [40, 'Faint'], [0, 'None']]; // background opacity (%) while not hovered
   const S = () => CA.Settings;
   const I = (n, s) => CA.UI.Icons.html(n, s);
@@ -48,7 +48,7 @@ CA.UI.Widgets = (() => {
 
   const types = [];
   const typeById = {};
-  let widgets = []; // { id, type, x, y, collapsed, macro?, scale?, w?, h?, count?, types?, stats?, font?, title?, bg?, sort? }
+  let widgets = []; // { id, type, x, y, collapsed, macro?, scale?, w?, h?, count?, types?, stats?, font?, title?, bg?, sort?, barScale? }
   let layer = null;
   let press = null; // { w, el, sx, sy, dx, dy, moved }
   let swallowClick = false;
@@ -715,6 +715,7 @@ CA.UI.Widgets = (() => {
         if (typeof w.title === 'string') out.title = w.title.slice(0, 40);
         if (Number.isFinite(w.bg)) out.bg = Math.max(0, Math.min(1, w.bg));
         if (typeof w.sort === 'string') out.sort = w.sort.slice(0, 20);
+        if (typeof w.barScale === 'string') out.barScale = w.barScale.slice(0, 20);
         if (Array.isArray(w.types)) out.types = w.types.map(String);
         if (Array.isArray(w.stats)) out.stats = w.stats.map(String);
         return out;

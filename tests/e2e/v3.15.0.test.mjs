@@ -51,6 +51,25 @@ const gc = CA.Timers.buffsWithGolden().find((b) => b.name === 'Click frenzy').go
 assert(r1.querySelector('.ca-et-gc').textContent === `${Math.round(gc * 100)}%`, 'the chance a golden cookie comes before it ends (CA.Timers)');
 assert(/golden cookie comes before it ends/.test(r1.dataset.tip) && /×777 clicks/.test(r1.dataset.tip), 'its tip says it all in words');
 
+// ---- A full bar is: a fresh Frenzy's length — every bar on one scale; longer ones full and outlined
+CA.Timers.effectDuration = (n) => (String(n).toLowerCase() === 'frenzy' ? 77 : NaN);
+inst.barScale = 'frenzy';
+CA.UI.Widgets.tick();
+const wOf = (r) => parseFloat(r.querySelector('.ca-et-bar > i').style.width);
+assert(wOf(rows()[0]) === 100 && rows()[0].classList.contains('over') && /Longer than a fresh Frenzy \(1m 17s\)/.test(rows()[0].dataset.tip), 'Frenzy with 2:21 left (> 77 s): full and outlined, its tip says why');
+assert(/2:21/.test(rows()[0].textContent), '…its timer still the real time left');
+assert(Math.abs(wOf(rows()[1]) - (21 / 77) * 100) < 0.01 && !rows()[1].classList.contains('over'), 'Click frenzy: 21 s of 77');
+assert(CA.UI.Widgets.serialize().find((x) => x.id === inst.id).barScale === 'frenzy', 'saved');
+const sel = (() => {
+  CA.UI.Menu.openPage('widgets');
+  CA.UI.Widgets.openSettings(inst.id);
+  return doc.querySelector('[data-w-opt="barScale"]');
+})();
+assert(sel && /1m 17s/.test(sel.textContent) && sel.value === 'frenzy', 'its settings: A full bar is — with today’s Frenzy length');
+inst.barScale = 'own';
+CA.UI.Widgets.tick();
+assert(!rows()[0].classList.contains('over') && Math.abs(wOf(rows()[0]) - (141 / 154) * 100) < 0.01, 'its own length again');
+
 // ---- the golden cookie chart's effect bars: the same colours
 const cyc = doc.createElement('div');
 cyc.innerHTML = CA.UI.SpawnView.cycleChart('golden', CA.Timers.distribution('golden', 60), CA.Timers.buffs());

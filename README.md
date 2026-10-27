@@ -698,8 +698,9 @@ always grab them again). Drag them anywhere; hover for × and ⚙ (its settings)
 - **Effect timers** — a slim bar per effect running (Frenzy, Click frenzy, building specials, Dragon Harvest, Clot…),
   each in its own colour with the game's own icon, draining as it runs out: its name, what it multiplies (×7 CpS,
   ×777 clicks), the time left, and (ticked in its settings) the chance a golden cookie comes before it ends. Bad effects are striped.
-  One line of text per effect, so a big combo stays short; it starts see-through. Its settings pick what to show and
-  the order (as they started, or ending soonest first).
+  One line of text per effect, so a big combo stays short; it starts see-through. Its settings pick what to show, what a full
+  bar is (the effect's own length, or a fresh Frenzy's for every bar — longer effects then fill theirs and are
+  outlined in white) and the order (as they started, or ending soonest first).
 
 Framed boxes (Quick stats, Latest events) are dragged by their title bar and folded with ▾. **Resize** any widget
 from its bottom-right corner: buttons, round widgets and the status bar scale up or down keeping their shape, framed
