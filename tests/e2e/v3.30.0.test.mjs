@@ -1,111 +1,66 @@
-// v3.30.0: Pantheon profiles — named combinations of the three slots (two to start: Wrinklers and
-// Golden), a row each on the Pantheon page (rename, a spirit per slot, Use, Delete, New profile,
-// From current), saved with the game; pantheon.profile(p) slots one while swaps last, and the
-// profileActive / profileSwaps / activeProfile / profiles values tell where it stands.
+// v3.30.0: the golden cookie frequency multiplier (× vs nothing helping) is called Multiplier, and a new
+// Frequency says how long between golden cookies on average with what's helping now (a fresh cycle's mean
+// wait: static, not a countdown) — on the Stats page's card and the Next golden cookie widget's numbers;
+// the value word golden.interval.
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
-import { boot, sleep, makeAssert, click } from '../harness/game.mjs';
+import { boot, sleep, makeAssert } from '../harness/game.mjs';
 
 const { assert, done } = makeAssert();
-const idb = { factory: new IDBFactory(), IDBKeyRange };
-const g = boot({ idb, withPantheon: true });
-const { window: w, P, Game } = g;
+const g = boot({ idb: { factory: new IDBFactory(), IDBKeyRange } });
+const { window: w, Game } = g;
 const CA = w.CookieMgr;
 const doc = w.document;
 await sleep(400);
-const S = CA.Script;
-const PA = CA.Pantheon;
-const pass1 = (src) => CA.Macros.runPass(S.compile(src).flow);
-const val = (src) => S.evaluate(S.compile(`wait until ${src}`).flow[0].cond).ok;
 
-// the rest of the spirits, as minigamePantheon.js has them
-[
-  ['seasons', 'Selebrak, Spirit of Festivities'],
-  ['labor', 'Muridal, Spirit of Labor'],
-  ['scorn', 'Skruuia, Spirit of Scorn'],
-].forEach(([k, name], i) => {
-  P.gods[k] = { id: 3 + i, slot: -1, name, icon: [24 + i, 18] };
-  P.godsById.push(P.gods[k]);
-});
-const keys = () => P.slot.map((id) => (id >= 0 ? Object.keys(P.gods).find((k) => P.gods[k].id === id) : '')).join();
+Game.fps = 30;
+Game.Has = () => false;
+Game.hasBuff = () => false;
+Game.buffs = {};
+// this cycle: 5–15 min, 4 min in
+Game.shimmerTypes.golden = Object.assign(Game.shimmerTypes.golden || {}, { time: 30 * 240, minTime: 30 * 300, maxTime: 30 * 900, spawned: 0, n: 0, spawnConditions: () => true });
+const span = CA.Format.span;
+const V = (id) => CA.Script.VALUES.find((v) => v.id === id).get();
 
-// ---- the two to start with
-const ps = PA.profiles();
-assert(ps.map((p) => `${p.id}:${p.name}:${p.slots.join('/')}`).join(' ') === 'wrinklers:Wrinklers:scorn// golden:Golden:decadence/seasons/labor', `seeded profiles (${ps.map((p) => p.id)})`);
-assert(pass1('log pantheon.profiles()').trace.some((t) => /\[wrinklers, golden\]/.test(t.text)), 'pantheon.profiles()');
-assert(S.lookups().some((l) => l.name === 'Pantheon profile' && l.items.some((i) => i.v === 'golden')), 'Lookup: Pantheon profile');
+let d = CA.Timers.distribution('golden');
+assert(Math.abs(V('golden.interval') - d.next.mean) < 1e-9 && d.next.mean > 300 && d.next.mean < 900, `golden.interval: a fresh cycle's mean (${span(d.next.mean)})`);
 
-// ---- swaps it takes; applying while swaps last
-// now: asceticism, ruin, empty — with 1 swap
-assert(keys() === 'asceticism,ruin,' && P.swaps === 1, 'start');
-assert(PA.swapsFor('golden') === 3 && PA.swapsFor('Wrinklers') === 1, `swaps needed (${PA.swapsFor('golden')}, ${PA.swapsFor('wrinklers')})`);
-assert(!val('pantheon.profileActive(golden)'), 'Golden not on');
-let F = pass1('pantheon.profile(golden)');
-assert(F.done === 1 && keys() === 'decadence,ruin,' && P.swaps === 0, `one swap: diamond first (${keys()})`);
-F = pass1('pantheon.profile(golden)');
-assert(F.done === 0 && keys() === 'decadence,ruin,', 'no swaps left: waits');
-assert(val('pantheon.profileSwaps("Golden") == 2'), 'still takes 2');
-P.swaps = 3;
-F = pass1('pantheon.profile("golden")');
-assert(F.done === 2 && keys() === 'decadence,seasons,labor' && P.swaps === 1, `finished as swaps come back (${keys()})`);
-assert(val('pantheon.profileActive(golden)') && val('pantheon.activeProfile() == "golden"'), 'in use; activeProfile');
-assert(pass1('pantheon.profile(golden)').done === 0 && P.swaps === 1, 'already on: nothing, no swap');
+CA.UI.Menu.openPage('stats');
+const card = () => doc.querySelector('[data-page="stats"] [data-st-spawn]');
+const flat = () => card().textContent.replace(/\s+/g, '');
+assert(flat().includes('Multiplier×1') && flat().includes(`Frequency${span(d.next.mean).replace(/\s+/g, '')}`), 'the card: a Multiplier tile (×1) and a Frequency tile (the time between)');
+const before = d.next.mean;
 
-// ---- Wrinklers: Skruuia in the diamond slot, the others emptied (free)
-F = pass1('pantheon.profile(Wrinklers)');
-assert(F.done === 3 && keys() === 'scorn,,' && P.swaps === 0, `by its name; emptying is free (${keys()}, ${P.swaps})`);
-assert(val('pantheon.activeProfile() == "wrinklers"'), 'Wrinklers in use');
+// Lucky day + Serendipity: ×4 as often, a quarter of the time between
+Game.Has = (n) => n === 'Lucky day' || n === 'Serendipity';
+d = CA.Timers.distribution('golden');
+assert(Math.abs(d.frequency - 4) < 1e-9 && d.next.mean >= before / 4 && d.next.mean < before / 3, `Lucky day + Serendipity: ×4 (the game's spawn odds ramp up in a cycle, so not quite a quarter of the time), one every ${span(d.next.mean)} (was ${span(before)})`);
+CA.UI.Menu.render();
+assert(flat().includes('Multiplier×4') && flat().includes(`Frequency${span(d.next.mean).replace(/\s+/g, '')}`), 'the card follows');
 
-// ---- a spirit already slotted elsewhere: the game swaps the two (one swap)
-const mine = PA.add('Swap test', ['', 'scorn', '']);
-P.swaps = 1;
-assert(PA.swapsFor(mine) === 1 && PA.apply(mine) === 1 && keys() === ',scorn,', `moved across (${keys()})`);
+// static: time passing in the cycle moves the countdown, not the frequency
+Game.shimmerTypes.golden.time = 30 * 60;
+const d2 = CA.Timers.distribution('golden');
+assert(d2.next.mean === d.next.mean && d2.wait.mean !== d.wait.mean, 'not a countdown: the cycle moving changes next in, not the frequency');
 
-// ---- the page: a row each
-PA.remove(mine);
-P.swaps = 3;
-CA.UI.Menu.openPage('pantheon');
-const page = () => doc.querySelector('[data-page="pantheon"]');
-const rows = () => [...page().querySelectorAll('[data-pp-row]')];
-assert(rows().length === 2 && /needs 1 swap/.test(rows()[0].textContent) && /needs 3 swaps/.test(rows()[1].textContent), `rows and their states (${rows().map((r) => r.textContent.replace(/\s+/g, ' ')).join(' | ')})`);
-click(w, rows()[0].querySelector('[data-pp-act="use"]'));
-assert(keys() === 'scorn,,' && rows()[0].classList.contains('on') && /in use/.test(rows()[0].textContent), 'Use');
-// change a slot; a spirit picked twice leaves its other slot
-const sel = (row, i) => row.querySelector(`[data-pp-slot][data-i="${i}"]`);
-const change = (el, v) => {
-  el.value = v;
-  el.dispatchEvent(new w.Event('change', { bubbles: true }));
-};
-change(sel(rows()[1], 2), 'ruin');
-change(sel(rows()[1], 0), 'ruin');
-assert(PA.profileOf('golden').slots.join('/') === 'ruin/seasons/', `a slot picked; ruin left jade (${PA.profileOf('golden').slots})`);
-change(rows()[1].querySelector('[data-pp-name]'), 'Golden 2');
-assert(PA.profileOf('golden').name === 'Golden 2' && PA.profileOf('golden 2').id === 'golden' && val('pantheon.profileSwaps("golden 2") == 2'), 'renamed; found by its new name');
-click(w, page().querySelector('[data-pp-act="current"]'));
-assert(rows().length === 3 && PA.profiles()[2].slots.join('/') === 'scorn//' && /in use/.test(rows()[2].textContent), 'From current');
-click(w, page().querySelector('[data-pp-act="new"]'));
-assert(rows().length === 4 && PA.profiles()[3].slots.join('/') === '//', 'New profile: empty');
-const del = () => rows()[3].querySelector('[data-pp-act="delete"]');
-click(w, del());
-assert(rows().length === 4, 'Delete: armed first');
-click(w, del());
-assert(rows().length === 3, 'deleted');
-
-// ---- in the Temple: the page follows
-P.swaps = 3;
-PA.slot('asceticism', 'diamond');
-await sleep(1200);
-assert(!rows()[0].classList.contains('on') && /needs 1 swap/.test(rows()[0].textContent), 'slots changed elsewhere: the page redraws');
-
-// ---- saved with the game
-Game.WriteSave();
-const raw = Game.modSaveData.CookieMgr;
-w.localStorage.clear();
-w.close();
-const g2 = boot({ idb, save: raw, withPantheon: true });
-await sleep(400);
-const back = g2.window.CookieMgr.Pantheon.profiles();
-assert(back.length === 3 && back[1].name === 'Golden 2' && back[1].slots.join('/') === 'ruin/seasons/', `restored after a reload (${back.map((p) => p.name)})`);
-g2.window.close();
+// the widget
+CA.Settings.set('widgetsShown', true);
+CA.UI.Widgets.add('goldenNext');
+CA.UI.Widgets.render();
+CA.UI.Widgets.tick();
+const nums = () => [...doc.querySelectorAll('#CookieMgrWidgets [data-widget]')].find((x) => /Next golden cookie/.test(x.textContent)).querySelector('.ca-tl-nums');
+const cell = (label) => [...nums().querySelectorAll('span')].find((s) => s.querySelector('em').textContent === label);
+assert(cell('multiplier') && cell('multiplier').querySelector('b').textContent === '×4', 'the widget: multiplier ×4');
+assert(cell('frequency') && cell('frequency').querySelector('b').textContent === span(d.next.mean) && /on average/.test(cell('frequency').getAttribute('data-tip')), `and frequency ${span(d.next.mean)}`);
+const inst = CA.UI.Widgets.list().find((x) => x.type === 'goldenNext');
+inst.nums = ['every'];
+CA.UI.Widgets.tick();
+assert(nums().querySelectorAll('span').length === 1 && cell('frequency'), 'picked alone in its settings (every)');
+inst.nums = ['frequency'];
+CA.UI.Widgets.tick();
+assert(nums().querySelectorAll('span').length === 1 && cell('multiplier'), 'a saved pick from before (frequency) is the multiplier');
+CA.UI.Widgets.openSettings(inst.id);
+const labels = [...doc.querySelectorAll('[data-w-multi="nums"]')].map((x) => x.closest('label') ? x.closest('label').textContent : '').join(' | ');
+assert(/Multiplier/.test(labels) && /Frequency \(one every/.test(labels), `its settings: ${labels}`);
 
 assert(g.errors.length === 0, 'no runtime errors' + (g.errors.length ? `: ${g.errors.slice(0, 3).join(' | ')}` : ''));
 done();

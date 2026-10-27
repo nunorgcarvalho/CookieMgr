@@ -7195,7 +7195,7 @@ body.ca-has-storebar #products {
   background: rgba(154, 154, 154, 0.14);
 }
 
-/* Pantheon: profiles, a row each (v3.30) */
+/* Pantheon: profiles, a row each (v3.31) */
 #CookieMgrMenu .ca-pprof {
   display: flex;
   flex-wrap: wrap;
