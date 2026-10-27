@@ -210,7 +210,7 @@ CA.UI.Widgets = (() => {
   };
 
   // glowing: hovered on the Widgets page, or its settings open there
-  const glow = (w) => (w.id === linked || (w.id === editing && pageRoot) ? ' ca-w-linked' : '');
+  const glow = (w) => (isLinked(w) || (w.id === editing && pageRoot) ? ' ca-w-linked' : '');
 
   function frameHtml(w) {
     const t = typeById[w.type];
@@ -577,18 +577,24 @@ CA.UI.Widgets = (() => {
 
   // ---- linking: a widget on the page ⇄ the same widget on the left panel ------------------
 
-  let linked = null; // the widget hovered on either side
+  let linked = null; // the widget hovered on either side (its id), or every widget of a kind: 'type:<id>' (a picker tile)
+
+  const isLinked = (w) => !!w && (w.id === linked || (!!linked && linked === `type:${w.type}`));
 
   /** Puts the glow on the widgets that should have it (without redrawing them). */
   function refreshGlow() {
-    if (layer) layer.querySelectorAll('[data-widget]').forEach((el) => el.classList.toggle('ca-w-linked', el.dataset.widget === linked || (el.dataset.widget === editing && !!pageRoot)));
+    if (layer) layer.querySelectorAll('[data-widget]').forEach((el) => el.classList.toggle('ca-w-linked', isLinked(get(el.dataset.widget)) || (el.dataset.widget === editing && !!pageRoot)));
   }
 
   function setLinked(id) {
     if (id === linked) return;
     linked = id;
     refreshGlow();
-    if (pageRoot) pageRoot.querySelectorAll('[data-wlink]').forEach((el) => el.classList.toggle('linked', el.dataset.wlink === id));
+    if (pageRoot) {
+      pageRoot.querySelectorAll('[data-wlink]').forEach((el) => el.classList.toggle('linked', isLinked(get(el.dataset.wlink))));
+      // a tile lights up with its widgets: hovered itself, or one of them hovered on the panel
+      pageRoot.querySelectorAll('[data-wlink-type]').forEach((el) => el.classList.toggle('linked', linked === `type:${el.dataset.wlinkType}` || (!!linked && (get(linked) || {}).type === el.dataset.wlinkType)));
+    }
   }
 
   /** Where each widget sits on the left panel, in % of it (measured; from its saved place when it can't be). */
@@ -628,7 +634,7 @@ CA.UI.Widgets = (() => {
           const t = typeById[w.type];
           const icon = w.type === 'macro' && CA.Macros.get(w.macro) ? CA.UI.MacrosPage.icon(CA.Macros.get(w.macro), true) : I(t.icon, 12);
           return (
-            `<button type="button" class="ca-wmap-item${t.bare ? ' bare' : ''}${w.id === linked ? ' linked' : ''}${w.id === editing ? ' editing' : ''}" data-wlink="${esc(w.id)}" data-w-page-edit="${esc(w.id)}" ` +
+            `<button type="button" class="ca-wmap-item${t.bare ? ' bare' : ''}${isLinked(w) ? ' linked' : ''}${w.id === editing ? ' editing' : ''}" data-wlink="${esc(w.id)}" data-w-page-edit="${esc(w.id)}" ` +
             `style="left:${p.l.toFixed(2)}%;top:${p.t.toFixed(2)}%;width:${p.w.toFixed(2)}%;height:${p.h.toFixed(2)}%" data-tip="${esc(nameOf(w))} — click for its settings">${icon}</button>`
           );
         })
@@ -645,7 +651,7 @@ CA.UI.Widgets = (() => {
         const t = typeById[w.type];
         const icon = w.type === 'macro' && CA.Macros.get(w.macro) ? CA.UI.MacrosPage.icon(CA.Macros.get(w.macro), true) : I(t.icon, 13);
         return (
-          `<span class="ca-wchip${w.id === editing ? ' editing' : ''}${w.id === linked ? ' linked' : ''}" data-wlink="${esc(w.id)}">` +
+          `<span class="ca-wchip${w.id === editing ? ' editing' : ''}${isLinked(w) ? ' linked' : ''}" data-wlink="${esc(w.id)}">` +
           `<button type="button" class="ca-wchip-main" data-w-page-edit="${esc(w.id)}" data-tip="Settings">${icon}<b>${esc(nameOf(w))}</b>${I('settings', 11)}</button>` +
           `<button type="button" class="ca-wchip-x" data-w-page-del="${esc(w.id)}" data-tip="Remove">${I('close', 9)}</button></span>`
         );
@@ -757,12 +763,13 @@ CA.UI.Widgets = (() => {
     if (o.link) {
       act = 'Click to open the Macros page';
       pill = 'Open';
-    } else if (o.single && n) {
-      act = 'Placed — click to remove it';
+    } else if (n) {
+      act = o.single ? 'Placed — click to remove it' : `${n} placed — click to remove the newest; + Add places another`;
       pill = 'Remove';
-    } else if (n) act = `${n} placed — click to add another`;
+    }
     const cls = `ca-wtile${n || o.badge ? ' placed' : ''}${o.single ? ' single' : ''}`;
-    const attr = o.single && n ? `data-w-page-remove="${o.id}"` : o.link ? 'data-ca="open-macros"' : `data-w-page-add="${o.id}"`;
+    const attr = (n && !o.link ? `data-w-page-remove="${o.id}"` : o.link ? 'data-ca="open-macros"' : `data-w-page-add="${o.id}"`) + (o.link ? '' : ` data-wlink-type="${o.id}"`);
+    const more = n && !o.single && !o.link ? `<button type="button" class="ca-btn ca-btn-small ca-wtile-add" data-w-page-add="${o.id}">${I('plus', 10)} Add</button>` : '';
     const tag = o.link ? o.badge : n ? (o.single ? '✓' : `×${n}`) : '';
     let ico;
     if (o.sprite) ico = `<i class="${o.sheet ? 'ca-wcrate-plant' : ''}" style="${spriteVar(o.sprite)}"></i>`;
@@ -774,6 +781,7 @@ CA.UI.Widgets = (() => {
       `<span class="ca-wadd${pill === 'Remove' ? ' remove' : ''}">${pill}</span></div>` +
       `<div class="ca-wtile-name">${esc(o.name)}</div>` +
       (o.short ? `<div class="ca-wtile-sub">${esc(o.short)}</div>` : '') +
+      more +
       `<div class="ca-wpop ca-wtip"><div class="ca-wtip-head">${esc(o.name)}<span class="ca-wshape">${shape}</span></div>${o.descHtml || esc(o.desc || '')}<div class="ca-wtip-act">${act}</div></div>` +
       '</div>'
     );
@@ -860,8 +868,8 @@ CA.UI.Widgets = (() => {
 
   let pageRoot = null;
   function onPageHover(e) {
-    const el = e.target.closest && e.target.closest('[data-wlink]');
-    setLinked(el ? el.dataset.wlink : null);
+    const el = e.target.closest && e.target.closest('[data-wlink],[data-wlink-type]');
+    setLinked(el ? el.dataset.wlink || `type:${el.dataset.wlinkType}` : null);
   }
   function onLayerHover(e) {
     const el = e.target.closest && e.target.closest('[data-widget]');
@@ -894,7 +902,11 @@ CA.UI.Widgets = (() => {
     if ('wPageAdd' in d) {
       add(d.wPageAdd);
       if (!S().get('widgetsShown')) S().set('widgetsShown', true);
-    } else if ('wPageRemove' in d) widgets.filter((w) => w.type === d.wPageRemove).forEach((w) => remove(w.id));
+    } else if ('wPageRemove' in d) {
+      const of = widgets.filter((w) => w.type === d.wPageRemove);
+      const t = typeById[d.wPageRemove];
+      (t && t.single ? of : of.slice(-1)).forEach((w) => remove(w.id));
+    }
     else if ('wPageEdit' in d) {
       editing = d.wPageEdit;
       CA.UI.Menu.render();
