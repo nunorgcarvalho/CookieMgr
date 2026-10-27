@@ -4,6 +4,11 @@
 //   status     "Running now" as a status bar: an icon per running macro, details on hover
 //   stats      Quick stats — you pick which (see STATS below)
 //   events     the latest events — how many and which types; as many of these as you like
+//   chart      a page's chart on the left panel (its ☆ — the Garden's growth and effects): a live copy
+//              of it, sharing the page chart's window and choices (ui/plot.js mini())
+//   goldenFrequency
+//              how many times more often golden cookies come than with nothing helping, and what's
+//              helping — a bar each (the Stats page's frequency effects; its ☆)
 //   grimoire / garden / market / pantheon
 //              one compact round widget per minigame: a ring for its timer (magic, next tick,
 //              next worship swap), a short label under it, details on hover; click to open it
@@ -430,6 +435,62 @@ CA.UI.WidgetTypes = (() => {
     });
   }
 
+  // ---- a page's chart --------------------------------------------------------------------------
+
+  const DEFAULT_PLOT = 'garden';
+  const shownPlot = {}; // widget id → the chart it last drew (to let go of the old one when it changes)
+  const plotOf = (inst) => (CA.UI.Plot.get(inst.plot) ? inst.plot : DEFAULT_PLOT);
+
+  function chartHtml(inst) {
+    const id = plotOf(inst);
+    if (shownPlot[inst.id] && shownPlot[inst.id] !== id) CA.UI.Plot.dropMini(shownPlot[inst.id], inst.id);
+    shownPlot[inst.id] = id;
+    const p = CA.UI.Plot.mini(id, inst.id);
+    return p ? p.html() : '<div class="ca-w-empty">This chart isn’t available.</div>';
+  }
+  /** After each refresh: draws the copy into the widget (mounting it again after a re-render). */
+  function chartLive(inst, body) {
+    const p = CA.UI.Plot.mini(plotOf(inst), inst.id);
+    if (!p) return;
+    if (p.isMounted()) p.tick(); // (lets go of a canvas that's no longer on screen)
+    if (!p.isMounted()) p.mount(body);
+  }
+  function chartRemoved(inst) {
+    CA.UI.Plot.dropMini(plotOf(inst), inst.id);
+    delete shownPlot[inst.id];
+  }
+
+  // ---- golden cookie frequency --------------------------------------------------------------------
+
+  /** ×2.37, ×12, ×1.5 */
+  const times = (v) => `×${v >= 10 ? Math.round(v) : Math.round(v * 100) / 100}`;
+
+  function frequencyHtml() {
+    const d = CA.Timers.distribution('golden', 2);
+    if (!d) return '<div class="ca-w-empty">No golden cookies: the Golden switch is on.</div>';
+    // each effect as a frequency (×2: twice as often) — the game's own numbers are the times between
+    const parts = d.factors.map((x) => ({ name: x.name, why: x.why, f: 1 / x.k })).sort((a, b) => b.f - a.f);
+    const total = Number.isFinite(d.frequency) ? d.frequency : parts.reduce((a, x) => a * x.f, 1);
+    // bars on a log scale, so they add up to the whole: ×2 and ×2 fill as much as one ×4
+    const logTotal = Math.max(Math.log(total), parts.reduce((a, x) => a + Math.max(0, Math.log(x.f)), 0));
+    const rows = parts
+      .map((x) => {
+        const w = logTotal > 0 ? Math.max(3, (Math.max(0, Math.log(x.f)) / logTotal) * 100) : 0;
+        return (
+          `<div class="ca-wfq-row${x.f < 1 ? ' slower' : ''}" data-tip="${esc(`${x.name} (${x.why}): ${times(x.f)} as often`)}">` +
+          `<span class="ca-wfq-name">${esc(x.name)}</span><span class="ca-wfq-bar"><i style="width:${w.toFixed(1)}%"></i></span><b>${times(x.f)}</b></div>`
+        );
+      })
+      .join('');
+    return (
+      `<div class="ca-wfreq" data-w-open="stats">` +
+      `<div class="ca-wfreq-head"><span class="ca-wfreq-big">${times(total)}</span>` +
+      `<span class="ca-wfreq-sub"><em>as often as with nothing helping</em><em>one every <b>${F().span(d.next.mean)}</b> on average</em></span></div>` +
+      (rows || '<div class="ca-w-empty">Nothing is making them come more often yet — upgrades like Lucky day, a Golden Clover in the garden, Mokalsium… each shows up here.</div>') +
+      '</div>'
+    );
+  }
+
   function register() {
     const D = CA.UI.Widgets.defineType;
     D({ id: 'macro', name: 'Macro button', icon: 'star', bare: true, hidden: true, resize: 'scale', html: macroHtml });
@@ -491,6 +552,29 @@ CA.UI.WidgetTypes = (() => {
       ],
     });
     D({ id: 'golden', name: 'Golden cookies', icon: 'sparkle', desc: 'The ring fills towards the latest the next golden cookie can come; the label is how long it takes on average (worked out from the game’s own odds). Hover for the soonest, the latest, the chance within a minute and the effects running; click it for the Stats page.', bare: true, single: true, resize: 'scale', html: goldenHtml });
+    D({
+      id: 'goldenFrequency',
+      name: 'Golden cookie frequency',
+      icon: 'sparkle',
+      desc: 'How many times more often golden cookies come than with nothing helping, and a bar for each thing that’s helping (upgrades, the garden, spirits, the dragon…). Click it for the Stats page.',
+      width: 260,
+      single: true,
+      resize: 'free',
+      html: frequencyHtml,
+    });
+    D({
+      id: 'chart',
+      name: 'Chart',
+      icon: 'graphs',
+      desc: 'A chart from a CookieMgr page, live on the left panel — the Garden’s growth or its effects. It shows the same window as the chart on its page; hover it for the details.',
+      width: 300,
+      resize: 'free',
+      html: chartHtml,
+      iconOf: (inst) => (CA.UI.Plot.get(plotOf(inst)) || { spec: {} }).spec.icon || 'graphs',
+      live: chartLive,
+      removed: chartRemoved,
+      settings: [{ key: 'plot', label: 'Chart', type: 'select', default: DEFAULT_PLOT, options: () => CA.UI.Plot.widgetable().map((p) => ({ v: p.id, label: p.title })) }],
+    });
     D({ id: 'garden', name: 'Garden', icon: 'leaf', desc: 'The ring counts down to the next garden tick; the dots under it are your plants by stage (bud, sprout, bloom, mature). Click it to open the Garden.', bare: true, single: true, resize: 'scale', html: gardenHtml });
     D({ id: 'market', name: 'Stock market', icon: 'stocks', desc: 'The ring counts down to the next market tick; the label is what the last tick did to the stocks you held. Click it to open the Stock market.', bare: true, single: true, resize: 'scale', html: marketHtml });
     D({ id: 'pantheon', name: 'Pantheon', icon: 'pantheon', desc: 'Your three slotted spirits, and a ring counting down to the next worship swap. Click it to open the Pantheon.', bare: true, single: true, resize: 'scale', html: pantheonHtml });

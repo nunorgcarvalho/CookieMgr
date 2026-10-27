@@ -11,7 +11,8 @@
 //                 ends, with what it multiplies your income by (a click effect at your click rate)
 //   frequency     the effects making them come more often now — each a chip; click one to see the
 //   effects       mean wait without it (what if) — counting from the next one, as the game fixes a
-//                 cycle's bounds when the last cookie leaves
+//                 cycle's bounds when the last cookie leaves; its ☆ puts the Golden cookie frequency
+//                 widget on the left panel
 //
 // chart() — the wait from now (density, bands, the next one's window) — is the Golden timeline
 // widget's.
@@ -249,7 +250,12 @@ CA.UI.SpawnView = (() => {
         : '';
     const effects = type === 'golden' ? T().buffs() : [];
     const override = d.override === 'chain' ? 'A cookie chain is going: the next comes within seconds.' : d.override === 'hoard' ? 'Gold hoard: they come almost at once.' : d.override === 'season' ? 'Reindeer season: they come almost at once.' : '';
-    const freq = factors ? `<div class="ca-sp-factors"><span>${type === 'golden' ? 'Golden cookie' : 'Reindeer'} frequency effects:</span>${factors}</div>${whatIfLine}` : '';
+    // golden cookies: always, with the ☆ that puts the Golden cookie frequency widget on the left panel
+    const star = type === 'golden' ? CA.UI.C.widgetStar({ type: 'goldenFrequency' }, 'Golden cookie frequency') : '';
+    const freq =
+      factors || star
+        ? `<div class="ca-sp-factors"><span>${type === 'golden' ? 'Golden cookie' : 'Reindeer'} frequency effects:</span>${factors || '<em class="ca-sp-none">none yet</em>'}${star}</div>${whatIfLine}`
+        : '';
     const wrath = type === 'golden' ? tile('Wrath chance', pc(d.wrathChance), 'that it’s a wrath cookie') : '';
     if (d.spawned)
       return (

@@ -702,6 +702,17 @@ always grab them again). Drag them anywhere; hover for × and ⚙ (its settings)
   bar is (the effect's own length, or a fresh Frenzy's for every bar — longer effects then fill theirs and are
   outlined in white) and the order (as they started, or ending soonest first).
 
+- **Golden cookie frequency** — how many times more often golden cookies come than with nothing helping (×4 with
+  Lucky day and Serendipity) and how often that is on average, then a bar for each thing helping (upgrades, a Golden
+  clover, spirits, the dragon…), on a log scale so the bars add up to the whole. Click it for the Stats page.
+- **Chart** — a CookieMgr chart, live on the left panel: the Garden's **Growth** or **Effects** (pick in its settings).
+  It shows the same window, X axis and choices as the chart on its page; hover it for the details.
+
+**Stars:** a ☆ next to a chart or a section adds its ready-made widget in one click, as a macro's ★ gives it a
+button: the Garden page's Growth and Effects charts (a Chart widget each) and the golden cookie frequency row on the
+Stats page (Golden cookie frequency). The star fills while the widget is on the left panel; click it again to take it
+away.
+
 Framed boxes (Quick stats, Latest events) are dragged by their title bar and folded with ▾. **Resize** any widget
 from its bottom-right corner: buttons, round widgets and the status bar scale up or down keeping their shape, framed
 boxes take any width and height.
@@ -993,6 +1004,9 @@ If you add a file, add it to `MODULES` in `build.mjs` in the right order.
 - **A new event type:** `CA.EventLog.defineType(type, { name, icon, color, income })`, then `CA.EventLog.add({ type, title, text, cookies, data })`.
 - **A new widget:** `CA.UI.Widgets.defineType({ id, name, icon, desc, width, single, bare, resize, bg, settings, html(instance) })`
   in `ui/widgetTypes.js` — it appears on the Widgets page; `html` is re-rendered twice a second and patched in place.
+  A ☆ for it anywhere on a page: `CA.UI.C.widgetStar({ type, ...its settings }, name)` (adds or removes the widget with
+  those settings; the star is full while one matches). A chart on the left panel: give its `CA.UI.Plot.create` spec
+  `widget: true` (and a `widgetName`) — its card gets a ☆ for the Chart widget.
   `settings` (`{ key, label, type: 'number' | 'multi', … }`) appear in its settings editor and are saved on the instance.
 - **A new page:** `CA.UI.Pages.register({ id, label, icon, order, html, mount, unmount, tick })` (or `parts: [a, b]` for a
   page made of components with their own mount/unmount/tick) from the page's own

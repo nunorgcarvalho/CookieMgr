@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## 3.19.0 — 2026-10-27
+
+- **☆ stars put a ready-made widget on the left panel**, as a macro's ★ gives it a button: one click adds it (and
+  shows widgets if they were hidden), the star fills, a second click takes it away. They're on the Garden page's
+  **Growth** and **Effects** charts and on the Stats page's golden cookie frequency row. Any page can add one
+  (`CA.UI.C.widgetStar`).
+- **Chart**, a new widget: a CookieMgr chart, live on the left panel — the Garden's Growth (plants by seed and stage)
+  or its Effects. It follows the page chart's window, X axis and choices, resizes freely (the chart fills the box),
+  and hovers like the original. Charts opt in with `widget: true` on their spec.
+- **Golden cookie frequency**, a new widget: how many times more often golden cookies come than with nothing helping
+  (×4 with Lucky day and Serendipity), one every how long on average, and a bar for each thing helping. Click it for
+  the Stats page.
+- The Stats page's golden cookie frequency row always shows now ("none yet" when nothing helps), with its ☆.
+
 ## 3.16.0 — 2026-10-27
 
 - **Miscellaneous**, a new card on the Settings page, now holds **Plain Business Day** (it was under General):

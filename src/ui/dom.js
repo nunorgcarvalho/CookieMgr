@@ -2,7 +2,8 @@
 //
 //   morph(target, html)   makes target's children match html, keeping every node that's still the
 //                         same kind — only text and attributes change — so hover states, focus and
-//                         open popups survive a refresh (live numbers re-rendered every half second)
+//                         open popups survive a refresh (live numbers re-rendered every half second);
+//                         a node marked data-keep is left exactly as it is (a chart's canvas)
 //   replay(el, cls, ms)   restarts a one-off animation class (a shake, a flash); with ms, removes it after
 //   armed(btn)            two-click buttons for destructive things: the first click arms (and relabels)
 //                         the button for a few seconds, the second returns true
@@ -36,6 +37,7 @@ CA.UI.Dom = (() => {
         continue;
       }
       if (want.nodeType !== 1) continue;
+      if (have.hasAttribute('data-keep')) continue; // drawn by its own code: not ours to patch
       for (const attr of [...have.attributes]) if (!want.hasAttribute(attr.name)) have.removeAttribute(attr.name);
       for (const attr of [...want.attributes]) {
         let v = attr.value;

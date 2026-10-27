@@ -6342,3 +6342,137 @@ body.ca-has-storebar #products {
 #CookieMgrWidgets .ca-tl-now {
   color: #ffd56a;
 }
+
+/* ---------- v3.19.0: ☆ widget stars, the Chart widget, Golden cookie frequency ---------- */
+
+/* a page's ☆ (CA.UI.C.widgetStar): the macros' favourite star, a touch smaller in card heads */
+#CookieMgrMenu .ca-wstar {
+  padding: 2px 4px;
+  line-height: 0;
+}
+#CookieMgrMenu .ca-card-meta .ca-wstar {
+  margin-right: 6px;
+  vertical-align: middle;
+}
+#CookieMgrMenu .ca-wstar.on {
+  box-shadow: 0 0 8px rgba(255, 213, 74, 0.25);
+}
+#CookieMgrMenu .ca-sp-factors .ca-wstar {
+  margin-left: auto;
+}
+#CookieMgrMenu .ca-sp-none {
+  font-style: italic;
+  color: #7f735f;
+}
+
+/* the Chart widget: the canvas fills the box (a given height: all of it), the legend under it */
+#CookieMgrWidgets .ca-graph-mini {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  margin: -2px -4px -4px;
+}
+#CookieMgrWidgets .ca-graph-mini canvas.ca-graph {
+  display: block;
+  width: 100%;
+  height: 150px;
+  flex: 1 1 auto;
+  min-height: 60px;
+  cursor: crosshair;
+}
+#CookieMgrWidgets .ca-w.sized .ca-graph-mini canvas.ca-graph {
+  height: auto;
+}
+#CookieMgrWidgets .ca-graph-mini .ca-legend {
+  display: flex;
+  flex-wrap: wrap;
+  flex: none;
+  gap: 2px 9px;
+  padding: 3px 4px 0;
+  font-size: 10px;
+  color: #b9ab93;
+}
+#CookieMgrWidgets .ca-graph-mini .ca-legend:empty {
+  display: none;
+}
+#CookieMgrWidgets .ca-sw {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 3px;
+  border-radius: 50%;
+  vertical-align: -1px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);
+}
+#CookieMgrWidgets .ca-sw.ca-sw-dash {
+  width: 10px;
+  height: 0;
+  border-radius: 0;
+  border-top: 2px dashed;
+  box-shadow: none;
+  vertical-align: 2px;
+}
+
+/* Golden cookie frequency: the total big, a bar per thing helping (log scale: they add up) */
+#CookieMgrWidgets .ca-wfreq {
+  cursor: pointer;
+}
+#CookieMgrWidgets .ca-wfreq-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+#CookieMgrWidgets .ca-wfreq-big {
+  font: bold 22px Merriweather, Georgia, serif;
+  color: #ffd84a;
+  text-shadow: 0 0 10px rgba(255, 200, 60, 0.35), 0 1px 0 #000;
+  line-height: 1;
+}
+#CookieMgrWidgets .ca-wfreq-sub {
+  display: flex;
+  flex-direction: column;
+  font-size: 10px;
+  line-height: 1.3;
+  color: #a89a83;
+}
+#CookieMgrWidgets .ca-wfreq-sub em {
+  font-style: normal;
+}
+#CookieMgrWidgets .ca-wfreq-sub b {
+  color: #fff3d6;
+}
+#CookieMgrWidgets .ca-wfq-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 54px auto;
+  align-items: center;
+  gap: 6px;
+  padding: 1px 0;
+  font-size: 11px;
+  color: #e8dcc4;
+}
+#CookieMgrWidgets .ca-wfq-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+#CookieMgrWidgets .ca-wfq-bar {
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+#CookieMgrWidgets .ca-wfq-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #c9902a, #ffe066);
+}
+#CookieMgrWidgets .ca-wfq-row b {
+  min-width: 34px;
+  text-align: right;
+  color: #ffe066;
+}
+#CookieMgrWidgets .ca-wfq-row.slower b {
+  color: #e58a6a;
+}
