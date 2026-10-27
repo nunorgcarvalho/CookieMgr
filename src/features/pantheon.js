@@ -8,6 +8,18 @@
 //   pantheon.swaps()           worship swaps left (0–3; they come back over hours)
 //   pantheon.slot(god, slot)   puts a spirit in a slot (slot none: back to the roster, free)
 //
+// Profiles: named combinations of the three slots (a spirit's key, or "" for an empty slot), saved
+// with the game. Two to start with, ordinary ones (rename them, delete them) whose ids stay put:
+//   wrinklers   Skruuia (Scorn) in the diamond slot, nothing else
+//   golden      Vomitrax (Decadence), Selebrak (Festivities), Muridal (Labor)
+//
+//   pantheon.profile(p)        slots a profile (its id or its name): its spirits, diamond to jade,
+//                              while swaps last, then empties the rest (free); call it again to finish
+//   pantheon.profileActive(p)  whether the three slots are the profile's
+//   pantheon.profileSwaps(p)   worship swaps it still takes
+//   pantheon.activeProfile()   the profile the slots are now ("" when none)
+//   pantheon.profiles()        a list: every profile's id
+//
 // Game facts (minigamePantheon.js): M.gods by key, M.godsById, M.slot[0..2] = god id or -1 (diamond,
 // ruby, jade); dropping a spirit on a slot costs M.useSwap(1) and only works with swaps left;
 // M.slotGod(god, slot) swaps out whoever was there; taking one off a slot is free.
@@ -69,7 +81,116 @@ CA.Pantheon = (() => {
     return 1;
   }
 
+  // ---- profiles ------------------------------------------------------------------------------
+
+  const DEFAULTS = () => [
+    { id: 'wrinklers', name: 'Wrinklers', slots: ['scorn', '', ''] },
+    { id: 'golden', name: 'Golden', slots: ['decadence', 'seasons', 'labor'] },
+  ];
+  let profiles = DEFAULTS();
+  const changed = () => CA.Events.emit('pantheon');
+  const cleanSlots = (a) => {
+    const out = [0, 1, 2].map((i) => (Array.isArray(a) && typeof a[i] === 'string' ? a[i].slice(0, 40) : ''));
+    // a spirit sits in one slot at most
+    return out.map((k, i) => (k && out.indexOf(k) < i ? '' : k));
+  };
+  const cleanName = (n, fallback) => String(n == null ? '' : n).trim().slice(0, 40) || fallback;
+
+  /** A profile from its id or its name (any case), or null. */
+  function profileOf(x) {
+    if (x == null || x === '') return null;
+    const k = String(x).toLowerCase();
+    return profiles.find((p) => p.id === String(x)) || profiles.find((p) => p.name.toLowerCase() === k) || null;
+  }
+  const list = () => profiles.map((p) => ({ id: p.id, name: p.name, slots: p.slots.slice() }));
+  /** What's in the three slots now, as keys ("" empty). */
+  function current() {
+    const M = minigame();
+    return M ? M.slot.map((id) => (id >= 0 && M.godsById[id] ? keyOf(M, M.godsById[id]) : '')) : ['', '', ''];
+  }
+  /** Spirits a profile names, as this game's keys (one it doesn't know: left as it is). */
+  const wanted = (p) => p.slots.map((k) => (k ? (godOf(k) ? keyOf(minigame(), godOf(k)) : k) : ''));
+  const isActive = (x) => {
+    const p = profileOf(x);
+    if (!p || !minigame()) return false;
+    const now = current();
+    return wanted(p).every((k, i) => k === now[i]);
+  };
+  /** Swaps a profile still takes from the slots now: each spirit it moves in (as the game swaps them). */
+  function swapsFor(x) {
+    const p = profileOf(x);
+    if (!p || !minigame()) return 0;
+    const now = current();
+    let n = 0;
+    wanted(p).forEach((k, i) => {
+      if (!k || k === now[i]) return;
+      n++;
+      const j = now.indexOf(k);
+      if (j >= 0) now[j] = now[i];
+      now[i] = k;
+    });
+    return n;
+  }
+  /**
+   * Slots a profile: its spirits first, diamond to jade, while swaps last (one already in another
+   * slot trades places with what's there, as in the game), then empties the slots it leaves empty
+   * (free). How many spirits moved: 0 when it's on, or nothing could move.
+   */
+  function apply(x) {
+    const p = profileOf(x);
+    if (!p || !minigame()) return 0;
+    const want = wanted(p);
+    let n = 0;
+    want.forEach((k, i) => {
+      if (k && k !== current()[i] && godOf(k)) n += slot(k, SLOTS[i]);
+    });
+    want.forEach((k, i) => {
+      const now = current()[i];
+      if (!k && now) n += slot(now, 'none');
+    });
+    return n;
+  }
+  /** A new profile (the slots now when none are given): its id. */
+  function add(name, slots) {
+    let id = `p${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`;
+    while (profileOf(id)) id += 'x';
+    profiles.push({ id, name: cleanName(name, 'My spirits'), slots: cleanSlots(slots || current()) });
+    changed();
+    return id;
+  }
+  function rename(id, name) {
+    const p = profiles.find((x) => x.id === id);
+    if (!p || !String(name).trim()) return;
+    p.name = cleanName(name, p.name);
+    changed();
+  }
+  function remove(id) {
+    const n = profiles.length;
+    profiles = profiles.filter((x) => x.id !== id);
+    if (profiles.length !== n) changed();
+  }
+  /** One slot of a profile (a spirit already in another of its slots leaves that one). */
+  function setSlot(id, i, key) {
+    const p = profiles.find((x) => x.id === id);
+    if (!p || !(i >= 0 && i < 3)) return;
+    const k = String(key || '');
+    p.slots = p.slots.map((s, j) => (j === i ? k : k && s === k ? '' : s));
+    changed();
+  }
+  const serialize = () => ({ profiles: list() });
+  function load(data) {
+    const ps = data && Array.isArray(data.profiles) ? data.profiles : null;
+    profiles = ps
+      ? ps
+          .filter((x) => x && x.id)
+          .map((x) => ({ id: String(x.id), name: cleanName(x.name, 'Spirits'), slots: cleanSlots(x.slots) }))
+          .filter((x, i, a) => a.findIndex((y) => y.id === x.id) === i)
+      : DEFAULTS();
+    changed();
+  }
+
   function init() {
+    CA.Settings.registerSection('pantheon', { serialize, load, event: 'pantheon' });
     const V = (id, desc, get, more) => CA.Script.defineValue({ id, desc, get, ...(more || {}) });
     V('pantheon.gods', 'a list: every spirit of the Pantheon', () => {
       const M = minigame();
@@ -108,7 +229,25 @@ CA.Pantheon = (() => {
       available: () => !!minigame(),
       run: (p) => slot(p.god, p.slot),
     });
+
+    V('pantheon.profiles', 'a list: every Pantheon profile (its id)', () => profiles.map((p) => p.id), { list: true });
+    V('pantheon.activeProfile', 'the Pantheon profile the three slots are now ("" when none)', () => {
+      const p = profiles.find((x) => isActive(x.id));
+      return p ? p.id : '';
+    });
+    V('pantheon.profileActive', 'whether the three slots are a profile’s (its id or name)', (x) => isActive(x), { params: ['profile'], bool: true });
+    V('pantheon.profileSwaps', 'worship swaps a profile still takes (0 when it’s on)', (x) => swapsFor(x), { params: ['profile'] });
+    CA.Actions.register({
+      id: 'pantheon.profile',
+      name: 'Use a Pantheon profile',
+      icon: 'pantheon',
+      group: 'Pantheon',
+      unit: 'moved',
+      params: [{ key: 'profile', label: 'Pantheon profile', type: 'select', default: 'golden', options: () => profiles.map((p) => ({ v: p.id, label: p.name })) }],
+      available: () => !!minigame(),
+      run: (p) => apply(p.profile),
+    });
   }
 
-  return { init, minigame, slot, godOf, SLOTS };
+  return { init, minigame, slot, godOf, SLOTS, profiles: list, profileOf, current, isActive, swapsFor, apply, add, rename, remove, setSlot };
 })();

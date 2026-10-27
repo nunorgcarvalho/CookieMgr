@@ -7194,3 +7194,66 @@ body.ca-has-storebar #products {
   color: #bdbdbd;
   background: rgba(154, 154, 154, 0.14);
 }
+
+/* Pantheon: profiles, a row each (v3.30) */
+#CookieMgrMenu .ca-pprof {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 8px 10px;
+  margin: 6px 4px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.25);
+  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.12);
+}
+#CookieMgrMenu .ca-pprof.on {
+  box-shadow: inset 0 0 0 1px rgba(130, 235, 120, 0.45);
+}
+#CookieMgrMenu .ca-pprof .ca-gname,
+#CookieMgrMenu .ca-pprof select {
+  font: 12px Tahoma, Arial, sans-serif;
+  color: #f0e2c0;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 220, 150, 0.25);
+  border-radius: 4px;
+  padding: 3px 6px;
+}
+#CookieMgrMenu .ca-pprof .ca-gname {
+  width: 110px;
+  font-weight: bold;
+}
+#CookieMgrMenu .ca-pprof select option {
+  background: #2a2015;
+}
+#CookieMgrMenu .ca-pprof-slots {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+#CookieMgrMenu .ca-pprof-slot {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px 2px 4px;
+  border-radius: 6px;
+}
+#CookieMgrMenu .ca-pprof-slot .ca-god-ico {
+  zoom: 0.5;
+}
+#CookieMgrMenu .ca-pprof-slot select {
+  max-width: 110px;
+}
+#CookieMgrMenu .ca-pprof-end {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+#CookieMgrMenu .ca-pprof-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px 4px;
+}

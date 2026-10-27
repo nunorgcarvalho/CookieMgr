@@ -2,6 +2,9 @@
 //
 //   Spirits      the three slots — Diamond, Ruby, Jade — with the spirit in each and what it does in
 //                that slot
+//   Profiles     named combinations of the three slots (features/pantheon.js): one row each —
+//                its name, a spirit per slot, whether it's on (or the swaps it takes), Use, Delete —
+//                and New profile / From current
 //   Worship      swaps left, when the next one comes back, how long a swap takes to refill
 //   All spirits  every spirit, the slot it's in (if any), and on hover what it does in each slot
 //
@@ -18,6 +21,7 @@ CA.UI.PantheonPage = (() => {
   const SYNC_MS = 1000;
   let root = null;
   let life = null; // the mounted page (CA.UI.Pages.scope)
+  let slotSig = ''; // the slots when the page was drawn
 
   function minigame() {
     const t = Game.Objects && Game.Objects.Temple;
@@ -51,6 +55,59 @@ CA.UI.PantheonPage = (() => {
         '</div>';
     });
     return h + '</div></div>';
+  }
+
+  // ---- profiles ----
+
+  const P = () => CA.Pantheon;
+  /** A profile's state: on, or the swaps it takes (and whether there are that many now). */
+  function statusHtml(M, p) {
+    if (P().isActive(p.id)) return '<span class="ca-pill on">in use</span>';
+    const n = P().swapsFor(p.id);
+    if (!n) return '<span class="ca-pill">free to use</span>';
+    return `<span class="ca-pill${n > M.swaps ? ' ca-pill-warn' : ''}">needs ${n} swap${n === 1 ? '' : 's'}</span>`;
+  }
+  function slotPick(M, p, i) {
+    const k = p.slots[i];
+    const g = k ? P().godOf(k) : null;
+    const opts =
+      `<option value=""${k ? '' : ' selected'}>— empty —</option>` +
+      M.godsById.map((x) => {
+        const key = Object.keys(M.gods || {}).find((y) => M.gods[y] === x) || String(x.id);
+        return `<option value="${esc(key)}"${g === x ? ' selected' : ''}>${esc(nameParts(x)[0])}</option>`;
+      }).join('');
+    return (
+      `<label class="ca-pprof-slot ca-slot-${i}" data-tip="${esc(g ? g.name : `${SLOTS[i]}: empty`)}">` +
+      (g ? sprite(g) : '<span class="ca-god-ico empty"></span>') +
+      `<select data-pp-slot="${esc(p.id)}" data-i="${i}">${opts}</select>` +
+      '</label>'
+    );
+  }
+  function profileRow(M, p) {
+    const on = P().isActive(p.id);
+    return (
+      `<div class="ca-pprof${on ? ' on' : ''}" data-pp-row="${esc(p.id)}">` +
+      `<input type="text" class="ca-gname" maxlength="40" value="${esc(p.name)}" data-pp-name="${esc(p.id)}" data-tip="the profile’s name — macros use it, or its id: ${esc(p.id)}">` +
+      `<div class="ca-pprof-slots">${[0, 1, 2].map((i) => slotPick(M, p, i)).join('')}</div>` +
+      '<span class="ca-pprof-end">' +
+      `<span data-pp-status="${esc(p.id)}">${statusHtml(M, p)}</span>` +
+      C().button(`${I('play', 12)} Use`, `data-pp-act="use" data-id="${esc(p.id)}"${on ? ' disabled' : ''}`, 'ca-btn-small') +
+      C().button('Delete', `data-pp-act="delete" data-id="${esc(p.id)}" data-arm-label="Delete it?"`, 'ca-btn-small ca-btn-off') +
+      '</span></div>'
+    );
+  }
+  function profilesCard(M) {
+    const ps = P().profiles();
+    return (
+      '<div class="ca-card ca-pprofs">' +
+      C().cardHead('Profiles', 'save', '<div class="ca-card-meta"><span class="ca-hint">macros: pantheon.profile(golden)</span></div>') +
+      (ps.length ? ps.map((p) => profileRow(M, p)).join('') : '<div class="ca-card-note">No profiles. Make one from what’s slotted now, or a new one to fill in.</div>') +
+      '<div class="ca-pprof-foot">' +
+      C().button(`${I('plus', 12)} New profile`, 'data-pp-act="new"', 'ca-btn-small') +
+      C().button(`${I('pantheon', 12)} From current`, 'data-pp-act="current"', 'ca-btn-small') +
+      '<span class="ca-hint">Use puts in what differs, diamond first, a worship swap each (emptying a slot is free); without swaps it waits — a macro calling it again finishes it as swaps come back.</span>' +
+      '</div></div>'
+    );
   }
 
   function swapInfo(M) {
@@ -99,7 +156,7 @@ CA.UI.PantheonPage = (() => {
         '<div class="ca-card-note">The Pantheon opens once you have a level-1 Temple (spend a sugar lump on it).</div>' +
         '</div>'
       );
-    return slotsCard(M) + worshipCard(M) + godsCard(M);
+    return slotsCard(M) + profilesCard(M) + worshipCard(M) + godsCard(M);
   }
 
   function sync() {
@@ -107,13 +164,45 @@ CA.UI.PantheonPage = (() => {
     const M = minigame();
     const el = M && root.querySelector('[data-pan-worship]');
     if (el) CA.UI.Dom.morph(el, worshipHtml(M));
+    // the slots changed (in the Temple, or by a macro): the page again; else the profiles' states
+    const sig = M ? M.slot.join() : '';
+    if (sig !== slotSig) return CA.UI.Menu.render();
+    if (!M) return;
+    root.querySelectorAll('[data-pp-status]').forEach((st) => {
+      const p = P().profileOf(st.dataset.ppStatus);
+      if (p) CA.UI.Dom.morph(st, statusHtml(M, p));
+    });
+  }
+
+  function onClick(e) {
+    const t = e.target.closest('[data-pp-act]');
+    if (!t || !root.contains(t)) return;
+    e.stopPropagation();
+    const { ppAct: act, id } = t.dataset;
+    if (act === 'delete') {
+      if (!CA.UI.Dom.armed(t)) return;
+      P().remove(id);
+    } else if (act === 'use') P().apply(id);
+    else if (act === 'new') P().add('New profile', ['', '', '']);
+    else if (act === 'current') P().add('From current');
+    CA.Util.sound('snd/tick.mp3');
+    CA.UI.Menu.render();
+  }
+  function onChange(e) {
+    const d = e.target.dataset || {};
+    if (d.ppSlot) P().setSlot(d.ppSlot, Number(d.i), e.target.value);
+    else if (d.ppName) P().rename(d.ppName, e.target.value);
+    else return;
+    CA.UI.Menu.render();
   }
 
   function mount(el) {
     unmount();
     root = el;
+    const M = minigame();
+    slotSig = M ? M.slot.join() : '';
     sync();
-    life = CA.UI.Pages.scope(el).every(SYNC_MS, sync);
+    life = CA.UI.Pages.scope(el).on('click', onClick).on('change', onChange).every(SYNC_MS, sync);
   }
   function unmount() {
     if (life) life.close();
