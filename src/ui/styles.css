@@ -6105,7 +6105,7 @@ body.ca-has-storebar #products {
 }
 #CookieMgrMenu .ca-sp-half,
 #CookieMgrWidgets .ca-sp-half {
-  stroke: rgba(255, 255, 255, 0.35);
+  stroke: rgba(125, 255, 122, 0.6);
   stroke-width: 1;
   stroke-dasharray: 4 3;
   vector-effect: non-scaling-stroke;
@@ -6115,6 +6115,12 @@ body.ca-has-storebar #products {
   stroke: #ffe066;
   stroke-width: 1.5;
   vector-effect: non-scaling-stroke;
+}
+#CookieMgrMenu .ca-sp-now .ca-sp-nowh,
+#CookieMgrWidgets .ca-sp-now .ca-sp-nowh {
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  opacity: 0.7;
 }
 #CookieMgrMenu .ca-sp-now circle,
 #CookieMgrWidgets .ca-sp-now circle {
@@ -6149,6 +6155,11 @@ body.ca-has-storebar #products {
   paint-order: stroke;
   stroke: rgba(0, 0, 0, 0.85);
   stroke-width: 3px;
+}
+#CookieMgrMenu .ca-sp-chart .ca-sp-hp,
+#CookieMgrWidgets .ca-sp-chart .ca-sp-hp {
+  fill: #7dff7a;
+  font-weight: bold;
 }
 #CookieMgrMenu .ca-sp-chart .ca-sp-now .ca-sp-since,
 #CookieMgrWidgets .ca-sp-chart .ca-sp-now .ca-sp-since {

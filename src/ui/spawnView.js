@@ -7,8 +7,8 @@
 //                 helping (the frequency effects together), the chance the next is a wrath cookie
 //   the chart     this cycle's cumulative chance, over the time since the last one left (0 → the
 //                 latest it can come): a line sweeps left to right at now (the time since, at its
-//                 top), a dashed one at the expected moment (how long until it), and a dashed one
-//                 across where that meets the curve (its height, labelled);
+//                 top), a dashed one at the expected moment (how long until it), and dashed ones
+//                 across at the curve's height at each (labelled);
 //                 hover it for the moment under the pointer
 //   the bars      under the chart, on its axis: each effect that ran since the last one left — ended
 //                 ones dimmed — from when it started to when it ends, with what it multiplies your
@@ -176,7 +176,7 @@ CA.UI.SpawnView = (() => {
     const hp = expAt !== null ? c.cdf(expAt) : 0.5;
     // the lines and shapes first, every label after them all (drawn on top: SVG paints in order)
     let labels =
-      `<text class="ca-sp-ylab" x="${x0 + 2}" y="${(Y(hp) - 3).toFixed(2)}">${pc(hp)}</text>` +
+      `<text class="ca-sp-ylab ca-sp-hp" x="${x0 + 2}" y="${(Y(hp) - 3).toFixed(2)}">${pc(hp)}</text>` +
       (y0 - y1 >= 60 && Y(hp) - y1 > 20 ? `<text class="ca-sp-ylab" x="${x0 + 2}" y="${(y1 + 8).toFixed(2)}">100%</text>` : ''); // a short chart (a widget): the dashed line's alone
     let plotSvg =
       `<path class="ca-sp-swept" d="${area}"/>` +
@@ -185,9 +185,12 @@ CA.UI.SpawnView = (() => {
       `<path class="ca-sp-cdf" d="${line}"/>` +
       `<line class="ca-sp-axis" x1="${x0}" x2="${x1}" y1="${y0}" y2="${y0}"/>` +
       `<g class="ca-sp-now"><line x1="${nx.toFixed(2)}" x2="${nx.toFixed(2)}" y1="${y1}" y2="${y0 + effects.length * LN}"/>` +
+      // dashed, across: the curve's height now
+      `<line class="ca-sp-nowh" x1="${x0}" x2="${x1}" y1="${ny.toFixed(2)}" y2="${ny.toFixed(2)}"/>` +
       `<circle cx="${nx.toFixed(2)}" cy="${ny.toFixed(2)}" r="3"/></g>`;
     labels +=
-      `<g class="ca-sp-now"><text x="${(nx + (right ? -5 : 5)).toFixed(2)}" y="${Math.max(y1 + 9, Math.min(y0 - 4, ny - 5)).toFixed(2)}" text-anchor="${right ? 'end' : 'start'}">${pc(c.by)}</text>` +
+      // its height: right of the now line, just under the dashed line across (over it when that's at the bottom)
+      `<g class="ca-sp-now"><text x="${(nx + (right ? -5 : 5)).toFixed(2)}" y="${(ny + 11 > y0 - 2 ? ny - 4 : ny + 11).toFixed(2)}" text-anchor="${right ? 'end' : 'start'}">${pc(c.by)}</text>` +
       // the time since the last one left, at its top, on the side away from the expected line
       `<text class="ca-sp-since" x="${(nx + (nx < x0 + 50 ? 4 : -4)).toFixed(2)}" y="${(y1 + 9).toFixed(2)}" text-anchor="${nx < x0 + 50 ? 'start' : 'end'}">${c.elapsed < 1 ? '0s' : F().span(c.elapsed)}</text></g>`;
     // the expected moment (now + the mean wait from now), dashed, with how long until it
