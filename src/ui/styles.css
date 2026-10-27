@@ -7194,3 +7194,67 @@ body.ca-has-storebar #products {
   color: #bdbdbd;
   background: rgba(154, 154, 154, 0.14);
 }
+
+/* ---------- v3.31: the Dragon page ---------- */
+#CookieMgrMenu .ca-aura-slots {
+  grid-template-columns: repeat(2, 1fr);
+}
+#CookieMgrMenu .ca-aura-slot {
+  box-shadow: inset 0 0 0 1px rgba(255, 170, 110, 0.35);
+}
+#CookieMgrMenu .ca-aura-slot .ca-slot-gem {
+  color: #ffb27a;
+}
+#CookieMgrMenu .ca-aura-slot.locked {
+  opacity: 0.55;
+}
+#CookieMgrMenu .ca-dragon-next {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 6px 6px;
+  font-size: 12px;
+  color: #d8cbb0;
+}
+#CookieMgrMenu .ca-dragon-next em {
+  font-style: normal;
+  color: #a39477;
+}
+#CookieMgrMenu .ca-dragon-next b {
+  color: #ffeab0;
+}
+#CookieMgrMenu .ca-dprof-name {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+#CookieMgrMenu .ca-dprof-name .ca-gname {
+  width: 120px;
+}
+#CookieMgrMenu .ca-dprof-name code {
+  font-size: 10px;
+  color: #93866f;
+}
+#CookieMgrMenu .ca-dprof select {
+  width: 165px;
+}
+#CookieMgrMenu .ca-dprof {
+  flex-wrap: nowrap;
+}
+@media (max-width: 760px) {
+  #CookieMgrMenu .ca-dprof {
+    flex-wrap: wrap;
+  }
+}
+#CookieMgrMenu .ca-dprof-acts {
+  display: inline-flex;
+  gap: 6px;
+  margin-left: auto;
+}
+#CookieMgrMenu .ca-dprof-foot {
+  display: flex;
+  gap: 6px;
+  padding: 8px 14px 10px;
+}
