@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+## 3.36.0 — 2026-10-27
+
+- **Cast tiers**: a new card on the Grimoire page that decides when **Force the Hand of Fate on combos** casts.
+  Combos go into tiers, and each tier casts only once magic is far enough up the bar: 0% means as soon as the
+  spell is affordable, 100% means a full bar. Magic refills faster the fuller the bar is, so the best combos cast
+  at once and the rest wait for a full bar, where refill would be wasted anyway.
+  - **Strongest combos** at 0%: Frenzy or a building special, together with Click frenzy or Dragonflight (as before).
+  - **Regular combos** at 100%: Frenzy + a building special (it cast at once before), two building specials, and
+    Elder frenzy.
+  - A combo is on when at least its effects are; other effects can be on too. Each of its effects must have at
+    least the profile's **time left** (5 seconds to start with, a slider from 0 to 30), so the golden cookie the
+    spell brings still finds them. Only what's on now counts: nothing reads the seed.
+  - Each tier shows the magic its threshold stands for and how long a cast there takes to refill back to it.
+  - Combos show as the game's effect icons with their abbreviations, and the full names on hover. **Add combo**
+    opens an effect picker (building special twice for two of them). Drag a combo onto another tier to move it.
+  - The magic bar shows the spell's cost and a mark for each tier, and each tier says when it's casting or what
+    it's waiting for.
+- **Grimoire profiles**: all of the above (tiers, combos, time left) as named profiles, saved with the game. There's
+  a tab for each, with **Copy**, **New** and **Delete**. **Default** and **Saving up** (the strongest combos only)
+  come seeded. Macros switch with `grimoire.profile(id)`; also `grimoire.profileActive`, `grimoire.activeProfile`,
+  `grimoire.profiles`, `grimoire.fthofReady`, `grimoire.fthofTier`, `grimoire.fthofCombo` and `grimoire.fill`.
+- If you've edited the auto-cast's code, **Revert to default** picks the tiers up.
+
 ## 3.35.0 — 2026-10-27
 
 - **Upgrade info cards.** Hover an upgrade anywhere CookieMgr shows one and a card tells you about it: its icon and
