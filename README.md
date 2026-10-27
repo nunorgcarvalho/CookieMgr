@@ -291,7 +291,7 @@ forever:
 - **Prestige** — `prestige.ifAscended()`, `prestige.toNext()` (cookies), `prestige.perSecond()`, `prestige.cpsGain()`,
   `prestige.cookiesFor(level)`, `prestige.secondsTo(level)`, `prestige.nextIn()`.
 - **Wrinklers** — `wrinkler.reward(w)`, `wrinklers.reward()`, `wrinklers.rewardFattest()`, `wrinklers.eating()`.
-- **Timers, what's left, what if** — `buff.timeLeft(effect)`, `buff.goldenChance(effect)` (a golden cookie before it ends, 0–1), `golden.effectDuration(effect)` (seconds an effect lasts if it starts now, with your upgrades), `lump.ripeIn()`, `autosave.in()`, `magic.fullIn()`;
+- **Timers, what's left, what if** — `buff.timeLeft(effect)`, `buff.goldenChance(effect)` (a golden cookie before it ends, 0–1), `buff.effectiveMult(effect)` (what it multiplies your income by, clicking counted at your click rate), `golden.effectDuration(effect)` (seconds an effect lasts if it starts now, with your upgrades), `lump.ripeIn()`, `autosave.in()`, `magic.fullIn()`;
   `missing.upgrades()`, `missing.achievements()`, `missing.seasonDrops(season)`, `missing.plantDrops()`;
   `pantheon.cpsGain(god, slot)`, `dragon.auraCpsGain(aura, slot)`.
 - **Garden** — `garden.tiles()` (tiles are `"x,y"`), `garden.plantAt / wantAt / age / decay(tile)`,

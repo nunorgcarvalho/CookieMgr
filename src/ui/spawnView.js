@@ -7,8 +7,8 @@
 //   the chart     this cycle's cumulative chance, over the time since the last one left (0 → the
 //                 latest it can come): a line sweeps left to right at now, a dashed line at 50%;
 //                 hover it for the moment under the pointer
-//   the bars      under the chart, from the now line: each effect running — how long it has left and
-//                 the chance a golden cookie comes before it ends (to stack on it)
+//   the bars      under the chart, on its axis: each effect running, from when it started to when it
+//                 ends, with what it multiplies your income by (a click effect at your click rate)
 //   frequency     the effects making them come more often now — each a chip; click one to see the
 //   effects       mean wait without it (what if) — counting from the next one, as the game fixes a
 //                 cycle's bounds when the last cookie leaves
@@ -32,6 +32,9 @@ CA.UI.SpawnView = (() => {
   const when = (s) => (!Number.isFinite(s) ? '—' : s <= 0 ? 'now' : s < 1 ? '<1s' : F().span(s));
   const pc = (p) => `${p >= 0.9995 ? 100 : p > 0 && p < 0.0005 ? '<0.1' : (p * 100).toFixed(p < 0.1 ? 1 : 0)}%`;
   const LABEL = { golden: 'golden cookie', reindeer: 'reindeer' };
+
+  /** A multiplier, short: ×777, ×12.3, ×1.85, ×0.5. */
+  const mx = (m) => (!Number.isFinite(m) ? '?' : m >= 100 ? String(Math.round(m)) : m >= 10 ? String(Math.round(m * 10) / 10) : String(Math.round(m * 100) / 100));
 
   /** An effect's bar colour: what it multiplies. */
   const buffKind = (b) => (b.click > 1 ? 'click' : b.cps > 1 ? 'up' : b.cps < 1 || b.click < 1 ? 'down' : 'other');
@@ -135,7 +138,7 @@ CA.UI.SpawnView = (() => {
   /**
    * This cycle's chart: x is the time since the last one left, 0 → the latest it can come; the curve,
    * the chance one has come by then (0 → 100%); a dashed line at 50%; the now line where the cycle is,
-   * its height labelled — and under it, from the now line, each effect running (golden cookies).
+   * its height labelled — and under it, on the same axis, each effect running (golden cookies).
    * d: CA.Timers.distribution's (not spawned). opts: width, height, hover, lane — as chart()'s.
    */
   function cycleChart(type, d, effects = [], opts = {}) {
@@ -180,22 +183,30 @@ CA.UI.SpawnView = (() => {
     for (let s = 0; s <= span + 1e-9; s += step) axis += `<text x="${X(s).toFixed(2)}" y="${HH - 6}" text-anchor="${s === 0 ? 'start' : 'middle'}">${s === 0 ? '0' : F().span(s)}</text>`;
     // and the latest, at the end — unless a round moment is already close to it
     if (span % step > step * 0.45) axis += `<text x="${x1}" y="${HH - 6}" text-anchor="end">${F().span(span)}</text>`;
-    // the effects, from now
+    // the effects, on the same axis: each from when it started (or 0) to when it ends, with what it
+    // multiplies your income by (a click effect at your click rate)
     const ly = (i) => y0 + 4 + i * LN;
     const bh = LN - 3;
-    const short = x1 - x0 < 400;
     let bars = '';
     effects.forEach((b, i) => {
       const y = ly(i);
+      const from = Math.max(0, c.elapsed - Math.max(0, b.maxSecs - b.secs));
       const end = c.elapsed + b.secs;
-      const gc = Number.isFinite(b.golden) ? ` · ${short ? 'GC' : 'golden cookie before it ends'} ${pc(b.golden)}` : '';
-      // its label inside the track, from the now line — or from the left when the line is far right
-      const tx = nx + 3 + 140 > x1 ? x0 + 3 : nx + 3;
+      const em = T().effectiveMult(b.name);
+      const m = em ? em.mult : b.cps;
+      const clicky = b.click !== 1;
+      const why = clicky
+        ? em && em.rate > 0
+          ? ` — ×${mx(b.click)} a click, at your ${em.rate.toFixed(em.rate < 10 ? 1 : 0)} clicks/s${b.cps !== 1 ? ` and ×${mx(b.cps)} CpS` : ''}`
+          : ` — ×${mx(b.click)} a click; you haven’t been clicking, so no more income`
+        : '';
+      const label = `${esc(b.name)} · ×${mx(m)}${clicky ? ' income' : ' CpS'} · ${when(b.secs)}${end > span + 0.5 ? ' →' : ''}`;
+      const tx = Math.min(X(from) + 3, x1 - 150);
       bars +=
-        `<g class="ca-sp-lane ${buffKind(b)}" data-tip="${esc(`${b.name}: ${when(b.secs)} left${Number.isFinite(b.golden) ? ` — a golden cookie comes before it ends ${pc(b.golden)} of the time` : ''}`)}">` +
+        `<g class="ca-sp-lane ${buffKind(b)}" data-tip="${esc(`${b.name}: ×${mx(m)} your income${why}; ${when(b.secs)} left`)}">` +
         `<rect class="track" x="${x0}" y="${y}" width="${x1 - x0}" height="${bh}"/>` +
-        `<rect class="left" x="${nx.toFixed(2)}" y="${y}" width="${Math.max(1, X(end) - nx).toFixed(2)}" height="${bh}"/>` +
-        `<text x="${tx.toFixed(2)}" y="${y + bh - 2}">${esc(b.name)} · ${when(b.secs)}${end > span + 0.5 ? ' →' : ''}${gc}</text></g>`;
+        `<rect class="left" x="${X(from).toFixed(2)}" y="${y}" width="${Math.max(1, X(end) - X(from)).toFixed(2)}" height="${bh}"/>` +
+        `<text x="${Math.max(x0 + 3, tx).toFixed(2)}" y="${y + bh - 2}">${label}</text></g>`;
     });
     // the hover readout
     const hf = hover[type];
@@ -234,7 +245,7 @@ CA.UI.SpawnView = (() => {
       whatIf !== null
         ? `<div class="ca-sp-note">From the next one, on average <b>${when(d.next.mean)}</b> — without ${esc(without[type].join(', '))}: <b>${when(whatIf)}</b> (${whatIf > d.next.mean ? '+' : '−'}${when(Math.abs(whatIf - d.next.mean))})</div>`
         : '';
-    const effects = type === 'golden' ? T().buffsWithGolden() : [];
+    const effects = type === 'golden' ? T().buffs() : [];
     const override = d.override === 'chain' ? 'A cookie chain is going: the next comes within seconds.' : d.override === 'hoard' ? 'Gold hoard: they come almost at once.' : d.override === 'season' ? 'Reindeer season: they come almost at once.' : '';
     const freq = factors ? `<div class="ca-sp-factors"><span>${type === 'golden' ? 'Golden cookie' : 'Reindeer'} frequency effects:</span>${factors}</div>${whatIfLine}` : '';
     const wrath = type === 'golden' ? tile('Wrath chance', pc(d.wrathChance), 'that it’s a wrath cookie') : '';

@@ -2,7 +2,9 @@
 // time since the last one left (0 → the latest it can come) against the chance one has come by then,
 // a dashed line at 50%, a now line sweeping across it; the numbers are the expected wait, the odds so
 // far (0% → 100%) and the wrath chance; the percentiles and notes are gone; "Golden cookie frequency
-// effects" (was "Making them come sooner"); the Next golden cookie widget draws the same chart.
+// effects" (was "Making them come sooner"); effects as bars on the same axis, each with what it
+// multiplies your income by (CA.Timers.effectiveMult — a click effect at your click rate), no golden
+// cookie chance; the Next golden cookie widget draws the same chart.
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
 import { boot, sleep, makeAssert } from '../harness/game.mjs';
 
@@ -65,11 +67,41 @@ s.dispatchEvent(new w.MouseEvent('mousemove', { bubbles: true, clientX: X(400), 
 const hov = card().querySelector('.ca-sp-hover');
 assert(hov && /after the last/.test(hov.textContent) && hov.textContent.includes(`${(CA.Timers.distribution('golden').cycle.cdf(400) * 100).toFixed(1)}%`), `hover: the moment under the pointer, its chance by then (${hov && hov.textContent})`);
 
-// ---- effects run from the now line
+// ---- effects, on the same axis: from when each started to when it ends
 Game.buffs = { Frenzy: { name: 'Frenzy', time: 30 * 60, maxTime: 30 * 77, multCpS: 7 } };
 CA.UI.Menu.render();
 const fr = card().querySelector('.ca-sp-lane.up .left');
-assert(fr && Math.abs(Number(fr.getAttribute('x')) - X(450)) < 0.05 && Math.abs(Number(fr.getAttribute('x')) + Number(fr.getAttribute('width')) - X(510)) < 0.05, 'the Frenzy bar: from now, 60 s on');
+assert(fr && Math.abs(Number(fr.getAttribute('x')) - X(433)) < 0.05 && Math.abs(Number(fr.getAttribute('x')) + Number(fr.getAttribute('width')) - X(510)) < 0.05, 'the Frenzy bar: from when it started (17 s ago) to 60 s from now');
+const frLane = card().querySelector('.ca-sp-lane.up');
+assert(/Frenzy · ×7 CpS · 1m 00s/.test(frLane.textContent) && !/before it ends/.test(frLane.textContent), `its label: the multiplier and the time left, no golden cookie chance (${frLane.textContent})`);
+
+// ---- a click effect: what it multiplies your income by, at your click rate
+const CPS = 100;
+Game.unbuffedCps = CPS;
+Game.cookiesPs = CPS;
+Game.mouseCps = () => {
+  let m = 1;
+  Object.values(Game.buffs).forEach((b) => b.multClick !== undefined && (m *= b.multClick));
+  return (1 + Game.cookiesPs * 0.01) * m; // +1% of CpS a click, × click effects
+};
+const cf = { name: 'Click frenzy', time: 30 * 10, maxTime: 30 * 13, multClick: 777 };
+Game.buffs = { 'Click frenzy': cf };
+CA.Payback.clickRate = () => 10;
+const want = (CPS + 10 * 2 * 777) / (CPS + 10 * 2); // a click: 1 + 1 = 2 cookies
+assert(Math.abs(CA.Timers.effectiveMult('click frenzy').mult - want) < 1e-9, `Click frenzy at 10 clicks/s with 100 CpS and 2 a click: ×${want.toFixed(1)} income`);
+assert(Math.abs(CA.Script.VALUES.find((v) => v.id === 'buff.effectiveMult').get('Click frenzy') - want) < 1e-9 && CA.Script.VALUES.find((v) => v.id === 'buff.effectiveMult').get('Frenzy') === 1, 'the word buff.effectiveMult (1 when not running)');
+CA.Payback.clickRate = () => 0;
+assert(CA.Timers.effectiveMult('Click frenzy').mult === 1, 'not clicking: a click effect adds nothing');
+Game.buffs = { Frenzy: { name: 'Frenzy', time: 30 * 60, maxTime: 30 * 77, multCpS: 7 } };
+CA.Payback.clickRate = () => 10;
+const wantF = (CPS * 7 + 10 * (1 + 7)) / (CPS + 10 * 2); // Frenzy also makes each click's 1% of CpS worth 7×
+assert(Math.abs(CA.Timers.effectiveMult('Frenzy').mult - wantF) < 1e-9, `Frenzy with clicking: ×${wantF.toFixed(2)} (the clicks' share of CpS counted)`);
+Game.buffs = { 'Click frenzy': cf };
+CA.UI.Menu.render();
+const cfLane = card().querySelector('.ca-sp-lane.click');
+assert(cfLane && cfLane.textContent.includes(`×${Math.round(want)} income`) && /10 clicks\/s/.test(cfLane.getAttribute('data-tip')), `the click effect’s bar: ×${Math.round(want)} income, its tooltip naming the click rate (${cfLane && cfLane.textContent})`);
+Game.buffs = { Frenzy: { name: 'Frenzy', time: 30 * 60, maxTime: 30 * 77, multCpS: 7 } };
+delete Game.mouseCps;
 
 // ---- what if, without the note it used to live in
 CA.UI.Menu.openPage('stats');

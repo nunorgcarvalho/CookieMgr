@@ -6,8 +6,9 @@
 //                              that frame (so surely by maxTime). From that, exactly: the soonest it
 //                              can come, the latest, the expected wait, the median, the chance it
 //                              comes within N seconds. (Cookie Monster only shows the min and max.)
-//   buffs                      seconds left of each effect, its multipliers — and the chance a golden
-//                              cookie comes before it ends
+//   buffs                      seconds left of each effect, its multipliers — what it multiplies your
+//                              income by, clicking counted — and the chance a golden cookie comes
+//                              before it ends
 //   sugar lump                 seconds until mature / ripe / overripe (it falls off then), its type
 //   autosave                   seconds until the game saves itself (once a minute)
 //   magic                      seconds until the Grimoire's magic is full (features/grimoire.js)
@@ -302,6 +303,44 @@ CA.Timers = (() => {
     return buffs().map((b) => ({ ...b, golden: s ? s.within(b.secs) : 0 }));
   }
 
+  /**
+   * What an effect running multiplies your income by, clicking counted: (CpS + clicks/s × a click)
+   * with it alone over the same with no effects — the game's own Game.mouseCps() asked both ways
+   * (CpS and the buffs swapped in and restored within this one call), at your click rate (the last
+   * ten seconds: yours or an autoclicker's). A CpS effect at no clicking is its multCpS; a click
+   * effect at no clicking is ×1. { mult, cps, click, rate } — or null when it isn't running.
+   */
+  function effectiveMult(name) {
+    const b = Object.values(Game.buffs || {}).find((x) => x && x.time > 0 && x.name.toLowerCase() === String(name).toLowerCase());
+    if (!b) return null;
+    const cps = b.multCpS !== undefined ? b.multCpS : 1;
+    const click = b.multClick !== undefined ? b.multClick : 1;
+    const rate = CA.Payback && typeof CA.Payback.clickRate === 'function' ? CA.Payback.clickRate() : 0;
+    const base = Game.unbuffedCps || Game.cookiesPs || 0;
+    const mouse = (cpsNow, buffsNow) => {
+      if (typeof Game.mouseCps !== 'function') return NaN;
+      const keep = [Game.cookiesPs, Game.buffs];
+      try {
+        Game.cookiesPs = cpsNow;
+        Game.buffs = buffsNow;
+        return Game.mouseCps();
+      } catch (e) {
+        return NaN;
+      } finally {
+        [Game.cookiesPs, Game.buffs] = keep;
+      }
+    };
+    let mult = cps;
+    if (rate > 0) {
+      const c0 = mouse(base, {});
+      const c1 = mouse(base * cps, { [b.name]: b });
+      const before = base + rate * c0;
+      if (Number.isFinite(c0) && Number.isFinite(c1) && before > 0) mult = (base * cps + rate * c1) / before;
+      else if (!(base > 0)) mult = click; // nothing baked yet: clicking is all there is
+    }
+    return { mult, cps, click, rate };
+  }
+
   const LUMP_TYPES = ['normal', 'bifurcated', 'golden', 'meaty', 'caramelized'];
   /** The sugar lump: { type, matureIn, ripeIn, fallsIn } seconds (0 once reached), or null before lumps. */
   function lump() {
@@ -345,10 +384,11 @@ CA.Timers = (() => {
       const b = buffsWithGolden().find((x) => x.name.toLowerCase() === String(n).toLowerCase());
       return b ? b.golden : 0;
     }, ['effect']);
+    V('buff.effectiveMult', 'what an effect multiplies your income by, clicking counted at your click rate (Click frenzy at 10 clicks/s…; 1: not running)', (n) => (effectiveMult(n) || { mult: 1 }).mult, ['effect']);
     V('lump.ripeIn', 'seconds until the sugar lump is ripe (0: it is)', () => (lump() || { ripeIn: NaN }).ripeIn);
     V('autosave.in', 'seconds until the game saves itself', () => autosave() ?? NaN);
     V('magic.fullIn', 'seconds until the Grimoire’s magic is full (0: it is)', () => magicFull() ?? NaN);
   }
 
-  return { init, spawnOf, distribution, waitFrom, meanWithout, goldenFactors, reindeerFactors, buffs, buffsWithGolden, effectDuration, effectDurMod, EFFECTS, lump, autosave, magicFull, curve, LUMP_TYPES };
+  return { init, spawnOf, distribution, waitFrom, meanWithout, goldenFactors, reindeerFactors, buffs, buffsWithGolden, effectiveMult, effectDuration, effectDurMod, EFFECTS, lump, autosave, magicFull, curve, LUMP_TYPES };
 })();

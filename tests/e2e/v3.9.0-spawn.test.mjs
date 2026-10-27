@@ -77,8 +77,9 @@ const frPc = `${(fr.golden * 100).toFixed(fr.golden < 0.1 ? 1 : 0)}%`;
 const frLane = lanes.find((l) => /Frenzy/.test(l.textContent));
 const frW = Number(frLane.querySelector('.left').getAttribute('width'));
 const frX = Number(frLane.querySelector('.left').getAttribute('x'));
-assert(Math.abs(frX - ax(330)) < 0.05 && Math.abs(frX + frW - ax(390)) < 0.05, `the Frenzy bar runs from now (330 s in) to 60 s later on the chart's own axis (x ${frX.toFixed(1)}–${(frX + frW).toFixed(1)} vs ${ax(330).toFixed(1)}–${ax(390).toFixed(1)})`);
-assert(/golden cookie before it ends/.test(frLane.textContent) && frLane.textContent.includes(frPc), 'the bar says the chance');
+// (v3.12.6: from when it started — 17 s ago — and the bar gives its multiplier, not the chance)
+assert(Math.abs(frX - ax(313)) < 0.05 && Math.abs(frX + frW - ax(390)) < 0.05, `the Frenzy bar runs from when it started (313 s in) to 60 s from now on the chart's own axis (x ${frX.toFixed(1)}–${(frX + frW).toFixed(1)} vs ${ax(313).toFixed(1)}–${ax(390).toFixed(1)})`);
+assert(/×7 CpS/.test(frLane.textContent) && !/golden cookie before it ends/.test(frLane.textContent), 'the bar says its multiplier');
 assert(/→/.test(lanes.find((l) => /Clot/.test(l.textContent)).textContent), 'a bar past the chart’s end: an arrow');
 assert(Number(svgG.getAttribute('viewBox').split(' ')[3]) === 150 + 3 * 14, 'the chart grows a lane per bar');
 CA.UI.Widgets.render();

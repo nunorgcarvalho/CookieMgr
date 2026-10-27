@@ -7809,8 +7809,9 @@ CA.Prestige = (() => {
 //                              that frame (so surely by maxTime). From that, exactly: the soonest it
 //                              can come, the latest, the expected wait, the median, the chance it
 //                              comes within N seconds. (Cookie Monster only shows the min and max.)
-//   buffs                      seconds left of each effect, its multipliers — and the chance a golden
-//                              cookie comes before it ends
+//   buffs                      seconds left of each effect, its multipliers — what it multiplies your
+//                              income by, clicking counted — and the chance a golden cookie comes
+//                              before it ends
 //   sugar lump                 seconds until mature / ripe / overripe (it falls off then), its type
 //   autosave                   seconds until the game saves itself (once a minute)
 //   magic                      seconds until the Grimoire's magic is full (features/grimoire.js)
@@ -8105,6 +8106,44 @@ CA.Timers = (() => {
     return buffs().map((b) => ({ ...b, golden: s ? s.within(b.secs) : 0 }));
   }
 
+  /**
+   * What an effect running multiplies your income by, clicking counted: (CpS + clicks/s × a click)
+   * with it alone over the same with no effects — the game's own Game.mouseCps() asked both ways
+   * (CpS and the buffs swapped in and restored within this one call), at your click rate (the last
+   * ten seconds: yours or an autoclicker's). A CpS effect at no clicking is its multCpS; a click
+   * effect at no clicking is ×1. { mult, cps, click, rate } — or null when it isn't running.
+   */
+  function effectiveMult(name) {
+    const b = Object.values(Game.buffs || {}).find((x) => x && x.time > 0 && x.name.toLowerCase() === String(name).toLowerCase());
+    if (!b) return null;
+    const cps = b.multCpS !== undefined ? b.multCpS : 1;
+    const click = b.multClick !== undefined ? b.multClick : 1;
+    const rate = CA.Payback && typeof CA.Payback.clickRate === 'function' ? CA.Payback.clickRate() : 0;
+    const base = Game.unbuffedCps || Game.cookiesPs || 0;
+    const mouse = (cpsNow, buffsNow) => {
+      if (typeof Game.mouseCps !== 'function') return NaN;
+      const keep = [Game.cookiesPs, Game.buffs];
+      try {
+        Game.cookiesPs = cpsNow;
+        Game.buffs = buffsNow;
+        return Game.mouseCps();
+      } catch (e) {
+        return NaN;
+      } finally {
+        [Game.cookiesPs, Game.buffs] = keep;
+      }
+    };
+    let mult = cps;
+    if (rate > 0) {
+      const c0 = mouse(base, {});
+      const c1 = mouse(base * cps, { [b.name]: b });
+      const before = base + rate * c0;
+      if (Number.isFinite(c0) && Number.isFinite(c1) && before > 0) mult = (base * cps + rate * c1) / before;
+      else if (!(base > 0)) mult = click; // nothing baked yet: clicking is all there is
+    }
+    return { mult, cps, click, rate };
+  }
+
   const LUMP_TYPES = ['normal', 'bifurcated', 'golden', 'meaty', 'caramelized'];
   /** The sugar lump: { type, matureIn, ripeIn, fallsIn } seconds (0 once reached), or null before lumps. */
   function lump() {
@@ -8148,12 +8187,13 @@ CA.Timers = (() => {
       const b = buffsWithGolden().find((x) => x.name.toLowerCase() === String(n).toLowerCase());
       return b ? b.golden : 0;
     }, ['effect']);
+    V('buff.effectiveMult', 'what an effect multiplies your income by, clicking counted at your click rate (Click frenzy at 10 clicks/s…; 1: not running)', (n) => (effectiveMult(n) || { mult: 1 }).mult, ['effect']);
     V('lump.ripeIn', 'seconds until the sugar lump is ripe (0: it is)', () => (lump() || { ripeIn: NaN }).ripeIn);
     V('autosave.in', 'seconds until the game saves itself', () => autosave() ?? NaN);
     V('magic.fullIn', 'seconds until the Grimoire’s magic is full (0: it is)', () => magicFull() ?? NaN);
   }
 
-  return { init, spawnOf, distribution, waitFrom, meanWithout, goldenFactors, reindeerFactors, buffs, buffsWithGolden, effectDuration, effectDurMod, EFFECTS, lump, autosave, magicFull, curve, LUMP_TYPES };
+  return { init, spawnOf, distribution, waitFrom, meanWithout, goldenFactors, reindeerFactors, buffs, buffsWithGolden, effectiveMult, effectDuration, effectDurMod, EFFECTS, lump, autosave, magicFull, curve, LUMP_TYPES };
 })();
 
 // ---- src/features/collection.js --------------------------------------
@@ -20441,8 +20481,8 @@ CA.UI.PaybackPage = (() => {
 //   the chart     this cycle's cumulative chance, over the time since the last one left (0 → the
 //                 latest it can come): a line sweeps left to right at now, a dashed line at 50%;
 //                 hover it for the moment under the pointer
-//   the bars      under the chart, from the now line: each effect running — how long it has left and
-//                 the chance a golden cookie comes before it ends (to stack on it)
+//   the bars      under the chart, on its axis: each effect running, from when it started to when it
+//                 ends, with what it multiplies your income by (a click effect at your click rate)
 //   frequency     the effects making them come more often now — each a chip; click one to see the
 //   effects       mean wait without it (what if) — counting from the next one, as the game fixes a
 //                 cycle's bounds when the last cookie leaves
@@ -20466,6 +20506,9 @@ CA.UI.SpawnView = (() => {
   const when = (s) => (!Number.isFinite(s) ? '—' : s <= 0 ? 'now' : s < 1 ? '<1s' : F().span(s));
   const pc = (p) => `${p >= 0.9995 ? 100 : p > 0 && p < 0.0005 ? '<0.1' : (p * 100).toFixed(p < 0.1 ? 1 : 0)}%`;
   const LABEL = { golden: 'golden cookie', reindeer: 'reindeer' };
+
+  /** A multiplier, short: ×777, ×12.3, ×1.85, ×0.5. */
+  const mx = (m) => (!Number.isFinite(m) ? '?' : m >= 100 ? String(Math.round(m)) : m >= 10 ? String(Math.round(m * 10) / 10) : String(Math.round(m * 100) / 100));
 
   /** An effect's bar colour: what it multiplies. */
   const buffKind = (b) => (b.click > 1 ? 'click' : b.cps > 1 ? 'up' : b.cps < 1 || b.click < 1 ? 'down' : 'other');
@@ -20569,7 +20612,7 @@ CA.UI.SpawnView = (() => {
   /**
    * This cycle's chart: x is the time since the last one left, 0 → the latest it can come; the curve,
    * the chance one has come by then (0 → 100%); a dashed line at 50%; the now line where the cycle is,
-   * its height labelled — and under it, from the now line, each effect running (golden cookies).
+   * its height labelled — and under it, on the same axis, each effect running (golden cookies).
    * d: CA.Timers.distribution's (not spawned). opts: width, height, hover, lane — as chart()'s.
    */
   function cycleChart(type, d, effects = [], opts = {}) {
@@ -20614,22 +20657,30 @@ CA.UI.SpawnView = (() => {
     for (let s = 0; s <= span + 1e-9; s += step) axis += `<text x="${X(s).toFixed(2)}" y="${HH - 6}" text-anchor="${s === 0 ? 'start' : 'middle'}">${s === 0 ? '0' : F().span(s)}</text>`;
     // and the latest, at the end — unless a round moment is already close to it
     if (span % step > step * 0.45) axis += `<text x="${x1}" y="${HH - 6}" text-anchor="end">${F().span(span)}</text>`;
-    // the effects, from now
+    // the effects, on the same axis: each from when it started (or 0) to when it ends, with what it
+    // multiplies your income by (a click effect at your click rate)
     const ly = (i) => y0 + 4 + i * LN;
     const bh = LN - 3;
-    const short = x1 - x0 < 400;
     let bars = '';
     effects.forEach((b, i) => {
       const y = ly(i);
+      const from = Math.max(0, c.elapsed - Math.max(0, b.maxSecs - b.secs));
       const end = c.elapsed + b.secs;
-      const gc = Number.isFinite(b.golden) ? ` · ${short ? 'GC' : 'golden cookie before it ends'} ${pc(b.golden)}` : '';
-      // its label inside the track, from the now line — or from the left when the line is far right
-      const tx = nx + 3 + 140 > x1 ? x0 + 3 : nx + 3;
+      const em = T().effectiveMult(b.name);
+      const m = em ? em.mult : b.cps;
+      const clicky = b.click !== 1;
+      const why = clicky
+        ? em && em.rate > 0
+          ? ` — ×${mx(b.click)} a click, at your ${em.rate.toFixed(em.rate < 10 ? 1 : 0)} clicks/s${b.cps !== 1 ? ` and ×${mx(b.cps)} CpS` : ''}`
+          : ` — ×${mx(b.click)} a click; you haven’t been clicking, so no more income`
+        : '';
+      const label = `${esc(b.name)} · ×${mx(m)}${clicky ? ' income' : ' CpS'} · ${when(b.secs)}${end > span + 0.5 ? ' →' : ''}`;
+      const tx = Math.min(X(from) + 3, x1 - 150);
       bars +=
-        `<g class="ca-sp-lane ${buffKind(b)}" data-tip="${esc(`${b.name}: ${when(b.secs)} left${Number.isFinite(b.golden) ? ` — a golden cookie comes before it ends ${pc(b.golden)} of the time` : ''}`)}">` +
+        `<g class="ca-sp-lane ${buffKind(b)}" data-tip="${esc(`${b.name}: ×${mx(m)} your income${why}; ${when(b.secs)} left`)}">` +
         `<rect class="track" x="${x0}" y="${y}" width="${x1 - x0}" height="${bh}"/>` +
-        `<rect class="left" x="${nx.toFixed(2)}" y="${y}" width="${Math.max(1, X(end) - nx).toFixed(2)}" height="${bh}"/>` +
-        `<text x="${tx.toFixed(2)}" y="${y + bh - 2}">${esc(b.name)} · ${when(b.secs)}${end > span + 0.5 ? ' →' : ''}${gc}</text></g>`;
+        `<rect class="left" x="${X(from).toFixed(2)}" y="${y}" width="${Math.max(1, X(end) - X(from)).toFixed(2)}" height="${bh}"/>` +
+        `<text x="${Math.max(x0 + 3, tx).toFixed(2)}" y="${y + bh - 2}">${label}</text></g>`;
     });
     // the hover readout
     const hf = hover[type];
@@ -20668,7 +20719,7 @@ CA.UI.SpawnView = (() => {
       whatIf !== null
         ? `<div class="ca-sp-note">From the next one, on average <b>${when(d.next.mean)}</b> — without ${esc(without[type].join(', '))}: <b>${when(whatIf)}</b> (${whatIf > d.next.mean ? '+' : '−'}${when(Math.abs(whatIf - d.next.mean))})</div>`
         : '';
-    const effects = type === 'golden' ? T().buffsWithGolden() : [];
+    const effects = type === 'golden' ? T().buffs() : [];
     const override = d.override === 'chain' ? 'A cookie chain is going: the next comes within seconds.' : d.override === 'hoard' ? 'Gold hoard: they come almost at once.' : d.override === 'season' ? 'Reindeer season: they come almost at once.' : '';
     const freq = factors ? `<div class="ca-sp-factors"><span>${type === 'golden' ? 'Golden cookie' : 'Reindeer'} frequency effects:</span>${factors}</div>${whatIfLine}` : '';
     const wrath = type === 'golden' ? tile('Wrath chance', pc(d.wrathChance), 'that it’s a wrath cookie') : '';
