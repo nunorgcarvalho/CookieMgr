@@ -24,7 +24,7 @@ The same words mean the same things everywhere in the add-on and this README:
 ## Features (v3.1)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
-the data pages **Events**, **Graphs**, **Stats** and **Payback**; the minigames **Garden**, **Stock market**, **Pantheon** and **Grimoire**;
+the data pages **Events**, **Graphs**, **Stats** and **Payback**; the minigames **Garden**, **Stock market**, **Pantheon** and **Grimoire**, and the **Dragon**;
 then **Macros**, **Widgets** and **Settings** — a small gap between each kind. Hovering an icon slides its name out to
 the left. Wherever a page mentions another (a Macros section, a "Macros page" hint), the name is a link to it, and
 each minigame page has an **Open in game** button that closes the panel and takes you to the minigame.
@@ -310,7 +310,10 @@ forever:
   `upgrade.gain / payback(u)` (NaN for a switch); `paybackActual(seconds)`, `actualIncome(seconds)`;
   `timeTo(price)`, `clickRate()`; `building.buy / sell(building, n)`; `upgrades()`,
   `upgrade.price(u)`, `upgrade.owned(name)`, `buy.upgrade(u)`; `research.next(stopBefore)`.
-- **The dragon** — `dragon.canPet()`, `dragon.dropNow()`, `dragon.pet()`.
+- **The dragon** — `dragon.canPet()`, `dragon.dropNow()`, `dragon.pet()`; `dragon.level()`, `dragon.aura(slot)` (1 or 2),
+  `dragon.canTrain(buildings)`, `dragon.train(buildings)` (buildings: all, one or none — which levels may sacrifice
+  buildings), `dragon.setAura(aura, slot)`; aura profiles: `dragon.profile(profile)` (its id or name),
+  `dragon.profileActive(profile)`, `dragon.activeProfile()`, `dragon.profiles()`.
 - **Pantheon** — `pantheon.gods()`, `pantheon.god(slot)`, `pantheon.slotOf(god)`, `pantheon.isSlotted(god)`,
   `pantheon.swaps()`; `pantheon.slot(god, slot)` (diamond, ruby, jade, or none).
 - **Macros** — `macro.isOn(id)`, `switch on / off …`. The editor colours the code, numbers the lines,

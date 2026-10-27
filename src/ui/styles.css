@@ -7214,6 +7214,67 @@ body.ca-has-storebar #products {
   background: rgba(154, 154, 154, 0.14);
 }
 
+/* ---------- v3.33: the Dragon page ---------- */
+#CookieMgrMenu .ca-aura-slots {
+  grid-template-columns: repeat(2, 1fr);
+}
+#CookieMgrMenu .ca-aura-slot {
+  box-shadow: inset 0 0 0 1px rgba(255, 170, 110, 0.35);
+}
+#CookieMgrMenu .ca-aura-slot .ca-slot-gem {
+  color: #ffb27a;
+}
+#CookieMgrMenu .ca-aura-slot.locked {
+  opacity: 0.55;
+}
+#CookieMgrMenu .ca-dragon-next {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 6px 6px;
+  font-size: 12px;
+  color: #d8cbb0;
+}
+#CookieMgrMenu .ca-dragon-next em {
+  font-style: normal;
+  color: #a39477;
+}
+#CookieMgrMenu .ca-dragon-next b {
+  color: #ffeab0;
+}
+#CookieMgrMenu .ca-dprof-name {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+#CookieMgrMenu .ca-dprof-name .ca-gname {
+  width: 150px;
+}
+#CookieMgrMenu .ca-dprof-name code {
+  font-size: 10px;
+  color: #93866f;
+}
+#CookieMgrMenu .ca-dprof {
+  flex-wrap: nowrap;
+}
+@media (max-width: 760px) {
+  #CookieMgrMenu .ca-dprof {
+    flex-wrap: wrap;
+  }
+}
+#CookieMgrMenu .ca-dprof-acts {
+  display: inline-flex;
+  gap: 6px;
+  margin-left: auto;
+}
+#CookieMgrMenu .ca-dprof-foot {
+  display: flex;
+  gap: 6px;
+  padding: 8px 14px 10px;
+}
+
 /* Pantheon: profiles, a row each (v3.31) */
 #CookieMgrMenu .ca-pprof {
   display: flex;
@@ -7275,4 +7336,111 @@ body.ca-has-storebar #products {
   align-items: center;
   gap: 8px;
   padding: 6px 4px 4px;
+}
+#CookieMgrMenu .ca-aura-slot[data-dragon-act] {
+  cursor: pointer;
+  transition: box-shadow 0.15s, background 0.15s;
+}
+#CookieMgrMenu .ca-aura-slot[data-dragon-act]:hover,
+#CookieMgrMenu .ca-aura-slot.picking {
+  box-shadow: inset 0 0 0 1px rgba(255, 190, 120, 0.8), 0 0 10px rgba(255, 160, 80, 0.25);
+}
+/* a profile's aura: a chip that opens the picker */
+#CookieMgrMenu .ca-aura-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 170px;
+  padding: 3px 8px 3px 4px;
+  font: 12px Tahoma, Arial, sans-serif;
+  color: #f0e2c0;
+  text-align: left;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 220, 150, 0.25);
+  border-radius: 6px;
+  cursor: pointer;
+}
+#CookieMgrMenu .ca-aura-chip span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#CookieMgrMenu .ca-aura-chip:hover,
+#CookieMgrMenu .ca-aura-chip.on {
+  border-color: rgba(255, 190, 120, 0.8);
+  background: rgba(60, 35, 15, 0.6);
+}
+#CookieMgrMenu .ca-aura-chip .ca-god-ico {
+  zoom: 0.55;
+}
+#CookieMgrMenu .ca-aura-chip.untrained .ca-god-ico,
+#CookieMgrMenu .ca-aura-tile.untrained .ca-god-ico {
+  filter: grayscale(0.8) brightness(0.7);
+}
+/* the aura picker: every aura, its icon and what it does */
+#CookieMgrMenu .ca-aura-picker {
+  margin: 4px 10px 10px;
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(255, 190, 120, 0.35);
+}
+#CookieMgrMenu .ca-aura-picker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 2px 6px;
+  font: bold 12px Tahoma, Arial, sans-serif;
+  color: #ffb27a;
+}
+#CookieMgrMenu .ca-aura-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 6px;
+}
+#CookieMgrMenu .ca-aura-tile {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 8px;
+  text-align: left;
+  font: 12px Tahoma, Arial, sans-serif;
+  color: #f0e2c0;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 220, 150, 0.12);
+  border-radius: 6px;
+  cursor: pointer;
+}
+#CookieMgrMenu .ca-aura-tile:hover {
+  background: rgba(255, 190, 120, 0.1);
+  border-color: rgba(255, 190, 120, 0.5);
+}
+#CookieMgrMenu .ca-aura-tile.on {
+  background: rgba(255, 170, 90, 0.16);
+  border-color: rgba(255, 190, 120, 0.9);
+}
+#CookieMgrMenu .ca-aura-tile.off {
+  opacity: 0.4;
+  cursor: default;
+}
+#CookieMgrMenu .ca-aura-tile .ca-god-ico {
+  zoom: 0.75;
+}
+#CookieMgrMenu .ca-aura-tile-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+#CookieMgrMenu .ca-aura-tile-text b {
+  color: #ffeab0;
+}
+#CookieMgrMenu .ca-aura-tile-text .ca-god-desc {
+  margin-top: 2px;
+}
+#CookieMgrMenu .ca-aura-tile-text em {
+  margin-top: 2px;
+  font-size: 10px;
+  font-style: normal;
+  color: #c9a26b;
 }
