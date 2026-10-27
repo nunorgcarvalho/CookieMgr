@@ -2,7 +2,8 @@
 // left — dimmed, on the same axis, with their multiplier as last seen (CA.Timers.effectsSince);
 // those that ended before it don't show. A dashed line at the expected moment with how long until it,
 // and the time since the last one on the now line; the golden cookie frequency (× vs nothing helping) —
-// on the Stats page and the Next golden cookie widget.
+// on the Stats page and the Next golden cookie widget; the dashed line across at the curve's height at the
+// expected moment; the widget's numbers picked one by one in its settings.
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
 import { boot, sleep, makeAssert } from '../harness/game.mjs';
 
@@ -52,6 +53,9 @@ const exp = card().querySelector('.ca-sp-expect');
 const ex = exp && Number(exp.querySelector('line').getAttribute('x1'));
 assert(exp && Math.abs(ex - X(240 + d.wait.mean)) < 0.05 && exp.textContent === `expected · ${CA.Format.span(d.wait.mean)}`, `the expected line at now + the mean wait (${exp && exp.textContent})`);
 assert(card().querySelector('.ca-sp-now .ca-sp-since').textContent === CA.Format.span(240), 'the now line says the time since the last one (4m 00s)');
+const half = card().querySelector('.ca-sp-half');
+const hp = d.cycle.cdf(240 + d.wait.mean);
+assert(Math.abs(Number(half.getAttribute('y1')) - (128 - 118 * hp)) < 0.05 && [...card().querySelectorAll('.ca-sp-ylab')].some((t) => t.textContent === `${(hp * 100).toFixed(hp < 0.1 ? 1 : 0)}%`), `the dashed line across meets the expected line on the curve, labelled ${(hp * 100).toFixed(0)}%`);
 CA.Settings.set('widgetsShown', true);
 CA.UI.Widgets.add('goldenNext');
 CA.UI.Widgets.render();
@@ -73,6 +77,22 @@ const wg2 = [...doc.querySelectorAll('#CookieMgrWidgets [data-widget]')].find((x
 assert(/frequency/i.test(wg2.querySelector('.ca-tl-nums').textContent) && wg2.querySelector('.ca-tl-nums').textContent.includes(`×${Math.round(want * 100) / 100}`), 'and the widget’s numbers');
 Game.Has = () => false;
 delete Game.eff;
+
+// the widget's numbers, picked in its settings
+const inst = CA.UI.Widgets.list().find((x) => x.type === 'goldenNext');
+const nums = () => [...wg2.ownerDocument.querySelectorAll('#CookieMgrWidgets [data-widget]')].find((x) => /Next golden cookie/.test(x.textContent)).querySelector('.ca-tl-nums');
+assert(nums().querySelectorAll('span').length === 5, 'all five numbers by default');
+inst.nums = ['next', 'frequency'];
+CA.UI.Widgets.tick();
+assert(nums().querySelectorAll('span').length === 2 && /next in/.test(nums().textContent) && /frequency/.test(nums().textContent) && !/median/.test(nums().textContent), 'two picked: next in and frequency');
+assert(CA.UI.Widgets.serialize().find((x) => x.type === 'goldenNext').nums.join() === 'next,frequency', 'saved with the widget');
+inst.nums = [];
+CA.UI.Widgets.tick();
+assert(!nums(), 'none picked: no numbers row');
+CA.UI.Widgets.openSettings(inst.id);
+assert(doc.querySelectorAll('[data-w-multi="nums"]').length === 5, 'its settings list the five numbers');
+delete inst.nums;
+CA.UI.Menu.openPage('stats');
 
 // a golden cookie leaves: a new cycle — what ended before it is gone, what still runs stays
 Game.shimmerTypes.golden.time = 0;

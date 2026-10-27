@@ -18,6 +18,10 @@
   Selebrak…) multiplied together. A tile on the Stats page, in the Next golden cookie widget's numbers, and the
   word `golden.frequency`. (The game fixes a cycle's timing when the last cookie leaves, so it counts from the next.)
   The frequency effects' chips read the same way now: Lucky day ×2 (twice as often), not ×0.5 (the time between).
+- **The dashed line across follows the expected moment**: instead of a fixed 50%, it crosses the chart where the
+  expected line meets the curve, labelled with that height (how likely one has come by the expected moment).
+- **Next golden cookie widget: pick its numbers.** Its settings list each number (next in, median, chance within a
+  minute, window, frequency) to switch on or off; all on by default, saved with the widget.
 ## 3.16.0 — 2026-10-27
 
 - **Miscellaneous**, a new card on the Settings page, now holds **Plain Business Day** (it was under General):

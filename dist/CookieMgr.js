@@ -16147,7 +16147,7 @@ CA.UI.Widgets = (() => {
   const FONT_MAX = 200;
   const MIN_W = 140;
   const MIN_H = 60;
-  const SAVED = ['count', 'types', 'stats', 'font', 'title', 'target', 'targetMagic', 'bg', 'sort', 'barScale']; // per-widget settings that are saved
+  const SAVED = ['count', 'types', 'stats', 'nums', 'font', 'title', 'target', 'targetMagic', 'bg', 'sort', 'barScale']; // per-widget settings that are saved
   const BG = [[100, 'Solid'], [40, 'Faint'], [0, 'None']]; // background opacity (%) while not hovered
   const S = () => CA.Settings;
   const I = (n, s) => CA.UI.Icons.html(n, s);
@@ -16825,6 +16825,7 @@ CA.UI.Widgets = (() => {
         if (typeof w.barScale === 'string') out.barScale = w.barScale.slice(0, 20);
         if (Array.isArray(w.types)) out.types = w.types.map(String);
         if (Array.isArray(w.stats)) out.stats = w.stats.map(String);
+        if (Array.isArray(w.nums)) out.nums = w.nums.map(String);
         return out;
       });
     render();
@@ -20314,7 +20315,8 @@ CA.UI.PaybackPage = (() => {
 //                 helping (the frequency effects together), the chance the next is a wrath cookie
 //   the chart     this cycle's cumulative chance, over the time since the last one left (0 → the
 //                 latest it can come): a line sweeps left to right at now (the time since, at its
-//                 top), a dashed one at the expected moment (how long until it), a dashed line at 50%;
+//                 top), a dashed one at the expected moment (how long until it), and a dashed one
+//                 across where that meets the curve (its height, labelled);
 //                 hover it for the moment under the pointer
 //   the bars      under the chart, on its axis: each effect that ran since the last one left — ended
 //                 ones dimmed — from when it started to when it ends, with what it multiplies your
@@ -20447,7 +20449,8 @@ CA.UI.SpawnView = (() => {
 
   /**
    * This cycle's chart: x is the time since the last one left, 0 → the latest it can come; the curve,
-   * the chance one has come by then (0 → 100%); a dashed line at 50%; the now line where the cycle is,
+   * the chance one has come by then (0 → 100%); dashed lines at the expected moment and across at the
+   * curve's height there; the now line where the cycle is,
    * its height labelled — and under it, on the same axis, each effect running (golden cookies).
    * d: CA.Timers.distribution's (not spawned). opts: width, height, hover, lane — as chart()'s.
    */
@@ -20477,11 +20480,14 @@ CA.UI.SpawnView = (() => {
     const swept = pts.filter(([x]) => x <= nx);
     const area = `M${x0},${y0}` + swept.map(([x, y]) => `L${x.toFixed(2)},${y.toFixed(2)}`).join('') + `L${nx.toFixed(2)},${ny.toFixed(2)}L${nx.toFixed(2)},${y0}Z`;
     const right = nx > x0 + (x1 - x0) * 0.75; // the label left of the line near the end
+    const expAt = d.wait && Number.isFinite(d.wait.mean) ? c.elapsed + d.wait.mean : null; // the expected moment
+    const hp = expAt !== null ? c.cdf(expAt) : 0.5;
     let plotSvg =
       `<path class="ca-sp-swept" d="${area}"/>` +
-      `<line class="ca-sp-half" x1="${x0}" x2="${x1}" y1="${Y(0.5).toFixed(2)}" y2="${Y(0.5).toFixed(2)}"/>` +
-      `<text class="ca-sp-ylab" x="${x0 + 2}" y="${(Y(0.5) - 3).toFixed(2)}">50%</text>` +
-      (y0 - y1 >= 60 ? `<text class="ca-sp-ylab" x="${x0 + 2}" y="${(y1 + 8).toFixed(2)}">100%</text>` : '') + // a short chart (a widget): 50% alone
+      // dashed, across: the curve's height at the expected moment (where the expected line meets it)
+      `<line class="ca-sp-half" x1="${x0}" x2="${x1}" y1="${Y(hp).toFixed(2)}" y2="${Y(hp).toFixed(2)}"/>` +
+      `<text class="ca-sp-ylab" x="${x0 + 2}" y="${(Y(hp) - 3).toFixed(2)}">${pc(hp)}</text>` +
+      (y0 - y1 >= 60 && Y(hp) - y1 > 20 ? `<text class="ca-sp-ylab" x="${x0 + 2}" y="${(y1 + 8).toFixed(2)}">100%</text>` : '') + // a short chart (a widget): the dashed line's alone
       `<path class="ca-sp-cdf" d="${line}"/>` +
       `<line class="ca-sp-axis" x1="${x0}" x2="${x1}" y1="${y0}" y2="${y0}"/>` +
       `<g class="ca-sp-now"><line x1="${nx.toFixed(2)}" x2="${nx.toFixed(2)}" y1="${y1}" y2="${y0 + effects.length * LN}"/>` +
@@ -20490,8 +20496,8 @@ CA.UI.SpawnView = (() => {
       // the time since the last one left, at its top, on the side away from the expected line
       `<text class="ca-sp-since" x="${(nx + (nx < x0 + 50 ? 4 : -4)).toFixed(2)}" y="${(y1 + 9).toFixed(2)}" text-anchor="${nx < x0 + 50 ? 'start' : 'end'}">${c.elapsed < 1 ? '0s' : F().span(c.elapsed)}</text></g>`;
     // the expected moment (now + the mean wait from now), dashed, with how long until it
-    if (d.wait && Number.isFinite(d.wait.mean)) {
-      const ex = X(c.elapsed + d.wait.mean);
+    if (expAt !== null) {
+      const ex = X(expAt);
       const exRight = ex > x0 + (x1 - x0) * 0.8;
       plotSvg +=
         `<g class="ca-sp-expect"><line x1="${ex.toFixed(2)}" x2="${ex.toFixed(2)}" y1="${y1}" y2="${y0}"/>` +
@@ -20652,7 +20658,7 @@ CA.UI.SpawnView = (() => {
 //                       chance, a line sweeping across it at now
 //
 // (Effect timers, a bar per effect running, is its own widget: ui/effectTimers.js.)
-// Each shows what you tick in its settings (numbers, chart, effect bars), resizes freely
+// Each shows what you tick in its settings (numbers — and which of them — chart, effect bars), resizes freely
 // (the chart is drawn at the widget's width), and opens the Stats page from its numbers.
 
 CA.UI = CA.UI || {};
@@ -20679,19 +20685,31 @@ CA.UI.TimelineWidget = (() => {
   };
   const widthOf = (inst) => Math.max(160, (inst.w || TYPES[inst.type].width) - 18);
 
-  function numbersHtml(d) {
+  // the numbers, each switched on or off in its settings (all, by default)
+  const NUMS = [
+    { v: 'next', label: 'Next in (the expected wait)' },
+    { v: 'median', label: 'Median' },
+    { v: 'minute', label: 'Chance within a minute' },
+    { v: 'window', label: 'Window (soonest – latest)' },
+    { v: 'frequency', label: 'Frequency (× vs nothing helping)' },
+  ];
+  const numsOf = (inst) => (Array.isArray(inst.nums) ? inst.nums : NUMS.map((x) => x.v));
+  function numbersHtml(d, inst) {
     if (!d) return '<div class="ca-tl-line">No golden cookies: the Golden switch is on.</div>';
     if (d.spawned) return '<div class="ca-tl-line"><b class="ca-tl-now">A golden cookie is on screen!</b></div>';
     const w = d.wait;
-    return (
-      '<div class="ca-tl-nums" data-w-open="stats">' +
-      `<span data-tip="On average (the mean), ± ${esc(when(w.sd))}"><em>next in</em><b>${when(w.mean)}</b></span>` +
-      `<span data-tip="Even odds by then"><em>median</em><b>${when(w.median)}</b></span>` +
-      `<span data-tip="The chance one comes within a minute (this second: ${esc(pc(w.hazard))})"><em>≤ 1 min</em><b>${pc(w.within(60))}</b></span>` +
-      `<span data-tip="The soonest it can come, and the latest"><em>window</em><b>${when(w.soonest)}–${when(w.latest)}</b></span>` +
-      `<span data-tip="${esc(`How many times more often golden cookies come than with nothing helping (no upgrades, garden, spirits, aura…)${d.factors.length ? `: ${d.factors.map((x) => x.name).join(', ')}` : ''} — counted from the next one`)}"><em>frequency</em><b>×${Math.round(d.frequency * 100) / 100}</b></span>` +
-      '</div>'
-    );
+    const on = new Set(numsOf(inst));
+    const cells = {
+      next: `<span data-tip="On average (the mean), ± ${esc(when(w.sd))}"><em>next in</em><b>${when(w.mean)}</b></span>`,
+      median: `<span data-tip="Even odds by then"><em>median</em><b>${when(w.median)}</b></span>`,
+      minute: `<span data-tip="The chance one comes within a minute (this second: ${esc(pc(w.hazard))})"><em>≤ 1 min</em><b>${pc(w.within(60))}</b></span>`,
+      window: `<span data-tip="The soonest it can come, and the latest"><em>window</em><b>${when(w.soonest)}–${when(w.latest)}</b></span>`,
+      frequency: `<span data-tip="${esc(`How many times more often golden cookies come than with nothing helping (no upgrades, garden, spirits, aura…)${d.factors.length ? `: ${d.factors.map((x) => x.name).join(', ')}` : ''} — counted from the next one`)}"><em>frequency</em><b>×${Math.round(d.frequency * 100) / 100}</b></span>`,
+    };
+    const h = NUMS.filter((x) => on.has(x.v))
+      .map((x) => cells[x.v])
+      .join('');
+    return h ? `<div class="ca-tl-nums" data-w-open="stats">${h}</div>` : '';
   }
 
   function html(inst) {
@@ -20699,7 +20717,7 @@ CA.UI.TimelineWidget = (() => {
     const d = CA.Timers.distribution('golden', 60);
     const effects = parts.includes('bars') ? CA.Timers.buffsWithGolden() : [];
     let h = '';
-    if (parts.includes('numbers')) h += numbersHtml(d);
+    if (parts.includes('numbers')) h += numbersHtml(d, inst);
     const wait = d && !d.spawned ? d.wait : null;
     const showChart = parts.includes('chart') && wait;
     if (showChart && inst.type === 'goldenNext')
@@ -20727,6 +20745,7 @@ CA.UI.TimelineWidget = (() => {
         html,
         settings: [
           { key: 'stats', label: 'Show', type: 'multi', default: TYPES[id].parts, options: () => PARTS },
+          { key: 'nums', label: 'Numbers', type: 'multi', default: NUMS.map((x) => x.v), options: () => NUMS },
         ],
       });
     D('goldenTimeline', 'Golden timeline', 'sparkle', 'Everything golden on one time axis from now: the odds of the next golden cookie, each effect running with its time left and the chance a golden cookie comes before it ends. Pick what to show in its settings.');
