@@ -1,6 +1,6 @@
 // For the parity tests (tests/sim/*-parity): the real game with Cookie Monster loaded, ready to compare.
 //
-//   simWithCookieMonster(opts)   createSim({ cookieMonster: true }) — skipped (passes, saying so) when the
+//   simWithCookieMonster(opts)   createSim({ cookieMonster: true }) — skipped (SKIPPED; a failure in CI) when the
 //                                game's or Cookie Monster's scripts can't be downloaded; resolves once
 //                                Cookie Monster's numbers cover every building
 //   settle(sim, check)           lets the game award what it has pending and Cookie Monster refresh
@@ -9,18 +9,7 @@
 //                                own schedule, and a parity check shouldn't fail on that
 import { ensureGame, ensureMod } from '../../sim/game/fetch.mjs';
 import { createSim } from '../../sim/sim.mjs';
-
-function skip(why) {
-  // in CI (GitHub Actions sets CI=true) a parity test that can't run is a failure, not a pass: a gate
-  // that silently skips isn't one
-  if (process.env.CI) {
-    console.log(`FAIL: ${why} — in CI the parity tests must run`);
-    process.exit(1);
-  }
-  console.log(`skipped: ${why}`);
-  console.log('\nALL CHECKS PASSED');
-  process.exit(0);
-}
+import { skipSim as skip } from './sim.mjs';
 
 export async function simWithCookieMonster(opts = {}) {
   try {

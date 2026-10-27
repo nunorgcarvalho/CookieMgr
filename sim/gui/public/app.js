@@ -528,7 +528,7 @@ buy.best(all)
   function macrosHtml() {
     const s = S.snap;
     if (!s) return '';
-    const list = s.macros.filter((m) => m.on || !m.builtin || ['golden', 'bigCookie', 'wrath', 'reindeer', 'wrinklers', 'lumps', 'gardener', 'cmBuildings', 'cmUpgrades', 'research', 'cheapUpgrades', 'fthof', 'stockTrader'].includes(m.id));
+    const list = s.macros.filter((m) => m.on || !m.builtin || ['golden', 'bigCookie', 'wrath', 'reindeer', 'wrinklers', 'lumps', 'gardener', 'cmBuildings', 'cmUpgrades', 'research', 'cheapUpgrades', 'petDragon', 'autoDragon', 'seasonCompletion', 'fthofOnClickFrenzy', 'stockTrader'].includes(m.id));
     return list
       .map(
         (m) =>
@@ -957,7 +957,7 @@ buy.best(all)
               )}` +
               (ST.error ? `<div class="ca-editor-error">${esc(ST.error)}</div>` : '') +
               `<div class="sim-form"><span class="ca-chipgroup"><span class="ca-chip-label">With</span>${builtinMacros()
-                .filter((m) => ['golden', 'bigCookie', 'wrath', 'reindeer', 'wrinklers', 'lumps', 'gardener', 'fortune', 'research', 'cheapUpgrades', 'petDragon', 'fthof', 'stockTrader', 'elderPledge'].includes(m.id) || h.with.includes(m.id))
+                .filter((m) => ['golden', 'bigCookie', 'wrath', 'reindeer', 'wrinklers', 'lumps', 'gardener', 'fortune', 'research', 'cheapUpgrades', 'petDragon', 'autoDragon', 'fthofOnClickFrenzy', 'stockTrader', 'elderPledge'].includes(m.id) || h.with.includes(m.id))
                 .map((m) => `<button type="button" class="ca-chip${h.with.includes(m.id) ? ' on' : ''}" data-swith="${esc(m.id)}" data-tip="${esc(m.desc || m.name)}">${esc(m.name)}</button>`)
                 .join('')}</span>` +
               `<label class="ca-field"><span class="ca-field-label">A pass every</span><input type="number" min="50" step="50" value="${h.every}" data-severy> ms</label>` +

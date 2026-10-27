@@ -1,6 +1,6 @@
 # CookieMgr simulator
 
-*v0.3.2 — versioned apart from the add-on (`sim-v*` tags; `SIM_VERSION` in `sim.mjs`).*
+*v0.4.0 (in step with add-on v3.34.0) — versioned apart from the add-on (`sim-v*` tags; `SIM_VERSION` in `sim.mjs`; [CHANGELOG](CHANGELOG.md)).*
 
 A Cookie Clicker simulator for trying out strategies over long timescales — written in CookieMgr's
 own words, so what works here can be pasted into the add-on and run on the real game.
@@ -11,6 +11,12 @@ minigame scripts — headless in Node, and loads **CookieMgr itself** into it (t
 clock, the random seed, and the bookkeeping. Cookies, CpS, upgrades, golden cookies, buffs, the
 garden, spells: all the game's code. Actions, values, macros, the Auto-gardener, the event log: all
 CookieMgr's code.
+
+Which of CookieMgr's modules start is read from the add-on's own init list in `src/main.js` (all of it
+but the UI's, the update check and the Cookie Monster loader), and which files load from `MODULES`
+in `build.mjs` — so a module the add-on gains starts here too, with nothing to keep in step. That
+includes the dragon (`dragon.*`, Auto dragon, aura profiles), the Pantheon's profiles, SeasonCompletion
+and the statistics' words (`stat.*`).
 
 ```
 npm run sim:gui                                      # CookieSimMgr: all of it in your browser (below)
@@ -102,7 +108,7 @@ A strategy is what CookieMgr does during a simulation:
   ```
 
 - **`name.mjs`** — `export default { name, desc, setup(sim) }`, for anything `sim` can do.
-- a built-in macro's id (`golden`, `bigCookie`, `gardener`, `cmBuildings`…), or several joined with
+- a built-in macro's id (`golden`, `bigCookie`, `gardener`, `cmBuildings`, `autoDragon`, `seasonCompletion`…), or several joined with
   `+` (`golden+payback`).
 
 Every `.cmgr` in `strategies/` is checked by the tests to compile with CookieMgr's own compiler.
@@ -144,11 +150,11 @@ Some strategies need words the add-on doesn't have yet. Those live in `mgr/stagi
 feature modules written in the add-on's style (a `CA.*` module with `init()`, registering actions
 and values in CookieMgr's registries, headless). The simulator loads them after the add-on's own;
 `vocab` marks them `[staging]`. **Promoting one** to the add-on: move the file to `src/features/`,
-add it to `MODULES` in `build.mjs` and to the init list in `src/main.js`.
+add it to `MODULES` in `build.mjs` and to the init list in `src/main.js` — the simulator then starts it
+from there.
 
-| Staging module | Words |
-| --- | --- |
-| `payback.js` | `building.buy(building, n)`, `building.sell(building, n)`, `buy.best(kind)`; values `building.price / gain / payback(building)`, `upgrade.gain / payback(upgrade)`, `best(kind)`, `clickRate()` — payback periods asked of the game itself (`Game.CalculateGains` with the change, then undone), so buying by payback works without Cookie Monster |
+There are none right now: the last one, `payback.js` (`building.buy`, `buy.best`, payback periods asked
+of the game itself), is the add-on's `src/features/payback.js` now.
 
 Cookie Monster can be loaded too (`createSim({ cookieMonster: true })`, for the add-on's Best
 building / Best upgrade macros), but it recomputes everything every frame — the simulation runs at
@@ -178,7 +184,8 @@ sim/
   scenarios/         starting states
   models/            fast models (the garden), numbers taken from the game
   experiments/       questions answered with the models and the simulator
-tests/sim/           the simulator's tests (part of npm test)
+tests/sim/           the simulator's tests (part of npm test; SKIPPED where the game's scripts can't be
+                     downloaded, a failure in CI)
 ```
 
 ## What it found so far
@@ -210,6 +217,7 @@ tests/sim/           the simulator's tests (part of npm test)
 ## Not yet
 
 - Ascension, prestige and heavenly upgrades (the game's code is there; nothing drives it yet).
-- The minigames beyond the garden as strategy targets (spells, stocks and the pantheon run, and
-  CookieMgr's words for them work, but no strategies or scenarios use them yet).
+- The minigames beyond the garden as strategy targets (spells, stocks, the Pantheon and the dragon
+  run, and CookieMgr's words for them work — `pantheon.profile`, `dragon.train`, Auto dragon,
+  SeasonCompletion — but no strategies or scenarios use them yet).
 - A search loop — strategies with knobs, tuned automatically over many seeds.

@@ -12,7 +12,8 @@
 //
 // A test file is a plain script: it boots the fake game (tests/harness/game.mjs), checks things
 // with makeAssert(), and ends with done() — which prints "ALL CHECKS PASSED" and exits 0, or the
-// number of failures and exits 1. See tests/README.md.
+// number of failures and exits 1 — or, when it can't run here (the simulator's tests without the game's
+// scripts), prints "SKIPPED: why" and exits 0: reported as skipped, not passed. See tests/README.md.
 import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -81,12 +82,14 @@ function run(file, again = false) {
     }, TIMEOUT_MS);
     child.on('close', (code) => {
       clearTimeout(timer);
-      const ok = code === 0 && /ALL CHECKS PASSED/.test(out);
+      // a file that couldn't run (the simulator's, without the game's scripts) says SKIPPED: why
+      const skipped = code === 0 && (out.match(/^SKIPPED: (.*)$/m) || [])[1];
+      const ok = !!skipped || (code === 0 && /ALL CHECKS PASSED/.test(out));
       const checks = (out.match(/^ok:/gm) || []).length;
-      const r = { file, ok, out, checks, secs: (Date.now() - t0) / 1000 };
+      const r = { file, ok, skipped, out, checks, secs: (Date.now() - t0) / 1000 };
       if (!again) results.push(r);
-      const mark = ok ? color(again ? 33 : 32, '✓') : color(31, '✗');
-      console.log(`${mark} ${rel(file)}  ${color(90, `${checks} checks · ${r.secs.toFixed(1)}s${again ? ' · run again, alone' : ''}`)}`);
+      const mark = skipped ? color(33, '○') : ok ? color(again ? 33 : 32, '✓') : color(31, '✗');
+      console.log(`${mark} ${rel(file)}  ${color(90, `${checks} checks · ${r.secs.toFixed(1)}s${again ? ' · run again, alone' : ''}`)}${skipped ? color(33, `  skipped: ${skipped}`) : ''}`);
       if (!ok || verbose) {
         const lines = out.split(/\r?\n/).filter((l) => verbose || !/^ok:/.test(l));
         const shown = verbose ? lines : lines.filter((l) => l.trim()).slice(-25);
@@ -116,10 +119,13 @@ for (const r of retry) {
   flaky.push(r.file);
 }
 const failed = results.filter((r) => !r.ok);
+const skipped = results.filter((r) => r.skipped);
 const checks = results.reduce((a, r) => a + r.checks, 0);
+const ran = results.length - skipped.length;
 console.log(
-  `\n${failed.length ? color(31, `${failed.length} of ${results.length} files failed`) : color(32, `All ${results.length} files passed`)} · ${checks} checks · ${((Date.now() - t0) / 1000).toFixed(1)}s`
+  `\n${failed.length ? color(31, `${failed.length} of ${results.length} files failed`) : color(32, `All ${ran} files ${skipped.length ? 'that ran ' : ''}passed`)}${skipped.length ? color(33, ` · ${skipped.length} skipped`) : ''} · ${checks} checks · ${((Date.now() - t0) / 1000).toFixed(1)}s`
 );
+if (skipped.length) console.log(color(33, `skipped — couldn't run here (in CI they must):\n${skipped.map((r) => `  ${rel(r.file)}: ${r.skipped}`).join('\n')}`));
 if (flaky.length) console.log(color(33, `flaky — failed side by side, passed alone (wait with waitFor, not sleep):\n${flaky.map((f) => `  ${rel(f)}`).join('\n')}`));
 if (failed.length) console.log(failed.map((r) => `  ${rel(r.file)}`).join('\n'));
 process.exit(failed.length ? 1 : 0);
