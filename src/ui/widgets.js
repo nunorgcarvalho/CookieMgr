@@ -1010,7 +1010,7 @@ CA.UI.Widgets = (() => {
       { id: 'golden', name: 'Golden cookies', sprite: [10, 14], order: 10 },
       { id: 'minigames', name: 'Minigames', sprite: [17, 0], order: 20 },
       { id: 'macros', name: 'Macros', sprite: [12, 0], order: 30 },
-      { id: 'game', name: 'Your game', sprite: [18, 7], order: 40 },
+      { id: 'game', name: 'Data', sprite: [18, 7], order: 40 }, // the game's numbers, and statistics (v3.27: was Your game)
     ].forEach(defineGroup);
     CA.UI.WidgetTypes.register();
     S().defineOption({ key: 'widgetsShown', group: 'widgets', icon: 'widget', name: 'Show widgets', desc: 'Show your widgets on the left panel (they stay saved while hidden).', default: true });

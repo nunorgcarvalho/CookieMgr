@@ -6211,6 +6211,37 @@ body.ca-has-storebar #products {
     0 0 2px #000,
     0 1px 2px #000;
 }
+/* the muted text (labels, axes, notes) is a dark beige meant for the solid box: brighter over the game, outlined
+   like the rest. Chart canvases do the same in ui/plot.js (axisText). */
+#CookieMgrWidgets .ca-w-clear .ca-w-stat span,
+#CookieMgrWidgets .ca-w-clear .ca-tl-nums em,
+#CookieMgrWidgets .ca-w-clear .ca-sp-chips,
+#CookieMgrWidgets .ca-w-clear .ca-sp-factors,
+#CookieMgrWidgets .ca-w-clear .ca-sp-note,
+#CookieMgrWidgets .ca-w-clear .ca-wfreq-sub,
+#CookieMgrWidgets .ca-w-clear .ca-graph-mini .ca-legend {
+  color: #f2e9d4;
+}
+#CookieMgrWidgets .ca-w-clear .ca-w-stat em,
+#CookieMgrWidgets .ca-w-clear .ca-w-empty,
+#CookieMgrWidgets .ca-w-clear .ca-ev-time,
+#CookieMgrWidgets .ca-w-clear .ca-wbar-lead,
+#CookieMgrWidgets .ca-w-clear .ca-wbar-idle,
+#CookieMgrWidgets .ca-w-clear .ca-tl-dim,
+#CookieMgrWidgets .ca-w-clear .ca-et-none,
+#CookieMgrWidgets .ca-w-clear .ca-et-gc.lo {
+  color: #e2d7bf;
+}
+/* SVG text takes no text-shadow everywhere: a dark stroke under the fill instead */
+#CookieMgrWidgets .ca-w-clear .ca-sp-chart text {
+  paint-order: stroke;
+  stroke: rgba(0, 0, 0, 0.85);
+  stroke-width: 2.5px;
+  stroke-linejoin: round;
+}
+#CookieMgrWidgets .ca-w-clear .ca-sp-ticks text {
+  fill: #f2e9d4;
+}
 
 /* Effect timers: one slim bar per effect, in its colour (--c); its icon (.ca-et-ico) is shared with other views */
 #CookieMgrWidgets .ca-et-list {

@@ -540,11 +540,10 @@ CA.UI.TooltipsPage = (() => {
       .concat((Game.UpgradesInStore || []).filter((u) => !P().isSwitch(u)).map((u) => ({ v: `u:${u.name}`, label: `${u.dname || u.name} (upgrade)` })));
   }
   function defineWidget() {
-    CA.UI.Widgets.defineGroup({ id: 'stats', name: 'Statistics', sprite: [3, 5], order: 35 });
     CA.UI.Widgets.defineType({
       id: 'statistic',
-      group: 'stats',
-      sprite: [3, 5],
+      group: 'game',
+      sprite: [10, 10],
       short: 'One statistic, live — yours or a built-in',
       name: 'Statistic',
       icon: 'graphs',

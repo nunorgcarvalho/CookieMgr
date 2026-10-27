@@ -441,7 +441,7 @@ The **Tooltips** page (next to Macros) is the store tooltip's block and every st
 - **Values**: every word a statistic can read — the `item.*` words first, then statistics, text, and the game's —
   with its signature, what it is and its value now (for the previewed building).
 
-A **Statistic widget** (its own shelf, Statistics, in Add a widget) shows one statistic live, as its tooltip line
+A **Statistic widget** (on the **Data** shelf of Add a widget, beside Quick stats and Latest events) shows one statistic live, as its tooltip line
 would: about **the best** (the best building, the best upgrade or the best buy, as the statistic is about), or a
 building or store upgrade you pick in its settings. Add as many as you like.
 

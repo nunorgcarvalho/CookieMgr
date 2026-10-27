@@ -13,12 +13,18 @@
     screen; search. Add to the tooltip (or take out) in one click; **Duplicate** a statistic to make it yours (the
     editor comes next); delete yours; ☆ puts one on the left panel as a widget.
   - **Values**: every word a statistic can read, with its signature, what it is and its value now.
-- **Statistic widget**: one statistic, live, about the best building / upgrade / buy or an item you pick. Its own
-  shelf, Statistics, in Add a widget. Add as many as you like.
+- **Statistic widget**: one statistic, live, about the best building / upgrade / buy or an item you pick, on the
+  Add a widget picker's **Data** shelf (Your game, renamed). Add as many as you like.
 - The Payback page's Store tooltips card keeps its two switches and links to the new page.
 - For other code: `CA.Stats.duplicate(id)`, `bestOf(scope)`, `about(context, fn)`, `GROUPS`; a statistic has a
   `group`. A widget type can name each widget itself (`nameOf(inst)`).
 
+## 3.26.0 — 2026-10-27
+
+- **See-through widgets, easier to read.** With a widget's Background on Faint or None, its muted text — the Next
+  golden cookie's “next in”, “median”, “frequency” labels, the Quick stats names, notes, “Nothing has happened yet”,
+  and chart axes (the golden cookie charts' and the Chart widget's) — is brighter and gets the same dark outline as
+  the rest of the text, so it stands out over the game. Solid widgets look as before.
 ## 3.25.0 — 2026-10-27
 
 - **Add a widget: tiles and widgets light up together.** Hover a tile in the picker and every widget of that kind

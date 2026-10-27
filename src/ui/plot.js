@@ -516,6 +516,23 @@ CA.UI.Plot = (() => {
 
     // ---- drawing ----
 
+    /** Writes an axis label (or the empty note) in `ink`; in a see-through widget (Background Faint or None,
+     *  over the game) brighter, with a dark shadow like the widget's other text. */
+    function axisText(text, x, y, ink) {
+      if (canvas.closest && canvas.closest('.ca-w-clear')) {
+        ctx.save();
+        ctx.fillStyle = '#f2e9d4';
+        ctx.shadowColor = '#000';
+        ctx.shadowBlur = 3;
+        ctx.fillText(text, x, y);
+        ctx.fillText(text, x, y); // twice: a denser outline
+        ctx.restore();
+        return;
+      }
+      ctx.fillStyle = ink;
+      ctx.fillText(text, x, y);
+    }
+
     function draw() {
       if (!canvas || !canvas.isConnected) return;
       const { w, h } = CA.UI.Chart.fitCanvas(canvas, ctx);
@@ -676,8 +693,7 @@ CA.UI.Plot = (() => {
         ctx.moveTo(plot.x, y);
         ctx.lineTo(plot.x + plot.w, y);
         ctx.stroke();
-        ctx.fillStyle = 'rgba(230,220,200,0.75)';
-        ctx.fillText(fmt(t), plot.x - 6, y);
+        axisText(fmt(t), plot.x - 6, y, 'rgba(230,220,200,0.75)');
       });
 
       drawXAxis(plot, v, xOf);
@@ -869,12 +885,11 @@ CA.UI.Plot = (() => {
       if (sel) drawSelection(plot);
 
       if (!bars.length && !Object.keys(lines).some((k) => lines[k].length)) {
-        ctx.fillStyle = 'rgba(230,220,200,0.6)';
         ctx.font = '12px Tahoma, Arial, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         const msg = !S().get('trackHistory') ? 'History recording is off (Settings)' : data.empty || 'Collecting data…';
-        ctx.fillText(msg, plot.x + plot.w / 2, plot.y + plot.h / 2);
+        axisText(msg, plot.x + plot.w / 2, plot.y + plot.h / 2, 'rgba(230,220,200,0.6)');
       }
     }
 
@@ -959,8 +974,7 @@ CA.UI.Plot = (() => {
           ctx.lineTo(px, plot.y + plot.h);
           ctx.stroke();
           if (px > plot.x + 16 && px < plot.x + plot.w - 16) {
-            ctx.fillStyle = 'rgba(230,220,200,0.7)';
-            ctx.fillText(l.label, px, plot.y + plot.h + 7);
+            axisText(l.label, px, plot.y + plot.h + 7, 'rgba(230,220,200,0.7)');
           }
         });
         return;
@@ -983,8 +997,7 @@ CA.UI.Plot = (() => {
         ctx.stroke();
         if (px > plot.x + 16 && px < plot.x + plot.w - 16) {
           const t = v.tAt(x);
-          ctx.fillStyle = 'rgba(230,220,200,0.7)';
-          ctx.fillText(long ? dayClock(t) : clock(t, stepMs < 60 * SEC), px, plot.y + plot.h + 7);
+          axisText(long ? dayClock(t) : clock(t, stepMs < 60 * SEC), px, plot.y + plot.h + 7, 'rgba(230,220,200,0.7)');
         }
       }
     }

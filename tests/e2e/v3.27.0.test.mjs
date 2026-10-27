@@ -163,7 +163,7 @@ assert(!pp.querySelector('[data-tl-lines]') && pp.querySelector('[data-ca="goto"
 
 // ---- the Statistic widget
 const W = CA.UI.Widgets;
-assert(W.types().some((t) => t.id === 'statistic' && t.group === 'stats'), 'a Statistic widget, on its own shelf');
+assert(W.types().some((t) => t.id === 'statistic' && t.group === 'game'), 'a Statistic widget, on the Data shelf');
 const box = (id) => doc.querySelector(`#CookieMgrWidgets [data-widget="${id}"]`);
 const one = W.add('statistic', null, { stat: 'payback' });
 W.render();
@@ -184,6 +184,9 @@ ST.remove(yours.id);
 W.render();
 assert(/gone/.test(box(two.id).textContent), 'its statistic deleted: says so, no crash');
 CA.UI.Menu.openPage('widgets');
+await sleep(30);
+const shelf = doc.querySelector('[data-page="widgets"] [data-w-shelf="game"]');
+assert(shelf && /Data/.test(shelf.textContent) && shelf.querySelector('.ca-wtile[data-w-tile="statistic"]') && shelf.querySelector('.ca-wtile[data-w-tile="stats"]'), 'the picker: Statistic on the Data shelf, beside Quick stats');
 W.openSettings(one.id);
 await sleep(30);
 const sel = doc.querySelector('[data-w-editor] select[data-w-opt="stat"]');
