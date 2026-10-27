@@ -46,7 +46,7 @@ CA.UI.Widgets = (() => {
   const FONT_MAX = 200;
   const MIN_W = 140;
   const MIN_H = 60;
-  const SAVED = ['count', 'types', 'stats', 'font', 'title', 'target', 'targetMagic', 'bg', 'sort', 'barScale']; // per-widget settings that are saved
+  const SAVED = ['count', 'types', 'stats', 'nums', 'font', 'title', 'target', 'targetMagic', 'bg', 'sort', 'barScale']; // per-widget settings that are saved
   const BG = [[100, 'Solid'], [40, 'Faint'], [0, 'None']]; // background opacity (%) while not hovered
   const S = () => CA.Settings;
   const I = (n, s) => CA.UI.Icons.html(n, s);
@@ -715,6 +715,7 @@ CA.UI.Widgets = (() => {
     // v2.1 had one Shortcuts widget for all favourites; its buttons now start where it was
     const old = data.find((w) => ok(w) && w.type === 'shortcuts');
     anchor = old ? { x: old.x, y: old.y } : null;
+    // a type that's gone is dropped (v3.19: the Golden cookies ring, now the Next golden cookie widget)
     widgets = data
       .filter((w) => ok(w) && typeById[w.type])
       .map((w) => {
@@ -734,6 +735,7 @@ CA.UI.Widgets = (() => {
         if (typeof w.barScale === 'string') out.barScale = w.barScale.slice(0, 20);
         if (Array.isArray(w.types)) out.types = w.types.map(String);
         if (Array.isArray(w.stats)) out.stats = w.stats.map(String);
+        if (Array.isArray(w.nums)) out.nums = w.nums.map(String);
         return out;
       });
     render();

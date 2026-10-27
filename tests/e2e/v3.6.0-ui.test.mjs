@@ -111,14 +111,7 @@ assert(!colourOf(1) && !crate.querySelector('.ca-pp-updot'), 'option off: no col
 CA.UI.Menu.openPage('settings');
 assert(['storeColours', 'storeTooltips', 'storeWarnings'].every((k) => doc.querySelector(`[data-page="settings"] [data-key="${k}"]`)), 'the options, in Settings → Store');
 
-// ---- the Golden cookies widget
-CA.UI.Widgets.add('golden');
-CA.Settings.set('widgetsShown', true);
-CA.UI.Widgets.render();
-CA.UI.Widgets.tick();
-const orb = doc.querySelector('#CookieMgrWidgets .ca-orb-golden');
-const exp = CA.Timers.spawnOf('golden').expected;
-assert(orb && orb.querySelector('.ca-orb-label').textContent === CA.Format.span(exp) && orb.dataset.wOpen === 'stats', `the widget: the expected wait (${orb && orb.querySelector('.ca-orb-label').textContent}), opens Stats`);
+// (the Golden cookies widget that was here went in v3.19: the Next golden cookie widget replaces it)
 
 assert(g.errors.length === 0, 'no runtime errors' + (g.errors.length ? `: ${g.errors.slice(0, 3).join(' | ')}` : ''));
 done();

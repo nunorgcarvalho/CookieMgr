@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## 3.20.0 — 2026-10-27
+## 3.22.0 — 2026-10-27
 
 - **Add a widget, redrawn.** The picker on the Widgets page is now four shelves — Golden cookies, Minigames, Macros,
   Your game — of tiles wearing the game's own icons: a round dial (a dark disc with a ring in its colour) for the
@@ -12,6 +12,35 @@
   the full description. For other code: `defineType` takes `group`, `sprite` (`[col, row]` of icons.png, or
   `{ sheet, pos }`), `short` and `ring`, and `CA.UI.Widgets.defineGroup({ id, name, sprite, order })` adds a shelf;
   types with an unknown group land in a trailing "More".
+## 3.19.1 — 2026-10-27
+
+- **The next golden cookie chart keeps effects that ended.** An effect that ran since the last golden cookie left
+  keeps its bar after it ends, dimmed and marked “ended”, on the same axis, with the multiplier it had — so a
+  cycle's Frenzy, Click frenzy and the rest stay visible until the next golden cookie resets the axis. (CookieMgr
+  remembers the effects it saw for an hour: `CA.Timers.effectsSince(secs)`; ones that ran while it wasn't loaded
+  can't show.)
+- **The expected moment, on the chart**: a dashed green line at now + the expected wait, labelled with how long
+  until it, and the yellow now line labelled with the time since the last golden cookie — on the Stats page and the
+  Next golden cookie widget.
+- **Golden cookie frequency**: how many times more often golden cookies come than with nothing helping — every
+  factor the game's spawn timer uses (Lucky day, Serendipity, Golden goose egg, Heavenly luck, Green yeast
+  digestives, the Arcane aura, Sugar blessing, the season's star upgrade, garden plants, Muridal, Mokalsium,
+  Selebrak…) multiplied together. A tile on the Stats page, in the Next golden cookie widget's numbers, and the
+  word `golden.frequency`. (The game fixes a cycle's timing when the last cookie leaves, so it counts from the next.)
+  The frequency effects' chips read the same way now: Lucky day ×2 (twice as often), not ×0.5 (the time between).
+- **Dashed lines across at both moments**: instead of a fixed 50%, a green one where the expected line meets the
+  curve (its percentage at the right edge, under the line) and a yellow one at the curve's height now (its
+  percentage at the left edge, over the line).
+- **Next golden cookie widget: pick its numbers.** Its settings list each number (next in, median, chance within a
+  minute, window, frequency) to switch on or off; all on by default, saved with the widget.
+- The chart's labels (the percentages, the times, “expected”) are drawn over its lines, curve and bars, with a dark
+  outline.
+## 3.19.0 — 2026-10-27
+
+- **The Golden cookies widget is gone** — the small ring that filled towards the latest the next golden cookie could
+  come. The **Next golden cookie** widget (the chart, the expected wait, the median, the chance within a minute and
+  the effects running) and the **Golden timeline** do everything it did. A saved layout that still has it loads
+  without it; everything else on the panel stays where it was. The Golden cookies *macro* (which pops them) stays.
 
 ## 3.18.0 — 2026-10-27
 

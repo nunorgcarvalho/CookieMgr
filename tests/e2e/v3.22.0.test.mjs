@@ -1,4 +1,4 @@
-// v3.20.0: "Add a widget" is four shelves of tiles (the game's own icons; round dials vs framed panels);
+// v3.22.0: "Add a widget" is four shelves of tiles (the game's own icons; round dials vs framed panels);
 // click a tile to place it, hover for the full description; defineType takes group/sprite/short/ring.
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
 import { boot, sleep, makeAssert, click } from '../harness/game.mjs';
