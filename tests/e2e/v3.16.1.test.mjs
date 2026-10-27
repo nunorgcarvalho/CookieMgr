@@ -49,10 +49,14 @@ assert(!lanes().find((l) => /Click frenzy/.test(l.textContent)).classList.contai
 
 // the expected moment, dashed, with how long until it; the time since the last one on the now line
 const d = CA.Timers.distribution('golden');
-const exp = card().querySelector('.ca-sp-expect');
-const ex = exp && Number(exp.querySelector('line').getAttribute('x1'));
+const expLine = card().querySelector('.ca-sp-expect line');
+const exp = card().querySelector('.ca-sp-expect text');
+const ex = expLine && Number(expLine.getAttribute('x1'));
 assert(exp && Math.abs(ex - X(240 + d.wait.mean)) < 0.05 && exp.textContent === `expected · ${CA.Format.span(d.wait.mean)}`, `the expected line at now + the mean wait (${exp && exp.textContent})`);
 assert(card().querySelector('.ca-sp-now .ca-sp-since').textContent === CA.Format.span(240), 'the now line says the time since the last one (4m 00s)');
+const kids = [...card().querySelector('[data-sp-chart="golden"]').children];
+const lastShape = Math.max(...kids.map((k, i) => (k.matches('path, line, rect, circle') || k.querySelector('path, line, rect, circle')) && !k.classList.contains('ca-sp-hover') ? i : -1));
+assert(kids.findIndex((k) => k.querySelector && k.querySelector('.ca-sp-since')) > lastShape && kids.findIndex((k) => k.matches('.ca-sp-ylab')) > lastShape, 'the labels come after every line, curve and bar (drawn on top)');
 const half = card().querySelector('.ca-sp-half');
 const hp = d.cycle.cdf(240 + d.wait.mean);
 assert(Math.abs(Number(half.getAttribute('y1')) - (128 - 118 * hp)) < 0.05 && [...card().querySelectorAll('.ca-sp-ylab')].some((t) => t.textContent === `${(hp * 100).toFixed(hp < 0.1 ? 1 : 0)}%`), `the dashed line across meets the expected line on the curve, labelled ${(hp * 100).toFixed(0)}%`);
@@ -61,7 +65,7 @@ CA.UI.Widgets.add('goldenNext');
 CA.UI.Widgets.render();
 CA.UI.Widgets.tick();
 const wg = [...doc.querySelectorAll('#CookieMgrWidgets [data-widget]')].find((x) => /Next golden cookie/.test(x.textContent));
-assert(wg && wg.querySelector('.ca-sp-expect line') && /expected/.test(wg.querySelector('.ca-sp-expect').textContent) && wg.querySelector('.ca-sp-since'), 'the Next golden cookie widget too');
+assert(wg && wg.querySelector('.ca-sp-expect line') && /expected/.test(wg.querySelector('.ca-sp-expect text').textContent) && wg.querySelector('.ca-sp-since'), 'the Next golden cookie widget too');
 
 // the frequency: × vs nothing helping, every factor counted
 assert(d.frequency === 1 && /Frequency×1/.test(card().textContent.replace(/\s+/g, '')), 'nothing helping: frequency ×1');
