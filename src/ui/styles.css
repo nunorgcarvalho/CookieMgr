@@ -5312,10 +5312,67 @@ body.ca-has-storebar #products {
   font-weight: bold;
   text-align: right;
 }
+/* bank warnings: one line of coloured tags (the banks a purchase breaks, and by how much) */
 #tooltip .ca-tt-warn,
 #CookieMgrMenu .ca-tl-preview .ca-tt-warn {
-  margin-top: 4px;
+  display: block;
+  margin-top: 3px;
+  line-height: 18px;
   color: #ffb36a;
+}
+#tooltip .ca-tt-warn span,
+#CookieMgrMenu .ca-tl-preview .ca-tt-warn span {
+  margin-right: 4px;
+}
+#tooltip .ca-tt-warn b,
+#CookieMgrMenu .ca-tl-preview .ca-tt-warn b {
+  text-align: left;
+}
+#tooltip .ca-tt-bank,
+#CookieMgrMenu .ca-tl-preview .ca-tt-bank {
+  display: inline-block;
+  margin-right: 3px;
+  line-height: 14px;
+  padding: 0 4px;
+  border-radius: 3px;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+  font-weight: bold;
+}
+#tooltip .ca-tt-bank small,
+#CookieMgrMenu .ca-tl-preview .ca-tt-bank small {
+  font-weight: normal;
+  opacity: 0.85;
+}
+#tooltip .ca-tt-bank-red,
+#CookieMgrMenu .ca-tl-preview .ca-tt-bank-red {
+  color: #ff8a8a;
+  background: rgba(255, 107, 107, 0.15);
+}
+#tooltip .ca-tt-bank-orange,
+#CookieMgrMenu .ca-tl-preview .ca-tt-bank-orange {
+  color: #ffb36a;
+  background: rgba(255, 170, 77, 0.15);
+}
+#tooltip .ca-tt-bank-yellow,
+#CookieMgrMenu .ca-tl-preview .ca-tt-bank-yellow {
+  color: #ffe066;
+  background: rgba(255, 224, 102, 0.12);
+}
+/* the store's mark: a small "!" in the colour of the smallest bank buying it breaks */
+.ca-bank-mark {
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  z-index: 5;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  color: #000;
+  font: bold 10px/12px Tahoma, Arial, sans-serif;
+  text-align: center;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.8), 0 0 4px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
 }
 
 /* the Payback page's Store tooltips card: the lines, the preview */
@@ -6343,7 +6400,7 @@ body.ca-has-storebar #products {
   color: #ffd56a;
 }
 
-/* ---------- v3.19.0: ☆ widget stars, the Chart widget, Golden cookie frequency ---------- */
+/* ---------- v3.20.0: ☆ widget stars, the Chart widget, Golden cookie frequency ---------- */
 
 /* a page's ☆ (CA.UI.C.widgetStar): the macros' favourite star, a touch smaller in card heads */
 #CookieMgrMenu .ca-wstar {

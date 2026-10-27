@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## 3.19.0 — 2026-10-27
+## 3.20.0 — 2026-10-27
 
 - **☆ stars put a ready-made widget on the left panel**, as a macro's ★ gives it a button: one click adds it (and
   shows widgets if they were hidden), the star fills, a second click takes it away. They're on the Garden page's
@@ -15,6 +15,23 @@
   (×4 with Lucky day and Serendipity), one every how long on average, and a bar for each thing helping. Click it for
   the Stats page.
 - The Stats page's golden cookie frequency row always shows now ("none yet" when nothing helps), with its ☆.
+
+## 3.18.0 — 2026-10-27
+
+- **Bank warnings, compact.** The warnings that a purchase would take your bank below what a Lucky!, Conjure Baked
+  Goods or a Lucky! in a Frenzy needs to pay its most were up to three long sentences under the store's tooltips.
+  Now anything whose purchase would do it gets a small coloured **!** in the corner of its store button, in the
+  colour of the smallest bank it breaks: red for Lucky!, orange for Conjure, yellow for Frenzy Lucky!. Its tooltip
+  says which in one line of tags, each with how far under you'd be (`⚠ Drops bank below  Lucky! −456 M  Conjure
+  −1.2 B`). Banks you're already under don't warn. Still the **Bank warnings** option (Settings → Store, the Payback
+  page), off by default; `warnings(price)` returns the banks as data (id, name, colour, need, short).
+
+## 3.17.0 — 2026-10-27
+
+- **Numbers start on Cookie Monster's own default, the short scale**: 1.23 M, 4.56 B, 7.8 Tr, 1.5 Quadr… 2.3 Dec,
+  4.56 Septendec, 7.89 Octodec, up to Quattuorvigint (1e75; scientific past it, as Cookie Monster), instead of the
+  abbreviated 7.89 ODe. Saves from before this version, which all kept the old default, move over to it; one on
+  another notation keeps it, and the abbreviated scale is still in Settings → General → Numbers.
 
 ## 3.16.0 — 2026-10-27
 
