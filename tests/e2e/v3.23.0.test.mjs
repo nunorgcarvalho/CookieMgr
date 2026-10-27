@@ -1,4 +1,4 @@
-// v3.20.0: statistics (features/stats.js). The store tooltip's lines are statistics — code in the
+// v3.23.0: statistics (features/stats.js). The store tooltip's lines are statistics — code in the
 // macro language, compiled as a statistic (it only reads, and ends with `return`), about the building
 // or upgrade hovered (`item`, item.* words) — the built-ins written that way, yours beside them as
 // { stat: id } lines. Every statistic is a value word, stat.<key>(…), for macros and other

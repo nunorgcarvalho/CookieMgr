@@ -17,7 +17,7 @@ assert(!CA.UI.Widgets.add('golden'), 'it can’t be added');
 assert(!('sparkline' in CA.UI.SpawnView), 'its sparkline went with it');
 
 CA.UI.Menu.openPage('widgets');
-const gallery = [...doc.querySelectorAll('.ca-wgallery .ca-wcard-name')].map((n) => n.textContent);
+const gallery = [...doc.querySelectorAll('.ca-wpick .ca-wtile-name')].map((n) => n.textContent); // v3.22: the picker's tiles
 assert(!gallery.some((t) => /^Golden cookies/.test(t)) && gallery.some((t) => /^Next golden cookie/.test(t)), `the Widgets page offers it no more (${gallery.join(' | ')})`);
 
 // an old save with the ring among other widgets

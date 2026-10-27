@@ -84,12 +84,15 @@ CA.UI.TimelineWidget = (() => {
   }
 
   function init() {
-    const D = (id, name, icon, desc) =>
+    const D = (id, name, icon, desc, sprite, short) =>
       CA.UI.Widgets.defineType({
         id,
         name,
         icon,
         desc,
+        group: 'golden',
+        sprite,
+        short,
         width: TYPES[id].width,
         resize: 'free',
         single: false,
@@ -99,8 +102,8 @@ CA.UI.TimelineWidget = (() => {
           { key: 'nums', label: 'Numbers', type: 'multi', default: NUMS.map((x) => x.v), options: () => NUMS },
         ],
       });
-    D('goldenTimeline', 'Golden timeline', 'sparkle', 'Everything golden on one time axis from now: the odds of the next golden cookie, each effect running with its time left and the chance a golden cookie comes before it ends. Pick what to show in its settings.');
-    D('goldenNext', 'Next golden cookie', 'sparkle', 'When the next golden cookie comes: on average, the median, the chance within a minute, its window — and this cycle’s odds as a chart, a line sweeping across it as time passes (the Stats page’s).');
+    D('goldenTimeline', 'Golden timeline', 'sparkle', 'Everything golden on one time axis from now: the odds of the next golden cookie, each effect running with its time left and the chance a golden cookie comes before it ends. Pick what to show in its settings.', [22, 6], 'Next cookie and every effect, on one axis');
+    D('goldenNext', 'Next golden cookie', 'sparkle', 'When the next golden cookie comes: on average, the median, the chance within a minute, its window — and this cycle’s odds as a chart, a line sweeping across it as time passes (the Stats page’s).', [8, 14], 'Its odds, in numbers and a chart');
   }
 
   return { init, html, PARTS };
