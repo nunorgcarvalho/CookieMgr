@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+## 3.31.0 — 2026-10-27
+
+- **The Dragon page**, in the minigames under the Grimoire: Krumblor's level, the aura in each slot and what it does,
+  what the next level takes, and a **Train** button.
+- **Auto dragon**, a built-in macro (with the seasons and lumps ones, and on the Dragon page): trains the dragon
+  whenever you can afford its next level — buys A crumbly egg, chips and hatches the egg, trains each aura (100 of a
+  building each), bakes the dragon cookie and trains the second aura slot (50 and 200 of every building). Its
+  **Sacrificing buildings** setting picks which levels it may sacrifice buildings for: all, one (only the
+  100-of-a-building levels) or none (cookies only).
+- **Aura profiles**: named pairs of auras, one row each on the Dragon page — its name, an aura per slot, whether it's
+  in use (or how many switches it needs), **Use** and **Delete**; **New profile** and **From current auras**. Using one
+  puts its auras in the way the game's own switch does (each changed slot costs one of your highest buildings): with
+  one slot, its first aura you've trained; with two, both, in either slot. Three come with it — **Drops** (Mind Over
+  Matter + Dragon Guts), **Drops & flight** (Mind Over Matter + Dragonflight) and **Golden** (Dragonflight + Reaper of
+  Fields) — and like yours they can be renamed or deleted; macros call them by id (`drops`, `dropsFlight`, `golden`),
+  which a rename doesn't change. Saved with the game.
+- For macros: actions `dragon.train(buildings)`, `dragon.setAura(aura, slot)`, `dragon.profile(profile)`; values
+  `dragon.level()`, `dragon.aura(slot)`, `dragon.canTrain(buildings)`, `dragon.profileActive(profile)`,
+  `dragon.activeProfile()`, `dragon.profiles()`. For other code: `CA.Dragon` (`apply`, `isActive`, `status`, `train`…).
+
 ## 3.30.0 — 2026-10-27
 
 - **Golden cookie frequency, in time.** The Stats page's golden cookie card and the Next golden cookie widget's
