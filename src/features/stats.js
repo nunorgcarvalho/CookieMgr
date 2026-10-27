@@ -109,18 +109,32 @@ if known(a):
       source: `colour = [item.colourOf(1), item.colourOf(10), item.colourOf(100)]
 return [item.paybackOf(1), item.paybackOf(10), item.paybackOf(100)]`,
     },
-    { id: 'price', group: 'Bank', name: 'Price', label: 'Price', desc: 'what it costs (what a click buys)', scope: 'item', format: 'number', source: 'return item.price()' },
+    {
+      id: 'price',
+      group: 'Bank',
+      name: 'Price',
+      label: 'Price',
+      desc: 'what it costs (what a click buys) — green when you can afford it, red when not',
+      scope: 'item',
+      format: 'number',
+      source: `colour = "red"
+if timeTo(item.price()) <= 0:
+  colour = "green"
+return item.price()`,
+    },
     {
       id: 'afford',
       group: 'Bank',
       name: 'Affordable',
       label: 'Affordable',
-      desc: 'when you can afford it at your CpS',
+      desc: 'when you can afford it at your CpS — green when you can now, red when not',
       scope: 'item',
       format: 'text',
       source: `s = timeTo(item.price())
 if s <= 0:
+  colour = "green"
   return "now"
+colour = "red"
 if finite(s):
   return fmt.time(s)
 return "not at this CpS"`,
@@ -131,15 +145,17 @@ return "not at this CpS"`,
       group: 'Achievements',
       name: 'Next achievement',
       label: 'Next achievement',
-      desc: 'how many more win the next achievement, and for how much',
+      desc: 'how many more win the next achievement, and for how much — in the payback colour of buying that many',
       scope: 'building',
       format: 'text',
       source: `n = building.toNextAchievement(item)
 if n > 100:
   return "none within 100"
+# buying that many, the achievement's milk counted: is its payback period good enough?
+colour = item.colourOf(n)
 return n + " more (" + fmt.number(building.priceOf(item, n)) + ")"`,
     },
-    { id: 'wins', group: 'Achievements', name: 'Wins', label: 'Wins', desc: 'the achievements buying it wins', scope: 'item', format: 'text', source: 'return item.wins()' },
+    { id: 'wins', group: 'Achievements', name: 'Wins', label: 'Wins', desc: 'the achievements buying it wins, in its payback colour', scope: 'item', format: 'text', colour: 'payback', source: 'return item.wins()' },
     // the bank warnings: buying it would take your bank below what a golden cookie (or a spell) needs
     // to pay its most — only when you have that bank now; keep: how many times that bank to keep
     ...[
