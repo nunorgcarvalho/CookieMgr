@@ -138,10 +138,7 @@ CA.Macros.setInput('cheapUpgrades', 'secs', 2); // v3: an input of its code
 CA.Macros.runOnce('cheapUpgrades');
 assert(!names().includes('Pricey one'), '2s: that one too');
 
-// ---- the dragon
-w.Math.seedrandom = () => {};
-w.shuffle = (a) => a.reverse(); // the save's order: teddy bear, fang, claw, scale (quarters 0–3)
-Game.seed = 'abc';
+// ---- the dragon (since v3.13.0 it learns the quarters' drops by petting, never from the seed)
 Game.dragonLevel = 8;
 const owned = new Set(['Pet the dragon']);
 const unlocked = new Set();
@@ -157,16 +154,17 @@ Game.ClickSpecialPic = () => {
   pets++;
   if (Game.specialTab === 'dragon' && pets === 7) unlocked.add(dueNow); // drops on the 7th pet
 };
-const sched = AB.petSchedule();
-assert(sched.length === 4 && sched.find((x) => x.now).name === dueNow, `knows this quarter's drop (${dueNow})`);
-assert(sched.filter((x) => !x.now).every((x) => x.inSec > 0 && x.inSec < 3600), 'and when the others come');
+let sched = AB.petSchedule();
+assert(sched.length === 4 && sched.find((x) => x.now).open && sched.find((x) => x.now).drop === '', 'this quarter: not tried yet, worth petting');
 const r = CA.Macros.runOnce('petDragon');
 assert(r === 1 && unlocked.has(dueNow) && pets === 7, `pets until it drops (${pets} pets)`);
 assert(menuOn === 0 && Game.specialTab === '', 'closes the dragon after');
+sched = AB.petSchedule();
+assert(sched.find((x) => x.now).drop === dueNow && !sched.find((x) => x.now).open, `learned this quarter's drop (${dueNow})`);
 pets = 0;
 CA.Macros.runOnce('petDragon');
 assert(pets === 0, 'nothing due this quarter any more: leaves it alone');
-assert(/in \d/.test(CA.Actions.get('dragon.pet').ready({}).text), 'says when the next one comes');
+assert(/in \d/.test(CA.Actions.get('dragon.pet').ready({}).text), 'says when the next quarter worth trying comes');
 
 assert(g.errors.length === 0, 'no runtime errors' + (g.errors.length ? `: ${g.errors.slice(0, 3).join(' | ')}` : ''));
 done();

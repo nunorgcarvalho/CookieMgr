@@ -168,7 +168,7 @@ default brings the original back):
 | Best upgrade           | —           | Buys the lowest-payback upgrade                                      |
 | Research               | —           | Buys research as it comes (stops before One mind by default)         |
 | Cheap upgrades         | —           | Buys upgrades costing under 1s (adjustable) of production            |
-| Pet the dragon         | —           | Gets the dragon's four drops, petting only in the right quarter-hour |
+| Pet the dragon         | —           | Gets the dragon's four drops, learning by petting which quarter-hour gives which |
 
 The autobuyer is the same switch as on the Stock market page and in the Bank minigame toolbar. (A group macro is
 the way to switch several at once.)
@@ -298,11 +298,8 @@ forever:
   `garden.isMature / isNew / isEmpty / isOff(tile)`, `garden.seeds()`, `garden.seedCost(seed)`; `garden.harvest(tile)`,
   `garden.plant(tile, seed)` — and the whole-plot ones the default rules use (`garden.plantEmpty()`…);
   `garden.mutationChance(x, y)`, `garden.growChance(seed)` (at the next tick, 0–1), `garden.growIn(seed)` (seconds).
-- **Minigames** — `spell.cost / waitFor / recover(spell)`, `stock.restingRatio(good)`.
-- **Force the Hand of Fate** — `fthof.next()` (what the next cast gives: `frenzy`, `click frenzy`, `building special`,
-  `multiply cookies`, `cookie storm`, `cookie storm drop`, `blab`, `free sugar lump`; backfires `clot`, `ruin cookies`,
-  `cursed finger`, `blood frenzy`), `fthof.nextIs(outcome)`, `fthof.after(n)`, `fthof.castsUntil(outcome)`,
-  `fthof.backfireChance()`.
+- **Minigames** — `spell.cost / waitFor / recover / failChance(spell)`, `fthof.backfireChance()`,
+  `stock.restingRatio(good)`.
 - **Shimmers & wrinklers** — `shimmers()`, `shimmer.type / isWrath / life(s)`, `shimmer.pop(s)`; `wrinklers()`,
   `wrinkler.isShiny / isFed / sucked(w)`, `wrinkler.pop(w)`.
 - **Sugar lump** — `lump.isRipe()`, `lump.isMature()`, `lump.pick()`.
@@ -357,9 +354,10 @@ back). It's checked against Cookie Monster itself in the real game (the simulato
 ×1, ×10 and ×100 and every upgrade in the store, the same to the last digit.
 
 **Pet the dragon** gets the dragon's four drops (Dragon scale, claw, fang, teddy bear): each pet has a 1 in 20 chance,
-and which one drops depends only on the quarter of the hour, in an order fixed by your save. It works that order out,
-and in a quarter whose drop you're missing it opens the dragon, pets it until it drops, and closes it again; its button
-says which drop is due and when the next one comes. Needs dragon level 8 and the "Pet the dragon" upgrade.
+and which one drops depends only on the quarter of the hour, in an order fixed per run. It learns that order by petting
+(it never reads your save's seed): in a quarter it hasn't tried, or whose drop you're still missing, it opens the dragon,
+pets it until something drops (200 pets with nothing: that quarter's drop is one you have), and closes it again; its
+button says what this quarter-hour gives, as far as it knows, and when the next quarter worth trying comes. Needs dragon level 8 and the "Pet the dragon" upgrade.
 
 **Running** at the top of the page is a strip with a chip per running macro (warmer the busier it is — click one to
 find its card, × to stop it) and **Stop all**. A running macro's card shows, for each of its actions, how many things
@@ -419,9 +417,10 @@ checked against Cookie Monster in the real game:
   appears with chance ((time − min) ÷ (max − min))⁵; checked against the game itself): the expected wait from now, how
   far along this cycle's odds it is (0% → 100% as time passes), the wrath chance; and a chart of this cycle — the
   time since the last one left, from 0 to the latest it can come, against the chance one has come by then — with a
-  dashed line at 50% and a line sweeping across it at now (hover for any moment). Under the chart, from the now
-  line, **timer bars**: each effect running, with how long it has left and **the chance a golden cookie comes
-  before it ends** (whether a Frenzy can still be stacked). **Golden cookie frequency effects** (Lucky day,
+  dashed line at 50% and a line sweeping across it at now (hover for any moment). Under the chart, on the same
+  axis, **golden cookie effects**: a bar per effect running, from when it started to when it ends, with how long
+  it has left and **what it multiplies your income by** — a click effect counted at your click rate (yours or an
+  autoclicker's). **Golden cookie frequency effects** (Lucky day,
   Serendipity, golden clovers, spirits, the dragon…) as chips — click one for the wait without it. At Christmas,
   the next reindeer too.
 - **Prestige** — the levels you'd gain by ascending now, how long until the next and how many cookies it takes,
@@ -454,12 +453,6 @@ CookieMgr adds to the game's own tooltips (each with its option):
 - **Grimoire** — under a spell's tooltip: when you'll have the magic for it; once you can, the magic left after
   casting it and how long it takes to come back (to where it is, and to full). Conjure Baked Goods: what it gives
   now and the bank that gives the most; Spontaneous Edifice: the building it can give and the bank it needs.
-  **Force the Hand of Fate, forecast**: the game rolls every cast from your save (its seed and how many spells you've
-  cast), so what the next casts give is already fixed — its tooltip lists the next eight (and what each would be as a
-  backfire), at today's backfire chance. Any spell cast moves the list on by one, so a cheap one skips an outcome you
-  don't want. Gambler's Fever Dream's tooltip says which spell it would cast at each of the next four casts, and what
-  Force the Hand of Fate gives through it. Worked out by replaying the game's own draws — checked against hundreds of
-  real casts across saves, seasons, Dragonflight and backfires.
 - **Stock market** — under a stock's tooltip: its resting value (the price it drifts back to) and how far the price
   is from it, its trend, what you hold of what your offices can, its worth in cookies, and a share's.
 - **Pantheon** — under a spirit's tooltip: the CpS it would bring in each slot (and taking it out), measured on the
@@ -497,14 +490,7 @@ The **Grimoire** page (Wizard tower minigame) is the Grimoire, CookieMgr-style:
   two effects line up *and* there's enough magic, it casts Force the Hand of Fate, so its golden cookie can stack a third.
   The combos: Frenzy + Dragonflight, Frenzy + Click frenzy, Frenzy + a building special, a building special +
   Dragonflight, a building special + Click frenzy (a combo that starts when you're short of magic still gets its cast
-  once the magic is there). With **Forecast** on (its card), it reads what the next cast gives (the forecast, fthof.*)
-  and casts only on a click frenzy or a building special — or a frenzy, for a combo without one. Meanwhile, while the
-  next cast isn't good, it spends spare magic on Haggler's Charm to skip it (never dipping below what Force the Hand of
-  Fate costs): the forecast only moves when something is cast, so it keeps skipping however far the next good cast is.
-  **Skip ahead** caps that (0: no limit, the default) — a cap can stall it when the next good cast is further away. In
-  the simulator (`sim/experiments/fthof-forecast.mjs`: the real game, 24 h × 4 seeds, no buying) Forecast on with no
-  limit baked +79% ± 30% more than off with a 90-magic bar (higher on every seed) and +917% ± 535% with 299 — skewed by
-  rare stacked combos — while a limit of 1–10 casts stalled on most seeds. Its card says when combos can’t happen with your
+  once the magic is there). Its card says when combos can’t happen with your
   upgrades — the next golden cookie can’t come before a Frenzy ends (with Lucky day alone: 2m 30s at the soonest, a
   77 s Frenzy) — and which of Lucky day, Serendipity and Get lucky would help. Its code is yours to change (Edit on its card; Revert to default
   brings these back). Pair it with the Golden cookies macro to pop the cookie it summons. Your own macros that cast spells are listed here too.

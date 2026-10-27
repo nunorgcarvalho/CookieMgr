@@ -6117,38 +6117,3 @@ body.ca-has-storebar #products {
 #CookieMgrWidgets .ca-tl-now {
   color: #ffd56a;
 }
-#CookieMgrWidgets .ca-tl-fthof {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 3px;
-  margin-top: 4px;
-  font-size: 10px;
-}
-#CookieMgrWidgets .ca-tl-label {
-  color: #a89a83;
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-right: 2px;
-}
-#CookieMgrWidgets .ca-tl-cast {
-  padding: 1px 5px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.07);
-  color: #e8dcc4;
-  white-space: nowrap;
-}
-#CookieMgrWidgets .ca-tl-cast i {
-  font-style: normal;
-  color: #8a7d68;
-  margin-right: 3px;
-}
-#CookieMgrWidgets .ca-tl-cast.good {
-  background: rgba(125, 255, 122, 0.14);
-  color: #b6ffb3;
-}
-#CookieMgrWidgets .ca-tl-cast.wrath {
-  background: rgba(255, 110, 110, 0.16);
-  color: #ffb3ad;
-}

@@ -200,7 +200,7 @@ CA.UI.SpawnView = (() => {
           ? ` — ×${mx(b.click)} a click, at your ${em.rate.toFixed(em.rate < 10 ? 1 : 0)} clicks/s${b.cps !== 1 ? ` and ×${mx(b.cps)} CpS` : ''}`
           : ` — ×${mx(b.click)} a click; you haven’t been clicking, so no more income`
         : '';
-      const label = `${esc(b.name)} · ×${mx(m)}${clicky ? ' income' : ' CpS'} · ${when(b.secs)}${end > span + 0.5 ? ' →' : ''}`;
+      const label = `${esc(b.name)} · ×${mx(m)} income · ${when(b.secs)}${end > span + 0.5 ? ' →' : ''}`;
       const tx = Math.min(X(from) + 3, x1 - 150);
       bars +=
         `<g class="ca-sp-lane ${buffKind(b)}" data-tip="${esc(`${b.name}: ×${mx(m)} your income${why}; ${when(b.secs)} left`)}">` +

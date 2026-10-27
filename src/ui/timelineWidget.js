@@ -3,13 +3,12 @@
 //
 //   Golden timeline     everything on one time axis from now: when the next golden cookie comes (its
 //                       odds over time, the soonest-to-latest window, the mean), each effect running with
-//                       its time left and the chance a golden cookie comes before it ends — and what Force
-//                       the Hand of Fate gives over the next casts (features/fthof.js)
+//                       its time left and the chance a golden cookie comes before it ends
 //   Next golden cookie  the countdown and the odds: expected, median, the chance within a minute — and the
 //                       chart: this cycle's cumulative chance, a line sweeping across it at now
 //   Effect timers       a bar per effect running, its time left, the chance of a golden cookie before it ends
 //
-// Each shows what you tick in its settings (numbers, chart, effect bars, the forecast), resizes freely
+// Each shows what you tick in its settings (numbers, chart, effect bars), resizes freely
 // (the chart is drawn at the widget's width), and opens the Stats page from its numbers.
 
 CA.UI = CA.UI || {};
@@ -23,15 +22,18 @@ CA.UI.TimelineWidget = (() => {
     { v: 'numbers', label: 'The next golden cookie, in numbers' },
     { v: 'chart', label: 'Its odds over time (chart)' },
     { v: 'bars', label: 'Effect timers (bars)' },
-    { v: 'fthof', label: 'Force the Hand of Fate, the next casts' },
   ];
   const TYPES = {
-    goldenTimeline: { width: 300, parts: ['numbers', 'chart', 'bars', 'fthof'] },
+    goldenTimeline: { width: 300, parts: ['numbers', 'chart', 'bars'] },
     goldenNext: { width: 260, parts: ['numbers', 'chart'] },
     effectTimers: { width: 240, parts: ['bars'] },
   };
 
-  const partsOf = (inst) => (Array.isArray(inst.stats) && inst.stats.length ? inst.stats : TYPES[inst.type].parts);
+  // (a part saved that's gone — v3.12's Force the Hand of Fate forecast — is left out)
+  const partsOf = (inst) => {
+    const saved = Array.isArray(inst.stats) ? inst.stats.filter((p) => PARTS.some((x) => x.v === p)) : [];
+    return saved.length ? saved : TYPES[inst.type].parts;
+  };
   const widthOf = (inst) => Math.max(160, (inst.w || TYPES[inst.type].width) - 18);
 
   function numbersHtml(d) {
@@ -46,21 +48,6 @@ CA.UI.TimelineWidget = (() => {
       `<span data-tip="The soonest it can come, and the latest"><em>window</em><b>${when(w.soonest)}–${when(w.latest)}</b></span>` +
       '</div>'
     );
-  }
-
-  function fthofHtml(inst) {
-    const n = Math.max(1, Math.min(12, Number(inst.count) || 5));
-    const f = CA.Fthof && CA.Fthof.forecast(n);
-    if (!f) return '<div class="ca-tl-line ca-tl-dim">Force the Hand of Fate: no Grimoire yet.</div>';
-    const chips = f
-      .map(
-        (x) =>
-          `<span class="ca-tl-cast${x.wrath ? ' wrath' : x.good ? ' good' : ''}" data-tip="${esc(
-            `Cast ${x.n} from now${x.n > 1 ? ' (any spell before it counts)' : ''}: ${x.name}${x.wrath ? ' — a backfire' : ''}. If it wins: ${CA.Fthof.nameOf(x.win)}; if it backfires: ${CA.Fthof.nameOf(x.backfire)}.${x.gfd ? ` Gambler’s Fever Dream here would cast ${x.gfd.name}${x.gfd.fthof ? ` → ${x.gfd.fthof.name}` : ''}.` : ''}`
-          )}"><i>${x.n}</i>${esc(x.name)}</span>`
-      )
-      .join('');
-    return `<div class="ca-tl-fthof"><span class="ca-tl-label" data-tip="${esc(`What Force the Hand of Fate gives over your next casts — worked out from the game’s seeded rolls, at today’s ${pc(f[0].failChance)} backfire chance`)}">FtHoF</span>${chips}</div>`;
   }
 
   function html(inst) {
@@ -80,7 +67,6 @@ CA.UI.TimelineWidget = (() => {
       if (!showChart) opts.span = Math.max(10, ...effects.map((e) => e.secs)) * 1.05;
       h += CA.UI.SpawnView.chart('golden', showChart ? wait : opts.next ? wait : null, effects, opts);
     } else if (parts.includes('bars') && !parts.includes('chart')) h += '<div class="ca-tl-line ca-tl-dim">No effects running.</div>';
-    if (parts.includes('fthof')) h += fthofHtml(inst);
     return `<div class="ca-tl-w">${h || '<div class="ca-tl-line ca-tl-dim">Pick what to show in its settings.</div>'}</div>`;
   }
 
@@ -97,10 +83,9 @@ CA.UI.TimelineWidget = (() => {
         html,
         settings: [
           { key: 'stats', label: 'Show', type: 'multi', default: TYPES[id].parts, options: () => PARTS },
-          { key: 'count', label: 'Force the Hand of Fate: casts ahead', type: 'number', min: 1, max: 12, default: 5, unit: 'casts' },
         ],
       });
-    D('goldenTimeline', 'Golden timeline', 'sparkle', 'Everything golden on one time axis from now: the odds of the next golden cookie, each effect running with its time left and the chance a golden cookie comes before it ends, and what Force the Hand of Fate gives over your next casts. Pick what to show in its settings.');
+    D('goldenTimeline', 'Golden timeline', 'sparkle', 'Everything golden on one time axis from now: the odds of the next golden cookie, each effect running with its time left and the chance a golden cookie comes before it ends. Pick what to show in its settings.');
     D('goldenNext', 'Next golden cookie', 'sparkle', 'When the next golden cookie comes: on average, the median, the chance within a minute, its window — and this cycle’s odds as a chart, a line sweeping across it as time passes (the Stats page’s).');
     D('effectTimers', 'Effect timers', 'clock', 'A bar per effect running (Frenzy, Click frenzy, building specials…): its time left, and the chance a golden cookie comes before it ends.');
   }

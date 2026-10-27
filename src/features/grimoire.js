@@ -4,8 +4,7 @@
 //   conditions  spellAffordable {spell}        there's enough magic for that spell right now
 //               magicPct {op, value}           magic as a % of the maximum
 //   macros      one built-in "Cast …" macro per spell (buttons, hotkeys, shortcut widgets), and the
-//               built-in "Force the Hand of Fate on combos" (algorithmic: COMBO_SOURCE) — with the
-//               forecast (features/fthof.js): only on a good cast, and skipping ahead to one
+//               built-in "Force the Hand of Fate on combos" (algorithmic: COMBO_SOURCE)
 //   events      'spell' — every cast (yours, a macro's, or the Grimoire's own buttons), and whether
 //               it backfired
 //
@@ -40,29 +39,12 @@ CA.Grimoire = (() => {
 # The combos: Frenzy + Dragonflight, Frenzy + Click frenzy, Frenzy + a building special,
 # a building special + Dragonflight, a building special + Click frenzy.
 # Pair it with the Golden cookies macro, so the cookie it brings gets popped.
-#
-# forecast (on its card): "off" casts on every combo, whatever the cast gives; "good" only when
-# the forecast (fthof.*) says the next cast gives a click frenzy or a building special — or a
-# frenzy, for a combo without one. In "good" mode, while the next cast would give anything else,
-# Haggler's Charm (the cheapest spell; every cast moves the forecast on) skips it — only with magic
-# to spare, never dipping below what Force the Hand of Fate costs — so a good cast is always
-# coming: the forecast only moves when something is cast, and waiting for a bad one to go away
-# would wait forever. skipAhead: 0, skip however far the next good cast is (the simulator's best:
-# sim/experiments/fthof-forecast.mjs); a number caps it to a good cast within that many casts —
-# a cap can stall when the next good one is further.
 forever:
   if spellAffordable("hand of fate"):
     if buff(Frenzy) and (buff(Dragonflight) or buff("Click frenzy") or buildingSpecial()):
-      if forecast == "off" or fthof.nextIs("click frenzy") or fthof.nextIs("building special"):
-        spell.cast("hand of fate")
+      spell.cast("hand of fate")
     elif buildingSpecial() and (buff(Dragonflight) or buff("Click frenzy")):
-      if forecast == "off" or fthof.nextIs("click frenzy") or fthof.nextIs("building special") or fthof.nextIs("frenzy"):
-        spell.cast("hand of fate")
-  # skip ahead to a good cast, with spare magic (no cap: even past the forecast's reach — it extends as it moves)
-  if forecast != "off" and not fthof.nextIs("click frenzy") and not fthof.nextIs("building special"):
-    if skipAhead <= 0 or (fthof.castsUntil("click frenzy") >= 1 and fthof.castsUntil("click frenzy") <= skipAhead) or (fthof.castsUntil("building special") >= 1 and fthof.castsUntil("building special") <= skipAhead):
-      if magic() - spell.cost("haggler's charm") >= spell.cost("hand of fate"):
-        spell.cast("haggler's charm")
+      spell.cast("hand of fate")
 `;
 
   /**
@@ -267,27 +249,13 @@ forever:
     CA.Macros.addBuiltin({
       id: AUTO_ID,
       name: 'Force the Hand of Fate on combos',
-      desc: 'While on: casts Force the Hand of Fate as soon as two effects line up and there’s enough magic — Frenzy with Dragonflight, Click frenzy or a building special, or a building special with Dragonflight or Click frenzy — so its golden cookie can stack a third. With Forecast on, only when the next cast gives a click frenzy or a building special (or a frenzy, for a combo without one) — skipping the casts in between with Haggler’s Charm, with spare magic only. Pair it with the Golden cookies macro to pop it. Its code is yours to change.',
+      desc: 'While on: casts Force the Hand of Fate as soon as two effects line up and there’s enough magic — Frenzy with Dragonflight, Click frenzy or a building special, or a building special with Dragonflight or Click frenzy — so its golden cookie can stack a third. Pair it with the Golden cookies macro to pop it. Its code is yours to change.',
       icon: { sprite: [22, 11] },
       mode: 'flow',
       every: 250,
       defaultSource: COMBO_SOURCE,
       // on its card, when combos can't happen with today's upgrades (and which would help)
       hint: comboHint,
-      // its choices on its card: variables in its code
-      inputs: [
-        {
-          key: 'forecast',
-          label: 'Forecast',
-          type: 'select',
-          default: 'off',
-          options: [
-            { v: 'off', label: 'Off — cast on every combo' },
-            { v: 'good', label: 'Only when the next cast is good' },
-          ],
-        },
-        { key: 'skipAhead', label: 'Skip ahead at most (casts; 0: no limit — a limit can stall it)', type: 'number', default: 0, min: 0 },
-      ],
       defaultKey: '',
       section: 'grimoire',
     });

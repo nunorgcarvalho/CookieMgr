@@ -1,4 +1,4 @@
-// v3.12.6: the next golden cookie as this cycle's cumulative chance — the Stats card's chart is the
+// v3.14.0: the next golden cookie as this cycle's cumulative chance — the Stats card's chart is the
 // time since the last one left (0 → the latest it can come) against the chance one has come by then,
 // a dashed line at 50%, a now line sweeping across it; the numbers are the expected wait, the odds so
 // far (0% → 100%) and the wrath chance; the percentiles and notes are gone; "Golden cookie frequency
@@ -73,7 +73,7 @@ CA.UI.Menu.render();
 const fr = card().querySelector('.ca-sp-lane.up .left');
 assert(fr && Math.abs(Number(fr.getAttribute('x')) - X(433)) < 0.05 && Math.abs(Number(fr.getAttribute('x')) + Number(fr.getAttribute('width')) - X(510)) < 0.05, 'the Frenzy bar: from when it started (17 s ago) to 60 s from now');
 const frLane = card().querySelector('.ca-sp-lane.up');
-assert(/Frenzy · ×7 CpS · 1m 00s/.test(frLane.textContent) && !/before it ends/.test(frLane.textContent), `its label: the multiplier and the time left, no golden cookie chance (${frLane.textContent})`);
+assert(/Frenzy · ×7 income · 1m 00s/.test(frLane.textContent) && !/before it ends/.test(frLane.textContent), `its label: the multiplier and the time left, no golden cookie chance (${frLane.textContent})`);
 
 // ---- a click effect: what it multiplies your income by, at your click rate
 const CPS = 100;

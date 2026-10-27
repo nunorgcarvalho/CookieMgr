@@ -31,7 +31,7 @@ assert(Math.abs(wt.pdf.reduce((a, b) => a + b, 0) - wt.cdf[wt.cdf.length - 1]) <
 assert(wt.hazard > 0 && wt.hazard < 1 && Math.abs(wt.within(1) - wt.hazard) < 1e-9, 'the chance in this second');
 CA.UI.Menu.openPage('stats');
 const card = () => doc.querySelector('[data-page="stats"] [data-st-spawn]');
-// (v3.12.6 made the card’s chart this cycle’s cumulative chance with a now line — tests/e2e/v3.12.6.test.mjs)
+// (v3.14.0 made the card’s chart this cycle’s cumulative chance with a now line — tests/e2e/v3.14.0.test.mjs)
 assert(card() && card().querySelector('[data-sp-chart="golden"] .ca-sp-cdf') && card().querySelector('.ca-sp-now'), 'the chart: cumulative chance, the now line');
 assert(/Expected wait/.test(card().textContent) && /Wrath chance/.test(card().textContent), 'the numbers: expected wait, wrath chance');
 // hover
@@ -77,9 +77,9 @@ const frPc = `${(fr.golden * 100).toFixed(fr.golden < 0.1 ? 1 : 0)}%`;
 const frLane = lanes.find((l) => /Frenzy/.test(l.textContent));
 const frW = Number(frLane.querySelector('.left').getAttribute('width'));
 const frX = Number(frLane.querySelector('.left').getAttribute('x'));
-// (v3.12.6: from when it started — 17 s ago — and the bar gives its multiplier, not the chance)
+// (v3.14.0: from when it started — 17 s ago — and the bar gives its multiplier, not the chance)
 assert(Math.abs(frX - ax(313)) < 0.05 && Math.abs(frX + frW - ax(390)) < 0.05, `the Frenzy bar runs from when it started (313 s in) to 60 s from now on the chart's own axis (x ${frX.toFixed(1)}–${(frX + frW).toFixed(1)} vs ${ax(313).toFixed(1)}–${ax(390).toFixed(1)})`);
-assert(/×7 CpS/.test(frLane.textContent) && !/golden cookie before it ends/.test(frLane.textContent), 'the bar says its multiplier');
+assert(/×7 income/.test(frLane.textContent) && !/golden cookie before it ends/.test(frLane.textContent), 'the bar says its multiplier');
 assert(/→/.test(lanes.find((l) => /Clot/.test(l.textContent)).textContent), 'a bar past the chart’s end: an arrow');
 assert(Number(svgG.getAttribute('viewBox').split(' ')[3]) === 150 + 3 * 14, 'the chart grows a lane per bar');
 CA.UI.Widgets.render();

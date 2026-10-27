@@ -2,16 +2,37 @@
 
 ## Unreleased
 
-## 3.12.6 — 2026-10-27
+## 3.14.0 — 2026-10-27
 
 - **The next golden cookie, as this cycle's odds.** The Stats page's chart is now the time since the last golden
   cookie left, from 0 to the latest the next can come, against the chance one has come by then (the game's own
   odds, with your upgrades): a dashed line at 50%, and a line sweeping across it as time passes, labelled with
   how far along the odds it is. The numbers above it: the expected wait (from now), **Odds so far** (0% → 100%)
-  and the wrath chance. Effects running are bars from the now line, with the chance a golden cookie comes before
-  each ends. The **Next golden cookie** widget draws the same chart; the Golden timeline keeps its wait-from-now.
+  and the wrath chance. The **Next golden cookie** widget draws the same chart; the Golden timeline keeps its
+  wait-from-now.
+- **Golden cookie effects under it, on the same axis**: a bar per effect running, from when it started to when it
+  ends (stacking as new ones come), labelled with **what it multiplies your income by** — a click effect counted at
+  your click rate (yours or an autoclicker's, the last ten seconds): Click frenzy at 10 clicks/s might be ×130, at
+  none ×1. No more "golden cookie before it ends" on them. The word `buff.effectiveMult(effect)` gives the same.
 - The card is simpler: no more density bars, bands, percentiles, within-N chips, legend or cycle notes.
   "Making them come sooner" is now **Golden cookie frequency effects** (click one for the wait without it, as before).
+
+## 3.13.0 — 2026-10-27
+
+- **Removed: the Force the Hand of Fate forecast.** CookieMgr no longer reads your save's seed to say what a spell cast
+  will give: knowing the dice before they roll isn't the game. It works with odds, expected values and what has
+  happened. Gone: the next casts under Force the Hand of Fate's and Gambler's Fever Dream's tooltips, the
+  *Force the Hand of Fate, the next casts* part of the Golden timeline widget (a widget saved with it shows the rest),
+  the words `fthof.next`, `fthof.nextIs`, `fthof.after` and `fthof.castsUntil`, and the combo macro's **Forecast** and
+  **Skip ahead** choices — **Force the Hand of Fate on combos** casts on every combo again. A copy of a macro you
+  edited to use those words will show a compile error on its card. The simulator's `fthof-forecast` experiment is gone too.
+- **Pet the dragon learns the drop order by petting.** Which drop a pet can give depends on the quarter of the hour,
+  in an order the game shuffles from your save's seed; CookieMgr used to work that order out from the seed. Now it
+  pets in any quarter it hasn't tried (or whose drop you're still missing) and remembers what dropped there —
+  200 pets with nothing means that quarter's drop is one you have. Learned anew each run. `dragon.dropNow()` gives
+  `"?"` for a quarter not tried yet.
+- Kept, as they're odds and not predictions: `fthof.backfireChance()`, and a new `spell.failChance(spell)` for any spell.
+
 ## 3.12.5 — 2026-10-16
 
 - **Force the Hand of Fate on combos says when combos can’t happen.** Every combo needs a second golden cookie
