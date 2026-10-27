@@ -5,8 +5,8 @@
 //                       odds over time, the soonest-to-latest window, the mean), each effect running with
 //                       its time left and the chance a golden cookie comes before it ends
 //   Next golden cookie  the countdown and the odds: expected, median, the chance within a minute, the
-//                       frequency (× vs nothing helping) — and the chart: this cycle's cumulative
-//                       chance, a line sweeping across it at now
+//                       multiplier (× vs nothing helping), the frequency (one every …, on average) —
+//                       and the chart: this cycle's cumulative chance, a line sweeping across it at now
 //
 // (Effect timers, a bar per effect running, is its own widget: ui/effectTimers.js.)
 // Each shows what you tick in its settings (numbers — and which of them — chart, effect bars), resizes freely
@@ -36,13 +36,15 @@ CA.UI.TimelineWidget = (() => {
   };
   const widthOf = (inst) => Math.max(160, (inst.w || TYPES[inst.type].width) - 18);
 
-  // the numbers, each switched on or off in its settings (all, by default)
+  // the numbers, each switched on or off in its settings (all, by default) — 'frequency' is the multiplier
+  // (its key from before v3.30.0, when it was called Frequency), 'every' the time between them
   const NUMS = [
     { v: 'next', label: 'Next in (the expected wait)' },
     { v: 'median', label: 'Median' },
     { v: 'minute', label: 'Chance within a minute' },
     { v: 'window', label: 'Window (soonest – latest)' },
-    { v: 'frequency', label: 'Frequency (× vs nothing helping)' },
+    { v: 'frequency', label: 'Multiplier (× vs nothing helping)' },
+    { v: 'every', label: 'Frequency (one every …, on average)' },
   ];
   const numsOf = (inst) => (Array.isArray(inst.nums) ? inst.nums : NUMS.map((x) => x.v));
   function numbersHtml(d, inst) {
@@ -55,7 +57,8 @@ CA.UI.TimelineWidget = (() => {
       median: `<span data-tip="Even odds by then"><em>median</em><b>${when(w.median)}</b></span>`,
       minute: `<span data-tip="The chance one comes within a minute (this second: ${esc(pc(w.hazard))})"><em>≤ 1 min</em><b>${pc(w.within(60))}</b></span>`,
       window: `<span data-tip="The soonest it can come, and the latest"><em>window</em><b>${when(w.soonest)}–${when(w.latest)}</b></span>`,
-      frequency: `<span data-tip="${esc(`How many times more often golden cookies come than with nothing helping (no upgrades, garden, spirits, aura…)${d.factors.length ? `: ${d.factors.map((x) => x.name).join(', ')}` : ''} — counted from the next one`)}"><em>frequency</em><b>×${Math.round(d.frequency * 100) / 100}</b></span>`,
+      frequency: `<span data-tip="${esc(`How many times more often golden cookies come than with nothing helping (no upgrades, garden, spirits, aura…)${d.factors.length ? `: ${d.factors.map((x) => x.name).join(', ')}` : ''} — counted from the next one`)}"><em>multiplier</em><b>×${Math.round(d.frequency * 100) / 100}</b></span>`,
+      every: `<span data-tip="One golden cookie every ${esc(when(d.next.mean))} on average with what’s helping now (from one leaving to the next coming) — it doesn’t count down"><em>frequency</em><b>${when(d.next.mean)}</b></span>`,
     };
     const h = NUMS.filter((x) => on.has(x.v))
       .map((x) => cells[x.v])
@@ -103,7 +106,7 @@ CA.UI.TimelineWidget = (() => {
         ],
       });
     D('goldenTimeline', 'Golden timeline', 'sparkle', 'Everything golden on one time axis from now: the odds of the next golden cookie, each effect running with its time left and the chance a golden cookie comes before it ends. Pick what to show in its settings.', [22, 6], 'Next cookie and every effect, on one axis');
-    D('goldenNext', 'Next golden cookie', 'sparkle', 'When the next golden cookie comes: on average, the median, the chance within a minute, its window — and this cycle’s odds as a chart, a line sweeping across it as time passes (the Stats page’s).', [8, 14], 'Its odds, in numbers and a chart');
+    D('goldenNext', 'Next golden cookie', 'sparkle', 'When the next golden cookie comes: on average, the median, the chance within a minute, its window, how often they come — and this cycle’s odds as a chart, a line sweeping across it as time passes (the Stats page’s).', [8, 14], 'Its odds, in numbers and a chart');
   }
 
   return { init, html, PARTS };

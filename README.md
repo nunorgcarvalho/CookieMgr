@@ -397,7 +397,7 @@ one off, or write your own.
 
 **Which lines that block shows, and in what order, is yours to choose** — on the **Tooltips** page (see
 [Tooltips](#tooltips)): add a line (a built-in statistic, one of yours, or **any value word** that takes the building
-or upgrade, or nothing: `building.toNextAchievement`, `clickRate`, `golden.expected`…), drag it into place, rename a
+or upgrade, or nothing: `building.toNextAchievement`, `clickRate`, `golden.expected`, `golden.interval`…), drag it into place, rename a
 word's line and choose how its value reads, remove it; **Reset** goes back to Cookie Monster's layout. A line with
 nothing to say (no wins, too little recorded) is left out; a word that doesn't fit the tooltip (one taking an upgrade,
 in a building's) too. The Payback page keeps the block's two switches.
@@ -491,8 +491,9 @@ checked against Cookie Monster in the real game:
   half the building's price — Cookie Monster asks for twice it; this follows the game.)
 - **Next golden cookie** — when it comes, worked out exactly from the game's odds (each frame past its minimum time it
   appears with chance ((time − min) ÷ (max − min))⁵; checked against the game itself): the expected wait from now, how
-  far along this cycle's odds it is (0% → 100% as time passes), the **frequency** (how many times more often they
-  come than with nothing helping — every factor counted), the wrath chance; and a chart of this cycle — the
+  far along this cycle's odds it is (0% → 100% as time passes), the **multiplier** (how many times more often they
+  come than with nothing helping — every factor counted), the **frequency** (one every so long on average with what's
+  helping now — it doesn't count down), the wrath chance; and a chart of this cycle — the
   time since the last one left, from 0 to the latest it can come, against the chance one has come by then — with a
   line sweeping across it at now (the time since the last one on it), a dashed one at the expected moment (how
   long until it) and a dashed one across where that meets the curve (hover for any moment). Under the chart, on the same
@@ -767,7 +768,7 @@ always grab them again). Drag them anywhere; hover for × and ⚙ (its settings)
   chance a golden cookie comes before it ends, and what Force the Hand of Fate gives over your next casts (green: a
   good one, red: a backfire; hover for each). Its settings pick the parts and how many casts ahead.
 - **Next golden cookie** — the countdown in numbers (on average, the median, the chance within a minute, its window,
-  the frequency — each switched on or off in its settings) over the Stats page's chart of this cycle's odds, a line
+  the multiplier, the frequency — each switched on or off in its settings) over the Stats page's chart of this cycle's odds, a line
   sweeping across it — the Golden timeline with fewer parts;
   tick more in its settings. Click the numbers for the Stats page.
 - **Effect timers** — a slim bar per effect running (Frenzy, Click frenzy, building specials, Dragon Harvest, Clot…),
