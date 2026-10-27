@@ -3785,54 +3785,69 @@ body.ca-has-storebar #products {
   margin-left: auto;
 }
 
-/* widget gallery */
-#CookieMgrMenu .ca-wgallery {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 8px;
-  padding: 8px;
+/* widget picker: shelves of tiles (v3.20) */
+#CookieMgrMenu .ca-wpick { display: flex; flex-wrap: wrap; gap: 4px 18px; padding: 2px 12px 8px; }
+#CookieMgrMenu .ca-wshelf { width: 100%; min-width: 0; padding: 4px 0 6px; }
+#CookieMgrMenu .ca-wshelf-head {
+  display: flex; align-items: center; gap: 8px; margin: 6px 0 2px; padding-left: 2px;
+  font-family: 'Merriweather', Georgia, serif; font-variant: small-caps; font-size: 14px; letter-spacing: 0.02em; color: #e9d8ad;
+  text-shadow: 0 1px 2px #000;
 }
-#CookieMgrMenu .ca-wcard {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  padding: 12px 10px 10px;
-  text-align: center;
-  border-radius: 8px;
-  background: radial-gradient(ellipse at 50% 0%, rgba(255, 210, 110, 0.1), rgba(0, 0, 0, 0.3) 70%);
-  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.1);
+#CookieMgrMenu .ca-wshelf-head::after { content: ''; flex: 1; height: 1px; margin-left: 4px; background: linear-gradient(to right, rgba(255, 220, 150, 0.35), rgba(255, 220, 150, 0)); }
+#CookieMgrMenu .ca-wshelf-head .ca-wshelf-ico { flex: none; width: 48px; height: 48px; background: url(img/icons.png) var(--bgp); transform: scale(0.5); margin: -12px -14px -12px -12px; filter: drop-shadow(0 1px 1px #000); }
+#CookieMgrMenu .ca-wshelf-tiles { display: flex; flex-wrap: wrap; gap: 6px 4px; }
+
+/* a tile: the game's own icon in a frame (square = a framed panel, round = a round dial), name, one line */
+#CookieMgrMenu .ca-wtile {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  width: 112px; padding: 10px 4px 8px; border-radius: 8px; cursor: pointer; text-align: center;
+  background: transparent; box-shadow: inset 0 0 0 1px transparent;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.15s;
 }
-#CookieMgrMenu .ca-wcard.placed {
-  box-shadow: inset 0 0 0 1px rgba(255, 211, 106, 0.4);
+#CookieMgrMenu .ca-wtile:hover { background: radial-gradient(ellipse at 50% 20%, rgba(255, 210, 110, 0.14), rgba(255, 210, 110, 0.02) 70%); box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.28); transform: translateY(-1px); }
+#CookieMgrMenu .ca-wtile.placed { background: radial-gradient(ellipse at 50% 20%, rgba(255, 211, 106, 0.1), rgba(0, 0, 0, 0.2) 75%); box-shadow: inset 0 0 0 1px rgba(255, 211, 106, 0.35); }
+
+/* the crate: 48px game icon on a dark backing, framed like a store upgrade */
+#CookieMgrMenu .ca-wcrate { position: relative; width: 48px; height: 48px; margin: 6px; background: rgba(0, 0, 0, 0.45); }
+#CookieMgrMenu .ca-wcrate::before { content: ''; position: absolute; left: -6px; top: -6px; width: 60px; height: 60px; background: url(img/upgradeFrame.png) 0 0; z-index: 2; pointer-events: none; }
+#CookieMgrMenu .ca-wtile:hover .ca-wcrate::before, #CookieMgrMenu .ca-wtile.placed .ca-wcrate::before { background-position: 60px 0; }
+#CookieMgrMenu .ca-wcrate > i { position: absolute; inset: 0; background: url(img/icons.png) var(--bgp); }
+#CookieMgrMenu .ca-wcrate > i.ca-wcrate-plant { background-image: url(img/gardenPlants.png); }
+#CookieMgrMenu .ca-wcrate > i.ca-wcrate-svg { display: flex; align-items: center; justify-content: center; background: none; color: #ffd98a; filter: drop-shadow(0 2px 2px #000); }
+/* round dial: a disc with a ring, like the widget itself */
+#CookieMgrMenu .ca-wcrate.round { border-radius: 50%; background: radial-gradient(circle at 50% 50%, rgba(40, 24, 10, 0.95) 58%, rgba(0, 0, 0, 0.7) 100%); box-shadow: 0 3px 8px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(0, 0, 0, 0.7); }
+#CookieMgrMenu .ca-wcrate.round::before { background: none; border-radius: 50%; box-shadow: inset 0 0 0 3px var(--ring, #ffd36a), 0 0 0 1px rgba(0,0,0,.6); opacity: 0.85; }
+#CookieMgrMenu .ca-wtile:hover .ca-wcrate.round::before, #CookieMgrMenu .ca-wtile.placed .ca-wcrate.round::before { opacity: 1; box-shadow: inset 0 0 0 3px var(--ring, #ffd36a), 0 0 10px var(--ring, #ffd36a), 0 0 0 1px rgba(0,0,0,.6); }
+#CookieMgrMenu .ca-wcrate.round > i { transform: scale(0.8); }
+/* the corner badge: ✓ / ×2 when placed (a count of starred macros on Macro buttons) */
+#CookieMgrMenu .ca-wtag {
+  position: absolute; right: -9px; top: -9px; z-index: 3; min-width: 18px; height: 18px; padding: 0 4px; box-sizing: border-box;
+  display: flex; align-items: center; justify-content: center; border-radius: 9px;
+  font: bold 11px/1 Tahoma, Arial, sans-serif; color: #2a1a08; background: linear-gradient(#b9f07a, #6fbf2e); box-shadow: 0 1px 3px #000, inset 0 0 0 1px rgba(255,255,255,.4);
 }
-#CookieMgrMenu .ca-wcard-ico {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  color: #ffd98a;
-  background: radial-gradient(circle at 35% 30%, rgba(110, 72, 36, 0.95), rgba(28, 18, 9, 0.95));
-  box-shadow:
-    0 3px 8px rgba(0, 0, 0, 0.6),
-    inset 0 0 0 1px rgba(255, 220, 150, 0.3);
+/* the action pill: on the crate's bottom edge, only while hovered */
+#CookieMgrMenu .ca-wadd {
+  position: absolute; left: 50%; bottom: -8px; z-index: 3; transform: translate(-50%, 3px); padding: 3px 9px; border-radius: 9px; white-space: nowrap;
+  font: bold 10px Tahoma, Arial, sans-serif; color: #2a1a08; background: linear-gradient(#ffe9a8, #e2b24e); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+  opacity: 0; pointer-events: none; transition: opacity 0.15s, transform 0.15s;
 }
-#CookieMgrMenu .ca-wcard-name {
-  font-size: 12.5px;
-  font-weight: bold;
-  color: #f3e5c3;
-}
-#CookieMgrMenu .ca-wcard-desc {
-  flex: 1;
-  font-size: 10.5px;
-  line-height: 1.35;
-  color: #a39477;
-}
-#CookieMgrMenu .ca-wcard-foot {
-  margin-top: 4px;
-}
+#CookieMgrMenu .ca-wtile:hover .ca-wadd { opacity: 1; transform: translate(-50%, 0); }
+#CookieMgrMenu .ca-wadd.remove { background: linear-gradient(#ffb0a0, #d9583f); color: #3a0d05; }
+#CookieMgrMenu .ca-wtile-name { font-size: 12px; font-weight: bold; color: #f3e5c3; line-height: 1.2; }
+#CookieMgrMenu .ca-wtile-sub { font-size: 10px; line-height: 1.3; color: #a39477; }
+#CookieMgrMenu .ca-wtile:hover .ca-wtile-sub { color: #c9b891; }
+#CookieMgrMenu .ca-wpick-foot { display: flex; align-items: center; gap: 14px; padding: 6px 14px 8px; font-size: 10.5px; color: #8e8064; border-top: 1px solid rgba(255, 255, 255, 0.06); }
+#CookieMgrMenu .ca-wpick-foot .ca-wkey { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+#CookieMgrMenu .ca-wpick-foot .ca-wkey i { display: inline-block; width: 10px; height: 10px; box-shadow: inset 0 0 0 1.5px #c9b891; }
+#CookieMgrMenu .ca-wpick-foot .ca-wkey i.round { border-radius: 50%; }
+#CookieMgrMenu .ca-wpick-foot .ca-wkey.hint { flex: 1; white-space: normal; }
+
+/* the hover popup: full description */
+#CookieMgrMenu .ca-wtile .ca-wpop { display: none; }
+#CookieMgrLayer .ca-wpop.ca-wtip { width: 240px; }
+#CookieMgrLayer .ca-wtip-head { display: flex; align-items: center; gap: 7px; margin-bottom: 4px; font-size: 12px; font-weight: bold; color: #fff; }
+#CookieMgrLayer .ca-wtip-head .ca-wshape { margin-left: auto; font-weight: normal; font-size: 9.5px; color: #c9b891; text-transform: uppercase; letter-spacing: 0.05em; }
+#CookieMgrLayer .ca-wtip-act { margin-top: 5px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,.1); font-size: 10px; color: #ffd36a; }
 
 /* styled hover tips (instead of the browser's own) */
 #CookieMgrTip {
@@ -6423,7 +6438,7 @@ body.ca-has-storebar #products {
   color: #ffd56a;
 }
 
-/* ---------- v3.21.0: ☆ widget stars, the Chart widget, Golden cookie frequency ---------- */
+/* ---------- v3.24.0: ☆ widget stars, the Chart widget, Golden cookie frequency ---------- */
 
 /* a page's ☆ (CA.UI.C.widgetStar): the macros' favourite star, a touch smaller in card heads */
 #CookieMgrMenu .ca-wstar {
