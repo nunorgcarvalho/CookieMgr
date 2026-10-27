@@ -135,7 +135,30 @@ CA.UI.GardenPage = (() => {
       tile('Soil', v.soil ? esc(v.soil.name) : '—', esc(CA.GardenLayers.get('soil', CA.GardenLayers.picked('soil')).name)) +
       tile('Mature', String(mature), `of ${v.tiles.filter((t) => t.plant).length} plants`) +
       tile('Off-layout', String(off), off ? 'tiles not as planned' : 'all as planned') +
-      grows
+      grows +
+      costTile(v)
+    );
+  }
+
+  /**
+   * What planting the layout costs at today's seed prices (they scale with CpS): every planned tile, green if
+   * the bank covers it, red if not; under it what the planned tiles still missing their seed would cost.
+   */
+  function costTile(v) {
+    const M = v.M;
+    if (!v.profile || typeof M.getCost !== 'function') return '';
+    const { beautify, tile } = CA.UI.Plot.fmt;
+    const planned = v.tiles.filter((t) => t.open && t.want);
+    if (!planned.length) return tile('Garden cost', '—', 'no seeds in the layout');
+    const cost = (ts) => ts.reduce((s, t) => s + M.getCost(t.want), 0);
+    const full = cost(planned);
+    const left = cost(planned.filter((t) => !t.match));
+    const ok = Game.cookies >= full;
+    return tile(
+      'Garden cost',
+      `<span class="ca-gcost ${ok ? 'pos' : 'neg'}">${beautify(full)}</span>`,
+      left ? `${beautify(left)} left to plant` : 'all planted',
+      `Cookies to plant every tile of the layout at today’s seed prices (they go up with your CpS) — green if your bank covers it, red if not. Under it: what the tiles still missing their seed would cost.`
     );
   }
 
