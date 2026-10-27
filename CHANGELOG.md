@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 3.30.0 — 2026-10-27
+
+- **Golden cookie frequency, in time.** The Stats page's golden cookie card and the Next golden cookie widget's
+  numbers have a new **Frequency**: one golden cookie every so long on average with what's helping now (e.g.
+  *4m 12s*; from one leaving to the next coming). It doesn't count down — it changes only when what's helping does.
+  Reindeer get it too.
+- The old Frequency (× vs nothing helping) is now called **Multiplier**. A widget that saved its numbers keeps its
+  pick (the multiplier); tick Frequency in its settings to add the new one.
+- For other code: the value word **`golden.interval`** (seconds between golden cookies on average);
+  `golden.frequency` is unchanged (the multiplier).
+
 ## 3.29.0 — 2026-10-27
 
 - **Warnings are statistics.** The bank warnings — a purchase that would take your bank below what a Lucky! (red),

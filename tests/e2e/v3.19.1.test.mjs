@@ -68,33 +68,33 @@ const wg = [...doc.querySelectorAll('#CookieMgrWidgets [data-widget]')].find((x)
 assert(wg && wg.querySelector('.ca-sp-expect line') && /expected/.test(wg.querySelector('.ca-sp-expect text').textContent) && wg.querySelector('.ca-sp-since'), 'the Next golden cookie widget too');
 
 // the frequency: × vs nothing helping, every factor counted
-assert(d.frequency === 1 && /Frequency×1/.test(card().textContent.replace(/\s+/g, '')), 'nothing helping: frequency ×1');
+assert(d.frequency === 1 && /Multiplier×1/.test(card().textContent.replace(/\s+/g, '')), 'nothing helping: frequency ×1');
 Game.Has = (n) => n === 'Lucky day' || n === 'Serendipity' || n === 'Golden goose egg';
 Game.eff = (k) => (k === 'goldenCookieFreq' ? 1.03 : 1); // a garden plant's +3%
 const f = CA.Timers.distribution('golden').frequency;
 const want = 1 / (0.5 * 0.5 * 0.95 * (1 / 1.03));
 assert(Math.abs(f - want) < 1e-9 && Math.abs(CA.Script.VALUES.find((v) => v.id === 'golden.frequency').get() - want) < 1e-9, `Lucky day, Serendipity, Golden goose egg, a garden +3%: ×${want.toFixed(2)} (the word golden.frequency too)`);
 CA.UI.Menu.render();
-assert(card().textContent.replace(/\s+/g, '').includes(`Frequency×${Math.round(want * 100) / 100}`), 'the Stats card’s Frequency tile');
+assert(card().textContent.replace(/\s+/g, '').includes(`Multiplier×${Math.round(want * 100) / 100}`), 'the Stats card’s Multiplier tile (Frequency until v3.30.0)');
 CA.UI.Widgets.tick();
 const wg2 = [...doc.querySelectorAll('#CookieMgrWidgets [data-widget]')].find((x) => /Next golden cookie/.test(x.textContent));
-assert(/frequency/i.test(wg2.querySelector('.ca-tl-nums').textContent) && wg2.querySelector('.ca-tl-nums').textContent.includes(`×${Math.round(want * 100) / 100}`), 'and the widget’s numbers');
+assert(/multiplier/i.test(wg2.querySelector('.ca-tl-nums').textContent) && wg2.querySelector('.ca-tl-nums').textContent.includes(`×${Math.round(want * 100) / 100}`), 'and the widget’s numbers');
 Game.Has = () => false;
 delete Game.eff;
 
 // the widget's numbers, picked in its settings
 const inst = CA.UI.Widgets.list().find((x) => x.type === 'goldenNext');
 const nums = () => [...wg2.ownerDocument.querySelectorAll('#CookieMgrWidgets [data-widget]')].find((x) => /Next golden cookie/.test(x.textContent)).querySelector('.ca-tl-nums');
-assert(nums().querySelectorAll('span').length === 5, 'all five numbers by default');
+assert(nums().querySelectorAll('span').length === 6, 'all six numbers by default (the Frequency since v3.30.0)');
 inst.nums = ['next', 'frequency'];
 CA.UI.Widgets.tick();
-assert(nums().querySelectorAll('span').length === 2 && /next in/.test(nums().textContent) && /frequency/.test(nums().textContent) && !/median/.test(nums().textContent), 'two picked: next in and frequency');
+assert(nums().querySelectorAll('span').length === 2 && /next in/.test(nums().textContent) && /multiplier/.test(nums().textContent) && !/median/.test(nums().textContent), 'two picked: next in and the multiplier (key frequency)');
 assert(CA.UI.Widgets.serialize().find((x) => x.type === 'goldenNext').nums.join() === 'next,frequency', 'saved with the widget');
 inst.nums = [];
 CA.UI.Widgets.tick();
 assert(!nums(), 'none picked: no numbers row');
 CA.UI.Widgets.openSettings(inst.id);
-assert(doc.querySelectorAll('[data-w-multi="nums"]').length === 5, 'its settings list the five numbers');
+assert(doc.querySelectorAll('[data-w-multi="nums"]').length === 6, 'its settings list the six numbers');
 delete inst.nums;
 CA.UI.Menu.openPage('stats');
 

@@ -434,7 +434,8 @@ CA.Timers = (() => {
       const x = spawnOf('golden');
       return x ? x.within(Number(s) || 0) : 0;
     }, ['seconds']);
-    V('golden.frequency', 'how many times more often golden cookies come than with nothing helping (no upgrades, garden, spirits, aura…): 2 with Lucky day', () => (distribution('golden', 2) || { frequency: NaN }).frequency);
+    V('golden.frequency', 'the frequency multiplier: how many times more often golden cookies come than with nothing helping (no upgrades, garden, spirits, aura…): 2 with Lucky day', () => (distribution('golden', 2) || { frequency: NaN }).frequency);
+    V('golden.interval', 'seconds between golden cookies on average with what’s helping now (from one leaving to the next coming; it doesn’t count down)', () => (distribution('golden', 2) || { next: { mean: NaN } }).next.mean);
     V('reindeer.expected', 'seconds the next reindeer takes on average (Christmas)', () => (spawnOf('reindeer') || { expected: NaN }).expected);
     V('golden.effectDuration', 'seconds a golden cookie’s effect lasts if it starts now, with your upgrades (frenzy, building special, click frenzy, dragonflight, clot…; NaN for others)', (n) => effectDuration(n), ['effect']);
     V('buff.timeLeft', 'seconds an effect has left (0: not running)', (n) => {
