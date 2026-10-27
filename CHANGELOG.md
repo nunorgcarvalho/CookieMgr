@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 3.16.0 — 2026-10-27
+
+- **Miscellaneous**, a new card on the Settings page, now holds **Plain Business Day** (it was under General):
+  Business day without its corporate theme — the normal building names, descriptions and icons, golden cookies,
+  background, news and tab title — while the season and its effects stay.
+- Plain Business Day goes further: switching it re-skins the golden cookies already on screen (they used to keep
+  their spam look until they faded), and the Stats menu leaves out its business lines (cookie dollars, TV show
+  seasons produced).
+
 ## 3.15.0 — 2026-10-27
 
 - **Effect timers, redrawn.** One slim bar per effect running, in the effect's own colour (Frenzy amber, Click frenzy
