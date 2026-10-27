@@ -332,11 +332,19 @@ CA.Payback = (() => {
     return Game.cookiesPs > 0 ? short / Game.cookiesPs : Infinity;
   }
 
-  /** An upgrade's measured worth: { bonus, mouse, gain } — gain counts its clicks at your click rate. */
-  function upgradeWorth(name, c = fresh()) {
+  /**
+   * An upgrade's measured worth: { bonus, mouse, gain } — gain counts its clicks at your click rate.
+   * opts.any: one not in the store yet too (locked: what it would add if you had it now).
+   */
+  function upgradeWorth(name, c = fresh(), opts = {}) {
     const u = upgradeNamed(name);
     if (!u || isSwitch(u)) return null;
     ensure(c, [], [u.name]);
+    if (opts.any && !(u.name in c.u) && !u.bought && u.pool !== 'prestige') {
+      const [base, r] = measureAll([buyUpgradeChange(u)]);
+      calls += 2;
+      c.u[u.name] = { bonus: r.cps - base.cps, mouse: r.mouse - base.mouse, won: r.won };
+    }
     const e = c.u[u.name];
     if (!e) return null;
     return { bonus: e.bonus, mouse: e.mouse, gain: e.bonus + Math.max(0, e.mouse) * clickRate(), won: e.won };

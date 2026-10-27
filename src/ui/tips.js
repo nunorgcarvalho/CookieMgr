@@ -7,7 +7,9 @@
 //                 provide(key, fn(el)) instead, worked out while it shows (live numbers)
 //   rich popups   an element marked data-pop keeps its popup as a hidden child (.ca-gpop /
 //                 .ca-wpop / .ca-orb-pop); on hover a copy of it is shown in the layer, refreshed
-//                 while the mouse stays (the content behind it updates live)
+//                 while the mouse stays (the content behind it updates live); data-pop-live="key"
+//                 builds it instead from providePop(key, fn(el) → html) — an upgrade's info card
+//                 (ui/upgradeTip.js) for anything marked data-pop-live="upgrade" data-upgrade="<name>"
 //   chart tips    plots put their hover box in the layer too (float())
 
 CA.UI = CA.UI || {};
@@ -22,9 +24,12 @@ CA.UI.Tips = (() => {
   let current = null; // element whose tip / popup is showing
   let timer = null;
   const providers = {};
+  const popProviders = {};
 
   /** Live tip text for elements marked data-tip-live="key": fn(el) → text. */
   const provide = (key, fn) => (providers[key] = fn);
+  /** Live popups for elements marked data-pop-live="key": fn(el) → html. */
+  const providePop = (key, fn) => (popProviders[key] = fn);
   function textOf(el) {
     const live = el.dataset.tipLive;
     if (live && providers[live]) {
@@ -85,15 +90,24 @@ CA.UI.Tips = (() => {
     return target.querySelector(POPS);
   }
 
+  function livePop(target) {
+    const fn = popProviders[target.dataset.popLive];
+    try {
+      return fn ? String(fn(target) || '') : '';
+    } catch (e) {
+      return '';
+    }
+  }
   function showPop(target) {
-    const src = popOf(target);
-    if (!src) return hide();
+    const html = target.dataset.popLive ? livePop(target) : popOf(target) ? popOf(target).outerHTML : '';
+    if (!html) return hide();
+    const src = target.dataset.popLive ? null : popOf(target);
     if (!box || !box.isConnected) box = float('ca-float');
-    box.innerHTML = src.outerHTML;
+    if (box.innerHTML !== html) box.innerHTML = html;
     // a widget's text size (its --wfs zoom) applied to its popups too, out here in the layer
     const w = target.closest('[data-widget]');
     const size = w && w.style.getPropertyValue('--wfs');
-    box.style.zoom = size && (src.classList.contains('ca-wt') || target.closest('.ca-wt')) ? size : '';
+    box.style.zoom = size && ((src && src.classList.contains('ca-wt')) || target.closest('.ca-wt')) ? size : '';
     box.style.display = 'block';
     place(box, target, false);
   }
@@ -108,7 +122,7 @@ CA.UI.Tips = (() => {
 
   function onOver(e) {
     const t = e.target && e.target.closest ? e.target : null;
-    const pop = t && t.closest('[data-pop]');
+    const pop = t && t.closest('[data-pop], [data-pop-live]');
     if (pop && pop.closest(ROOTS)) {
       if (pop === current) return;
       hide();
@@ -149,5 +163,5 @@ CA.UI.Tips = (() => {
     addEventListener('scroll', hide, true);
   }
 
-  return { init, hide, float, provide, layer: getLayer };
+  return { init, hide, float, provide, providePop, layer: getLayer };
 })();

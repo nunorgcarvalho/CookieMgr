@@ -392,7 +392,8 @@ In the **store** itself (Settings → Store, each can be turned off): each build
 colour for what a click buys now (×1, ×10, ×100, or to the next multiple with Round to multiples on), each upgrade
 has a coloured dot in its corner, and under the game's own building and upgrade tooltips a CookieMgr block adds the
 CpS it adds (and its share of your CpS), its payback period (and by actual income, once a minute of play is
-recorded), when you can afford it, a building's share of your production and how many more win its next achievement —
+recorded), when you can afford it (green now, red not yet), a building's share of your production, how many more win
+its next achievement (in the payback colour of buying that many) and the next upgrade more of it unlocks —
 and, with **Warnings** on, a coloured "!" on the item and a ⚠ line in its tooltip when a warning applies: by default,
 when buying it would take your bank below what a Lucky! (in a Frenzy too) or Conjure Baked Goods needs to pay its
 most. Warnings are statistics too (below): change a bank warning's `keep` (how many times that bank to keep), turn
@@ -514,7 +515,8 @@ checked against Cookie Monster in the real game:
 - **What if** — every Pantheon spirit in each slot and every dragon aura you can pick: the CpS it would bring (an
   aura counting the building it costs), measured on the game itself and put back.
 - **Still to collect** — the upgrades, cookies, heavenly upgrades and achievements you're missing, each season's
-  drops, the garden's rare drops — as icons (hover for names).
+  drops, the garden's rare drops — as icons (hover an upgrade for its info card: what it does, costs, would add, its
+  payback period and how the game unlocks it).
 
 ### In the game's own minigames
 
@@ -1006,6 +1008,7 @@ src/
     prestige.js      levels if you ascended now, the next one, the rate, the CpS they'd add
     timers.js        golden cookie / reindeer odds (exact), buffs, sugar lump, autosave, magic
     collection.js    what's left to collect: upgrades, achievements, season and plant drops
+    upgradeInfo.js   how the game unlocks an upgrade, the next one a building unlocks, what one would add
     whatIf.js        the CpS a Pantheon spirit or a dragon aura would bring, asked of the game
     alerts.js        alerts: flash / sound / notify actions, fortune & lump conditions, the built-in alerts, the tab
     autoBuy.js       buying macros (lowest payback period, research, cheap upgrades) and petting the dragon
@@ -1015,6 +1018,7 @@ src/
   ui/
     components.js    HTML snippets: switch, hotkey chip, icon, button
     dom.js           DOM helpers: morph (patch in place), replay (restart an animation), armed (two-click buttons)
+    upgradeTip.js    the upgrade info card shown on hover wherever an upgrade appears
     icons.js         the inline-SVG icon set used everywhere
     pages.js         page registry — the sidebar and the panel both read it; scope(): a page's mounted state
     chart.js         shared chart core: canvas sizing, axis padding, nice scales, scroll/live view

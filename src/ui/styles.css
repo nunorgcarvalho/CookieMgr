@@ -5255,6 +5255,7 @@ body.ca-has-storebar #products {
    30 best · purple further · gray never pays back */
 #CookieMgrMenu,
 #CookieMgrWidgets,
+#CookieMgrLayer,
 #products,
 #tooltip {
   --pp-blue: #6ec3ff;
@@ -5270,7 +5271,8 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-tl-val.ca-pp-blue,
 #CookieMgrMenu .ca-tl-preview .ca-pp-blue,
 #CookieMgrMenu .ca-st-live .ca-pp-blue,
-#CookieMgrWidgets .ca-w-stat .ca-pp-blue {
+#CookieMgrWidgets .ca-w-stat .ca-pp-blue,
+#CookieMgrLayer .ca-uptip .ca-pp-blue {
   color: var(--pp-blue) !important;
 }
 #products .price.ca-pp-green,
@@ -5278,7 +5280,8 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-tl-val.ca-pp-green,
 #CookieMgrMenu .ca-tl-preview .ca-pp-green,
 #CookieMgrMenu .ca-st-live .ca-pp-green,
-#CookieMgrWidgets .ca-w-stat .ca-pp-green {
+#CookieMgrWidgets .ca-w-stat .ca-pp-green,
+#CookieMgrLayer .ca-uptip .ca-pp-green {
   color: var(--pp-green) !important;
 }
 #products .price.ca-pp-yellow,
@@ -5286,7 +5289,8 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-tl-val.ca-pp-yellow,
 #CookieMgrMenu .ca-tl-preview .ca-pp-yellow,
 #CookieMgrMenu .ca-st-live .ca-pp-yellow,
-#CookieMgrWidgets .ca-w-stat .ca-pp-yellow {
+#CookieMgrWidgets .ca-w-stat .ca-pp-yellow,
+#CookieMgrLayer .ca-uptip .ca-pp-yellow {
   color: var(--pp-yellow) !important;
 }
 #products .price.ca-pp-orange,
@@ -5294,7 +5298,8 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-tl-val.ca-pp-orange,
 #CookieMgrMenu .ca-tl-preview .ca-pp-orange,
 #CookieMgrMenu .ca-st-live .ca-pp-orange,
-#CookieMgrWidgets .ca-w-stat .ca-pp-orange {
+#CookieMgrWidgets .ca-w-stat .ca-pp-orange,
+#CookieMgrLayer .ca-uptip .ca-pp-orange {
   color: var(--pp-orange) !important;
 }
 #products .price.ca-pp-red,
@@ -5302,7 +5307,8 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-tl-val.ca-pp-red,
 #CookieMgrMenu .ca-tl-preview .ca-pp-red,
 #CookieMgrMenu .ca-st-live .ca-pp-red,
-#CookieMgrWidgets .ca-w-stat .ca-pp-red {
+#CookieMgrWidgets .ca-w-stat .ca-pp-red,
+#CookieMgrLayer .ca-uptip .ca-pp-red {
   color: var(--pp-red) !important;
 }
 #products .price.ca-pp-purple,
@@ -5310,7 +5316,8 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-tl-val.ca-pp-purple,
 #CookieMgrMenu .ca-tl-preview .ca-pp-purple,
 #CookieMgrMenu .ca-st-live .ca-pp-purple,
-#CookieMgrWidgets .ca-w-stat .ca-pp-purple {
+#CookieMgrWidgets .ca-w-stat .ca-pp-purple,
+#CookieMgrLayer .ca-uptip .ca-pp-purple {
   color: var(--pp-purple) !important;
 }
 #products .price.ca-pp-gray,
@@ -5318,7 +5325,8 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-tl-val.ca-pp-gray,
 #CookieMgrMenu .ca-tl-preview .ca-pp-gray,
 #CookieMgrMenu .ca-st-live .ca-pp-gray,
-#CookieMgrWidgets .ca-w-stat .ca-pp-gray {
+#CookieMgrWidgets .ca-w-stat .ca-pp-gray,
+#CookieMgrLayer .ca-uptip .ca-pp-gray {
   color: var(--pp-gray) !important;
 }
 /* an upgrade's corner dot in the store */
@@ -7443,4 +7451,120 @@ body.ca-has-storebar #products {
   font-size: 10px;
   font-style: normal;
   color: #c9a26b;
+}
+
+/* an upgrade named in a line: its icon and name, its info card on hover (ui/upgradeTip.js) */
+.ca-upref {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  vertical-align: middle;
+  border-bottom: 1px dotted rgba(255, 230, 170, 0.45);
+  cursor: help;
+}
+.ca-upref-ico {
+  display: inline-block;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  zoom: 0.33;
+}
+/* the upgrade info card */
+#CookieMgrLayer .ca-uptip {
+  width: 290px;
+  padding: 8px 10px 7px;
+  font:
+    11px/1.4 Tahoma,
+    Arial,
+    sans-serif;
+  text-align: left;
+  color: #e8d7b0;
+  background: linear-gradient(to bottom, rgba(64, 40, 18, 0.98), rgba(24, 15, 7, 0.98));
+  border: 1px solid;
+  border-color: #ece2b6 #875526 #733726 #dfbc9a;
+  border-radius: 7px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.85);
+}
+#CookieMgrLayer .ca-uptip-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+#CookieMgrLayer .ca-uptip-ico {
+  display: inline-block;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  zoom: 0.75;
+}
+#CookieMgrLayer .ca-uptip-head b {
+  display: block;
+  font-size: 13px;
+  color: #fff3cf;
+}
+#CookieMgrLayer .ca-uptip-st {
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #a39477;
+}
+#CookieMgrLayer .ca-uptip-st.owned {
+  color: #9be89b;
+}
+#CookieMgrLayer .ca-uptip-st.store {
+  color: #ffd56a;
+}
+#CookieMgrLayer .ca-uptip-st.heavenly {
+  color: #8fd6ff;
+}
+#CookieMgrLayer .ca-uptip-desc {
+  padding: 4px 0 5px;
+  border-top: 1px solid rgba(255, 220, 150, 0.15);
+  color: #e8d7b0;
+}
+#CookieMgrLayer .ca-uptip-desc q {
+  display: block;
+  margin-top: 3px;
+  font-style: italic;
+  color: #a39477;
+}
+#CookieMgrLayer .ca-uptip-desc q::before,
+#CookieMgrLayer .ca-uptip-desc q::after {
+  content: '';
+}
+#CookieMgrLayer .ca-uptip-desc .line {
+  height: 1px;
+  margin: 3px 0;
+  background: rgba(255, 220, 150, 0.12);
+}
+#CookieMgrLayer .ca-uptip-rows {
+  padding-top: 3px;
+  border-top: 1px solid rgba(255, 220, 150, 0.15);
+}
+#CookieMgrLayer .ca-uptip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 1px 0;
+  color: #a39477;
+}
+#CookieMgrLayer .ca-uptip-row span {
+  flex: none;
+}
+#CookieMgrLayer .ca-uptip-row b {
+  color: #fff3cf;
+  text-align: right;
+}
+#CookieMgrLayer .ca-uptip-row small {
+  font-weight: normal;
+  color: #a39477;
+}
+#CookieMgrLayer .ca-uptip-met {
+  color: #9be89b;
+}
+/* in the game's own tooltip (gone when the mouse leaves the building): just the icon and name */
+#tooltip .ca-upref {
+  border-bottom: 0;
+  cursor: inherit;
 }

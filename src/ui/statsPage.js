@@ -150,7 +150,9 @@ CA.UI.StatsPage = (() => {
     return names
       .map((n) => {
         const it = ((kind === 'achievement' ? Game.Achievements : Game.Upgrades) || {})[n];
-        return it && it.icon ? `<span class="ca-col-ico" data-tip="${esc(it.dname || n)}">${sprite(it.icon)}</span>` : '';
+        if (!it || !it.icon) return '';
+        // an upgrade: its info card on hover (ui/upgradeTip.js); an achievement: its name
+        return `<span class="ca-col-ico" ${kind === 'achievement' ? `data-tip="${esc(it.dname || n)}"` : CA.UpgradeInfo.attrs(it.name)}>${sprite(it.icon)}</span>`;
       })
       .join('');
   }
