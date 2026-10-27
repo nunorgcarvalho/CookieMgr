@@ -24,7 +24,13 @@
 // Content refreshes twice a second by patching the existing DOM (morph()), never replacing it, so
 // whatever is under the mouse — and its popup — stays put.
 //
-//   CA.UI.Widgets.defineType({ id, name, icon, desc, bare, width, single, hidden, resize, bg, settings, html(inst) })
+//   CA.UI.Widgets.defineType({ id, name, icon, desc, bare, width, single, hidden, resize, bg, settings, html(inst),
+//                              group, sprite, short, ring })
+//     For the "Add a widget" picker on the Widgets page: group = the id of a shelf (see defineGroup; unknown or
+//     missing ones land in "More"); sprite = [col, row] of the game's img/icons.png, or { sheet, pos: [col, row] }
+//     for another 48px sheet (img/gardenPlants.png) — without one the `icon` is drawn instead; short = a one-line
+//     summary under the name; ring = the colour of a round (bare) widget's ring on its tile (default gold).
+//   CA.UI.Widgets.defineGroup({ id, name, sprite, order })   a shelf of the picker; shelves sort by order
 
 CA.UI = CA.UI || {};
 
@@ -48,6 +54,7 @@ CA.UI.Widgets = (() => {
 
   const types = [];
   const typeById = {};
+  const groups = [];
   let widgets = []; // { id, type, x, y, collapsed, macro?, scale?, w?, h?, count?, types?, stats?, font?, title?, bg?, sort?, barScale? }
   let layer = null;
   let press = null; // { w, el, sx, sy, dx, dy, moved }
@@ -59,6 +66,15 @@ CA.UI.Widgets = (() => {
     const d = { width: 220, single: false, bare: false, hidden: false, icon: 'widget', settings: [], ...t };
     types.push(d);
     typeById[d.id] = d;
+    return d;
+  }
+
+  /** A shelf of the "Add a widget" picker: { id, name, sprite: [col, row] of img/icons.png, order }. */
+  function defineGroup(g) {
+    const d = { order: 100, sprite: [10, 0], ...g };
+    const i = groups.findIndex((x) => x.id === d.id);
+    if (i >= 0) groups[i] = d;
+    else groups.push(d);
     return d;
   }
 
@@ -726,6 +742,91 @@ CA.UI.Widgets = (() => {
 
   // ---- the Widgets page ------------------------------------------------------------------
 
+  // ---- the picker: shelves of tiles ---------------------------------------------------------------
+
+  const spriteVar = (p) => `--bgp:${-p[0] * 48}px ${-p[1] * 48}px`;
+
+  function tileHtml(o) {
+    // o: { id, name, short, desc, round, ring, sprite, sheet, svg, placed, single, link, badge }
+    const n = o.placed || 0;
+    const shape = o.round ? 'Round dial' : 'Framed panel';
+    let act = 'Click to place it on the left panel';
+    let pill = '+ Add';
+    if (o.link) {
+      act = 'Click to open the Macros page';
+      pill = 'Open';
+    } else if (o.single && n) {
+      act = 'Placed — click to remove it';
+      pill = 'Remove';
+    } else if (n) act = `${n} placed — click to add another`;
+    const cls = `ca-wtile${n || o.badge ? ' placed' : ''}${o.single ? ' single' : ''}`;
+    const attr = o.single && n ? `data-w-page-remove="${o.id}"` : o.link ? 'data-ca="open-macros"' : `data-w-page-add="${o.id}"`;
+    const tag = o.link ? o.badge : n ? (o.single ? '✓' : `×${n}`) : '';
+    let ico;
+    if (o.sprite) ico = `<i class="${o.sheet ? 'ca-wcrate-plant' : ''}" style="${spriteVar(o.sprite)}"></i>`;
+    else ico = `<i class="ca-wcrate-svg">${I(o.svg || 'widget', 26)}</i>`;
+    return (
+      `<div class="${cls}" data-pop ${attr} data-w-tile="${o.id}">` +
+      `<div class="ca-wcrate${o.round ? ' round' : ''}" style="--ring:${o.ring || '#ffd36a'}">${ico}` +
+      (tag ? `<span class="ca-wtag">${tag}</span>` : '') +
+      `<span class="ca-wadd${pill === 'Remove' ? ' remove' : ''}">${pill}</span></div>` +
+      `<div class="ca-wtile-name">${esc(o.name)}</div>` +
+      (o.short ? `<div class="ca-wtile-sub">${esc(o.short)}</div>` : '') +
+      `<div class="ca-wpop ca-wtip"><div class="ca-wtip-head">${esc(o.name)}<span class="ca-wshape">${shape}</span></div>${o.descHtml || esc(o.desc || '')}<div class="ca-wtip-act">${act}</div></div>` +
+      '</div>'
+    );
+  }
+
+  function pickerHtml(favCount) {
+    const C = CA.UI.C;
+    const typeTile = (t) =>
+      tileHtml({
+        id: t.id,
+        name: t.name,
+        short: t.short,
+        desc: t.desc,
+        round: t.bare,
+        ring: t.ring,
+        sprite: t.sprite && (Array.isArray(t.sprite) ? t.sprite : t.sprite.pos),
+        sheet: t.sprite && !Array.isArray(t.sprite),
+        svg: t.icon,
+        single: t.single,
+        placed: widgets.filter((w) => w.type === t.id).length,
+      });
+    const macroTile = tileHtml({
+      id: 'macro-buttons',
+      name: 'Macro buttons',
+      short: '★ a macro or spell to get one',
+      descHtml: `★ a macro (or a spell on the Grimoire page) and it gets its own round button on the panel: click to switch it on/off or run it. Opens the Macros page.`,
+      round: true,
+      svg: 'star',
+      link: true,
+      badge: favCount || '',
+    });
+    const shelves = groups.slice().sort((a, b) => a.order - b.order);
+    const known = new Set(shelves.map((g) => g.id));
+    const visible = types.filter((t) => !t.hidden);
+    const rows = shelves.map((g) => ({ g, tiles: visible.filter((t) => t.group === g.id).map(typeTile) }));
+    const more = visible.filter((t) => !known.has(t.group)).map(typeTile);
+    if (more.length) rows.push({ g: { id: 'more', name: 'More', sprite: [10, 0] }, tiles: more });
+    const macros = rows.find((r) => r.g.id === 'macros');
+    if (macros) macros.tiles.unshift(macroTile);
+    else rows.push({ g: { id: 'macros', name: 'Macros', sprite: [12, 0] }, tiles: [macroTile] });
+    return (
+      '<div class="ca-card">' +
+      C.cardHead('Add a widget', 'plus', '<div class="ca-card-meta"><span class="ca-pill">Hover for details · click to place</span></div>') +
+      '<div class="ca-wpick">' +
+      rows
+        .filter((r) => r.tiles.length)
+        .map((r) => `<div class="ca-wshelf" data-w-shelf="${esc(r.g.id)}"><div class="ca-wshelf-head"><i class="ca-wshelf-ico" style="${spriteVar(r.g.sprite)}"></i>${esc(r.g.name)}</div><div class="ca-wshelf-tiles">${r.tiles.join('')}</div></div>`)
+        .join('') +
+      '</div>' +
+      '<div class="ca-wpick-foot"><span class="ca-wkey"><i class="round"></i> round dial</span><span class="ca-wkey"><i></i> framed panel</span>' +
+      '<span class="ca-wkey hint">Widgets sit on the left panel, around the big cookie. Drag them anywhere — framed ones by their title bar, the rest from anywhere — and resize them from their corner; hover one for × and ⚙.</span></div>' +
+      '</div>'
+    );
+  }
+
   function pageHtml() {
     const C = CA.UI.C;
     const favs = CA.Macros.list().filter((m) => CA.Macros.isFav(m.id));
@@ -744,34 +845,7 @@ CA.UI.Widgets = (() => {
         '</div>';
     }
 
-    h +=
-      '<div class="ca-card">' +
-      C.cardHead('Add a widget', 'plus') +
-      '<div class="ca-card-note">Widgets sit on the left panel, around the big cookie. Drag them anywhere — framed ones by their title bar, the rest from anywhere — and resize them from their corner. Hover for × and ⚙.</div>' +
-      '<div class="ca-wgallery">' +
-      // a card per kind of widget: picture, name, what it shows, Add / Remove
-      '<div class="ca-wcard">' +
-      `<div class="ca-wcard-ico">${I('star', 26)}</div>` +
-      `<div class="ca-wcard-name">Macro buttons${favs.length ? ` <span class="ca-badge">${favs.length} placed</span>` : ''}</div>` +
-      `<div class="ca-wcard-desc">★ a macro (or a spell on the ${C.link('Grimoire', 'wizard')} page) and it gets its own round button here: click to switch it on/off or run it.</div>` +
-      `<div class="ca-wcard-foot">${C.button(`${I('open', 12)} Macros`, 'data-ca="open-macros"', 'ca-btn-small')}</div>` +
-      '</div>';
-    types
-      .filter((t) => !t.hidden)
-      .forEach((t) => {
-        const placed = widgets.filter((w) => w.type === t.id).length;
-        h +=
-          `<div class="ca-wcard${placed ? ' placed' : ''}">` +
-          `<div class="ca-wcard-ico">${I(t.icon, 26)}</div>` +
-          `<div class="ca-wcard-name">${esc(t.name)}${placed ? ` <span class="ca-badge">${placed} placed</span>` : ''}</div>` +
-          `<div class="ca-wcard-desc">${esc(t.desc)}</div>` +
-          '<div class="ca-wcard-foot">' +
-          (t.single && placed
-            ? C.button('Remove', `data-w-page-remove="${t.id}"`, 'ca-btn-small ca-btn-off')
-            : C.button(`${I('plus', 12)} Add`, `data-w-page-add="${t.id}"`, 'ca-btn-small ca-btn-on')) +
-          '</div></div>';
-      });
-    h += '</div></div>';
+    h += pickerHtml(favs.length);
     h +=
       `<div class="ca-card">${C.cardHead('Options', 'settings')}<div class="ca-optgrid">${S().optionsIn('widgets').map(CA.UI.Menu.optionTile).join('')}</div><div class="ca-list">` +
       '<div class="ca-row ca-row-option">' +
@@ -839,6 +913,12 @@ CA.UI.Widgets = (() => {
 
   function init() {
     CA.Settings.registerSection('widgets', { serialize, load, event: 'widgets' });
+    [
+      { id: 'golden', name: 'Golden cookies', sprite: [10, 14], order: 10 },
+      { id: 'minigames', name: 'Minigames', sprite: [17, 0], order: 20 },
+      { id: 'macros', name: 'Macros', sprite: [12, 0], order: 30 },
+      { id: 'game', name: 'Your game', sprite: [18, 7], order: 40 },
+    ].forEach(defineGroup);
     CA.UI.WidgetTypes.register();
     S().defineOption({ key: 'widgetsShown', group: 'widgets', icon: 'widget', name: 'Show widgets', desc: 'Show your widgets on the left panel (they stay saved while hidden).', default: true });
     S().defineOption({ key: 'widgetsLocked', group: 'widgets', icon: 'grip', name: 'Lock widgets', desc: 'Stop widgets from being dragged around by accident (buttons still work).', default: false });
@@ -881,5 +961,5 @@ CA.UI.Widgets = (() => {
     render();
   }
 
-  return { init, defineType, types: () => types.slice(), add, remove, list, get, has, serialize, load, render, tick, reconcile, openSettings, editing: () => editing };
+  return { init, defineType, defineGroup, types: () => types.slice(), add, remove, list, get, has, serialize, load, render, tick, reconcile, openSettings, editing: () => editing };
 })();

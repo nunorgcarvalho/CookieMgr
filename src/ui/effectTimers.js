@@ -142,6 +142,9 @@ CA.UI.EffectTimers = (() => {
   function init() {
     CA.UI.Widgets.defineType({
       id: 'effectTimers',
+      group: 'golden',
+      sprite: [0, 14],
+      short: 'A draining bar per effect running',
       name: 'Effect timers',
       icon: 'clock',
       desc: 'A slim bar per effect running (Frenzy, Click frenzy, building specials, Clot…) in its own colour and icon: what it multiplies and its time left (and, if you tick it, the chance a golden cookie comes before it ends). See-through until you hover it.',

@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 3.20.0 — 2026-10-27
+
+- **Add a widget, redrawn.** The picker on the Widgets page is now four shelves — Golden cookies, Minigames, Macros,
+  Your game — of tiles wearing the game's own icons: a round dial (a dark disc with a ring in its colour) for the
+  widgets that sit round on the panel, a store-framed crate for the framed ones. Click a tile to place it, like buying
+  an upgrade (a small **+ Add** pill appears on hover; on a widget that's already placed it says **Remove** and removes
+  it, **Open** on Macro buttons goes to the Macros page); a green corner badge shows ✓ or ×N once it's placed. Hover for
+  the full description. For other code: `defineType` takes `group`, `sprite` (`[col, row]` of icons.png, or
+  `{ sheet, pos }`), `short` and `ring`, and `CA.UI.Widgets.defineGroup({ id, name, sprite, order })` adds a shelf;
+  types with an unknown group land in a trailing "More".
+
 ## 3.18.0 — 2026-10-27
 
 - **Bank warnings, compact.** The warnings that a purchase would take your bank below what a Lucky!, Conjure Baked
