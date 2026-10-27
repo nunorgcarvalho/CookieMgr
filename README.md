@@ -763,9 +763,9 @@ won't force a save on a quick refresh — without the mirror, a change made righ
 The mirror is restored even when the game save holds no CookieMgr data yet (the game only hands a mod its saved data
 once it has autosaved with it).
 
-**Numbers** — how CookieMgr writes long numbers, in Cookie Monster's notations: **short scale, abbreviated** (the
-default: 1.23 M, 45.6 B, 789 T, 1.23 Qa, Qi, Sx, Sp, Oc, No, De, UDe… SpDe, ODe, NDe, Vi… up to UCt), **short scale**
-(1.23 M, 4.56 Quadr… Quattuorvigint), **metric** (1.23 M, 4.56 P… Y) — Cookie Monster's own suffix lists and spacing — **scientific** (1.23e15), **engineering** (123e12) or **the game's own** (its Numbers preference). Always
+**Numbers** — how CookieMgr writes long numbers, in Cookie Monster's notations: **short scale** (the
+default, as in Cookie Monster: 1.23 M, 45.6 B, 789 Tr, 1.23 Quadr, Quint… Dec… Septendec, Octodec… up to Quattuorvigint),
+**short scale, abbreviated** (1.23 M, 45.6 B, 789 T, 1.23 Qa, Qi, Sx, Sp, Oc, No, De, UDe… SpDe, ODe, NDe, Vi… up to UCt), **metric** (1.23 M, 4.56 P… Y) — Cookie Monster's own suffix lists and spacing — **scientific** (1.23e15), **engineering** (123e12) or **the game's own** (its Numbers preference). Always
 three significant digits — 999.96 M rounds up to 1 B, never "1000 M" — and numbers under a million in full (999,999);
 past a scale's last name, scientific. Every number on every CookieMgr page follows it.
 

@@ -2,9 +2,10 @@
 // them as CA.UI.Plot.fmt).
 //
 // Long numbers follow the **Numbers** setting (Settings → General), Cookie Monster's notations:
+//   short    short scale (the default, as in Cookie Monster) — 1.23 M, 45.6 B, 789 Tr, 1.23 Quadr,
+//            Quint, Sext, Sept, Oct, Non, Dec, Undec… Octodec, Novemdec… up to Quattuorvigint
 //   abbr     short scale, abbreviated — 1.23 M, 45.6 B, 789 T, 1.23 Qa, Qi, Sx, Sp, Oc, No, De, UDe…
 //            SpDe, ODe, NDe, Vi… up to UCt (1e303)
-//   short    short scale — 1.23 M, 45.6 B, 789 Tr, 1.23 Quadr, Quint, Sext… up to Quattuorvigint
 //   metric   1.23 M, 45.6 G, 789 T, 1.23 P, E, Z, Y
 // (Cookie Monster's own suffix lists and spacing.)
 //   sci      scientific — 1.23e15
@@ -25,14 +26,14 @@ CA.Format = (() => {
   const SCALES = { abbr: ABBR, short: WORDS, metric: METRIC };
   /** The notations, for the Numbers setting. */
   const FORMATS = [
-    { v: 'abbr', label: 'Short scale, abbreviated — 1.23 M, 4.56 Qa' },
-    { v: 'short', label: 'Short scale — 1.23 M, 4.56 Quadr' },
+    { v: 'short', label: 'Short scale — 1.23 M, 4.56 Quadr, 7.89 Octodec' },
+    { v: 'abbr', label: 'Short scale, abbreviated — 1.23 M, 4.56 Qa, 7.89 ODe' },
     { v: 'metric', label: 'Metric — 1.23 M, 4.56 P' },
     { v: 'sci', label: 'Scientific — 1.23e15' },
     { v: 'eng', label: 'Engineering — 123e12' },
     { v: 'game', label: 'The game’s own (its Numbers setting)' },
   ];
-  const DEFAULT = 'abbr';
+  const DEFAULT = 'short'; // Cookie Monster's own default
   const SIG = 3; // significant digits of an abbreviated number
 
   // the setting is defined the first time a number is written (core/format.js loads before the
