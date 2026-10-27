@@ -415,10 +415,12 @@ checked against Cookie Monster in the real game:
   half the building's price — Cookie Monster asks for twice it; this follows the game.)
 - **Next golden cookie** — when it comes, worked out exactly from the game's odds (each frame past its minimum time it
   appears with chance ((time − min) ÷ (max − min))⁵; checked against the game itself): the expected wait from now, how
-  far along this cycle's odds it is (0% → 100% as time passes), the wrath chance; and a chart of this cycle — the
+  far along this cycle's odds it is (0% → 100% as time passes), the **frequency** (how many times more often they
+  come than with nothing helping — every factor counted), the wrath chance; and a chart of this cycle — the
   time since the last one left, from 0 to the latest it can come, against the chance one has come by then — with a
-  dashed line at 50% and a line sweeping across it at now (hover for any moment). Under the chart, on the same
-  axis, **golden cookie effects**: a bar per effect running, from when it started to when it ends, with how long
+  line sweeping across it at now (the time since the last one on it), a dashed one at the expected moment (how
+  long until it) and a dashed one across where that meets the curve (hover for any moment). Under the chart, on the same
+  axis, **golden cookie effects**: a bar per effect that ran since the last one left (ended ones dimmed), from when it started to when it ends, with how long
   it has left and **what it multiplies your income by** — a click effect counted at your click rate (yours or an
   autoclicker's). **Golden cookie frequency effects** (Lucky day,
   Serendipity, golden clovers, spirits, the dragon…) as chips — click one for the wait without it. At Christmas,
@@ -688,8 +690,9 @@ always grab them again). Drag them anywhere; hover for × and ⚙ (its settings)
   Stats page's chart), its window (soonest – latest, the mean), a bar per effect running with its time left and the
   chance a golden cookie comes before it ends, and what Force the Hand of Fate gives over your next casts (green: a
   good one, red: a backfire; hover for each). Its settings pick the parts and how many casts ahead.
-- **Next golden cookie** — the countdown in numbers (on average, the median, the chance within a minute, its window)
-  over the Stats page's chart of this cycle's odds, a line sweeping across it — the Golden timeline with fewer parts;
+- **Next golden cookie** — the countdown in numbers (on average, the median, the chance within a minute, its window,
+  the frequency — each switched on or off in its settings) over the Stats page's chart of this cycle's odds, a line
+  sweeping across it — the Golden timeline with fewer parts;
   tick more in its settings. Click the numbers for the Stats page.
 - **Effect timers** — a slim bar per effect running (Frenzy, Click frenzy, building specials, Dragon Harvest, Clot…),
   each in its own colour with the game's own icon, draining as it runs out: its name, what it multiplies (×7 CpS,
