@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 3.25.0 — 2026-10-27
+
+- **See-through widgets, easier to read.** With a widget's Background on Faint or None, its muted text — the Next
+  golden cookie's “next in”, “median”, “frequency” labels, the Quick stats names, notes, “Nothing has happened yet”,
+  and chart axes (the golden cookie charts' and the Chart widget's) — is brighter and gets the same dark outline as
+  the rest of the text, so it stands out over the game. Solid widgets look as before.
+
 ## 3.22.0 — 2026-10-27
 
 - **Add a widget, redrawn.** The picker on the Widgets page is now four shelves — Golden cookies, Minigames, Macros,
