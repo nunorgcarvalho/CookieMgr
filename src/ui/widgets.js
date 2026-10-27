@@ -32,7 +32,8 @@
 //     summary under the name; ring = the colour of a round (bare) widget's ring on its tile (default gold).
 //   CA.UI.Widgets.defineGroup({ id, name, sprite, order })   a shelf of the picker; shelves sort by order
 //
-// iconOf(inst): an icon of its own per widget (a chart's: its chart's).
+// iconOf(inst): an icon of its own per widget (a chart's: its chart's); nameOf(inst): a name of its own
+// (a Statistic widget's: its statistic's).
 // live(inst, body) runs after each render and refresh, for a widget that draws into its own nodes
 // (a chart's canvas); removed(inst) when it's taken away.
 //
@@ -53,7 +54,7 @@ CA.UI.Widgets = (() => {
   const FONT_MAX = 200;
   const MIN_W = 140;
   const MIN_H = 60;
-  const SAVED = ['plot', 'count', 'types', 'stats', 'nums', 'font', 'title', 'target', 'targetMagic', 'bg', 'sort', 'barScale']; // per-widget settings that are saved
+  const SAVED = ['plot', 'stat', 'item', 'count', 'types', 'stats', 'nums', 'font', 'title', 'target', 'targetMagic', 'bg', 'sort', 'barScale']; // per-widget settings that are saved
   const BG = [[100, 'Solid'], [40, 'Faint'], [0, 'None']]; // background opacity (%) while not hovered
   const S = () => CA.Settings;
   const I = (n, s) => CA.UI.Icons.html(n, s);
@@ -239,7 +240,9 @@ CA.UI.Widgets = (() => {
       const p = CA.UI.Plot.widgetable().find((x) => x.id === w.plot);
       if (p) return p.title;
     }
-    return (typeById[w.type] || {}).name || w.type;
+    const t = typeById[w.type];
+    if (t && t.nameOf) return t.nameOf(w) || t.name;
+    return (t || {}).name || w.type;
   }
 
   // ---- rendering ------------------------------------------------------------------------------
@@ -806,6 +809,8 @@ CA.UI.Widgets = (() => {
         if (Number.isFinite(w.h)) out.h = Math.max(MIN_H, w.h);
         if (Number.isFinite(w.count)) out.count = w.count;
         if (typeof w.target === 'string') out.target = w.target.slice(0, 40);
+        if (typeof w.stat === 'string') out.stat = w.stat.slice(0, 60);
+        if (typeof w.item === 'string') out.item = w.item.slice(0, 120);
         if (Number.isFinite(w.targetMagic)) out.targetMagic = w.targetMagic;
         if (Number.isFinite(w.font)) out.font = Math.max(FONT_MIN, Math.min(FONT_MAX, w.font));
         if (typeof w.title === 'string') out.title = w.title.slice(0, 40);
@@ -1005,7 +1010,7 @@ CA.UI.Widgets = (() => {
       { id: 'golden', name: 'Golden cookies', sprite: [10, 14], order: 10 },
       { id: 'minigames', name: 'Minigames', sprite: [17, 0], order: 20 },
       { id: 'macros', name: 'Macros', sprite: [12, 0], order: 30 },
-      { id: 'game', name: 'Your game', sprite: [18, 7], order: 40 },
+      { id: 'game', name: 'Data', sprite: [18, 7], order: 40 }, // the game's numbers, and statistics (v3.27: was Your game)
     ].forEach(defineGroup);
     CA.UI.WidgetTypes.register();
     S().defineOption({ key: 'widgetsShown', group: 'widgets', icon: 'widget', name: 'Show widgets', desc: 'Show your widgets on the left panel (they stay saved while hidden).', default: true });

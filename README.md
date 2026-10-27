@@ -393,13 +393,12 @@ recorded), when you can afford it, a building's share of your production and how
 and, with **Bank warnings** on, a warning when buying it would take your bank below what a Lucky! (in a Frenzy too)
 or Conjure Baked Goods needs to pay its most.
 
-**Which lines that block shows, and in what order, is yours to choose** — the **Store tooltips** card on the Payback
-page: add a line (the built-in ones — also the price, and a building's payback at ×1 / ×10 / ×100 in their colours —
-or **any value word** that takes the building or upgrade, or nothing: `building.toNextAchievement`, `clickRate`,
-`golden.expected`…), move it up or down, rename a word's line and choose how its value reads (a number, a time, a
-chance — or as it reads: a time for seconds, a chance for 0–1), remove it; **Reset** goes back to Cookie Monster's
-layout. A line with nothing to say (no wins, too little recorded) is left out; a word that doesn't fit the tooltip
-(one taking an upgrade, in a building's) too. A live preview shows any building's block and the best upgrade's.
+**Which lines that block shows, and in what order, is yours to choose** — on the **Tooltips** page (see
+[Tooltips](#tooltips)): add a line (a built-in statistic, one of yours, or **any value word** that takes the building
+or upgrade, or nothing: `building.toNextAchievement`, `clickRate`, `golden.expected`…), drag it into place, rename a
+word's line and choose how its value reads, remove it; **Reset** goes back to Cookie Monster's layout. A line with
+nothing to say (no wins, too little recorded) is left out; a word that doesn't fit the tooltip (one taking an upgrade,
+in a building's) too. The Payback page keeps the block's two switches.
 
 **Every line is a statistic**: a few lines of algorithmic code (the language of [Macros](#macros)) that only read the
 game and end with `return` — in a tooltip, `item` is the building or upgrade hovered and the `item.*` words read it
@@ -420,9 +419,31 @@ or a list of them for a list of values); with no `return` it shows nothing. It c
 (no actions, `wait`, `while`, `repeat until`, `forever`, `parallel`, `stop`) and stops after 5,000 steps. Every
 statistic is also a value word — `stat.payback(Farm)`, `stat.next(item)` — that macros and other statistics can use.
 Text words build what a line says: `fmt.number(x)`, `fmt.short(x)`, `fmt.time(s)`, `fmt.pct(x, 2)`, `fmt.fixed(x, 2)`;
-`finite(x)` and `known(x)` are yes / no. (A page to browse, write and pick statistics is coming.)
+`finite(x)` and `known(x)` are yes / no.
+
 **Upgrades: best first** orders the store's upgrades by colour, then payback period
 (switches last). The store's **Best buy** sort ranks buildings by what a click buys — or the minimum bulk, if more.
+
+### Tooltips
+
+The **Tooltips** page (next to Macros) is the store tooltip's block and every statistic it can show.
+
+- **In the store tooltip**: the block's lines in order, in fixed columns: the line, what it's about (a building, an
+  upgrade, either, the game), **its value now** for the previewed building, how a value word reads, and ↑ ↓ ✕ — or drag
+  a row. Beside it, two live previews drawn by the tooltip's own code: a building you pick, and the best upgrade. The
+  block's switches (Payback in tooltips, Bank warnings) are here too.
+- **Statistics**: a card per statistic — built-in and yours — with its value for the previewed building (an upgrade's:
+  for the best upgrade), what it shows, its code (coloured, as in the editor) and how to call it
+  (`stat.payback(item)`). Filter by group (Payback, Production, Achievements, Bank), **Yours** or **On screen**, and
+  search labels, descriptions and code. One click adds a statistic to the tooltip or takes it out; **Duplicate** makes
+  a copy that's yours (the editor for changing it is next); yours can be deleted (its tooltip lines go too); ☆ puts it
+  on the left panel as a widget.
+- **Values**: every word a statistic can read — the `item.*` words first, then statistics, text, and the game's —
+  with its signature, what it is and its value now (for the previewed building).
+
+A **Statistic widget** (on the **Data** shelf of Add a widget, beside Quick stats and Latest events) shows one statistic live, as its tooltip line
+would: about **the best** (the best building, the best upgrade or the best buy, as the statistic is about), or a
+building or store upgrade you pick in its settings. Add as many as you like.
 
 ### Stats
 
@@ -973,6 +994,8 @@ src/
     storeBar.js      the store toolbar (building sort, rounding to multiples)
     storeInsight.js  the store with payback colours, and a CookieMgr block under the game's tooltips
     paybackPage.js   the Payback page: best buy, every building ×1/×10/×100, upgrades, options
+    tooltipsPage.js  the Tooltips page: the tooltip's layout and previews, the statistics catalog, the Values
+                     list; the Statistic widget
     statsPage.js     the Stats page: bank meters, golden cookie odds, prestige, wrinklers, what if, collection
     stockGraph.js    the Stock market page charts: portfolio value / per-stock prices, rolling performance
     stockLog.js      the trade ticker + transaction history table, also on the Stock market page

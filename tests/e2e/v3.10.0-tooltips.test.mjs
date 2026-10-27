@@ -73,15 +73,15 @@ CA.Settings.set('storeWarnings', false);
 assert(!/ca-tt-warn/.test(tip('Grandma')), 'off: none');
 Game.cookies = 1e4;
 
-// ---- the Payback page's card
+// ---- the layout card (v3.27: on the Tooltips page)
 SI.setLines(null);
-CA.UI.Menu.openPage('payback');
+CA.UI.Menu.openPage('tooltips');
 await sleep(50);
-const card = () => doc.querySelector('[data-page="payback"] [data-tl-lines]');
+const card = () => doc.querySelector('[data-page="tooltips"] [data-tl-lines]');
 const names = () => [...card().querySelectorAll('.ca-tl-row')].map((x) => (x.querySelector('.ca-tl-name') || x.querySelector('.ca-tl-label')).textContent || x.querySelector('.ca-tl-label').value);
 assert(card() && names().length === SI.DEFAULT_LINES.length, `a row per line (${names().length})`);
 assert(!card().querySelector('[data-tl-reset]'), 'the default: no reset button');
-const preview = () => doc.querySelector('[data-page="payback"] [data-tl-preview]');
+const preview = () => doc.querySelector('[data-page="tooltips"] [data-tl-preview]');
 assert(preview() && /ca-tt-row/.test(preview().innerHTML) && /Kitten helpers/.test(preview().textContent), 'a live preview: a building and the best upgrade');
 // move the second up
 click(w, card().querySelectorAll('[data-tl-up]')[1]);
@@ -119,10 +119,10 @@ pick.value = 'Cursor';
 pick.dispatchEvent(new w.Event('change', { bubbles: true }));
 assert(/Bonus income \(×1\)/.test(preview().innerHTML) && preview().querySelector('[data-tl-b]').value === 'Cursor', 'preview another building');
 // the warnings switch here
-click(w, doc.querySelector('[data-page="payback"] [data-pp-opt="storeWarnings"]'));
+click(w, doc.querySelector('[data-page="tooltips"] [data-tl-opt="storeWarnings"]'));
 assert(CA.Settings.get('storeWarnings') === true, 'the Bank warnings switch, on the card');
 // back to Cookie Monster's
-click(w, doc.querySelector('[data-page="payback"] [data-tl-reset]'));
+click(w, doc.querySelector('[data-page="tooltips"] [data-tl-reset]'));
 assert(SI.isDefault() && names().length === SI.DEFAULT_LINES.length, 'reset: Cookie Monster’s layout');
 
 // ---- kept with your settings

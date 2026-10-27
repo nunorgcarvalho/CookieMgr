@@ -17,7 +17,7 @@ CA.UI.Menu.openPage('widgets');
 
 // ---- shelves
 const shelfNames = () => [...page().querySelectorAll('.ca-wshelf-head')].map((e) => e.textContent.trim());
-eq(shelfNames().join('|'), 'Golden cookies|Minigames|Macros|Your game|More', 'shelves in order, then More');
+eq(shelfNames().join('|'), 'Golden cookies|Minigames|Macros|Data|More', 'shelves in order, then More'); // v3.27: Your game → Data
 const more = page().querySelector('[data-w-shelf="more"]');
 assert(more && more.querySelector('[data-w-page-add="oddball"]'), 'a type with an unknown group lands in More');
 
