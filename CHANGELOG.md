@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+## 3.14.0 — 2026-10-27
+
+- **The next golden cookie, as this cycle's odds.** The Stats page's chart is now the time since the last golden
+  cookie left, from 0 to the latest the next can come, against the chance one has come by then (the game's own
+  odds, with your upgrades): a dashed line at 50%, and a line sweeping across it as time passes, labelled with
+  how far along the odds it is. The numbers above it: the expected wait (from now), **Odds so far** (0% → 100%)
+  and the wrath chance. The **Next golden cookie** widget draws the same chart; the Golden timeline keeps its
+  wait-from-now.
+- **Golden cookie effects under it, on the same axis**: a bar per effect running, from when it started to when it
+  ends (stacking as new ones come), labelled with **what it multiplies your income by** — a click effect counted at
+  your click rate (yours or an autoclicker's, the last ten seconds): Click frenzy at 10 clicks/s might be ×130, at
+  none ×1. No more "golden cookie before it ends" on them. The word `buff.effectiveMult(effect)` gives the same.
+- The card is simpler: no more density bars, bands, percentiles, within-N chips, legend or cycle notes.
+  "Making them come sooner" is now **Golden cookie frequency effects** (click one for the wait without it, as before).
+
 ## 3.13.0 — 2026-10-27
 
 - **Removed: the Force the Hand of Fate forecast.** CookieMgr no longer reads your save's seed to say what a spell cast

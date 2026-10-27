@@ -5883,6 +5883,36 @@ body.ca-has-storebar #products {
   stroke: rgba(0, 0, 0, 0.85);
   stroke-width: 3px;
 }
+/* this cycle's chart: the swept part, the 50% line, the now line */
+#CookieMgrMenu .ca-sp-swept,
+#CookieMgrWidgets .ca-sp-swept {
+  fill: rgba(255, 224, 102, 0.16);
+}
+#CookieMgrMenu .ca-sp-half,
+#CookieMgrWidgets .ca-sp-half {
+  stroke: rgba(255, 255, 255, 0.35);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  vector-effect: non-scaling-stroke;
+}
+#CookieMgrMenu .ca-sp-now line,
+#CookieMgrWidgets .ca-sp-now line {
+  stroke: #ffe066;
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+#CookieMgrMenu .ca-sp-now circle,
+#CookieMgrWidgets .ca-sp-now circle {
+  fill: #ffe066;
+}
+#CookieMgrMenu .ca-sp-chart .ca-sp-now text,
+#CookieMgrWidgets .ca-sp-chart .ca-sp-now text {
+  fill: #ffe066;
+  font-weight: bold;
+  paint-order: stroke;
+  stroke: rgba(0, 0, 0, 0.85);
+  stroke-width: 3px;
+}
 /* the timer bars under the spawn chart */
 #CookieMgrMenu .ca-sp-lane .track,
 #CookieMgrWidgets .ca-sp-lane .track {
@@ -5925,45 +5955,6 @@ body.ca-has-storebar #products {
   paint-order: stroke;
   stroke: rgba(0, 0, 0, 0.8);
   stroke-width: 2.5px;
-}
-#CookieMgrMenu .ca-sp-legend .lane,
-#CookieMgrWidgets .ca-sp-legend .lane {
-  background: rgba(125, 255, 122, 0.45);
-}
-#CookieMgrMenu .ca-sp-legend,
-#CookieMgrWidgets .ca-sp-legend {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 6px;
-  padding: 4px 12px 0;
-  font-size: 10px;
-  color: #a89a83;
-}
-#CookieMgrMenu .ca-sp-legend span,
-#CookieMgrWidgets .ca-sp-legend span {
-  display: inline-block;
-  width: 10px;
-  height: 8px;
-  margin-left: 6px;
-  border-radius: 2px;
-}
-#CookieMgrMenu .ca-sp-legend .pdf,
-#CookieMgrWidgets .ca-sp-legend .pdf {
-  background: #e0a84a;
-}
-#CookieMgrMenu .ca-sp-legend .cdf,
-#CookieMgrWidgets .ca-sp-legend .cdf {
-  height: 2px;
-  background: #fff3d6;
-}
-#CookieMgrMenu .ca-sp-legend .band,
-#CookieMgrWidgets .ca-sp-legend .band {
-  background: rgba(255, 224, 102, 0.24);
-}
-#CookieMgrMenu .ca-sp-legend .band2,
-#CookieMgrWidgets .ca-sp-legend .band2 {
-  background: rgba(255, 224, 102, 0.12);
 }
 #CookieMgrMenu .ca-sp-chips,
 #CookieMgrMenu .ca-sp-factors,

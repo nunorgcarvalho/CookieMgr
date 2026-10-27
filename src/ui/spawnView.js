@@ -1,20 +1,20 @@
-// When the next golden cookie (or reindeer) comes, as statistics: the distribution of the wait from
-// now (features/timers.js — exact, from the game's own rule), drawn and summed up. Used by the Stats
-// page (a card per type) and the Golden cookies widget (a sparkline in its popup).
+// When the next golden cookie (or reindeer) comes, as statistics (features/timers.js — exact, from the
+// game's own rule), drawn and summed up. Used by the Stats page (a card per type), the Next golden
+// cookie widget (its chart) and the Golden cookies widget (a sparkline in its popup).
 //
-//   the numbers   expected (mean), median, most likely (mode), the chance it comes in this second;
-//                 percentiles (soonest · 10 · 25 · 50 · 75 · 90% · latest); the chance within 10 s, 30 s,
-//                 1 min, 5 min; this cycle's bounds (fixed when the last one left) and how far in;
-//                 the chance the next golden cookie is a wrath cookie
-//   the chart     the density of the wait (how likely each moment is), the cumulative chance over it
-//                 (0 → 100%), the 10–90% and 25–75% bands shaded, ticks at the mean and the median;
+//   the numbers   the expected wait (from now), how far along this cycle's odds it is (the curve's
+//                 height at now: 0% → 100%), the chance the next golden cookie is a wrath cookie
+//   the chart     this cycle's cumulative chance, over the time since the last one left (0 → the
+//                 latest it can come): a line sweeps left to right at now, a dashed line at 50%;
 //                 hover it for the moment under the pointer
-//   the bars      under the chart, on its time axis: the next one's window (can't come yet · could
-//                 come · the mean), and each effect running — how long it has left and the chance a
-//                 golden cookie comes before it ends (to stack on it)
-//   what moves it the factors making them come more often now — each a chip; click one to see the
-//                 mean wait without it (what if) — counting from the next one, as the game fixes a
+//   the bars      under the chart, on its axis: each effect running, from when it started to when it
+//                 ends, with what it multiplies your income by (a click effect at your click rate)
+//   frequency     the effects making them come more often now — each a chip; click one to see the
+//   effects       mean wait without it (what if) — counting from the next one, as the game fixes a
 //                 cycle's bounds when the last cookie leaves
+//
+// chart() — the wait from now (density, bands, the next one's window) — is the Golden timeline
+// widget's.
 
 CA.UI = CA.UI || {};
 
@@ -32,6 +32,9 @@ CA.UI.SpawnView = (() => {
   const when = (s) => (!Number.isFinite(s) ? '—' : s <= 0 ? 'now' : s < 1 ? '<1s' : F().span(s));
   const pc = (p) => `${p >= 0.9995 ? 100 : p > 0 && p < 0.0005 ? '<0.1' : (p * 100).toFixed(p < 0.1 ? 1 : 0)}%`;
   const LABEL = { golden: 'golden cookie', reindeer: 'reindeer' };
+
+  /** A multiplier, short: ×777, ×12.3, ×1.85, ×0.5. */
+  const mx = (m) => (!Number.isFinite(m) ? '?' : m >= 100 ? String(Math.round(m)) : m >= 10 ? String(Math.round(m * 10) / 10) : String(Math.round(m * 100) / 100));
 
   /** An effect's bar colour: what it multiplies. */
   const buffKind = (b) => (b.click > 1 ? 'click' : b.cps > 1 ? 'up' : b.cps < 1 || b.click < 1 ? 'down' : 'other');
@@ -132,6 +135,98 @@ CA.UI.SpawnView = (() => {
     );
   }
 
+  /**
+   * This cycle's chart: x is the time since the last one left, 0 → the latest it can come; the curve,
+   * the chance one has come by then (0 → 100%); a dashed line at 50%; the now line where the cycle is,
+   * its height labelled — and under it, on the same axis, each effect running (golden cookies).
+   * d: CA.Timers.distribution's (not spawned). opts: width, height, hover, lane — as chart()'s.
+   */
+  function cycleChart(type, d, effects = [], opts = {}) {
+    const WW = opts.width || W;
+    const LN = opts.lane || LANE;
+    const c = d.cycle;
+    const x0 = PAD.l;
+    const x1 = WW - PAD.r;
+    const y1 = PAD.t;
+    const y0 = (opts.height || H) - PAD.b;
+    const HH = y0 + 4 + effects.length * LN + 18;
+    const span = Math.max(1e-9, c.max);
+    const X = (s) => x0 + ((x1 - x0) * Math.max(0, Math.min(span, s))) / span;
+    const Y = (p) => y0 - (y0 - y1) * p;
+    const N = Math.max(60, Math.round((x1 - x0) / 2));
+    const pts = [];
+    for (let i = 0; i <= N; i++) {
+      const s = (span * i) / N;
+      pts.push([X(s), Y(c.cdf(s))]);
+    }
+    const line = pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(2)},${y.toFixed(2)}`).join('');
+    const now = Math.min(span, c.elapsed);
+    const nx = X(now);
+    const ny = Y(c.by);
+    // the part swept so far, shaded under the curve
+    const swept = pts.filter(([x]) => x <= nx);
+    const area = `M${x0},${y0}` + swept.map(([x, y]) => `L${x.toFixed(2)},${y.toFixed(2)}`).join('') + `L${nx.toFixed(2)},${ny.toFixed(2)}L${nx.toFixed(2)},${y0}Z`;
+    const right = nx > x0 + (x1 - x0) * 0.75; // the label left of the line near the end
+    let plotSvg =
+      `<path class="ca-sp-swept" d="${area}"/>` +
+      `<line class="ca-sp-half" x1="${x0}" x2="${x1}" y1="${Y(0.5).toFixed(2)}" y2="${Y(0.5).toFixed(2)}"/>` +
+      `<text class="ca-sp-ylab" x="${x0 + 2}" y="${(Y(0.5) - 3).toFixed(2)}">50%</text>` +
+      (y0 - y1 >= 60 ? `<text class="ca-sp-ylab" x="${x0 + 2}" y="${(y1 + 8).toFixed(2)}">100%</text>` : '') + // a short chart (a widget): 50% alone
+      `<path class="ca-sp-cdf" d="${line}"/>` +
+      `<line class="ca-sp-axis" x1="${x0}" x2="${x1}" y1="${y0}" y2="${y0}"/>` +
+      `<g class="ca-sp-now"><line x1="${nx.toFixed(2)}" x2="${nx.toFixed(2)}" y1="${y1}" y2="${y0 + effects.length * LN}"/>` +
+      `<circle cx="${nx.toFixed(2)}" cy="${ny.toFixed(2)}" r="3"/>` +
+      `<text x="${(nx + (right ? -5 : 5)).toFixed(2)}" y="${Math.max(y1 + 9, Math.min(y0 - 4, ny - 5)).toFixed(2)}" text-anchor="${right ? 'end' : 'start'}">${pc(c.by)}</text></g>`;
+    // the time axis: since the last one left
+    const step = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200].find((s) => span / s <= Math.max(3, Math.floor((x1 - x0) / 100))) || 7200;
+    let axis = '';
+    for (let s = 0; s <= span + 1e-9; s += step) axis += `<text x="${X(s).toFixed(2)}" y="${HH - 6}" text-anchor="${s === 0 ? 'start' : 'middle'}">${s === 0 ? '0' : F().span(s)}</text>`;
+    // and the latest, at the end — unless a round moment is already close to it
+    if (span % step > step * 0.45) axis += `<text x="${x1}" y="${HH - 6}" text-anchor="end">${F().span(span)}</text>`;
+    // the effects, on the same axis: each from when it started (or 0) to when it ends, with what it
+    // multiplies your income by (a click effect at your click rate)
+    const ly = (i) => y0 + 4 + i * LN;
+    const bh = LN - 3;
+    let bars = '';
+    effects.forEach((b, i) => {
+      const y = ly(i);
+      const from = Math.max(0, c.elapsed - Math.max(0, b.maxSecs - b.secs));
+      const end = c.elapsed + b.secs;
+      const em = T().effectiveMult(b.name);
+      const m = em ? em.mult : b.cps;
+      const clicky = b.click !== 1;
+      const why = clicky
+        ? em && em.rate > 0
+          ? ` — ×${mx(b.click)} a click, at your ${em.rate.toFixed(em.rate < 10 ? 1 : 0)} clicks/s${b.cps !== 1 ? ` and ×${mx(b.cps)} CpS` : ''}`
+          : ` — ×${mx(b.click)} a click; you haven’t been clicking, so no more income`
+        : '';
+      const label = `${esc(b.name)} · ×${mx(m)} income · ${when(b.secs)}${end > span + 0.5 ? ' →' : ''}`;
+      const tx = Math.min(X(from) + 3, x1 - 150);
+      bars +=
+        `<g class="ca-sp-lane ${buffKind(b)}" data-tip="${esc(`${b.name}: ×${mx(m)} your income${why}; ${when(b.secs)} left`)}">` +
+        `<rect class="track" x="${x0}" y="${y}" width="${x1 - x0}" height="${bh}"/>` +
+        `<rect class="left" x="${X(from).toFixed(2)}" y="${y}" width="${Math.max(1, X(end) - X(from)).toFixed(2)}" height="${bh}"/>` +
+        `<text x="${Math.max(x0 + 3, tx).toFixed(2)}" y="${y + bh - 2}">${label}</text></g>`;
+    });
+    // the hover readout
+    const hf = hover[type];
+    if (opts.hover !== false && hf !== null && hf !== undefined) {
+      const s = span * hf;
+      const hx = X(s);
+      plotSvg +=
+        `<g class="ca-sp-hover"><line x1="${hx.toFixed(2)}" x2="${hx.toFixed(2)}" y1="${y1}" y2="${y0}"/>` +
+        `<text x="${Math.min(x1 - 4, Math.max(x0 + 4, hx + (hf > 0.6 ? -6 : 6))).toFixed(2)}" y="${y0 - 8}" text-anchor="${hf > 0.6 ? 'end' : 'start'}">${when(s)} after the last: ${pc(c.cdf(s))} by then</text></g>`;
+    }
+    const sized = opts.width ? `width:${WW}px;` : '';
+    return (
+      `<svg class="ca-sp-chart ca-sp-cycle${opts.width ? ' ca-sp-fixed' : ''}" viewBox="0 0 ${WW} ${HH}" preserveAspectRatio="none" style="${sized}height:${HH}px"${opts.hover === false ? '' : ` data-sp-chart="${type}"`}>` +
+      plotSvg +
+      `<g class="ca-sp-ticks">${axis}</g>` +
+      bars +
+      '</svg>'
+    );
+  }
+
   /** A type's card body (the Stats page). */
   function html(type) {
     const d = T().distribution(type, 120);
@@ -146,45 +241,31 @@ CA.UI.SpawnView = (() => {
       })
       .join('');
     const whatIf = without[type].length ? T().meanWithout(type, without[type]) : null;
-    const nextLine =
-      `Next cycle at today’s factors: ${when(d.next.min)}–${when(d.next.max)}, on average ${when(d.next.mean)}` +
-      (whatIf !== null ? ` — <b>without ${esc(without[type].join(', '))}: ${when(whatIf)}</b> (${whatIf > d.next.mean ? '+' : '−'}${when(Math.abs(whatIf - d.next.mean))})` : '');
-    const effects = type === 'golden' ? T().buffsWithGolden() : [];
-    const override = d.override === 'chain' ? ' A cookie chain is going: the next comes within seconds.' : d.override === 'hoard' ? ' Gold hoard: they come almost at once.' : d.override === 'season' ? ' Reindeer season: they come almost at once.' : '';
+    const whatIfLine =
+      whatIf !== null
+        ? `<div class="ca-sp-note">From the next one, on average <b>${when(d.next.mean)}</b> — without ${esc(without[type].join(', '))}: <b>${when(whatIf)}</b> (${whatIf > d.next.mean ? '+' : '−'}${when(Math.abs(whatIf - d.next.mean))})</div>`
+        : '';
+    const effects = type === 'golden' ? T().buffs() : [];
+    const override = d.override === 'chain' ? 'A cookie chain is going: the next comes within seconds.' : d.override === 'hoard' ? 'Gold hoard: they come almost at once.' : d.override === 'season' ? 'Reindeer season: they come almost at once.' : '';
+    const freq = factors ? `<div class="ca-sp-factors"><span>${type === 'golden' ? 'Golden cookie' : 'Reindeer'} frequency effects:</span>${factors}</div>${whatIfLine}` : '';
+    const wrath = type === 'golden' ? tile('Wrath chance', pc(d.wrathChance), 'that it’s a wrath cookie') : '';
     if (d.spawned)
       return (
-        `<div class="ca-stats">${tile(`Next ${name}`, 'on screen', 'pop it! — the timer starts again when it leaves')}${type === 'golden' ? tile('Wrath chance', pc(d.wrathChance), 'that the next is a wrath cookie') : ''}</div>` +
-        `<div class="ca-sp-note">${nextLine}.${override}</div>` +
+        `<div class="ca-stats">${tile(`Next ${name}`, 'on screen', 'pop it! — the timer starts again when it leaves')}${wrath}</div>` +
         (effects.length ? `<div class="ca-sp-chips">${effects.map((b) => `<span class="ca-sp-chip">${esc(b.name)} <b>${when(b.secs)}</b></span>`).join('')}</div>` : '') +
-        (factors ? `<div class="ca-sp-factors"><span>Making them come sooner:</span>${factors}</div>` : '')
+        (override ? `<div class="ca-sp-note">${override}</div>` : '') +
+        freq
       );
     const w = d.wait;
-    const within = [10, 30, 60, 300].map((s) => `<span class="ca-sp-chip" data-tip="${esc(`The chance a ${name} appears within ${F().span(s)} from now`)}">${F().span(s)} <b>${pc(w.within(s))}</b></span>`).join('');
-    const pcts = [
-      ['soonest', w.soonest],
-      ['10%', w.pct(10)],
-      ['25%', w.pct(25)],
-      ['median', w.median],
-      ['75%', w.pct(75)],
-      ['90%', w.pct(90)],
-      ['latest', w.latest],
-    ]
-      .map(([k, v]) => `<span class="ca-sp-chip" data-tip="${esc(k === 'soonest' || k === 'latest' ? `The ${k} it can come` : `${k} of the time it has come by then`)}">${k} <b>${when(v)}</b></span>`)
-      .join('');
     return (
       '<div class="ca-stats">' +
-      tile('Expected wait', when(w.mean), `± ${when(w.sd)} (the mean)`) +
-      tile('Median', when(w.median), 'even odds by then') +
-      tile('Most likely', when(w.mode), 'the single likeliest moment') +
-      tile('Within a minute', pc(w.within(60)), `this second: ${pc(w.hazard)}`) +
-      (type === 'golden' ? tile('Wrath chance', pc(d.wrathChance), 'that it’s a wrath cookie') : '') +
+      tile('Expected wait', when(w.mean), 'on average, from now') +
+      tile('Odds so far', pc(d.cycle.by), `of the time one has come by ${when(d.cycle.elapsed)} after the last`) +
+      wrath +
       '</div>' +
-      chart(type, w, effects) +
-      `<div class="ca-sp-legend"><span class="pdf"></span>how likely each moment is <span class="cdf"></span>chance it has come by then <span class="band"></span>half the time (25–75%) <span class="band2"></span>80% (10–90%) <span class="lane"></span>timer bars: the next one, the effects running${w.range < w.latest - 0.5 ? ` · drawn to ${when(w.range)} (99.9%) — the latest is ${when(w.latest)}` : ''}</div>` +
-      `<div class="ca-sp-chips">${pcts}</div>` +
-      `<div class="ca-sp-chips">${within}</div>` +
-      `<div class="ca-sp-note">This cycle: ${when(d.cycle.min)}–${when(d.cycle.max)}, fixed when the last one left; ${when(d.cycle.elapsed)} in. ${nextLine}.${override}</div>` +
-      (factors ? `<div class="ca-sp-factors"><span>Making them come sooner:</span>${factors}</div>` : '<div class="ca-sp-note">Nothing is making them come sooner — Lucky day, Serendipity, golden clovers, Muridal and Mokalsium all would.</div>')
+      cycleChart(type, d, effects) +
+      (override ? `<div class="ca-sp-note">${override}</div>` : '') +
+      freq
     );
   }
 
@@ -226,5 +307,5 @@ CA.UI.SpawnView = (() => {
     return true;
   }
 
-  return { html, chart, sparkline, onMove, onLeave, onClick };
+  return { html, chart, cycleChart, sparkline, onMove, onLeave, onClick };
 })();
