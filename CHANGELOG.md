@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 3.34.0 — 2026-10-27
+
+- **SeasonCompletion sets the dragon and the Pantheon for each stage**, from their profiles (the Dragon page's aura
+  profiles, the Pantheon page's profiles — change those and SeasonCompletion follows):
+  - hunting drops (the first Christmas, Easter, Halloween, Valentine's day): auras **drops** (Mind Over Matter +
+    Dragon Guts), Pantheon **wrinklers** (Skruuia in the diamond slot, the others empty);
+  - the second Christmas, reindeer only: auras **dropsFlight** (Mind Over Matter + Dragonflight);
+  - Business day: auras **dragonFlightHarvest** (Dragonflight + Reaper of Fields), and the Pantheon's **golden** (Vomitrax ·
+    Selebrak · Muridal) once there are worship swaps enough to put all of it in at once.
+  Auras the dragon hasn't trained yet are skipped and come in once trained; without a dragon or a Temple the seasons
+  go on as before. If you've edited SeasonCompletion's code, **Revert to default** picks this up.
+
+
 ## 3.33.0 — 2026-10-27
 
 - **The Dragon page**, in the minigames under the Grimoire: Krumblor's level, the aura in each slot and what it does,
