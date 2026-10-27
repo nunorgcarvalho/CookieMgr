@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## 3.15.1 — 2026-10-27
+
+- **The next golden cookie chart keeps effects that ended.** An effect that ran since the last golden cookie left
+  keeps its bar after it ends, dimmed and marked “ended”, on the same axis, with the multiplier it had — so a
+  cycle's Frenzy, Click frenzy and the rest stay visible until the next golden cookie resets the axis. (CookieMgr
+  remembers the effects it saw for an hour: `CA.Timers.effectsSince(secs)`; ones that ran while it wasn't loaded
+  can't show.)
+- **The expected moment, on the chart**: a dashed green line at now + the expected wait, labelled with how long
+  until it, and the yellow now line labelled with the time since the last golden cookie — on the Stats page and the
+  Next golden cookie widget.
+- **Golden cookie frequency**: how many times more often golden cookies come than with nothing helping — every
+  factor the game's spawn timer uses (Lucky day, Serendipity, Golden goose egg, Heavenly luck, Green yeast
+  digestives, the Arcane aura, Sugar blessing, the season's star upgrade, garden plants, Muridal, Mokalsium,
+  Selebrak…) multiplied together. A tile on the Stats page, in the Next golden cookie widget's numbers, and the
+  word `golden.frequency`. (The game fixes a cycle's timing when the last cookie leaves, so it counts from the next.)
+  The frequency effects' chips read the same way now: Lucky day ×2 (twice as often), not ×0.5 (the time between).
+
 ## 3.15.0 — 2026-10-27
 
 - **Effect timers, redrawn.** One slim bar per effect running, in the effect's own colour (Frenzy amber, Click frenzy

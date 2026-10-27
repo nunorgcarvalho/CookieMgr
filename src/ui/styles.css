@@ -6128,6 +6128,31 @@ body.ca-has-storebar #products {
   stroke: rgba(0, 0, 0, 0.85);
   stroke-width: 3px;
 }
+/* this cycle's chart: the expected moment, and the time since the last one at the now line's foot */
+#CookieMgrMenu .ca-sp-expect line,
+#CookieMgrWidgets .ca-sp-expect line {
+  stroke: #7dff7a;
+  stroke-width: 1.2;
+  stroke-dasharray: 4 3;
+  vector-effect: non-scaling-stroke;
+}
+#CookieMgrMenu .ca-sp-chart .ca-sp-expect text,
+#CookieMgrWidgets .ca-sp-chart .ca-sp-expect text {
+  fill: #7dff7a;
+  font-weight: bold;
+  paint-order: stroke;
+  stroke: rgba(0, 0, 0, 0.85);
+  stroke-width: 3px;
+}
+#CookieMgrMenu .ca-sp-chart .ca-sp-now .ca-sp-since,
+#CookieMgrWidgets .ca-sp-chart .ca-sp-now .ca-sp-since {
+  font-weight: normal;
+}
+/* an effect that has ended (this cycle's chart keeps it) */
+#CookieMgrMenu .ca-sp-lane.ended,
+#CookieMgrWidgets .ca-sp-lane.ended {
+  opacity: 0.45;
+}
 /* the timer bars under the spawn chart */
 #CookieMgrMenu .ca-sp-lane .track,
 #CookieMgrWidgets .ca-sp-lane .track {

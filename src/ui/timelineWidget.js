@@ -4,8 +4,9 @@
 //   Golden timeline     everything on one time axis from now: when the next golden cookie comes (its
 //                       odds over time, the soonest-to-latest window, the mean), each effect running with
 //                       its time left and the chance a golden cookie comes before it ends
-//   Next golden cookie  the countdown and the odds: expected, median, the chance within a minute — and the
-//                       chart: this cycle's cumulative chance, a line sweeping across it at now
+//   Next golden cookie  the countdown and the odds: expected, median, the chance within a minute, the
+//                       frequency (× vs nothing helping) — and the chart: this cycle's cumulative
+//                       chance, a line sweeping across it at now
 //
 // (Effect timers, a bar per effect running, is its own widget: ui/effectTimers.js.)
 // Each shows what you tick in its settings (numbers, chart, effect bars), resizes freely
@@ -45,6 +46,7 @@ CA.UI.TimelineWidget = (() => {
       `<span data-tip="Even odds by then"><em>median</em><b>${when(w.median)}</b></span>` +
       `<span data-tip="The chance one comes within a minute (this second: ${esc(pc(w.hazard))})"><em>≤ 1 min</em><b>${pc(w.within(60))}</b></span>` +
       `<span data-tip="The soonest it can come, and the latest"><em>window</em><b>${when(w.soonest)}–${when(w.latest)}</b></span>` +
+      `<span data-tip="${esc(`How many times more often golden cookies come than with nothing helping (no upgrades, garden, spirits, aura…)${d.factors.length ? `: ${d.factors.map((x) => x.name).join(', ')}` : ''} — counted from the next one`)}"><em>frequency</em><b>×${Math.round(d.frequency * 100) / 100}</b></span>` +
       '</div>'
     );
   }
