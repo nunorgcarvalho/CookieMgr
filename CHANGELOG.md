@@ -11,6 +11,23 @@
   widget goes; a kind that takes several loses the newest), and a small **+ Add** button under the tile places
   another.
 
+## 3.23.0 — 2026-10-27
+
+- **Statistics.** The lines under the store's tooltips are now **statistics**: a few lines of algorithmic code — the
+  macro language — that only read the game and end with `return`. In a tooltip, `item` is the building or upgrade
+  hovered, and new `item.*` words read it: `item.price()`, `item.gain()`, `item.payback()`, `item.colour()`,
+  `item.bulk()`, `item.owned()`, `item.wins()`, `item.share()`, `item.clickGain()`, `item.paybackOf(n)`,
+  `item.colourOf(n)`, `item.kind()`. The ten built-in lines are rewritten this way and show exactly what they showed
+  before. A statistic can set `label`, `note` (small print after the value) and `colour` (a payback colour, or one per
+  item of a list), and shows nothing when it doesn't return. It can't act, wait or loop without end, and it stops
+  after 5,000 steps.
+- **Every statistic is a value word**, `stat.<name>(item)`, so macros and other statistics can use it:
+  `wait until stat.payback(Farm) < 600`.
+- The language: **lists** (`[a, b, c]`) anywhere a value goes; **text words** `fmt.number(x)`, `fmt.short(x)`,
+  `fmt.time(s)`, `fmt.pct(x, d)`, `fmt.fixed(x, d)`; `finite(x)` and `known(x)` (yes / no);
+  `paybackActualRatio(seconds)`. `return` is a statistic's keyword.
+- Your own statistics (and your changes to the built-ins) are saved in a new part of the save, `stats`, and a tooltip
+  line can be one of them (`{ stat: id }`). Writing and browsing them gets its own page next.
 ## 3.22.0 — 2026-10-27
 
 - **Add a widget, redrawn.** The picker on the Widgets page is now four shelves — Golden cookies, Minigames, Macros,
