@@ -5,7 +5,8 @@
 //                       odds over time, the soonest-to-latest window, the mean), each effect running with
 //                       its time left and the chance a golden cookie comes before it ends — and what Force
 //                       the Hand of Fate gives over the next casts (features/fthof.js)
-//   Next golden cookie  the countdown and the odds: expected, median, the chance within a minute, the chart
+//   Next golden cookie  the countdown and the odds: expected, median, the chance within a minute — and the
+//                       chart: this cycle's cumulative chance, a line sweeping across it at now
 //   Effect timers       a bar per effect running, its time left, the chance of a golden cookie before it ends
 //
 // Each shows what you tick in its settings (numbers, chart, effect bars, the forecast), resizes freely
@@ -70,7 +71,10 @@ CA.UI.TimelineWidget = (() => {
     if (parts.includes('numbers')) h += numbersHtml(d);
     const wait = d && !d.spawned ? d.wait : null;
     const showChart = parts.includes('chart') && wait;
-    if (showChart || effects.length) {
+    if (showChart && inst.type === 'goldenNext')
+      // this cycle's odds, the now line sweeping across (the Stats page's chart)
+      h += CA.UI.SpawnView.cycleChart('golden', d, effects, { width: widthOf(inst), height: 74, hover: false, lane: 13 });
+    else if (showChart || effects.length) {
       // the bars alone: an axis as long as the longest effect; with the chart, the chart's
       const opts = { width: widthOf(inst), height: 74, hover: false, lane: 13, plot: !!showChart, next: !!wait && (showChart || parts.includes('numbers')) };
       if (!showChart) opts.span = Math.max(10, ...effects.map((e) => e.secs)) * 1.05;
@@ -97,7 +101,7 @@ CA.UI.TimelineWidget = (() => {
         ],
       });
     D('goldenTimeline', 'Golden timeline', 'sparkle', 'Everything golden on one time axis from now: the odds of the next golden cookie, each effect running with its time left and the chance a golden cookie comes before it ends, and what Force the Hand of Fate gives over your next casts. Pick what to show in its settings.');
-    D('goldenNext', 'Next golden cookie', 'sparkle', 'When the next golden cookie comes: on average, the median, the chance within a minute, its window — and its odds over time as a chart (the Stats page’s).');
+    D('goldenNext', 'Next golden cookie', 'sparkle', 'When the next golden cookie comes: on average, the median, the chance within a minute, its window — and this cycle’s odds as a chart, a line sweeping across it as time passes (the Stats page’s).');
     D('effectTimers', 'Effect timers', 'clock', 'A bar per effect running (Frenzy, Click frenzy, building specials…): its time left, and the chance a golden cookie comes before it ends.');
   }
 

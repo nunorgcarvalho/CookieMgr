@@ -165,9 +165,22 @@ CA.Timers = (() => {
   };
 
   /**
+   * This cycle's cumulative chance, counted from when the last one left (not from now): secs since
+   * then → the chance one has come by then — 0 up to minTime, 1 at maxTime (the same curve).
+   */
+  function cycleCdf({ minTime, maxTime }) {
+    const S = curve(minTime, maxTime);
+    const span = S.length - 1;
+    return (secs) => {
+      const k = Math.floor(secs * fps()) - minTime;
+      return k <= 0 ? 0 : k >= span ? 1 : 1 - S[k];
+    };
+  }
+
+  /**
    * Everything about a shimmer type's next appearance — null when it can't come (no timer running:
-   * the Golden switch, out of season): { type, spawned, cycle: { min, max, elapsed } (seconds, as fixed
-   * when the last one left), wait (waitFrom — from now), factors (what's making them more frequent now),
+   * the Golden switch, out of season): { type, spawned, cycle: { min, max, elapsed (seconds, as fixed
+   * when the last one left), cdf(secs since it left) → the chance one has come by then, by (cdf now) }, wait (waitFrom — from now), factors (what's making them more frequent now),
    * next: { min, max, mean } (a fresh cycle at today's factors), override ('chain' | 'hoard' | ''),
    * wrathChance (the next golden cookie being a wrath cookie) }.
    */
@@ -191,7 +204,7 @@ CA.Timers = (() => {
     return {
       type,
       spawned: !!me.spawned,
-      cycle: { min: me.minTime / f, max: me.maxTime / f, elapsed: me.time / f },
+      cycle: { min: me.minTime / f, max: me.maxTime / f, elapsed: me.time / f, cdf: cycleCdf(me), by: cycleCdf(me)(me.time / f) },
       wait: me.spawned ? null : waitFrom(me, bins),
       factors,
       next: { min: nmin / f, max: nmax / f, mean: waitFrom({ time: 0, minTime: nmin, maxTime: nmax }, 2).mean },

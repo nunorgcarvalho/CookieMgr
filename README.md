@@ -415,15 +415,15 @@ checked against Cookie Monster in the real game:
   Goods** (up to 30 minutes) and **Spontaneous Edifice** (the most expensive building it can give) — the bank it
   needs to pay its most, how full yours is, how long until it's there, and what it pays. (Spontaneous Edifice needs
   half the building's price — Cookie Monster asks for twice it; this follows the game.)
-- **Next golden cookie** — when it comes, as statistics, worked out exactly from the game's odds (each frame past
-  its minimum time it appears with chance ((time − min) ÷ (max − min))⁵; checked against the game itself): the
-  expected wait, the median, the most likely moment, the chance within a minute and in this second, the wrath
-  chance; a chart of how likely each moment is and the chance it has come by then (the 25–75% and 10–90% bands
-  shaded, hover for any moment); percentiles and the chance within 10 s, 30 s, 1 min, 5 min; this cycle's bounds.
-  Under the chart, on its time axis, **timer bars**: the next one's window (can't come yet · could come · the
-  mean) and each effect running, with how long it has left and **the chance a golden cookie comes before it ends**
-  (whether a Frenzy can still be stacked). What makes them come sooner (Lucky day, Serendipity, golden clovers,
-  spirits, the dragon…) as chips — click one for the wait without it. At Christmas, the next reindeer too.
+- **Next golden cookie** — when it comes, worked out exactly from the game's odds (each frame past its minimum time it
+  appears with chance ((time − min) ÷ (max − min))⁵; checked against the game itself): the expected wait from now, how
+  far along this cycle's odds it is (0% → 100% as time passes), the wrath chance; and a chart of this cycle — the
+  time since the last one left, from 0 to the latest it can come, against the chance one has come by then — with a
+  dashed line at 50% and a line sweeping across it at now (hover for any moment). Under the chart, from the now
+  line, **timer bars**: each effect running, with how long it has left and **the chance a golden cookie comes
+  before it ends** (whether a Frenzy can still be stacked). **Golden cookie frequency effects** (Lucky day,
+  Serendipity, golden clovers, spirits, the dragon…) as chips — click one for the wait without it. At Christmas,
+  the next reindeer too.
 - **Prestige** — the levels you'd gain by ascending now, how long until the next and how many cookies it takes,
   levels an hour, the CpS the new levels would add, and the total level the Lucky digit / number / payout heavenly
   upgrades need.
@@ -707,7 +707,7 @@ always grab them again). Drag them anywhere; hover for × and ⚙ (its settings)
   chance a golden cookie comes before it ends, and what Force the Hand of Fate gives over your next casts (green: a
   good one, red: a backfire; hover for each). Its settings pick the parts and how many casts ahead.
 - **Next golden cookie** — the countdown in numbers (on average, the median, the chance within a minute, its window)
-  over the odds chart. **Effect timers** — the effect bars alone. Both are the Golden timeline with fewer parts — tick
+  over the Stats page's chart of this cycle's odds, a line sweeping across it. **Effect timers** — the effect bars alone. Both are the Golden timeline with fewer parts — tick
   more in their settings. Click the numbers for the Stats page.
 
 Framed boxes (Quick stats, Latest events) are dragged by their title bar and folded with ▾. **Resize** any widget

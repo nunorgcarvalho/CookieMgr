@@ -31,9 +31,9 @@ assert(Math.abs(wt.pdf.reduce((a, b) => a + b, 0) - wt.cdf[wt.cdf.length - 1]) <
 assert(wt.hazard > 0 && wt.hazard < 1 && Math.abs(wt.within(1) - wt.hazard) < 1e-9, 'the chance in this second');
 CA.UI.Menu.openPage('stats');
 const card = () => doc.querySelector('[data-page="stats"] [data-st-spawn]');
-assert(card() && card().querySelector('[data-sp-chart="golden"] .ca-sp-pdf rect') && card().querySelector('.ca-sp-cdf') && card().querySelector('.ca-sp-mean') && card().querySelector('.ca-sp-median') && card().querySelector('.ca-sp-band'), 'the chart: density, cumulative chance, mean, median, bands');
-assert(/Expected wait/.test(card().textContent) && /Most likely/.test(card().textContent) && /median/.test(card().textContent) && /90%/.test(card().textContent) && /1m 00s|1 min|1m/.test(card().textContent), 'the numbers: expected, most likely, percentiles, within a minute');
-assert(/This cycle: 5m 00s–15m 00s/.test(card().textContent) && /Next cycle at today’s factors/.test(card().textContent), 'this cycle (fixed when the last left) and the next at today’s factors');
+// (v3.12.6 made the card’s chart this cycle’s cumulative chance with a now line — tests/e2e/v3.12.6.test.mjs)
+assert(card() && card().querySelector('[data-sp-chart="golden"] .ca-sp-cdf') && card().querySelector('.ca-sp-now'), 'the chart: cumulative chance, the now line');
+assert(/Expected wait/.test(card().textContent) && /Wrath chance/.test(card().textContent), 'the numbers: expected wait, wrath chance');
 // hover
 const svg = card().querySelector('[data-sp-chart]');
 svg.getBoundingClientRect = () => ({ left: 0, top: 0, width: 640, height: 150 });
@@ -70,19 +70,17 @@ assert(eff.find((b) => b.name === 'Clot').golden > 0.999, 'an effect outlasting 
 assert(Math.abs(V('buff.goldenChance', 'frenzy') - fr.golden) < 1e-12 && V('buff.goldenChance', 'Dragonflight') === 0, 'the word buff.goldenChance (0 when not running)');
 CA.UI.Menu.render();
 const lanes = [...card().querySelectorAll('[data-sp-chart="golden"] .ca-sp-lane')];
-assert(lanes.length === 4 && lanes[0].classList.contains('next') && lanes.some((l) => l.classList.contains('up')) && lanes.some((l) => l.classList.contains('click')) && lanes.some((l) => l.classList.contains('down')), `the bars: the next golden cookie, then each effect (boost, click, malus) — ${lanes.map((l) => l.getAttribute('class')).join(' | ')}`);
+assert(lanes.length === 3 && lanes.some((l) => l.classList.contains('up')) && lanes.some((l) => l.classList.contains('click')) && lanes.some((l) => l.classList.contains('down')), `the bars: each effect (boost, click, malus) — ${lanes.map((l) => l.getAttribute('class')).join(' | ')}`);
 const svgG = card().querySelector('[data-sp-chart="golden"]');
-const ax = (s) => {
-  const x0 = 8;
-  return x0 + ((640 - 16) * Math.min(bw.range, s)) / bw.range;
-};
+const ax = (s) => 8 + ((640 - 16) * Math.min(900, s)) / 900; // this cycle's axis: 0 → 15 min since the last
 const frPc = `${(fr.golden * 100).toFixed(fr.golden < 0.1 ? 1 : 0)}%`;
 const frLane = lanes.find((l) => /Frenzy/.test(l.textContent));
 const frW = Number(frLane.querySelector('.left').getAttribute('width'));
-assert(Math.abs(8 + frW - ax(60)) < 0.05, `the Frenzy bar ends at 60 s on the chart's own axis (x ${(8 + frW).toFixed(1)} vs ${ax(60).toFixed(1)})`);
+const frX = Number(frLane.querySelector('.left').getAttribute('x'));
+assert(Math.abs(frX - ax(330)) < 0.05 && Math.abs(frX + frW - ax(390)) < 0.05, `the Frenzy bar runs from now (330 s in) to 60 s later on the chart's own axis (x ${frX.toFixed(1)}–${(frX + frW).toFixed(1)} vs ${ax(330).toFixed(1)}–${ax(390).toFixed(1)})`);
 assert(/golden cookie before it ends/.test(frLane.textContent) && frLane.textContent.includes(frPc), 'the bar says the chance');
 assert(/→/.test(lanes.find((l) => /Clot/.test(l.textContent)).textContent), 'a bar past the chart’s end: an arrow');
-assert(Number(svgG.getAttribute('viewBox').split(' ')[3]) === 150 + 4 * 14, 'the chart grows a lane per bar');
+assert(Number(svgG.getAttribute('viewBox').split(' ')[3]) === 150 + 3 * 14, 'the chart grows a lane per bar');
 CA.UI.Widgets.render();
 CA.UI.Widgets.tick();
 const orb2 = doc.querySelector('#CookieMgrWidgets .ca-orb-golden');

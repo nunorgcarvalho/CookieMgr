@@ -65,7 +65,7 @@ assert(Number(svg.getAttribute('viewBox').split(' ')[2]) === 300 - 18 && !svg.ha
 const d = CA.Timers.distribution('golden', 60);
 assert(tl.querySelector('.ca-tl-nums').textContent.includes(CA.Format.span(d.wait.mean)), 'the expected wait: the Stats page’s (CA.Timers)');
 const nx = el('goldenNext');
-assert(nx && nx.querySelector('.ca-sp-pdf rect') && !nx.querySelector('.ca-sp-lane.up') && !nx.querySelector('.ca-tl-cast'), 'Next golden cookie: numbers and chart, no effects, no forecast');
+assert(nx && nx.querySelector('.ca-sp-cycle .ca-sp-now') && !nx.querySelector('.ca-sp-lane.up') && !nx.querySelector('.ca-tl-cast'), 'Next golden cookie: numbers and chart, no effects, no forecast');
 const et = el('effectTimers');
 assert(et && et.querySelector('.ca-sp-lane.up') && !et.querySelector('.ca-sp-pdf') && /GC/.test(et.textContent), 'Effect timers: the bars alone, with the chance of a golden cookie');
 // parts, by its settings

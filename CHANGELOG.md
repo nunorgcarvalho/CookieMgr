@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 3.12.6 — 2026-10-27
+
+- **The next golden cookie, as this cycle's odds.** The Stats page's chart is now the time since the last golden
+  cookie left, from 0 to the latest the next can come, against the chance one has come by then (the game's own
+  odds, with your upgrades): a dashed line at 50%, and a line sweeping across it as time passes, labelled with
+  how far along the odds it is. The numbers above it: the expected wait (from now), **Odds so far** (0% → 100%)
+  and the wrath chance. Effects running are bars from the now line, with the chance a golden cookie comes before
+  each ends. The **Next golden cookie** widget draws the same chart; the Golden timeline keeps its wait-from-now.
+- The card is simpler: no more density bars, bands, percentiles, within-N chips, legend or cycle notes.
+  "Making them come sooner" is now **Golden cookie frequency effects** (click one for the wait without it, as before).
 ## 3.12.5 — 2026-10-16
 
 - **Force the Hand of Fate on combos says when combos can’t happen.** Every combo needs a second golden cookie

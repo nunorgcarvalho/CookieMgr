@@ -78,7 +78,7 @@ assert(st() && st().querySelectorAll('.ca-meter').length >= 5 && /Lucky!/.test(s
 const lucky = CA.GoldenMath.lucky().bank;
 assert(st().querySelector('.ca-meter .ca-meter-top span').textContent === CA.Format.beautify(lucky), 'a meter shows the bank it needs');
 // v3.8: the odds strip became a chart of the whole distribution (ui/spawnView.js)
-assert(/Next golden cookie/.test(st().textContent) && st().querySelector('[data-sp-chart="golden"] .ca-sp-pdf rect') && st().querySelector('.ca-sp-cdf'), 'the next golden cookie, with its odds over time');
+assert(/Next golden cookie/.test(st().textContent) && st().querySelector('[data-sp-chart="golden"] .ca-sp-now') && st().querySelector('.ca-sp-cdf'), 'the next golden cookie, with its odds over time');
 assert(/If you ascended now/.test(st().textContent) && /Still to collect/.test(st().textContent), 'prestige, what’s left to collect');
 Game.cookies = lucky * 2;
 CA.UI.StatsPage.sync();
