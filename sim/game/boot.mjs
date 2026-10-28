@@ -199,6 +199,7 @@ export async function bootGame({ seed = 1, fps = 30, start, save = null, quiet =
   Game.fps = fps;
   run("Game.Loader = new Loader(); Game.Loader.domain = Game.resPath + 'img/';", 'sim:loader');
   Game.Init();
+  Game.fps = fps; // Game.Init sets it back to the game's 30
   // a save (Options → Export save, mods' data included) loads as the game loads an import
   if (save) Game.LoadSave(String(save).trim());
   Game.Loop = noop;

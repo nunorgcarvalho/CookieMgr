@@ -3,6 +3,21 @@
 The simulator is versioned apart from the add-on (`SIM_VERSION` in `sim.mjs`, `sim-v*` tags). Each entry
 says which add-on version it was brought in step with.
 
+## 0.6.0 — 2026-10-28 (add-on v3.39.0)
+
+- **The Garden page's model, checked against the real game.** `models/gardenExact.mjs` keeps each of the
+  Garden page's gardeners in the game's own garden code (planting, harvesting and the soil through the
+  game's functions, by the model's rules) and reads the golden cookie frequency bonus off the game every
+  simulated second, in the model's bookkeeping. The experiment `garden-frequency-exact` runs gardeners ×
+  seeds in parallel and prints them beside the model. On the level-8 plot, 1000 h × 3 seeds each, every
+  gardener's mean is within a point of the model's (clover field +73.1% / +73.2%, combos +83.6% / +83.5%,
+  4 nursetulips + combos +85.0% / +85.1%).
+- **Fixed: a nursetulip's CpS cost wasn't boosted by the nursetulips next to it** in the garden models
+  (`models/garden.mjs`, `models/gardenFrequency.mjs`) — the game boosts it as it boosts a clover's bonus.
+  With 8 nursetulips (they touch) the Garden page said CpS ×0.904; the game, and now the model, ×0.886.
+- **Fixed: `fps` was ignored** (`createSim({ fps })`, `--fps`): the game's `Game.Init` set it back to 30.
+  The garden only reads the clock, so the exact garden runs at 1 frame a second — 1000 h in ~9 minutes.
+
 ## 0.5.0 — 2026-10-27 (add-on v3.34.0)
 
 - **CookieSimMgr's Garden page: golden cookie frequency over game time, gardener by gardener.** For a
