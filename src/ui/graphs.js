@@ -2,7 +2,8 @@
 // recorded states, and of statistics cards (ui/statsPage.js — the old Stats page, now merged in).
 //
 //   Cookies   CpS (production + clicking, unbuffed line, effects, events) with an averages table,
-//             Actual CpS (what really got baked per second, by source), Cookies baked (cumulative)
+//             Actual CpS (what really got baked per second, by source), Cookies baked (cumulative),
+//             and Income outside CpS (ui/eventsPage.js — on the Events page until v3.48)
 //   Prestige  the prestige statistics, a target, prestige level if you ascended now, levels gained per hour
 //   Golden    what golden cookies and spells pay and the bank it takes, when the next one comes
 //   What if   every Pantheon spirit and dragon aura, the CpS each would bring
@@ -54,8 +55,10 @@ CA.UI.Graphs = (() => {
   // not loaded where the page is hosted without the game, the simulator's GUI: its tabs then don't show)
   const SP = () => CA.UI.StatsPage;
   const cards = (tab) => (SP() ? SP().html(tab) : '');
+  // `parts`: cards below the charts, each with html/mount/unmount/tick
+  const INCOME = () => CA.UI.EventsPage && CA.UI.EventsPage.income;
   const ALL_TABS = [
-    { id: 'cookies', label: 'Cookies', icon: 'cookie', plots: ['cps', 'actual', 'ledgerCum'] },
+    { id: 'cookies', label: 'Cookies', icon: 'cookie', plots: ['cps', 'actual', 'ledgerCum'], parts: () => [INCOME()].filter(Boolean) },
     { id: 'prestige', label: 'Prestige', icon: 'ascend', plots: ['prestige', 'prestigeRate'], top: () => cards('prestige') + targetCardHtml() },
     { id: 'golden', label: 'Golden cookies', icon: 'sparkle', plots: [], top: () => cards('golden') },
     { id: 'whatif', label: 'What if', icon: 'pantheon', plots: [], top: () => cards('whatif') },
@@ -734,6 +737,7 @@ CA.UI.Graphs = (() => {
   let mountedRoot = null;
   let life = null; // the mounted page (CA.UI.Pages.scope)
 
+  const partsOf = (t) => (t.parts ? t.parts() : []);
   const currentTab = () => {
     const t = S().get('graphTab');
     return tabs().find((x) => x.id === t) || tabs()[0];
@@ -751,6 +755,7 @@ CA.UI.Graphs = (() => {
       '</div>' +
       (cur.top ? cur.top() : '') +
       cur.plots.map((id) => plots[id].html()).join('') +
+      partsOf(cur).map((p) => p.html()).join('') +
       (cur.plots.length ? CA.UI.Menu.optionsCard('Options', 'settings', 'graph') : '')
     );
   }
@@ -774,12 +779,14 @@ CA.UI.Graphs = (() => {
     mountedRoot = root;
     life = CA.UI.Pages.scope(root).on('click', onClick).on('input', onTargetInput).on('change', onTargetInput);
     currentTab().plots.forEach((id) => plots[id].mount(root));
+    partsOf(currentTab()).forEach((p) => p.mount(root));
     if (SP()) SP().mount(root);
     refreshTarget();
   }
 
   function unmount() {
     ALL_TABS.forEach((t) => t.plots.forEach((id) => plots[id] && plots[id].unmount()));
+    ALL_TABS.forEach((t) => partsOf(t).forEach((p) => p.unmount()));
     if (SP()) SP().unmount();
     if (life) life.close();
     life = null;
@@ -788,6 +795,7 @@ CA.UI.Graphs = (() => {
 
   function tick() {
     currentTab().plots.forEach((id) => plots[id].tick());
+    partsOf(currentTab()).forEach((p) => p.tick());
     refreshTarget();
   }
 

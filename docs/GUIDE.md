@@ -101,12 +101,15 @@ Everything that happens lands in one **event log**: golden and wrath cookies (wi
 wrinklers popped (with what they gave back — shiny ones too), sugar lumps harvested, achievements unlocked,
 golden-cookie effects starting, stock trades and ascensions. The Events page shows it:
 
+- **Event log** — newest first (a golden cookie that granted an effect instead of cookies shows the CpS it added), with a chip per event type to show or hide it (with counts), an **Income only**
+  filter, a search box, and a **CSV** download of whatever is shown.
+
+The Stats page's **Cookies** tab adds it up below its charts:
+
 - **Income outside CpS** — a live table of every source of cookies other than production and clicking, for this
   session, the last 15m / 1h / 1d, or everything: golden cookies, wrath cookies, reindeer, wrinklers, sugar lumps,
   stock trades (net), golden-effect boosts (the extra production from Frenzy & co.) and anything else — with counts,
   cookies, average per event, share of all cookies baked, and when it last happened.
-- **Event log** — newest first (a golden cookie that granted an effect instead of cookies shows the CpS it added), with a chip per event type to show or hide it (with counts), an **Income only**
-  filter, a search box, and a **CSV** download of whatever is shown.
 
 Wrinkler payouts are worked out the way the game does it (what the wrinkler ate × 1.1, with Sacrilegious corruption,
 Dragon Guts, shiny ×3, Wrinklerspawn and Scorn), since the game pays them out with nothing for an add-on to hook.

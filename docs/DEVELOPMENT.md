@@ -95,7 +95,7 @@ src/
     tab.js           the sidebar of page icons on the left beam
     plot.js          the plotting engine every chart uses: bucketing, scales, overlays, tooltips, chips
     graphs.js        the Stats page: Cookies / Prestige / Golden cookies / What if / Misc tabs, the plot specs
-    eventsPage.js    the Events page: income-outside-CpS table and the filterable event log
+    eventsPage.js    the Events page (the filterable event log) and the income-outside-CpS card on Stats → Cookies
     macrosPage.js    the Macros page: built-in cards with settings, the running strip, your macros, the editor
     widgets.js       widgets on the left panel (dragging, sizing, settings, saving) and the Widgets page
     widgetTypes.js   what each widget shows (macro buttons, status bar, stats, events, minigames)

@@ -17,7 +17,11 @@ await sleep(400);
 const CA = w.CookieMgr;
 assert(CA && w.cookieMgr === CA, 'window.CookieMgr still there, window.cookieMgr beside it');
 assert(CA.ID === 'CookieMgr' && Game.mods.CookieMgr, 'the mod id (where the save keeps its data) is unchanged');
+<<<<<<< HEAD
 const loadedNote = g.calls.notify.find((n) => / v\d+\.\d+\.\d+ loaded/.test(n.title));
+=======
+const loadedNote = g.calls.notify.find((n) => /v\d+\.\d+\.\d+ loaded/.test(n.title));
+>>>>>>> 23ccb9b (v3.48.0: Events page leads with the Event log; Income outside CpS moves to Stats → Cookies)
 assert(loadedNote && loadedNote.title.startsWith('cookieMgr'), `the loaded note says cookieMgr (${loadedNote && loadedNote.title})`);
 assert(CA.Stats.toText({ label: 'X', source: 'return 1' }).startsWith('# cookieMgr statistic'), 'statistics export with the new name');
 const old = CA.Stats.fromText('# CookieMgr statistic\n# label: Old one\nreturn 2');
