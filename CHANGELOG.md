@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 3.47.2 — 2026-10-28
+
+- **A new README for new players.** It now says what cookieMgr does, puts the install steps first (bookmarklet,
+  userscript or console, with what to do when it doesn't load), gives a short tour of the pages with fresh
+  screenshots from the game, and lists what's good to know (fair play, where your data lives, updates). The full
+  feature reference moved to [docs/GUIDE.md](docs/GUIDE.md), and building, testing and the project layout to
+  [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md). No change to the add-on itself.
+
 ## 3.47.1 — 2026-10-28
 
 - **Fixed: the bookmarklet, userscript and update check pointed at the old address.** The repo is now
