@@ -17,8 +17,8 @@ const items = $$('#CookieMgrTab [data-tab-item]');
 assert(items.length === 13, `sidebar has one item per page (13), got ${items.length}`);
 assert(
   JSON.stringify(items.map((i) => i.querySelector('.ca-tab-label').textContent)) ===
-    JSON.stringify(['Events', 'Graphs', 'Stats', 'Payback', 'Garden', 'Stock market', 'Pantheon', 'Grimoire', 'Dragon', 'Macros', 'Tooltips', 'Widgets', 'Settings']),
-  'sidebar labels in page order, CPS renamed to Graphs'
+    JSON.stringify(['Events', 'Graphs', 'Stats', 'Payback', 'Garden', 'Stock market', 'Pantheon', 'Grimoire', 'Dragon', 'Macros', 'Statistics', 'Widgets', 'Settings']),
+  'sidebar labels in page order, CPS renamed to Graphs (v3.42: Tooltips → Statistics)'
 );
 assert(items.every((i) => i.querySelector('.ca-tab-icon .ca-ico')), 'every sidebar item has an icon');
 

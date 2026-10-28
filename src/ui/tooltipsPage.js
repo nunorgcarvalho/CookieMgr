@@ -1,6 +1,8 @@
-// The Tooltips page: what CookieMgr adds under the store's tooltips, and every statistic it can add.
+// The Statistics page (page id 'tooltips', its old name): every statistic — the store tooltip's lines,
+// the warnings, the payback modes, yours — to browse, edit and write. The store tooltip's layout is a
+// card on the Settings page (layoutCard; this module's handlers run there too).
 //
-//   In the store tooltip   the layout (ui/storeInsight.js lines), in order — a row per line in fixed
+//   In the store tooltip   (Settings) the layout (ui/storeInsight.js lines), in order — a row per line in fixed
 //                          columns: its name, what it's about, its value now, how a word reads, ↑ ↓ ✕
 //                          (or drag a row); add a built-in, one of yours or any value word; Reset — and
 //                          two live previews drawn by the tooltip's own code: a building you pick, and
@@ -255,6 +257,7 @@ CA.UI.TooltipsPage = (() => {
         if (filter === 'yours' && s.builtin) return false;
         if (filter === 'onscreen' && !onScreen(s)) return false;
         if (filter === 'warnings' && !s.warn) return false;
+        if (filter === 'modes' && !s.mode) return false;
         if (ST().GROUPS.includes(filter) && s.group !== filter) return false;
         return matchesQuery(`${s.label} ${s.key} ${s.desc} ${s.source}`);
       });
@@ -271,16 +274,19 @@ CA.UI.TooltipsPage = (() => {
     const [v, cls] = valueNow(s);
     const c = ctxFor(s.scope);
     const inTt = s.warn ? isWarning(s.id) : inTooltip(s.id);
+    const usedMode = s.mode && CA.Settings.get('ppMode') === s.id;
     const star = C().widgetStar(widgetPreset(s), s.label);
     const call = `stat.${s.key}(${s.scope === 'game' ? '' : 'item'})`;
     return (
       `<div class="ca-st-card${s.builtin ? '' : ' yours'}" data-st-card="${esc(s.id)}">` +
-      `<div class="ca-st-head"><b class="ca-st-name">${esc(s.label)}</b>${kindTag(s.scope)}${s.warn ? `<span class="ca-tl-kind ca-tl-colour ${warnColour(s)}" data-tip="A warning: it marks items in the store">⚠ warning</span>` : ''}${s.builtin ? (s.customized ? '<span class="ca-tl-kind yours" data-tip="A built-in you’ve changed (Edit → Reset brings back the original)">changed</span>' : '') : '<span class="ca-tl-kind yours">yours</span>'}${star}</div>` +
+      `<div class="ca-st-head"><b class="ca-st-name">${esc(s.label)}</b>${kindTag(s.scope)}${s.warn ? `<span class="ca-tl-kind ca-tl-colour ${warnColour(s)}" data-tip="A warning: it marks items in the store">⚠ warning</span>` : ''}${s.mode ? '<span class="ca-tl-kind ca-st-modetag" data-tip="A payback mode: it sets income (what payback periods count in) and returns what the item adds to it">payback mode</span>' : ''}${s.builtin ? (s.customized ? '<span class="ca-tl-kind yours" data-tip="A built-in you’ve changed (Edit → Reset brings back the original)">changed</span>' : '') : '<span class="ca-tl-kind yours">yours</span>'}${star}</div>` +
       `<div class="ca-st-live"><span>${c ? esc(aboutName(c)) : 'the game'}</span><b class="${cls}" data-st-val="${esc(s.id)}">${v}</b></div>` +
       `<div class="ca-st-desc">${esc(s.desc || '')}</div>` +
       codeHtml(s.source) +
       '<div class="ca-st-actions">' +
-      (s.warn
+      (s.mode
+        ? `<button type="button" class="ca-chip${usedMode ? ' on' : ''}" data-st-mode="${esc(s.id)}" data-tip="${usedMode ? 'The payback mode in use (the Payback page’s)' : 'Make it the payback mode: every payback period counts in it'}">${usedMode ? '✓ the payback mode' : '+ use as the payback mode'}</button>`
+        : s.warn
         ? `<button type="button" class="ca-chip${inTt ? ' on' : ''}" data-st-tt="${esc(s.id)}" data-tip="${inTt ? 'Stop this warning' : 'Use this warning (at the end of the list)'}">${inTt ? '✓ warning on' : '+ use as a warning'}</button>`
         : `<button type="button" class="ca-chip${inTt ? ' on' : ''}" data-st-tt="${esc(s.id)}" data-tip="${inTt ? 'Take it out of the store tooltip' : 'Add it to the store tooltip, at the end'}">${inTt ? '✓ in the tooltip' : '+ add to the tooltip'}</button>`) +
       `<button type="button" class="ca-chip" data-st-edit="${esc(s.id)}" data-tip="${s.builtin ? 'Change it: its label, code, how it reads (Reset brings back the original)' : 'Change it'}">${I('edit', 11)} ${s.builtin ? 'Customise' : 'Edit'}</button>` +
@@ -301,7 +307,8 @@ CA.UI.TooltipsPage = (() => {
     return (
       chip('all', 'All', all.length) +
       ST()
-        .GROUPS.map((g) =>
+        .GROUPS.filter((g) => g !== 'Payback modes')
+        .map((g) =>
           chip(
             g,
             g,
@@ -314,6 +321,12 @@ CA.UI.TooltipsPage = (() => {
         'Warnings',
         n((s) => s.warn),
         'Statistics that mark items in the store'
+      ) +
+      chip(
+        'modes',
+        'Payback modes',
+        n((s) => s.mode),
+        'What payback periods count in: each sets an income and returns what an item adds to it'
       ) +
       chip(
         'yours',
@@ -427,7 +440,18 @@ CA.UI.TooltipsPage = (() => {
 
   // ---- the page ---------------------------------------------------------------------------------
 
-  const html = () => layoutCard() + browseCard();
+  /** Where the tooltip's layout is now: a note under the catalog. */
+  const layoutNote = () =>
+    `<div class="ca-card-note">Which statistics show under the store’s tooltips, and the warnings, are set on ${C().link('the Settings page', 'settings')} (Store tooltips).</div>`;
+  const html = () => browseCard() + layoutNote();
+  /** Opens the page on a shelf: 'modes' (or 'Payback modes'), 'warnings', a group… */
+  function showGroup(g) {
+    filter = g === 'Payback modes' ? 'modes' : g;
+    tab = 'stats';
+    query = '';
+    if (SE().isOpen()) SE().close();
+    CA.UI.Menu.openPage('tooltips');
+  }
 
   /** Everything again (after a change): morphed, so focus and open menus stay. */
   function refresh() {
@@ -510,7 +534,7 @@ CA.UI.TooltipsPage = (() => {
       });
     }
     const b = e.target.closest(
-      '[data-tl-opt],[data-st-tab],[data-st-filter],[data-st-tt],[data-st-dup],[data-st-del],[data-st-edit],[data-st-new],[data-st-paste],[data-st-pasteopen]'
+      '[data-tl-opt],[data-st-mode],[data-st-tab],[data-st-filter],[data-st-tt],[data-st-dup],[data-st-del],[data-st-edit],[data-st-new],[data-st-paste],[data-st-pasteopen]'
     );
     if (!b) return;
     e.stopPropagation();
@@ -521,6 +545,11 @@ CA.UI.TooltipsPage = (() => {
       return;
     }
     CA.Util.sound('snd/tick.mp3');
+    if (d.stMode) {
+      CA.Settings.set('ppMode', d.stMode);
+      refresh();
+      return;
+    }
     if (d.stTab) {
       tab = d.stTab;
       CA.UI.Menu.render();
@@ -768,8 +797,8 @@ CA.UI.TooltipsPage = (() => {
 
   function init() {
     defineWidget();
-    CA.UI.Pages.register({ id: 'tooltips', label: 'Tooltips', icon: 'tag', order: 75, group: 'custom', html, mount, unmount, tick: sync });
+    CA.UI.Pages.register({ id: 'tooltips', label: 'Statistics', icon: 'tag', order: 75, group: 'custom', html, mount, unmount, tick: sync });
   }
 
-  return { init, sync };
+  return { init, sync, mount, unmount, layoutCard, showGroup };
 })();

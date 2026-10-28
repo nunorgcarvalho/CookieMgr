@@ -55,6 +55,7 @@ CA.UI.StatEditor = (() => {
     colour: s.colour || 'none',
     group: s.group || '',
     warn: !!s.warn,
+    mode: !!s.mode,
     source: s.source || '',
   });
 
@@ -102,6 +103,20 @@ CA.UI.StatEditor = (() => {
     return out;
   }
 
+  /** A payback mode's result about the item: the income it sets, the gain it returns, the payback period they make. */
+  function modeHtml(s, c) {
+    const m = ST().runMode(s, c);
+    const F = CA.Format;
+    if (!(m.income > 0)) return '<div class="ca-se-none">As a payback mode: not ready — it sets no income above nothing (set <code>income = …</code>). Until it does, payback periods count in CpS.</div>';
+    const price = c && c.r ? c.r.price : NaN;
+    const short = Math.max(0, price - CA.Payback.bank());
+    const afford = short / m.income;
+    const earn = m.gain > 0 ? price / m.gain : Infinity;
+    const pp = Number.isFinite(earn) && Number.isFinite(price) ? afford + earn : Infinity;
+    const t = (x) => (!Number.isFinite(x) ? 'never' : x <= 0 ? 'now' : F.span(x));
+    return `<div class="ca-se-line ca-se-mode"><span>As a payback mode</span><b>income ${F.beautify(m.income)}/s · gain ${Number.isFinite(m.gain) ? `${F.beautify(m.gain)}/s` : '—'} · payback ${Number.isFinite(pp) ? F.short(pp) : '∞'} <small>(${t(afford)} to afford + ${t(earn)} to earn back)</small></b></div>`;
+  }
+
   function resultHtml() {
     const s = asStat();
     const c = ST().pick(s.scope, item);
@@ -130,6 +145,7 @@ CA.UI.StatEditor = (() => {
             ? `<div class="ca-se-none">No warning about this item (${r.returned ? 'it returned nothing to show' : 'no return'}).</div>`
             : `<div class="ca-se-none">${r.returned ? 'It returned nothing to show (empty), so its line is left out.' : 'No return: its line is left out.'}</div>`;
     const lines = s.source.split('\n');
+    const asMode = s.mode && !r.error ? modeHtml(s, c) : '';
     const trace = (r.trace || [])
       .map(
         (t) =>
@@ -138,6 +154,7 @@ CA.UI.StatEditor = (() => {
       .join('');
     return (
       shows +
+      asMode +
       (trace
         ? `<div class="ca-se-trace"><div class="ca-se-tr-head">What it did <em>${r.steps} step${r.steps === 1 ? '' : 's'}</em></div>${trace}</div>`
         : '') +
@@ -163,14 +180,15 @@ CA.UI.StatEditor = (() => {
         [
           ['', 'a tooltip line'],
           ['yes', 'a warning'],
+          ['mode', 'a payback mode'],
         ],
-        d.warn ? 'yes' : '',
-        `${off} data-tip="A warning marks the store’s items it has something to show about, with a “!” in its color, and a tag in their tooltips"`
+        d.warn ? 'yes' : d.mode ? 'mode' : '',
+        `${off} data-tip="A warning marks the store’s items it has something to show about, with a “!” in its color, and a tag in their tooltips. A payback mode sets income (what payback periods count in) and returns what the item adds to it — pick it on the Payback page"`
       )}</label>` +
       `<label class="ca-field"><span>About</span>${sel(
         'scope',
         ST()
-          .SCOPES.filter((x) => !d.warn || x !== 'game')
+          .SCOPES.filter((x) => !(d.warn || d.mode) || x !== 'game')
           .map((x) => [x, SCOPE_NAMES[x]]),
         d.scope,
         off
@@ -303,6 +321,7 @@ CA.UI.StatEditor = (() => {
       colour: d.colour,
       group: d.group,
       warn: d.warn,
+      mode: d.mode,
       source: d.source,
     };
     if (d.builtin) {
@@ -405,7 +424,9 @@ CA.UI.StatEditor = (() => {
     if (!d.se) return;
     if (d.se === 'warn') {
       draft.warn = el.value === 'yes';
-      if (draft.warn && draft.scope === 'game') draft.scope = 'item';
+      draft.mode = el.value === 'mode';
+      if ((draft.warn || draft.mode) && draft.scope === 'game') draft.scope = 'item';
+      if (draft.mode && !draft.group) draft.group = 'Payback modes';
       if (draft.warn && draft.colour === 'none') draft.colour = 'red';
       item = 'best';
       redraw();

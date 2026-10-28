@@ -9,8 +9,8 @@
 //   Upgrades      the store's upgrades as tiles, ringed in their color, best first; click to buy —
 //                 switches (no payback period) only when the filter chip shows them, grayed
 //   Options       the minimum bulk, the wrinkler bank, "best = what you can afford", the cheap-enough floor
-//   Store tooltips  the tooltip block's two switches (Payback in tooltips, Bank warnings) and a link to
-//                 the Tooltips page (ui/tooltipsPage.js), where its lines are
+//   Store tooltips  the tooltip block's two switches (Payback in tooltips, Bank warnings) and links to
+//                 Settings (which lines show) and the Statistics page (ui/tooltipsPage.js)
 //
 // Payback mode — the page's main setting, at the top: what every payback period counts in (raw CpS,
 // CpS, CpS + clicking, actual income — features/payback.js modes). It's the add-on's: the colors,
@@ -68,15 +68,16 @@ CA.UI.PaybackPage = (() => {
     const chips = P()
       .modes()
       .map((m) => {
-        const ready = m.ready();
-        const inc = ready ? m.income() : NaN;
+        const inc = P().income(m.id);
+        const ready = Number.isFinite(inc);
         const tip = `${m.desc}${ready ? ` Now: ${F().beautify(inc)}/s.` : ' Not ready yet: too little recorded.'}`;
         const cls = `ca-chip${chosen === m.id ? ' on' : ''}${ready ? '' : ' ca-pp-notready'}`;
         return `<button type="button" class="${cls}" data-pp-mode="${esc(m.id)}" data-tip="${esc(tip)}">${esc(m.label)}<small>${ready ? `${F().short(inc)}/s` : '—'}</small></button>`;
       })
       .join('');
     const note = chosen !== used ? `<span class="ca-hint">${esc(P().modeOf(chosen) ? P().modeOf(chosen).label : chosen)} isn’t ready yet (a minute of play recorded): by ${esc(P().mode().label)} until then</span>` : '';
-    return `<span class="ca-pp-modelabel" data-tip="${esc(CA.StatInfo.desc('payback.income'))}">${I('dollar', 12)} Payback mode</span><span class="ca-pp-chips">${chips}</span>${note}`;
+    const edit = `<button type="button" class="ca-chip ca-pp-editmodes" data-pp-editmodes data-tip="Payback modes are statistics: open them on the Statistics page to see their code, change one, or add your own">${I('edit', 11)} edit modes</button>`;
+    return `<span class="ca-pp-modelabel" data-tip="${esc(CA.StatInfo.desc('payback.income'))}">${I('dollar', 12)} Payback mode</span><span class="ca-pp-chips">${chips}${edit}</span>${note}`;
   }
   function bestTiles(t) {
     // in the minimum bulk: what the buyers would buy
@@ -201,12 +202,12 @@ CA.UI.PaybackPage = (() => {
     );
   }
 
-  // the store tooltip's block: its two switches here, the lines on the Tooltips page (ui/tooltipsPage.js)
+  // the store tooltip's block: its two switches here, the lines on the Settings page (ui/tooltipsPage.js layoutCard)
   function tooltipCard() {
     const S = CA.Settings;
     return (
       '<div class="ca-card">' +
-      C().cardHead('Store tooltips', 'search', `<div class="ca-card-meta"><span class="ca-hint">what each line under the tooltips shows, and your own: ${C().link('the Tooltips page', 'tooltips')}</span></div>`) +
+      C().cardHead('Store tooltips', 'search', `<div class="ca-card-meta"><span class="ca-hint">which lines show under the tooltips: ${C().link('Settings', 'settings')} · what each is, and your own: ${C().link('the Statistics page', 'tooltips')}</span></div>`) +
       '<div class="ca-list">' +
       `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('search', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Payback in tooltips</div><div class="ca-row-desc">The block at all (off: the game’s tooltips as they are).</div></div>${C().toggle(!!S.get('storeTooltips'), 'data-pp-opt="storeTooltips"', 'Payback in tooltips')}</div>` +
       `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('bell', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Bank warnings</div><div class="ca-row-desc">A colored “!” on items whose purchase would take your bank below what a Lucky!, Conjure or a Frenzy Lucky! needs.</div></div>${C().toggle(!!S.get('storeWarnings'), 'data-pp-opt="storeWarnings"', 'Bank warnings')}</div>` +
@@ -246,7 +247,7 @@ CA.UI.PaybackPage = (() => {
   }
 
   function onClick(e) {
-    const b = e.target.closest('[data-pp-buy],[data-pp-up],[data-pp-wrink],[data-pp-opt],[data-pp-bulk],[data-pp-mode],[data-pp-pick]');
+    const b = e.target.closest('[data-pp-buy],[data-pp-up],[data-pp-wrink],[data-pp-opt],[data-pp-bulk],[data-pp-mode],[data-pp-pick],[data-pp-editmodes]');
     if (!b) return;
     e.stopPropagation();
     const d = b.dataset;
@@ -261,6 +262,10 @@ CA.UI.PaybackPage = (() => {
       CA.Util.sound('snd/tick.mp3');
       CA.Shop.setMinBulk(Number(d.ppBulk));
       CA.UI.Menu.render();
+      return;
+    } else if (d.ppEditmodes !== undefined) {
+      CA.Util.sound('snd/tick.mp3');
+      CA.UI.TooltipsPage.showGroup('Payback modes');
       return;
     } else if (d.ppMode) {
       CA.Util.sound('snd/tick.mp3');

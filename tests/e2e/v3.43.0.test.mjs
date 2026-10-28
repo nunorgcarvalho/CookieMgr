@@ -2,9 +2,10 @@
 // Payback mode (the Payback page's main setting, ppMode) says what the income is and what a purchase
 // adds to it: raw CpS · CpS (the default, as before) · CpS + clicking · actual income (the Recorder's,
 // over ppActualWindow minutes; a gain scaled by actual ÷ raw CpS). Everything follows it — the table and
-// its colors, the ranking, the store, the item words. Its parts are words (item.timeToAfford,
-// item.earnBack, item.gainIn, item.paybackIn, payback.income…), with built-in statistics; more modes can
-// be added (CA.Payback.defineMode).
+// its colors, the ranking, the store, the item words. A mode is a statistic (flagged mode: its code sets
+// income and returns the item's gain), so the built-ins can be changed and new ones written. Its parts
+// are words (item.timeToAfford, item.earnBack, item.gainIn, item.paybackIn, payback.income…). The
+// Tooltips page is the Statistics page now; the store tooltip's layout moved to Settings.
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
 import { boot, sleep, makeAssert } from '../harness/game.mjs';
 import { cpsModel } from '../harness/cps.mjs';
@@ -47,9 +48,11 @@ w.Date.now = Date.now;
 const later = () => (offset += 6000); // past the 5 s memo
 
 // ---- the modes there are; the default is cps, as before
-assert(P.modes().map((m) => m.id).join() === 'raw,cps,clicking,actual', `four modes (${P.modes().map((m) => m.id)})`);
+assert(P.modes().map((m) => m.id).join() === 'rawCps,cps,cpsClicking,actualIncome', `four modes (${P.modes().map((m) => m.id)})`);
 assert(CA.Settings.get('ppMode') === 'cps' && P.mode().id === 'cps' && value('payback.mode') === 'cps', 'the default: cps');
-assert(CA.StatInfo.label('payback.mode.clicking') === 'CpS + clicking' && CA.StatInfo.desc('payback.mode.actual'), 'each mode is named and explained by CA.StatInfo');
+const modeStat = CA.Stats.get('cpsClicking');
+assert(modeStat && modeStat.mode && modeStat.group === 'Payback modes' && modeStat.label === 'CpS + clicking' && /income =/.test(modeStat.source), 'each mode is a statistic: label, description, code that sets income');
+assert(P.modeOf('raw').id === 'rawCps' && P.modeOf('clicking').id === 'cpsClicking' && P.modeOf('actual').id === 'actualIncome' && P.modeOf('cpsClicking').id === 'cpsClicking', 'short names: raw, clicking, actual');
 
 const farm = () => P.table().buildings[1].Farm;
 let row = farm();
@@ -58,14 +61,15 @@ assert(near(row.pp, Math.max(0, row.price - 50) / C + row.price / row.bonus), 'c
 assert(near(row.afford + row.earn, row.pp) && near(row.gain, row.bonus), 'a row has its parts: afford + earn = pp, and its gain');
 
 // ---- raw CpS
-CA.Settings.set('ppMode', 'raw');
+CA.Settings.set('ppMode', 'rawCps');
+later();
 row = farm();
-assert(row.mode === 'raw' && near(row.gain, row.bonus / 7), `raw: the gain is what it adds to the raw CpS (${row.gain} = ${row.bonus} ÷ 7)`);
+assert(row.mode === 'rawCps' && near(row.gain, row.bonus / 7), `raw: the gain is what it adds to the raw CpS (${row.gain} = ${row.bonus} ÷ 7)`);
 assert(near(row.pp, (row.price - 50) / RAW + row.price / row.gain), 'raw: afford at the raw CpS + price ÷ raw gain');
 assert(near(value('payback.income'), RAW) && near(value('payback.income', 'cps'), C), 'payback.income(): the mode in use’s; payback.income("cps")');
 
 // ---- CpS + clicking
-CA.Settings.set('ppMode', 'clicking');
+CA.Settings.set('ppMode', 'cpsClicking');
 later();
 row = farm();
 const perClick = Game.computedMouseCps;
@@ -79,7 +83,7 @@ P.table();
 assert(asked.includes(300), 'the clicks window is an option (5 minutes)');
 
 // ---- actual income: the gain scaled by actual ÷ raw CpS
-CA.Settings.set('ppMode', 'actual');
+CA.Settings.set('ppMode', 'actualIncome');
 later();
 asked = [];
 row = farm();
@@ -96,19 +100,19 @@ assert(asked.includes(3600), 'the window is an option (1 hour)');
 Game.cookies = 1e12;
 const order = () => P.ranking('building', { bulk: 1 }).map((x) => x.name).join();
 const inActual = order();
-CA.Settings.set('ppMode', 'raw');
+CA.Settings.set('ppMode', 'rawCps');
 assert(order() === inActual, `the same order by raw CpS and by actual income (${inActual})`);
 Game.cookies = 50;
 
 // too little recorded: not ready — the add-on stays on cps, the words say NaN
-CA.Settings.set('ppMode', 'actual');
+CA.Settings.set('ppMode', 'actualIncome');
 recorded = 30;
 later();
 assert(P.mode().id === 'cps' && farm().mode === 'cps', 'under a minute recorded: by cps until it is');
 assert(Number.isNaN(value('payback.income', 'actual')), 'payback.income("actual"): NaN');
 recorded = 1e6;
 later();
-assert(P.mode().id === 'actual', 'a minute recorded: by actual income');
+assert(P.mode().id === 'actualIncome', 'a minute recorded: by actual income');
 
 // ---- the words and statistics: the parts in any mode
 CA.Settings.set('ppMode', 'cps');
@@ -132,7 +136,7 @@ assert(!compiled.errors.length, 'payback.* words compile in a statistic');
 
 // ---- the store follows the mode
 Game.buyMode = 1;
-CA.Settings.set('ppMode', 'raw');
+CA.Settings.set('ppMode', 'rawCps');
 const block = CA.UI.StoreInsight.buildingBlock(Game.Objects.Farm);
 assert(block && block.includes(CA.Format.short(farm().pp)), 'the store tooltip’s Payback period is the raw-CpS one');
 
@@ -141,12 +145,12 @@ CA.Settings.set('ppMode', 'cps');
 CA.UI.Menu.openPage('payback');
 await sleep(100);
 const chips = () => [...doc.querySelectorAll('[data-pp-mode]')];
-assert(chips().map((b) => b.dataset.ppMode).join() === 'raw,cps,clicking,actual', 'a chip a mode, at the top of the page');
+assert(chips().map((b) => b.dataset.ppMode).join() === 'rawCps,cps,cpsClicking,actualIncome', 'a chip a mode, at the top of the page');
 assert(chips().find((b) => b.classList.contains('on')).dataset.ppMode === 'cps', 'the one in use is on');
 assert(chips().every((b) => b.dataset.tip && /\/s/.test(b.textContent)), 'each explains itself and shows its income now');
 chips()[0].click();
 await sleep(100);
-assert(CA.Settings.get('ppMode') === 'raw', 'clicking a chip: that mode');
+assert(CA.Settings.get('ppMode') === 'rawCps', 'clicking a chip: that mode');
 const cell = doc.querySelector('.ca-pp-cell');
 assert(/to afford \+ .* to earn back \(by Raw CpS\)/.test(cell.dataset.tip), `a cell’s tip: its parts, by the mode (${cell.dataset.tip.slice(0, 120)})`);
 const win = doc.querySelector('[data-pp-pick="ppActualWindow"][data-v="15"]');
@@ -155,13 +159,55 @@ await sleep(50);
 assert(CA.Settings.get('ppActualWindow') === '15', 'the Options card sets the actual-income window');
 assert(CA.Settings.definitions().find((d) => d.key === 'ppMode').choices.length === 4, 'the Settings page lists the modes');
 
-// ---- another mode, added later
-P.defineMode({ id: 'double', label: 'Double CpS', desc: 'twice the CpS', order: 60, income: () => 2 * Game.cookiesPs, gain: (x) => 2 * x.bonus });
-assert(CA.Settings.definitions().find((d) => d.key === 'ppMode').choices.some((x) => x.v === 'double'), 'a mode defined later is a choice too');
-CA.Settings.set('ppMode', 'double');
-row = farm();
-assert(row.mode === 'double' && near(row.pp, (row.price - 50) / (2 * C) + row.price / (2 * row.bonus)), 'and works like the others');
+// ---- edit modes: the Statistics page, on its Payback modes shelf
+doc.querySelector('[data-pp-editmodes]').click();
+await sleep(100);
+const cards = () => [...doc.querySelectorAll('[data-st-card]')].map((c) => c.dataset.stCard);
+assert(CA.UI.Menu.currentTab() === 'tooltips', 'edit modes: the Statistics page');
+assert(cards().join() === 'rawCps,cps,cpsClicking,actualIncome', `the Payback modes shelf (${cards()})`);
+const use = doc.querySelector('[data-st-mode="cpsClicking"]');
+use.click();
+await sleep(50);
+assert(CA.Settings.get('ppMode') === 'cpsClicking', 'a mode’s card: use as the payback mode');
+assert(doc.querySelector('[data-st-mode="cpsClicking"]').classList.contains('on'), 'and it says so');
+
+// ---- a built-in mode changed: everything follows
 CA.Settings.set('ppMode', 'cps');
+later();
+const before = farm().pp;
+CA.Stats.update('cps', { source: 'income = 2 * cps()\nreturn 2 * item.gain()' });
+later();
+row = farm();
+assert(row.mode === 'cps' && near(row.pp, (row.price - 50) / (2 * C) + row.price / (2 * row.bonus)), `a built-in mode changed (twice the income, twice the gain): ${before} → ${row.pp}`);
+CA.Stats.remove('cps'); // back to how it came
+later();
+assert(near(farm().pp, before), 'Reset: back to how it came');
+
+// ---- a mode of yours
+const mine = CA.Stats.add({ label: 'Half CpS', mode: true, source: 'income = cps() / 2\nreturn item.gain() / 2' });
+assert(mine.mode && mine.scope === 'item', 'a statistic of yours can be a payback mode');
+assert(CA.Settings.definitions().find((d) => d.key === 'ppMode').choices.some((x) => x.v === mine.id), 'it’s a choice of the setting');
+assert(P.modeOf('halfCps').id === mine.id, 'and has a code name: item.paybackIn("halfCps")');
+CA.Settings.set('ppMode', mine.id);
+later();
+row = farm();
+assert(row.mode === mine.id && near(row.pp, (row.price - 50) / (C / 2) + row.price / (row.bonus / 2)), 'and works like the others');
+assert(CA.Stats.fromText(CA.Stats.toText(mine)).mode === true, 'shared as text, it stays a mode');
+CA.Stats.remove(mine.id);
+later();
+assert(P.mode().id === 'cps', 'deleted: back to cps');
+
+// ---- the tooltip's layout is on the Settings page now
+CA.UI.Menu.openPage('settings');
+await sleep(100);
+assert(doc.querySelector('[data-tl-lines]') && doc.querySelector('[data-tl-warns]'), 'Settings: the store tooltip’s lines and warnings');
+const delBtn = doc.querySelector('[data-tl-del="0"]');
+const n0 = CA.UI.StoreInsight.lines().length;
+delBtn.click();
+await sleep(50);
+assert(CA.UI.StoreInsight.lines().length === n0 - 1, 'and they work there (✕ takes a line out)');
+CA.UI.StoreInsight.setLines(null);
+assert(CA.UI.Pages.get('tooltips').label === 'Statistics', 'the Tooltips page is the Statistics page');
 
 R.recent = recent;
 Date.now = realNow;

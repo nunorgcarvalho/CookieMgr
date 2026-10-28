@@ -7601,13 +7601,14 @@ CA.Payback = (() => {
   // ranking) asks for the buildings you can buy, at the amount you'd buy, and the store's upgrades;
   // the full table (the colors, the Payback page) for every building at ×1, ×10 and ×100 — Cookie
   // Monster's color scale ranks all sixty. Whatever has been measured is kept until the state changes.
+  let gens = 0; // caches made so far (a mode's results are kept for one)
   let cache = null; // { key, t, cps, b: { 'name|n': income }, bx: { 'name|n': { raw, mouse } }, u: { name: { bonus, raw, mouse, won } }, won: { 'name|n': [...] } }
 
   function fresh() {
     const k = structKey();
     const moved = cache ? Math.abs((Game.cookiesPs || 0) - cache.cps) / Math.max(1e-9, Math.abs(cache.cps)) : 1;
     // a real change of CpS (a god, an aura, a lump…): now; a drift (the god of Ages wobbles it every frame): once a second
-    if (!cache || cache.key !== k || moved > 1e-3 || (moved > 0 && Date.now() - cache.t > 1000)) cache = { key: k, t: Date.now(), cps: Game.cookiesPs, b: {}, bx: {}, u: {}, won: {} };
+    if (!cache || cache.key !== k || moved > 1e-3 || (moved > 0 && Date.now() - cache.t > 1000)) cache = { key: k, t: Date.now(), gen: ++gens, cps: Game.cookiesPs, b: {}, bx: {}, u: {}, won: {} };
     return cache;
   }
   let calls = 0; // CpS computations so far (for the tests' and the simulator's benefit)
@@ -7693,11 +7694,11 @@ CA.Payback = (() => {
   /** What n of a building would add, every way a payback mode counts it: { kind, bonus (CpS), raw (raw CpS), mouse (per click), won }. */
   function buildingWorth(name, n = 1, c = fresh()) {
     const b = buildingNamed(name);
-    if (!b) return { kind: 'building', bonus: 0, raw: 0, mouse: 0, won: [] };
+    if (!b) return { kind: 'building', name, n, bonus: 0, raw: 0, mouse: 0, won: [] };
     ensure(c, [[b.name, n]], []);
     const k = `${b.name}|${n}`;
     const x = c.bx[k] || { raw: c.b[k], mouse: 0 };
-    return { kind: 'building', bonus: c.b[k], raw: x.raw, mouse: x.mouse, won: c.won[k] || [] };
+    return { kind: 'building', name: b.name, n, bonus: c.b[k], raw: x.raw, mouse: x.mouse, won: c.won[k] || [] };
   }
 
   // ---- payback modes ------------------------------------------------------------------------------
@@ -7706,41 +7707,65 @@ CA.Payback = (() => {
   //
   //     PP = max(price − bank, 0) ÷ income + price ÷ gain        (time to afford + time to earn it back)
   //
-  // A mode says what the income is, and what a purchase's worth (worth: { kind, bonus — the CpS it
-  // adds, raw — the raw CpS it adds, mouse — what it adds to a click }) adds to it:
-  //   raw       the game's raw CpS (no buffs, no golden switch…): steady, whatever's running now
-  //   cps       the CpS the game shows now, buffs and all (Cookie Monster's; the default)
-  //   clicking  CpS + your clicks a second (averaged over the last ppClickWindow seconds) × a click
-  //   actual    what you've actually taken in (the Recorder's baked cookies: clicking, golden cookies,
-  //             wrinklers…) averaged over the last ppActualWindow minutes of play, projected forward;
-  //             what a purchase adds scales with it: its raw gain × actual ÷ raw CpS (take in 10× your
-  //             raw CpS and what it adds to your raw CpS counts 10×)
-  // In raw and cps an upgrade that makes clicks stronger still counts its clicks at your click rate
-  // (clickRate, the last 10 s), as it always has. A mode that isn't ready (actual income with under a
-  // minute recorded) leaves the add-on on cps until it is. More can be added: defineMode.
-  // History is only read; nothing is predicted.
+  // A payback mode is a statistic (features/stats.js, flagged `mode`, on the Payback modes shelf): its
+  // code, about the item, sets `income` and returns the item's gain — so the built-in ones can be
+  // changed, copied, and new ones written like any other statistic. The built-ins:
+  //   rawCps        the game's raw CpS (no buffs, no golden switch…): steady, whatever's running now
+  //   cps           the CpS the game shows now, buffs and all (Cookie Monster's; the default)
+  //   cpsClicking   CpS + your clicks a second (over the last ppClickWindow seconds) × a click
+  //   actualIncome  what you've actually taken in (the Recorder's baked cookies) over the last
+  //                 ppActualWindow minutes of play, projected forward; a gain is its raw gain ×
+  //                 actual ÷ raw CpS (take in 10× your raw CpS and what it adds counts 10×)
+  // "raw", "clicking" and "actual" name them too. A mode is ready when its income is known (actual
+  // income: once a minute is recorded); the one chosen (ppMode) is used while it's
+  // ready, cps otherwise — and without any (no statistics), Cookie Monster's formula. A mode's
+  // results are kept for a second. History is only read; nothing is predicted.
 
-  const modes = [];
-  /**
-   * Adds a mode (or replaces one): { id, label, short, desc, order, income() → cookies a second,
-   * gain(worth) → what a purchase adds to it, ready() → whether it can be worked out now }.
-   */
-  function defineMode(m) {
-    const i = modes.findIndex((x) => x.id === m.id);
-    if (i >= 0) modes.splice(i, 1);
-    modes.push({ order: 50, ready: () => true, short: m.label, ...m });
-    modes.sort((a, b) => a.order - b.order);
-    if (CA.StatInfo) CA.StatInfo.define(`payback.mode.${m.id}`, { label: m.label, desc: m.desc });
-    return m;
+  const ALIASES = { raw: 'rawCps', clicking: 'cpsClicking', actual: 'actualIncome' };
+  // Cookie Monster's formula, for when no mode statistic can be had
+  const LEGACY = { id: 'cps', key: 'cps', label: 'CpS', desc: '', legacy: true };
+  const modeStats = () => (CA.Stats && typeof CA.Stats.modes === 'function' ? CA.Stats.modes() : []);
+  const asMode = (st) => ({ id: st.id, key: st.key, label: st.label, desc: st.desc, builtin: !!st.builtin, stat: st });
+  /** The payback modes there are (the mode statistics): [{ id, key, label, desc, builtin, stat }]. */
+  const modes = () => modeStats().map(asMode);
+  /** A mode by its id, its code name or a short name (raw, clicking, actual) — null for none such. */
+  function modeById(id) {
+    const x = String(id);
+    const list = modeStats();
+    const st = list.find((m) => m.id === x) || list.find((m) => m.key === x) || (ALIASES[x] ? list.find((m) => m.id === ALIASES[x]) : null);
+    return st ? asMode(st) : null;
   }
-  const modeById = (id) => modes.find((m) => m.id === id) || null;
-  /** The mode in use: the setting's, when there's such a mode and it's ready — else cps. */
+
+  // a mode's results ({ income, gain }), kept for a second at most — and while what they read stays put
+  // (the game's state, CpS, a click, the click rates, the actual income) and no statistic or setting changes
+  let modeMemo = { at: -Infinity, sig: '', m: new Map() };
+  const forgetModes = () => (modeMemo = { at: -Infinity, sig: '', m: new Map() });
+  const NOTHING = { kind: 'building', name: '', n: 1, bonus: 0, raw: 0, mouse: 0 };
+  /** A mode's statistic run about a purchase (none: about nothing — for its income): { income, gain } (NaN: none). */
+  function runMode(m, worth, price) {
+    if (m.legacy) return { income: Game.cookiesPs || 0, gain: worth ? cpsGain(worth) : NaN };
+    const now = Date.now();
+    // what the built-in modes read: kept while none of it moves (and a second at most)
+    const a = incomeOver(actualWindow());
+    const sig = `${cache ? cache.gen : 0}|${Game.cookiesPs}|${rawNow()}|${perClick()}|${clickRate()}|${clicksOver(clickWindow())}|${a ? a.actual : ''}`;
+    if (now - modeMemo.at > 1000 || modeMemo.sig !== sig) modeMemo = { at: now, sig, m: new Map() };
+    const w = worth || NOTHING;
+    const k = `${m.id}|${worth ? `${w.kind}|${w.name || ''}|${w.n || 1}|${price}` : ''}`;
+    if (!modeMemo.m.has(k)) modeMemo.m.set(k, CA.Stats.runMode(m.stat, { kind: w.kind, name: w.name || '', r: { price: worth ? price : 0, bonus: w.bonus, mouse: w.mouse, n: w.n || 1, worth: w } }));
+    return modeMemo.m.get(k);
+  }
+  const modeIncome = (m) => runMode(m, null, 0).income;
+  /** Whether a mode can be worked out now: its income known (nothing will do — at the start of a run, CpS is 0). */
+  const ready = (m) => !!m && (m.legacy || modeIncome(m) >= 0);
+  /** The mode in use: the setting's, while it's ready — else cps (or Cookie Monster's formula). */
   function currentMode() {
     const m = modeById(CA.Settings.get('ppMode'));
-    return m && m.ready() ? m : modeById('cps');
+    if (m && ready(m)) return m;
+    const c = modeById('cps');
+    return c && ready(c) ? c : LEGACY;
   }
   /** A mode by id ('' or none: the one in use) — null for an unknown one. */
-  const modeOf = (id) => (id === undefined || id === null || id === '' ? currentMode() : modeById(String(id)));
+  const modeOf = (id) => (id === undefined || id === null || id === '' ? currentMode() : modeById(id));
 
   /** Clicks a second over the last secs seconds (the Recorder's when it has them; else the last ten seconds sampled) — read at most once a second. */
   let clicksMemo = { at: -Infinity, secs: 0, v: 0 };
@@ -7773,46 +7798,6 @@ CA.Payback = (() => {
   /** What a purchase adds to your CpS, its clicks counted at your click rate (an upgrade's — Cookie Monster's way). */
   const cpsGain = (w) => (w.bonus || 0) + (w.kind === 'upgrade' ? Math.max(0, w.mouse || 0) * clickRate() : 0);
 
-  /** What a purchase adds to your raw CpS (an upgrade's clicks counted at your click rate, without buffs). */
-  const rawGain = (w) => (Number.isFinite(w.raw) ? w.raw : w.bonus || 0) + (w.kind === 'upgrade' ? Math.max(0, w.mouse || 0) * clickRate() * (Game.cookiesPs > 0 ? rawNow() / Game.cookiesPs : 1) : 0);
-  defineMode({
-    id: 'raw',
-    order: 10,
-    label: 'Raw CpS',
-    short: 'raw',
-    desc: 'Payback periods count in your raw CpS — what you make with no golden cookie effects, golden switch or Dragon’s Fortune: steady, whatever is running now. A purchase’s gain is what it adds to that.',
-    income: rawNow,
-    gain: rawGain,
-  });
-  defineMode({
-    id: 'cps',
-    order: 20,
-    label: 'CpS',
-    short: 'CpS',
-    desc: 'Payback periods count in the CpS the game shows now, buffs included (a Frenzy shrinks every payback period alike) — Cookie Monster’s way. An upgrade that makes clicks stronger counts its clicks at your click rate.',
-    income: () => Game.cookiesPs || 0,
-    gain: cpsGain,
-  });
-  defineMode({
-    id: 'clicking',
-    order: 30,
-    label: 'CpS + clicking',
-    short: 'clicking',
-    desc: 'Payback periods count in your CpS plus your clicking: your clicks a second (averaged over the last minute, or what the option says) × what a click is worth. A purchase’s gain is the CpS it adds plus what it adds to your clicks.',
-    income: () => (Game.cookiesPs || 0) + clicksOver(clickWindow()) * perClick(),
-    gain: (w) => (w.bonus || 0) + (w.mouse || 0) * clicksOver(clickWindow()),
-  });
-  defineMode({
-    id: 'actual',
-    order: 40,
-    label: 'Actual income',
-    short: 'actual',
-    desc: 'Payback periods count in what you’ve actually been taking in — everything baked: production, clicking, golden cookies, wrinklers — averaged over the last 30 minutes of play (or what the option says), projected forward. A purchase’s gain scales the same way: what it adds to your raw CpS × your actual income ÷ your raw CpS. Needs a minute of play recorded; until then CpS.',
-    ready: () => !!incomeOver(actualWindow()) && rawNow() > 0,
-    income: () => (incomeOver(actualWindow()) || { actual: NaN }).actual,
-    gain: (w) => rawGain(w) * actualRatio(),
-  });
-
   /** Your actual income (over the option's window) as a multiple of your raw CpS — NaN with too little recorded. */
   function actualRatio() {
     const a = incomeOver(actualWindow());
@@ -7824,7 +7809,7 @@ CA.Payback = (() => {
   /** Cookies a second in a mode (none: the one in use) — NaN for one unknown or not ready. */
   function income(id) {
     const m = modeOf(id);
-    return m && m.ready() ? m.income() : NaN;
+    return m && ready(m) ? modeIncome(m) : NaN;
   }
 
   /** Cookies that count as the bank: the cookies in hand, plus your wrinklers' when that's chosen. */
@@ -7840,9 +7825,9 @@ CA.Payback = (() => {
    */
   function parts(price, worth, id) {
     const m = modeOf(id);
-    if (!m || !m.ready()) return { mode: m ? m.id : '', income: NaN, gain: NaN, afford: NaN, earn: NaN, pp: NaN };
-    const inc = m.income();
-    const gain = worth ? m.gain(worth) : NaN;
+    if (!m || !ready(m)) return { mode: m ? m.id : '', income: NaN, gain: NaN, afford: NaN, earn: NaN, pp: NaN };
+    const inc = modeIncome(m);
+    const gain = worth ? runMode(m, worth, price).gain : NaN;
     const short = Math.max(0, price - bank());
     const afford = short <= 0 ? 0 : inc > 0 ? short / inc : Infinity;
     const earn = gain > 0 && Number.isFinite(price) ? price / gain : Infinity;
@@ -7881,7 +7866,7 @@ CA.Payback = (() => {
     }
     const e = c.u[u.name];
     if (!e) return null;
-    const w = { kind: 'upgrade', bonus: e.bonus, raw: e.raw, mouse: e.mouse, won: e.won };
+    const w = { kind: 'upgrade', name: u.name, n: 1, bonus: e.bonus, raw: e.raw, mouse: e.mouse, won: e.won };
     w.gain = cpsGain(w);
     return w;
   }
@@ -7897,7 +7882,7 @@ CA.Payback = (() => {
     if (opts.staleMs && memo && Date.now() - memo.at < opts.staleMs) return memo.t;
     const c = fresh();
     const m = currentMode();
-    const mk = [m.id, m.income(), m.gain({ kind: 'building', bonus: 1, raw: 1, mouse: 1 }), Game.cookies, Game.cookiesPs, clickRate(), CA.Settings.get('ppWrinklers'), CA.Settings.get('ppOnlyBuyable'), CA.Settings.get('ppSecondsLowerLimit'), CA.Wrinklers ? CA.Wrinklers.bank('all') : 0].join('|');
+    const mk = [m.id, income(), modeMemo.at, Game.cookies, Game.cookiesPs, clickRate(), CA.Settings.get('ppWrinklers'), CA.Settings.get('ppOnlyBuyable'), CA.Settings.get('ppSecondsLowerLimit'), CA.Wrinklers ? CA.Wrinklers.bank('all') : 0].join('|');
     if (memo && memo.c === c && memo.key === mk) return memo.t;
     memo = { c, key: mk, t: tableFrom(c), at: Date.now() };
     return memo.t;
@@ -8140,6 +8125,9 @@ CA.Payback = (() => {
   // ---- building blocks -------------------------------------------------------------------------------
 
   function init() {
+    // a mode statistic changed, or an option it reads: work the modes out again
+    CA.Events.on('stats', forgetModes);
+    CA.Events.on('settings', forgetModes);
     setInterval(sampleClicks, 1000);
     CA.Settings.defineOption({
       key: 'ppWrinklers',
@@ -8161,9 +8149,9 @@ CA.Payback = (() => {
       name: 'Payback mode',
       desc: 'What payback periods count in, everywhere — the Payback page, the store’s colors and sort, the tooltips, the best buy and the buyers: raw CpS, CpS (Cookie Monster’s), CpS + clicking, or your actual income.',
       default: 'cps',
-      // the modes defined by now and later (defineMode)
+      // the mode statistics there are now (yours too)
       get choices() {
-        return modes.map((m) => ({ v: m.id, label: m.label }));
+        return modes().map((m) => ({ v: m.id, label: m.label }));
       },
     });
     CA.Settings.defineOption({
@@ -8261,7 +8249,7 @@ CA.Payback = (() => {
     V('building.price', 'what one more of a building costs now', ['building'], (n) => (b1(n) ? sumPrice(b1(n), 1) : NaN));
     V('building.gain', 'the CpS one more of a building adds (its bonus income)', ['building'], (n) => buildingBonus(n, 1));
     V('building.payback', 'the payback period of one more of a building (seconds; in the payback mode in use)', ['building'], (n) => (b1(n) ? ppOf(sumPrice(b1(n), 1), buildingWorth(n, 1)) : Infinity));
-    V('building.paybackIn', 'the payback period of one more of a building in a payback mode: "raw", "cps", "clicking" or "actual" — none: the mode in use (seconds; NaN: not ready)', ['building', 'mode'], (n, m) => (b1(n) ? ppOf(sumPrice(b1(n), 1), buildingWorth(n, 1), m) : Infinity));
+    V('building.paybackIn', 'the payback period of one more of a building in a payback mode: "raw", "cps", "clicking", "actual" or a mode statistic’s code name — none: the mode in use (seconds; NaN: not ready)', ['building', 'mode'], (n, m) => (b1(n) ? ppOf(sumPrice(b1(n), 1), buildingWorth(n, 1), m) : Infinity));
     V('building.priceOf', 'what n more of a building cost now', ['building', 'n'], (n, k) => (b1(n) ? sumPrice(b1(n), Math.max(1, Math.floor(k) || 1)) : NaN));
     V('building.gainOf', 'the CpS n more of a building add', ['building', 'n'], (n, k) => buildingBonus(n, Math.max(1, Math.floor(k) || 1)));
     V('building.paybackOf', 'the payback period of n more of a building (seconds)', ['building', 'n'], (n, k) => {
@@ -8277,7 +8265,7 @@ CA.Payback = (() => {
       const w = upgradeWorth(n);
       return u && w ? ppOf(upgradePrice(u), w) : Infinity;
     });
-    V('upgrade.paybackIn', 'the payback period of an upgrade in a payback mode: "raw", "cps", "clicking" or "actual" — none: the mode in use (seconds; NaN for a switch, or a mode not ready)', ['upgrade', 'mode'], (n, m) => {
+    V('upgrade.paybackIn', 'the payback period of an upgrade in a payback mode: "raw", "cps", "clicking", "actual" or a mode statistic’s code name — none: the mode in use (seconds; NaN for a switch, or a mode not ready)', ['upgrade', 'mode'], (n, m) => {
       const u = upgradeNamed(n);
       if (isSwitch(u)) return NaN;
       const w = upgradeWorth(n);
@@ -8287,19 +8275,22 @@ CA.Payback = (() => {
     V('clickRate', 'big cookie clicks per second (last 10 s)', [], clickRate);
     V('timeTo', 'seconds until you can afford a price at your income in the payback mode in use (0: now)', ['price'], (p) => timeTo(Number(p)));
     const PV = (id, desc, params, get, more) => V(id, desc, params, get, { group: 'Payback', ...(more || {}) });
-    PV('payback.mode', 'the payback mode in use: raw, cps, clicking or actual (the Payback page’s; cps while the one chosen isn’t ready)', [], () => currentMode().id);
-    PV('payback.modes', 'the payback modes there are, as a list of ids', [], () => modes.map((m) => m.id));
-    PV('payback.income', 'cookies a second in a payback mode — "raw", "cps", "clicking" or "actual" (none: the mode in use): what its payback periods count in (NaN: not ready)', ['mode'], (m) => income(m));
+    PV('payback.mode', 'the code name of the payback mode in use: rawCps, cps, cpsClicking, actualIncome or one of yours (the Payback page’s; cps while the one chosen isn’t ready)', [], () => currentMode().key);
+    PV('payback.modes', 'the payback modes there are (the payback mode statistics), as a list of code names', [], () => modes().map((m) => m.key));
+    PV('payback.income', 'cookies a second in a payback mode — "raw", "cps", "clicking", "actual" or a mode statistic’s code name (none: the mode in use): what its payback periods count in (NaN: not ready)', ['mode'], (m) => income(m));
     PV('payback.bank', 'cookies that count as the bank for payback periods: in hand, plus your wrinklers’ when that’s chosen', [], bank);
     PV('payback.clickRate', 'clicks a second, averaged as the CpS + clicking mode counts them (the option’s window)', [], () => clicksOver(clickWindow()));
     PV('payback.perClick', 'what a click on the big cookie is worth now', [], perClick);
+    PV('payback.actualIncome', 'cookies a second you actually took in over the Actual income window (the option’s; NaN: under a minute recorded)', [], () => (incomeOver(actualWindow()) || { actual: NaN }).actual);
+    PV('payback.actualWindow', 'the Actual income window, in seconds (the option’s)', [], actualWindow);
+    PV('payback.clickWindow', 'how many seconds the CpS + clicking mode averages your clicks over (the option’s)', [], clickWindow);
     PV('payback.actualRatio', 'your actual income (over the Actual income window) as a multiple of your raw CpS: what the Actual income mode scales gains by (NaN: too little recorded)', [], actualRatio);
     V('paybackActual', 'a payback period by actual income: the period × CpS ÷ what you took in over a stretch as long (NaN: too little recorded)', ['seconds'], (p) => (ppActual(Number(p)) || { pp: NaN }).pp);
     V('paybackActualRatio', 'what you actually took in over a payback period’s stretch, as a multiple of your CpS (NaN: too little recorded)', ['seconds'], (p) => (ppActual(Number(p)) || { ratio: NaN }).ratio);
     V('actualIncome', 'cookies a second you actually took in over about the last seconds of play (at least 5 minutes; NaN: too little recorded)', ['seconds'], (p) => (actualIncome(Number(p) || 0) || { actual: NaN }).actual);
   }
 
-  return { init, defineMode, modes: () => modes.slice(), mode: currentMode, modeOf, income, bank, parts, ppOf, buildingWorth, actualRatio, clicksOver, incomeOver, isSwitch, ppActual, actualIncome, calls: () => calls, table, ranking, best, buy, buyBuilding, buyUpgrade, buildingBonus, upgradeWorth, pp, timeTo, sumPrice, clickRate, nextAchievement, storeUpgrades, measureAll, COLOURS, BULKS };
+  return { init, modes, mode: currentMode, modeOf, income, bank, parts, ppOf, buildingWorth, actualRatio, clicksOver, incomeOver, isSwitch, ppActual, actualIncome, calls: () => calls, table, ranking, best, buy, buyBuilding, buyUpgrade, buildingBonus, upgradeWorth, pp, timeTo, sumPrice, clickRate, nextAchievement, storeUpgrades, measureAll, COLOURS, BULKS };
 })();
 
 // ---- src/features/goldenMath.js --------------------------------------
@@ -12014,7 +12005,7 @@ CA.Stats = (() => {
   ];
   const MAX_DEPTH = 8;
   /** The catalog's groups (a statistic of yours keeps the group of the one it was duplicated from). */
-  const GROUPS = ['Payback', 'Production', 'Achievements', 'Upgrades', 'Bank'];
+  const GROUPS = ['Payback', 'Payback modes', 'Production', 'Achievements', 'Upgrades', 'Bank'];
 
   // ---- the built-ins: Cookie Monster's lines -----------------------------------------------------
 
@@ -12067,6 +12058,80 @@ if m > 0:
 if known(a):
   note = "(×" + fmt.fixed(payback.income("actual") / cps(), 2) + " CpS)"
   return a`,
+    },
+    // ---- the payback modes (features/payback.js): what payback periods count in. A mode's code sets
+    // `income` (cookies a second) and returns what the item adds to it.
+    {
+      id: 'rawCps',
+      group: 'Payback modes',
+      mode: true,
+      name: 'Raw CpS',
+      label: 'Raw CpS',
+      desc: 'Payback periods count in your raw CpS — what you make with no golden cookie effects, golden switch or Dragon’s Fortune: steady, whatever is running now. A purchase’s gain is what it adds to that.',
+      scope: 'item',
+      format: 'number',
+      source: `# a payback mode: income is what payback periods count in, the return what the item adds to it
+# the game's raw CpS: no golden cookie effects, golden switch or Dragon's Fortune
+income = rawCps()
+gain = item.rawGain()
+# an upgrade that makes clicks stronger: its clicks at your click rate, without the buffs
+if item.kind() == "upgrade" and item.clickGain() > 0 and cps() > 0:
+  gain = gain + item.clickGain() * clickRate() * rawCps() / cps()
+return gain`,
+    },
+    {
+      id: 'cps',
+      group: 'Payback modes',
+      mode: true,
+      name: 'CpS',
+      label: 'CpS',
+      desc: 'Payback periods count in the CpS the game shows now, buffs included (a Frenzy shrinks every payback period alike) — Cookie Monster’s way. An upgrade that makes clicks stronger counts its clicks at your click rate.',
+      scope: 'item',
+      format: 'number',
+      source: `# a payback mode: income is what payback periods count in, the return what the item adds to it
+# the CpS the game shows now, buffs included (Cookie Monster's)
+income = cps()
+gain = item.gain()
+# an upgrade that makes clicks stronger: its clicks at your click rate (the last 10 seconds)
+if item.kind() == "upgrade" and item.clickGain() > 0:
+  gain = gain + item.clickGain() * clickRate()
+return gain`,
+    },
+    {
+      id: 'cpsClicking',
+      group: 'Payback modes',
+      mode: true,
+      name: 'CpS + clicking',
+      label: 'CpS + clicking',
+      desc: 'Payback periods count in your CpS plus your clicking: your clicks a second (averaged over the last minute, or what the option says) × what a click is worth. A purchase’s gain is the CpS it adds plus what it adds to your clicks.',
+      scope: 'item',
+      format: 'number',
+      source: `# a payback mode: income is what payback periods count in, the return what the item adds to it
+# your CpS plus your clicking: clicks a second (over the option's window) × what a click is worth
+rate = payback.clickRate()
+income = cps() + rate * payback.perClick()
+return item.gain() + item.clickGain() * rate`,
+    },
+    {
+      id: 'actualIncome',
+      group: 'Payback modes',
+      mode: true,
+      name: 'Actual income',
+      label: 'Actual income',
+      desc: 'Payback periods count in what you’ve actually been taking in — everything baked: production, clicking, golden cookies, wrinklers — averaged over the last 30 minutes of play (or what the option says), projected forward. A purchase’s gain scales the same way: what it adds to your raw CpS × your actual income ÷ your raw CpS. Needs a minute of play recorded; until then CpS.',
+      scope: 'item',
+      format: 'number',
+      source: `# a payback mode: income is what payback periods count in, the return what the item adds to it
+# what you actually took in (everything baked) over the option's window, projected forward
+a = payback.actualIncome()
+if not known(a) or rawCps() <= 0:
+  return
+income = a
+# what it adds scales the same way: its raw gain × actual ÷ raw CpS
+gain = item.rawGain()
+if item.kind() == "upgrade" and item.clickGain() > 0 and cps() > 0:
+  gain = gain + item.clickGain() * clickRate() * rawCps() / cps()
+return gain * a / rawCps()`,
     },
     { id: 'paybackRaw', group: 'Payback', name: 'Payback, raw CpS', label: 'Payback, raw CpS', desc: 'the payback period by your raw CpS (no golden cookie effects)', scope: 'item', format: 'payback', source: 'return item.paybackIn("raw")' },
     { id: 'paybackCps', group: 'Payback', name: 'Payback, CpS', label: 'Payback, CpS', desc: 'the payback period by the CpS the game shows (Cookie Monster’s)', scope: 'item', format: 'payback', source: 'return item.paybackIn("cps")' },
@@ -12252,6 +12317,9 @@ if cookies() >= need and after < need:
     s.source = String(s.source || '');
     s.group = GROUPS.includes(s.group) ? s.group : '';
     s.warn = (s.warn === true || s.warn === 'yes' || s.warn === 'true') && s.scope !== 'game';
+    // a payback mode (features/payback.js): about an item, never a warning too
+    s.mode = (s.mode === true || s.mode === 'yes' || s.mode === 'true') && !s.warn;
+    if (s.mode && s.scope === 'game') s.scope = 'item';
     return s;
   }
   /** A key no other statistic has: paybackVsBest, paybackVsBest2… */
@@ -12315,8 +12383,8 @@ if cookies() >= need and after < need:
   function duplicate(id) {
     const s = get(id);
     if (!s) return null;
-    const { label, desc, scope, format, colour, source, group, warn } = s;
-    return add({ label: `${label} (copy)`, desc, scope, format, colour, source, group, warn });
+    const { label, desc, scope, format, colour, source, group, warn, mode } = s;
+    return add({ label: `${label} (copy)`, desc, scope, format, colour, source, group, warn, mode });
   }
 
   // ---- running one ------------------------------------------------------------------------------
@@ -12495,10 +12563,10 @@ if cookies() >= need and after < need:
   // ---- as text: to share one (copy, paste) -----------------------------------------------------
 
   const TEXT_HEAD = '# CookieMgr statistic';
-  const TEXT_KEYS = ['label', 'key', 'desc', 'scope', 'format', 'colour', 'group', 'warn'];
+  const TEXT_KEYS = ['label', 'key', 'desc', 'scope', 'format', 'colour', 'group', 'warn', 'mode'];
   /** A statistic as text: a few "# field: value" lines, then its code. */
   function toText(s) {
-    const val = (k) => (k === 'warn' ? (s.warn ? 'yes' : '') : s[k]);
+    const val = (k) => (k === 'warn' || k === 'mode' ? (s[k] ? 'yes' : '') : s[k]);
     return [TEXT_HEAD, ...TEXT_KEYS.filter((k) => val(k) !== undefined && val(k) !== '').map((k) => `# ${k}: ${String(val(k)).replace(/\n/g, ' ')}`), s.source].join('\n');
   }
   /** Text (toText's, or just code) as a statistic to add: { label, key, …, source } — null when there's nothing in it. */
@@ -12545,7 +12613,11 @@ if cookies() >= need and after < need:
       return isB() ? CA.Payback.buildingWorth(cur.name, r().n || 1) : CA.Payback.upgradeWorth(cur.name);
     };
     const partsIn = (m) => (r() ? CA.Payback.parts(r().price, worth(), m) : null);
-    const MODES = '"raw", "cps", "clicking" or "actual" — none: the mode in use';
+    const MODES = '"raw", "cps", "clicking", "actual" or a mode statistic’s code name — none: the mode in use';
+    V('item.rawGain', 'the raw CpS it adds (no golden cookie effects; an upgrade’s clicks not counted)', () => {
+      const w = worth();
+      return w ? (Number.isFinite(w.raw) ? w.raw : w.bonus || 0) : NaN;
+    });
     V('item.paybackIn', `its payback period in a payback mode: ${MODES} (seconds; NaN: not ready)`, (m) => (partsIn(m) || { pp: NaN }).pp, { params: ['mode'] });
     V('item.gainIn', `what it adds to your income in a payback mode: ${MODES} (cookies a second)`, (m) => (partsIn(m) || { gain: NaN }).gain, { params: ['mode'] });
     V('item.timeToAfford', `seconds until you can afford it at your income in a payback mode: ${MODES} (0: now) — a payback period's first part`, (m) => (partsIn(m) || { afford: NaN }).afford, { params: ['mode'] });
@@ -12566,7 +12638,11 @@ if cookies() >= need and after < need:
       const b = Game.Objects[cur.name];
       return b && b.storedTotalCps && Game.cookiesPs ? (b.storedTotalCps * (Game.globalCpsMult || 1)) / Game.cookiesPs : 0;
     });
-    V('item.clickGain', 'what an upgrade adds to each click (a building: 0)', () => (cur && cur.kind === 'upgrade' ? r().mouse || 0 : cur ? 0 : NaN));
+    V('item.clickGain', 'what it adds to each click (an upgrade that makes clicks stronger; a building, through the fingers upgrades)', () => {
+      if (!cur) return NaN;
+      const w = worth();
+      return (w && Number.isFinite(w.mouse) ? w.mouse : r().mouse) || 0;
+    });
     const bulkRow = (n) => {
       if (!isB()) return null;
       const k = Math.max(1, Math.floor(Number(n)) || 1);
@@ -12600,7 +12676,7 @@ if cookies() >= need and after < need:
 
   function serialize() {
     if (!mine.length && !Object.keys(overrides).length && !favs.length) return undefined;
-    return { v: 1, mine: mine.map((s) => ({ id: s.id, key: s.key, label: s.label, desc: s.desc, scope: s.scope, format: s.format, colour: s.colour, source: s.source, group: s.group || undefined, warn: s.warn || undefined })), builtin: overrides, favs };
+    return { v: 1, mine: mine.map((s) => ({ id: s.id, key: s.key, label: s.label, desc: s.desc, scope: s.scope, format: s.format, colour: s.colour, source: s.source, group: s.group || undefined, warn: s.warn || undefined, mode: s.mode || undefined })), builtin: overrides, favs };
   }
   function load(data) {
     mine.forEach((s) => CA.Script.removeValue(`stat.${s.key}`));
@@ -12635,7 +12711,26 @@ if cookies() >= need and after < need:
     CA.Settings.registerSection('stats', { serialize, load, event: 'stats' });
   }
 
-  return { init, all, get, byKey, add, update, remove, duplicate, toText, fromText, run, line, warning, format, fromWord, compiled, contextOf, bestOf, pick, about, keyOf: camel, favs: () => favs.slice(), BUILTINS, FORMATS, SCOPES, GROUPS, COLOURS };
+  // ---- payback modes ---------------------------------------------------------------------------
+
+  /** The payback mode statistics (built-in, then yours). */
+  const modes = () => all().filter((s) => s.mode);
+  /**
+   * A payback mode's statistic run about `c` (an item context): { income — what it set as income,
+   * gain — what it returned } (NaN: none, or it failed).
+   */
+  function runMode(s, c) {
+    let r;
+    try {
+      r = run(s, c);
+    } catch (e) {
+      r = { returned: false };
+    }
+    const num = (x) => (typeof x === 'number' ? x : NaN);
+    return { income: num(r && r.vars ? r.vars.income : NaN), gain: r && r.returned ? num(r.value) : NaN };
+  }
+
+  return { init, modes, runMode, all, get, byKey, add, update, remove, duplicate, toText, fromText, run, line, warning, format, fromWord, compiled, contextOf, bestOf, pick, about, keyOf: camel, favs: () => favs.slice(), BUILTINS, FORMATS, SCOPES, GROUPS, COLOURS };
 })();
 
 // ---- src/features/upgradeInfo.js -------------------------------------
@@ -23792,8 +23887,8 @@ CA.UI.AscendTip = (() => {
 //   Upgrades      the store's upgrades as tiles, ringed in their color, best first; click to buy —
 //                 switches (no payback period) only when the filter chip shows them, grayed
 //   Options       the minimum bulk, the wrinkler bank, "best = what you can afford", the cheap-enough floor
-//   Store tooltips  the tooltip block's two switches (Payback in tooltips, Bank warnings) and a link to
-//                 the Tooltips page (ui/tooltipsPage.js), where its lines are
+//   Store tooltips  the tooltip block's two switches (Payback in tooltips, Bank warnings) and links to
+//                 Settings (which lines show) and the Statistics page (ui/tooltipsPage.js)
 //
 // Payback mode — the page's main setting, at the top: what every payback period counts in (raw CpS,
 // CpS, CpS + clicking, actual income — features/payback.js modes). It's the add-on's: the colors,
@@ -23851,15 +23946,16 @@ CA.UI.PaybackPage = (() => {
     const chips = P()
       .modes()
       .map((m) => {
-        const ready = m.ready();
-        const inc = ready ? m.income() : NaN;
+        const inc = P().income(m.id);
+        const ready = Number.isFinite(inc);
         const tip = `${m.desc}${ready ? ` Now: ${F().beautify(inc)}/s.` : ' Not ready yet: too little recorded.'}`;
         const cls = `ca-chip${chosen === m.id ? ' on' : ''}${ready ? '' : ' ca-pp-notready'}`;
         return `<button type="button" class="${cls}" data-pp-mode="${esc(m.id)}" data-tip="${esc(tip)}">${esc(m.label)}<small>${ready ? `${F().short(inc)}/s` : '—'}</small></button>`;
       })
       .join('');
     const note = chosen !== used ? `<span class="ca-hint">${esc(P().modeOf(chosen) ? P().modeOf(chosen).label : chosen)} isn’t ready yet (a minute of play recorded): by ${esc(P().mode().label)} until then</span>` : '';
-    return `<span class="ca-pp-modelabel" data-tip="${esc(CA.StatInfo.desc('payback.income'))}">${I('dollar', 12)} Payback mode</span><span class="ca-pp-chips">${chips}</span>${note}`;
+    const edit = `<button type="button" class="ca-chip ca-pp-editmodes" data-pp-editmodes data-tip="Payback modes are statistics: open them on the Statistics page to see their code, change one, or add your own">${I('edit', 11)} edit modes</button>`;
+    return `<span class="ca-pp-modelabel" data-tip="${esc(CA.StatInfo.desc('payback.income'))}">${I('dollar', 12)} Payback mode</span><span class="ca-pp-chips">${chips}${edit}</span>${note}`;
   }
   function bestTiles(t) {
     // in the minimum bulk: what the buyers would buy
@@ -23984,12 +24080,12 @@ CA.UI.PaybackPage = (() => {
     );
   }
 
-  // the store tooltip's block: its two switches here, the lines on the Tooltips page (ui/tooltipsPage.js)
+  // the store tooltip's block: its two switches here, the lines on the Settings page (ui/tooltipsPage.js layoutCard)
   function tooltipCard() {
     const S = CA.Settings;
     return (
       '<div class="ca-card">' +
-      C().cardHead('Store tooltips', 'search', `<div class="ca-card-meta"><span class="ca-hint">what each line under the tooltips shows, and your own: ${C().link('the Tooltips page', 'tooltips')}</span></div>`) +
+      C().cardHead('Store tooltips', 'search', `<div class="ca-card-meta"><span class="ca-hint">which lines show under the tooltips: ${C().link('Settings', 'settings')} · what each is, and your own: ${C().link('the Statistics page', 'tooltips')}</span></div>`) +
       '<div class="ca-list">' +
       `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('search', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Payback in tooltips</div><div class="ca-row-desc">The block at all (off: the game’s tooltips as they are).</div></div>${C().toggle(!!S.get('storeTooltips'), 'data-pp-opt="storeTooltips"', 'Payback in tooltips')}</div>` +
       `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('bell', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Bank warnings</div><div class="ca-row-desc">A colored “!” on items whose purchase would take your bank below what a Lucky!, Conjure or a Frenzy Lucky! needs.</div></div>${C().toggle(!!S.get('storeWarnings'), 'data-pp-opt="storeWarnings"', 'Bank warnings')}</div>` +
@@ -24029,7 +24125,7 @@ CA.UI.PaybackPage = (() => {
   }
 
   function onClick(e) {
-    const b = e.target.closest('[data-pp-buy],[data-pp-up],[data-pp-wrink],[data-pp-opt],[data-pp-bulk],[data-pp-mode],[data-pp-pick]');
+    const b = e.target.closest('[data-pp-buy],[data-pp-up],[data-pp-wrink],[data-pp-opt],[data-pp-bulk],[data-pp-mode],[data-pp-pick],[data-pp-editmodes]');
     if (!b) return;
     e.stopPropagation();
     const d = b.dataset;
@@ -24044,6 +24140,10 @@ CA.UI.PaybackPage = (() => {
       CA.Util.sound('snd/tick.mp3');
       CA.Shop.setMinBulk(Number(d.ppBulk));
       CA.UI.Menu.render();
+      return;
+    } else if (d.ppEditmodes !== undefined) {
+      CA.Util.sound('snd/tick.mp3');
+      CA.UI.TooltipsPage.showGroup('Payback modes');
       return;
     } else if (d.ppMode) {
       CA.Util.sound('snd/tick.mp3');
@@ -24150,6 +24250,7 @@ CA.UI.StatEditor = (() => {
     colour: s.colour || 'none',
     group: s.group || '',
     warn: !!s.warn,
+    mode: !!s.mode,
     source: s.source || '',
   });
 
@@ -24197,6 +24298,20 @@ CA.UI.StatEditor = (() => {
     return out;
   }
 
+  /** A payback mode's result about the item: the income it sets, the gain it returns, the payback period they make. */
+  function modeHtml(s, c) {
+    const m = ST().runMode(s, c);
+    const F = CA.Format;
+    if (!(m.income > 0)) return '<div class="ca-se-none">As a payback mode: not ready — it sets no income above nothing (set <code>income = …</code>). Until it does, payback periods count in CpS.</div>';
+    const price = c && c.r ? c.r.price : NaN;
+    const short = Math.max(0, price - CA.Payback.bank());
+    const afford = short / m.income;
+    const earn = m.gain > 0 ? price / m.gain : Infinity;
+    const pp = Number.isFinite(earn) && Number.isFinite(price) ? afford + earn : Infinity;
+    const t = (x) => (!Number.isFinite(x) ? 'never' : x <= 0 ? 'now' : F.span(x));
+    return `<div class="ca-se-line ca-se-mode"><span>As a payback mode</span><b>income ${F.beautify(m.income)}/s · gain ${Number.isFinite(m.gain) ? `${F.beautify(m.gain)}/s` : '—'} · payback ${Number.isFinite(pp) ? F.short(pp) : '∞'} <small>(${t(afford)} to afford + ${t(earn)} to earn back)</small></b></div>`;
+  }
+
   function resultHtml() {
     const s = asStat();
     const c = ST().pick(s.scope, item);
@@ -24225,6 +24340,7 @@ CA.UI.StatEditor = (() => {
             ? `<div class="ca-se-none">No warning about this item (${r.returned ? 'it returned nothing to show' : 'no return'}).</div>`
             : `<div class="ca-se-none">${r.returned ? 'It returned nothing to show (empty), so its line is left out.' : 'No return: its line is left out.'}</div>`;
     const lines = s.source.split('\n');
+    const asMode = s.mode && !r.error ? modeHtml(s, c) : '';
     const trace = (r.trace || [])
       .map(
         (t) =>
@@ -24233,6 +24349,7 @@ CA.UI.StatEditor = (() => {
       .join('');
     return (
       shows +
+      asMode +
       (trace
         ? `<div class="ca-se-trace"><div class="ca-se-tr-head">What it did <em>${r.steps} step${r.steps === 1 ? '' : 's'}</em></div>${trace}</div>`
         : '') +
@@ -24258,14 +24375,15 @@ CA.UI.StatEditor = (() => {
         [
           ['', 'a tooltip line'],
           ['yes', 'a warning'],
+          ['mode', 'a payback mode'],
         ],
-        d.warn ? 'yes' : '',
-        `${off} data-tip="A warning marks the store’s items it has something to show about, with a “!” in its color, and a tag in their tooltips"`
+        d.warn ? 'yes' : d.mode ? 'mode' : '',
+        `${off} data-tip="A warning marks the store’s items it has something to show about, with a “!” in its color, and a tag in their tooltips. A payback mode sets income (what payback periods count in) and returns what the item adds to it — pick it on the Payback page"`
       )}</label>` +
       `<label class="ca-field"><span>About</span>${sel(
         'scope',
         ST()
-          .SCOPES.filter((x) => !d.warn || x !== 'game')
+          .SCOPES.filter((x) => !(d.warn || d.mode) || x !== 'game')
           .map((x) => [x, SCOPE_NAMES[x]]),
         d.scope,
         off
@@ -24398,6 +24516,7 @@ CA.UI.StatEditor = (() => {
       colour: d.colour,
       group: d.group,
       warn: d.warn,
+      mode: d.mode,
       source: d.source,
     };
     if (d.builtin) {
@@ -24500,7 +24619,9 @@ CA.UI.StatEditor = (() => {
     if (!d.se) return;
     if (d.se === 'warn') {
       draft.warn = el.value === 'yes';
-      if (draft.warn && draft.scope === 'game') draft.scope = 'item';
+      draft.mode = el.value === 'mode';
+      if ((draft.warn || draft.mode) && draft.scope === 'game') draft.scope = 'item';
+      if (draft.mode && !draft.group) draft.group = 'Payback modes';
       if (draft.warn && draft.colour === 'none') draft.colour = 'red';
       item = 'best';
       redraw();
@@ -24570,9 +24691,11 @@ CA.UI.StatEditor = (() => {
 })();
 
 // ---- src/ui/tooltipsPage.js ------------------------------------------
-// The Tooltips page: what CookieMgr adds under the store's tooltips, and every statistic it can add.
+// The Statistics page (page id 'tooltips', its old name): every statistic — the store tooltip's lines,
+// the warnings, the payback modes, yours — to browse, edit and write. The store tooltip's layout is a
+// card on the Settings page (layoutCard; this module's handlers run there too).
 //
-//   In the store tooltip   the layout (ui/storeInsight.js lines), in order — a row per line in fixed
+//   In the store tooltip   (Settings) the layout (ui/storeInsight.js lines), in order — a row per line in fixed
 //                          columns: its name, what it's about, its value now, how a word reads, ↑ ↓ ✕
 //                          (or drag a row); add a built-in, one of yours or any value word; Reset — and
 //                          two live previews drawn by the tooltip's own code: a building you pick, and
@@ -24827,6 +24950,7 @@ CA.UI.TooltipsPage = (() => {
         if (filter === 'yours' && s.builtin) return false;
         if (filter === 'onscreen' && !onScreen(s)) return false;
         if (filter === 'warnings' && !s.warn) return false;
+        if (filter === 'modes' && !s.mode) return false;
         if (ST().GROUPS.includes(filter) && s.group !== filter) return false;
         return matchesQuery(`${s.label} ${s.key} ${s.desc} ${s.source}`);
       });
@@ -24843,16 +24967,19 @@ CA.UI.TooltipsPage = (() => {
     const [v, cls] = valueNow(s);
     const c = ctxFor(s.scope);
     const inTt = s.warn ? isWarning(s.id) : inTooltip(s.id);
+    const usedMode = s.mode && CA.Settings.get('ppMode') === s.id;
     const star = C().widgetStar(widgetPreset(s), s.label);
     const call = `stat.${s.key}(${s.scope === 'game' ? '' : 'item'})`;
     return (
       `<div class="ca-st-card${s.builtin ? '' : ' yours'}" data-st-card="${esc(s.id)}">` +
-      `<div class="ca-st-head"><b class="ca-st-name">${esc(s.label)}</b>${kindTag(s.scope)}${s.warn ? `<span class="ca-tl-kind ca-tl-colour ${warnColour(s)}" data-tip="A warning: it marks items in the store">⚠ warning</span>` : ''}${s.builtin ? (s.customized ? '<span class="ca-tl-kind yours" data-tip="A built-in you’ve changed (Edit → Reset brings back the original)">changed</span>' : '') : '<span class="ca-tl-kind yours">yours</span>'}${star}</div>` +
+      `<div class="ca-st-head"><b class="ca-st-name">${esc(s.label)}</b>${kindTag(s.scope)}${s.warn ? `<span class="ca-tl-kind ca-tl-colour ${warnColour(s)}" data-tip="A warning: it marks items in the store">⚠ warning</span>` : ''}${s.mode ? '<span class="ca-tl-kind ca-st-modetag" data-tip="A payback mode: it sets income (what payback periods count in) and returns what the item adds to it">payback mode</span>' : ''}${s.builtin ? (s.customized ? '<span class="ca-tl-kind yours" data-tip="A built-in you’ve changed (Edit → Reset brings back the original)">changed</span>' : '') : '<span class="ca-tl-kind yours">yours</span>'}${star}</div>` +
       `<div class="ca-st-live"><span>${c ? esc(aboutName(c)) : 'the game'}</span><b class="${cls}" data-st-val="${esc(s.id)}">${v}</b></div>` +
       `<div class="ca-st-desc">${esc(s.desc || '')}</div>` +
       codeHtml(s.source) +
       '<div class="ca-st-actions">' +
-      (s.warn
+      (s.mode
+        ? `<button type="button" class="ca-chip${usedMode ? ' on' : ''}" data-st-mode="${esc(s.id)}" data-tip="${usedMode ? 'The payback mode in use (the Payback page’s)' : 'Make it the payback mode: every payback period counts in it'}">${usedMode ? '✓ the payback mode' : '+ use as the payback mode'}</button>`
+        : s.warn
         ? `<button type="button" class="ca-chip${inTt ? ' on' : ''}" data-st-tt="${esc(s.id)}" data-tip="${inTt ? 'Stop this warning' : 'Use this warning (at the end of the list)'}">${inTt ? '✓ warning on' : '+ use as a warning'}</button>`
         : `<button type="button" class="ca-chip${inTt ? ' on' : ''}" data-st-tt="${esc(s.id)}" data-tip="${inTt ? 'Take it out of the store tooltip' : 'Add it to the store tooltip, at the end'}">${inTt ? '✓ in the tooltip' : '+ add to the tooltip'}</button>`) +
       `<button type="button" class="ca-chip" data-st-edit="${esc(s.id)}" data-tip="${s.builtin ? 'Change it: its label, code, how it reads (Reset brings back the original)' : 'Change it'}">${I('edit', 11)} ${s.builtin ? 'Customise' : 'Edit'}</button>` +
@@ -24873,7 +25000,8 @@ CA.UI.TooltipsPage = (() => {
     return (
       chip('all', 'All', all.length) +
       ST()
-        .GROUPS.map((g) =>
+        .GROUPS.filter((g) => g !== 'Payback modes')
+        .map((g) =>
           chip(
             g,
             g,
@@ -24886,6 +25014,12 @@ CA.UI.TooltipsPage = (() => {
         'Warnings',
         n((s) => s.warn),
         'Statistics that mark items in the store'
+      ) +
+      chip(
+        'modes',
+        'Payback modes',
+        n((s) => s.mode),
+        'What payback periods count in: each sets an income and returns what an item adds to it'
       ) +
       chip(
         'yours',
@@ -24999,7 +25133,18 @@ CA.UI.TooltipsPage = (() => {
 
   // ---- the page ---------------------------------------------------------------------------------
 
-  const html = () => layoutCard() + browseCard();
+  /** Where the tooltip's layout is now: a note under the catalog. */
+  const layoutNote = () =>
+    `<div class="ca-card-note">Which statistics show under the store’s tooltips, and the warnings, are set on ${C().link('the Settings page', 'settings')} (Store tooltips).</div>`;
+  const html = () => browseCard() + layoutNote();
+  /** Opens the page on a shelf: 'modes' (or 'Payback modes'), 'warnings', a group… */
+  function showGroup(g) {
+    filter = g === 'Payback modes' ? 'modes' : g;
+    tab = 'stats';
+    query = '';
+    if (SE().isOpen()) SE().close();
+    CA.UI.Menu.openPage('tooltips');
+  }
 
   /** Everything again (after a change): morphed, so focus and open menus stay. */
   function refresh() {
@@ -25082,7 +25227,7 @@ CA.UI.TooltipsPage = (() => {
       });
     }
     const b = e.target.closest(
-      '[data-tl-opt],[data-st-tab],[data-st-filter],[data-st-tt],[data-st-dup],[data-st-del],[data-st-edit],[data-st-new],[data-st-paste],[data-st-pasteopen]'
+      '[data-tl-opt],[data-st-mode],[data-st-tab],[data-st-filter],[data-st-tt],[data-st-dup],[data-st-del],[data-st-edit],[data-st-new],[data-st-paste],[data-st-pasteopen]'
     );
     if (!b) return;
     e.stopPropagation();
@@ -25093,6 +25238,11 @@ CA.UI.TooltipsPage = (() => {
       return;
     }
     CA.Util.sound('snd/tick.mp3');
+    if (d.stMode) {
+      CA.Settings.set('ppMode', d.stMode);
+      refresh();
+      return;
+    }
     if (d.stTab) {
       tab = d.stTab;
       CA.UI.Menu.render();
@@ -25340,10 +25490,10 @@ CA.UI.TooltipsPage = (() => {
 
   function init() {
     defineWidget();
-    CA.UI.Pages.register({ id: 'tooltips', label: 'Tooltips', icon: 'tag', order: 75, group: 'custom', html, mount, unmount, tick: sync });
+    CA.UI.Pages.register({ id: 'tooltips', label: 'Statistics', icon: 'tag', order: 75, group: 'custom', html, mount, unmount, tick: sync });
   }
 
-  return { init, sync };
+  return { init, sync, mount, unmount, layoutCard, showGroup };
 })();
 
 // ---- src/ui/spawnView.js ---------------------------------------------
@@ -26490,6 +26640,8 @@ CA.UI.Menu = (() => {
       '</div>' +
       historyCard() +
       optionsCard('Store', 'dollar', 'store') +
+      // the store tooltip's lines and warnings (ui/tooltipsPage.js — its handlers run here too)
+      CA.UI.TooltipsPage.layoutCard() +
       optionsCard('Miscellaneous', 'calendar', 'misc') +
       integrationsCard() +
       indexCard() +
@@ -26609,7 +26761,15 @@ CA.UI.Menu = (() => {
     html: () => stocksPage(),
     parts: [CA.UI.StockGraph, CA.UI.StockPerf, CA.UI.StockLog, { mount: wireSellAll, unmount() {}, tick() {} }],
   });
-  CA.UI.Pages.register({ id: 'settings', label: 'Settings', icon: 'settings', order: 90, group: 'custom', html: () => settingsPage() });
+  CA.UI.Pages.register({
+    id: 'settings',
+    label: 'Settings',
+    icon: 'settings',
+    order: 90,
+    group: 'custom',
+    html: () => settingsPage(),
+    parts: [{ mount: (root) => CA.UI.TooltipsPage.mount(root), unmount: () => CA.UI.TooltipsPage.unmount(), tick() {} }],
+  });
 
   let mounted = null; // the page whose mount() ran for the current render
 
