@@ -62,7 +62,7 @@ the page. [See every page with a screenshot](#pages).
 | **Statistics** | What the store's tooltips show, and statistics you write yourself |
 | **Garden**, **Stock market**, **Grimoire**, **Pantheon**, **Dragon** | A page per minigame, each with its own automation |
 | **Widgets** | Small panels you place on the game's left side |
-| **Settings** | Number format, hotkeys, updates, and your history's export and import |
+| **Settings** | Options in tabs: number format, hotkeys, updates, store tooltips, and your history's export and import |
 
 ## Pages
 
@@ -136,7 +136,7 @@ the page. [See every page with a screenshot](#pages).
 <td width="50%" valign="top">
 <b>Settings</b><br>
 <img src="docs/readme/settings.png" alt="The Settings page" width="100%">
-<ul><li>Number format, hotkeys and update checks</li><li>Export and import your history</li><li>Load Cookie Monster alongside</li></ul>
+<ul><li>Tabs for General, Store &amp; tooltips, Data &amp; integrations and All options</li><li>Number format, hotkeys and update checks</li><li>Export and import your history, and load Cookie Monster alongside</li></ul>
 </td>
 </tr>
 </table>
