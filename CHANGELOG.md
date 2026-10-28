@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 3.53.1 — 2026-10-28
+
+- **README:** the Widgets screenshot shows copies grouped by kind, and the Macros and Widgets summaries mention
+  code hover cards and widget copies.
+
 ## 3.53.0 — 2026-10-28
 
 - **Hover any word of code to see what it is.** In every code editor (macros, statistics, the gardener and soil
