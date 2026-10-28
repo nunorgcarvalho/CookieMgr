@@ -32,5 +32,12 @@ CA.StatInfo = (() => {
   define('garden.mature', { label: 'Mature', desc: 'How many of your plants are mature now (the ones whose effects are at full strength and that can be harvested for their rewards).' });
   define('garden.nextTick', { label: 'Next tick', desc: 'How long until the next garden tick, when plants grow, spread and mutate.' });
 
+  // ---- payback periods (features/payback.js — the modes are statistics)
+  define('payback.period', { label: 'Payback period', desc: 'How long until a purchase has paid for itself: the time to afford it at your income, plus its price ÷ what it adds to that income. Your income depends on the payback mode.' });
+  define('payback.afford', { label: 'Time to afford', desc: 'How long until your bank reaches its price, at your income in the payback mode (0 when you can afford it now).' });
+  define('payback.earnBack', { label: 'Earn back', desc: 'How long what it adds takes to make its price back: price ÷ gain, in the payback mode.' });
+  define('payback.income', { label: 'Income', desc: 'What payback periods count in: cookies a second, as the payback mode in use counts them.' });
+  define('payback.gain', { label: 'Gain', desc: 'What a purchase adds to your income, as the payback mode counts it.' });
+
   return { define, get, label, desc };
 })();

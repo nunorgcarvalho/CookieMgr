@@ -94,7 +94,7 @@ assert(bulks.querySelector('details.ca-st-more') === null || bulks.querySelector
 assert(card('bonus').querySelector('details.ca-st-more'), 'the long built-in (Bonus income): folded');
 // filters
 click(w, page().querySelector('[data-st-filter="Payback"]'));
-assert(cards().map((c) => c.dataset.stCard).join() === 'payback,actual,bulks', `the Payback group (${cards().map((c) => c.dataset.stCard)})`);
+assert(cards().map((c) => c.dataset.stCard).join() === 'payback,actual,paybackRaw,paybackCps,paybackClicking,paybackModes,paybackParts,income,bulks', `the Payback group (v3.42: + the payback modes' lines) (${cards().map((c) => c.dataset.stCard)})`);
 click(w, page().querySelector('[data-st-filter="yours"]'));
 assert(cards().length === 0 && /duplicate a statistic/.test(page().querySelector('[data-st-body]').textContent), 'none of yours yet: says how');
 click(w, page().querySelector('[data-st-filter="all"]'));

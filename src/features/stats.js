@@ -86,19 +86,63 @@ return sign + fmt.number(gain) + "/s" + share`,
 if m > 0:
   return "+" + fmt.number(m) + " (≈ " + fmt.number(m * clickRate()) + "/s at your clicking)"`,
     },
-    { id: 'payback', group: 'Payback', name: 'Payback period', label: 'Payback period', desc: 'in its payback color', scope: 'item', format: 'payback', colour: 'payback', source: 'return item.payback()' },
+    { id: 'payback', group: 'Payback', name: 'Payback period', label: 'Payback period', desc: 'in the payback mode in use, in its payback color', scope: 'item', format: 'payback', colour: 'payback', source: 'return item.payback()' },
     {
       id: 'actual',
       group: 'Payback',
       name: 'Payback, actual income',
       label: 'Payback, actual income',
-      desc: 'the payback period by what you’ve really been taking in (once a minute of play is recorded)',
+      desc: 'the payback period by what you’ve really been taking in (the Actual income mode; once a minute of play is recorded)',
       scope: 'item',
       format: 'payback',
-      source: `a = paybackActual(item.payback())
+      source: `a = item.paybackIn("actual")
 if known(a):
-  note = "(×" + fmt.fixed(paybackActualRatio(item.payback()), 2) + " CpS)"
+  note = "(×" + fmt.fixed(payback.income("actual") / cps(), 2) + " CpS)"
   return a`,
+    },
+    { id: 'paybackRaw', group: 'Payback', name: 'Payback, raw CpS', label: 'Payback, raw CpS', desc: 'the payback period by your raw CpS (no golden cookie effects)', scope: 'item', format: 'payback', source: 'return item.paybackIn("raw")' },
+    { id: 'paybackCps', group: 'Payback', name: 'Payback, CpS', label: 'Payback, CpS', desc: 'the payback period by the CpS the game shows (Cookie Monster’s)', scope: 'item', format: 'payback', source: 'return item.paybackIn("cps")' },
+    { id: 'paybackClicking', group: 'Payback', name: 'Payback, CpS + clicking', label: 'Payback, CpS + clicking', desc: 'the payback period by your CpS plus your clicking', scope: 'item', format: 'payback', source: 'return item.paybackIn("clicking")' },
+    {
+      id: 'paybackModes',
+      group: 'Payback',
+      name: 'Payback in every mode',
+      label: 'Payback raw / CpS / click / actual',
+      desc: 'the payback period in each payback mode: raw CpS, CpS, CpS + clicking, actual income',
+      scope: 'item',
+      format: 'payback',
+      source: `return [item.paybackIn("raw"), item.paybackIn("cps"), item.paybackIn("clicking"), item.paybackIn("actual")]`,
+    },
+    {
+      id: 'paybackParts',
+      group: 'Payback',
+      name: 'Payback, its parts',
+      label: 'Afford + earn back',
+      desc: 'the payback period’s two parts: the time to afford it, plus the time to earn its price back',
+      scope: 'item',
+      format: 'text',
+      source: `# payback period = time to afford + price ÷ gain, at your income in the payback mode in use
+a = item.timeToAfford()
+e = item.earnBack()
+if not finite(e):
+  return "never pays back"
+w = "now"
+if a > 0:
+  w = fmt.time(a)
+if not finite(a):
+  w = "never"
+return w + " + " + fmt.time(e)`,
+    },
+    {
+      id: 'income',
+      group: 'Payback',
+      name: 'Payback income',
+      label: 'Income',
+      desc: 'what payback periods count in now: your income in the payback mode in use',
+      scope: 'game',
+      format: 'text',
+      source: `label = "Income (" + payback.mode() + ")"
+return fmt.number(payback.income()) + "/s"`,
     },
     {
       id: 'bulks',
@@ -525,7 +569,19 @@ if cookies() >= need and after < need:
     V('item.kind', 'what the item is: building or upgrade', () => (cur ? cur.kind : ''));
     V('item.price', 'what it costs (for a building: what a click buys)', () => (r() ? r().price : NaN));
     V('item.gain', 'the CpS it adds (an upgrade’s clicks not counted)', () => (r() ? r().bonus : NaN));
-    V('item.payback', 'its payback period (seconds)', () => (r() ? r().pp : NaN));
+    V('item.payback', 'its payback period (seconds; in the payback mode in use)', () => (r() ? r().pp : NaN));
+    // its payback period's parts, in a payback mode ("raw", "cps", "clicking", "actual"; none: the one in use)
+    const worth = () => {
+      if (!r()) return null;
+      if (r().worth) return r().worth;
+      return isB() ? CA.Payback.buildingWorth(cur.name, r().n || 1) : CA.Payback.upgradeWorth(cur.name);
+    };
+    const partsIn = (m) => (r() ? CA.Payback.parts(r().price, worth(), m) : null);
+    const MODES = '"raw", "cps", "clicking" or "actual" — none: the mode in use';
+    V('item.paybackIn', `its payback period in a payback mode: ${MODES} (seconds; NaN: not ready)`, (m) => (partsIn(m) || { pp: NaN }).pp, { params: ['mode'] });
+    V('item.gainIn', `what it adds to your income in a payback mode: ${MODES} (cookies a second)`, (m) => (partsIn(m) || { gain: NaN }).gain, { params: ['mode'] });
+    V('item.timeToAfford', `seconds until you can afford it at your income in a payback mode: ${MODES} (0: now) — a payback period's first part`, (m) => (partsIn(m) || { afford: NaN }).afford, { params: ['mode'] });
+    V('item.earnBack', `seconds it takes to earn its price back, in a payback mode: ${MODES} — price ÷ gain, a payback period's second part`, (m) => (partsIn(m) || { earn: NaN }).earn, { params: ['mode'] });
     const colorWord = () => (r() ? r().colour || '' : '');
     V('item.color', 'its payback color: blue, green, yellow, orange, red, purple or gray', colorWord);
     V('item.colour', 'the same as item.color()', colorWord, { hidden: true }); // the old spelling, still works
@@ -551,7 +607,7 @@ if cookies() >= need and after < need:
       const b = Game.Objects[cur.name];
       if (!b) return null;
       const price = CA.Payback.sumPrice(b, k);
-      const pp = CA.Payback.pp(price, CA.Payback.buildingBonus(cur.name, k));
+      const pp = CA.Payback.ppOf(price, CA.Payback.buildingWorth(cur.name, k));
       return { pp, colour: cur.t.colourOf ? cur.t.colourOf(pp, price) : '' };
     };
     V('item.paybackOf', 'the payback period of n more of the building (seconds; an upgrade: NaN)', (n) => (bulkRow(n) || { pp: NaN }).pp, { params: ['n'] });

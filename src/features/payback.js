@@ -19,7 +19,9 @@
 //
 // with CpS the game's (buffs included, so a Frenzy shrinks every PP alike) and the bank optionally
 // counting what your wrinklers would give back. An upgrade that only makes clicks stronger is worth
-// its extra cookies per click × your clicks per second.
+// its extra cookies per click × your clicks per second. That's the cps **payback mode**; the others
+// count in another income — raw CpS, CpS + clicking, your actual income (see "payback modes"
+// below) — and the setting ppMode picks the one everything uses.
 //
 // **Colors** (Cookie Monster's): blue — better than the best building (only upgrades can be);
 // green — the best building; yellow / orange / red — within the 10 / 20 / 30 best building PPs (one,
@@ -116,6 +118,8 @@ CA.Payback = (() => {
     if (!hasAchiev('Jellicles') && Game.UpgradesByPool && Game.UpgradesByPool.kitten && Game.UpgradesByPool.kitten.filter((u) => has(u.name)).length >= 10) win('Jellicles');
   }
 
+  /** The game's raw CpS (its Stats menu's "Raw cookies per second": no buffs, golden switch, aura of Dragon's Fortune…). */
+  const rawNow = () => (Number.isFinite(Game.cookiesPsRaw) && Game.cookiesPsRaw > 0 ? Game.cookiesPsRaw : Game.unbuffedCps || Game.cookiesPs || 0);
   /**
    * Runs `changes` — each (win) → undo: makes a change to the game (calling win(name) for an
    * achievement it wins outright), then measures — and returns [{ cps, unbuffed, mouse, won }] in
@@ -124,7 +128,7 @@ CA.Payback = (() => {
    */
   function measureAll(changes) {
     // no game to ask (a page without Cookie Clicker's engine): everything adds nothing
-    if (typeof Game.CalculateGains !== 'function') return [null].concat(changes).map(() => ({ cps: Game.cookiesPs || 0, unbuffed: Game.unbuffedCps || 0, mouse: 0, won: [] }));
+    if (typeof Game.CalculateGains !== 'function') return [null].concat(changes).map(() => ({ cps: Game.cookiesPs || 0, raw: rawNow(), unbuffed: Game.unbuffedCps || 0, mouse: 0, won: [] }));
     const real ={ win: Game.Win, owned: Game.AchievementsOwned, highest: Game.cookiesPsRawHighest, recalc: Game.recalculateGains };
     const out = [];
     try {
@@ -145,7 +149,7 @@ CA.Payback = (() => {
           Game.CalculateGains(); // wins the CpS milestones it reaches — into `won`
           otherWins(win);
           if (Game.AchievementsOwned !== before) Game.CalculateGains();
-          out.push({ cps: Game.cookiesPs, unbuffed: Game.unbuffedCps, mouse: typeof Game.mouseCps === 'function' ? Game.mouseCps() : 0, won: won.map((a) => a.name) });
+          out.push({ cps: Game.cookiesPs, raw: rawNow(), unbuffed: Game.unbuffedCps, mouse: typeof Game.mouseCps === 'function' ? Game.mouseCps() : 0, won: won.map((a) => a.name) });
         } finally {
           if (typeof undo === 'function') undo();
           won.forEach((a) => (a.won = 0));
@@ -222,13 +226,13 @@ CA.Payback = (() => {
   // ranking) asks for the buildings you can buy, at the amount you'd buy, and the store's upgrades;
   // the full table (the colors, the Payback page) for every building at ×1, ×10 and ×100 — Cookie
   // Monster's color scale ranks all sixty. Whatever has been measured is kept until the state changes.
-  let cache = null; // { key, t, cps, b: { 'name|n': income }, u: { name: { bonus, mouse, won } }, won: { 'name|n': [...] } }
+  let cache = null; // { key, t, cps, b: { 'name|n': income }, bx: { 'name|n': { raw, mouse } }, u: { name: { bonus, raw, mouse, won } }, won: { 'name|n': [...] } }
 
   function fresh() {
     const k = structKey();
     const moved = cache ? Math.abs((Game.cookiesPs || 0) - cache.cps) / Math.max(1e-9, Math.abs(cache.cps)) : 1;
     // a real change of CpS (a god, an aura, a lump…): now; a drift (the god of Ages wobbles it every frame): once a second
-    if (!cache || cache.key !== k || moved > 1e-3 || (moved > 0 && Date.now() - cache.t > 1000)) cache = { key: k, t: Date.now(), cps: Game.cookiesPs, b: {}, u: {}, won: {} };
+    if (!cache || cache.key !== k || moved > 1e-3 || (moved > 0 && Date.now() - cache.t > 1000)) cache = { key: k, t: Date.now(), cps: Game.cookiesPs, b: {}, bx: {}, u: {}, won: {} };
     return cache;
   }
   let calls = 0; // CpS computations so far (for the tests' and the simulator's benefit)
@@ -285,11 +289,12 @@ CA.Payback = (() => {
     const base = res.shift();
     needB.forEach(([n, k], i) => {
       c.b[`${n}|${k}`] = res[i].cps - base.cps;
+      c.bx[`${n}|${k}`] = { raw: res[i].raw - base.raw, mouse: res[i].mouse - base.mouse };
       c.won[`${n}|${k}`] = res[i].won;
     });
     needU.forEach((n, i) => {
       const r = res[needB.length + i];
-      c.u[n] = { bonus: r.cps - base.cps, mouse: r.mouse - base.mouse, won: r.won };
+      c.u[n] = { bonus: r.cps - base.cps, raw: r.raw - base.raw, mouse: r.mouse - base.mouse, won: r.won };
     });
     if (!derived.length) return;
     const s = c.u[sample[0]];
@@ -298,7 +303,7 @@ CA.Payback = (() => {
       const clickShare = s.bonus ? s.mouse / s.bonus : 0;
       derived.forEach(([n, p]) => {
         const bonus = (base.cps * p) / 100;
-        c.u[n] = { bonus, mouse: bonus * clickShare, won: [] };
+        c.u[n] = { bonus, raw: (base.raw * p) / 100, mouse: bonus * clickShare, won: [] };
       });
     } else ensure(c, [], derived.map(([n]) => n)); // not as expected: measure them all
   }
@@ -310,8 +315,137 @@ CA.Payback = (() => {
     ensure(c, [[b.name, n]], []);
     return c.b[`${b.name}|${n}`];
   }
+  /** What n of a building would add, every way a payback mode counts it: { kind, bonus (CpS), raw (raw CpS), mouse (per click), won }. */
+  function buildingWorth(name, n = 1, c = fresh()) {
+    const b = buildingNamed(name);
+    if (!b) return { kind: 'building', bonus: 0, raw: 0, mouse: 0, won: [] };
+    ensure(c, [[b.name, n]], []);
+    const k = `${b.name}|${n}`;
+    const x = c.bx[k] || { raw: c.b[k], mouse: 0 };
+    return { kind: 'building', bonus: c.b[k], raw: x.raw, mouse: x.mouse, won: c.won[k] || [] };
+  }
+
+  // ---- payback modes ------------------------------------------------------------------------------
+  //
+  // A payback period counts in some income — cookies a second — and what a purchase adds to it:
+  //
+  //     PP = max(price − bank, 0) ÷ income + price ÷ gain        (time to afford + time to earn it back)
+  //
+  // A mode says what the income is, and what a purchase's worth (worth: { kind, bonus — the CpS it
+  // adds, raw — the raw CpS it adds, mouse — what it adds to a click }) adds to it:
+  //   raw       the game's raw CpS (no buffs, no golden switch…): steady, whatever's running now
+  //   cps       the CpS the game shows now, buffs and all (Cookie Monster's; the default)
+  //   clicking  CpS + your clicks a second (averaged over the last ppClickWindow seconds) × a click
+  //   actual    what you've actually taken in (the Recorder's baked cookies: clicking, golden cookies,
+  //             wrinklers…) averaged over the last ppActualWindow minutes of play, projected forward;
+  //             what a purchase adds scales with it: its raw gain × actual ÷ raw CpS (take in 10× your
+  //             raw CpS and what it adds to your raw CpS counts 10×)
+  // In raw and cps an upgrade that makes clicks stronger still counts its clicks at your click rate
+  // (clickRate, the last 10 s), as it always has. A mode that isn't ready (actual income with under a
+  // minute recorded) leaves the add-on on cps until it is. More can be added: defineMode.
+  // History is only read; nothing is predicted.
+
+  const modes = [];
+  /**
+   * Adds a mode (or replaces one): { id, label, short, desc, order, income() → cookies a second,
+   * gain(worth) → what a purchase adds to it, ready() → whether it can be worked out now }.
+   */
+  function defineMode(m) {
+    const i = modes.findIndex((x) => x.id === m.id);
+    if (i >= 0) modes.splice(i, 1);
+    modes.push({ order: 50, ready: () => true, short: m.label, ...m });
+    modes.sort((a, b) => a.order - b.order);
+    if (CA.StatInfo) CA.StatInfo.define(`payback.mode.${m.id}`, { label: m.label, desc: m.desc });
+    return m;
+  }
+  const modeById = (id) => modes.find((m) => m.id === id) || null;
+  /** The mode in use: the setting's, when there's such a mode and it's ready — else cps. */
+  function currentMode() {
+    const m = modeById(CA.Settings.get('ppMode'));
+    return m && m.ready() ? m : modeById('cps');
+  }
+  /** A mode by id ('' or none: the one in use) — null for an unknown one. */
+  const modeOf = (id) => (id === undefined || id === null || id === '' ? currentMode() : modeById(String(id)));
+
+  /** Clicks a second over the last secs seconds (the Recorder's when it has them; else the last ten seconds sampled). */
+  function clicksOver(secs) {
+    const r = CA.Recorder && typeof CA.Recorder.recent === 'function' ? CA.Recorder.recent(secs) : null;
+    return r && Number.isFinite(r.clickRate) && r.clickRate >= 0 && r.secs > 0 ? r.clickRate : sampledRate();
+  }
+  const clickWindow = () => Math.max(1, Number(CA.Settings.get('ppClickWindow')) || 60);
+  const actualWindow = () => Math.max(1, Number(CA.Settings.get('ppActualWindow')) || 30) * 60;
+  /** What a click is worth now (the game's). */
+  const perClick = () => (Number.isFinite(Game.computedMouseCps) ? Game.computedMouseCps : typeof Game.mouseCps === 'function' ? Game.mouseCps() : 0);
+  // the actual income over exactly the window asked for, read at most every 5 s
+  let incomeMemo = { at: -Infinity, m: new Map() };
+  /** What you actually took in a second over the last secs seconds of play: { actual, secs (recorded), window } — null with under a minute recorded. */
+  function incomeOver(secs) {
+    const R = CA.Recorder;
+    if (!R || typeof R.recent !== 'function') return null;
+    const now = Date.now();
+    if (now - incomeMemo.at > ACTUAL_STALE_MS) incomeMemo = { at: now, m: new Map() };
+    if (!incomeMemo.m.has(secs)) {
+      const r = R.recent(secs);
+      incomeMemo.m.set(secs, r && r.secs >= 60 && Number.isFinite(r.actual) ? { actual: r.actual, secs: r.secs, window: secs } : null);
+    }
+    return incomeMemo.m.get(secs);
+  }
+  /** What a purchase adds to your CpS, its clicks counted at your click rate (an upgrade's — Cookie Monster's way). */
+  const cpsGain = (w) => (w.bonus || 0) + (w.kind === 'upgrade' ? Math.max(0, w.mouse || 0) * clickRate() : 0);
+
+  /** What a purchase adds to your raw CpS (an upgrade's clicks counted at your click rate, without buffs). */
+  const rawGain = (w) => (Number.isFinite(w.raw) ? w.raw : w.bonus || 0) + (w.kind === 'upgrade' ? Math.max(0, w.mouse || 0) * clickRate() * (Game.cookiesPs > 0 ? rawNow() / Game.cookiesPs : 1) : 0);
+  defineMode({
+    id: 'raw',
+    order: 10,
+    label: 'Raw CpS',
+    short: 'raw',
+    desc: 'Payback periods count in your raw CpS — what you make with no golden cookie effects, golden switch or Dragon’s Fortune: steady, whatever is running now. A purchase’s gain is what it adds to that.',
+    income: rawNow,
+    gain: rawGain,
+  });
+  defineMode({
+    id: 'cps',
+    order: 20,
+    label: 'CpS',
+    short: 'CpS',
+    desc: 'Payback periods count in the CpS the game shows now, buffs included (a Frenzy shrinks every payback period alike) — Cookie Monster’s way. An upgrade that makes clicks stronger counts its clicks at your click rate.',
+    income: () => Game.cookiesPs || 0,
+    gain: cpsGain,
+  });
+  defineMode({
+    id: 'clicking',
+    order: 30,
+    label: 'CpS + clicking',
+    short: 'clicking',
+    desc: 'Payback periods count in your CpS plus your clicking: your clicks a second (averaged over the last minute, or what the option says) × what a click is worth. A purchase’s gain is the CpS it adds plus what it adds to your clicks.',
+    income: () => (Game.cookiesPs || 0) + clicksOver(clickWindow()) * perClick(),
+    gain: (w) => (w.bonus || 0) + (w.mouse || 0) * clicksOver(clickWindow()),
+  });
+  defineMode({
+    id: 'actual',
+    order: 40,
+    label: 'Actual income',
+    short: 'actual',
+    desc: 'Payback periods count in what you’ve actually been taking in — everything baked: production, clicking, golden cookies, wrinklers — averaged over the last 30 minutes of play (or what the option says), projected forward. A purchase’s gain scales the same way: what it adds to your raw CpS × your actual income ÷ your raw CpS. Needs a minute of play recorded; until then CpS.',
+    ready: () => !!incomeOver(actualWindow()) && rawNow() > 0,
+    income: () => (incomeOver(actualWindow()) || { actual: NaN }).actual,
+    gain: (w) => rawGain(w) * actualRatio(),
+  });
+
+  /** Your actual income (over the option's window) as a multiple of your raw CpS — NaN with too little recorded. */
+  function actualRatio() {
+    const a = incomeOver(actualWindow());
+    return a && rawNow() > 0 ? a.actual / rawNow() : NaN;
+  }
 
   // ---- payback periods, colors -------------------------------------------------------------------
+
+  /** Cookies a second in a mode (none: the one in use) — NaN for one unknown or not ready. */
+  function income(id) {
+    const m = modeOf(id);
+    return m && m.ready() ? m.income() : NaN;
+  }
 
   /** Cookies that count as the bank: the cookies in hand, plus your wrinklers' when that's chosen. */
   function bank() {
@@ -319,21 +453,41 @@ CA.Payback = (() => {
     if (mode === 'all' || mode === 'fattest') return (Game.cookies || 0) + (CA.Wrinklers ? CA.Wrinklers.bank(mode) : 0);
     return Game.cookies || 0;
   }
-  /** Cookie Monster's payback period: the wait to afford it, then its price over what it adds. */
+  /**
+   * A payback period's parts in a mode (none: the one in use): { mode, income, gain, afford (seconds
+   * to afford it), earn (seconds to earn its price back), pp } — pp ∞ when it never pays back, NaN
+   * when the mode is unknown or not ready.
+   */
+  function parts(price, worth, id) {
+    const m = modeOf(id);
+    if (!m || !m.ready()) return { mode: m ? m.id : '', income: NaN, gain: NaN, afford: NaN, earn: NaN, pp: NaN };
+    const inc = m.income();
+    const gain = worth ? m.gain(worth) : NaN;
+    const short = Math.max(0, price - bank());
+    const afford = short <= 0 ? 0 : inc > 0 ? short / inc : Infinity;
+    const earn = gain > 0 && Number.isFinite(price) ? price / gain : Infinity;
+    // an income of nothing: the earning back alone (Cookie Monster's)
+    const pp = !(gain > 0) || !Number.isFinite(price) ? Infinity : inc > 0 ? afford + earn : earn;
+    return { mode: m.id, income: inc, gain, afford, earn, pp };
+  }
+  /** A payback period in a mode (none: the one in use). */
+  const ppOf = (price, worth, id) => parts(price, worth, id).pp;
+  /** Cookie Monster's payback period, by CpS, with a CpS gain given (kept for code that has one). */
   function pp(price, bonus) {
     if (!(bonus > 0) || !Number.isFinite(price)) return Infinity;
     const cps = Game.cookiesPs || 0;
     return cps > 0 ? Math.max(0, price - bank()) / cps + price / bonus : price / bonus;
   }
-  /** Seconds until you can afford a price at your CpS (0: you can now; ∞: never). */
-  function timeTo(price) {
+  /** Seconds until you can afford a price at your income in a mode (none: the one in use) (0: you can now; ∞: never). */
+  function timeTo(price, id) {
     const short = price - bank();
     if (short <= 0) return 0;
-    return Game.cookiesPs > 0 ? short / Game.cookiesPs : Infinity;
+    const inc = income(id);
+    return inc > 0 ? short / inc : Infinity;
   }
 
   /**
-   * An upgrade's measured worth: { bonus, mouse, gain } — gain counts its clicks at your click rate.
+   * An upgrade's measured worth: { kind, bonus, raw, mouse, gain, won } — gain (by CpS) counts its clicks at your click rate.
    * opts.any: one not in the store yet too (locked: what it would add if you had it now).
    */
   function upgradeWorth(name, c = fresh(), opts = {}) {
@@ -343,11 +497,13 @@ CA.Payback = (() => {
     if (opts.any && !(u.name in c.u) && !u.bought && u.pool !== 'prestige') {
       const [base, r] = measureAll([buyUpgradeChange(u)]);
       calls += 2;
-      c.u[u.name] = { bonus: r.cps - base.cps, mouse: r.mouse - base.mouse, won: r.won };
+      c.u[u.name] = { bonus: r.cps - base.cps, raw: r.raw - base.raw, mouse: r.mouse - base.mouse, won: r.won };
     }
     const e = c.u[u.name];
     if (!e) return null;
-    return { bonus: e.bonus, mouse: e.mouse, gain: e.bonus + Math.max(0, e.mouse) * clickRate(), won: e.won };
+    const w = { kind: 'upgrade', bonus: e.bonus, raw: e.raw, mouse: e.mouse, won: e.won };
+    w.gain = cpsGain(w);
+    return w;
   }
 
   /** Every building at every bulk, and every store upgrade: PP, price, bonus, color — Cookie Monster's table. */
@@ -360,7 +516,8 @@ CA.Payback = (() => {
   function table(opts = {}) {
     if (opts.staleMs && memo && Date.now() - memo.at < opts.staleMs) return memo.t;
     const c = fresh();
-    const mk = [Game.cookies, Game.cookiesPs, clickRate(), CA.Settings.get('ppWrinklers'), CA.Settings.get('ppOnlyBuyable'), CA.Settings.get('ppSecondsLowerLimit'), CA.Wrinklers ? CA.Wrinklers.bank('all') : 0].join('|');
+    const m = currentMode();
+    const mk = [m.id, m.income(), m.gain({ kind: 'building', bonus: 1, raw: 1, mouse: 1 }), Game.cookies, Game.cookiesPs, clickRate(), CA.Settings.get('ppWrinklers'), CA.Settings.get('ppOnlyBuyable'), CA.Settings.get('ppSecondsLowerLimit'), CA.Wrinklers ? CA.Wrinklers.bank('all') : 0].join('|');
     if (memo && memo.c === c && memo.key === mk) return memo.t;
     memo = { c, key: mk, t: tableFrom(c), at: Date.now() };
     return memo.t;
@@ -377,9 +534,10 @@ CA.Payback = (() => {
     BULKS.forEach((n) =>
       objects().forEach((b) => {
         const price = sumPrice(b, n);
-        const bonus = c.b[`${b.name}|${n}`];
-        const v = pp(price, bonus);
-        rows[n][b.name] = { name: b.name, n, price, bonus, pp: v, won: c.won[`${b.name}|${n}`] || [] };
+        const worth = buildingWorth(b.name, n, c);
+        const x = parts(price, worth);
+        const v = x.pp;
+        rows[n][b.name] = { name: b.name, n, price, bonus: worth.bonus, gain: x.gain, afford: x.afford, earn: x.earn, mode: x.mode, worth, pp: v, won: worth.won };
         ranked.push([v, n, price]);
       })
     );
@@ -411,8 +569,9 @@ CA.Payback = (() => {
       if (isSwitch(u)) return switches.push(u.name);
       const w = upgradeWorth(u.name, c);
       const price = upgradePrice(u);
-      const v = w ? pp(price, w.gain) : Infinity;
-      upgrades[u.name] = { name: u.name, price, bonus: w ? w.bonus : 0, mouse: w ? w.mouse : 0, gain: w ? w.gain : 0, pp: v, colour: colourOf(v, price), won: w ? w.won : [] };
+      const x = w ? parts(price, w) : null;
+      const v = x ? x.pp : Infinity;
+      upgrades[u.name] = { name: u.name, price, bonus: w ? w.bonus : 0, mouse: w ? w.mouse : 0, gain: x ? x.gain : 0, afford: x ? x.afford : timeTo(price), earn: x ? x.earn : Infinity, mode: currentMode().id, worth: w, pp: v, colour: colourOf(v, price), won: w ? w.won : [] };
     });
     return { buildings: rows, upgrades, switches, min, minBulk, colourOf };
   }
@@ -453,7 +612,7 @@ CA.Payback = (() => {
     }
     ensure(c, bs, []);
     if (opts.top && us.length) {
-      const bestB = bs.reduce((m, [name, n]) => Math.min(m, pp(sumPrice(buildingNamed(name), n), c.b[`${name}|${n}`])), Infinity);
+      const bestB = bs.reduce((m, [name, n]) => Math.min(m, ppOf(sumPrice(buildingNamed(name), n), buildingWorth(name, n, c))), Infinity);
       if (Number.isFinite(bestB)) us = us.filter((u) => timeTo(upgradePrice(u)) < bestB);
     }
     ensure(
@@ -467,18 +626,20 @@ CA.Payback = (() => {
     bs.forEach(([name, n]) => {
       const b = buildingNamed(name);
       const price = sumPrice(b, n);
-      const bonus = c.b[`${name}|${n}`];
-      const v = pp(price, bonus);
+      const worth = buildingWorth(name, n, c);
+      const x = parts(price, worth);
+      const v = x.pp;
       const row = t && t.buildings[n] && t.buildings[n][name];
-      out.push({ kind: 'building', name, n, label: n > 1 ? `${n} × ${b.dname || name}` : b.dname || name, price, bonus, pp: v, colour: row ? row.colour : t ? t.colourOf(v, price) : null });
+      out.push({ kind: 'building', name, n, label: n > 1 ? `${n} × ${b.dname || name}` : b.dname || name, price, bonus: worth.bonus, gain: x.gain, pp: v, colour: row ? row.colour : t ? t.colourOf(v, price) : null });
     });
     us.forEach((u) => {
       const w = upgradeWorth(u.name, c);
       if (!w) return;
       const price = upgradePrice(u);
-      const v = pp(price, w.gain);
+      const x = parts(price, w);
+      const v = x.pp;
       const row = t && t.upgrades[u.name];
-      out.push({ kind: 'upgrade', name: u.name, n: 1, label: u.dname || u.name, price, bonus: w.gain, pp: v, colour: row ? row.colour : t ? t.colourOf(v, price) : null, estimated: !(w.bonus > 0) && w.mouse > 0 });
+      out.push({ kind: 'upgrade', name: u.name, n: 1, label: u.dname || u.name, price, bonus: w.gain, gain: x.gain, pp: v, colour: row ? row.colour : t ? t.colourOf(v, price) : null, estimated: !(w.bonus > 0) && w.mouse > 0 });
     });
     return out.filter((x) => Number.isFinite(x.pp) && (!opts.skip || affordable(x.price))).sort((a, b) => a.pp - b.pp);
   }
@@ -614,12 +775,39 @@ CA.Payback = (() => {
       ],
     });
     CA.Settings.defineOption({
-      key: 'ppActual',
+      key: 'ppMode',
+      group: 'payback',
+      icon: 'dollar',
+      name: 'Payback mode',
+      desc: 'What payback periods count in, everywhere — the Payback page, the store’s colors and sort, the tooltips, the best buy and the buyers: raw CpS, CpS (Cookie Monster’s), CpS + clicking, or your actual income.',
+      default: 'cps',
+      // the modes defined by now and later (defineMode)
+      get choices() {
+        return modes.map((m) => ({ v: m.id, label: m.label }));
+      },
+    });
+    CA.Settings.defineOption({
+      key: 'ppActualWindow',
       group: 'payback',
       icon: 'graphs',
-      name: 'Payback by actual income',
-      desc: 'The Payback page shows payback periods by what you’ve actually been taking in (clicking, golden cookies, wrinklers — the Recorder’s baked cookies) instead of by CpS.',
-      default: false,
+      name: 'Actual income over',
+      desc: 'The Actual income payback mode averages what you took in over this much of your latest play.',
+      default: '30',
+      choices: ['5', '15', '30', '60', '120', '180'].map((v) => ({ v, label: Number(v) < 60 ? `${v} minutes` : `${v / 60} hour${v === '60' ? '' : 's'}` })),
+    });
+    CA.Settings.defineOption({
+      key: 'ppClickWindow',
+      group: 'payback',
+      icon: 'cookie',
+      name: 'Clicks averaged over',
+      desc: 'The CpS + clicking payback mode counts your clicks a second averaged over this much of your latest play.',
+      default: '60',
+      choices: [
+        { v: '10', label: '10 seconds' },
+        { v: '60', label: '1 minute' },
+        { v: '300', label: '5 minutes' },
+        { v: '900', label: '15 minutes' },
+      ],
     });
     CA.Settings.defineOption({
       key: 'ppOnlyBuyable',
@@ -692,12 +880,13 @@ CA.Payback = (() => {
     const b1 = (n) => buildingNamed(n);
     V('building.price', 'what one more of a building costs now', ['building'], (n) => (b1(n) ? sumPrice(b1(n), 1) : NaN));
     V('building.gain', 'the CpS one more of a building adds (its bonus income)', ['building'], (n) => buildingBonus(n, 1));
-    V('building.payback', 'the payback period of one more of a building (seconds)', ['building'], (n) => (b1(n) ? pp(sumPrice(b1(n), 1), buildingBonus(n, 1)) : Infinity));
+    V('building.payback', 'the payback period of one more of a building (seconds; in the payback mode in use)', ['building'], (n) => (b1(n) ? ppOf(sumPrice(b1(n), 1), buildingWorth(n, 1)) : Infinity));
+    V('building.paybackIn', 'the payback period of one more of a building in a payback mode: "raw", "cps", "clicking" or "actual" — none: the mode in use (seconds; NaN: not ready)', ['building', 'mode'], (n, m) => (b1(n) ? ppOf(sumPrice(b1(n), 1), buildingWorth(n, 1), m) : Infinity));
     V('building.priceOf', 'what n more of a building cost now', ['building', 'n'], (n, k) => (b1(n) ? sumPrice(b1(n), Math.max(1, Math.floor(k) || 1)) : NaN));
     V('building.gainOf', 'the CpS n more of a building add', ['building', 'n'], (n, k) => buildingBonus(n, Math.max(1, Math.floor(k) || 1)));
     V('building.paybackOf', 'the payback period of n more of a building (seconds)', ['building', 'n'], (n, k) => {
       const m = Math.max(1, Math.floor(k) || 1);
-      return b1(n) ? pp(sumPrice(b1(n), m), buildingBonus(n, m)) : Infinity;
+      return b1(n) ? ppOf(sumPrice(b1(n), m), buildingWorth(n, m)) : Infinity;
     });
     V('building.toNextAchievement', 'how many more of a building win an achievement (101: none within 100)', ['building'], (n) => nextAchievement(n).n);
     // a switch has neither: NaN
@@ -706,15 +895,29 @@ CA.Payback = (() => {
       const u = upgradeNamed(n);
       if (isSwitch(u)) return NaN;
       const w = upgradeWorth(n);
-      return u && w ? pp(upgradePrice(u), w.gain) : Infinity;
+      return u && w ? ppOf(upgradePrice(u), w) : Infinity;
+    });
+    V('upgrade.paybackIn', 'the payback period of an upgrade in a payback mode: "raw", "cps", "clicking" or "actual" — none: the mode in use (seconds; NaN for a switch, or a mode not ready)', ['upgrade', 'mode'], (n, m) => {
+      const u = upgradeNamed(n);
+      if (isSwitch(u)) return NaN;
+      const w = upgradeWorth(n);
+      return u && w ? ppOf(upgradePrice(u), w, m) : Infinity;
     });
     V('best', 'what has the lowest payback period ("" when nothing does): kind building, upgrade or all', ['kind'], (k) => (best(k || 'all') || {}).name || '');
     V('clickRate', 'big cookie clicks per second (last 10 s)', [], clickRate);
-    V('timeTo', 'seconds until you can afford a price at your CpS (0: now)', ['price'], (p) => timeTo(Number(p)));
+    V('timeTo', 'seconds until you can afford a price at your income in the payback mode in use (0: now)', ['price'], (p) => timeTo(Number(p)));
+    const PV = (id, desc, params, get, more) => V(id, desc, params, get, { group: 'Payback', ...(more || {}) });
+    PV('payback.mode', 'the payback mode in use: raw, cps, clicking or actual (the Payback page’s; cps while the one chosen isn’t ready)', [], () => currentMode().id);
+    PV('payback.modes', 'the payback modes there are, as a list of ids', [], () => modes.map((m) => m.id));
+    PV('payback.income', 'cookies a second in a payback mode — "raw", "cps", "clicking" or "actual" (none: the mode in use): what its payback periods count in (NaN: not ready)', ['mode'], (m) => income(m));
+    PV('payback.bank', 'cookies that count as the bank for payback periods: in hand, plus your wrinklers’ when that’s chosen', [], bank);
+    PV('payback.clickRate', 'clicks a second, averaged as the CpS + clicking mode counts them (the option’s window)', [], () => clicksOver(clickWindow()));
+    PV('payback.perClick', 'what a click on the big cookie is worth now', [], perClick);
+    PV('payback.actualRatio', 'your actual income (over the Actual income window) as a multiple of your raw CpS: what the Actual income mode scales gains by (NaN: too little recorded)', [], actualRatio);
     V('paybackActual', 'a payback period by actual income: the period × CpS ÷ what you took in over a stretch as long (NaN: too little recorded)', ['seconds'], (p) => (ppActual(Number(p)) || { pp: NaN }).pp);
     V('paybackActualRatio', 'what you actually took in over a payback period’s stretch, as a multiple of your CpS (NaN: too little recorded)', ['seconds'], (p) => (ppActual(Number(p)) || { ratio: NaN }).ratio);
     V('actualIncome', 'cookies a second you actually took in over about the last seconds of play (at least 5 minutes; NaN: too little recorded)', ['seconds'], (p) => (actualIncome(Number(p) || 0) || { actual: NaN }).actual);
   }
 
-  return { init, isSwitch, ppActual, actualIncome, calls: () => calls, table, ranking, best, buy, buyBuilding, buyUpgrade, buildingBonus, upgradeWorth, pp, timeTo, sumPrice, clickRate, nextAchievement, storeUpgrades, measureAll, COLOURS, BULKS };
+  return { init, defineMode, modes: () => modes.slice(), mode: currentMode, modeOf, income, bank, parts, ppOf, buildingWorth, actualRatio, clicksOver, incomeOver, isSwitch, ppActual, actualIncome, calls: () => calls, table, ranking, best, buy, buyBuilding, buyUpgrade, buildingBonus, upgradeWorth, pp, timeTo, sumPrice, clickRate, nextAchievement, storeUpgrades, measureAll, COLOURS, BULKS };
 })();

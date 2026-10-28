@@ -12,8 +12,9 @@
 //   Store tooltips  the tooltip block's two switches (Payback in tooltips, Bank warnings) and a link to
 //                 the Tooltips page (ui/tooltipsPage.js), where its lines are
 //
-// The "actual income" chip shows every payback period by what you've actually been taking in
-// (features/payback.js ppActual) instead of by CpS; colors stay CpS's.
+// Payback mode — the page's main setting, at the top: what every payback period counts in (raw CpS,
+// CpS, CpS + clicking, actual income — features/payback.js modes). It's the add-on's: the colors,
+// the store's sort and tooltips, the best buy and the buyers all follow it.
 //
 // Colors (Cookie Monster's): blue better than the best building · green the best building ·
 // yellow / orange / red within the 10 / 20 / 30 best · purple worse · gray never pays back.
@@ -41,12 +42,12 @@ CA.UI.PaybackPage = (() => {
   };
   /** A payback period, short: seconds as a number (Cookie Monster's way), ∞ when it never pays back. */
   const ppText = (v) => (Number.isFinite(v) ? F().short(v) : '∞');
-  /** By actual income, when the chip's on: the period shown, and a note on it for a tip. */
-  const shown = (v) => {
-    if (!CA.Settings.get('ppActual')) return { v, note: '' };
-    const a = P().ppActual(v);
-    if (!a) return { v, note: ' · by actual income: too little recorded yet' };
-    return { v: a.pp, note: ` · by actual income ${ppText(a.pp)} (by CpS ${ppText(v)})` };
+  const span = (s) => (!Number.isFinite(s) ? 'never' : s <= 0 ? 'now' : F().span(s));
+  /** A row's payback period in parts, for a tip: " = 5m to afford + 20m to earn back (by CpS)". */
+  const partsNote = (row) => {
+    const m = P().modeOf(row.mode);
+    if (!Number.isFinite(row.pp)) return m ? ` (by ${m.label})` : '';
+    return ` = ${span(row.afford)} to afford + ${span(row.earn)} to earn back${m ? ` (by ${m.label})` : ''}`;
   };
   const sprite = (pos, cls = '') => `<span class="ca-pp-ico ${cls}" style="background-image:url(${CA.Util.res('img/icons.png')});background-position:${-pos[0] * 48}px ${-pos[1] * 48}px"></span>`;
   const buildingIcon = (b) => sprite([b.iconColumn || 0, 0]);
@@ -54,9 +55,28 @@ CA.UI.PaybackPage = (() => {
   function bestCard(t) {
     return (
       '<div class="ca-card">' +
-      C().cardHead('Best buy', 'dollar', '<div class="ca-card-meta"><span class="ca-hint">lowest payback period (PP) = time to afford + price ÷ the CpS it adds</span></div>') +
+      C().cardHead('Best buy', 'dollar', '<div class="ca-card-meta"><span class="ca-hint">lowest payback period (PP) = time to afford + price ÷ what it adds, at your income</span></div>') +
+      `<div class="ca-pp-modebar" data-pp-modes>${modeBar()}</div>` +
       `<div class="ca-stats" data-pp-best>${bestTiles(t)}</div></div>`
     );
+  }
+  /** The payback mode: one chip a mode, the one in use on; each says what it counts in, and how much that is now. */
+  function modeBar() {
+    const S = CA.Settings;
+    const chosen = S.get('ppMode');
+    const used = P().mode().id;
+    const chips = P()
+      .modes()
+      .map((m) => {
+        const ready = m.ready();
+        const inc = ready ? m.income() : NaN;
+        const tip = `${m.desc}${ready ? ` Now: ${F().beautify(inc)}/s.` : ' Not ready yet: too little recorded.'}`;
+        const cls = `ca-chip${chosen === m.id ? ' on' : ''}${ready ? '' : ' ca-pp-notready'}`;
+        return `<button type="button" class="${cls}" data-pp-mode="${esc(m.id)}" data-tip="${esc(tip)}">${esc(m.label)}<small>${ready ? `${F().short(inc)}/s` : '—'}</small></button>`;
+      })
+      .join('');
+    const note = chosen !== used ? `<span class="ca-hint">${esc(P().modeOf(chosen) ? P().modeOf(chosen).label : chosen)} isn’t ready yet (a minute of play recorded): by ${esc(P().mode().label)} until then</span>` : '';
+    return `<span class="ca-pp-modelabel" data-tip="${esc(CA.StatInfo.desc('payback.income'))}">${I('dollar', 12)} Payback mode</span><span class="ca-pp-chips">${chips}</span>${note}`;
   }
   function bestTiles(t) {
     // in the minimum bulk: what the buyers would buy
@@ -70,24 +90,25 @@ CA.UI.PaybackPage = (() => {
       return s > 0 ? (Number.isFinite(s) ? `in ${F().span(s)}` : 'not at this CpS') : 'affordable now';
     };
     const who = (x) => (x ? esc(x.label) : '—');
-    const ppOf = (x) => ppText(shown(x.pp).v);
+    const ppOf = (x) => ppText(x.pp);
+    const m = P().mode();
     return (
-      tile('Best of all', `<span class="ca-pp-dot ${top ? top.colour : 'gray'}"></span>${who(top)}`, top ? `PP ${ppOf(top)} · +${F().short(top.bonus)}/s · ${wait(top)}` : 'nothing pays back') +
+      tile('Best of all', `<span class="ca-pp-dot ${top ? top.colour : 'gray'}"></span>${who(top)}`, top ? `PP ${ppOf(top)} · +${F().short(top.gain)}/s · ${wait(top)}` : 'nothing pays back') +
       tile('Best building', who(bb), bb ? `PP ${ppOf(bb)} · ${F().beautify(bb.price)} · ${wait(bb)}` : '') +
       tile('Best upgrade', who(bu), bu ? `PP ${ppOf(bu)} ·${F().beautify(bu.price)}${bu.estimated ? ' · by your clicking' : ''}` : 'none in the store') +
-      tile('Best bulk', `×${t.minBulk}`, 'the best building’s amount')
+      tile('Best bulk', `×${t.minBulk}`, 'the best building’s amount') +
+      tile(CA.StatInfo.label('payback.income'), `${F().short(P().income())}/s`, `by ${esc(m.label)}`, CA.StatInfo.desc('payback.income'))
     );
   }
 
   function cell(b, n, row) {
     if (!row) return '<td></td>';
     const can = row.price <= Game.cookies;
-    const s = shown(row.pp);
     return (
       `<td class="ca-pp-cell ${row.colour}${can ? ' can' : ''}" data-pp-buy="${esc(b.name)}" data-n="${n}" data-tip="${esc(
-        `${n} × ${b.dname || b.name}: PP ${ppText(row.pp)} (${COLOUR_NAMES[row.colour]})${s.note} · adds ${F().beautify(row.bonus)}/s for ${F().beautify(row.price)}${row.won.length ? ` · wins ${row.won.join(', ')}` : ''}${can ? ' — click to buy' : ` — affordable ${Number.isFinite(P().timeTo(row.price)) ? `in ${F().span(P().timeTo(row.price))}` : 'not at this CpS'}`}`
+        `${n} × ${b.dname || b.name}: PP ${ppText(row.pp)}${partsNote(row)} (${COLOUR_NAMES[row.colour]}) · adds ${F().beautify(row.gain)}/s${row.mode !== 'cps' ? ` (${F().beautify(row.bonus)} CpS)` : ''} for ${F().beautify(row.price)}${row.won.length ? ` · wins ${row.won.join(', ')}` : ''}${can ? ' — click to buy' : ` — affordable ${Number.isFinite(P().timeTo(row.price)) ? `in ${F().span(P().timeTo(row.price))}` : 'not at this CpS'}`}`
       )}">` +
-      `<b>${ppText(s.v)}</b><span>+${F().short(row.bonus)}/s</span><em>${F().short(row.price)}</em>` +
+      `<b>${ppText(row.pp)}</b><span>+${F().short(row.gain)}/s</span><em>${F().short(row.price)}</em>` +
       '</td>'
     );
   }
@@ -126,13 +147,12 @@ CA.UI.PaybackPage = (() => {
         .map((r) => {
           const u = (Game.Upgrades && Game.Upgrades[r.name]) || (Game.UpgradesInStore || []).find((x) => x.name === r.name) || {};
           const can = r.price <= Game.cookies;
-          const s = shown(r.pp);
           const what = r.bonus > 0 ? `adds ${F().beautify(r.bonus)}/s` : r.mouse > 0 ? `adds ${F().beautify(r.mouse)} a click (≈ ${F().beautify(r.gain)}/s at your clicking)` : 'adds no CpS';
           return (
             // its info card on hover (ui/upgradeTip.js): what it does, costs, adds, its payback period, how it unlocked
-            `<button type="button" class="ca-pp-up ${r.colour}${can ? ' can' : ''}" data-pp-up="${esc(r.name)}" ${CA.UpgradeInfo.attrs(r.name)} aria-label="${esc(`${u.dname || r.name}: PP ${ppText(r.pp)} (${COLOUR_NAMES[r.colour]})${s.note} · ${what} · ${F().beautify(r.price)}${can ? ' — click to buy' : ''}`)}">` +
+            `<button type="button" class="ca-pp-up ${r.colour}${can ? ' can' : ''}" data-pp-up="${esc(r.name)}" ${CA.UpgradeInfo.attrs(r.name)} aria-label="${esc(`${u.dname || r.name}: PP ${ppText(r.pp)}${partsNote(r)} (${COLOUR_NAMES[r.colour]}) · ${what} · ${F().beautify(r.price)}${can ? ' — click to buy' : ''}`)}">` +
             (u.icon ? sprite(u.icon) : '') +
-            `<span>${ppText(s.v)}</span></button>`
+            `<span>${ppText(r.pp)}</span></button>`
           );
         })
         .join('') +
@@ -144,17 +164,6 @@ CA.UI.PaybackPage = (() => {
         .join('') +
       '</div>'
     );
-  }
-  /** The buildings card's "actual income" chip: payback periods by what you've been taking in. */
-  function actualChip() {
-    const on = !!CA.Settings.get('ppActual');
-    const a = P().actualIncome(300);
-    const C0 = Game.cookiesPs;
-    const ratio = a && C0 > 0 ? a.actual / C0 : NaN;
-    const tip = `${on ? 'Back to' : 'Show'} payback periods by ${on ? 'CpS' : 'actual income'}. By actual income: the period × CpS ÷ what you actually took in (clicking, golden cookies, wrinklers — everything baked) over the last stretch of play as long as the period itself (at least 5 minutes). ${
-      Number.isFinite(ratio) ? `Over the last 5 minutes you took in ${F().beautify(a.actual)}/s: ×${ratio.toFixed(2)} your CpS.` : 'Too little recorded yet (a minute of play).'
-    } Colors stay CpS's.`;
-    return `<button type="button" class="ca-chip${on ? ' on' : ''}" data-pp-opt="ppActual" data-tip="${esc(tip)}">${I('graphs', 11)} actual income${Number.isFinite(ratio) ? ` ×${ratio.toFixed(2)}` : ''}</button>`;
   }
   /** The upgrades card's switch filter: a chip, on when switches are shown. */
   function switchChip(t) {
@@ -171,12 +180,18 @@ CA.UI.PaybackPage = (() => {
     const wr = S.get('ppWrinklers');
     const choice = (v, label) => `<button type="button" class="ca-chip${wr === v ? ' on' : ''}" data-pp-wrink="${v}">${label}</button>`;
     const mb = Number(S.get('minBulk')) || 0;
+    const pick = (key) => {
+      const def = S.definitions().find((d) => d.key === key);
+      return def.choices.map((c) => `<button type="button" class="ca-chip${S.get(key) === c.v ? ' on' : ''}" data-pp-pick="${key}" data-v="${esc(c.v)}">${esc(c.short || c.label)}</button>`).join('');
+    };
     const bulkChip = (v) => `<button type="button" class="ca-chip${mb === v ? ' on' : ''}" data-pp-bulk="${v}">${v ? `×${v}` : 'auto'}</button>`;
     return (
       '<div class="ca-card">' +
       C().cardHead('Options', 'settings') +
       '<div class="ca-list">' +
       `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('wrinkler', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Count wrinklers in the bank</div><div class="ca-row-desc">What popping them would give counts towards affording things.</div></div><span class="ca-pp-chips">${choice('none', 'No')}${choice('all', 'All')}${choice('fattest', 'The fattest')}</span></div>` +
+      `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('graphs', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Actual income over</div><div class="ca-row-desc">The Actual income mode averages what you took in over this much of your latest play${Number.isFinite(P().actualRatio()) ? ` — now ×${P().actualRatio().toFixed(2)} your raw CpS` : ''}.</div></div><span class="ca-pp-chips">${pick('ppActualWindow')}</span></div>` +
+      `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('cookie', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Clicks averaged over</div><div class="ca-row-desc">The CpS + clicking mode counts your clicks a second over this much of your latest play — now ${P().clicksOver(Math.max(1, Number(S.get('ppClickWindow')) || 60)).toFixed(1)} a second.</div></div><span class="ca-pp-chips">${pick('ppClickWindow')}</span></div>` +
       `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('building', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Minimum bulk</div><div class="ca-row-desc">What the buyers (Best building, buy.best, Best of all above) buy a building in — with Round to multiples on, up to the next multiple of it. Auto: ×10 with Round to multiples, else ×1. Now: ×${CA.Shop.minBulk()}${CA.Shop.roundUp() ? ', rounded up' : ''}.</div></div><span class="ca-pp-chips">${CA.Shop.MIN_BULKS.map(bulkChip).join('')}</span></div>` +
       `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('dollar', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Best = what you can afford</div><div class="ca-row-desc">The green building is the best you can buy now; what you can’t afford yet shows red.</div></div>${C().toggle(!!S.get('ppOnlyBuyable'), 'data-pp-opt="ppOnlyBuyable"', 'Best = what you can afford')}</div>` +
       `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('clock', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Cheap enough to just buy</div><div class="ca-row-desc">Anything costing less than this many seconds of CpS shows blue (0: off).</div></div><input type="number" min="0" step="1" class="ca-pp-num" data-pp-num="ppSecondsLowerLimit" value="${Number(S.get('ppSecondsLowerLimit')) || 0}"></div>` +
@@ -204,7 +219,7 @@ CA.UI.PaybackPage = (() => {
     return (
       bestCard(t) +
       '<div class="ca-card">' +
-      C().cardHead('Buildings', 'building', `<div class="ca-card-meta"><span class="ca-hint">payback period, CpS added, price — click a cell to buy</span><span data-pp-actchip>${actualChip()}</span></div>`) +
+      C().cardHead('Buildings', 'building', `<div class="ca-card-meta"><span class="ca-hint">payback period, what it adds, price — click a cell to buy</span></div>`) +
       `<div data-pp-buildings>${buildingsHtml(t)}</div>${legendHtml()}</div>` +
       '<div class="ca-card">' +
       C().cardHead('Upgrades', 'upgrade', `<div class="ca-card-meta"><span class="ca-hint">best first — click to buy</span><span data-pp-swchip>${switchChip(t)}</span></div>`) +
@@ -222,7 +237,7 @@ CA.UI.PaybackPage = (() => {
       ['[data-pp-upgrades]', () => upgradesHtml(t)],
       ['[data-pp-best]', () => bestTiles(t)],
       ['[data-pp-swchip]', () => switchChip(t)],
-      ['[data-pp-actchip]', actualChip],
+      ['[data-pp-modes]', modeBar],
     ];
     parts.forEach(([sel, fn]) => {
       const el = root.querySelector(sel);
@@ -231,7 +246,7 @@ CA.UI.PaybackPage = (() => {
   }
 
   function onClick(e) {
-    const b = e.target.closest('[data-pp-buy],[data-pp-up],[data-pp-wrink],[data-pp-opt],[data-pp-bulk]');
+    const b = e.target.closest('[data-pp-buy],[data-pp-up],[data-pp-wrink],[data-pp-opt],[data-pp-bulk],[data-pp-mode],[data-pp-pick]');
     if (!b) return;
     e.stopPropagation();
     const d = b.dataset;
@@ -245,6 +260,15 @@ CA.UI.PaybackPage = (() => {
     } else if (d.ppBulk !== undefined) {
       CA.Util.sound('snd/tick.mp3');
       CA.Shop.setMinBulk(Number(d.ppBulk));
+      CA.UI.Menu.render();
+      return;
+    } else if (d.ppMode) {
+      CA.Util.sound('snd/tick.mp3');
+      CA.Settings.set('ppMode', d.ppMode);
+      CA.UI.Menu.render();
+      return;
+    } else if (d.ppPick) {
+      CA.Settings.set(d.ppPick, d.v);
       CA.UI.Menu.render();
       return;
     } else if (d.ppWrink) {

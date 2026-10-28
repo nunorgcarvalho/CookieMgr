@@ -6045,6 +6045,36 @@ body.ca-has-storebar #products {
   display: flex;
   gap: 4px;
 }
+/* the Payback page's main setting: the payback mode */
+#CookieMgrMenu .ca-pp-modebar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 2px 12px 8px;
+}
+#CookieMgrMenu .ca-pp-modelabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font: bold 11px Tahoma, Arial, sans-serif;
+  color: #e8d9b5;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+#CookieMgrMenu .ca-pp-modebar .ca-pp-chips {
+  flex-wrap: wrap;
+}
+#CookieMgrMenu .ca-pp-modebar .ca-chip small {
+  font-weight: normal;
+  color: #8f826d;
+}
+#CookieMgrMenu .ca-pp-modebar .ca-chip.on small {
+  color: #d9c79f;
+}
+#CookieMgrMenu .ca-pp-modebar .ca-chip.ca-pp-notready {
+  opacity: 0.6;
+}
 #CookieMgrMenu .ca-pp-num {
   width: 60px;
   font: 12px Tahoma, Arial, sans-serif;

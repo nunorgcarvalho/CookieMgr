@@ -90,21 +90,22 @@ fresh();
 assert(near(CA.Script.VALUES.find((v) => v.id === 'paybackActual').get(1500), 1000), 'paybackActual(1500) at 1.5×: 1000');
 assert(near(CA.Script.VALUES.find((v) => v.id === 'actualIncome').get(600), 1.5 * C), 'actualIncome(600)');
 
-// ---- the Payback page: the chip, the cells
-CA.Settings.set('ppActual', false);
+// ---- the Payback page: the chip, the cells (v3.42: the chip is the Actual income payback mode)
+CA.Settings.set('ppMode', 'cps');
 CA.UI.Menu.openPage('payback');
 await sleep(100);
-const chip = w.document.querySelector('[data-pp-opt="ppActual"]');
-assert(chip && /×1\.50/.test(chip.textContent), `the chip: actual income ×1.50 (${chip && chip.textContent.trim()})`);
+const chip = w.document.querySelector('[data-pp-mode="actual"]');
+assert(chip && chip.textContent.includes(CA.Format.short(1.5 * C)), `the chip: actual income ${CA.Format.short(1.5 * C)}/s (${chip && chip.textContent.trim()})`);
 const cellPP = () => w.document.querySelector('.ca-pp-cell b').textContent;
 const cps = cellPP();
 chip.click();
 await sleep(100);
-assert(CA.Settings.get('ppActual') === true, 'clicking it: by actual income');
+assert(CA.Settings.get('ppMode') === 'actual', 'clicking it: by actual income');
 const t = P.table();
 const row = t.buildings[1].Cursor;
-assert(cellPP() !== cps && cellPP() === CA.Format.short(P.ppActual(row.pp).pp), `cells show the actual-income period (${cps} → ${cellPP()})`);
-assert(/by actual income/.test(w.document.querySelector('.ca-pp-cell').dataset.tip), 'and say so in their tip');
+assert(cellPP() !== cps && cellPP() === CA.Format.short(row.pp) && row.mode === 'actual', `cells show the actual-income period (${cps} → ${cellPP()})`);
+assert(/by Actual income/.test(w.document.querySelector('.ca-pp-cell').dataset.tip), 'and say so in their tip');
+CA.Settings.set('ppMode', 'cps');
 
 // ---- the store tooltip: a line
 CA.Settings.set('storeTooltips', true);

@@ -181,7 +181,7 @@ CA.UpgradeInfo = (() => {
     const w = CA.Payback.upgradeWorth(u.name, undefined, { any: true });
     if (!w) return null;
     const p = price(u);
-    const pp = CA.Payback.pp(p, w.gain);
+    const pp = CA.Payback.ppOf(p, w);
     const t = CA.Payback.table({ staleMs: 2000 });
     return { price: p, bonus: w.bonus, mouse: w.mouse, gain: w.gain, pp, colour: t.colourOf ? t.colourOf(pp, p) : '', won: w.won || [] };
   }
