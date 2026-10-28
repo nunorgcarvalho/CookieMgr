@@ -3,7 +3,7 @@
 The simulator is versioned apart from the add-on (`SIM_VERSION` in `sim.mjs`, `sim-v*` tags). Each entry
 says which add-on version it was brought in step with.
 
-## 0.6.0 — 2026-10-28 (add-on v3.36.0)
+## 0.6.0 — 2026-10-28 (add-on v3.39.0)
 
 - **The Garden page's model, checked against the real game.** `models/gardenExact.mjs` keeps each of the
   Garden page's gardeners in the game's own garden code (planting, harvesting and the soil through the
