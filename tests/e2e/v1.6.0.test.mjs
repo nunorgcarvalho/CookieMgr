@@ -108,7 +108,7 @@ click(w, page.querySelector('[data-ev-csv]'));
 assert(downloaded && /^cookiemgr-events-.*\.csv$/.test(downloaded), `CSV download (${downloaded})`);
 
 // settings card for events
-CA.UI.Menu.openPage('settings');
+CA.UI.Menu.openPage('settings:all');
 assert(doc.querySelector('.ca-index [data-key="logEmptyWrinklers"]'), 'Events options in the Settings index (v2.15: on the Events page)');
 
 clearInterval(loop);

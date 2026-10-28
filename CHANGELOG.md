@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 3.51.0 — 2026-10-28
+
+- **The Settings page has tabs.** Instead of one long scroll, tabs at the top split it into **General** (the
+  overview, general options, hotkeys and Miscellaneous), **Store & tooltips** (the Store options and the store
+  tooltip's lines and warnings), **Data & integrations** (History data and Cookie Monster) and **All options** (every
+  page's options as quick chips). The page remembers the tab you last had open, and links elsewhere take you straight
+  to the right one: the Payback page's "Best buy" and the Statistics page's note open **Store & tooltips**. Every
+  setting and its saved value is unchanged.
+
 ## 3.50.1 — 2026-10-28
 
 - **README:** the Payback screenshot and its bullets show Buy all upgrades in the Auto buyer's queue with its own

@@ -198,7 +198,7 @@ later();
 assert(P.mode().id === 'cps', 'deleted: back to cps');
 
 // ---- the tooltip's layout is on the Settings page now
-CA.UI.Menu.openPage('settings');
+CA.UI.Menu.openPage('settings:store');
 await sleep(100);
 assert(doc.querySelector('[data-tl-lines]') && doc.querySelector('[data-tl-warns]'), 'Settings: the store tooltip’s lines and warnings');
 const delBtn = doc.querySelector('[data-tl-del="0"]');

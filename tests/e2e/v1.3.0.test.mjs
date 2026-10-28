@@ -64,7 +64,7 @@ CA.Settings.set('bankToolbar', true);
 assert($('#cm-bank-toolbar'), 'turning it back on restores it');
 
 // ---- Cookie Monster ------------------------------------------------------------------
-CA.UI.Menu.openPage('settings');
+CA.UI.Menu.openPage('settings:data');
 const cmBtn = $('[data-ca="cm-load"]');
 assert(cmBtn && /Load now/.test(cmBtn.textContent), 'Settings has a "Load now" Cookie Monster button');
 assert($('[data-option="cmAutoLoad"]'), 'Settings has the "Load Cookie Monster on start-up" toggle');
