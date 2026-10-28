@@ -11755,7 +11755,7 @@ if known(a):
       desc: 'the payback period of one, ten and a hundred more, each in its color',
       scope: 'building',
       format: 'payback',
-      source: `colour = [item.colourOf(1), item.colourOf(10), item.colourOf(100)]
+      source: `color = [item.colorOf(1), item.colorOf(10), item.colorOf(100)]
 return [item.paybackOf(1), item.paybackOf(10), item.paybackOf(100)]`,
     },
     {
@@ -11766,9 +11766,9 @@ return [item.paybackOf(1), item.paybackOf(10), item.paybackOf(100)]`,
       desc: 'what it costs (what a click buys) — green when you can afford it, red when not',
       scope: 'item',
       format: 'number',
-      source: `colour = "red"
+      source: `color = "red"
 if timeTo(item.price()) <= 0:
-  colour = "green"
+  color = "green"
 return item.price()`,
     },
     {
@@ -11781,9 +11781,9 @@ return item.price()`,
       format: 'text',
       source: `s = timeTo(item.price())
 if s <= 0:
-  colour = "green"
+  color = "green"
   return "now"
-colour = "red"
+color = "red"
 if finite(s):
   return fmt.time(s)
 return "not at this CpS"`,
@@ -11801,7 +11801,7 @@ return "not at this CpS"`,
 if n > 100:
   return "none within 100"
 # buying that many, the achievement's milk counted: is its payback period good enough?
-colour = item.colourOf(n)
+color = item.colorOf(n)
 return n + " more (" + fmt.number(building.priceOf(item, n)) + ")"`,
     },
     {
@@ -12075,7 +12075,7 @@ if cookies() >= need and after < need:
     if (v === undefined || v === null || (v === '' && !s.showEmpty) || (Array.isArray(v) && !v.length)) return null;
     const vars = r.vars || {};
     const label = typeof vars.label === 'string' || typeof vars.label === 'number' ? String(vars.label) : s.label;
-    let colour = vars.colour !== undefined ? vars.colour : s.colour === 'payback' ? (c && c.r ? c.r.colour : '') : s.colour;
+    let colour = vars.color !== undefined ? vars.color : vars.colour !== undefined ? vars.colour : s.colour === 'payback' ? (c && c.r ? c.r.colour : '') : s.colour;
     let html;
     let cls = '';
     if (Array.isArray(v)) {
@@ -12173,7 +12173,9 @@ if cookies() >= need and after < need:
     V('item.price', 'what it costs (for a building: what a click buys)', () => (r() ? r().price : NaN));
     V('item.gain', 'the CpS it adds (an upgrade’s clicks not counted)', () => (r() ? r().bonus : NaN));
     V('item.payback', 'its payback period (seconds)', () => (r() ? r().pp : NaN));
-    V('item.colour', 'its payback color: blue, green, yellow, orange, red, purple or gray', () => (r() ? r().colour || '' : ''));
+    const colorWord = () => (r() ? r().colour || '' : '');
+    V('item.color', 'its payback color: blue, green, yellow, orange, red, purple or gray', colorWord);
+    V('item.colour', 'the same as item.color()', colorWord, { hidden: true }); // the old spelling, still works
     V('item.bulk', 'how many a click buys (an upgrade: 1)', () => (isB() ? r().n || 1 : cur ? 1 : NaN));
     V('item.owned', 'how many you own (an upgrade: 1 or 0)', () => {
       if (!cur) return NaN;
@@ -12200,7 +12202,9 @@ if cookies() >= need and after < need:
       return { pp, colour: cur.t.colourOf ? cur.t.colourOf(pp, price) : '' };
     };
     V('item.paybackOf', 'the payback period of n more of the building (seconds; an upgrade: NaN)', (n) => (bulkRow(n) || { pp: NaN }).pp, { params: ['n'] });
-    V('item.colourOf', 'the payback color of n more of the building', (n) => (bulkRow(n) || { colour: '' }).colour, { params: ['n'] });
+    const colorOfWord = (n) => (bulkRow(n) || { colour: '' }).colour;
+    V('item.colorOf', 'the payback color of n more of the building', colorOfWord, { params: ['n'] });
+    V('item.colourOf', 'the same as item.colorOf(n)', colorOfWord, { params: ['n'], hidden: true }); // the old spelling, still works
   }
 
   function defineFormatWords() {
@@ -23606,8 +23610,8 @@ CA.UI.StatEditor = (() => {
       (trace
         ? `<div class="ca-se-trace"><div class="ca-se-tr-head">What it did <em>${r.steps} step${r.steps === 1 ? '' : 's'}</em></div>${trace}</div>`
         : '') +
-      (r.vars && (r.vars.label !== undefined || r.vars.note !== undefined || r.vars.colour !== undefined)
-        ? `<div class="ca-hint">sets ${['label', 'note', 'colour'].filter((k) => r.vars[k] !== undefined).join(', ')}</div>`
+      (r.vars && (r.vars.label !== undefined || r.vars.note !== undefined || r.vars.color !== undefined || r.vars.colour !== undefined)
+        ? `<div class="ca-hint">sets ${['label', 'note', 'color'].filter((k) => r.vars[k] !== undefined || (k === 'color' && r.vars.colour !== undefined)).join(', ')}</div>`
         : '')
     );
   }

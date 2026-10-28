@@ -6,8 +6,9 @@
 
 - Spelling is American English throughout: the add-on's text, tooltips, settings and docs (colour → color,
   favourite → favorite, neighbour → neighbor, customise → customize, centre → center, labelled → labeled,
-  greyed → grayed, cancelled → canceled, behaviour → behavior). Nothing else changes: saved settings, option ids,
-  statistic names (`item.colour`), code and API names keep their spelling.
+  greyed → grayed, cancelled → canceled, behaviour → behavior). The statistic words are now `item.color()` and
+  `item.colorOf(n)`, and statistic code sets `color`; the old `item.colour()`, `item.colourOf(n)` and `colour` still
+  work. Saved settings, option ids, saved statistics and code and API names keep their spelling.
 
 ## 3.39.0 — 2026-10-28
 

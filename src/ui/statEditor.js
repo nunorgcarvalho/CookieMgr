@@ -141,8 +141,8 @@ CA.UI.StatEditor = (() => {
       (trace
         ? `<div class="ca-se-trace"><div class="ca-se-tr-head">What it did <em>${r.steps} step${r.steps === 1 ? '' : 's'}</em></div>${trace}</div>`
         : '') +
-      (r.vars && (r.vars.label !== undefined || r.vars.note !== undefined || r.vars.colour !== undefined)
-        ? `<div class="ca-hint">sets ${['label', 'note', 'colour'].filter((k) => r.vars[k] !== undefined).join(', ')}</div>`
+      (r.vars && (r.vars.label !== undefined || r.vars.note !== undefined || r.vars.color !== undefined || r.vars.colour !== undefined)
+        ? `<div class="ca-hint">sets ${['label', 'note', 'color'].filter((k) => r.vars[k] !== undefined || (k === 'color' && r.vars.colour !== undefined)).join(', ')}</div>`
         : '')
     );
   }
