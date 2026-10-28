@@ -1,4 +1,4 @@
-// One small icon set for everything CookieMgr draws: sidebar, page headers, buttons, widgets.
+// One small icon set for everything cookieMgr draws: sidebar, page headers, buttons, widgets.
 // Inline SVG (24×24 viewBox, fill="currentColor") so icons inherit text color and need no
 // extra assets — except the cookie, which reuses the game's own perfectCookie.png.
 

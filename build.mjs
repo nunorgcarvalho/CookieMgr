@@ -1,4 +1,4 @@
-// CookieMgr build script — zero dependencies, just Node 18+.
+// cookieMgr build script — zero dependencies, just Node 18+.
 //
 //   node build.mjs            -> writes dist/CookieMgr.js
 //   node build.mjs --watch    -> rebuilds whenever src/ changes
@@ -119,7 +119,7 @@ function render() {
   const css = STYLES.map(readSrc).join('\n');
 
   const parts = [];
-  parts.push(`/*! CookieMgr v${pkg.version} */`);
+  parts.push(`/*! cookieMgr v${pkg.version} */`);
   parts.push('(function () {');
   parts.push("'use strict';");
   parts.push('const CA = {};');

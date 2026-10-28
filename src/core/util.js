@@ -52,7 +52,7 @@ CA.Util = {
       // the game shows the title as HTML: titles are plain text (macro names…), so escape them; desc may hold markup
       Game.Notify(CA.Util.escapeHtml(String(title)), desc || '', icon || CA.ICON, quick, 1);
     } catch (e) {
-      console.log(`[CookieMgr] ${title}: ${desc}`);
+      console.log(`[cookieMgr] ${title}: ${desc}`);
     }
   },
 
@@ -78,7 +78,7 @@ CA.Util = {
   },
 
   log(...args) {
-    console.log('[CookieMgr]', ...args);
+    console.log('[cookieMgr]', ...args);
   },
 
   /** Widest rendered width among `texts` in the given canvas font (0 if ctx/texts is empty). */
@@ -95,7 +95,7 @@ CA.Util = {
   },
 
   /**
-   * Scrolls `el` into view inside its own scroll area only (the CookieMgr panel, the middle
+   * Scrolls `el` into view inside its own scroll area only (the cookieMgr panel, the middle
    * panel's building list…). Element.scrollIntoView also scrolls every ancestor — including the
    * game's overflow-hidden containers, which you then can't scroll back: the whole screen shifts.
    * block: 'start' | 'nearest'.

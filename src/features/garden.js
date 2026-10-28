@@ -34,7 +34,7 @@
 CA.Garden = (() => {
   const SIZE = 6;
   let current = null; // the Current garden: each tile's plant as remembered ([[key|null × 6] × 6])
-  let unlockedAt = {}; // seed → when a harvest by CookieMgr unlocked it (ms)
+  let unlockedAt = {}; // seed → when a harvest by cookieMgr unlocked it (ms)
   const CURRENT = 'current';
   const S = () => CA.Settings;
   const L = () => CA.GardenLayers;

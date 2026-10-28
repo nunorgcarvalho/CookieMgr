@@ -1,5 +1,5 @@
 /* ==========================================================================
-   CookieMgr — styles
+   cookieMgr — styles
    Colors and borders borrow from the game's own "framed" look so the panel
    feels native. Everything is scoped under #CookieMgrTab / #CookieMgrMenu.
    ========================================================================== */
@@ -7051,7 +7051,7 @@ body.ca-has-storebar #products {
   box-shadow: 0 0 0 1px rgba(255, 213, 106, 0.6);
 }
 
-/* the minigames' tooltips: CookieMgr's additions (ui/minigameTips.js) */
+/* the minigames' tooltips: cookieMgr's additions (ui/minigameTips.js) */
 #tooltip .ca-mg-ok,
 #CookieMgrAscendTip .ca-mg-ok {
   color: #7dff7a;
@@ -7063,7 +7063,7 @@ body.ca-has-storebar #products {
   color: #ffd56a;
 }
 
-/* the Legacy button's tooltip: CookieMgr's block (ui/ascendTip.js) */
+/* the Legacy button's tooltip: cookieMgr's block (ui/ascendTip.js) */
 #CookieMgrAscendTip .ca-tt {
   margin: 0;
   text-align: left;

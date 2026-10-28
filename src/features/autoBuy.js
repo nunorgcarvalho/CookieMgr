@@ -15,7 +15,7 @@
 //                                    you're missing it opens the dragon, pets it until it drops, and
 //                                    closes it again.
 //
-// Payback periods come from features/payback.js (CookieMgr's own, the way Cookie Monster computes
+// Payback periods come from features/payback.js (cookieMgr's own, the way Cookie Monster computes
 // them — Cookie Monster doesn't have to be loaded).
 
 CA.AutoBuy = (() => {
@@ -113,7 +113,7 @@ CA.AutoBuy = (() => {
 
   const DROPS = ['Dragon scale', 'Dragon claw', 'Dragon fang', 'Dragon teddy bear'];
   // Which drop a pet can give depends on the quarter of the hour, in an order the game fixes per run.
-  // CookieMgr doesn't read that order (it comes from the save's seed): it learns it by petting. Per
+  // cookieMgr doesn't read that order (it comes from the save's seed): it learns it by petting. Per
   // quarter: the drop that dropped there, OWNED when 200 pets gave nothing (its drop is one you have;
   // at 1 in 20 a pet, 200 misses happen 0.004% of the time), or null — not tried yet. Forgotten when
   // the run changes (an ascension or a new game shuffles the order anew).

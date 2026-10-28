@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 3.47.1 — 2026-10-28
+
+- **Fixed: the bookmarklet, userscript and update check pointed at the old address.** The repo is now
+  `nunorgcarvalho/cookieMgr`, and GitHub Pages serves it at `https://nunorgcarvalho.github.io/cookieMgr/`, so
+  `…/CookieMgr/dist/CookieMgr.js` no longer exists and clicking the old bookmarklet did nothing. Update your
+  bookmark to:
+  `javascript:(function(){Game.LoadMod('https://nunorgcarvalho.github.io/cookieMgr/dist/CookieMgr.js?v='+Date.now());}());`
+- **The name is written cookieMgr** (lowercase c) everywhere it shows: notifications, the panel, tooltips, the
+  simulator. What saves and scripts rely on stays: `window.CookieMgr` (now also `window.cookieMgr`), the mod's id in
+  the save, the storage keys and the file names. Statistics exported as `# CookieMgr statistic` still import.
+
 ## 3.47.0 — 2026-10-28
 
 - **Graphs and Stats are one page, named Stats.** It keeps the Graphs icon and its place in the sidebar, right under

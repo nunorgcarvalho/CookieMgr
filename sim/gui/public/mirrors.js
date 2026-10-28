@@ -1,7 +1,7 @@
 // The simulation's data, where the add-on's pages look for it. The add-on's charts and pages (its
-// Graphs page, its Events page, the plotting engine — loaded from src/ in /cm.js) read CookieMgr's
+// Graphs page, its Events page, the plotting engine — loaded from src/ in /cm.js) read cookieMgr's
 // recorder, event log and golden cookie history. In the game those modules record live; here the
-// recording happens in the simulated game (CookieMgr's own Recorder and History running there), and
+// recording happens in the simulated game (cookieMgr's own Recorder and History running there), and
 // what they recorded is streamed to the page. This file puts it in place:
 //
 //   CA.Recorder    the add-on's own recorder (core/recorder.js), loaded from a stand-in store that

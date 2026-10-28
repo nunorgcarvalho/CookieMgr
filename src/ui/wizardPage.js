@@ -235,7 +235,7 @@ CA.UI.WizardPage = (() => {
       bar.id = TOOLBAR_ID;
       bar.innerHTML =
         '<div class="cm-gt-btn" data-cm-gt="auto"></div>' +
-        `<div class="cm-gt-btn cm-gt-open" data-cm-gt="open" data-tip="Open the CookieMgr Grimoire page">${I('open', 12)}CookieMgr</div>`;
+        `<div class="cm-gt-btn cm-gt-open" data-cm-gt="open" data-tip="Open the cookieMgr Grimoire page">${I('open', 12)}cookieMgr</div>`;
       bar.addEventListener('click', (e) => {
         const b = e.target.closest('[data-cm-gt]');
         if (!b) return;
@@ -252,7 +252,7 @@ CA.UI.WizardPage = (() => {
     auto.innerHTML = `${I('bolt', 12)}Auto FtHoF on combos: ${on ? 'on' : 'off'}`;
     auto.classList.toggle('on', on);
     const d = on && CA.CastTiers.decide();
-    auto.dataset.tip = `Casts Force the Hand of Fate when a combo is on and magic has reached its tier (Cast tiers on the CookieMgr Grimoire page) — same switch as there${d ? ` · now: ${CA.CastTiers.comboName(d.combo)}, ${d.ready ? 'casting' : `waits for ${d.tier.name} at ${d.tier.pct}%`}` : ''}`;
+    auto.dataset.tip = `Casts Force the Hand of Fate when a combo is on and magic has reached its tier (Cast tiers on the cookieMgr Grimoire page) — same switch as there${d ? ` · now: ${CA.CastTiers.comboName(d.combo)}, ${d.ready ? 'casting' : `waits for ${d.tier.name} at ${d.tier.pct}%`}` : ''}`;
   }
 
   function init() {
@@ -261,7 +261,7 @@ CA.UI.WizardPage = (() => {
       group: 'grimoire',
       icon: 'toolbar',
       name: 'Toolbar in the Grimoire',
-      desc: 'Adds the auto-cast switch and a CookieMgr button under the Grimoire’s own info line.',
+      desc: 'Adds the auto-cast switch and a cookieMgr button under the Grimoire’s own info line.',
       default: true,
     });
     createPlot();

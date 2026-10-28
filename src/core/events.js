@@ -27,7 +27,7 @@ CA.Events = (() => {
       try {
         fn(...args);
       } catch (e) {
-        console.error('[CookieMgr] event handler error', event, e);
+        console.error('[cookieMgr] event handler error', event, e);
       }
     });
   }

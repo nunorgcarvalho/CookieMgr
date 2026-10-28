@@ -1,4 +1,4 @@
-// Persistent storage for everything CookieMgr *records* (state history, the event log, small
+// Persistent storage for everything cookieMgr *records* (state history, the event log, small
 // key/value blobs), in IndexedDB rather than localStorage.
 //
 // Why not localStorage: the real Cookie Clicker save lives in localStorage, browsers give
@@ -11,7 +11,7 @@
 //   events  { id, s, t, ... }                       the event log (core/eventLog.js)
 //   kv      { id, s, k, v }                         small blobs (stock cost basis, buff log, …)
 // If IndexedDB is unavailable (very old browser, some private modes) every call resolves to an
-// empty result and CookieMgr just runs without persistence.
+// empty result and cookieMgr just runs without persistence.
 
 CA.Store = (() => {
   const DB_NAME = 'CookieMgr';

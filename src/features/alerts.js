@@ -1,6 +1,6 @@
 // Alerts: telling you when something worth catching appears — what Cookie Monster's notifications do
 // (flash the screen, play a sound, a desktop notification, the tab's title and icon), built from
-// CookieMgr's own pieces so macros can use every part:
+// cookieMgr's own pieces so macros can use every part:
 //
 //   conditions  fortune (a fortune cookie is in the news ticker) · lumpRipe (the sugar lump is ripe) —
 //               with the ones there already: shimmer (a golden / wrath cookie, a reindeer on screen),
@@ -74,7 +74,7 @@ CA.Alerts = (() => {
   }
   function notify(text, where = 'log') {
     const t = String(text || 'Alert');
-    if (where === 'game' || where === 'both') CA.Util.notify('CookieMgr', CA.Util.escapeHtml(t), CA.ICON, 4);
+    if (where === 'game' || where === 'both') CA.Util.notify('cookieMgr', CA.Util.escapeHtml(t), CA.ICON, 4);
     if (where === 'desktop' || where === 'both') desktop('Cookie Clicker', t);
     CA.EventLog.add({ type: 'alert', title: t, data: { where } });
     return 1;

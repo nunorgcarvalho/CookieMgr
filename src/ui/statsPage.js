@@ -1,4 +1,4 @@
-// The Stats page's statistics cards: Cookie Monster's statistics, CookieMgr's way (features/goldenMath.js,
+// The Stats page's statistics cards: Cookie Monster's statistics, cookieMgr's way (features/goldenMath.js,
 // timers.js, prestige.js, wrinklers.js, whatIf.js, collection.js). Until v3.47 they were a page of their own;
 // now they sit on the Stats page's tabs (ui/graphs.js), beside its charts:
 //

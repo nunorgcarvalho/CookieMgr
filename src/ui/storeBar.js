@@ -5,7 +5,7 @@
 //               order out; laySort() lays the store's building rows out in it, as Cookie Monster
 //               does: the building list as a grid, a row number per building)
 //   multiples   on/off: ×10 / ×100 buys and sells stop at a multiple of it
-//   min bulk    auto → ×1 → ×10 → ×100: what CookieMgr's buyers buy a building in (features/shop.js)
+//   min bulk    auto → ×1 → ×10 → ×100: what cookieMgr's buyers buy a building in (features/shop.js)
 //
 // Placed like the sidebar: measured from the game's panels on resize and every half second. The
 // building list gets a little room at the bottom so its last row can scroll clear of the toolbar.
@@ -39,7 +39,7 @@ CA.UI.StoreBar = (() => {
     const mb = Number(CA.Settings.get('minBulk')) || 0;
     h +=
       `<button type="button" class="ca-sb-btn ca-sb-min${mb ? ' on' : ''}" data-ss-min data-tip="${CA.Util.escapeHtml(
-        `Minimum bulk: ${mb ? `×${mb}` : `auto (×${CA.Shop.minBulk()})`} — what CookieMgr’s buyers (the Auto buyer, buy.best, the Payback page) buy a building in${CA.Shop.roundUp() ? ', up to the next multiple of it' : ''}. Click for the next: auto, ×1, ×10, ×100.`
+        `Minimum bulk: ${mb ? `×${mb}` : `auto (×${CA.Shop.minBulk()})`} — what cookieMgr’s buyers (the Auto buyer, buy.best, the Payback page) buy a building in${CA.Shop.roundUp() ? ', up to the next multiple of it' : ''}. Click for the next: auto, ×1, ×10, ×100.`
       )}"><span class="ca-sb-txt">≥${CA.Shop.minBulk()}</span></button></div>`;
     return h;
   }

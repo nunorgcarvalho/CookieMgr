@@ -1,4 +1,4 @@
-// Payback: what buying something is worth — CookieMgr's own version of Cookie Monster's numbers, so
+// Payback: what buying something is worth — cookieMgr's own version of Cookie Monster's numbers, so
 // nothing needs Cookie Monster loaded. (Grown from the simulator's staging module, sim/mgr/staging;
 // the model follows Cookie Monster — MIT — src/Sim and src/Cache/PP.)
 //
@@ -577,7 +577,7 @@ CA.Payback = (() => {
   /**
    * What to buy, lowest PP first: [{ kind, name, n, label, price, pp, bonus, color }]. kind
    * 'building' | 'upgrade' | 'all'; opts.bulk: 1 (default), 10, 100, 'round' (to the next multiple of 10)
-   * or 'auto' — what CookieMgr's buyers buy (CA.Shop.buyAmount: the minimum bulk, rounded up with
+   * or 'auto' — what cookieMgr's buyers buy (CA.Shop.buyAmount: the minimum bulk, rounded up with
    * Round to multiples); opts.skip: only what you can afford now (with opts.budget cookies, when
    * given: the bank less what a buyer keeps in it);
    * opts.mode: the payback mode to rank by (none: the one in use); opts.all: what never pays back

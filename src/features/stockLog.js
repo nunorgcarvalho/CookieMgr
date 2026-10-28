@@ -29,7 +29,7 @@ CA.StockLog = (() => {
           const shares = good.stock - beforeStock;
           if (shares > 0) record('buy', good, shares, beforeCookies - Game.cookies);
         } catch (e) {
-          console.error('[CookieMgr] logging a trade failed', e);
+          console.error('[cookieMgr] logging a trade failed', e);
         }
       }
       return ok;
@@ -45,7 +45,7 @@ CA.StockLog = (() => {
           const shares = beforeStock - good.stock;
           if (shares > 0) record('sell', good, shares, Game.cookies - beforeCookies);
         } catch (e) {
-          console.error('[CookieMgr] logging a trade failed', e);
+          console.error('[cookieMgr] logging a trade failed', e);
         }
       }
       return ok;

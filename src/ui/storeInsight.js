@@ -2,7 +2,7 @@
 //
 //   colors    each building's price in its payback color, for what a click buys now (×1, ×10,
 //              ×100, or to the next multiple), and a small dot in each upgrade's corner
-//   tooltips   under the game's own building and upgrade tooltips, a CookieMgr block — by default
+//   tooltips   under the game's own building and upgrade tooltips, a cookieMgr block — by default
 //              Cookie Monster's: the CpS it adds (and what share of your CpS that is), its payback period
 //              and color (and by actual income), when you can afford it, the achievements it wins; a
 //              building's share of your production, and how many more win its next achievement. Every
@@ -144,7 +144,7 @@ CA.UI.StoreInsight = (() => {
   function block(rows, warns) {
     return (
       '<div class="ca-tt">' +
-      '<div class="ca-tt-head">CookieMgr</div>' +
+      '<div class="ca-tt-head">cookieMgr</div>' +
       rows.map(([k, v, cls]) => `<div class="ca-tt-row"><span>${k}</span><b${cls ? ` class="${cls}"` : ''}>${v}</b></div>`).join('') +
       warnLine(warns) +
       '</div>'

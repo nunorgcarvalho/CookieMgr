@@ -1,4 +1,4 @@
-// Registry of CookieMgr pages (one sidebar entry each). A page is
+// Registry of cookieMgr pages (one sidebar entry each). A page is
 //   { id, label, icon, order, group, html(), mount(root), unmount(), tick(), parts, open(sub), aliases }
 // `group` ('data' | 'minigames' | 'custom') puts a small gap in the sidebar between kinds of page.
 // html() returns the page markup; mount/unmount/tick are optional lifecycle hooks for pages
@@ -62,7 +62,7 @@ CA.UI.Pages = (() => {
           try {
             f();
           } catch (e) {
-            console.error('[CookieMgr] page clean-up failed', e);
+            console.error('[cookieMgr] page clean-up failed', e);
           }
         });
       },

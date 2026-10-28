@@ -16,7 +16,7 @@
 //                 warn: a warning, not a line — when it has something to show about an item, the
 //                 item gets a "!" in the store in its color (red when it has none) and a tag in the
 //                 tooltip's ⚠ line (ui/storeInsight.js: which warnings, in what order)
-//   built-ins     the lines CookieMgr shows, written in the language like any other (BUILTINS)
+//   built-ins     the lines cookieMgr shows, written in the language like any other (BUILTINS)
 //   yours         saved in the "stats" part of the save: { v, mine: [statistic…], builtin: { id:
 //                 { label, source, format, color } } (your changes to a built-in), favs: [id…] }
 //
@@ -603,7 +603,7 @@ if cookies() >= need and after < need:
 
   // ---- as text: to share one (copy, paste) -----------------------------------------------------
 
-  const TEXT_HEAD = '# CookieMgr statistic';
+  const TEXT_HEAD = '# cookieMgr statistic';
   const TEXT_KEYS = ['label', 'key', 'desc', 'scope', 'format', 'colour', 'group', 'warn', 'mode'];
   /** A statistic as text: a few "# field: value" lines, then its code. */
   function toText(s) {
@@ -615,7 +615,7 @@ if cookies() >= need and after < need:
     const lines = String(text || '').replace(/\r/g, '').split('\n');
     const def = {};
     let i = 0;
-    if (lines[0] && lines[0].trim() === TEXT_HEAD) {
+    if (lines[0] && lines[0].trim().toLowerCase() === TEXT_HEAD.toLowerCase()) { // up to v3.47.0 the head had a capital C
       for (i = 1; i < lines.length; i++) {
         const m = lines[i].match(/^#\s*(\w+):\s?(.*)$/);
         if (!m || !TEXT_KEYS.includes(m[1])) break;

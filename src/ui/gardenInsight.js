@@ -23,7 +23,7 @@ CA.UI.GardenInsight = (() => {
   function block(rows, note) {
     return (
       '<div class="ca-tt ca-tt-garden">' +
-      '<div class="ca-tt-head">CookieMgr · next tick</div>' +
+      '<div class="ca-tt-head">cookieMgr · next tick</div>' +
       rows.map(([k, v, cls]) => `<div class="ca-tt-row"><span>${k}</span><b${cls ? ` class="${cls}"` : ''}>${v}</b></div>`).join('') +
       (note ? `<div class="ca-tt-note">${note}</div>` : '') +
       '</div>'

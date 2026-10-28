@@ -22,7 +22,7 @@ export async function ensureGame({ force = false, quiet = false } = {}) {
     const out = path.join(DIR, f);
     if (!force && fs.existsSync(out) && fs.statSync(out).size > 0) continue;
     fs.mkdirSync(path.dirname(out), { recursive: true });
-    const res = await fetch(BASE + f + `?v=${GAME_VERSION}`, { headers: { 'User-Agent': 'Mozilla/5.0 (CookieMgr simulator)' } });
+    const res = await fetch(BASE + f + `?v=${GAME_VERSION}`, { headers: { 'User-Agent': 'Mozilla/5.0 (cookieMgr simulator)' } });
     if (!res.ok) throw new Error(`Couldn't download ${f}: HTTP ${res.status}`);
     const text = await res.text();
     if (/^\s*<!DOCTYPE/i.test(text)) throw new Error(`Couldn't download ${f}: got a web page instead of the script (bot check?)`);

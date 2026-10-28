@@ -1,4 +1,4 @@
-// The plotting engine every CookieMgr chart is built on: a plot is a *technique* applied to
+// The plotting engine every cookieMgr chart is built on: a plot is a *technique* applied to
 // recorded *states* (core/states.js, core/recorder.js). A plot spec says which states it reads
 // and how to turn the recorder's frames into bars / lines / overlays; this module does the rest:
 // the card + toolbar chips (persisted per plot), bucketing, scales, axes, effect bands, event
@@ -1532,6 +1532,6 @@ CA.UI.Plot = (() => {
     axis,
     fmt: { beautify, signed, short, clock, span, tile, row, swatch, windowLabel, joinFigures },
     SEC,
-    SESSION_START, // "this session" = since CookieMgr was loaded in this tab
+    SESSION_START, // "this session" = since cookieMgr was loaded in this tab
   };
 })();

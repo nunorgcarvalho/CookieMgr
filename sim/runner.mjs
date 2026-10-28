@@ -38,7 +38,7 @@ export async function runOne({ strategy, scenario = 'fresh', seed = 1, span = '1
   const sc = await loadScenario(scenario);
   const st = await loadStrategy(strategy);
   const wall = Date.now();
-  // save: a file with an exported save (Options → Export save) — your own game, CookieMgr's settings included
+  // save: a file with an exported save (Options → Export save) — your own game, cookieMgr's settings included
   const saveText = save ? fs.readFileSync(save, 'utf8').trim() : null;
   const sim = await createSim({ seed, fps, sampleEvery, ...sc.options, ...(saveText ? { save: saveText } : {}) });
   await sc.prepare(sim);
