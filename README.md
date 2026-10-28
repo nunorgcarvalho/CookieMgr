@@ -88,7 +88,7 @@ the page. [See every page with a screenshot](#pages).
 <td width="50%" valign="top">
 <b>Macros</b><br>
 <img src="docs/readme/macros.png" alt="The Macros page" width="100%">
-<ul><li>Autoclickers for the big cookie, golden and wrath cookies, reindeer, fortunes and wrinklers</li><li>Alerts, hotkeys and buttons on the left panel</li><li>Write your own macros in cookieMgr's simple code</li></ul>
+<ul><li>Autoclickers for the big cookie, golden and wrath cookies, reindeer, fortunes and wrinklers</li><li>Alerts, hotkeys and buttons on the left panel</li><li>Write your own macros in cookieMgr's simple code, and hover any word in it to see what it is</li></ul>
 </td>
 </tr>
 <tr>
@@ -131,7 +131,7 @@ the page. [See every page with a screenshot](#pages).
 <td width="50%" valign="top">
 <b>Widgets</b><br>
 <img src="docs/readme/widgets.png" alt="The Widgets page" width="100%">
-<ul><li>Place macro buttons, golden cookie odds, effect timers, charts and more on the left panel</li><li>Save and switch layouts</li></ul>
+<ul><li>Place macro buttons, golden cookie odds, effect timers, charts and more on the left panel</li><li>Place any widget more than once, each copy with its own settings</li><li>Save and switch layouts</li></ul>
 </td>
 <td width="50%" valign="top">
 <b>Settings</b><br>
