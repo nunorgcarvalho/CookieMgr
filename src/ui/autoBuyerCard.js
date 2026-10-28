@@ -2,7 +2,8 @@
 //
 //   Auto buyer   its on/off switch (the autoBuyer macro), what it buys next (a bar filling as you save
 //                for it), the profiles (click one to make it active), the payback mode, Buy all upgrades
-//   Queue        the active profile's queue: place, what (icon, name; an upgrade's info card on hover),
+//   Queue        the active profile's queue: place, what (icon, name; an upgrade's info card on hover;
+//                Buy all upgrades as one row, the upgrades it buys on hover),
 //                payback period in its color, score, price, when, the rules that touched it — the first
 //                ten (all on "show all"), then what's held back, grayed, with why
 //   Profile      the active profile: name, what it buys, the bulk, save up or skip, the reserve
@@ -29,6 +30,12 @@ CA.UI.AutoBuyerCard = (() => {
   /** A queue entry's name: a building's icon and name, an upgrade's (hoverable: its info card). */
   function thingName(x) {
     if (x.kind === 'upgrade') return CA.UpgradeInfo.ref(x.name);
+    if (x.kind === 'allUpgrades') {
+      const names = (x.names || []).map((n) => (Game.Upgrades && Game.Upgrades[n] && Game.Upgrades[n].dname) || n);
+      const tip = names.length ? `The game’s Buy all upgrades: ${names.join(', ')} — bought at once, their payback period measured together` : 'The game’s Buy all upgrades: every store upgrade the budget affords';
+      const box = Game.Upgrades && Game.Upgrades['Inspired checklist'];
+      return `<span class="ca-ab-thing" data-tip="${esc(tip)}">${box && box.icon ? sprite(box.icon) : I('upgrade', 14)}${esc(x.label)}</span>`;
+    }
     const b = (Game.Objects || {})[x.name];
     return `<span class="ca-ab-thing">${b ? sprite([b.iconColumn || 0, 0]) : ''}${esc(x.label)}</span>`;
   }
@@ -72,6 +79,13 @@ CA.UI.AutoBuyerCard = (() => {
       'ca-btn-small'
     );
   }
+  /** Buy all upgrades' own payback period, measured as one purchase (the store upgrades the bank affords, together). */
+  function allUpgradesPp() {
+    const x = P().allUpgrades();
+    if (!x.n) return '';
+    const t = P().table({ staleMs: 1000 });
+    return `<span class="ca-hint" data-tip="${esc('Its payback period in the mode in use: the upgrades it would buy, measured together as one purchase. Macros: payback.allUpgrades()')}"><span class="ca-pp-dot ${t.colourOf(x.pp, x.price)}"></span>PP ${ppText(x.pp)} · +${F().short(x.gain)}/s · ${F().beautify(x.price)}</span>`;
+  }
   function buyerHtml() {
     const on = CA.Macros.isOn('autoBuyer');
     const key = CA.Settings.getHotkey('macro.autoBuyer');
@@ -83,7 +97,7 @@ CA.UI.AutoBuyerCard = (() => {
       '</div>' +
       `<div class="ca-ab-row"><span class="ca-ab-lbl">Profile</span><span class="ca-pp-chips">${profileChips()}</span></div>` +
       `<div class="ca-ab-row ca-pp-modebar" data-pp-modes>${CA.UI.PaybackPage.modeBar()}</div>` +
-      `<div class="ca-ab-row"><span class="ca-ab-lbl">Upgrades</span>${allUpgradesButton()}</div>`
+      `<div class="ca-ab-row"><span class="ca-ab-lbl">Upgrades</span>${allUpgradesButton()}${allUpgradesPp()}</div>`
     );
   }
   function buyerCard() {
@@ -196,7 +210,7 @@ CA.UI.AutoBuyerCard = (() => {
     return (
       '<div class="ca-list">' +
       `<div class="ca-ab-row"><span class="ca-ab-lbl">Name</span><input type="text" class="ca-gname" maxlength="40" value="${esc(p.name)}" data-ab-f="name" data-tip="${esc(`macros use its name or its id: ${p.id}`)}"><span class="ca-hint">id ${esc(p.id)}</span></div>` +
-      `<div class="ca-ab-row"><span class="ca-ab-lbl">Buys</span><span class="ca-pp-chips">${chip('data-ab-kind', 'building', 'Buildings', p.kinds.building)}${chip('data-ab-kind', 'upgrade', 'Upgrades', p.kinds.upgrade)}<span class="ca-hint">more kinds later</span></span></div>` +
+      `<div class="ca-ab-row"><span class="ca-ab-lbl">Buys</span><span class="ca-pp-chips">${chip('data-ab-kind', 'building', 'Buildings', p.kinds.building)}${chip('data-ab-kind', 'upgrade', 'Upgrades', p.kinds.upgrade)}${chip('data-ab-kind', 'allUpgrades', 'Buy all upgrades', p.kinds.allUpgrades, 'Every store upgrade the budget affords, bought at once — ranked by its own payback period, measured together')}</span></div>` +
       `<div class="ca-ab-row"><span class="ca-ab-lbl">Building bulk</span><span class="ca-pp-chips">${B()
         .BULKS.map((b) => chip('data-ab-bulk', b, b === 'auto' ? 'auto' : `×${b}`, p.bulk === b, b === 'auto' ? `The store’s minimum bulk (Options below), rounded up with Round to multiples — now ×${CA.Shop.minBulk()}` : ''))
         .join('')}</span></div>` +
