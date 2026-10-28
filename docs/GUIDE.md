@@ -385,17 +385,23 @@ it). Modifiers work (`Shift + G`): click a key chip and press the new key (`Esc`
 The **Payback** page sits right above Macros and is the hub of the **Auto buyer**. At the top: its switch, what it
 buys next (a bar filling as you save for it), the **profiles** (click one to make it active; **New** copies it), the
 payback mode, and **Buy all upgrades** (the game's Inspired checklist button, without needing it: every upgrade you
-can afford but switches, research and what you've vaulted, cheapest first). Then the **Queue**: place, what (an
+can afford but switches, research and what you've vaulted, cheapest first), with its own payback period beside it.
+Then the **Queue**: place, what (an
 upgrade with its icon and its info card on hover), payback period in its color, score (the payback period after the
 rules' weights — the order), price, when you can afford it, the rules that touched it; what's held back below,
-grayed, with why. Then the active **Profile**: what it buys (buildings, upgrades), the building bulk, save up or skip,
+grayed, with why. **Buy all upgrades** is a row of its own: the upgrades the budget affords, bought at once and
+measured together (so upgrades that multiply each other count as one purchase). Profiles that buy upgrades come with
+the rule *Buy all upgrades → buy first when `payback.allUpgradesCount(buyer.budget()) >= 20`*: with lots affordable,
+it takes them all at once. Then the active **Profile**: what it buys (buildings, upgrades, Buy all upgrades), the building bulk, save up or skip,
 the bank reserve (minutes of unbuffed CpS, plus any of the **Lucky!**, **Conjure**, **Frenzy Lucky!** and **Garden
 replant** banks — it keeps the highest, so the bank never drops below any of them), what it ranks by (a payback mode), and its **rules**, top to bottom: what
-they apply to (anything, buildings, upgrades, one building or upgrade, cookies, kittens, synergies, clicking upgrades,
+they apply to (anything, buildings, upgrades, Buy all upgrades, one building or upgrade, cookies, kittens, synergies, clicking upgrades,
 anything under N s of CpS, anything that wins an achievement) → **buy first**, **weight ×k**, **up to N owned** or
 **never**, each with an optional **when** in the macro language (`thing` is what's ranked). In code: `buyer.next()`,
 `buyer.queue()`, `buyer.rank(thing)`, `buyer.score(thing)`, `buyer.budget()`, `buyer.reserve()`, `buyer.profile(x)`, `buyer.buyNext()`,
-`buy.allUpgrades()`.
+`buy.allUpgrades()`; Buy all upgrades' payback period: `payback.allUpgrades()` (`payback.allUpgradesIn(mode)`,
+`payback.allUpgradesGain()`, `payback.allUpgradesPrice()`, `payback.allUpgradesCount(budget)`), and in the queue it is
+the thing `"allUpgrades"`.
 
 Below it, what every purchase is worth (see [Payback periods](#payback-periods)): every
 building with a cell for **×1**, **×10** and **×100** — colored by its payback color, with its payback period, the
@@ -439,7 +445,7 @@ when buying it would take your bank below what a Lucky! (in a Frenzy too) or Con
 most. Warnings are statistics too (below): change a bank warning's `keep` (how many times that bank to keep), turn
 one off, or write your own.
 
-**Which lines that block shows, and in what order, is yours to choose** — on the **Settings** page, under Store (see
+**Which lines that block shows, and in what order, is yours to choose** — on the **Settings** page, **Store & tooltips** tab (see
 [Statistics](#statistics)): add a line (a built-in statistic, one of yours, or **any value word** that takes the building
 or upgrade, or nothing: `building.toNextAchievement`, `clickRate`, `golden.expected`, `golden.interval`…), drag it into place, rename a
 word's line and choose how its value reads, remove it; **Reset** goes back to Cookie Monster's layout. A line with
@@ -486,7 +492,7 @@ if cookies() >= need and after < need:
 
 The **Statistics** page (next to Macros; it was the Tooltips page until v3.43) is every statistic — the store
 tooltip's lines, the warnings, the payback modes and yours. The store tooltip's layout is a card on the **Settings**
-page (Store tooltips):
+page (**Store & tooltips** tab):
 
 - **In the store tooltip** (Settings): the block's lines in order, in fixed columns: the line, what it's about (a building, an
   upgrade, either, the game), **its value now** for the previewed building, how a value word reads, and ↑ ↓ ✕ — or drag
@@ -921,10 +927,16 @@ Settings → Store can hide it). The building list gets a little extra room so i
 
 Every option lives on the page of the feature it changes, in an **Options** card at the bottom (macro options on
 Macros, golden cookie notifications on Events, the Grimoire toolbar on Grimoire…). The **Settings** page keeps what's
-cookieMgr-wide: an overview (recording, macros running, widgets placed, Cookie Monster), general options (record
-history, check for updates, **Numbers** — below), the panel hotkey and resetting hotkeys, the History data card (export / import / clear),
-the Store options, **Miscellaneous** (**Plain Business Day** — below), and **All options** — every page's options as quick on/off chips, each group titled with a link
-to its page. cookieMgr doesn't need Cookie Monster; if you'd like its displays alongside, **Integrations** has a
+cookieMgr-wide, in four tabs (it reopens on the one you last had open):
+
+- **General:** an overview (recording, macros running, widgets placed, Cookie Monster), general options (record
+  history, check for updates, **Numbers** — below), the panel hotkey and resetting hotkeys, and **Miscellaneous**
+  (**Plain Business Day** — below).
+- **Store & tooltips:** the Store options and **In the store tooltip** (the tooltip's lines and warnings).
+- **Data & integrations:** the History data card (export / import / clear) and **Integrations**.
+- **All options:** every page's options as quick on/off chips, each group titled with a link to its page.
+
+cookieMgr doesn't need Cookie Monster; if you'd like its displays alongside, **Integrations** has a
 **Load now** button that loads the latest [Cookie Monster](https://github.com/CookieMonsterTeam/CookieMonster) release,
 and a toggle that loads it whenever cookieMgr starts (skipped if Cookie Monster is already running). Everything is stored in the normal Cookie Clicker
 save through the official mod API (`Game.registerMod`), so it survives exports and imports. Settings are also

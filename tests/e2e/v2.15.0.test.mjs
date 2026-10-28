@@ -15,9 +15,14 @@ const page = (id) => doc.querySelector(`[data-page="${id}"]`);
 const homes = {};
 CA.UI.Pages.list().forEach((p) => {
   CA.UI.Menu.openPage(p.id);
-  page(p.id)
-    .querySelectorAll('[data-option]')
-    .forEach((el) => (homes[el.dataset.option] = (homes[el.dataset.option] || []).concat(p.id)));
+  // v3.51: the Settings page's options are spread over its tabs
+  const views = [...page(p.id).querySelectorAll('[data-settings-tab]')].map((b) => `${p.id}:${b.dataset.settingsTab}`);
+  (views.length ? views : [p.id]).forEach((v) => {
+    CA.UI.Menu.openPage(v);
+    page(p.id)
+      .querySelectorAll('[data-option]')
+      .forEach((el) => (homes[el.dataset.option] = (homes[el.dataset.option] || []).concat(p.id)));
+  });
 });
 const twice = Object.keys(homes).filter((k) => homes[k].length > 1);
 assert(!twice.length, `no option shown on two pages (${twice.map((k) => `${k}: ${homes[k]}`)})`);
@@ -25,10 +30,12 @@ const expect = { goldenNotify: 'events', logEmptyWrinklers: 'events', graphActiv
 Object.keys(expect).forEach((k) => assert(homes[k] && homes[k][0] === expect[k], `${k} lives on ${expect[k]} (${homes[k]})`));
 
 // ---- the Settings page
-CA.UI.Menu.openPage('settings');
-const st = page('settings');
+CA.UI.Menu.openPage('settings:general');
+let st = page('settings');
 assert(st.querySelector('.ca-overview') && /cookieMgr/.test(st.querySelector('.ca-overview').textContent) && st.querySelectorAll('.ca-overview .ca-stat').length === 4, 'overview tiles on top');
 assert(st.querySelectorAll('.ca-optgrid .ca-opt').length >= 2, 'general options as tiles');
+CA.UI.Menu.openPage('settings:all'); // v3.51: All options has its own tab
+st = page('settings');
 const blocks = [...st.querySelectorAll('.ca-index-block')];
 assert(blocks.length >= 6 && blocks.every((b) => b.querySelector('.ca-index-head [data-ca="goto"]')), `All options: a block per page, titled with a link (${blocks.length})`);
 const chip = st.querySelector('.ca-index [data-key="goldenNotify"]');

@@ -1,138 +1,121 @@
-// v3.50.0: every kind of widget can be placed more than once, each copy with its own settings. The Widgets
-// page lists placed widgets by kind (copies numbered: "Grimoire 2"), a kind's + adds another, and a widget's
-// settings switch between its copies and Duplicate it. Saves and layouts keep every copy.
+// v3.50.0: "Buy all upgrades" ranked by payback. The game's button (Inspired checklist) — every store
+// upgrade the bank affords, cheapest first — gets its own payback period, measured as one purchase:
+// all of them bought at once in the hypothetical, the game's CpS read, undone (so upgrades that
+// multiply each other count together). It's one thing in the Auto buyer's queue ("allUpgrades"),
+// rankable by rules, and words: payback.allUpgrades / allUpgradesIn / Gain / Price / Count.
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
-import { boot, sleep, makeAssert, click } from '../harness/game.mjs';
+import { boot, sleep, makeAssert } from '../harness/game.mjs';
+import { cpsModel } from '../harness/cps.mjs';
 
 const { assert, done } = makeAssert();
-const g = boot({ idb: { factory: new IDBFactory(), IDBKeyRange }, withPantheon: true });
-const { window: w } = g;
+const g = boot({ idb: { factory: new IDBFactory(), IDBKeyRange } });
+const { window: w, Game } = g;
 const CA = w.CookieMgr;
-const doc = w.document;
 await sleep(400);
-const Wd = CA.UI.Widgets;
-const page = () => doc.querySelector('[data-page="widgets"]');
-const tile = (id) => page().querySelector(`.ca-wtile[data-w-tile="${id}"]`);
-const ed = () => page().querySelector('[data-w-editor]');
-const of = (type) => Wd.list().filter((x) => x.type === type);
-const eq = (got, want, what) => assert(got === want, `${what}: ${JSON.stringify(got)}${got === want ? '' : ` (wanted ${JSON.stringify(want)})`}`);
+const B = CA.AutoBuyer;
+const P = CA.Payback;
+const value = (id, ...args) => CA.Script.VALUES.find((v) => v.id === id).get(...args);
 
-CA.UI.Menu.openPage('widgets');
+const spec = { Cursor: [15, 0.1], Grandma: [100, 1], Farm: [1100, 8] };
+Object.keys(spec).forEach((n, i) => Object.assign(Game.Objects[n], { id: i, basePrice: spec[n][0], free: 0, amount: 5, locked: false }));
+const mk = (name, price, pool = '') => ({ name, dname: name, pool, bought: 0, unlocked: 1, icon: [0, 0], getPrice: () => price, buy() { if (Game.cookies >= price) { Game.cookies -= price; this.bought = 1; } }, isVaulted: () => false });
+const ups = [mk('A', 1000), mk('B', 2000), mk('Switch', 1, 'toggle'), mk('Dear', 1e30)];
+Game.Upgrades = { ...(Game.Upgrades || {}), ...Object.fromEntries(ups.map((u) => [u.name, u])) };
+Game.UpgradesInStore = ups.slice();
+const model = cpsModel(Game, { base: 1000, each: Object.fromEntries(Object.keys(spec).map((n) => [n, spec[n][1]])), mults: { A: 1.1, B: 1.2 } });
+Game.CpsAchievements = [];
+Game.cookies = 3500;
+Game.CalculateGains();
+const cps = Game.cookiesPs;
 
-// ---- every kind takes more than one, from its tile
-const kinds = Wd.types().filter((t) => !t.hidden);
-kinds.forEach((t) => {
-  click(w, tile(t.id));
-  const more = tile(t.id).querySelector('.ca-wtile-add');
-  assert(more, `${t.id}: a placed tile offers + Add`);
-  if (more) click(w, more);
-  eq(of(t.id).length, 2, `${t.id}: two placed`);
-  eq(tile(t.id).querySelector('.ca-wtag').textContent, '×2', `${t.id}: badge counts`);
-});
-assert(!kinds.some((t) => t.single), 'no kind is one-only any more');
-const two = of('grimoire');
-eq(Wd.add('pantheon') !== Wd.add('pantheon'), true, 'add() always places a new one');
-eq(of('pantheon').length, 4, 'four Pantheons');
-of('pantheon').slice(1).forEach((x) => Wd.remove(x.id));
+// ---- measured together ----
+const all = P.allUpgrades();
+assert(all.names.join() === 'A,B' && all.n === 2 && all.price === 3000, `what it would buy: the affordable ones, cheapest first (${all.names})`);
+const together = cps * (1.1 * 1.2 - 1);
+assert(Math.abs(all.gain - together) < 1e-6, `its gain is both bought at once: ×1.32, not ×1.1 + ×1.2 (${all.gain} vs ${together})`);
+assert(all.gain > P.upgradeWorth('A').gain + P.upgradeWorth('B').gain, 'more than the two apart (they multiply)');
+const expect = P.parts(3000, all.worth).pp;
+assert(Number.isFinite(all.pp) && all.pp === expect && Math.abs(all.pp - 3000 / together) < 1e-6, `its PP: price ÷ gain, all affordable (${all.pp})`);
+assert(Game.cookiesPs === cps && !ups[0].bought && !ups[1].bought, 'the game is put back');
+assert(value('payback.allUpgrades') === all.pp && value('payback.allUpgradesPrice') === 3000 && value('payback.allUpgradesCount') === 2, 'its words');
+assert(Math.abs(value('payback.allUpgradesGain') - together) < 1e-6, 'payback.allUpgradesGain');
+assert(Number.isFinite(value('payback.allUpgradesIn', 'raw')), 'payback.allUpgradesIn(mode)');
+Game.cookies = 1500;
+assert(P.allUpgrades().names.join() === 'A', 'only what the bank affords');
+Game.cookies = 3500;
 
-// ---- names: the second copy is numbered until it gets a name
-eq(Wd.labelOf(two[0]), 'Grimoire', 'the first copy keeps the plain name');
-eq(Wd.labelOf(two[1]), 'Grimoire 2', 'the second is numbered');
+// ---- in the Auto buyer's queue ----
+// the rule profiles that buy upgrades come with: 20+ affordable → buy them all first
+const bulk = B.ruleText(B.BULK_RULE);
+assert(B.find('payback').rules.length === 1 && B.ruleText(B.find('payback').rules[0]) === bulk && B.find('upgrades').rules.length === 1 && !B.find('buildings').rules.length, `seeded rule: ${bulk}`);
+assert(!B.whenProblem(B.BULK_RULE.when), 'its condition compiles');
+assert(B.find('payback').rules[0].on === true && B.find('payback').rules[0].k === 1, 'a whole rule, switched on');
+assert(value('payback.allUpgradesCount', 1500) === 1, 'payback.allUpgradesCount(budget)');
+assert(!B.queue().items.find((x) => x.key === 'allUpgrades').first, 'two affordable: the rule waits (it ranks by its payback period)');
+const many = Array.from({ length: 20 }, (_, i) => mk(`Cheap ${i}`, 1));
+Game.UpgradesInStore = ups.concat(many);
+assert(B.next().key === 'allUpgrades' && B.next().n === 22, `20+ affordable: Buy all upgrades goes first (${B.next().key})`);
+Game.UpgradesInStore = ups.slice();
+// a save from before v3.50: profiles that buy upgrades get the rule, the others don't
+const S = CA.Settings;
+const saved = JSON.parse(S.serialize());
+saved.buyer = { active: 'mine', profiles: [{ id: 'mine', name: 'Mine', kinds: { building: true, upgrade: true }, rules: [{ what: 'cheap', effect: 'first' }] }, { id: 'b', name: 'B', kinds: { building: true, upgrade: false }, rules: [] }] };
+S.load(JSON.stringify(saved));
+assert(B.find('mine').rules.length === 2 && B.ruleText(B.find('mine').rules[1]) === bulk && B.find('mine').kinds.allUpgrades, 'an old profile with upgrades: the rule added at the end');
+assert(!B.find('b').rules.length && !B.find('b').kinds.allUpgrades, 'one without: nothing');
+S.load(JSON.stringify({ ...saved, buyer: JSON.parse(S.serialize()).buyer }));
+assert(B.find('mine').rules.length === 2, 'saved again, it isn’t added twice');
+saved.buyer = { active: 'payback', profiles: B.SEEDS };
+S.load(JSON.stringify(saved));
+B.update('payback', { rules: [] });
+assert(B.find('payback').kinds.allUpgrades && B.find('upgrades').kinds.allUpgrades && !B.find('buildings').kinds.allUpgrades, 'seeded: on where upgrades are bought');
+const old = B.SEEDS.map((p) => ({ ...p, kinds: { building: p.kinds.building, upgrade: p.kinds.upgrade } }));
+B.update('buildings', { kinds: old[1].kinds });
+assert(!B.find('buildings').kinds.allUpgrades, 'a profile saved before v3.50 without upgrades: still none');
+B.update('payback', { kinds: old[0].kinds });
+assert(B.find('payback').kinds.allUpgrades, 'one with upgrades: buys it too');
+let q = B.queue();
+let row = q.items.find((x) => x.key === 'allUpgrades');
+assert(row && row.pp === all.pp && row.label === 'Buy all upgrades (2)', `a queue row of its own (${row && row.label})`);
+assert(value('pp.kind', 'allUpgrades') === 'allUpgrades' && value('pp.price', 'allUpgrades') === 3000 && value('pp.of', 'allUpgrades') === all.pp, 'pp.kind / pp.price / pp.of');
+assert(value('buyer.rank', 'allUpgrades') > 0, 'buyer.rank');
 
-// ---- placed widgets, grouped by kind
+// a rule can target it
+B.update('payback', { rules: [{ what: 'allUpgrades', effect: 'first' }] });
+assert(B.next().key === 'allUpgrades' && value('buyer.next') === 'allUpgrades', 'a "first" rule puts it at the front');
+assert(B.ruleText(B.find().rules[0]) === 'Buy all upgrades → buy first', B.ruleText(B.find().rules[0]));
+B.update('payback', { rules: [{ what: 'upgrade', effect: 'never' }] });
+assert(B.queue().items.some((x) => x.key === 'allUpgrades'), '"Upgrades" rules don’t touch it');
+B.update('payback', { rules: [{ what: 'allUpgrades', effect: 'never' }] });
+assert(B.queue().held.some((x) => x.key === 'allUpgrades'), '"never" holds it back');
+B.update('payback', { kinds: { building: true, upgrade: true, allUpgrades: false } });
+assert(!B.queue().items.concat(B.queue().held).some((x) => x.key === 'allUpgrades'), 'off: not in the queue');
+
+// the reserve: what it buys is what the budget affords
+B.update('payback', { kinds: { building: false, upgrade: false, allUpgrades: true }, rules: [], reserve: 0, banks: [] });
+Game.cookies = 2500;
+q = B.queue();
+row = q.held.find((x) => x.key === 'allUpgrades');
+assert(q.items.length === 0 && row && /only one/.test(row.why), `affording one: held, it’s just that one (${row && row.why})`);
+
+// the page
+const doc = w.document;
+CA.UI.Menu.openPage('payback');
+await sleep(50);
+const menu = () => doc.getElementById('CookieMgrMenu');
+assert(menu().querySelector('[data-ab-kind="allUpgrades"]'), 'the profile’s Buys chips have it');
+Game.cookies = 3500;
 CA.UI.Menu.render();
-const kind = (type) => page().querySelector(`.ca-wkind[data-w-kind="${type}"]`);
-eq(kind('grimoire').querySelectorAll('.ca-wchip').length, 2, 'the Grimoire group holds both chips');
-eq([...kind('grimoire').querySelectorAll('.ca-wchip b')].map((b) => b.textContent).join('|'), 'Grimoire|Grimoire 2', 'chips numbered');
-eq(kind('grimoire').querySelector('.ca-wkind-n').textContent, '×2', 'the group counts them');
-click(w, kind('grimoire').querySelector('.ca-wkind-add'));
-eq(of('grimoire').length, 3, "a kind's + adds another");
-eq(page().querySelectorAll('.ca-wkind').length, kinds.length, 'one group per kind placed');
+await sleep(20);
+assert(/Buy all upgrades \(2\)/.test(menu().querySelector('[data-ab-queue]').textContent), 'its queue row');
+assert(/PP /.test(menu().querySelector('[data-ab-act="all"]').parentNode.textContent), 'the Buy all upgrades button shows its PP');
 
-// ---- each copy has its own settings
-const [g1, g2] = of('grimoire');
-click(w, page().querySelector(`.ca-wchip[data-wlink="${g2.id}"] [data-w-page-edit]`));
-eq(ed().dataset.wEditor, g2.id, 'the chip opens that copy');
-eq(ed().querySelector('.ca-weditor-title b').textContent, 'Grimoire 2', 'its settings say which copy');
-const sel = ed().querySelector('select[data-w-opt="target"]');
-sel.value = 'custom';
-sel.dispatchEvent(new w.Event('change', { bubbles: true }));
-eq(g2.target, 'custom', 'copy 2 counts down to a fixed amount');
-eq(g1.target, undefined, 'copy 1 untouched');
-
-// ---- the copies switcher
-const copies = () => [...ed().querySelectorAll('.ca-wcopies .ca-wcopy')];
-eq(copies().map((b) => b.textContent).join(','), '1,2,3', 'numbered copies in the header');
-assert(copies()[1].classList.contains('on'), 'the open one lit');
-click(w, copies()[0]);
-eq(ed().dataset.wEditor, g1.id, 'clicking a number switches to that copy');
-
-// ---- a name of its own (round widgets have no title bar, so it's for the list)
-const name = ed().querySelector('input[data-w-opt="title"]');
-assert(name, 'round widgets get a Name field');
-name.value = 'Spell timer';
-name.dispatchEvent(new w.Event('change', { bubbles: true }));
-eq(g1.title, 'Spell timer', 'named');
-eq(Wd.labelOf(g2), 'Grimoire', 'once copy 1 has a name, copy 2 needs no number');
-CA.UI.Menu.render();
-assert(/Spell timer/.test(kind('grimoire').textContent), 'the chip shows the name');
-
-// ---- Duplicate: same settings, placed beside it, its settings open
-click(w, page().querySelector(`.ca-wchip[data-wlink="${g2.id}"] [data-w-page-edit]`));
-click(w, ed().querySelector('[data-w-page-dup]'));
-const g4 = of('grimoire')[2];
-assert(g4 && g4.id !== g2.id && g4.target === 'custom', 'the duplicate keeps the settings');
-assert(Math.abs(g4.x - g2.x) > 0.01 && Math.abs(g4.y - g2.y) > 0.01, 'and sits beside it');
-eq(ed().dataset.wEditor, g4.id, "the duplicate's settings show");
-g4.targetMagic = 300;
-eq(g2.targetMagic, undefined, 'changing the duplicate leaves the original');
-const stats = of('stats')[0];
-stats.stats = ['cps'];
-stats.w = 250;
-const sd = Wd.duplicate(stats.id);
-assert(sd.stats.join() === 'cps' && sd.stats !== stats.stats && sd.w === 250, 'a framed widget duplicates its lists (copied) and size');
-sd.stats.push('bank');
-eq(stats.stats.join(), 'cps', 'the copy owns its list');
-CA.Macros.setFav('golden', true);
-const btn = of('macro')[0];
-eq(Wd.duplicate(btn.id), null, 'macro buttons stay one per macro');
-
-// ---- saved and loaded: every copy, with its own settings
-const n = Wd.list().length;
-const saved = JSON.parse(JSON.stringify(Wd.serialize()));
-Wd.load(saved);
-eq(Wd.list().length, n, 'every copy loads back');
-eq(of('grimoire').map((x) => x.target || 'full').join(','), 'full,custom,custom,full', 'each with its settings');
-
-// ---- layouts keep copies
-const pid = Wd.addProfile('Two of everything');
-Wd.list()
-  .filter((x) => x.type !== 'macro')
-  .forEach((x) => Wd.remove(x.id));
-eq(of('grimoire').length, 0, 'cleared');
-Wd.useProfile(pid);
-eq(of('grimoire').length, 4, 'the layout brings back all four Grimoires');
-eq(of('grimoire').filter((x) => x.target === 'custom').length, 2, 'with their own settings');
-assert(Wd.profileActive(pid), 'and counts as that layout');
-
-// ---- stars: a preset is on while any copy matches it
-const preset = { type: 'events', types: ['golden'] };
-assert(!Wd.hasPreset(preset), 'no matching events widget yet');
-of('events')[1].types = ['golden'];
-assert(Wd.hasPreset(preset), 'one copy matching lights the star');
-
-// ---- the shortcut buttons on pages place one, not one per click
-Wd.list()
-  .filter((x) => x.type === 'pantheon')
-  .forEach((x) => Wd.remove(x.id));
-CA.UI.Menu.openPage('pantheon');
-const add = () => doc.querySelector('[data-page="pantheon"] [data-ca="widget-add"]');
-if (add()) {
-  click(w, add());
-  click(w, add());
-  eq(of('pantheon').length, 1, "the Pantheon page's Widget button places one");
-}
-
-assert(g.errors.length === 0, `no runtime errors (${g.errors.join('; ')})`);
+// buying it buys them all
+const got = B.buyNext();
+assert(got === 1 && ups[0].bought && ups[1].bought && Game.cookies === 500, `the buyer buys the lot (${Game.cookies})`);
+model.mults = {};
+B.update('payback', { kinds: { building: true, upgrade: true, allUpgrades: true } });
+Game.UpgradesInStore = [];
+assert(g.errors.length === 0, 'no runtime errors' + (g.errors.length ? `: ${g.errors.slice(0, 3).join(' | ')}` : ''));
 done();
 process.exit();

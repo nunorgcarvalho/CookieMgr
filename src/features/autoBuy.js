@@ -200,6 +200,10 @@ CA.AutoBuy = (() => {
     // the Auto buyer's queue (its profile's bulk): what buyer.next() named
     const queued = !hit && CA.AutoBuyer ? CA.AutoBuyer.thingOf(k) : null;
     if (queued) return { ...queued, buy: () => P().buy(queued) };
+    if (String(k) === 'allUpgrades') {
+      const all = P().allUpgrades();
+      return all.n ? { ...all, buy: () => P().buy(all) } : null;
+    }
     return hit || candidates(['building', 'upgrade']).find((c) => thingKey(c) === String(k)) || null;
   }
   const upgradeNamed = (n) => (Game.UpgradesInStore || []).find((u) => u && u.name === n) || (Game.UpgradesByName && Game.UpgradesByName[n]) || (Game.Upgrades && Game.Upgrades[n]) || null;
@@ -215,7 +219,7 @@ CA.AutoBuy = (() => {
       return b ? thingKey(b) : '';
     };
     both('pp.best', 'cm.best', 'the lowest payback period of a kind: building, upgrade or all ("": none); skip: only what you can afford (with budget cookies, if given — e.g. the bank less a reserve)', bestOf, { params: ['kind', 'skip', 'budget'] });
-    both('pp.kind', 'cm.kind', 'what a thing to buy is: "building" or "upgrade"', (k) => String(k || '').split(':')[0], { params: ['thing'] });
+    both('pp.kind', 'cm.kind', 'what a thing to buy is: "building", "upgrade" or "allUpgrades" (Buy all upgrades, the Auto buyer’s)', (k) => String(k || '').split(':')[0], { params: ['thing'] });
     both('pp.price', 'cm.price', 'cookies a thing to buy costs', (k) => (thingOf(k) || { price: NaN }).price, { params: ['thing'] });
     both('pp.of', 'cm.pp', 'a thing’s payback period (seconds)', (k) => (thingOf(k) || { pp: NaN }).pp, { params: ['thing'] });
     V('upgrades', 'a list: the upgrades in the store, cheapest first', () => storeUpgrades().map((u) => ({ u, price: priceOf(u) })).sort((a, b) => a.price - b.price).map((x) => x.u.name), { list: true });

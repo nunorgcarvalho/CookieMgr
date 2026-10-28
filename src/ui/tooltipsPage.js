@@ -444,7 +444,7 @@ CA.UI.TooltipsPage = (() => {
 
   /** Where the tooltip's layout is now: a note under the catalog. */
   const layoutNote = () =>
-    `<div class="ca-card-note">Which statistics show under the store’s tooltips, and the warnings, are set on ${C().link('the Settings page', 'settings')} (Store tooltips).</div>`;
+    `<div class="ca-card-note">Which statistics show under the store’s tooltips, and the warnings, are set on ${C().link('the Settings page', 'settings:store')} (Store &amp; tooltips tab).</div>`;
   const html = () => browseCard() + layoutNote();
   /** Opens the page on a shelf: 'modes' (or 'Payback modes'), 'warnings', a group… */
   function showGroup(g) {

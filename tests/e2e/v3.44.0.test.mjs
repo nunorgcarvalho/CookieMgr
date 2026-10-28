@@ -34,6 +34,7 @@ assert(value('buyer.next') === front.key && value('buyer.rank', front.key) === 1
 assert(value('buyer.queue').length === q.items.length, 'buyer.queue lists it');
 
 // a weight pushes the front back; never holds it back; first pulls the last forward
+B.update('payback', { rules: [] }); // (the seeded Buy all upgrades rule, v3.50, aside)
 B.addRule('payback', { what: `b:${front.name}`, effect: 'weight', k: 1000 });
 q = B.queue();
 assert(q.items[q.items.length - 1].name === front.name && q.items[q.items.length - 1].rules.includes('weight ×1000'), 'weight ×1000: last');
@@ -123,11 +124,11 @@ click(menu().querySelector('[data-ab-use="upgrades"]'));
 assert(B.activeProfile() === 'upgrades', 'a profile chip makes it active');
 click(menu().querySelector('[data-ab-use="payback"]'));
 click(menu().querySelector('[data-ab-act="rule-cheap"]'));
-assert(B.find().rules.length === 1 && B.find().rules[0].what === 'cheap', 'Cheap first adds a rule');
-const sel = menu().querySelector('[data-ab-rule="0"][data-k="effect"]');
+assert(B.find().rules.length === 2 && B.find().rules[1].what === 'cheap', 'Cheap first adds a rule');
+const sel = menu().querySelector('[data-ab-rule="1"][data-k="effect"]');
 sel.value = 'never';
 sel.dispatchEvent(new w.Event('change', { bubbles: true }));
-assert(B.find().rules[0].effect === 'never', 'the rule’s select changes it');
+assert(B.find().rules[1].effect === 'never', 'the rule’s select changes it');
 B.update('payback', { rules: [] });
 click(menu().querySelector('[data-ab-act="toggle"]'));
 assert(CA.Macros.isOn('autoBuyer'), 'its switch turns the Auto buyer on');

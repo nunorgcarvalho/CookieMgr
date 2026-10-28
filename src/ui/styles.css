@@ -4404,7 +4404,7 @@ body.ca-has-storebar #products {
   gap: 7px;
   min-width: 0;
 }
-/* v3.50: the chips by kind, each kind's copies together */
+/* v3.52: the chips by kind, each kind's copies together */
 #CookieMgrMenu .ca-wkind-head {
   display: flex;
   align-items: center;

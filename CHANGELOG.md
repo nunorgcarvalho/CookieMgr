@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## 3.50.0 — 2026-10-28
+## 3.52.0 — 2026-10-28
 
 - **Place any widget more than once.** Running now, Quick stats, the Grimoire, Garden, Stock market and Pantheon
   widgets were one-only; now every kind takes as many copies as you like, each with its own settings (a Grimoire
@@ -12,6 +12,43 @@
   its copies as numbered buttons in the header to switch between them, and **Duplicate** places another with the
   same settings beside it and opens its settings. Round widgets get a **Name** field (they have no title bar), used
   in that list. Saves, layouts and ☆ stars keep every copy.
+
+## 3.51.0 — 2026-10-28
+
+- **The Settings page has tabs.** Instead of one long scroll, tabs at the top split it into **General** (the
+  overview, general options, hotkeys and Miscellaneous), **Store & tooltips** (the Store options and the store
+  tooltip's lines and warnings), **Data & integrations** (History data and Cookie Monster) and **All options** (every
+  page's options as quick chips). The page remembers the tab you last had open, and links elsewhere take you straight
+  to the right one: the Payback page's "Best buy" and the Statistics page's note open **Store & tooltips**. Every
+  setting and its saved value is unchanged.
+
+## 3.50.1 — 2026-10-28
+
+- **README:** the Payback screenshot and its bullets show Buy all upgrades in the Auto buyer's queue with its own
+  payback period, as since 3.50.0. No change to the add-on itself.
+
+## 3.50.0 — 2026-10-28
+
+- **Buy all upgrades has a payback period, and the Auto buyer ranks it.** It's measured the way a single upgrade
+  is, as one purchase: every store upgrade the bank (the buyer's budget) affords, cheapest first, bought together in
+  the hypothetical, the game's CpS read (achievements and clicking included), then undone. So upgrades that multiply
+  each other count together, not added up apart. It shows beside the Buy all upgrades button, and as a row of its
+  own in the **Queue** ("Buy all upgrades (n)", the upgrades it buys on hover); when it's the front, the buyer buys
+  them all. Profiles have a **Buy all upgrades** chip under Buys (on where upgrades are bought, saved profiles
+  included), and rules can target it. When the budget affords only one upgrade, it's held back: that's just buying
+  that one.
+- **Lots of upgrades at once: buy them all first.** Profiles that buy upgrades come with a rule, *Buy all upgrades →
+  buy first when `payback.allUpgradesCount(buyer.budget()) >= 20`*. When 20 or more upgrades are affordable, the
+  buyer takes them all in one go instead of one a tick; otherwise the queue goes by payback period as usual. Saved
+  profiles that buy upgrades get it too, added at the end of their rules; edit or remove it like any rule.
+- **New words:** `payback.allUpgrades()`, `payback.allUpgradesIn(mode)`, `payback.allUpgradesGain()`,
+  `payback.allUpgradesPrice()`, `payback.allUpgradesCount(budget)`; `pp.kind`, `pp.price`, `pp.of` and `pp.buy` take the
+  thing `"allUpgrades"`.
+
+## 3.49.1 — 2026-10-28
+
+- **README:** the Payback and Statistics screenshots show payback periods in time units, as since 3.49.0. No change
+  to the add-on itself.
 
 ## 3.49.0 — 2026-10-28
 
