@@ -143,6 +143,54 @@ else:
 if garden.layoutYoung() > 0 and garden.layoutMature() == 0:
   garden.plantEmpty()
 `;
+  const TULIP_GARDENER = `# Tulip and clover rounds: two seeds, each planted and replanted as a round of its own. The
+# nursetulips (tulip) are replanted all together once fewer than half of them are mature, so they're
+# mature at the same time — each one makes the plants around it stronger, the most when it's mature.
+# The golden clovers (clover) run their own rounds as the Full-garden replanter does: fertilizer
+# while a round grows (the soil rule "Clovers grow together, then clay" counts the clovers only, so
+# young nursetulips don't hold fertilizer on), clay once it's mature, and a new round planted just
+# before a quick tick once too few of them are left. (Simulated — the real game, Farm level 8 (6×5),
+# 8 nursetulips, 1000 h × 3: golden cookies +84.8% on average against +83.6% for golden clover
+# combos, at CpS ×0.886; every nursetulip mature 25% of the time, in stretches of ~1.8 h, up to +149%.)
+tulip = nursetulip   # the seed replanted as one round, apart from the clovers
+clover = goldenClover   # the seed of the clover rounds
+tulipReplantBelow = 0.5   # replant the tulips once fewer than this share of their tiles hold a mature one
+replantBelow = 0.75   # start a new clover round once fewer than this share of their tiles hold a mature one
+replantAtTick = true   # when a new clover round is planted — true: fertilizer first, the old clovers kept working until the next tick, the round planted in its last plantWindow seconds; false: at once
+plantWindow = 15   # (replantAtTick only) the last seconds before the tick, when the new clover round is planted
+unlockNewSeeds = true   # a seed you haven't unlocked yet: let it grow, harvest it once mature (that unlocks it)
+if unlockNewSeeds:
+  garden.harvestNew()
+# what doesn't belong on the layout's tiles (weeds, mutations) is cleared, so it can't hold up a round
+for tile in garden.tiles():
+  if garden.wantAt(tile) != "" and garden.isOff(tile) and not garden.isEmpty(tile) and not (unlockNewSeeds and garden.isNew(tile)):
+    garden.harvest(tile)
+# the tulips: a new round once none is growing and fewer than tulipReplantBelow are mature — at once
+if garden.seedYoung(tulip) == 0 and garden.seedMature(tulip) < tulipReplantBelow * garden.seedTiles(tulip):
+  for tile in garden.tiles():
+    if garden.wantAt(tile) == tulip and not garden.isEmpty(tile):
+      garden.harvest(tile)
+  garden.plantEmpty(tulip)
+# while a tulip round is still young, fill any tile it couldn't plant (not enough cookies at the time)
+if garden.seedYoung(tulip) > 0 and garden.seedMature(tulip) == 0:
+  garden.plantEmpty(tulip)
+# the clovers: a new round is due once none is growing and too few are mature
+if garden.seedYoung(clover) == 0 and garden.seedMature(clover) < replantBelow * garden.seedTiles(clover):
+  # fertilizer: the next tick within 3 minutes, and quick ticks while the round grows
+  garden.soil(fertilizer)
+  # planted now — or, with replantAtTick, in the last seconds before that tick (at once when there's
+  # no clover left to keep working, or no quick tick to wait for)
+  if not replantAtTick or garden.seedMature(clover) == 0 or not garden.soilIs(fertilizer) or garden.tickIn() <= plantWindow:
+    for tile in garden.tiles():
+      if garden.wantAt(tile) == clover and not garden.isEmpty(tile):
+        garden.harvest(tile)
+    garden.plantEmpty(clover)
+else:
+  garden.soilRule()
+# while a clover round is still young, fill any tile it couldn't plant
+if garden.seedYoung(clover) > 0 and garden.seedMature(clover) == 0:
+  garden.plantEmpty(clover)
+`;
   const GARDENERS = [
     {
       id: 'effects',
@@ -155,6 +203,12 @@ if garden.layoutYoung() > 0 and garden.layoutMature() == 0:
       name: 'Full-garden replanter',
       desc: 'Plants the whole layout together, grows it on fertilizer, holds it on clay, and once too few are left, replants everything together on fertilizer just before the next tick (or at once) — so the plants are mature together. The most golden cookies from a golden clover field, in high windows.',
       data: () => ({ rules: COHORT_GARDENER, knobs: { replantBelow: PCT, replantAtTick: TOGGLE, plantWindow: SECONDS, unlockNewSeeds: TOGGLE } }),
+    },
+    {
+      id: 'tulipRounds',
+      name: 'Tulip and clover rounds',
+      desc: 'Nursetulips and golden clovers, each replanted all together on rounds of its own. The tulips once fewer than half are mature, the clovers as the Full-garden replanter does — so the tulips are mature at the same time, boosting the clovers around them.',
+      data: () => ({ rules: TULIP_GARDENER, knobs: { tulipReplantBelow: PCT, replantBelow: PCT, replantAtTick: TOGGLE, plantWindow: SECONDS, unlockNewSeeds: TOGGLE } }),
     },
     { id: 'weeds', name: 'Weed collector', desc: 'Keeps the garden bare so weeds and fungi spring up; harvests old meddleweed (for brown mold and crumbspore) and new seeds once mature, clears everything else. Plants nothing.', data: () => ({ rules: WEED_GARDENER, knobs: { oldWeedOver: PCT } }) },
     {
@@ -183,6 +237,17 @@ if garden.layoutYoung() > 0 and garden.layoutMature() < clayAt * garden.layoutTi
 else:
   garden.soil(clay)
 `;
+  const SOIL_CLOVERS = `# Clovers grow together, then clay: as "Grow together, then clay", counting one seed's plants only
+# (followSeed) — so plants on rounds of their own (nursetulips) don't keep fertilizer on while they
+# grow. (Simulated, 8 nursetulips at level 8: fertilizer for the tulips too drops golden cookies
+# from +84% to +38%.)
+followSeed = goldenClover   # the seed whose rounds pick the soil
+clayAt = 0.75   # switch to clay once this share of its tiles hold a mature plant
+if garden.seedYoung(followSeed) > 0 and garden.seedMature(followSeed) < clayAt * garden.seedTiles(followSeed):
+  garden.soil(fertilizer)
+else:
+  garden.soil(clay)
+`;
   const SOIL_MUTATIONS = `# Fertilizer to grow the layout's plants; wood chips (three times the mutation chances) once
 # they're mature — if you have the 300 farms it needs, else fertilizer (quicker ticks, more chances).
 growingOver = 0.34   # fertilizer while more than this share of the layout's plants is still growing
@@ -195,6 +260,7 @@ else:
   const SOILS = [
     { id: 'effects', name: 'Fertilizer, then clay', desc: 'Fertilizer for a freshly planted garden, clay (effects ×1.25) the rest of the time.', data: () => ({ rules: SOIL_EFFECTS, knobs: { [FERTILIZER_VAR]: PCT } }) },
     { id: 'cohort', name: 'Grow together, then clay', desc: 'For the Full-garden replanter: fertilizer while a round grows, clay once most of it is mature.', data: () => ({ rules: SOIL_COHORT, knobs: { clayAt: PCT } }) },
+    { id: 'clovers', name: 'Clovers grow together, then clay', desc: 'Fertilizer while a round of golden clovers grows, clay once most of it is mature — the nursetulips don’t count. For Tulip and clover rounds.', data: () => ({ rules: SOIL_CLOVERS, knobs: { clayAt: PCT } }) },
     { id: 'mutations', name: 'Fertilizer, then wood chips', desc: 'Fertilizer while the layout’s plants grow, wood chips (×3 mutation chances) once they’re mature.', data: () => ({ rules: SOIL_MUTATIONS, knobs: { growingOver: PCT } }) },
     { id: 'fertilizer', name: 'Always fertilizer', desc: 'Quickest ticks, the most weeds (×1.2); effects ×0.75.', data: () => ({ rules: fixedSoil('fertilizer', 'the quickest ticks and the most weeds') }) },
     { id: 'clay', name: 'Always clay', desc: 'Effects ×1.25; slow ticks.', data: () => ({ rules: fixedSoil('clay', 'effects ×1.25, slow ticks') }) },
@@ -208,6 +274,7 @@ else:
     { id: 'fill', name: 'Fill', desc: 'One seed on every tile.', data: () => ({ plot: grid(Array(SIZE).fill('AAAAAA')), abs: false }) },
     { id: 'bare', name: 'Bare', desc: 'Nothing planted (for weeds).', data: () => ({ plot: grid(Array(SIZE).fill('......')), abs: false }) },
     { id: 'checker', name: 'Checkerboard', desc: 'Two seeds, alternating.', data: () => ({ plot: grid(['ABABAB', 'BABABA', 'ABABAB', 'BABABA', 'ABABAB', 'BABABA']), abs: false }) },
+    { id: 'tulipRows', name: 'Two rows of four', desc: 'Two rows of four B with A all around them: each A touches as many B as it can on a 6×5 or 6×6 plot — 8 nursetulips among golden clovers.', data: () => ({ plot: grid(['AAAAAA', 'ABBBBA', 'AAAAAA', 'ABBBBA', 'AAAAAA', 'AAAAAA']), abs: false }) },
     { id: 'rows', name: 'Mutation rows', desc: 'A row of A, an empty row, a row of B: every empty tile has three of each around it — for two-parent mutations (A = B for a seed with itself).', data: () => ({ plot: grid(['AAAAAA', '......', 'BBBBBB', 'AAAAAA', '......', 'BBBBBB']), abs: false }) },
     { id: 'rings', name: 'Rings', desc: 'Rings of A around empty tiles: eight around each — for mutations that need many of one plant (Juicy queenbeet: 8 queenbeets).', data: () => ({ plot: grid(['AAAAAA', 'A.AA.A', 'AAAAAA', 'AAAAAA', 'A.AA.A', 'AAAAAA']), abs: false }) },
   ];
@@ -236,6 +303,7 @@ else:
   const SEEDS = [
     { id: 'current', name: 'As planted', desc: 'The seeds of the Current garden: A is the first seed on the plot (left to right, top to bottom), B the next…', live: true, data: () => ({ map: currentLetters().map }) },
     one('goldenClover', 'goldenClover', 'Golden cookies more often (+3% each).'),
+    { id: 'goldenTulips', name: 'Golden clover + nursetulip', desc: 'A: golden clover (golden cookies more often), B: nursetulip (the plants around it +20% stronger, CpS −2%).', group: 'For their effects', data: () => ({ map: { A: 'goldenClover', B: 'nursetulip' } }) },
     one('bakerWheat', 'bakerWheat', 'CpS +1% each.'),
     one('bakeberry', 'bakeberry', 'CpS +1% each; a harvest of a mature one pays 30 minutes of CpS.'),
     one('whiskerbloom', 'whiskerbloom', 'Milk effects +0.2% each.'),
@@ -253,6 +321,12 @@ else:
     { id: 'maxEffects', name: 'Max effects · current garden', desc: 'Keeps what you’ve planted, its effects as high as they go.', data: () => ({ gardener: 'effects', soil: 'effects', template: 'current', seeds: 'current' }) },
     { id: 'goldenClovers', name: 'Golden clover field', desc: 'Golden clover on every tile, for golden cookies.', data: () => ({ gardener: 'effects', soil: 'effects', template: 'fill', seeds: 'goldenClover' }) },
     { id: 'goldenCombos', name: 'Golden clover combos', desc: 'Golden clover on every tile, planted and replanted all together: the field is mature at once, for the most golden cookies in long high windows.', data: () => ({ gardener: 'cohort', soil: 'cohort', template: 'fill', seeds: 'goldenClover' }) },
+    {
+      id: 'tulipCombos',
+      name: '8 nursetulips together + clover combos',
+      desc: 'Two rows of four nursetulips replanted all together, golden clovers around them replanted all together on rounds of their own; the soil follows the clovers. A little more golden cookies than Golden clover combos on average, much higher peaks while the tulips are mature, CpS −11%.',
+      data: () => ({ gardener: 'tulipRounds', soil: 'clovers', template: 'tulipRows', seeds: 'goldenTulips' }),
+    },
     { id: 'mutationHunt', name: 'Mutation hunt', desc: 'Two parents in rows, wood chips once they’re mature; new seeds kept until unlocked. Pick the recipe in Seeds.', data: () => ({ gardener: 'mutations', soil: 'mutations', template: 'rows', seeds: 'to-cronerice' }) },
     { id: 'juicyQueenbeet', name: 'Juicy queenbeet', desc: 'Rings of queenbeets on wood chips: each empty center can grow a Juicy queenbeet (a sugar lump).', data: () => ({ gardener: 'mutations', soil: 'mutations', template: 'rings', seeds: 'queenbeet' }) },
     { id: 'weedFarm', name: 'Weed farm', desc: 'A bare garden on fertilizer, for meddleweed, brown mold and crumbspore.', data: () => ({ gardener: 'weeds', soil: 'fertilizer', template: 'bare', seeds: 'current' }) },

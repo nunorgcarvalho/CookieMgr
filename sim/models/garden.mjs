@@ -117,7 +117,7 @@ export function cloverField(data, { layout, w, h, policy = 'steady', theta = 0.9
       if (!alive[i]) continue;
       const s = stageMult(P[kinds[i]], age[i]) * m;
       if (kinds[i] === 'G') gc += 0.03 * s * boost[i];
-      else cps *= 1 - 0.02 * s;
+      else cps *= 1 - 0.02 * s * boost[i]; // boosted by the nursetulips next to it too, as in the game
     }
     return [gc, cps];
   };

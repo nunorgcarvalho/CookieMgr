@@ -2,13 +2,29 @@
 
 ## Unreleased
 
-## 3.39.1 — 2026-10-28
+## 3.40.1 — 2026-10-28
 
 - Spelling is American English throughout: the add-on's text, tooltips, settings and docs (colour → color,
   favourite → favorite, neighbour → neighbor, customise → customize, centre → center, labelled → labeled,
   greyed → grayed, cancelled → canceled, behaviour → behavior). The statistic words are now `item.color()` and
   `item.colorOf(n)`, and statistic code sets `color`; the old `item.colour()`, `item.colourOf(n)` and `colour` still
   work. Saved settings, option ids, saved statistics and code and API names keep their spelling.
+
+## 3.40.0 — 2026-10-28
+
+- **A new garden profile: 8 nursetulips together + clover combos.** Two rows of four nursetulips with golden
+  clovers all around them, each kind planted and replanted all together on rounds of its own. In the real game
+  (Farm level 8, 6×5, 1000 h × 3) it gets golden cookies +84.8% on average against +83.6% for Golden clover combos,
+  at CpS ×0.886, with every tulip mature 25% of the time (stretches of ~1.8 h, up to +149%). Built from new pieces
+  you can use on their own:
+  - the gardener **Tulip and clover rounds**: the tulips replanted all together once fewer than half are mature;
+    the clovers on their own rounds as the Full-garden replanter does (fertilizer first, replanted just before the
+    tick);
+  - the soil rule **Clovers grow together, then clay**: fertilizer while a round of clovers grows, clay once 75% is
+    mature, the tulips not counted (fertilizer for them too drops golden cookies to +38%);
+  - the template **Two rows of four** (on a 6×5 or 6×6 plot) and the seeds **Golden clover + nursetulip**.
+- For macros: `garden.seedTiles(seed)`, `garden.seedMature(seed)`, `garden.seedYoung(seed)`, and
+  `garden.plantEmpty(seed)` to plant only one seed's tiles (`garden.plantEmpty()` still plants every one).
 
 ## 3.39.0 — 2026-10-28
 
