@@ -80,7 +80,7 @@ CA.UI.TimelineWidget = (() => {
     const h = NUMS.filter((x) => on.has(x.v))
       .map(cell)
       .join('');
-    return h ? `<div class="ca-tl-nums" data-w-open="stats">${h}</div>` : '';
+    return h ? `<div class="ca-tl-nums" data-w-open="graphs:golden">${h}</div>` : '';
   }
 
   /** One statistic's value now, as its cell shows it (the picker's tile for it; its name is the tile's). */
@@ -111,7 +111,7 @@ CA.UI.TimelineWidget = (() => {
         );
       })
       .join('');
-    return `<div class="ca-wfreq" data-w-open="stats">${rows || '<div class="ca-tl-line ca-tl-dim">Nothing is making them come more often yet — upgrades like Lucky day, a Golden Clover in the garden, Mokalsium… each shows up here.</div>'}</div>`;
+    return `<div class="ca-wfreq" data-w-open="graphs:golden">${rows || '<div class="ca-tl-line ca-tl-dim">Nothing is making them come more often yet — upgrades like Lucky day, a Golden Clover in the garden, Mokalsium… each shows up here.</div>'}</div>`;
   }
 
   /**

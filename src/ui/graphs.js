@@ -1,9 +1,12 @@
-// The Graphs page: sub-tabs of plots (ui/plot.js) over the recorded states.
+// The Stats page (page id 'graphs', its name until v3.47): sub-tabs of plots (ui/plot.js) over the
+// recorded states, and of statistics cards (ui/statsPage.js — the old Stats page, now merged in).
 //
 //   Cookies   CpS (production + clicking, unbuffed line, effects, events) with an averages table,
 //             Actual CpS (what really got baked per second, by source), Cookies baked (cumulative)
-//   Bank      cookies in the bank, what moved it per second (in by source / out), and cumulative
-//   Prestige  prestige level if you ascended now, and levels gained per hour
+//   Prestige  the prestige statistics, a target, prestige level if you ascended now, levels gained per hour
+//   Golden    what golden cookies and spells pay and the bank it takes, when the next one comes
+//   What if   every Pantheon spirit and dragon aura, the CpS each would bring
+//   Misc      timers, wrinklers, what's still to collect
 //
 // Sources are colored the same everywhere: production, clicking, golden cookies & reindeer, other.
 
@@ -47,9 +50,13 @@ CA.UI.Graphs = (() => {
   const C_BASE = '#9db4cc';
   const C_SHOWN = '#ffffff';
 
+  // `plots`: its charts (and then the chart options); `top`: cards above them (statistics from ui/statsPage.js)
   const TABS = [
     { id: 'cookies', label: 'Cookies', icon: 'cookie', plots: ['cps', 'actual', 'ledgerCum'] },
-    { id: 'prestige', label: 'Prestige', icon: 'ascend', plots: ['prestige', 'prestigeRate'], top: () => targetCardHtml() },
+    { id: 'prestige', label: 'Prestige', icon: 'ascend', plots: ['prestige', 'prestigeRate'], top: () => CA.UI.StatsPage.html('prestige') + targetCardHtml() },
+    { id: 'golden', label: 'Golden cookies', icon: 'sparkle', plots: [], top: () => CA.UI.StatsPage.html('golden') },
+    { id: 'whatif', label: 'What if', icon: 'pantheon', plots: [], top: () => CA.UI.StatsPage.html('whatif') },
+    { id: 'misc', label: 'Misc', icon: 'puzzle', plots: [], top: () => CA.UI.StatsPage.html('misc') },
   ];
 
   // ---- shared overlays --------------------------------------------------------------------
@@ -740,7 +747,7 @@ CA.UI.Graphs = (() => {
       '</div>' +
       (cur.top ? cur.top() : '') +
       cur.plots.map((id) => plots[id].html()).join('') +
-      CA.UI.Menu.optionsCard('Options', 'settings', 'graph')
+      (cur.plots.length ? CA.UI.Menu.optionsCard('Options', 'settings', 'graph') : '')
     );
   }
 
@@ -753,16 +760,23 @@ CA.UI.Graphs = (() => {
     CA.UI.Menu.render();
   }
 
+  /** Opens on tab `id` (the panel's openPage, and links to the old Stats page: 'stats' → Golden cookies). */
+  function open(id) {
+    if (TABS.some((t) => t.id === id)) S().set('graphTab', id);
+  }
+
   function mount(root) {
     unmount();
     mountedRoot = root;
     life = CA.UI.Pages.scope(root).on('click', onClick).on('input', onTargetInput).on('change', onTargetInput);
     currentTab().plots.forEach((id) => plots[id].mount(root));
+    CA.UI.StatsPage.mount(root);
     refreshTarget();
   }
 
   function unmount() {
     TABS.forEach((t) => t.plots.forEach((id) => plots[id] && plots[id].unmount()));
+    CA.UI.StatsPage.unmount();
     if (life) life.close();
     life = null;
     mountedRoot = null;
@@ -775,7 +789,7 @@ CA.UI.Graphs = (() => {
 
   function init() {
     CA.Format.notation(); // defines the Numbers setting (Settings → General) before the Settings page draws
-    S().defineOption({ key: 'graphTab', group: 'ui', name: 'Graphs tab', desc: '', default: 'cookies' });
+    S().defineOption({ key: 'graphTab', group: 'ui', name: 'Stats tab', desc: '', default: 'cookies' });
     S().defineOption({ key: 'prestigeTargetNum', group: 'ui', name: 'Prestige target (number)', desc: '', default: 0 });
     S().defineOption({ key: 'prestigeTargetUnit', group: 'ui', name: 'Prestige target (magnitude)', desc: '', default: 0 });
     S().defineOption({ key: 'actualGains', group: 'plot', name: 'Actual CpS: gains', desc: '', default: true });
@@ -809,5 +823,5 @@ CA.UI.Graphs = (() => {
     });
   }
 
-  return { init, html, mount, unmount, tick, recent, TABS, SOURCES, CATS, plots };
+  return { init, html, mount, unmount, tick, open, recent, TABS, SOURCES, CATS, plots };
 })();

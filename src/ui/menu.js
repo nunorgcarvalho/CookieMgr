@@ -75,6 +75,12 @@ CA.UI.Menu = (() => {
   const currentTab = () => {
     const t = CA.Settings.get('tab');
     if (CA.UI.Pages.get(t)) return t;
+    const r = CA.UI.Pages.resolve(t); // a page merged into another (the old Stats page): saved as that one now
+    if (r) {
+      if (r.page.open) r.page.open(r.sub);
+      CA.Settings.set('tab', r.page.id);
+      return r.page.id;
+    }
     const first = CA.UI.Pages.list()[0];
     return first ? first.id : 'clickers';
   };
@@ -105,7 +111,7 @@ CA.UI.Menu = (() => {
   // Where each page's options live (the All options index on the Settings page links to them).
   const OPTION_HOMES = [
     { page: 'events', label: 'Events', icon: 'events', group: 'events' },
-    { page: 'graphs', label: 'Graphs', icon: 'graphs', group: 'graph' },
+    { page: 'graphs', label: 'Stats', icon: 'graphs', group: 'graph' },
     { page: 'garden', label: 'Garden', icon: 'leaf', group: 'garden' },
     { page: 'stocks', label: 'Stock market', icon: 'stocks', group: 'stocks' },
     { page: 'wizard', label: 'Grimoire', icon: 'wizard', group: 'grimoire' },
@@ -276,11 +282,13 @@ CA.UI.Menu = (() => {
 
   // Built-in pages. Other modules register their own pages the same way (CA.UI.Pages).
   CA.UI.Pages.register({
-    id: 'graphs',
-    label: 'Graphs',
+    id: 'graphs', // its name until v3.47, kept so saves, widgets and links still find it
+    label: 'Stats',
     icon: 'graphs',
     order: 20,
     group: 'data',
+    aliases: { stats: 'golden' }, // the old Stats page, merged in: its golden cookie cards
+    open: (sub) => CA.UI.Graphs.open(sub),
     html: () => CA.UI.Graphs.html(),
     mount: (root) => CA.UI.Graphs.mount(root),
     unmount: () => CA.UI.Graphs.unmount(),
@@ -335,9 +343,11 @@ CA.UI.Menu = (() => {
 
   /** Opens the panel on page `id` (or switches to it if the panel is already open). */
   function openPage(id) {
-    if (!CA.UI.Pages.get(id)) return;
+    const r = CA.UI.Pages.resolve(id);
+    if (!r) return;
+    if (r.sub !== null && r.page.open) r.page.open(r.sub);
     const wasOpen = isOpen();
-    CA.Settings.set('tab', id);
+    CA.Settings.set('tab', r.page.id);
     if (wasOpen) render();
     else open(); // Game.ShowMenu -> Game.UpdateMenu -> render()
   }

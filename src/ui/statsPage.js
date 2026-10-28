@@ -1,5 +1,11 @@
-// The Stats page: Cookie Monster's statistics, CookieMgr's way (features/goldenMath.js, timers.js,
-// prestige.js, wrinklers.js, whatIf.js, collection.js).
+// The Stats page's statistics cards: Cookie Monster's statistics, CookieMgr's way (features/goldenMath.js,
+// timers.js, prestige.js, wrinklers.js, whatIf.js, collection.js). Until v3.47 they were a page of their own;
+// now they sit on the Stats page's tabs (ui/graphs.js), beside its charts:
+//
+//   Golden    Bank, Next golden cookie (and reindeer)
+//   Prestige  Prestige (above the target and the charts)
+//   What if   What if
+//   Misc      Timers, Wrinklers, Still to collect
 //
 //   Bank          what golden cookies and spells pay at their most, and the bank each needs: a meter
 //                 per one (your bank against it — wrinklers counted when Payback says so), how long
@@ -186,19 +192,22 @@ CA.UI.StatsPage = (() => {
     ['data-st-wrinklers', wrinklersHtml],
     ['data-st-timers', timersHtml],
   ];
-  function html() {
-    const meta = (t) => `<div class="ca-card-meta"><span class="ca-hint">${t}</span></div>`;
-    return (
+  const meta = (t) => `<div class="ca-card-meta"><span class="ca-hint">${t}</span></div>`;
+  // each Stats tab's cards (a tab without any draws none)
+  const CARDS = {
+    golden: () =>
       card('Bank', 'dollar', bankHtml(), 'class="ca-meters" data-st-bank', meta('what golden cookies and spells pay at their most — and the bank it takes')) +
       card('Next golden cookie', 'sparkle', CA.UI.SpawnView.html('golden'), 'class="ca-sp" data-st-spawn', meta('exact, from the game’s own odds — hover the chart')) +
-      (Game.season === 'christmas' ? card('Next reindeer', 'sparkle', CA.UI.SpawnView.html('reindeer'), 'class="ca-sp" data-st-reindeer') : '') +
-      card('Prestige', 'ascend', prestigeHtml(), 'class="ca-stats" data-st-prestige') +
-      card('Wrinklers', 'wrinkler', wrinklersHtml(), 'class="ca-stats" data-st-wrinklers') +
+      (Game.season === 'christmas' ? card('Next reindeer', 'sparkle', CA.UI.SpawnView.html('reindeer'), 'class="ca-sp" data-st-reindeer') : ''),
+    prestige: () => card('Prestige statistics', 'ascend', prestigeHtml(), 'class="ca-stats" data-st-prestige'),
+    whatif: () => card('What if', 'pantheon', whatIfHtml(), 'data-st-whatif', meta('measured on the game itself, then put back')),
+    misc: () =>
       card('Timers', 'clock', timersHtml(), 'class="ca-stats" data-st-timers') +
-      card('What if', 'pantheon', whatIfHtml(), 'data-st-whatif', meta('measured on the game itself, then put back')) +
-      card('Still to collect', 'trophy', collectionHtml(), 'class="ca-cols" data-st-collection')
-    );
-  }
+      card('Wrinklers', 'wrinkler', wrinklersHtml(), 'class="ca-stats" data-st-wrinklers') +
+      card('Still to collect', 'trophy', collectionHtml(), 'class="ca-cols" data-st-collection'),
+  };
+  /** The cards of Stats tab `tab` ('golden' | 'prestige' | 'whatif' | 'misc'). */
+  const html = (tab) => (CARDS[tab] ? CARDS[tab]() : '');
 
   function sync() {
     if (!root || !root.isConnected) return;
@@ -235,9 +244,5 @@ CA.UI.StatsPage = (() => {
     root = null;
   }
 
-  function init() {
-    CA.UI.Pages.register({ id: 'stats', label: 'Stats', icon: 'trophy', order: 22, group: 'data', html, mount, unmount, tick: sync });
-  }
-
-  return { init, sync };
+  return { html, mount, unmount, sync };
 })();
