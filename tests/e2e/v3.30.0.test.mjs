@@ -51,7 +51,7 @@ const nums = () => [...doc.querySelectorAll('#CookieMgrWidgets [data-widget]')].
 const cell = (label) => [...nums().querySelectorAll('span')].find((s) => s.querySelector('em').textContent === label);
 assert(cell('multiplier') && cell('multiplier').querySelector('b').textContent === '×4', 'the widget: multiplier ×4');
 assert(cell('frequency') && cell('frequency').querySelector('b').textContent === span(d.next.mean) && /on average/.test(cell('frequency').getAttribute('data-tip')), `and frequency ${span(d.next.mean)}`);
-const inst = CA.UI.Widgets.list().find((x) => x.type === 'goldenNext');
+const inst = CA.UI.Widgets.list().find((x) => x.title === 'Next golden cookie');
 inst.nums = ['every'];
 CA.UI.Widgets.tick();
 assert(nums().querySelectorAll('span').length === 1 && cell('frequency'), 'picked alone in its settings (every)');

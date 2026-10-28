@@ -1105,8 +1105,9 @@ CA.UI.Plot = (() => {
       const r = canvas.getBoundingClientRect();
       const W = window.innerWidth || r.right;
       const H = window.innerHeight || r.bottom;
-      const vx = r.left + hover.x;
-      const vy = r.top + hover.y;
+      const k = zoomOf(r);
+      const vx = r.left + hover.x * k.x;
+      const vy = r.top + hover.y * k.y;
       let left = vx + 16;
       if (left + tw > W - 4) left = vx - tw - 16;
       let top = vy + 12;
@@ -1301,6 +1302,18 @@ CA.UI.Plot = (() => {
       tick();
     }
 
+    // a widget's text size is CSS zoom: the canvas is drawn in its own (unzoomed) pixels, the mouse
+    // and getBoundingClientRect() are on screen, so convert between them (else the hover line drifts)
+    function zoomOf(r) {
+      return { x: canvas.clientWidth ? r.width / canvas.clientWidth : 1, y: canvas.clientHeight ? r.height / canvas.clientHeight : 1 };
+    }
+    /** Where the mouse is over the canvas, in the canvas's own pixels. */
+    function pointIn(e) {
+      const r = canvas.getBoundingClientRect();
+      const k = zoomOf(r);
+      return { x: (e.clientX - r.left) / (k.x || 1), y: (e.clientY - r.top) / (k.y || 1) };
+    }
+
     function mount(pageRoot) {
       unmount();
       root = pageRoot.querySelector(`[data-plot="${id}"]`);
@@ -1312,8 +1325,7 @@ CA.UI.Plot = (() => {
       ctx = canvas.getContext('2d');
       if (!spec.compact) root.addEventListener('click', onClick);
       canvas.addEventListener('mousemove', (e) => {
-        const r = canvas.getBoundingClientRect();
-        hover = { x: e.clientX - r.left, y: e.clientY - r.top };
+        hover = pointIn(e);
         const before = layout && (layout.hoverIv || layout.hoverBar);
         draw();
         if (layout && (layout.hoverIv || layout.hoverBar) !== before) draw();
@@ -1342,7 +1354,7 @@ CA.UI.Plot = (() => {
         { panWhen: (e) => e.shiftKey, cursor: 'crosshair' }
       );
       // drag across it: pick a stretch to zoom into (Esc lets go of it); double-click: back out
-      const xIn = (e) => e.clientX - canvas.getBoundingClientRect().left;
+      const xIn = (e) => pointIn(e).x;
       const onDown = (e) => {
         if (e.button !== 0 || e.shiftKey || !layout) return;
         const x = xIn(e);

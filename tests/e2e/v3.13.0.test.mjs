@@ -53,7 +53,7 @@ assert(!CA.UI.TimelineWidget.PARTS.some((p) => p.v === 'fthof'), 'no Force the H
 CA.Settings.set('widgetsShown', true);
 CA.UI.Widgets.add('goldenTimeline');
 CA.UI.Widgets.render();
-const inst = CA.UI.Widgets.list().find((x) => x.type === 'goldenTimeline');
+const inst = CA.UI.Widgets.list().find((x) => x.title === 'Golden timeline');
 const box = () => [...doc.querySelectorAll('#CookieMgrWidgets [data-widget]')].find((x) => x.querySelector('.ca-tl-w'));
 inst.stats = ['fthof'];
 CA.UI.Widgets.tick();

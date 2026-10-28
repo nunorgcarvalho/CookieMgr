@@ -6,9 +6,6 @@
 //   events     the latest events — how many and which types; as many of these as you like
 //   chart      a page's chart on the left panel (its ☆ — the Garden's growth and effects): a live copy
 //              of it, sharing the page chart's window and choices (ui/plot.js mini())
-//   goldenFrequency
-//              how many times more often golden cookies come than with nothing helping, and what's
-//              helping — a bar each (the Stats page's frequency effects; its ☆)
 //   grimoire / garden / market / pantheon
 //              one compact round widget per minigame: a ring for its timer (magic, next tick,
 //              next worship swap), a short label under it, details on hover; click to open it
@@ -430,37 +427,6 @@ CA.UI.WidgetTypes = (() => {
     delete shownPlot[inst.id];
   }
 
-  // ---- golden cookie frequency --------------------------------------------------------------------
-
-  /** ×2.37, ×12, ×1.5 */
-  const times = (v) => `×${v >= 10 ? Math.round(v) : Math.round(v * 100) / 100}`;
-
-  function frequencyHtml() {
-    const d = CA.Timers.distribution('golden', 2);
-    if (!d) return '<div class="ca-w-empty">No golden cookies: the Golden switch is on.</div>';
-    // each effect as a frequency (×2: twice as often) — the game's own numbers are the times between
-    const parts = d.factors.map((x) => ({ name: x.name, why: x.why, f: 1 / x.k })).sort((a, b) => b.f - a.f);
-    const total = Number.isFinite(d.frequency) ? d.frequency : parts.reduce((a, x) => a * x.f, 1);
-    // bars on a log scale, so they add up to the whole: ×2 and ×2 fill as much as one ×4
-    const logTotal = Math.max(Math.log(total), parts.reduce((a, x) => a + Math.max(0, Math.log(x.f)), 0));
-    const rows = parts
-      .map((x) => {
-        const w = logTotal > 0 ? Math.max(3, (Math.max(0, Math.log(x.f)) / logTotal) * 100) : 0;
-        return (
-          `<div class="ca-wfq-row${x.f < 1 ? ' slower' : ''}" data-tip="${esc(`${x.name} (${x.why}): ${times(x.f)} as often`)}">` +
-          `<span class="ca-wfq-name">${esc(x.name)}</span><span class="ca-wfq-bar"><i style="width:${w.toFixed(1)}%"></i></span><b>${times(x.f)}</b></div>`
-        );
-      })
-      .join('');
-    return (
-      `<div class="ca-wfreq" data-w-open="stats">` +
-      `<div class="ca-wfreq-head"><span class="ca-wfreq-big">${times(total)}</span>` +
-      `<span class="ca-wfreq-sub"><em>as often as with nothing helping</em><em>one every <b>${F().span(d.next.mean)}</b> on average</em></span></div>` +
-      (rows || '<div class="ca-w-empty">Nothing is making them come more often yet — upgrades like Lucky day, a Golden Clover in the garden, Mokalsium… each shows up here.</div>') +
-      '</div>'
-    );
-  }
-
   function register() {
     const D = CA.UI.Widgets.defineType;
     D({ id: 'macro', name: 'Macro button', icon: 'star', bare: true, hidden: true, resize: 'scale', html: macroHtml });
@@ -530,19 +496,6 @@ CA.UI.WidgetTypes = (() => {
         },
         { key: 'targetMagic', label: 'Fixed amount', type: 'number', min: 1, max: 5000, default: 80, unit: 'magic (when “A fixed amount” is picked)' },
       ],
-    });
-    D({
-      id: 'goldenFrequency',
-      name: 'Golden cookie frequency',
-      icon: 'sparkle',
-      group: 'golden', // the Add-widget picker's shelf, picture and one-line summary
-      sprite: [27, 6],
-      short: 'How often they come, and what’s helping',
-      desc: 'How many times more often golden cookies come than with nothing helping, and a bar for each thing that’s helping (upgrades, the garden, spirits, the dragon…). Click it for the Stats page.',
-      width: 260,
-      single: true,
-      resize: 'free',
-      html: frequencyHtml,
     });
     D({
       id: 'chart',

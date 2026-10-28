@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## 3.38.0 — 2026-10-28
+
+- **One Golden cookies widget instead of three.** Next golden cookie, Golden timeline and Golden cookie frequency
+  are now a single **Golden cookies** widget; its settings pick what it shows:
+  - **Numbers**, each on or off: next in, median, chance within a minute, window, the multiplier and the frequency
+    (a new one shows next in, ≤ 1 min, the multiplier and the frequency).
+  - **Chart**: the odds of the next one, on **This cycle**'s axis (a line sweeping across it, as Next golden cookie
+    drew it) or **From now** (the timeline, as Golden timeline drew it).
+  - **Effect timers on the chart's axis**: each effect's time left and the chance a golden cookie comes first.
+  - **What's helping**: a bar for each thing making them come more often (the old frequency widget's bars).
+  Add as many as you like, each set up differently. Your saved widgets load as Golden cookies widgets showing what
+  they did before, titled with their old names (rename or clear the title in their settings). The Stats page's ☆
+  adds one showing the multiplier, the frequency and what's helping. **Effect timers** stays its own widget.
+- Fixed: on a chart widget with a smaller (or larger) text size, the hover line sat beside the pointer instead of
+  under it.
+
 ## 3.37.0 — 2026-10-28
 
 - **A bank reserve for Best building and Best upgrade.** A new setting on each, **Bank reserve (minutes of

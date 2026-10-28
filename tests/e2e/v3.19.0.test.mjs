@@ -11,14 +11,14 @@ const doc = w.document;
 await sleep(400);
 
 const ids = CA.UI.Widgets.types().map((t) => t.id);
-assert(!ids.includes('golden'), `no Golden cookies widget type (${ids.join()})`);
-assert(ids.includes('goldenNext') && ids.includes('goldenTimeline'), 'the Next golden cookie widget and the Golden timeline stay');
+assert(!ids.includes('golden'), `no ring widget type (id golden) (${ids.join()})`);
+assert(ids.includes('goldenCookies'), 'the Golden cookies widget (goldenCookies since v3.38.0, the Next golden cookie widget before) stays');
 assert(!CA.UI.Widgets.add('golden'), 'it can’t be added');
 assert(!('sparkline' in CA.UI.SpawnView), 'its sparkline went with it');
 
 CA.UI.Menu.openPage('widgets');
 const gallery = [...doc.querySelectorAll('.ca-wpick .ca-wtile-name')].map((n) => n.textContent); // v3.22: the picker's tiles
-assert(!gallery.some((t) => /^Golden cookies/.test(t)) && gallery.some((t) => /^Next golden cookie/.test(t)), `the Widgets page offers it no more (${gallery.join(' | ')})`);
+assert(gallery.filter((t) => /^Golden cookies/.test(t)).length === 1, `the Widgets page offers it no more, only v3.38's Golden cookies (${gallery.join(' | ')})`);
 
 // an old save with the ring among other widgets
 CA.UI.Widgets.load([
@@ -30,7 +30,7 @@ CA.Settings.set('widgetsShown', true);
 CA.UI.Widgets.render();
 CA.UI.Widgets.tick();
 const list = CA.UI.Widgets.list();
-assert(list.map((x) => x.type).join() === 'garden,goldenNext', `an old save loads without it, the rest kept (${list.map((x) => x.type)})`);
+assert(list.map((x) => x.type).join() === 'garden,goldenCookies', `an old save loads without it, the rest kept (${list.map((x) => x.type)})`);
 assert(list[0].x === 0.3 && list[0].y === 0.4, 'the others stay where they were');
 assert(doc.querySelector('[data-widget="w3"]') && !doc.querySelector('[data-widget="w1"]') && !doc.querySelector('#CookieMgrWidgets .ca-orb-golden'), 'on the panel: no ring');
 assert(!JSON.stringify(CA.UI.Widgets.serialize()).includes('"golden"'), 'and the next save leaves it out');

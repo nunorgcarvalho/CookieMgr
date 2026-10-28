@@ -283,8 +283,9 @@ CA.UI.SpawnView = (() => {
     // the effects that ran since the last one left (ended ones too: the chart's window); on screen, those running
     const effects = type !== 'golden' ? [] : d.spawned ? T().buffs() : T().effectsSince(d.cycle.elapsed);
     const override = d.override === 'chain' ? 'A cookie chain is going: the next comes within seconds.' : d.override === 'hoard' ? 'Gold hoard: they come almost at once.' : d.override === 'season' ? 'Reindeer season: they come almost at once.' : '';
-    // golden cookies: always, with the ☆ that puts the Golden cookie frequency widget on the left panel
-    const star = type === 'golden' ? CA.UI.C.widgetStar({ type: 'goldenFrequency' }, 'Golden cookie frequency') : '';
+    // golden cookies: always, with the ☆ that puts a Golden cookies widget showing the multiplier, the
+    // frequency and what's helping on the left panel
+    const star = type === 'golden' ? CA.UI.C.widgetStar(CA.UI.TimelineWidget.FREQUENCY_PRESET, 'Golden cookies (how often they come)') : '';
     const freq =
       factors || star
         ? `<div class="ca-sp-factors"><span>${type === 'golden' ? 'Golden cookie' : 'Reindeer'} frequency effects:</span>${factors || '<em class="ca-sp-none">none yet</em>'}${star}</div>${whatIfLine}`
