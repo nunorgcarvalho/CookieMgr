@@ -162,9 +162,17 @@ CA.UI.Widgets = (() => {
   /** Keeps macro buttons in step with ★ favorites: one button per favorite, none for the rest. */
   function reconcile() {
     let dirty = false;
+    const seen = new Set();
     widgets = widgets.filter((w) => {
       if (w.type !== 'macro') return true;
-      const keep = CA.Macros.get(w.macro) && CA.Macros.isFav(w.macro);
+      const m = CA.Macros.get(w.macro);
+      // a renamed built-in's button (v3.43: Best building / Best upgrade → Auto buyer) becomes the new one's — once
+      if (m && m.id !== w.macro) {
+        w.macro = m.id;
+        dirty = true;
+      }
+      const keep = m && CA.Macros.isFav(m.id) && !seen.has(m.id);
+      if (m) seen.add(m.id);
       if (!keep) dirty = true;
       return keep;
     });

@@ -3,6 +3,11 @@
 The simulator is versioned apart from the add-on (`SIM_VERSION` in `sim.mjs`, `sim-v*` tags). Each entry
 says which add-on version it was brought in step with.
 
+## Unreleased (add-on v3.44.0)
+
+- The add-on's Best building and Best upgrade became the **Auto buyer** (`autoBuyer`): the GUI lists it with the
+  built-ins, and the docs name it. `cmBuildings` / `cmUpgrades` still switch it on.
+
 ## 0.6.0 — 2026-10-28 (add-on v3.39.0)
 
 - **The Garden page's model, checked against the real game.** `models/gardenExact.mjs` keeps each of the

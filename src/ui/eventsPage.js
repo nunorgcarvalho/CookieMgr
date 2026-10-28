@@ -178,7 +178,7 @@ CA.UI.EventsPage = (() => {
       `<div class="ca-ev-row" style="--c:${t.color}">` +
       `<span class="ca-ev-ico">${CA.UI.Icons.html(t.icon, 14)}</span>` +
       `<span class="ca-ev-time">${clock(e.t, true)}</span>` +
-      `<span class="ca-ev-text"><b>${esc(e.title)}</b>${e.text ? ` <span>${esc(e.text)}</span>` : ''}</span>` +
+      `<span class="ca-ev-text"><b>${CA.UI.C.withUpgrade(e.title, e.data && e.data.upgrade)}</b>${e.text ? ` <span>${esc(e.text)}</span>` : ''}</span>` +
       `<span class="ca-ev-cookies ${eff.cls}">${eff.text}</span>` +
       '</div>'
     );

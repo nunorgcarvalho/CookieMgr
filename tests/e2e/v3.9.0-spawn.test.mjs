@@ -95,7 +95,8 @@ assert(t.upgrades['Kitten helpers'] && !t.upgrades['Golden switch [off]'] && !t.
 assert(CA.Payback.isSwitch(gold) && !CA.Payback.isSwitch(kitten), 'isSwitch: the toggle pool');
 assert(Number.isNaN(V('upgrade.payback', 'Golden switch [off]')) && Number.isNaN(V('upgrade.gain', 'Elder Pledge')) && Number.isFinite(V('upgrade.payback', 'Kitten helpers')), 'upgrade.payback / gain of a switch: NaN');
 assert(CA.Payback.best('all').name !== 'Golden switch [off]' && V('pp.best', 'upgrade', false) === 'upgrade:Kitten helpers' && V('best', 'upgrade') === 'Kitten helpers', 'never the best buy (pp.best, best)');
-CA.Macros.runOnce('cmUpgrades');
+CA.AutoBuyer.use('upgrades'); // v3.43: Best upgrade → the Auto buyer, Upgrades only
+CA.Macros.runOnce('autoBuyer');
 assert(!gold.bought && !pledge.bought && kitten.bought, 'Best upgrade buys the upgrade, never a switch');
 kitten.bought = 0;
 CA.Actions.run('buy.best', { kind: 'upgrade' });

@@ -29,7 +29,7 @@ assert(M.everyOf(M.get('bigCookie')) === 25 && /every 0\.025s/.test(card('bigCoo
 box().value = '500';
 box().dispatchEvent(new w.Event('change', { bubbles: true }));
 assert(M.everyOf(M.get('bigCookie')) === 20, 'capped at the game’s 50 a second');
-const gbox = card('cmBuildings').querySelector('input[data-macro-every]');
+const gbox = card('autoBuyer').querySelector('input[data-macro-every]');
 assert(gbox.dataset.everyAs === 'rate' && card('stockTrader').querySelector('input[data-macro-every]').dataset.everyAs === 'secs', 'slower macros in seconds');
 
 // ---- editing a built-in (v3: Golden cookies is code now — a shortcut macro with steps: Fortune news)

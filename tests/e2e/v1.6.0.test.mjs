@@ -51,7 +51,8 @@ assert(CA.GameEvents.popBonus(0) === 1.1 && Math.abs(CA.GameEvents.popBonus(1) -
 const items = [...doc.querySelectorAll('#CookieMgrTab [data-tab-item]')].map((i) => i.dataset.tabItem);
 // v3.6: + Stats, Payback
 // v3.27: + Tooltips
-assert(items.join() === 'events,graphs,stats,payback,garden,stocks,pantheon,wizard,dragon,clickers,tooltips,widgets,settings', `sidebar order (${items})`);
+// v3.43: Payback moved right above Macros
+assert(items.join() === 'events,graphs,stats,garden,stocks,pantheon,wizard,dragon,payback,clickers,tooltips,widgets,settings', `sidebar order (${items})`);
 CA.UI.Menu.openPage('events');
 await sleep(50);
 const page = doc.querySelector('[data-page="events"]');

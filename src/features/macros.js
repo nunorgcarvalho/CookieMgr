@@ -153,6 +153,12 @@ CA.Macros = (() => {
 
   const macros = []; // builtins first, then yours, in order
   const byId = {};
+  // built-ins that were replaced by another (v3.43: Best building, Best upgrade → Auto buyer): their
+  // old ids — on left-panel buttons, in groups, in code, in the running list — mean the new one
+  const renamed = {};
+  const rid = (id) => (byId[id] || !renamed[id] ? id : renamed[id]);
+  /** Makes an old built-in's id stand for another macro (the old one must not be defined). */
+  const rename = (from, to) => (renamed[from] = to);
   const running = {}; // id -> { timer, since }
   const status = {}; // id -> { runs, lastRun, steps: [{ total, runs, last, lastAt, error }] }
   let prefs = {}; // id -> { fav }
@@ -723,10 +729,11 @@ CA.Macros = (() => {
   }
 
   /** A group's members that exist and can be switched (no once macros, no other groups). */
-  const membersOf = (m) => (m && m.mode === 'group' ? m.members.map((id) => byId[id]).filter((x) => x && x.mode !== 'once' && x.mode !== 'group') : []);
+  const membersOf = (m) => (m && m.mode === 'group' ? [...new Set(m.members.map(rid))].map((id) => byId[id]).filter((x) => x && x.mode !== 'once' && x.mode !== 'group') : []);
 
   /** Turns a repeat/when macro — or every member of a group — on or off. */
   function set(id, on, { silent = false } = {}) {
+    id = rid(id);
     const m = byId[id];
     if (!m || m.mode === 'once') return;
     on = !!on;
@@ -753,6 +760,7 @@ CA.Macros = (() => {
 
   /** Runs a macro's steps one time right now (any mode). Returns how many things it did. */
   function runOnce(id) {
+    id = rid(id);
     const m = byId[id];
     if (!m || m.mode === 'group' || ascending()) return 0;
     // its steps once (an algorithm: one pass of its code)
@@ -767,6 +775,7 @@ CA.Macros = (() => {
 
   /** What a hotkey or shortcut button does: once macros run, the others switch on/off. */
   function trigger(id) {
+    id = rid(id);
     const m = byId[id];
     if (!m) return;
     if (m.mode === 'once') runOnce(id);
@@ -776,6 +785,7 @@ CA.Macros = (() => {
   // ---- queries --------------------------------------------------------------------------------
 
   function isOn(id) {
+    id = rid(id);
     const m = byId[id];
     if (m && m.mode === 'group') {
       const members = membersOf(m);
@@ -784,7 +794,7 @@ CA.Macros = (() => {
     return !!running[id];
   }
   const list = () => macros.slice();
-  const get = (id) => byId[id] || null;
+  const get = (id) => byId[rid(id)] || null;
   const activeCount = () => Object.keys(running).length;
   const runningIds = () => Object.keys(running);
   const statusOf = (id) => status[id] || null;
@@ -985,6 +995,7 @@ CA.Macros = (() => {
     list,
     get,
     addBuiltin,
+    rename,
     save,
     remove,
     duplicate,

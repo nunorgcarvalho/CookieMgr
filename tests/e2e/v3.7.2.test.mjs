@@ -104,7 +104,8 @@ assert(n > 0, 'table(): fresh');
 CA.Settings.set('roundUpBulk', false);
 newState();
 n = 0;
-CA.Macros.runOnce('cmUpgrades');
+CA.AutoBuyer.use('upgrades'); // v3.43: Best upgrade → the Auto buyer, Upgrades only
+CA.Macros.runOnce('autoBuyer');
 const buyerCost = n;
 assert(buyerCost <= 12, `Best upgrade, one pass: ${buyerCost} CpS computations (its pick looked up, not re-ranked)`);
 

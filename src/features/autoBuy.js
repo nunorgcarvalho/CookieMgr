@@ -1,15 +1,7 @@
 // Buying macros, and petting the dragon.
 //
-//   Best building                    buys the building with the lowest payback period (PP) — in the
-//                                    store's minimum bulk (×1, ×10, ×100; up to the next multiple of it
-//                                    when "Round to multiples" is on), ranked by the PP of exactly that many
-//   Best upgrade                     buys the upgrade with the lowest PP; an upgrade that only makes
-//                                    clicks stronger is worth what it adds per click × your clicks
-//                                    per second
-//   With both on, each buys only when the best of the two is its kind — so together they always
-//   buy the lowest PP overall. Each can skip what you can't afford yet (otherwise it saves up for
-//   the best one); shift-click its left-panel button to switch. Each can keep a reserve in the bank:
-//   N minutes of your unbuffed CpS it never spends (a purchase that would dip below it waits).
+//   (Best building and Best upgrade were here until v3.43: the Auto buyer replaced them —
+//   features/autoBuyer.js. Their actions cm.buyBuilding / cm.buyUpgrade stay, hidden, for old macros.)
 //   Research                         buys research (the Bingo center's tech upgrades) as it comes,
 //                                    optionally stopping before one you pick (One mind starts the
 //                                    Grandmapocalypse)
@@ -75,8 +67,7 @@ CA.AutoBuy = (() => {
 
   /** One run of a buyer: buys its pick if it's the best of what's switched on — and leaves its reserve (minutes of unbuffed CpS) in the bank. */
   function runBuyer(kind, skip, reserve) {
-    const other = kind === 'building' ? 'cmUpgrades' : 'cmBuildings';
-    const kinds = [kind].concat(CA.Macros.isOn(other) ? [kind === 'building' ? 'upgrade' : 'building'] : []);
+    const kinds = [kind];
     const budget = budgetOf(reserve);
     const pick = best(kinds, skip, budget);
     if (!pick || pick.kind !== kind || pick.price > budget) return 0;
@@ -206,6 +197,9 @@ CA.AutoBuy = (() => {
   function thingOf(k) {
     if (!k) return null;
     const hit = memo && memo.pass === CA.Macros.passKey() ? [...memo.lists.values()].flat().find((c) => thingKey(c) === String(k)) : null;
+    // the Auto buyer's queue (its profile's bulk): what buyer.next() named
+    const queued = !hit && CA.AutoBuyer ? CA.AutoBuyer.thingOf(k) : null;
+    if (queued) return { ...queued, buy: () => P().buy(queued) };
     return hit || candidates(['building', 'upgrade']).find((c) => thingKey(c) === String(k)) || null;
   }
   const upgradeNamed = (n) => (Game.UpgradesInStore || []).find((u) => u && u.name === n) || (Game.UpgradesByName && Game.UpgradesByName[n]) || (Game.Upgrades && Game.Upgrades[n]) || null;
@@ -281,6 +275,7 @@ CA.AutoBuy = (() => {
       name: 'Buy the best building (lowest payback period)',
       icon: 'building',
       group: 'Buying',
+      hidden: true, // v3.43: the Auto buyer's buyer.buyNext
       unit: 'bought',
       params: [skipParam, reserveParam],
       ready: (p) => readiness('building', p.skip, p.reserve),
@@ -291,6 +286,7 @@ CA.AutoBuy = (() => {
       name: 'Buy the best upgrade (lowest payback period)',
       icon: 'upgrade',
       group: 'Buying',
+      hidden: true, // v3.43: the Auto buyer's buyer.buyNext
       unit: 'bought',
       params: [skipParam, reserveParam],
       ready: (p) => readiness('upgrade', p.skip, p.reserve),
@@ -314,7 +310,7 @@ CA.AutoBuy = (() => {
       describe: (p) => (p.stopBefore && p.stopBefore !== 'none' ? `Buy research (up to before ${p.stopBefore})` : 'Buy all research'),
       ready: (p) => {
         const u = researchPick(p.stopBefore);
-        return u ? { ok: Game.cookies >= priceOf(u), text: `next: ${u.dname || u.name}` } : { ok: false, text: 'no research to buy' };
+        return u ? { ok: Game.cookies >= priceOf(u), text: `next: ${u.dname || u.name}`, upgrade: u.name } : { ok: false, text: 'no research to buy' };
       },
       run: (p) => {
         const u = researchPick(p.stopBefore);
@@ -331,7 +327,7 @@ CA.AutoBuy = (() => {
       describe: (p) => `Buy upgrades costing under ${p.secs}s of production`,
       ready: (p) => {
         const c = cheapUpgrades(p.secs)[0];
-        return c ? { ok: Game.cookies >= c.price, text: `next: ${c.u.dname || c.u.name}` } : { ok: false, text: 'nothing that cheap' };
+        return c ? { ok: Game.cookies >= c.price, text: `next: ${c.u.dname || c.u.name}`, upgrade: c.u.name } : { ok: false, text: 'nothing that cheap' };
       },
       run: (p) => cheapUpgrades(p.secs).reduce((n, x) => n + buyUpgrade(x.u), 0),
     });
@@ -355,44 +351,6 @@ CA.AutoBuy = (() => {
     });
 
     const M = CA.Macros;
-    const skipInput = { key: 'skip', label: 'Skip what you can’t afford yet', type: 'bool', default: false };
-    // a floor for the bank: what it never spends, in minutes of unbuffed CpS (100: the bank a Lucky! pays most from)
-    const reserveInput = {
-      key: 'reserve',
-      label: 'Bank reserve (minutes of unbuffed CpS)',
-      type: 'number',
-      default: 0,
-      min: 0,
-      summary: (v) => (Number(v) > 0 ? `keeps ${v} min of CpS in the bank` : 'no bank reserve'),
-    };
-    M.addBuiltin({
-      id: 'cmBuildings',
-      name: 'Best building',
-      desc: 'Buys the building with the lowest payback period — 10 at a time to the next multiple when the store’s Round to multiples is on. With Best upgrade also on, buys only when a building beats every upgrade. Can keep a reserve in the bank (minutes of CpS) it never spends.',
-      icon: { ico: 'building' },
-      mode: 'flow',
-      every: 500,
-      defaultSource: "# Buy the building with the lowest payback period — judged against the upgrades\n# too when Best upgrade is on, so together they always buy the best of both. skip: only what\n# you can afford now (otherwise it saves up for the best). Shift-click its button flips skip.\n# reserve: minutes of unbuffed CpS it leaves in the bank — it never buys below that.\nforever:\n  budget = cookies() - rawCps() * 60 * reserve\n  if macro.isOn(cmUpgrades):\n    pick = pp.best(all, skip, budget)\n  else:\n    pick = pp.best(building, skip, budget)\n  if pick != \"\" and pp.kind(pick) == \"building\" and pp.price(pick) <= budget:\n    pp.buy(pick)\n",
-      inputs: [skipInput, reserveInput],
-      shift: { input: 'skip', on: 'skips what you can’t afford', off: 'saves up for the best' },
-      readiness: (ins) => readiness('building', ins.skip, ins.reserve),
-      holdRepeat: true,
-      section: 'buying',
-    });
-    M.addBuiltin({
-      id: 'cmUpgrades',
-      name: 'Best upgrade',
-      desc: 'Buys the upgrade with the lowest payback period; clicking upgrades are judged by your clicks per second. With Best building also on, buys only when an upgrade beats every building. Can keep a reserve in the bank (minutes of CpS) it never spends.',
-      icon: { ico: 'upgrade' },
-      mode: 'flow',
-      every: 500,
-      defaultSource: "# Buy the upgrade with the lowest payback period (clicking upgrades are judged by\n# your clicks per second) — against the buildings too when Best building is on. skip: only what\n# you can afford now. Shift-click its button flips skip.\n# reserve: minutes of unbuffed CpS it leaves in the bank — it never buys below that.\nforever:\n  budget = cookies() - rawCps() * 60 * reserve\n  if macro.isOn(cmBuildings):\n    pick = pp.best(all, skip, budget)\n  else:\n    pick = pp.best(upgrade, skip, budget)\n  if pick != \"\" and pp.kind(pick) == \"upgrade\" and pp.price(pick) <= budget:\n    pp.buy(pick)\n",
-      inputs: [skipInput, reserveInput],
-      shift: { input: 'skip', on: 'skips what you can’t afford', off: 'saves up for the best' },
-      readiness: (ins) => readiness('upgrade', ins.skip, ins.reserve),
-      holdRepeat: true,
-      section: 'buying',
-    });
     M.addBuiltin({
       id: 'research',
       name: 'Research',

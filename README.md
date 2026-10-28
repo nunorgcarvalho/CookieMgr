@@ -24,8 +24,8 @@ The same words mean the same things everywhere in the add-on and this README:
 ## Features (v3.1)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
-the data pages **Events**, **Graphs**, **Stats** and **Payback**; the minigames **Garden**, **Stock market**, **Pantheon** and **Grimoire**, and the **Dragon**;
-then **Macros**, **Widgets** and **Settings** — a small gap between each kind. Hovering an icon slides its name out to
+the data pages **Events**, **Graphs** and **Stats**; the minigames **Garden**, **Stock market**, **Pantheon** and **Grimoire**, and the **Dragon**;
+then **Payback** (the Auto buyer's hub), **Macros**, **Widgets** and **Settings** — a small gap between each kind. Hovering an icon slides its name out to
 the left. Wherever a page mentions another (a Macros section, a "Macros page" hint), the name is a link to it, and
 each minigame page has an **Open in game** button that closes the panel and takes you to the minigame.
 Clicking one opens the CookieMgr panel straight to that page (switching pages directly if it's already open on a
@@ -164,8 +164,7 @@ default brings the original back):
 | Sugar lump harvester   | —           | Harvests your lump when ripe — or when mature, if you pick that      |
 | Elder Pledge           | —           | Buys the Elder Pledge whenever the Grandmapocalypse is on            |
 | FtHoF on combos        | —           | An algorithmic macro: Force the Hand of Fate when two effects line up |
-| Best building          | —           | Buys the lowest-payback building                                     |
-| Best upgrade           | —           | Buys the lowest-payback upgrade                                      |
+| Auto buyer             | —           | Buys the front of the queue its profile ranks (Payback page)         |
 | Research               | —           | Buys research as it comes (stops before One mind by default)         |
 | Cheap upgrades         | —           | Buys upgrades costing under 1s (adjustable) of production            |
 | Pet the dragon         | —           | Gets the dragon's four drops, learning by petting which quarter-hour gives which |
@@ -174,11 +173,11 @@ The autobuyer is the same switch as on the Stock market page and in the Bank min
 the way to switch several at once.)
 
 Every built-in that makes a decision is **code over building blocks** (below): Golden cookies, Wrath cookies,
-Reindeer, Wrinklers, the Sugar lump harvester, the Stock market autobuyer, Best building, Best upgrade, Research, Cheap
+Reindeer, Wrinklers, the Sugar lump harvester, the Stock market autobuyer, the Auto buyer, Research, Cheap
 upgrades, Pet the dragon, FtHoF on combos, SeasonCompletion and the Auto-gardener (whose code is the gardener you
 pick, with its soil rule, template and seeds as inputs beside it). The Big cookie, Fortune news, Elder Pledge, Sell all and the spell casts have nothing to decide and
 stay shortcuts. A built-in's **inputs** — the choices on its card (the Wrinklers' "shiny" and "fed", the autobuyer's
-"buy" and "brokers", Best building's "skip", …) — are variables in its code; shift-click flips one, and changing one
+"buy" and "brokers", …) — are variables in its code; shift-click flips one, and changing one
 while it runs applies on its next pass. Each was checked against the JavaScript it replaced, on random states: the
 same things popped, bought and traded.
 
@@ -333,15 +332,16 @@ recorded value (CpS, cookies in bank, prestige, a stock price…) above or below
 complete, all research bought, the Grandmapocalypse being on — each can be negated, and
 **And…** adds more conditions that must all hold. Your macros are saved with your settings inside the game save.
 
-**Buying.** **Best building** and **Best upgrade** buy whatever has the lowest payback period (PP: time to afford it
-+ price ÷ the CpS it adds — see [Payback periods](#payback-periods)). Best building buys in the store's **Minimum
-bulk** (Settings → Store, the store toolbar, or the Payback page): ×1, ×10 or ×100 at a time — up to the next multiple
-of it when Round to multiples is on (37 owned, ×10: 3, to 40) — ranked by the PP of exactly that many; auto (the
-default) is ×10 with Round to multiples on, else ×1. Switches (Elder Pledge, the Golden switch, season biscuits…)
-have no payback period: they're never the best buy and never bought. Upgrades that
-only make clicks stronger are judged by what they add per click × your clicks per second. With both on, each buys only when the best
-of the two is its kind, so together they always buy the lowest PP overall. By default they save up for the best; their
-**Skip what you can't afford** setting (shift-click the button) buys the best affordable one instead. **Hold** a
+**Buying.** The **Auto buyer** buys the front of a **queue**: its active profile (on the [Payback](#payback) page)
+ranks every building and upgrade by payback period (PP: time to afford it + price ÷ what it adds — see [Payback
+periods](#payback-periods)), then by the profile's rules, into one list. Buildings come in the profile's bulk — auto is
+the store's **Minimum bulk** (Settings → Store, the store toolbar, or the Payback page): ×1, ×10 or ×100 at a time — up
+to the next multiple of it when Round to multiples is on (37 owned, ×10: 3, to 40) — ranked by the PP of exactly that
+many; auto (the default) is ×10 with Round to multiples on, else ×1. Switches (Elder Pledge, the Golden switch, season
+biscuits…) have no payback period: they're never ranked and never bought. Upgrades that only make clicks stronger are
+judged by what they add per click × your clicks per second. A profile saves up for the front, or skips to what you
+can afford, and can keep a bank reserve. (It replaced Best building and Best upgrade in v3.43; old saves move over.)
+**Hold** a
 buying macro's button (instead of clicking it) and it buys again and again, fast, until you let go. Their buttons
 are tinted muted green or red for whether the next purchase is affordable now (hover for what and when), and
 switching one on when it can't buy yet shakes it and says why. **Research** buys the Bingo center's research as it appears,
@@ -377,8 +377,21 @@ it). Modifiers work (`Shift + G`): click a key chip and press the new key (`Esc`
 
 ### Payback
 
-The **Payback** page lays out what every purchase is worth (see [Payback periods](#payback-periods)): the **best buy**
-of all (building or upgrade), the best building and the best upgrade, and when you can afford each; then every
+The **Payback** page sits right above Macros and is the hub of the **Auto buyer**. At the top: its switch, what it
+buys next (a bar filling as you save for it), the **profiles** (click one to make it active; **New** copies it), the
+payback mode, and **Buy all upgrades** (the game's Inspired checklist button, without needing it: every upgrade you
+can afford but switches, research and what you've vaulted, cheapest first). Then the **Queue**: place, what (an
+upgrade with its icon and its info card on hover), payback period in its color, score (the payback period after the
+rules' weights — the order), price, when you can afford it, the rules that touched it; what's held back below,
+grayed, with why. Then the active **Profile**: what it buys (buildings, upgrades), the building bulk, save up or skip,
+the bank reserve (minutes of unbuffed CpS), what it ranks by (a payback mode), and its **rules**, top to bottom: what
+they apply to (anything, buildings, upgrades, one building or upgrade, cookies, kittens, synergies, clicking upgrades,
+anything under N s of CpS, anything that wins an achievement) → **buy first**, **weight ×k**, **up to N owned** or
+**never**, each with an optional **when** in the macro language (`thing` is what's ranked). In code: `buyer.next()`,
+`buyer.queue()`, `buyer.rank(thing)`, `buyer.score(thing)`, `buyer.budget()`, `buyer.profile(x)`, `buyer.buyNext()`,
+`buy.allUpgrades()`.
+
+Below it, what every purchase is worth (see [Payback periods](#payback-periods)): every
 building with a cell for **×1**, **×10** and **×100** — colored by its payback color, with its payback period, the
 CpS it adds and its price (hover for the achievements it would win; **click a cell to buy that many**) — and how many
 more win its next achievement; the store's upgrades as tiles ringed in their color, best first (click to buy); and
@@ -386,7 +399,7 @@ its options: the minimum bulk, count your wrinklers in the bank (none, all, the 
 afford", and a "cheap enough to just buy" floor in seconds of CpS. Switches show among the upgrades only when their
 filter chip is on, grayed.
 
-**Payback mode** is the page's main setting, at the top: what payback periods count in. A payback period is
+**Payback mode** is the page's main setting, in the Auto buyer card: what payback periods count in. A payback period is
 **max(price − bank, 0) ÷ income + price ÷ gain** — the time to afford it, plus the time to earn its price back — and
 the mode says what the income is and what a purchase adds to it:
 
@@ -1061,7 +1074,8 @@ src/
     upgradeInfo.js   how the game unlocks an upgrade, the next one a building unlocks, what one would add
     whatIf.js        the CpS a Pantheon spirit or a dragon aura would bring, asked of the game
     alerts.js        alerts: flash / sound / notify actions, fortune & lump conditions, the built-in alerts, the tab
-    autoBuy.js       buying macros (lowest payback period, research, cheap upgrades) and petting the dragon
+    autoBuy.js       buying macros (research, cheap upgrades), pp.best and petting the dragon
+    autoBuyer.js     the Auto buyer: profiles, rules, the queue, Buy all upgrades
     seasons.js       season drops and completion, the Grandmapocalypse, SeasonCompletion's code
     script.js        the language of algorithmic macros: parsing, values, explaining conditions
     notifyTips.js    tooltips on the game's notifications about upgrades and achievements
@@ -1085,7 +1099,8 @@ src/
     gardenPage.js    the Garden page: the plot against the active profile, the auto-gardener: profiles, its four layers and their editors
     storeBar.js      the store toolbar (building sort, rounding to multiples)
     storeInsight.js  the store with payback colors, and a CookieMgr block under the game's tooltips
-    paybackPage.js   the Payback page: best buy, every building ×1/×10/×100, upgrades, options
+    paybackPage.js   the Payback page: every building ×1/×10/×100, upgrades, options (under the Auto buyer)
+    autoBuyerCard.js the Payback page's top: the Auto buyer, its queue, the profile editor
     tooltipsPage.js  the Statistics page: the statistics catalog, the Values (and the tooltip's layout card, on Settings)
                      list; the Statistic widget
     statEditor.js    the statistic editor (on the Statistics page): fields, code, library, knobs, result, trace

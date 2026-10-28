@@ -580,6 +580,8 @@ CA.Payback = (() => {
    * or 'auto' — what CookieMgr's buyers buy (CA.Shop.buyAmount: the minimum bulk, rounded up with
    * Round to multiples); opts.skip: only what you can afford now (with opts.budget cookies, when
    * given: the bank less what a buyer keeps in it);
+   * opts.mode: the payback mode to rank by (none: the one in use); opts.all: what never pays back
+   * too (pp ∞, last);
    * opts.top: only the best has to be right (best()) — what can't beat it isn't measured: an upgrade
    * whose wait to afford alone is longer than the best building's payback period (a payback period is
    * at least that wait), anything you can't afford when skipping.
@@ -602,8 +604,8 @@ CA.Payback = (() => {
     }
     ensure(c, bs, []);
     if (opts.top && us.length) {
-      const bestB = bs.reduce((m, [name, n]) => Math.min(m, ppOf(sumPrice(buildingNamed(name), n), buildingWorth(name, n, c))), Infinity);
-      if (Number.isFinite(bestB)) us = us.filter((u) => timeTo(upgradePrice(u)) < bestB);
+      const bestB = bs.reduce((m, [name, n]) => Math.min(m, ppOf(sumPrice(buildingNamed(name), n), buildingWorth(name, n, c), opts.mode)), Infinity);
+      if (Number.isFinite(bestB)) us = us.filter((u) => timeTo(upgradePrice(u), opts.mode) < bestB);
     }
     ensure(
       c,
@@ -617,21 +619,21 @@ CA.Payback = (() => {
       const b = buildingNamed(name);
       const price = sumPrice(b, n);
       const worth = buildingWorth(name, n, c);
-      const x = parts(price, worth);
+      const x = parts(price, worth, opts.mode);
       const v = x.pp;
       const row = t && t.buildings[n] && t.buildings[n][name];
-      out.push({ kind: 'building', name, n, label: n > 1 ? `${n} × ${b.dname || name}` : b.dname || name, price, bonus: worth.bonus, gain: x.gain, pp: v, colour: row ? row.colour : t ? t.colourOf(v, price) : null });
+      out.push({ kind: 'building', name, n, label: n > 1 ? `${n} × ${b.dname || name}` : b.dname || name, price, bonus: worth.bonus, gain: x.gain, pp: v, won: worth.won || [], colour: row ? row.colour : t ? t.colourOf(v, price) : null });
     });
     us.forEach((u) => {
       const w = upgradeWorth(u.name, c);
       if (!w) return;
       const price = upgradePrice(u);
-      const x = parts(price, w);
+      const x = parts(price, w, opts.mode);
       const v = x.pp;
       const row = t && t.upgrades[u.name];
-      out.push({ kind: 'upgrade', name: u.name, n: 1, label: u.dname || u.name, price, bonus: w.gain, gain: x.gain, pp: v, colour: row ? row.colour : t ? t.colourOf(v, price) : null, estimated: !(w.bonus > 0) && w.mouse > 0 });
+      out.push({ kind: 'upgrade', name: u.name, n: 1, label: u.dname || u.name, price, bonus: w.gain, gain: x.gain, pp: v, won: w.won || [], colour: row ? row.colour : t ? t.colourOf(v, price) : null, estimated: !(w.bonus > 0) && w.mouse > 0 });
     });
-    return out.filter((x) => Number.isFinite(x.pp) && (!opts.skip || affordable(x.price))).sort((a, b) => a.pp - b.pp);
+    return out.filter((x) => (opts.all ? !Number.isNaN(x.pp) : Number.isFinite(x.pp)) && (!opts.skip || affordable(x.price))).sort((a, b) => (a.pp === b.pp ? 0 : a.pp - b.pp));
   }
   /** The lowest PP: { kind, name, n, price, pp, … } or null — buildings in the minimum bulk unless opts.bulk says otherwise. */
   const best = (kind = 'all', opts = {}) => ranking(kind, { bulk: 'auto', ...opts, top: true })[0] || null;

@@ -530,7 +530,7 @@ buy.best(all)
   function macrosHtml() {
     const s = S.snap;
     if (!s) return '';
-    const list = s.macros.filter((m) => m.on || !m.builtin || ['golden', 'bigCookie', 'wrath', 'reindeer', 'wrinklers', 'lumps', 'gardener', 'cmBuildings', 'cmUpgrades', 'research', 'cheapUpgrades', 'petDragon', 'autoDragon', 'seasonCompletion', 'fthofOnClickFrenzy', 'stockTrader'].includes(m.id));
+    const list = s.macros.filter((m) => m.on || !m.builtin || ['golden', 'bigCookie', 'wrath', 'reindeer', 'wrinklers', 'lumps', 'gardener', 'autoBuyer', 'research', 'cheapUpgrades', 'petDragon', 'autoDragon', 'seasonCompletion', 'fthofOnClickFrenzy', 'stockTrader'].includes(m.id));
     return list
       .map(
         (m) =>
