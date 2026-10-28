@@ -12,13 +12,13 @@ await sleep(400);
 
 const ids = CA.UI.Widgets.types().map((t) => t.id);
 assert(!ids.includes('golden'), `no ring widget type (id golden) (${ids.join()})`);
-assert(ids.includes('goldenCookies'), 'the Golden cookies widget (goldenCookies since v3.38.0, the Next golden cookie widget before) stays');
+assert(ids.includes('goldenCookies'), 'the Golden cookies widget (goldenCookies since v3.39.0, the Next golden cookie widget before) stays');
 assert(!CA.UI.Widgets.add('golden'), 'it can’t be added');
 assert(!('sparkline' in CA.UI.SpawnView), 'its sparkline went with it');
 
 CA.UI.Menu.openPage('widgets');
 const gallery = [...doc.querySelectorAll('.ca-wpick .ca-wtile-name')].map((n) => n.textContent); // v3.22: the picker's tiles
-assert(gallery.filter((t) => /^Golden cookies/.test(t)).length === 1, `the Widgets page offers it no more, only v3.38's Golden cookies (${gallery.join(' | ')})`);
+assert(gallery.filter((t) => /^Golden cookies/.test(t)).length === 1, `the Widgets page offers it no more, only v3.39's Golden cookies (${gallery.join(' | ')})`);
 
 // an old save with the ring among other widgets
 CA.UI.Widgets.load([

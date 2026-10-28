@@ -82,7 +82,7 @@ const fstar = () => doc.querySelector('[data-st-spawn] .ca-sp-factors [data-w-st
 assert(fstar(), 'the golden cookie frequency row has a ☆');
 click(w, fstar());
 const fInst = () => W.list().find((x) => x.type === 'goldenCookies');
-assert(fInst() && fInst().stats.join() === 'numbers,helping' && fInst().nums.join() === 'frequency,every', 'clicking it adds the Golden cookie frequency widget (since v3.38.0 a Golden cookies widget: the multiplier, the frequency, what’s helping)');
+assert(fInst() && fInst().stats.join() === 'numbers,helping' && fInst().nums.join() === 'frequency,every', 'clicking it adds the Golden cookie frequency widget (since v3.39.0 a Golden cookies widget: the multiplier, the frequency, what’s helping)');
 W.tick();
 const fw = () => doc.querySelector(`#CookieMgrWidgets [data-widget="${fInst().id}"]`);
 const mult = () => [...fw().querySelectorAll('.ca-tl-nums span')].find((s) => s.querySelector('em').textContent === 'multiplier').querySelector('b').textContent;

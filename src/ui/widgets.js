@@ -38,6 +38,9 @@
 // live(inst, body) runs after each render and refresh, for a widget that draws into its own nodes
 // (a chart's canvas); removed(inst) when it's taken away.
 //
+// Layouts: the whole panel saved under a name (profiles; see "layout profiles" below) — Use, Save over,
+// rename, delete, Undo; widgets.profile(name) in code.
+//
 // Stars: a page's ☆ (CA.UI.C.widgetStar) adds a ready-made widget — a preset, its type and the
 // settings that make it that one — and takes it away again; hasPreset() says whether it's there.
 
@@ -744,10 +747,24 @@ CA.UI.Widgets = (() => {
     if (!pageRoot || !pageRoot.isConnected) return;
     const map = pageRoot.querySelector('[data-w-map]');
     if (map) CA.UI.Dom.morph(map, mapHtml());
+    pageRoot.querySelectorAll('[data-wp-status]').forEach((st) => {
+      const p = profileOf(st.dataset.wpStatus);
+      if (!p) return;
+      const on = profileActive(p.id);
+      const row = st.closest('[data-wp-row]');
+      if (row.classList.contains('on') === on) return;
+      row.classList.toggle('on', on);
+      CA.UI.Dom.morph(st, profileStatus(p));
+      row.querySelectorAll('[data-wp-act="use"],[data-wp-act="save"]').forEach((b) => (b.disabled = on));
+    });
   }
 
   function onEditorInput(e) {
     const el = e.target;
+    if (el.dataset && el.dataset.wpName) {
+      if (e.type === 'change') renameProfile(el.dataset.wpName, el.value);
+      return;
+    }
     const box = el.closest && el.closest('[data-w-editor]');
     const w = box && get(box.dataset.wEditor);
     if (!w) return;
@@ -780,8 +797,9 @@ CA.UI.Widgets = (() => {
 
   const round = (v) => Math.round(v * 1000) / 1000;
 
-  function serialize() {
-    return widgets.map((wd) => {
+  /** A list of widgets as they're saved (the current layout's, or a profile's). */
+  function serializeList(list) {
+    return list.map((wd) => {
       const out = { id: wd.id, type: wd.type, x: round(wd.x), y: round(wd.y), collapsed: wd.collapsed };
       if (wd.macro) out.macro = wd.macro;
       if (wd.scale && wd.scale !== 1) out.scale = round(wd.scale);
@@ -794,11 +812,12 @@ CA.UI.Widgets = (() => {
       return out;
     });
   }
+  const serialize = () => serializeList(widgets);
 
   /**
    * Saved widgets of a type that's been replaced become the type that replaced it: a type's
    * `legacy: { oldId: (saved) => settings }` gives the settings that make it show what the old one did
-   * (v3.38: Next golden cookie, Golden timeline and Golden cookie frequency → Golden cookies).
+   * (v3.39: Next golden cookie, Golden timeline and Golden cookie frequency → Golden cookies).
    */
   function migrate(data) {
     if (!Array.isArray(data)) return data;
@@ -807,16 +826,15 @@ CA.UI.Widgets = (() => {
     return data.map((w) => (w && by[w.type] ? { ...w, ...by[w.type].fn(w), type: by[w.type].type } : w));
   }
 
-  function load(saved) {
-    const data = migrate(saved);
-    if (!Array.isArray(data)) return;
-    const ok = (w) => w && Number.isFinite(w.x) && Number.isFinite(w.y);
-    // v2.1 had one Shortcuts widget for all favourites; its buttons now start where it was
-    const old = data.find((w) => ok(w) && w.type === 'shortcuts');
-    anchor = old ? { x: old.x, y: old.y } : null;
+  const okPos = (w) => w && Number.isFinite(w.x) && Number.isFinite(w.y);
+
+  /** Saved widgets (the layout's, or a profile's) → clean widget objects; nothing else changes. */
+  function fromSaved(saved) {
+    const data = migrate(saved); // a replaced type → the type that replaced it
+    if (!Array.isArray(data)) return [];
     // a type that's gone is dropped (v3.19: the Golden cookies ring, now the Next golden cookie widget)
-    widgets = data
-      .filter((w) => ok(w) && typeById[w.type])
+    return data
+      .filter((w) => okPos(w) && typeById[w.type])
       .map((w) => {
         // ids go into attributes and selectors: only plain ones are kept
         const out = { id: /^[\w-]{1,40}$/.test(String(w.id)) ? String(w.id) : newId(), type: w.type, x: w.x, y: w.y, collapsed: !!w.collapsed };
@@ -841,8 +859,199 @@ CA.UI.Widgets = (() => {
         if (Array.isArray(w.nums)) out.nums = w.nums.map(String);
         return out;
       });
+  }
+
+  function load(data) {
+    if (!Array.isArray(data)) return;
+    // v2.1 had one Shortcuts widget for all favourites; its buttons now start where it was
+    const old = data.find((w) => okPos(w) && w.type === 'shortcuts');
+    anchor = old ? { x: old.x, y: old.y } : null;
+    widgets = fromSaved(data);
     render();
     reconcile();
+  }
+
+  // ---- layout profiles ------------------------------------------------------------------------
+  // A profile is a whole layout saved under a name: every widget, where it sits, its size and its
+  // settings (macro buttons too). Using one swaps the left panel for it — the macros it has buttons
+  // for get their ★, the rest lose it — and Undo goes back to the layout you had before. Saved in
+  // their own section ('widgetProfiles'), through fromSaved() like the layout itself.
+
+  let profiles = []; // { id, name, widgets: [saved widget] }
+  let undo = null; // { name, widgets } — the layout before the last profile was used (this session only)
+
+  const profileName = (n, fallback) => String(n == null ? '' : n).trim().slice(0, 40) || fallback;
+  /** A profile from its id or its name (any case), or null. */
+  function profileOf(x) {
+    if (x == null || x === '') return null;
+    const k = String(x).toLowerCase();
+    return profiles.find((p) => p.id === String(x)) || profiles.find((p) => p.name.toLowerCase() === k) || null;
+  }
+  const profileList = () => profiles.map((p) => ({ id: p.id, name: p.name, widgets: serializeList(fromSaved(p.widgets)) }));
+  // a layout to compare: its widgets without their ids, in any order
+  const sig = (list) => list.map(({ id, ...rest }) => JSON.stringify(rest)).sort().join('\n');
+  /** Whether the left panel is a profile's layout right now. */
+  function profileActive(x) {
+    const p = profileOf(x);
+    return !!p && sig(serializeList(fromSaved(p.widgets))) === sig(serialize());
+  }
+  function activeProfile() {
+    const now = sig(serialize());
+    const p = profiles.find((x) => sig(serializeList(fromSaved(x.widgets))) === now);
+    return p ? p.id : '';
+  }
+
+  /** Puts a layout on the left panel instead of the one there (macro ★s follow its buttons). */
+  function swapLayout(next) {
+    widgets.forEach((w) => {
+      const t = typeById[w.type];
+      if (t && t.removed) t.removed(w);
+    });
+    // favourites first: each change re-checks the buttons, which would drop the new layout's
+    const want = new Set(next.filter((w) => w.type === 'macro').map((w) => w.macro));
+    CA.Macros.list().forEach((m) => {
+      if (CA.Macros.isFav(m.id) !== want.has(m.id)) CA.Macros.setFav(m.id, want.has(m.id));
+    });
+    widgets = next;
+    editing = null;
+    anchor = null;
+    reconcile();
+    changed();
+  }
+
+  /** Uses a profile (its id or its name): the left panel becomes its layout. How many widgets it placed. */
+  function useProfile(x) {
+    const p = profileOf(x);
+    if (!p) return 0;
+    if (profileActive(p.id)) return 0;
+    const stamp = newId();
+    const next = fromSaved(p.widgets).map((w, i) => ({ ...w, id: `${stamp}${i.toString(36)}` }));
+    undo = { name: p.name, widgets: serialize() };
+    swapLayout(next);
+    if (!S().get('widgetsShown')) S().set('widgetsShown', true);
+    return widgets.length;
+  }
+  /** Back to the layout from before the last profile was used. */
+  function undoProfile() {
+    if (!undo) return 0;
+    const back = fromSaved(undo.widgets);
+    undo = null;
+    swapLayout(back);
+    return widgets.length;
+  }
+  /** A new profile of the layout now: its id. */
+  function addProfile(name) {
+    let id = `l${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`;
+    while (profileOf(id)) id += 'x';
+    profiles.push({ id, name: profileName(name, `Layout ${profiles.length + 1}`), widgets: serialize() });
+    CA.Events.emit('widgets');
+    return id;
+  }
+  /** Saves the layout now over a profile. */
+  function overwriteProfile(id) {
+    const p = profiles.find((x) => x.id === id);
+    if (!p) return;
+    p.widgets = serialize();
+    CA.Events.emit('widgets');
+  }
+  function renameProfile(id, name) {
+    const p = profiles.find((x) => x.id === id);
+    if (!p || !String(name).trim()) return;
+    p.name = profileName(name, p.name);
+    CA.Events.emit('widgets');
+  }
+  function removeProfile(id) {
+    const n = profiles.length;
+    profiles = profiles.filter((x) => x.id !== id);
+    if (profiles.length !== n) CA.Events.emit('widgets');
+  }
+  const serializeProfiles = () => ({ profiles: profileList() });
+  function loadProfiles(data) {
+    const ps = data && Array.isArray(data.profiles) ? data.profiles : [];
+    profiles = ps
+      .filter((x) => x && /^[\w-]{1,40}$/.test(String(x.id)) && Array.isArray(x.widgets))
+      .map((x) => ({ id: String(x.id), name: profileName(x.name, 'Layout'), widgets: serializeList(fromSaved(x.widgets)) }))
+      .filter((x, i, a) => a.findIndex((y) => y.id === x.id) === i);
+  }
+
+  /** A small picture of a saved layout: a box for each widget, where it sits on the panel. */
+  function thumbHtml(list) {
+    const host = layer && layer.parentNode;
+    const Hr = host && host.getBoundingClientRect ? host.getBoundingClientRect() : null;
+    const W = (Hr && Hr.width) || 400;
+    const H = (Hr && Hr.height) || 730;
+    return (
+      `<div class="ca-wthumb" style="aspect-ratio:${(W / H).toFixed(3)}">` +
+      list
+        .map((w) => {
+          const t = typeById[w.type];
+          const bare = t.bare;
+          const sc = t.resize === 'scale' ? w.scale || 1 : 1;
+          const pw = Math.min(100, ((bare ? BUTTON_PX : w.w || t.width) * sc * 100) / W);
+          const ph = Math.min(100, ((bare ? BUTTON_PX : w.collapsed ? 22 : w.h || 90) * sc * 100) / H);
+          return `<i class="${bare ? 'bare' : ''}" style="left:${(clamp01(w.x) * (100 - pw)).toFixed(1)}%;top:${(clamp01(w.y) * (100 - ph)).toFixed(1)}%;width:${pw.toFixed(1)}%;height:${ph.toFixed(1)}%"></i>`;
+        })
+        .join('') +
+      '</div>'
+    );
+  }
+
+  /** What a profile holds, in words: "4 widgets · 3 macro buttons". */
+  function profileSummary(list) {
+    const btn = list.filter((w) => w.type === 'macro').length;
+    const n = list.length - btn;
+    const parts = [];
+    if (n || !btn) parts.push(`${n} widget${n === 1 ? '' : 's'}`);
+    if (btn) parts.push(`${btn} macro button${btn === 1 ? '' : 's'}`);
+    return parts.join(' · ');
+  }
+  const profileStatus = (p) => (profileActive(p.id) ? '<span class="ca-pill on">on the panel</span>' : '');
+
+  function profileRow(p) {
+    const C = CA.UI.C;
+    const list = fromSaved(p.widgets);
+    const on = profileActive(p.id);
+    return (
+      `<div class="ca-pprof ca-wprof${on ? ' on' : ''}" data-wp-row="${esc(p.id)}">` +
+      thumbHtml(list) +
+      '<div class="ca-dprof-name">' +
+      `<input type="text" class="ca-gname" maxlength="40" value="${esc(p.name)}" data-wp-name="${esc(p.id)}" data-tip="the layout’s name — macros use it, or its id: ${esc(p.id)}">` +
+      `<code>${esc(profileSummary(list))}</code></div>` +
+      '<span class="ca-pprof-end">' +
+      `<span data-wp-status="${esc(p.id)}">${profileStatus(p)}</span>` +
+      C.button(`${I('play', 12)} Use`, `data-wp-act="use" data-id="${esc(p.id)}"${on ? ' disabled' : ''}`, 'ca-btn-small') +
+      C.button(`${I('save', 12)} Save`, `data-wp-act="save" data-id="${esc(p.id)}" data-arm-label="Replace it?" data-tip="Save the layout on the panel now over this one"${on ? ' disabled' : ''}`, 'ca-btn-small') +
+      C.button('Delete', `data-wp-act="delete" data-id="${esc(p.id)}" data-arm-label="Delete it?"`, 'ca-btn-small ca-btn-off') +
+      '</span></div>'
+    );
+  }
+
+  function profilesCard() {
+    const C = CA.UI.C;
+    return (
+      '<div class="ca-card ca-pprofs ca-wprofs">' +
+      C.cardHead('Layouts', 'save', '<div class="ca-card-meta"><span class="ca-hint">macros: widgets.profile(name)</span></div>') +
+      (profiles.length ? profiles.map(profileRow).join('') : '<div class="ca-card-note">No saved layouts yet. Save the one on the panel now to come back to it later.</div>') +
+      '<div class="ca-pprof-foot">' +
+      C.button(`${I('plus', 12)} Save current layout`, `data-wp-act="new"${widgets.length ? '' : ' disabled'}`, 'ca-btn-small') +
+      (undo ? C.button(`${I('refresh', 12)} Undo`, `data-wp-act="undo" data-tip="Back to the layout you had before “${esc(undo.name)}”"`, 'ca-btn-small') : '') +
+      '<span class="ca-hint">Use swaps the whole left panel for that layout — its macro buttons get their ★, the others lose it.</span>' +
+      '</div></div>'
+    );
+  }
+
+  /** A click on the Layouts card (true when it was one). */
+  function onProfileClick(t) {
+    const { wpAct: act, id } = t.dataset;
+    if (act === 'delete' || act === 'save') {
+      if (!CA.UI.Dom.armed(t)) return true;
+    }
+    if (act === 'delete') removeProfile(id);
+    else if (act === 'save') overwriteProfile(id);
+    else if (act === 'use') useProfile(id);
+    else if (act === 'undo') undoProfile();
+    else if (act === 'new') addProfile();
+    return true;
   }
 
   // ---- the Widgets page ------------------------------------------------------------------
@@ -952,6 +1161,7 @@ CA.UI.Widgets = (() => {
         '</div>';
     }
 
+    h += profilesCard();
     h += pickerHtml(favs.length);
     h +=
       `<div class="ca-card">${C.cardHead('Options', 'settings')}<div class="ca-optgrid">${S().optionsIn('widgets').map(CA.UI.Menu.optionTile).join('')}</div><div class="ca-list">` +
@@ -973,6 +1183,14 @@ CA.UI.Widgets = (() => {
     setLinked(el ? el.dataset.widget : null);
   }
   function onPageClick(e) {
+    const wp = e.target.closest('[data-wp-act]');
+    if (wp) {
+      e.stopPropagation();
+      CA.Util.sound('snd/tick.mp3');
+      onProfileClick(wp);
+      if (!wp.dataset.armed) CA.UI.Menu.render();
+      return;
+    }
     const pre = e.target.closest('[data-w-preset],[data-w-snap]');
     if (pre) {
       e.stopPropagation();
@@ -1025,6 +1243,7 @@ CA.UI.Widgets = (() => {
 
   function init() {
     CA.Settings.registerSection('widgets', { serialize, load, event: 'widgets' });
+    CA.Settings.registerSection('widgetProfiles', { serialize: serializeProfiles, load: loadProfiles, event: 'widgets' });
     [
       { id: 'golden', name: 'Golden cookies', sprite: [10, 14], order: 10 },
       { id: 'minigames', name: 'Minigames', sprite: [17, 0], order: 20 },
@@ -1071,7 +1290,23 @@ CA.UI.Widgets = (() => {
     });
     setInterval(tick, TICK_MS);
     render();
+
+    // code: widgets.profile(name) puts a saved layout on the panel
+    const V = (id, desc, get, more) => CA.Script.defineValue({ id, desc, get, ...(more || {}) });
+    V('widgets.profiles', 'a list: every saved widget layout (its id)', () => profiles.map((p) => p.id), { list: true });
+    V('widgets.activeProfile', 'the saved widget layout on the left panel now ("" when none)', () => activeProfile());
+    V('widgets.profileActive', 'whether the left panel is a saved widget layout (its id or name)', (x) => profileActive(x), { params: ['profile'], bool: true });
+    CA.Actions.register({
+      id: 'widgets.profile',
+      name: 'Use a widget layout',
+      icon: 'widget',
+      group: 'Widgets',
+      unit: 'placed',
+      params: [{ key: 'profile', label: 'Layout', type: 'select', default: '', options: () => profiles.map((p) => ({ v: p.id, label: p.name })) }],
+      run: (p) => useProfile(p.profile),
+    });
   }
 
-  return { init, defineType, defineGroup, types: () => types.slice(), add, remove, toggleStar, hasPreset, syncStars, list, get, has, serialize, migrate, load, render, tick, reconcile, openSettings, editing: () => editing };
+  return { init, defineType, defineGroup, types: () => types.slice(), add, remove, toggleStar, hasPreset, syncStars, list, get, has, serialize, migrate, load, fromSaved, render, tick, reconcile, openSettings, editing: () => editing,
+    profiles: profileList, profileOf, profileActive, activeProfile, useProfile, undoProfile, addProfile, overwriteProfile, renameProfile, removeProfile };
 })();

@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## 3.38.0 — 2026-10-28
+## 3.39.0 — 2026-10-28
 
 - **One Golden cookies widget instead of three.** Next golden cookie, Golden timeline and Golden cookie frequency
   are now a single **Golden cookies** widget; its settings pick what it shows:
@@ -17,6 +17,18 @@
   adds one showing the multiplier, the frequency and what's helping. **Effect timers** stays its own widget.
 - Fixed: on a chart widget with a smaller (or larger) text size, the hover line sat beside the pointer instead of
   under it.
+
+## 3.38.0 — 2026-10-28
+
+- **Widget layouts.** A new **Layouts** card on the Widgets page saves the whole left panel as a named profile:
+  every widget, where it sits, its size and its settings, macro buttons included. **Save current layout** adds one;
+  each row shows a small picture of the layout and what it holds, and has **Use**, **Save** (overwrite it with the
+  layout on the panel now, after a second click), **Delete** (also a second click) and a name box to rename it. Use
+  swaps the left panel for the layout; the macros it has buttons for get their ★ and the others lose it. **Undo**
+  brings back the layout from before the last one you used. The layout that's on the panel is marked "on the panel".
+  Layouts are saved with your settings.
+- For macros: the action **Use a widget layout**, `widgets.profile(name)` (its id or its name), and the values
+  `widgets.profileActive(name)`, `widgets.activeProfile()`, `widgets.profiles()`.
 
 ## 3.37.0 — 2026-10-28
 

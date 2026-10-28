@@ -1,107 +1,139 @@
-// v3.38.0: one Golden cookies widget (goldenCookies) instead of three — Next golden cookie, Golden timeline and
-// Golden cookie frequency. Its settings pick the parts (numbers — and which —, the chart on this cycle's axis or
-// from now, effect bars, what's helping); saved widgets of the old types load as it, showing what they did and
-// keeping their names as titles; the Stats page's ☆ adds one showing the multiplier, the frequency and what's
-// helping. Effect timers stays its own widget.
+// v3.38.0: widget layouts — the whole left panel saved under a name (a Layouts card on the Widgets page:
+// Save current layout, then per row Use, Save over it, rename, Delete), Undo back to the layout before the
+// last one used, macro buttons follow (their macros' ★), saved with the game; widgets.profile(name) in code,
+// with widgets.profileActive / activeProfile / profiles.
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
 import { boot, sleep, makeAssert, click } from '../harness/game.mjs';
 
 const { assert, done } = makeAssert();
-const g = boot({ idb: { factory: new IDBFactory(), IDBKeyRange } });
-const { window: w, Game } = g;
+const idb = { factory: new IDBFactory(), IDBKeyRange };
+const g = boot({ idb, withPantheon: true });
+const { window: w } = g;
 const CA = w.CookieMgr;
 const doc = w.document;
 await sleep(400);
 const W = CA.UI.Widgets;
-const eq = (got, want, what) => assert(JSON.stringify(got) === JSON.stringify(want), `${what}: ${JSON.stringify(got)}${JSON.stringify(got) === JSON.stringify(want) ? '' : ` (wanted ${JSON.stringify(want)})`}`);
+const S = CA.Script;
+const pass1 = (src) => CA.Macros.runPass(S.compile(src).flow);
+const val = (src) => S.evaluate(S.compile(`wait until ${src}`).flow[0].cond).ok;
+const page = () => doc.querySelector('[data-page="widgets"]');
+const card = () => page().querySelector('.ca-wprofs');
+const row = (id) => card().querySelector(`[data-wp-row="${id}"]`);
+const act = (id, a) => row(id).querySelector(`[data-wp-act="${a}"]`);
+const kinds = () => W.list().map((x) => x.type).sort().join(',');
+const eq = (got, want, what) => assert(got === want, `${what}: ${JSON.stringify(got)}${got === want ? '' : ` (wanted ${JSON.stringify(want)})`}`);
 
-Game.fps = 30;
-Game.Has = (n) => n === 'Lucky day' || n === 'Serendipity';
-Game.shimmerTypes.golden = Object.assign(Game.shimmerTypes.golden || {}, { time: 30 * 50, minTime: 30 * 75, maxTime: 30 * 225, spawned: 0, n: 0, spawnConditions: () => true });
-Game.buffs = { Frenzy: { name: 'Frenzy', time: 30 * 60, maxTime: 30 * 77, multCpS: 7 } };
-CA.Settings.set('widgetsShown', true);
+// start from an empty panel
 W.list().forEach((x) => W.remove(x.id));
-
-// ---- one type
-const ids = W.types().map((t) => t.id);
-assert(ids.includes('goldenCookies') && ids.includes('effectTimers'), 'the Golden cookies widget, and Effect timers on its own');
-assert(!['goldenNext', 'goldenTimeline', 'goldenFrequency'].some((t) => ids.includes(t)), `the three old types are gone (${ids.join()})`);
+CA.Macros.list().forEach((m) => CA.Macros.setFav(m.id, false));
 CA.UI.Menu.openPage('widgets');
-const shelf = [...doc.querySelectorAll('.ca-wpick .ca-wtile-name')].map((n) => n.textContent);
-assert(shelf.filter((t) => /golden/i.test(t)).length === 1 && shelf.some((t) => /^Golden cookies/.test(t)) && shelf.some((t) => /^Effect timers/.test(t)), `the picker: one Golden cookies tile, Effect timers beside it (${shelf.join(' | ')})`);
 
-// ---- a new one: the numbers you'd want most and this cycle's chart
-const box = (inst) => doc.querySelector(`#CookieMgrWidgets [data-widget="${inst.id}"]`);
-const labels = (inst) => [...box(inst).querySelectorAll('.ca-tl-nums em')].map((e) => e.textContent);
-const a = W.add('goldenCookies');
-W.render();
-W.tick();
-eq(labels(a), ['next in', '≤ 1 min', 'multiplier', 'frequency'], 'new: next in, ≤ 1 min, the multiplier, the frequency');
-assert(box(a).querySelector('.ca-sp-cycle .ca-sp-now') && !box(a).querySelector('.ca-sp-pdf') && !box(a).querySelector('.ca-wfq-row'), '…over this cycle’s chart; no helping bars');
-assert(box(a).querySelector('.ca-w-title').textContent === 'Golden cookies', '…titled Golden cookies');
-// the chart from now, with the effect bars
-a.axis = 'now';
-a.stats = ['chart', 'bars'];
-W.tick();
-assert(box(a).querySelector('.ca-sp-pdf rect') && box(a).querySelector('.ca-sp-lane.up') && !box(a).querySelector('.ca-sp-cycle') && !box(a).querySelector('.ca-tl-nums'), 'Chart: From now — the timeline, a bar for the Frenzy on its axis');
-a.stats = ['helping'];
-W.tick();
-const rows = [...box(a).querySelectorAll('.ca-wfq-row')];
-assert(rows.length === 2 && rows.every((r) => /×2/.test(r.querySelector('b').textContent)), 'What’s helping: a bar each for Lucky day and Serendipity, ×2');
-// its settings
-W.openSettings(a.id);
-assert(doc.querySelectorAll('[data-w-multi="stats"]').length === 4 && doc.querySelectorAll('[data-w-multi="nums"]').length === 6, 'settings: four parts, six numbers');
-const axisSel = doc.querySelector('select[data-w-opt="axis"]');
-assert(axisSel && [...axisSel.options].map((o) => o.value).join() === 'cycle,now' && axisSel.value === 'now', 'and the chart’s axis (This cycle / From now)');
-const saved = W.serialize().find((x) => x.id === a.id);
-eq([saved.axis, saved.stats], ['now', ['helping']], 'saved with the widget');
+// ---- the card, empty
+assert(card() && /Layouts/.test(card().querySelector('.ca-card-head').textContent), 'a Layouts card on the Widgets page');
+assert(/No saved layouts yet/.test(card().textContent), 'nothing saved yet: says so');
+assert(card().querySelector('[data-wp-act="new"]').disabled, 'nothing on the panel: nothing to save');
+assert(!card().querySelector('[data-wp-act="undo"]'), 'no Undo yet');
 
-// ---- an old layout: each old widget becomes a Golden cookies widget showing what it did
-W.list().forEach((x) => W.remove(x.id));
-W.load([
-  { id: 'n1', type: 'goldenNext', x: 0.1, y: 0.2, collapsed: false, w: 320 },
-  { id: 'n2', type: 'goldenNext', x: 0.1, y: 0.3, collapsed: false, nums: ['next'], title: 'Mine' },
-  { id: 't1', type: 'goldenTimeline', x: 0.2, y: 0.4, collapsed: true, stats: ['numbers', 'bars'] },
-  { id: 't2', type: 'goldenTimeline', x: 0.2, y: 0.5, collapsed: false },
-  { id: 'f1', type: 'goldenFrequency', x: 0.3, y: 0.6, collapsed: false, bg: 0.4 },
-  { id: 'e1', type: 'effectTimers', x: 0.4, y: 0.7, collapsed: false },
-]);
-const L = W.list();
-const by = (id) => L.find((x) => x.id === id);
-eq(L.map((x) => x.type), ['goldenCookies', 'goldenCookies', 'goldenCookies', 'goldenCookies', 'goldenCookies', 'effectTimers'], 'every old golden widget loads as Golden cookies; Effect timers stays');
-const all = ['next', 'median', 'minute', 'window', 'frequency', 'every'];
-eq([by('n1').axis, by('n1').stats, by('n1').nums, by('n1').title, by('n1').w, by('n1').x], ['cycle', ['numbers', 'chart'], all, 'Next golden cookie', 320, 0.1], 'Next golden cookie: this cycle’s chart and all six numbers (as before), its name, size and place');
-eq([by('n2').nums, by('n2').title], [['next'], 'Mine'], 'its numbers and title, when picked, kept');
-eq([by('t1').axis, by('t1').stats, by('t1').collapsed], ['now', ['numbers', 'bars'], true], 'Golden timeline: from now, its picked parts, folded');
-eq([by('t2').axis, by('t2').stats, by('t2').title], ['now', ['numbers', 'chart', 'bars'], 'Golden timeline'], 'Golden timeline with its defaults: numbers, chart, bars');
-eq([by('f1').stats, by('f1').nums, by('f1').title, by('f1').bg], [['numbers', 'helping'], ['frequency', 'every'], 'Golden cookie frequency', 0.4], 'Golden cookie frequency: the multiplier, the frequency and what’s helping');
-W.render();
-W.tick();
-assert(box(by('t2')).querySelector('.ca-sp-pdf rect') && box(by('t2')).querySelector('.ca-sp-lane.up'), 'the old timeline draws as before');
-assert(box(by('n1')).querySelector('.ca-sp-cycle') && box(by('f1')).querySelectorAll('.ca-wfq-row').length === 2, 'the old Next golden cookie and frequency too');
-assert(!JSON.stringify(W.serialize()).match(/goldenNext|goldenTimeline|goldenFrequency/), 'the next save has only the new type');
-// adding by an old id (an old macro or script) gives the new one, set up the same
-const old = W.add('goldenTimeline');
-assert(old && old.type === 'goldenCookies' && old.axis === 'now' && old.title === 'Golden timeline', 'adding an old type adds its Golden cookies equivalent');
+// ---- a layout: two framed widgets with settings, a round one scaled, a macro button
+const stats = W.add('stats', { x: 0.1, y: 0.2 }, { title: 'My stats', bg: 0.4, font: 130, w: 260, h: 140 });
+W.add('pantheon', { x: 0.9, y: 0.1 }, { scale: 1.5 });
+W.add('events', { x: 0.2, y: 0.8 }, { count: 5 });
+CA.Macros.setFav('golden', true);
+const btn = W.list().find((x) => x.type === 'macro');
+btn.x = 0.33;
+btn.y = 0.44;
+CA.UI.Menu.render();
+click(w, card().querySelector('[data-wp-act="new"]'));
+let ps = W.profiles();
+eq(ps.length, 1, 'Save current layout adds one');
+const A = ps[0].id;
+eq(ps[0].name, 'Layout 1', 'named Layout 1');
+eq(ps[0].widgets.length, 4, 'with every widget on the panel');
+const savedStats = ps[0].widgets.find((x) => x.type === 'stats');
+assert(savedStats.title === 'My stats' && savedStats.bg === 0.4 && savedStats.font === 130 && savedStats.w === 260 && savedStats.h === 140 && savedStats.x === 0.1, 'a widget’s place, size and settings are in it');
+assert(ps[0].widgets.some((x) => x.type === 'macro' && x.macro === 'golden' && x.x === 0.33), 'the macro button too, where it was');
+assert(row(A) && row(A).querySelector('.ca-wthumb') && row(A).querySelectorAll('.ca-wthumb i').length === 4, 'its row: a picture with a box per widget');
+eq(row(A).querySelector('code').textContent, '3 widgets · 1 macro button', 'what it holds');
+assert(row(A).classList.contains('on') && /on the panel/.test(row(A).textContent), 'it’s the one on the panel');
+assert(act(A, 'use').disabled && act(A, 'save').disabled, 'on the panel: Use and Save have nothing to do');
+assert(val('widgets.profileActive("Layout 1")') && val(`widgets.activeProfile() == "${A}"`), 'profileActive / activeProfile');
 
-// ---- the Stats page's ☆: a Golden cookies widget showing how often they come
-W.list().forEach((x) => W.remove(x.id));
-CA.UI.Menu.openPage('stats');
-await sleep(50);
-const star = () => doc.querySelector('[data-st-spawn] .ca-sp-factors [data-w-star]');
-assert(star() && /Golden cookies/.test(star().dataset.tip), 'the frequency row’s ☆ names the Golden cookies widget');
-click(w, star());
-const s = W.list()[0];
-eq([W.list().length, s && s.type, s && s.stats, s && s.nums], [1, 'goldenCookies', ['numbers', 'helping'], ['frequency', 'every']], 'clicking it adds one: the multiplier, the frequency, what’s helping');
-CA.UI.Menu.openPage('stats');
-assert(star().classList.contains('on'), 'its star fills');
-W.load(W.serialize());
-CA.UI.Menu.openPage('stats');
-assert(star().classList.contains('on'), '…still after a reload (lists match by value)');
-W.list()[0].stats = ['numbers'];
-CA.UI.Menu.openPage('stats');
-assert(!star().classList.contains('on'), 'set up differently, it’s no longer that preset');
+// ---- rename
+const name = row(A).querySelector('[data-wp-name]');
+name.value = 'Combo time';
+name.dispatchEvent(new w.Event('change', { bubbles: true }));
+eq(W.profileOf('combo time').id, A, 'renamed; found by its name, any case');
 
-assert(g.errors.length === 0, 'no runtime errors' + (g.errors.length ? `: ${g.errors.slice(0, 3).join(' | ')}` : ''));
+// ---- change the panel: the row isn't on any more (the page follows by itself)
+W.remove(stats.id);
+CA.Macros.setFav('golden', false);
+W.add('effectTimers', { x: 0.5, y: 0.5 });
+CA.Macros.setFav('bigCookie', true);
+await sleep(700);
+assert(!row(A).classList.contains('on') && !act(A, 'use').disabled, 'changed: no longer on the panel, Use is back');
+assert(!val('widgets.profileActive(A)') && val('widgets.activeProfile() == ""'), 'profileActive false, activeProfile ""');
+const before = kinds();
+
+// a second one, from this panel
+CA.UI.Menu.render();
+click(w, card().querySelector('[data-wp-act="new"]'));
+const B = W.profiles()[1].id;
+eq(W.profiles()[1].name, 'Layout 2', 'the next is Layout 2');
+
+// ---- Use: the panel becomes the layout, macro ★s follow
+click(w, act(A, 'use'));
+eq(kinds(), 'events,macro,pantheon,stats', 'Use: exactly its widgets');
+const st = W.list().find((x) => x.type === 'stats');
+assert(st.title === 'My stats' && st.w === 260 && st.x === 0.1 && st.y === 0.2, 'where they were, as they were');
+assert(W.list().find((x) => x.type === 'pantheon').scale === 1.5, 'a scaled round widget keeps its size');
+assert(CA.Macros.isFav('golden') && !CA.Macros.isFav('bigCookie'), 'its macro gets its ★; the one it hasn’t loses it');
+const mb = W.list().find((x) => x.type === 'macro');
+assert(mb && mb.macro === 'golden' && mb.x === 0.33 && mb.y === 0.44, 'the macro button where it was saved');
+assert(doc.querySelectorAll('#CookieMgrWidgets [data-widget]').length === 4, 'on the left panel');
+assert(row(A).classList.contains('on'), 'it’s on the panel');
+assert(card().querySelector('[data-wp-act="undo"]'), 'Undo shows up');
+
+// ---- Undo: back to what was there before
+click(w, card().querySelector('[data-wp-act="undo"]'));
+eq(kinds(), before, 'Undo: the layout from before');
+assert(CA.Macros.isFav('bigCookie') && !CA.Macros.isFav('golden'), '…its ★s too');
+assert(!card().querySelector('[data-wp-act="undo"]'), 'and Undo goes');
+assert(row(B).classList.contains('on'), 'which is Layout 2');
+
+// ---- Save over a layout (a second click), Delete (a second click)
+W.add('status');
+CA.UI.Menu.render();
+click(w, act(B, 'save'));
+assert(!W.profileOf(B).widgets.some((x) => x.type === 'status'), 'Save: the first click only arms');
+click(w, act(B, 'save'));
+assert(W.profileOf(B).widgets.some((x) => x.type === 'status'), 'the second saves the panel over it');
+click(w, act(B, 'delete'));
+assert(W.profileOf(B), 'Delete: the first click only arms');
+click(w, act(B, 'delete'));
+assert(!W.profileOf(B) && !row(B), 'the second deletes it');
+
+// ---- in code
+assert(pass1('log widgets.profiles()').trace.some((t) => t.text.includes(A)), 'widgets.profiles()');
+eq(pass1('widgets.profile("Combo time")').done, 4, 'widgets.profile(name): places its widgets');
+assert(val('widgets.profileActive("Combo time")'), 'and it’s active');
+eq(pass1('widgets.profile("Combo time")').done, 0, 'already on: does nothing');
+eq(pass1('widgets.profile(nope)').done, 0, 'an unknown one: nothing');
+assert(CA.Actions.get('widgets.profile').params[0].options().some((o) => o.v === A && o.label === 'Combo time'), 'the action’s picker lists the layouts');
+
+// ---- saved with the game; a saved layout goes through the same cleaning as the panel's
+const saved = JSON.parse(CA.Settings.serialize());
+assert(saved.widgetProfiles && saved.widgetProfiles.profiles.length === 1 && saved.widgetProfiles.profiles[0].name === 'Combo time', 'in the save');
+saved.widgetProfiles.profiles.push({ id: 'old', name: 'Old', widgets: [{ id: 'x', type: 'goneType', x: 0, y: 0 }, { id: 'bad"id', type: 'events', x: 0.5, y: 0.5, count: 3 }] });
+saved.widgetProfiles.profiles.push({ id: 'bad id!', name: 'Nope', widgets: [] });
+const g2 = boot({ idb: { factory: new IDBFactory(), IDBKeyRange }, save: JSON.stringify(saved), withPantheon: true });
+await sleep(400);
+const W2 = g2.window.CookieMgr.UI.Widgets;
+eq(W2.profiles().map((p) => p.name).join(','), 'Combo time,Old', 'loaded from the save (a bad id dropped)');
+eq(W2.profileOf('old').widgets.map((x) => x.type).join(','), 'events', 'a type that’s gone is dropped');
+eq(W2.useProfile('old'), 1, 'and it still works');
+assert(/^[\w-]+$/.test(W2.list()[0].id), 'with a clean id');
+
+assert(g.errors.length === 0, `no runtime errors (${g.errors.join('; ')})`);
+assert(g2.errors.length === 0, `no runtime errors after loading (${g2.errors.join('; ')})`);
 done();
 process.exit();

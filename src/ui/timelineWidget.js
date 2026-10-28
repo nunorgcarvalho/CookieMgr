@@ -11,7 +11,7 @@
 //   helping   what makes them come more often: a bar each (upgrades, the garden, spirits, the dragon…), on a
 //             log scale so they add up to the multiplier
 //
-// It replaces v3.37's three golden widgets — Next golden cookie, Golden timeline and Golden cookie frequency —
+// It replaces v3.38's three golden widgets — Next golden cookie, Golden timeline and Golden cookie frequency —
 // whose saved widgets load as this one with the same parts (`legacy` below). Effect timers, a bar per
 // effect running, stays its own widget: ui/effectTimers.js.
 // It resizes freely (the chart is drawn at the widget's width) and opens the Stats page from its numbers.
@@ -118,7 +118,7 @@ CA.UI.TimelineWidget = (() => {
     return `<div class="ca-tl-w">${h || '<div class="ca-tl-line ca-tl-dim">Pick what to show in its settings.</div>'}</div>`;
   }
 
-  // the parts each of v3.37's golden widgets showed (saved without settings = its defaults then), and
+  // the parts each of v3.38's golden widgets showed (saved without settings = its defaults then), and
   // its name as the title, so you still know which is which (and its width then)
   const ALL_NUMS = NUMS.map((x) => x.v);
   const legacy = {
@@ -127,7 +127,7 @@ CA.UI.TimelineWidget = (() => {
     goldenFrequency: (w) => ({ stats: ['numbers', 'helping'], nums: ['frequency', 'every'], title: w.title || 'Golden cookie frequency', w: w.w || 260 }),
   };
 
-  /** The Stats page's ☆: the multiplier, the frequency and what's helping (v3.37's Golden cookie frequency). */
+  /** The Stats page's ☆: the multiplier, the frequency and what's helping (v3.38's Golden cookie frequency). */
   const FREQUENCY_PRESET = { type: 'goldenCookies', stats: ['numbers', 'helping'], nums: ['frequency', 'every'] };
 
   function init() {
