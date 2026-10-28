@@ -63,9 +63,10 @@ assert(CA.UI.Widgets.serialize().find((x) => x.id === inst.id).barScale === 'fre
 const sel = (() => {
   CA.UI.Menu.openPage('widgets');
   CA.UI.Widgets.openSettings(inst.id);
-  return doc.querySelector('[data-w-opt="barScale"]');
+  // (v3.41: a tile per scale, with a sample bar, instead of a drop-down)
+  return doc.querySelector('[data-w-opt="barScale"]:checked');
 })();
-assert(sel && /1m 17s/.test(sel.textContent) && sel.value === 'frenzy', 'its settings: A full bar is — with today’s Frenzy length');
+assert(sel && /1m 17s/.test(sel.closest('label').querySelector('.ca-wopt-head').textContent) && sel.value === 'frenzy', 'its settings: A full bar is — with today’s Frenzy length');
 inst.barScale = 'own';
 CA.UI.Widgets.tick();
 assert(!rows()[0].classList.contains('over') && Math.abs(wOf(rows()[0]) - (141 / 154) * 100) < 0.01, 'its own length again');
