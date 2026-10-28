@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 3.48.0 — 2026-10-28
+
+- **The Events page leads with the Event log.** The **Income outside CpS** card moved to the Stats page's
+  **Cookies** tab, below the charts, where the rest of what you bake is broken down. It works as before: the span
+  chips (this session, 15m, 1h, 1d, all) and the live table per source.
+
 ## 3.47.2 — 2026-10-28
 
 - **A new README for new players.** It says what cookieMgr does, puts the install steps first (bookmarklet,

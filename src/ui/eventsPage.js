@@ -1,11 +1,12 @@
-// The Events page: everything in the central event log (core/eventLog.js), plus a live table of
-// income that isn't CpS or clicking.
+// The Events page: everything in the central event log (core/eventLog.js).
 //
-//   Income outside CpS   per source for the chosen span: golden & wrath cookies, reindeer, wrinklers,
-//                        sugar lumps, stock trades (net), golden-effect boosts (Frenzy & co.) and
-//                        anything else — counts, cookies, average, share of everything baked, last seen
 //   Event log            newest first, filter chips per event type (with counts), "income only",
 //                        a search box, and a CSV download of whatever the filters show
+//
+// It also builds the "Income outside CpS" card, shown on the Stats page's Cookies tab since v3.48
+// (CA.UI.EventsPage.income, a part with html/mount/unmount/tick): per source for the chosen span —
+// golden & wrath cookies, reindeer, wrinklers, sugar lumps, stock trades (net), golden-effect boosts
+// (Frenzy & co.) and anything else — counts, cookies, average, share of everything baked, last seen.
 
 CA.UI = CA.UI || {};
 
@@ -112,6 +113,53 @@ CA.UI.EventsPage = (() => {
     return h;
   }
 
+  // The card, a part of the Stats page's Cookies tab (ui/graphs.js).
+  const income = (() => {
+    let el = null;
+    let life = null;
+    const refresh = () => {
+      const box = el && el.isConnected && el.querySelector('[data-ev-income]');
+      if (box) box.innerHTML = incomeHtml();
+    };
+    function onClick(e) {
+      const t = e.target.closest('[data-ev-span]');
+      if (!t) return;
+      e.stopPropagation();
+      CA.Util.sound('snd/tick.mp3');
+      S().set('eventSpan', t.dataset.evSpan);
+      el.querySelectorAll('[data-ev-span]').forEach((b) => b.classList.toggle('on', b.dataset.evSpan === t.dataset.evSpan));
+      refresh();
+    }
+    return {
+      html() {
+        const span = S().get('eventSpan');
+        return (
+          '<div class="ca-card" data-ev-income-card>' +
+          CA.UI.C.cardHead('Income outside CpS', 'dollar') +
+          '<div class="ca-card-note">Cookies that didn’t come from production or clicking — measured as they happened.</div>' +
+          '<div class="ca-toolbar"><div class="ca-chipgroup">' +
+          SPANS.map((s) => `<button type="button" class="ca-chip${s.v === span ? ' on' : ''}" data-ev-span="${s.v}">${s.label}</button>`).join('') +
+          '</div></div>' +
+          '<div data-ev-income></div>' +
+          '</div>'
+        );
+      },
+      mount(root) {
+        this.unmount();
+        el = root.querySelector('[data-ev-income-card]');
+        if (!el) return;
+        life = CA.UI.Pages.scope(el).on('click', onClick);
+        refresh();
+      },
+      unmount() {
+        if (life) life.close();
+        life = null;
+        el = null;
+      },
+      tick: refresh,
+    };
+  })();
+
   // ---- event log -------------------------------------------------------------------------
 
   function filtered() {
@@ -196,16 +244,7 @@ CA.UI.EventsPage = (() => {
 
   function html() {
     const C = CA.UI.C;
-    const span = S().get('eventSpan');
     return (
-      '<div class="ca-card">' +
-      C.cardHead('Income outside CpS', 'dollar') +
-      '<div class="ca-card-note">Cookies that didn’t come from production or clicking — measured as they happened.</div>' +
-      '<div class="ca-toolbar"><div class="ca-chipgroup">' +
-      SPANS.map((s) => `<button type="button" class="ca-chip${s.v === span ? ' on' : ''}" data-ev-span="${s.v}">${s.label}</button>`).join('') +
-      '</div></div>' +
-      '<div data-ev-income></div>' +
-      '</div>' +
       '<div class="ca-card">' +
       C.cardHead('Event log', 'events', '<div class="ca-card-meta"><span class="ca-pill" data-ev-count></span></div>') +
       '<div class="ca-toolbar ca-ev-filters">' +
@@ -223,11 +262,8 @@ CA.UI.EventsPage = (() => {
     );
   }
 
-  function render(full) {
+  function render() {
     if (!root || !root.isConnected) return;
-    const income = root.querySelector('[data-ev-income]');
-    if (income) income.innerHTML = incomeHtml();
-    if (full === false) return;
     const chips = root.querySelector('[data-ev-chips]');
     if (chips) chips.innerHTML = chipsHtml();
     const list = root.querySelector('[data-ev-list]');
@@ -267,7 +303,7 @@ CA.UI.EventsPage = (() => {
   }
 
   function onClick(e) {
-    const t = e.target.closest('[data-ev-type],[data-ev-span],[data-ev-income-only],[data-ev-csv],[data-ev-more]');
+    const t = e.target.closest('[data-ev-type],[data-ev-income-only],[data-ev-csv],[data-ev-more]');
     if (!t) return;
     e.stopPropagation();
     CA.Util.sound('snd/tick.mp3');
@@ -277,9 +313,6 @@ CA.UI.EventsPage = (() => {
       else hide.add(t.dataset.evType);
       S().set('eventHidden', [...hide].join(','));
       shown = PAGE_ROWS;
-    } else if ('evSpan' in t.dataset) {
-      S().set('eventSpan', t.dataset.evSpan);
-      root.querySelectorAll('[data-ev-span]').forEach((b) => b.classList.toggle('on', b.dataset.evSpan === t.dataset.evSpan));
     } else if ('evIncomeOnly' in t.dataset) {
       S().set('eventIncomeOnly', !S().get('eventIncomeOnly'));
       t.classList.toggle('on', S().get('eventIncomeOnly'));
@@ -332,13 +365,9 @@ CA.UI.EventsPage = (() => {
       html,
       mount,
       unmount,
-      tick: () => render(false),
     });
     CA.Events.on('eventLogged', schedule);
-    CA.Events.on('history', (why) => {
-      if (why === 'sample' && root) render(false);
-    });
   }
 
-  return { init, incomeRows, filtered, rowHtml };
+  return { init, incomeRows, income, filtered, rowHtml };
 })();

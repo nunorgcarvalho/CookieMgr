@@ -93,10 +93,12 @@ assert(doc.querySelector('[data-plot="stocks"] [data-plot-toggle="plot.stocks.lo
 CA.UI.StockGraph.tick();
 assert(/Equity/.test(doc.querySelector('[data-plot="stocks"] [data-plot-stats]').textContent), 'portfolio tiles show equity in cookies');
 
-// ---- Events page: trades one row; effect pops show CpS
-CA.UI.Menu.openPage('events');
+// ---- Income table (v3.48: on Stats → Cookies): trades one row; Events page: effect pops show CpS
+CA.UI.Menu.openPage('graphs');
+click(w, doc.querySelector('[data-graph-tab="cookies"]'));
 const tradeRow = [...doc.querySelectorAll('[data-ev-income] tbody tr')].find((tr) => /Stock trades/.test(tr.textContent));
 assert(/−bought · \+sold/.test(tradeRow.textContent) && tradeRow.querySelector('span.neg') && tradeRow.querySelector('span.pos'), 'income table: stock trades as −bought · +sold');
+CA.UI.Menu.openPage('events');
 // v3.1.2: the effect and its multiplier, not the CpS it adds
 assert([...doc.querySelectorAll('[data-ev-list] .ca-ev-cookies')].some((el) => el.textContent === 'Frenzy ×7' && el.classList.contains('pos')), 'effect pop shows the effect and its multiplier in the log');
 
