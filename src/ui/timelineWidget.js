@@ -182,7 +182,6 @@ CA.UI.TimelineWidget = (() => {
       short: 'Stats, graph, effects — you pick',
       width: WIDTH,
       resize: 'free',
-      single: false,
       html,
       legacy,
       settings: [

@@ -882,10 +882,10 @@ CA.UI.MacrosPage = (() => {
         CA.Util.sound('snd/tick.mp3');
         const type = t.dataset.type;
         const had = CA.UI.Widgets.has(type);
-        CA.UI.Widgets.add(type);
+        if (!had) CA.UI.Widgets.add(type); // a shortcut to the one; more copies come from the Widgets page
         if (!CA.Settings.get('widgetsShown')) CA.Settings.set('widgetsShown', true);
         const name = (CA.UI.Widgets.types().find((x) => x.id === type) || {}).name || 'Widget';
-        CA.Util.notify(name, had ? 'Already on the left panel.' : 'Added to the left panel — drag it wherever you like.', CA.ICON, 2);
+        CA.Util.notify(name, had ? 'Already on the left panel — the Widgets page adds more copies.' : 'Added to the left panel — drag it wherever you like.', CA.ICON, 2);
         return true;
       }
       case 'stop-all':

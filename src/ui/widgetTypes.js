@@ -486,7 +486,7 @@ CA.UI.WidgetTypes = (() => {
   function register() {
     const D = CA.UI.Widgets.defineType;
     D({ id: 'macro', name: 'Macro button', icon: 'star', bare: true, hidden: true, resize: 'scale', html: macroHtml });
-    D({ id: 'status', group: 'macros', sprite: [12, 0], short: 'An icon per macro at work', ring: '#9be15d', name: 'Running now', icon: 'play', desc: 'A status bar: an icon for each running macro, pulsing while it works. Hover an icon for what its actions have done.', bare: true, single: true, resize: 'scale', html: statusHtml });
+    D({ id: 'status', group: 'macros', sprite: [12, 0], short: 'An icon per macro at work', ring: '#9be15d', name: 'Running now', icon: 'play', desc: 'A status bar: an icon for each running macro, pulsing while it works. Hover an icon for what its actions have done.', bare: true, resize: 'scale', html: statusHtml });
     D({
       id: 'stats',
       group: 'game',
@@ -496,7 +496,6 @@ CA.UI.WidgetTypes = (() => {
       icon: 'graphs',
       desc: 'The numbers you care about at a glance — pick which in its settings.',
       width: 190,
-      single: true,
       resize: 'free',
       html: statsHtml,
       settings: [{ key: 'stats', label: 'Show', type: 'multi', default: DEFAULT_STATS, options: () => STATS.map((s) => ({ v: s.id, label: s.label, sample: statSample(s) })), tile: 'small' }],
@@ -536,7 +535,6 @@ CA.UI.WidgetTypes = (() => {
       icon: 'wizard',
       desc: 'A small round meter: the ring is your magic, the label the time until it’s full — or until there’s enough for a spell you pick in its settings. Click it to open the Grimoire.',
       bare: true,
-      single: true,
       resize: 'scale',
       html: grimoireHtml,
       settings: [
@@ -592,9 +590,9 @@ CA.UI.WidgetTypes = (() => {
         },
       ],
     });
-    D({ id: 'garden', group: 'minigames', sprite: [2, 0], short: 'Next tick; your plants by stage', ring: '#a8f06a', name: 'Garden', icon: 'leaf', desc: 'The ring counts down to the next garden tick; the dots under it are your plants by stage (bud, sprout, bloom, mature). Click it to open the Garden.', bare: true, single: true, resize: 'scale', html: gardenHtml });
-    D({ id: 'market', group: 'minigames', sprite: [15, 0], short: 'Next tick; what the last did', ring: '#6fe6ef', name: 'Stock market', icon: 'stocks', desc: 'The ring counts down to the next market tick; the label is what the last tick did to the stocks you held. Click it to open the Stock market.', bare: true, single: true, resize: 'scale', html: marketHtml });
-    D({ id: 'pantheon', group: 'minigames', sprite: [16, 0], short: 'Slotted spirits; next swap', ring: '#ffd36a', name: 'Pantheon', icon: 'pantheon', desc: 'Your three slotted spirits, and a ring counting down to the next worship swap. Click it to open the Pantheon.', bare: true, single: true, resize: 'scale', html: pantheonHtml });
+    D({ id: 'garden', group: 'minigames', sprite: [2, 0], short: 'Next tick; your plants by stage', ring: '#a8f06a', name: 'Garden', icon: 'leaf', desc: 'The ring counts down to the next garden tick; the dots under it are your plants by stage (bud, sprout, bloom, mature). Click it to open the Garden.', bare: true, resize: 'scale', html: gardenHtml });
+    D({ id: 'market', group: 'minigames', sprite: [15, 0], short: 'Next tick; what the last did', ring: '#6fe6ef', name: 'Stock market', icon: 'stocks', desc: 'The ring counts down to the next market tick; the label is what the last tick did to the stocks you held. Click it to open the Stock market.', bare: true, resize: 'scale', html: marketHtml });
+    D({ id: 'pantheon', group: 'minigames', sprite: [16, 0], short: 'Slotted spirits; next swap', ring: '#ffd36a', name: 'Pantheon', icon: 'pantheon', desc: 'Your three slotted spirits, and a ring counting down to the next worship swap. Click it to open the Pantheon.', bare: true, resize: 'scale', html: pantheonHtml });
   }
 
   return { register, openMinigame, readyState, STATS, DEFAULT_STATS };

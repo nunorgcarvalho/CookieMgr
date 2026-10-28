@@ -795,7 +795,9 @@ Intellect, and it dies at 100 — worked out exactly.
 ### Widgets
 
 Things on the game's left panel, around the big cookie (and over it — they sit above its click area, so you can
-always grab them again). Drag them anywhere; hover for × and ⚙ (its settings).
+always grab them again). Drag them anywhere; hover for × and ⚙ (its settings). Every kind can be placed as many
+times as you like, each copy with its own settings — two Grimoires counting down to different spells, a Quick stats
+for production and one for prestige (see **Copies** below). Macro buttons are the exception: one per starred macro.
 
 - **Macro buttons** — ★ a macro (or a spell) and it gets its own round icon button: click to switch it on/off (it
   glows green while running) or to run it; hover for its name, state and hotkey. Un-star it, or ×, to take it away.
@@ -811,7 +813,7 @@ always grab them again). Drag them anywhere; hover for × and ⚙ (its settings)
   per second, bank, run start, upgrades, buildings, prestige level, prestige this run, time to the next level,
   heavenly chips, achievements, sugar lumps, golden cookies clicked, wrinklers, all-time baked).
 - **Latest events** — the newest entries in the event log, scrollable. Its settings choose how many to keep and which
-  event types to show; add as many as you like (one for golden cookies, one for trades…).
+  event types to show (one for golden cookies, one for trades…).
 - **Minigames** — one small round widget each, in its minigame's colors: the ring is a timer, a short label sits
   under it, hover for details, click to open the minigame. Unlocked ones only (others say "locked").
   - **Grimoire** — ring = magic; label = time until it's full, or until there's enough for a spell (or a fixed
@@ -829,7 +831,7 @@ always grab them again). Drag them anywhere; hover for × and ⚙ (its settings)
     comes before it ends.
   - **Frequency Factors**: a bar for each upgrade, plant, spirit or aura making them come more often, on a log scale
     so they add up to the multiplier.
-  Add as many as you like, each showing different parts. Click the stats for the Stats page. (Until v3.39.0 these
+  Each copy can show different parts. Click the stats for the Stats page. (Until v3.39.0 these
   were three widgets: Next golden cookie, Golden timeline and Golden cookie frequency; saved ones load as Golden
   cookies widgets with their old names as titles.)
 - **Effect timers** — a slim bar per effect running (Frenzy, Click frenzy, building specials, Dragon Harvest, Clot…),
@@ -868,6 +870,14 @@ settings are open.
 **Your widgets** on the Widgets page is a small map of the left panel with every widget where it is (the big cookie
 drawn in for bearings), next to a chip for each. Hover a widget on the map, its chip, or the widget itself on the
 left panel, and all three light up together; click one for its settings, × on a chip to remove it.
+
+**Copies:** the chips are grouped by kind, and a kind's **+** adds another of it (so does the small **+ Add** on a
+placed tile under Add a widget, whose main click removes the newest). A second copy is listed as "Grimoire 2" until
+you give it a name — framed boxes have a **Title**; round widgets a **Name** (in Look), used only on the Widgets page.
+A widget's settings show its copies as numbered buttons in the header (click one to switch to its settings) and a
+**Duplicate** button that places another with the same settings beside it and opens its settings. Stars, saves and
+layouts keep every copy; a star is filled while any copy matches its preset, and the shortcut Widget buttons on the
+Pantheon and Macros pages place one (more come from the Widgets page).
 
 **Layouts** on the Widgets page saves the whole left panel under a name — every widget, where it sits, its size and its
 settings, macro buttons too — so you can switch between setups. **Save current layout** adds one; each row has a

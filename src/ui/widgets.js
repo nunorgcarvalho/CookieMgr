@@ -24,7 +24,7 @@
 // Content refreshes twice a second by patching the existing DOM (morph()), never replacing it, so
 // whatever is under the mouse — and its popup — stays put.
 //
-//   CA.UI.Widgets.defineType({ id, name, icon, desc, bare, width, single, hidden, resize, bg, settings, html(inst),
+//   CA.UI.Widgets.defineType({ id, name, icon, desc, bare, width, hidden, resize, bg, settings, html(inst),
 //                              group, sprite, short, ring, legacy })
 //     For the "Add a widget" picker on the Widgets page: group = the id of a shelf (see defineGroup; unknown or
 //     missing ones land in "More"); sprite = [col, row] of the game's img/icons.png, or { sheet, pos: [col, row] }
@@ -40,6 +40,10 @@
 //
 // Layouts: the whole panel saved under a name (profiles; see "layout profiles" below) — Use, Save over,
 // rename, delete, Undo; widgets.profile(name) in code.
+//
+// Copies (v3.49): every kind can be placed as often as you like, each copy with its own settings. The
+// Widgets page lists them by kind (a second Grimoire is "Grimoire 2" until you name it), and a widget's
+// settings switch between its copies and Duplicate it (same settings, placed beside it).
 //
 // Stars: a page's ☆ (CA.UI.C.widgetStar) adds a ready-made widget — a preset, its type and the
 // settings that make it that one — and takes it away again; hasPreset() says whether it's there.
@@ -83,7 +87,7 @@ CA.UI.Widgets = (() => {
   let editing = null; // id of the widget whose settings the Widgets page shows
 
   function defineType(t) {
-    const d = { width: 220, single: false, bare: false, hidden: false, icon: 'widget', settings: [], ...t };
+    const d = { width: 220, bare: false, hidden: false, icon: 'widget', settings: [], ...t };
     types.push(d);
     typeById[d.id] = d;
     return d;
@@ -107,10 +111,6 @@ CA.UI.Widgets = (() => {
     const [{ type, ...extra }] = typeById[type0] ? [{ ...(extra0 || {}), type: type0 }] : migrate([{ ...(extra0 || {}), type: type0 }]);
     const t = typeById[type];
     if (!t) return null;
-    if (t.single) {
-      const existing = widgets.find((w) => w.type === type);
-      if (existing) return existing;
-    }
     let p = pos;
     if (!p && t.bare) p = nextButtonPos(); // round widgets line up with the buttons
     if (!p) {
@@ -199,6 +199,20 @@ CA.UI.Widgets = (() => {
     changed();
   }
 
+  /** Another copy of a widget: the same settings and size, placed just beside it (macro buttons: one per macro). */
+  function duplicate(id) {
+    const w = get(id);
+    if (!w || w.type === 'macro' || !typeById[w.type]) return null;
+    const step = (v) => round(v > 0.9 ? v - 0.06 : v + 0.06);
+    const [copy] = fromSaved(serializeList([w]));
+    copy.id = newId();
+    copy.x = step(w.x);
+    copy.y = step(w.y);
+    widgets.splice(widgets.indexOf(w) + 1, 0, copy);
+    changed();
+    return copy;
+  }
+
   function changed() {
     render();
     syncStars();
@@ -262,6 +276,15 @@ CA.UI.Widgets = (() => {
     const t = typeById[w.type];
     if (t && t.nameOf) return t.nameOf(w) || t.name;
     return (t || {}).name || w.type;
+  }
+  /** The other widgets of a widget's kind, itself included, in the order they were placed. */
+  const copiesOf = (w) => widgets.filter((x) => x.type === w.type);
+  /** The name a widget goes by on the Widgets page: its name, numbered while another copy has the same one ("Grimoire 2"). */
+  function labelOf(w) {
+    const name = nameOf(w);
+    const same = widgets.filter((x) => x.type === w.type && nameOf(x) === name);
+    const i = same.indexOf(w);
+    return same.length > 1 && i > 0 ? `${name} ${i + 1}` : name;
   }
 
   // ---- rendering ------------------------------------------------------------------------------
@@ -694,6 +717,8 @@ CA.UI.Widgets = (() => {
     if (t.resize === 'scale') {
       const sc = Math.round(scaleOf(w) * 100);
       look += field('Size', presets('scale', [[75, 'S'], [100, 'M'], [150, 'L'], [200, 'XL']], sc) + range('scale', SCALE_MIN * 100, SCALE_MAX * 100, sc, 'percent'), 'or drag its corner');
+      // a round widget shows no title; a name tells its copies apart here
+      if (w.type !== 'macro') look += field('Name', `<input type="text" maxlength="40" value="${esc(w.title || '')}" placeholder="${esc(w.title ? t.name : labelOf(w))}" data-w-opt="title" data-type="text">`, 'what this list calls it');
     }
     else {
       look += field('Title', `<input type="text" maxlength="40" value="${esc(w.title || '')}" placeholder="${esc(t.name)}" data-w-opt="title" data-type="text">`);
@@ -713,7 +738,9 @@ CA.UI.Widgets = (() => {
       `<div class="ca-card ca-weditor ca-wtheme-${esc(w.type)}" data-w-editor="${esc(w.id)}" data-wlink="${esc(w.id)}">` +
       '<div class="ca-weditor-head">' +
       `<span class="ca-weditor-ico">${I(t.icon, 20)}</span>` +
-      `<div class="ca-weditor-title"><b>${esc(nameOf(w))}</b><span>${esc(w.type === 'macro' ? 'Macro button' : t.name)} · glowing on the left panel</span></div>` +
+      `<div class="ca-weditor-title"><b>${esc(labelOf(w))}</b><span>${esc(w.type === 'macro' ? 'Macro button' : t.name)} · glowing on the left panel</span></div>` +
+      copiesHtml(w) +
+      (w.type === 'macro' ? '' : C.button(`${I('copy', 11)} Duplicate`, `data-w-page-dup="${esc(w.id)}" data-tip="Another one with these settings, placed beside it"`, 'ca-btn-small')) +
       C.button(`${I('close', 11)} Remove`, `data-w-page-del="${esc(w.id)}"`, 'ca-btn-small ca-btn-off') +
       C.button('Done', 'data-w-edit-done', 'ca-btn-small ca-btn-on') +
       '</div>' +
@@ -722,6 +749,17 @@ CA.UI.Widgets = (() => {
       (shows ? `<div class="ca-weditor-sec${/ca-wopts/.test(shows) ? ' ca-weditor-sec-wide' : ''}"><div class="ca-weditor-sec-head">${I('filter', 12)} Shows</div><div class="ca-weditor-shows" data-w-shows>${shows}</div></div>` : '') +
       `<div class="ca-weditor-sec ca-weditor-place"><div class="ca-weditor-sec-head">${I('grip', 12)} Place</div>${place}</div>` +
       '</div></div>'
+    );
+  }
+
+  /** The copies of a widget's kind as numbered buttons, to switch whose settings show (none for a lone one). */
+  function copiesHtml(w) {
+    const all = w.type === 'macro' ? [] : copiesOf(w);
+    if (all.length < 2) return '';
+    return (
+      `<div class="ca-wcopies" data-tip="Its copies — each keeps its own settings">${all
+        .map((x, i) => `<button type="button" class="ca-wcopy${x.id === w.id ? ' on' : ''}" data-wlink="${esc(x.id)}" data-w-page-edit="${esc(x.id)}" data-tip="${esc(labelOf(x))}">${i + 1}</button>`)
+        .join('')}</div>`
     );
   }
 
@@ -793,17 +831,34 @@ CA.UI.Widgets = (() => {
     );
   }
 
-  /** The placed widgets as chips: icon, name, ⚙, ×. */
+  /** The placed widgets as chips (icon, name, ⚙, ×), grouped by kind; a kind's + adds another copy of it. */
   function chipsHtml() {
-    return widgets
+    const kinds = [];
+    widgets
       .filter((w) => typeById[w.type])
-      .map((w) => {
-        const t = typeById[w.type];
-        const icon = w.type === 'macro' && CA.Macros.get(w.macro) ? CA.UI.MacrosPage.icon(CA.Macros.get(w.macro), true) : I(t.icon, 13);
+      .forEach((w) => {
+        const k = kinds.find((x) => x.type === w.type);
+        if (k) k.list.push(w);
+        else kinds.push({ type: w.type, list: [w] });
+      });
+    const chip = (w) => {
+      const t = typeById[w.type];
+      const icon = w.type === 'macro' && CA.Macros.get(w.macro) ? CA.UI.MacrosPage.icon(CA.Macros.get(w.macro), true) : I(t.iconOf ? t.iconOf(w) : t.icon, 13);
+      return (
+        `<span class="ca-wchip${w.id === editing ? ' editing' : ''}${isLinked(w) ? ' linked' : ''}" data-wlink="${esc(w.id)}">` +
+        `<button type="button" class="ca-wchip-main" data-w-page-edit="${esc(w.id)}" data-tip="Settings">${icon}<b>${esc(labelOf(w))}</b>${I('settings', 11)}</button>` +
+        `<button type="button" class="ca-wchip-x" data-w-page-del="${esc(w.id)}" data-tip="Remove">${I('close', 9)}</button></span>`
+      );
+    };
+    return kinds
+      .map(({ type, list }) => {
+        const t = typeById[type];
+        const name = type === 'macro' ? 'Macro buttons' : t.name;
+        const more = type === 'macro' ? '' : `<button type="button" class="ca-wkind-add" data-w-page-add="${esc(type)}" data-tip="Add another ${esc(t.name)}">${I('plus', 10)}</button>`;
         return (
-          `<span class="ca-wchip${w.id === editing ? ' editing' : ''}${isLinked(w) ? ' linked' : ''}" data-wlink="${esc(w.id)}">` +
-          `<button type="button" class="ca-wchip-main" data-w-page-edit="${esc(w.id)}" data-tip="Settings">${icon}<b>${esc(nameOf(w))}</b>${I('settings', 11)}</button>` +
-          `<button type="button" class="ca-wchip-x" data-w-page-del="${esc(w.id)}" data-tip="Remove">${I('close', 9)}</button></span>`
+          `<div class="ca-wkind" data-w-kind="${esc(type)}"><div class="ca-wkind-head"${type === 'macro' ? '' : ` data-wlink-type="${esc(type)}"`}><span>${esc(name)}</span>` +
+          `${list.length > 1 ? `<span class="ca-wkind-n">×${list.length}</span>` : ''}${more}</div>` +
+          `<div class="ca-wkind-chips">${list.map(chip).join('')}</div></div>`
         );
       })
       .join('');
@@ -1132,7 +1187,7 @@ CA.UI.Widgets = (() => {
   const spriteVar = (p) => `--bgp:${-p[0] * 48}px ${-p[1] * 48}px`;
 
   function tileHtml(o) {
-    // o: { id, name, short, desc, round, ring, sprite, sheet, svg, placed, single, link, badge }
+    // o: { id, name, short, desc, round, ring, sprite, sheet, svg, placed, link, badge }
     const n = o.placed || 0;
     const shape = o.round ? 'Round dial' : 'Framed panel';
     let act = 'Click to place it on the left panel';
@@ -1141,13 +1196,13 @@ CA.UI.Widgets = (() => {
       act = 'Click to open the Macros page';
       pill = 'Open';
     } else if (n) {
-      act = o.single ? 'Placed — click to remove it' : `${n} placed — click to remove the newest; + Add places another`;
+      act = `${n} placed — click to remove the newest; + Add places another (each with its own settings)`;
       pill = 'Remove';
     }
-    const cls = `ca-wtile${n || o.badge ? ' placed' : ''}${o.single ? ' single' : ''}`;
+    const cls = `ca-wtile${n || o.badge ? ' placed' : ''}`;
     const attr = (n && !o.link ? `data-w-page-remove="${o.id}"` : o.link ? 'data-ca="open-macros"' : `data-w-page-add="${o.id}"`) + (o.link ? '' : ` data-wlink-type="${o.id}"`);
-    const more = n && !o.single && !o.link ? `<button type="button" class="ca-btn ca-btn-small ca-wtile-add" data-w-page-add="${o.id}">${I('plus', 10)} Add</button>` : '';
-    const tag = o.link ? o.badge : n ? (o.single ? '✓' : `×${n}`) : '';
+    const more = n && !o.link ? `<button type="button" class="ca-btn ca-btn-small ca-wtile-add" data-w-page-add="${o.id}">${I('plus', 10)} Add</button>` : '';
+    const tag = o.link ? o.badge : n ? `×${n}` : '';
     let ico;
     if (o.sprite) ico = `<i class="${o.sheet ? 'ca-wcrate-plant' : ''}" style="${spriteVar(o.sprite)}"></i>`;
     else ico = `<i class="ca-wcrate-svg">${I(o.svg || 'widget', 26)}</i>`;
@@ -1177,7 +1232,6 @@ CA.UI.Widgets = (() => {
         sprite: t.sprite && (Array.isArray(t.sprite) ? t.sprite : t.sprite.pos),
         sheet: t.sprite && !Array.isArray(t.sprite),
         svg: t.icon,
-        single: t.single,
         placed: widgets.filter((w) => w.type === t.id).length,
       });
     const macroTile = tileHtml({
@@ -1280,7 +1334,7 @@ CA.UI.Widgets = (() => {
       CA.UI.Menu.render();
       return;
     }
-    const t = e.target.closest('[data-w-page-add],[data-w-page-remove],[data-w-page-clear],[data-w-page-edit],[data-w-page-del],[data-w-edit-done]');
+    const t = e.target.closest('[data-w-page-add],[data-w-page-remove],[data-w-page-clear],[data-w-page-edit],[data-w-page-del],[data-w-page-dup],[data-w-edit-done]');
     if (!t) return;
     e.stopPropagation();
     CA.Util.sound('snd/tick.mp3');
@@ -1290,8 +1344,11 @@ CA.UI.Widgets = (() => {
       if (!S().get('widgetsShown')) S().set('widgetsShown', true);
     } else if ('wPageRemove' in d) {
       const of = widgets.filter((w) => w.type === d.wPageRemove);
-      const t = typeById[d.wPageRemove];
-      (t && t.single ? of : of.slice(-1)).forEach((w) => remove(w.id));
+      if (of.length) remove(of[of.length - 1].id);
+    }
+    else if ('wPageDup' in d) {
+      const copy = duplicate(d.wPageDup);
+      if (copy) editing = copy.id; // its settings show next, to change what this one shows
     }
     else if ('wPageEdit' in d) {
       editing = d.wPageEdit;
@@ -1378,6 +1435,6 @@ CA.UI.Widgets = (() => {
     });
   }
 
-  return { init, defineType, defineGroup, types: () => types.slice(), add, remove, toggleStar, hasPreset, syncStars, list, get, has, serialize, migrate, load, fromSaved, render, tick, reconcile, openSettings, editing: () => editing,
+  return { init, defineType, defineGroup, types: () => types.slice(), add, remove, duplicate, labelOf, toggleStar, hasPreset, syncStars, list, get, has, serialize, migrate, load, fromSaved, render, tick, reconcile, openSettings, editing: () => editing,
     profiles: profileList, profileOf, profileActive, activeProfile, useProfile, undoProfile, addProfile, overwriteProfile, renameProfile, removeProfile };
 })();

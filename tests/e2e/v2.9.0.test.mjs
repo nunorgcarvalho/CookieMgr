@@ -94,7 +94,7 @@ set('[data-w-opt="font"]', '150');
 assert(inst('garden').font === 150 && /--wfs:\s*1\.5/.test(box('garden').getAttribute('style')), 'text size');
 set('[data-w-opt="scale"]', '200');
 assert(inst('garden').scale === 2 && /scale\(2\)/.test(box('garden').style.transform), 'size');
-assert(!ed().querySelector('[data-w-opt="title"]'), 'round widgets: no title');
+assert(!box('garden').querySelector('.ca-w-title'), 'round widgets: no title (v3.49: a Name for the Widgets page instead)');
 click(w, ed().querySelector('[data-w-edit-done]'));
 assert(!ed(), 'Done closes it');
 
