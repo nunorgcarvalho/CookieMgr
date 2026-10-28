@@ -1589,7 +1589,8 @@
 #CookieMgrWidgets .ca-w.collapsed .ca-w-body {
   display: none;
 }
-#CookieMgrWidgets .ca-w-empty {
+#CookieMgrWidgets .ca-w-empty,
+#CookieMgrMenu .ca-wsample .ca-w-empty {
   font-size: 11px;
   color: #93866f;
   line-height: 1.4;
@@ -1741,7 +1742,8 @@
 }
 
 /* "Running now" as a status bar */
-#CookieMgrWidgets .ca-w-status > .ca-w-body {
+#CookieMgrWidgets .ca-w-status > .ca-w-body,
+#CookieMgrMenu .ca-wsample .ca-w-status > .ca-w-body {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -1850,7 +1852,8 @@
   cursor: pointer;
 }
 /* quick stats */
-#CookieMgrWidgets .ca-w-stat {
+#CookieMgrWidgets .ca-w-stat,
+#CookieMgrMenu .ca-wsample .ca-w-stat {
   display: flex;
   justify-content: space-between;
   gap: 10px;
@@ -1858,23 +1861,28 @@
   font-size: 11px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
-#CookieMgrWidgets .ca-w-stat:last-child {
+#CookieMgrWidgets .ca-w-stat:last-child,
+#CookieMgrMenu .ca-wsample .ca-w-stat:last-child {
   border-bottom: none;
 }
-#CookieMgrWidgets .ca-w-stat span {
+#CookieMgrWidgets .ca-w-stat span,
+#CookieMgrMenu .ca-wsample .ca-w-stat span {
   color: #a39477;
 }
-#CookieMgrWidgets .ca-w-stat b {
+#CookieMgrWidgets .ca-w-stat b,
+#CookieMgrMenu .ca-wsample .ca-w-stat b {
   color: #fff3cf;
   font-variant-numeric: tabular-nums;
 }
-#CookieMgrWidgets .ca-w-stat em {
+#CookieMgrWidgets .ca-w-stat em,
+#CookieMgrMenu .ca-wsample .ca-w-stat em {
   font-style: normal;
   font-weight: normal;
   color: #93866f;
 }
 /* latest events */
-#CookieMgrWidgets .ca-ev-row {
+#CookieMgrWidgets .ca-ev-row,
+#CookieMgrMenu .ca-wsample .ca-ev-row {
   display: flex;
   align-items: baseline;
   gap: 6px;
@@ -1883,39 +1891,47 @@
   color: #d8cbb0;
   border-left: 2px solid var(--c);
 }
-#CookieMgrWidgets .ca-ev-ico {
+#CookieMgrWidgets .ca-ev-ico,
+#CookieMgrMenu .ca-wsample .ca-ev-ico {
   flex: none;
   align-self: center;
   display: inline-flex;
   color: var(--c);
 }
-#CookieMgrWidgets .ca-ev-ico .ca-ico-cookie {
+#CookieMgrWidgets .ca-ev-ico .ca-ico-cookie,
+#CookieMgrMenu .ca-wsample .ca-ev-ico .ca-ico-cookie {
   width: 12px !important;
   height: 12px !important;
 }
-#CookieMgrWidgets .ca-ev-time {
+#CookieMgrWidgets .ca-ev-time,
+#CookieMgrMenu .ca-wsample .ca-ev-time {
   flex: none;
   color: #93866f;
   font-variant-numeric: tabular-nums;
 }
-#CookieMgrWidgets .ca-ev-text {
+#CookieMgrWidgets .ca-ev-text,
+#CookieMgrMenu .ca-wsample .ca-ev-text {
   flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-#CookieMgrWidgets .ca-ev-text span {
+#CookieMgrWidgets .ca-ev-text span,
+#CookieMgrMenu .ca-wsample .ca-ev-text span {
   display: none;
 }
-#CookieMgrWidgets .ca-ev-cookies {
+#CookieMgrWidgets .ca-ev-cookies,
+#CookieMgrMenu .ca-wsample .ca-ev-cookies {
   flex: none;
   font-weight: bold;
 }
-#CookieMgrWidgets .ca-ev-cookies.pos {
+#CookieMgrWidgets .ca-ev-cookies.pos,
+#CookieMgrMenu .ca-wsample .ca-ev-cookies.pos {
   color: #9be89b;
 }
-#CookieMgrWidgets .ca-ev-cookies.neg {
+#CookieMgrWidgets .ca-ev-cookies.neg,
+#CookieMgrMenu .ca-wsample .ca-ev-cookies.neg {
   color: #ff9a8a;
 }
 #CookieMgrMenu .ca-card-meta .ca-iconbtn {
@@ -2083,16 +2099,19 @@
 #CookieMgrWidgets .ca-wbar-item:hover .ca-wpop {
   display: block;
 }
-#CookieMgrWidgets .ca-w-status:not(.pop-left) .ca-wpop {
+#CookieMgrWidgets .ca-w-status:not(.pop-left) .ca-wpop,
+#CookieMgrMenu .ca-wsample .ca-w-status:not(.pop-left) .ca-wpop {
   left: -6px;
   transform: none;
 }
-#CookieMgrWidgets .ca-w-status.pop-left .ca-wpop {
+#CookieMgrWidgets .ca-w-status.pop-left .ca-wpop,
+#CookieMgrMenu .ca-wsample .ca-w-status.pop-left .ca-wpop {
   left: auto;
   right: -6px;
   transform: none;
 }
-#CookieMgrWidgets .ca-w-status.pop-below .ca-wpop {
+#CookieMgrWidgets .ca-w-status.pop-below .ca-wpop,
+#CookieMgrMenu .ca-wsample .ca-w-status.pop-below .ca-wpop {
   bottom: auto;
   top: calc(100% + 10px);
 }
@@ -2419,10 +2438,12 @@
 #CookieMgrWidgets .ca-wt {
   zoom: var(--wfs, 1);
 }
-#CookieMgrWidgets .ca-w-events {
+#CookieMgrWidgets .ca-w-events,
+#CookieMgrMenu .ca-wsample .ca-w-events {
   max-height: 100%;
 }
-#CookieMgrWidgets .ca-w-stat em {
+#CookieMgrWidgets .ca-w-stat em,
+#CookieMgrMenu .ca-wsample .ca-w-stat em {
   font-style: normal;
   color: #93866f;
 }
@@ -5272,6 +5293,7 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-tl-preview .ca-pp-blue,
 #CookieMgrMenu .ca-st-live .ca-pp-blue,
 #CookieMgrWidgets .ca-w-stat .ca-pp-blue,
+#CookieMgrMenu .ca-wsample .ca-w-stat .ca-pp-blue,
 #CookieMgrLayer .ca-uptip .ca-pp-blue {
   color: var(--pp-blue) !important;
 }
@@ -5281,6 +5303,7 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-tl-preview .ca-pp-green,
 #CookieMgrMenu .ca-st-live .ca-pp-green,
 #CookieMgrWidgets .ca-w-stat .ca-pp-green,
+#CookieMgrMenu .ca-wsample .ca-w-stat .ca-pp-green,
 #CookieMgrLayer .ca-uptip .ca-pp-green {
   color: var(--pp-green) !important;
 }
@@ -5290,6 +5313,7 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-tl-preview .ca-pp-yellow,
 #CookieMgrMenu .ca-st-live .ca-pp-yellow,
 #CookieMgrWidgets .ca-w-stat .ca-pp-yellow,
+#CookieMgrMenu .ca-wsample .ca-w-stat .ca-pp-yellow,
 #CookieMgrLayer .ca-uptip .ca-pp-yellow {
   color: var(--pp-yellow) !important;
 }
@@ -5299,6 +5323,7 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-tl-preview .ca-pp-orange,
 #CookieMgrMenu .ca-st-live .ca-pp-orange,
 #CookieMgrWidgets .ca-w-stat .ca-pp-orange,
+#CookieMgrMenu .ca-wsample .ca-w-stat .ca-pp-orange,
 #CookieMgrLayer .ca-uptip .ca-pp-orange {
   color: var(--pp-orange) !important;
 }
@@ -5308,6 +5333,7 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-tl-preview .ca-pp-red,
 #CookieMgrMenu .ca-st-live .ca-pp-red,
 #CookieMgrWidgets .ca-w-stat .ca-pp-red,
+#CookieMgrMenu .ca-wsample .ca-w-stat .ca-pp-red,
 #CookieMgrLayer .ca-uptip .ca-pp-red {
   color: var(--pp-red) !important;
 }
@@ -5317,6 +5343,7 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-tl-preview .ca-pp-purple,
 #CookieMgrMenu .ca-st-live .ca-pp-purple,
 #CookieMgrWidgets .ca-w-stat .ca-pp-purple,
+#CookieMgrMenu .ca-wsample .ca-w-stat .ca-pp-purple,
 #CookieMgrLayer .ca-uptip .ca-pp-purple {
   color: var(--pp-purple) !important;
 }
@@ -5326,6 +5353,7 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-tl-preview .ca-pp-gray,
 #CookieMgrMenu .ca-st-live .ca-pp-gray,
 #CookieMgrWidgets .ca-w-stat .ca-pp-gray,
+#CookieMgrMenu .ca-wsample .ca-w-stat .ca-pp-gray,
 #CookieMgrLayer .ca-uptip .ca-pp-gray {
   color: var(--pp-gray) !important;
 }
@@ -5817,7 +5845,8 @@ body.ca-has-storebar #products {
   color: #fff3d6;
   font-variant-numeric: tabular-nums;
 }
-#CookieMgrWidgets .ca-w-stat-about {
+#CookieMgrWidgets .ca-w-stat-about,
+#CookieMgrMenu .ca-wsample .ca-w-stat-about {
   padding-top: 1px;
   font-size: 9px;
   color: #93866f;
@@ -5825,7 +5854,8 @@ body.ca-has-storebar #products {
   white-space: nowrap;
   text-overflow: ellipsis;
 }
-#CookieMgrWidgets .ca-w-stat small {
+#CookieMgrWidgets .ca-w-stat small,
+#CookieMgrMenu .ca-wsample .ca-w-stat small {
   color: #93866f;
 }
 
@@ -6270,12 +6300,14 @@ body.ca-has-storebar #products {
 }
 
 /* Effect timers: one slim bar per effect, in its color (--c); its icon (.ca-et-ico) is shared with other views */
-#CookieMgrWidgets .ca-et-list {
+#CookieMgrWidgets .ca-et-list,
+#CookieMgrMenu .ca-wsample .ca-et-list {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
-#CookieMgrWidgets .ca-et {
+#CookieMgrWidgets .ca-et,
+#CookieMgrMenu .ca-wsample .ca-et {
   display: flex;
   align-items: center;
   gap: 3px;
@@ -6308,7 +6340,8 @@ body.ca-has-storebar #products {
   background: var(--c);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6);
 }
-#CookieMgrWidgets .ca-et-bar {
+#CookieMgrWidgets .ca-et-bar,
+#CookieMgrMenu .ca-wsample .ca-et-bar {
   position: relative;
   flex: 1;
   min-width: 0;
@@ -6323,7 +6356,8 @@ body.ca-has-storebar #products {
     inset 0 0 0 1px color-mix(in srgb, var(--c) 60%, transparent),
     0 1px 2px rgba(0, 0, 0, 0.5);
 }
-#CookieMgrWidgets .ca-et-bar > i {
+#CookieMgrWidgets .ca-et-bar > i,
+#CookieMgrMenu .ca-wsample .ca-et-bar > i {
   position: absolute;
   left: 0;
   top: 0;
@@ -6333,19 +6367,22 @@ body.ca-has-storebar #products {
   transition: width 0.5s linear;
 }
 /* bad effects (Clot, Cursed finger, a building's debuff…): striped */
-#CookieMgrWidgets .ca-et.bad .ca-et-bar > i {
+#CookieMgrWidgets .ca-et.bad .ca-et-bar > i,
+#CookieMgrMenu .ca-wsample .ca-et.bad .ca-et-bar > i {
   background-image:
     repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.32) 0 4px, transparent 4px 8px),
     linear-gradient(to bottom, color-mix(in srgb, var(--c) 65%, #fff), var(--c) 50%, color-mix(in srgb, var(--c) 75%, #000));
 }
 /* more left than a full bar stands for (A full bar is: a fresh Frenzy's length): full, outlined */
-#CookieMgrWidgets .ca-et.over .ca-et-bar {
+#CookieMgrWidgets .ca-et.over .ca-et-bar,
+#CookieMgrMenu .ca-wsample .ca-et.over .ca-et-bar {
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.9),
     0 0 0 1px #fff,
     0 0 5px 1px var(--c);
 }
-#CookieMgrWidgets .ca-et-txt {
+#CookieMgrWidgets .ca-et-txt,
+#CookieMgrMenu .ca-wsample .ca-et-txt {
   position: relative;
   display: flex;
   align-items: center;
@@ -6361,28 +6398,33 @@ body.ca-has-storebar #products {
     0 1px 1px #000;
   white-space: nowrap;
 }
-#CookieMgrWidgets .ca-et-name {
+#CookieMgrWidgets .ca-et-name,
+#CookieMgrMenu .ca-wsample .ca-et-name {
   flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   font-weight: bold;
 }
-#CookieMgrWidgets .ca-et-name em {
+#CookieMgrWidgets .ca-et-name em,
+#CookieMgrMenu .ca-wsample .ca-et-name em {
   font-style: normal;
   font-weight: normal;
   font-size: 10px;
   color: #fff3d6;
 }
-#CookieMgrWidgets .ca-et-time {
+#CookieMgrWidgets .ca-et-time,
+#CookieMgrMenu .ca-wsample .ca-et-time {
   flex: none;
   font-variant-numeric: tabular-nums;
 }
-#CookieMgrWidgets .ca-et.ending .ca-et-time {
+#CookieMgrWidgets .ca-et.ending .ca-et-time,
+#CookieMgrMenu .ca-wsample .ca-et.ending .ca-et-time {
   color: #ffc9c2;
 }
 /* the chance a golden cookie comes before it ends */
-#CookieMgrWidgets .ca-et-gc {
+#CookieMgrWidgets .ca-et-gc,
+#CookieMgrMenu .ca-wsample .ca-et-gc {
   flex: none;
   min-width: 38px;
   font-size: 10px;
@@ -6395,7 +6437,8 @@ body.ca-has-storebar #products {
     0 0 2px #000,
     0 1px 1px #000;
 }
-#CookieMgrWidgets .ca-et-gc i {
+#CookieMgrWidgets .ca-et-gc i,
+#CookieMgrMenu .ca-wsample .ca-et-gc i {
   display: inline-block;
   width: 9px;
   height: 9px;
@@ -6404,16 +6447,20 @@ body.ca-has-storebar #products {
   background: center / contain no-repeat;
   filter: drop-shadow(0 0 1px #000);
 }
-#CookieMgrWidgets .ca-et-gc.lo i {
+#CookieMgrWidgets .ca-et-gc.lo i,
+#CookieMgrMenu .ca-wsample .ca-et-gc.lo i {
   opacity: 0.55;
 }
-#CookieMgrWidgets .ca-et-gc.hi {
+#CookieMgrWidgets .ca-et-gc.hi,
+#CookieMgrMenu .ca-wsample .ca-et-gc.hi {
   color: #ffe066;
 }
-#CookieMgrWidgets .ca-et-gc.lo {
+#CookieMgrWidgets .ca-et-gc.lo,
+#CookieMgrMenu .ca-wsample .ca-et-gc.lo {
   color: #b5a78f;
 }
-#CookieMgrWidgets .ca-et-none {
+#CookieMgrWidgets .ca-et-none,
+#CookieMgrMenu .ca-wsample .ca-et-none {
   font-size: 11px;
   color: #b5a78f;
   text-shadow: 0 0 2px #000, 0 1px 1px #000;
@@ -6748,42 +6795,50 @@ body.ca-has-storebar #products {
 }
 
 /* the golden cookie widgets (ui/timelineWidget.js) */
-#CookieMgrWidgets .ca-sp-chart.ca-sp-fixed {
+#CookieMgrWidgets .ca-sp-chart.ca-sp-fixed,
+#CookieMgrMenu .ca-wsample .ca-sp-chart.ca-sp-fixed {
   display: block;
   margin: 2px 0 0;
   max-width: 100%;
   cursor: default;
 }
-#CookieMgrWidgets .ca-tl-nums {
+#CookieMgrWidgets .ca-tl-nums,
+#CookieMgrMenu .ca-wsample .ca-tl-nums {
   display: flex;
   flex-wrap: wrap;
   gap: 2px 10px;
   cursor: pointer;
 }
-#CookieMgrWidgets .ca-tl-nums span {
+#CookieMgrWidgets .ca-tl-nums span,
+#CookieMgrMenu .ca-wsample .ca-tl-nums span {
   display: flex;
   flex-direction: column;
   line-height: 1.15;
 }
-#CookieMgrWidgets .ca-tl-nums em {
+#CookieMgrWidgets .ca-tl-nums em,
+#CookieMgrMenu .ca-wsample .ca-tl-nums em {
   font-style: normal;
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: #a89a83;
 }
-#CookieMgrWidgets .ca-tl-nums b {
+#CookieMgrWidgets .ca-tl-nums b,
+#CookieMgrMenu .ca-wsample .ca-tl-nums b {
   color: #fff3d6;
   font-size: 12px;
 }
-#CookieMgrWidgets .ca-tl-line {
+#CookieMgrWidgets .ca-tl-line,
+#CookieMgrMenu .ca-wsample .ca-tl-line {
   font-size: 11px;
   color: #e8dcc4;
 }
-#CookieMgrWidgets .ca-tl-dim {
+#CookieMgrWidgets .ca-tl-dim,
+#CookieMgrMenu .ca-wsample .ca-tl-dim {
   color: #8a7d68;
 }
-#CookieMgrWidgets .ca-tl-now {
+#CookieMgrWidgets .ca-tl-now,
+#CookieMgrMenu .ca-wsample .ca-tl-now {
   color: #ffd56a;
 }
 
@@ -6858,13 +6913,16 @@ body.ca-has-storebar #products {
 }
 
 /* the Golden cookies widget's What's helping: a bar per thing helping (log scale: they add up) */
-#CookieMgrWidgets .ca-wfreq {
+#CookieMgrWidgets .ca-wfreq,
+#CookieMgrMenu .ca-wsample .ca-wfreq {
   cursor: pointer;
 }
-#CookieMgrWidgets .ca-tl-w > * + .ca-wfreq {
+#CookieMgrWidgets .ca-tl-w > * + .ca-wfreq,
+#CookieMgrMenu .ca-wsample .ca-tl-w > * + .ca-wfreq {
   margin-top: 6px;
 }
-#CookieMgrWidgets .ca-wfq-row {
+#CookieMgrWidgets .ca-wfq-row,
+#CookieMgrMenu .ca-wsample .ca-wfq-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 54px auto;
   align-items: center;
@@ -6873,29 +6931,34 @@ body.ca-has-storebar #products {
   font-size: 11px;
   color: #e8dcc4;
 }
-#CookieMgrWidgets .ca-wfq-name {
+#CookieMgrWidgets .ca-wfq-name,
+#CookieMgrMenu .ca-wsample .ca-wfq-name {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
-#CookieMgrWidgets .ca-wfq-bar {
+#CookieMgrWidgets .ca-wfq-bar,
+#CookieMgrMenu .ca-wsample .ca-wfq-bar {
   height: 5px;
   border-radius: 3px;
   background: rgba(255, 255, 255, 0.08);
   overflow: hidden;
 }
-#CookieMgrWidgets .ca-wfq-bar i {
+#CookieMgrWidgets .ca-wfq-bar i,
+#CookieMgrMenu .ca-wsample .ca-wfq-bar i {
   display: block;
   height: 100%;
   border-radius: 3px;
   background: linear-gradient(90deg, #c9902a, #ffe066);
 }
-#CookieMgrWidgets .ca-wfq-row b {
+#CookieMgrWidgets .ca-wfq-row b,
+#CookieMgrMenu .ca-wsample .ca-wfq-row b {
   min-width: 34px;
   text-align: right;
   color: #ffe066;
 }
-#CookieMgrWidgets .ca-wfq-row.slower b {
+#CookieMgrWidgets .ca-wfq-row.slower b,
+#CookieMgrMenu .ca-wsample .ca-wfq-row.slower b {
   color: #e58a6a;
 }
 
@@ -7989,4 +8052,117 @@ body.ca-has-storebar #products {
   #CookieMgrMenu .ca-wprof {
     flex-wrap: wrap;
   }
+}
+
+/* ---------- v3.41.0: live pickers in a widget's settings (ui/widgets.js showsHtml) ---------- */
+
+/* a tile per option: its name over a sample of what picking it shows, drawn as the widget draws it */
+#CookieMgrMenu .ca-weditor-sec.ca-weditor-sec-wide {
+  flex: 3 1 460px;
+}
+#CookieMgrMenu .ca-wopts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 6px;
+  margin: 4px 0 8px;
+}
+#CookieMgrMenu .ca-wopt {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  padding: 6px 8px 7px;
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 220, 150, 0.12);
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+#CookieMgrMenu .ca-wopt:hover {
+  border-color: rgba(255, 220, 150, 0.4);
+}
+#CookieMgrMenu .ca-wopt.on {
+  border-color: rgba(77, 255, 94, 0.55);
+  background: rgba(77, 255, 94, 0.08);
+}
+#CookieMgrMenu .ca-wopt input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+#CookieMgrMenu .ca-wopt-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #c9bba0;
+}
+#CookieMgrMenu .ca-wopt.on .ca-wopt-head {
+  color: #fff3cf;
+}
+#CookieMgrMenu .ca-wopt-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-style: normal;
+  color: transparent;
+  border: 1px solid rgba(255, 220, 150, 0.3);
+  background: rgba(0, 0, 0, 0.35);
+}
+#CookieMgrMenu .ca-wopt-mark::after {
+  content: '✓';
+}
+#CookieMgrMenu .ca-wopts-small {
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+}
+#CookieMgrMenu .ca-wopts-one .ca-wopt-mark {
+  border-radius: 50%;
+}
+#CookieMgrMenu .ca-wopt.on .ca-wopt-mark {
+  color: #0b1a0c;
+  border-color: #4dd05a;
+  background: #4dd05a;
+}
+/* the sample: the widget's own look (its styles are twinned onto .ca-wsample above), dimmed while not picked */
+#CookieMgrMenu .ca-wsample {
+  min-height: 16px;
+  overflow: hidden;
+  padding: 5px 7px 6px;
+  border-radius: 5px;
+  font: 11px Tahoma, Arial, sans-serif;
+  color: #e8d7b0;
+  background: linear-gradient(to bottom, rgba(70, 45, 22, 0.92), rgba(28, 18, 9, 0.92));
+  box-shadow: inset 0 0 0 1px rgba(255, 230, 180, 0.12);
+  pointer-events: none;
+  transition:
+    opacity 0.15s,
+    filter 0.15s;
+}
+#CookieMgrMenu .ca-wopt:not(.on) .ca-wsample {
+  opacity: 0.45;
+  filter: grayscale(0.6);
+}
+#CookieMgrMenu .ca-wsample .ca-sp-chart {
+  display: block;
+  width: 100%;
+  margin: 0;
+}
+#CookieMgrMenu .ca-wsample .ca-w-empty {
+  font-size: 11px;
+  color: #93866f;
+}
+#CookieMgrMenu .ca-wf-wide .ca-wf-label .ca-wf-hint {
+  grid-column: auto;
+  margin-left: 6px;
 }

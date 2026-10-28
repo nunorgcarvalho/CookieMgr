@@ -139,6 +139,14 @@ CA.UI.EffectTimers = (() => {
     return `<div class="ca-et-list">${list.map((b) => rowHtml(b, show, golden, full)).join('')}</div>`;
   }
 
+  // ---- the settings' samples (ui/widgets.js): a row as the widget draws it — the first effect running,
+  // or a stand-in Frenzy when none is — showing just the column, or the bar at each scale
+  const STAND_IN = () => ({ name: 'Frenzy', type: 'frenzy', icon: [10, 14], secs: 48, maxSecs: frenzySecs(), cps: 7, click: 1, golden: 0.4 });
+  const sampleBuff = () => CA.Timers.buffsWithGolden()[0] || STAND_IN();
+  const sampleRow = (show, golden, full) => `<div class="ca-et-list">${rowHtml(sampleBuff(), new Set(show), golden, full)}</div>`;
+  const showSample = (v) => () => sampleRow(v === 'golden' ? [] : [v], v === 'golden', 0);
+  const scaleSample = (v) => () => sampleRow(['icon', 'mult'], false, v === 'frenzy' ? frenzySecs() : 0);
+
   function init() {
     CA.UI.Widgets.defineType({
       id: 'effectTimers',
@@ -154,8 +162,8 @@ CA.UI.EffectTimers = (() => {
       bg: 0,
       html,
       settings: [
-        { key: 'stats', label: 'Show', type: 'multi', default: DEFAULT, options: () => SHOW },
-        { key: 'barScale', label: 'A full bar is', type: 'select', default: 'own', options: SCALES },
+        { key: 'stats', label: 'Show', type: 'multi', default: DEFAULT, options: () => SHOW.map((o) => ({ ...o, sample: showSample(o.v) })) },
+        { key: 'barScale', label: 'A full bar is', type: 'select', default: 'own', options: () => SCALES().map((o) => ({ ...o, sample: scaleSample(o.v) })) },
         { key: 'sort', label: 'Order', type: 'select', default: 'start', options: () => SORTS },
       ],
     });
