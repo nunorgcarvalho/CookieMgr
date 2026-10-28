@@ -56,12 +56,12 @@ const valOf = (id) => {
 };
 const best = ST.bestOf('building');
 assert(best && best.kind === 'building', `the best building (${best && best.name})`);
-assert(valOf('payback').textContent === CA.Format.short(best.r.pp) && valOf('payback').classList.contains(`ca-pp-${best.r.colour}`), `a line’s value now, in its colour (${valOf('payback').textContent})`);
+assert(valOf('payback').textContent === CA.Format.payback(best.r.pp) && valOf('payback').classList.contains(`ca-pp-${best.r.colour}`), `a line’s value now, in its colour (${valOf('payback').textContent})`);
 assert(/Kitten helpers/.test(page().querySelector('[data-tl-preview]').textContent), 'the previews: a building, the best upgrade');
 // pick the previewed building: the values follow
 change(page().querySelector('[data-tl-b]'), 'Cursor');
 const cur = ST.contextOf('Cursor', 'building');
-assert(valOf('payback').textContent === CA.Format.short(cur.r.pp), 'pick a building: the values are its');
+assert(valOf('payback').textContent === CA.Format.payback(cur.r.pp), 'pick a building: the values are its');
 
 // ---- drag a row
 const drag = (type, el, y) => {
@@ -93,7 +93,7 @@ const cards = () => [...page().querySelectorAll('[data-st-card]')];
 assert(cards().length === ST.all().length, `a card per statistic (${cards().length})`);
 const card = (id) => page().querySelector(`[data-st-card="${id}"]`);
 assert(card('payback').querySelector('.ca-code-hl .hv') && /item\.payback/.test(card('payback').textContent), 'its code, coloured');
-assert(card('payback').querySelector('[data-st-val="payback"]').textContent === CA.Format.short(cur.r.pp), 'its value for the previewed building');
+assert(card('payback').querySelector('[data-st-val="payback"]').textContent === CA.Format.payback(cur.r.pp), 'its value for the previewed building');
 assert(/stat\.payback\(item\)/.test(card('payback').textContent), 'how to call it from a macro');
 assert(card('click').querySelector('.ca-st-live span').textContent === 'Kitten helpers', 'an upgrade’s: about the best upgrade');
 const bulks = card('bulks');
@@ -179,10 +179,10 @@ const one = W.add('statistic', null, { stat: 'payback' });
 W.render();
 assert(box(one.id).querySelector('.ca-w-title').textContent === 'Payback period', 'named after its statistic');
 const bb = ST.bestOf('building') && ST.bestOf('item');
-assert(box(one.id).querySelector('.ca-w-stat b').textContent === CA.Format.short(bb.r.pp) && new RegExp(`the best: ${bb.name}`).test(box(one.id).textContent), `about the best buy (${box(one.id).textContent})`);
+assert(box(one.id).querySelector('.ca-w-stat b').textContent === CA.Format.payback(bb.r.pp) && new RegExp(`the best: ${bb.name}`).test(box(one.id).textContent), `about the best buy (${box(one.id).textContent})`);
 one.item = 'b:Farm';
 W.render();
-assert(box(one.id).querySelector('.ca-w-stat b').textContent === CA.Format.short(ST.contextOf('Farm', 'building').r.pp) && /Farm/.test(box(one.id).textContent), 'or an item you pick');
+assert(box(one.id).querySelector('.ca-w-stat b').textContent === CA.Format.payback(ST.contextOf('Farm', 'building').r.pp) && /Farm/.test(box(one.id).textContent), 'or an item you pick');
 const two = W.add('statistic', null, { stat: yours.id, item: 'u:Kitten helpers' });
 W.render();
 assert(/Kitten helpers/.test(box(two.id).textContent) && box(two.id).querySelector('.ca-w-stat b').textContent !== '—', 'yours, about an upgrade');

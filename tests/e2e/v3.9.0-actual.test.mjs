@@ -103,7 +103,7 @@ await sleep(100);
 assert(CA.Settings.get('ppMode') === 'actualIncome', 'clicking it: by actual income');
 const t = P.table();
 const row = t.buildings[1].Cursor;
-assert(cellPP() !== cps && cellPP() === CA.Format.short(row.pp) && row.mode === 'actualIncome', `cells show the actual-income period (${cps} → ${cellPP()})`);
+assert(cellPP() !== cps && cellPP() === CA.Format.payback(row.pp) && row.mode === 'actualIncome', `cells show the actual-income period (${cps} → ${cellPP()})`);
 assert(/by Actual income/.test(w.document.querySelector('.ca-pp-cell').dataset.tip), 'and say so in their tip');
 CA.Settings.set('ppMode', 'cps');
 

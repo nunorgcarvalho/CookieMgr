@@ -25,7 +25,7 @@ CA.UI.AutoBuyerCard = (() => {
   const SHOW = 10;
   let showAll = false;
 
-  const ppText = (v) => (Number.isFinite(v) ? F().short(v) : '∞');
+  const ppText = (v) => F().payback(v);
   const sprite = (pos) => `<span class="ca-pp-ico" style="background-image:url(${CA.Util.res('img/icons.png')});background-position:${-pos[0] * 48}px ${-pos[1] * 48}px"></span>`;
   /** A queue entry's name: a building's icon and name, an upgrade's (hoverable: its info card). */
   function thingName(x) {

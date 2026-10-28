@@ -151,5 +151,34 @@ CA.Format = (() => {
     return `${Math.floor(sec / 86400)}d ${Math.floor((sec % 86400) / 3600)}h`;
   }
 
-  return { short, beautify, signed, two, clock, span, FORMATS, notation: kind };
+  // a payback period in time units: seconds, then minutes, hours, days, years — the next unit only
+  // once the number passes 999 in this one (999 s, then 16.7 min), so it keeps three digits
+  const UNITS = [
+    ['s', 1],
+    ['min', 60],
+    ['h', 3600],
+    ['d', 86400],
+    ['y', 365 * 86400],
+  ];
+  function inUnits(sec) {
+    let i = 0;
+    while (i < UNITS.length - 1 && Number((sec / UNITS[i][1]).toPrecision(SIG)) >= 1000) i++;
+    const v = sec / UNITS[i][1];
+    return `${v >= 1000 ? short(v) : v === 0 ? '0' : v < 0.001 ? scientific(v, false) : sig(v)} ${UNITS[i][0]}`;
+  }
+  /**
+   * A payback period (seconds) as the Payback units setting writes it: time units (the default —
+   * 999 s, 16.7 min, 41.6 h) or plain seconds, short (Cookie Monster's way: 999, 1K); ∞ when it
+   * never pays back.
+   */
+  function payback(sec) {
+    if (typeof sec !== 'number') sec = Number(sec);
+    if (Number.isNaN(sec)) return '—';
+    if (!isFinite(sec)) return sec > 0 ? '∞' : '-∞';
+    const seconds = CA.Settings && CA.Settings.get('ppUnits') === 'seconds';
+    if (seconds) return short(sec);
+    return (sec < 0 ? '-' : '') + inUnits(Math.abs(sec));
+  }
+
+  return { short, beautify, signed, two, clock, span, payback, FORMATS, notation: kind };
 })();

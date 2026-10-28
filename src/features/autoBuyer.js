@@ -54,7 +54,7 @@ CA.AutoBuyer = (() => {
     { id: 'garden', label: 'Garden replant', tip: 'what replanting the whole garden layout costs (garden.layoutCost)', get: () => (CA.Garden.minigame() ? CA.Garden.layoutCost() : 0) },
   ];
 
-  /** The rule profiles that buy upgrades come with (v3.49): lots of upgrades affordable → buy them all at once. */
+  /** The rule profiles that buy upgrades come with (v3.50): lots of upgrades affordable → buy them all at once. */
   const BULK_RULE = { what: 'allUpgrades', effect: 'first', when: 'payback.allUpgradesCount(buyer.budget()) >= 20' };
   const SEEDS = [
     { id: 'payback', name: 'Payback', kinds: { building: true, upgrade: true, allUpgrades: true }, bulk: 'auto', skip: false, reserve: 0, banks: [], mode: '', rules: [cleanRule(BULK_RULE)] },
@@ -87,7 +87,7 @@ CA.AutoBuyer = (() => {
     return {
       id: String(x.id || `p${i + 1}`).slice(0, 40),
       name: String(x.name || `Profile ${i + 1}`).slice(0, 40),
-      // Buy all upgrades (v3.49): a profile saved before it buys it when it buys upgrades
+      // Buy all upgrades (v3.50): a profile saved before it buys it when it buys upgrades
       kinds: { building: kinds.building !== false, upgrade: kinds.upgrade !== false, allUpgrades: kinds.allUpgrades === undefined ? kinds.upgrade !== false : !!kinds.allUpgrades },
       bulk: BULKS.includes(x.bulk) ? x.bulk : BULKS.includes(Number(x.bulk)) ? Number(x.bulk) : 'auto',
       skip: !!x.skip,
@@ -421,7 +421,7 @@ CA.AutoBuyer = (() => {
     if (data && Array.isArray(data.profiles) && data.profiles.length) {
       profiles = data.profiles.map((raw, i) => {
         const p = cleanProfile(raw, i);
-        // saved before Buy all upgrades (v3.49): one that buys upgrades gets its rule
+        // saved before Buy all upgrades (v3.50): one that buys upgrades gets its rule
         const old = !(raw && raw.kinds && typeof raw.kinds === 'object' && 'allUpgrades' in raw.kinds);
         if (old && p.kinds.upgrade && p.rules.length < 50) p.rules.push(cleanRule(BULK_RULE));
         return p;
