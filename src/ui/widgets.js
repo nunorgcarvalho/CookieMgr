@@ -50,7 +50,7 @@
 //   refreshed as the widget is, lit while it's picked; the tiles share the widget's own styles (.ca-wsample).
 //   Without samples it's a plain tick list / drop-down. when(inst): the field shows only while it's true
 //   (the Graph's axis, with the graph on). hint: a line under the label. tile: 'small' — narrower tiles, for
-//   samples that are a value (a statistic's).
+//   samples that are a value (a statistic's). default may be a function of the widget (its own default).
 
 CA.UI = CA.UI || {};
 
@@ -250,11 +250,6 @@ CA.UI.Widgets = (() => {
     if (w.type === 'macro') {
       const m = CA.Macros.get(w.macro);
       return m ? m.name : 'Macro button';
-    }
-    // a page's chart: its name ("Garden growth")
-    if (w.type === 'chart') {
-      const p = CA.UI.Plot.widgetable().find((x) => x.id === w.plot);
-      if (p) return p.title;
     }
     const t = typeById[w.type];
     if (t && t.nameOf) return t.nameOf(w) || t.name;
@@ -599,7 +594,9 @@ CA.UI.Widgets = (() => {
   }
 
   /** The settings a type lets you choose, each with what it has now (a hidden field is left out). */
-  const shownSettings = (w) => ((typeById[w.type] || {}).settings || []).filter((s) => !s.when || s.when(w)).map((s) => ({ s, opts: s.type === 'number' ? [] : s.options(), cur: w[s.key] !== undefined ? w[s.key] : s.default }));
+  /** A setting's default (a function: the widget's own — a chart's Show starts at the one chart it had). */
+  const defaultOf = (s, w) => (typeof s.default === 'function' ? s.default(w) : s.default);
+  const shownSettings = (w) => ((typeById[w.type] || {}).settings || []).filter((s) => !s.when || s.when(w)).map((s) => ({ s, opts: s.type === 'number' ? [] : s.options(), cur: w[s.key] !== undefined ? w[s.key] : defaultOf(s, w) }));
 
   /**
    * The Shows section: a field per setting — a tick list, a drop-down, a number — or, when its options
@@ -834,7 +831,7 @@ CA.UI.Widgets = (() => {
     if (el.dataset.wMulti) {
       const key = el.dataset.wMulti;
       const t = typeById[w.type];
-      const def = (t.settings.find((s) => s.key === key) || {}).default || [];
+      const def = defaultOf(t.settings.find((s) => s.key === key) || {}, w) || [];
       const set = new Set(w[key] !== undefined ? w[key] : def);
       if (el.checked) set.add(el.value);
       else set.delete(el.value);

@@ -799,8 +799,11 @@ always grab them again). Drag them anywhere; hover for × and ⚙ (its settings)
   One line of text per effect, so a big combo stays short; it starts see-through. Its settings pick what to show, what a full
   bar is (the effect's own length, or a fresh Frenzy's for every bar — longer effects then fill theirs and are
   outlined in white) and the order (as they started, or ending soonest first).
-- **Chart** — a CookieMgr chart, live on the left panel: the Garden's **Growth** or **Effects** (pick in its settings).
-  It shows the same window, X axis and choices as the chart on its page; hover it for the details.
+- **Chart** — the Garden's charts, live on the left panel. Its settings pick what to **Show**: **Stats**, the
+  **Garden growth** chart, the **Garden effects** chart, or any mix (both charts stack). **Stats** picks the numbers
+  over them: each plant effect now as the game's Garden information adds it up (golden cookie frequency, ticked to
+  start, CpS, golden cookie gains…), plants, mature plants and the time to the next tick. The charts show the same
+  window, X axis and choices as on the Garden page; hover them for the details.
 
 **Stars:** a ☆ next to a chart or a section adds its ready-made widget in one click, as a macro's ★ gives it a
 button: the Garden page's Growth and Effects charts (a Chart widget each) and the golden cookie frequency row on the
@@ -1117,7 +1120,8 @@ If you add a file, add it to `MODULES` in `build.mjs` in the right order.
   in `ui/widgetTypes.js` — it appears on the Widgets page; `html` is re-rendered twice a second and patched in place.
   A ☆ for it anywhere on a page: `CA.UI.C.widgetStar({ type, ...its settings }, name)` (adds or removes the widget with
   those settings; the star is full while one matches). A chart on the left panel: give its `CA.UI.Plot.create` spec
-  `widget: true` (and a `widgetName`) — its card gets a ☆ for the Chart widget.
+  `widget: true` (and a `widgetName`) — its card gets a ☆ for the Chart widget; its `numbers`
+  (`[{ v, stat, value(), page, on }]`, named by `CA.StatInfo`) are the statistics that widget can show over it.
   `settings` (`{ key, label, type: 'number' | 'multi', … }`) appear in its settings editor and are saved on the instance.
 - **A new page:** `CA.UI.Pages.register({ id, label, icon, order, html, mount, unmount, tick })` (or `parts: [a, b]` for a
   page made of components with their own mount/unmount/tick) from the page's own

@@ -26,5 +26,11 @@ CA.StatInfo = (() => {
   define('golden.frequency', { label: 'Multiplier', desc: 'How many times more often golden cookies come than with nothing helping (no upgrades, garden, spirits or aura): ×2 with Lucky day, ×4 with Serendipity too.' });
   define('golden.median', { label: 'Median wait', desc: 'Even odds the next golden cookie has come by then, from now.' });
 
+  // ---- the garden (the Chart widget's Stats; each plant effect, 'garden.<effect>', is defined with the
+  // effects in features/gardenHistory.js)
+  define('garden.plants', { label: 'Plants', desc: 'How many plants are in your garden now, at any stage.' });
+  define('garden.mature', { label: 'Mature', desc: 'How many of your plants are mature now (the ones whose effects are at full strength and that can be harvested for their rewards).' });
+  define('garden.nextTick', { label: 'Next tick', desc: 'How long until the next garden tick, when plants grow, spread and mutate.' });
+
   return { define, get, label, desc };
 })();

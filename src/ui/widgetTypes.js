@@ -408,30 +408,79 @@ CA.UI.WidgetTypes = (() => {
     });
   }
 
-  // ---- a page's chart --------------------------------------------------------------------------
+  // ---- a page's charts, and their statistics --------------------------------------------------
+  // Show (`stats`): Stats and/or the charts (the Garden's growth and effects), stacked; Stats (`nums`): the
+  // charts' statistics you tick (CA.UI.Plot's `numbers`: each garden effect now, plants…). Before v3.42 it
+  // showed one chart (`plot`, still what a ☆ sets): a widget saved without `stats` shows that one.
 
   const DEFAULT_PLOT = 'garden';
-  const shownPlot = {}; // widget id → the chart it last drew (to let go of the old one when it changes)
+  const shownPlots = {}; // widget id → the charts it last drew (to let go of the ones it no longer shows)
   const plotOf = (inst) => (CA.UI.Plot.get(inst.plot) ? inst.plot : DEFAULT_PLOT);
+  const chartPartsOf = (inst) => (Array.isArray(inst.stats) ? inst.stats : [plotOf(inst)]);
+  const plotsOf = (inst) => chartPartsOf(inst).filter((v) => v !== 'numbers' && CA.UI.Plot.get(v));
+  /** Every widgetable chart's statistics, each once. */
+  function chartNumbers() {
+    const seen = new Set();
+    return [].concat(...CA.UI.Plot.widgetable().map((p) => p.numbers)).filter((n) => !seen.has(n.v) && seen.add(n.v));
+  }
+  const chartNumsOf = (inst) => (Array.isArray(inst.nums) ? inst.nums : chartNumbers().filter((n) => n.on).map((n) => n.v));
+  const numCell = (n, val) => `<span data-tip="${esc(CA.StatInfo.desc(n.stat))}"${n.page ? ` data-w-open="${esc(n.page)}"` : ''}><em>${esc(CA.StatInfo.label(n.stat))}</em><b>${val}</b></span>`;
+
+  function chartNumbersHtml(inst) {
+    const on = new Set(chartNumsOf(inst));
+    const cells = chartNumbers()
+      .filter((n) => on.has(n.v))
+      .map((n) => numCell(n, n.value()))
+      .join('');
+    return cells ? `<div class="ca-tl-nums">${cells}</div>` : '';
+  }
 
   function chartHtml(inst) {
-    const id = plotOf(inst);
-    if (shownPlot[inst.id] && shownPlot[inst.id] !== id) CA.UI.Plot.dropMini(shownPlot[inst.id], inst.id);
-    shownPlot[inst.id] = id;
-    const p = CA.UI.Plot.mini(id, inst.id);
-    return p ? p.html() : '<div class="ca-w-empty">This chart isn’t available.</div>';
+    const plots = plotsOf(inst);
+    (shownPlots[inst.id] || []).filter((id) => !plots.includes(id)).forEach((id) => CA.UI.Plot.dropMini(id, inst.id));
+    shownPlots[inst.id] = plots;
+    let h = chartPartsOf(inst).includes('numbers') ? chartNumbersHtml(inst) || '<div class="ca-w-empty">None ticked under Stats.</div>' : '';
+    h += plots
+      .map((id) => {
+        const p = CA.UI.Plot.mini(id, inst.id);
+        return p ? p.html() : '<div class="ca-w-empty">This chart isn’t available.</div>';
+      })
+      .join('');
+    return `<div class="ca-wcharts${plots.length > 1 ? ' two' : ''}">${h || '<div class="ca-w-empty">Pick what to show in its settings.</div>'}</div>`;
   }
-  /** After each refresh: draws the copy into the widget (mounting it again after a re-render). */
+  /** After each refresh: draws each chart's copy into the widget (mounting it again after a re-render). */
   function chartLive(inst, body) {
-    const p = CA.UI.Plot.mini(plotOf(inst), inst.id);
-    if (!p) return;
-    if (p.isMounted()) p.tick(); // (lets go of a canvas that's no longer on screen)
-    if (!p.isMounted()) p.mount(body);
+    plotsOf(inst).forEach((id) => {
+      const p = CA.UI.Plot.mini(id, inst.id);
+      if (!p) return;
+      if (p.isMounted()) p.tick(); // (lets go of a canvas that's no longer on screen)
+      if (!p.isMounted()) p.mount(body);
+    });
   }
   function chartRemoved(inst) {
-    CA.UI.Plot.dropMini(plotOf(inst), inst.id);
-    delete shownPlot[inst.id];
+    (shownPlots[inst.id] || plotsOf(inst)).forEach((id) => CA.UI.Plot.dropMini(id, inst.id));
+    delete shownPlots[inst.id];
   }
+  /** Its name: the chart's ("Garden growth"); with more than one, what they're of ("Garden"). */
+  function chartName(inst) {
+    const all = CA.UI.Plot.widgetable();
+    const shown = plotsOf(inst).map((id) => all.find((p) => p.id === id)).filter(Boolean);
+    if (shown.length === 1) return shown[0].title;
+    const group = (shown[0] || all.find((p) => p.id === plotOf(inst)) || {}).group;
+    return group && shown.every((p) => p.group === group) ? group : '';
+  }
+
+  // the settings' samples: a chart as the widget draws it (a picture), a statistic's value now
+  const SAMPLE_W = 200;
+  const chartSample = (id) => () => {
+    const url = CA.UI.Plot.snapshot(id, SAMPLE_W, 84);
+    return url ? `<img class="ca-wchart-shot" src="${url}" alt="">` : '<div class="ca-w-empty">—</div>';
+  };
+  const chartNumSample = (n) => () => `<div class="ca-tl-nums"><span><b>${n.value()}</b></span></div>`;
+  const chartShowOptions = () =>
+    [{ v: 'numbers', label: 'Stats', tip: 'The statistics you tick under Stats', sample: (inst) => chartNumbersHtml(inst) || '<div class="ca-w-empty">None ticked under Stats.</div>' }].concat(
+      CA.UI.Plot.widgetable().map((p) => ({ v: p.id, label: p.title, tip: `The ${p.title.toLowerCase()} chart, live — the same window as on its page`, sample: chartSample(p.id) }))
+    );
 
   function register() {
     const D = CA.UI.Widgets.defineType;
@@ -509,15 +558,27 @@ CA.UI.WidgetTypes = (() => {
       icon: 'graphs',
       group: 'minigames',
       sprite: { sheet: 'img/gardenPlants.png', pos: [4, 3] },
-      short: 'The Garden page’s charts, live',
-      desc: 'A chart from a CookieMgr page, live on the left panel — the Garden’s growth or its effects. It shows the same window as the chart on its page; hover it for the details.',
+      short: 'The Garden’s charts and stats, live',
+      desc: 'The Garden page’s charts, live on the left panel — its growth, its effects or both — with the statistics you pick over them (each plant effect now, such as golden cookie frequency). The charts show the same window as on the Garden page; hover them for the details.',
       width: 300,
       resize: 'free',
       html: chartHtml,
-      iconOf: (inst) => (CA.UI.Plot.get(plotOf(inst)) || { spec: {} }).spec.icon || 'graphs',
+      iconOf: (inst) => (CA.UI.Plot.get(plotsOf(inst)[0] || plotOf(inst)) || { spec: {} }).spec.icon || 'graphs',
+      nameOf: chartName,
       live: chartLive,
       removed: chartRemoved,
-      settings: [{ key: 'plot', label: 'Chart', type: 'select', default: DEFAULT_PLOT, options: () => CA.UI.Plot.widgetable().map((p) => ({ v: p.id, label: p.title })) }],
+      settings: [
+        { key: 'stats', label: 'Show', type: 'multi', default: (inst) => [plotOf(inst)], options: chartShowOptions },
+        {
+          key: 'nums',
+          label: 'Stats',
+          type: 'multi',
+          default: () => chartNumbers().filter((n) => n.on).map((n) => n.v),
+          options: () => chartNumbers().map((n) => ({ v: n.v, label: CA.StatInfo.label(n.stat), tip: CA.StatInfo.desc(n.stat), sample: chartNumSample(n) })),
+          when: (inst) => chartPartsOf(inst).includes('numbers'),
+          tile: 'small',
+        },
+      ],
     });
     D({ id: 'garden', group: 'minigames', sprite: [2, 0], short: 'Next tick; your plants by stage', ring: '#a8f06a', name: 'Garden', icon: 'leaf', desc: 'The ring counts down to the next garden tick; the dots under it are your plants by stage (bud, sprout, bloom, mature). Click it to open the Garden.', bare: true, single: true, resize: 'scale', html: gardenHtml });
     D({ id: 'market', group: 'minigames', sprite: [15, 0], short: 'Next tick; what the last did', ring: '#6fe6ef', name: 'Stock market', icon: 'stocks', desc: 'The ring counts down to the next market tick; the label is what the last tick did to the stocks you held. Click it to open the Stock market.', bare: true, single: true, resize: 'scale', html: marketHtml });

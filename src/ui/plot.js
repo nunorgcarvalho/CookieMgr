@@ -9,7 +9,10 @@
 //
 // A spec with `widget: true` gets a ☆ in its card head that puts the chart on the left panel
 // (the Chart widget, ui/widgetTypes.js); the widget draws a copy of it — mini(id, key) — with only
-// the chart and its legend, sharing the page chart's window and choices.
+// the chart and its legend, sharing the page chart's window and choices. A spec's `numbers` —
+// [{ v, stat (a CA.StatInfo id), value() → html, page, on }] — are the statistics that widget can show
+// over its charts (on: ticked in a new one); snapshot(id, w, h) is a picture of the copy, for the
+// widget's settings.
 //
 // The x axis is either wall-clock time (frame.t) or **active play time** (frame.a, see
 // core/recorder.js) — the global "Active time" toggle (setting graphActiveTime). In active-time
@@ -1102,7 +1105,7 @@ CA.UI.Plot = (() => {
       // fixed to the window, so the card's edges (overflow: hidden) never cut it off
       const tw = tipEl.offsetWidth;
       const th = tipEl.offsetHeight;
-      const r = canvas.getBoundingClientRect();
+      const r = CA.UI.Dom.rect(canvas);
       const W = window.innerWidth || r.right;
       const H = window.innerHeight || r.bottom;
       const k = zoomOf(r);
@@ -1303,15 +1306,14 @@ CA.UI.Plot = (() => {
     }
 
     // a widget's text size is CSS zoom: the canvas is drawn in its own (unzoomed) pixels, the mouse
-    // and getBoundingClientRect() are on screen, so convert between them (else the hover line drifts)
+    // is on screen, so convert between them (else the hover line drifts) — ui/dom.js, for every browser
     function zoomOf(r) {
       return { x: canvas.clientWidth ? r.width / canvas.clientWidth : 1, y: canvas.clientHeight ? r.height / canvas.clientHeight : 1 };
     }
     /** Where the mouse is over the canvas, in the canvas's own pixels. */
     function pointIn(e) {
-      const r = canvas.getBoundingClientRect();
-      const k = zoomOf(r);
-      return { x: (e.clientX - r.left) / (k.x || 1), y: (e.clientY - r.top) / (k.y || 1) };
+      const p = CA.UI.Dom.pointIn(canvas, e);
+      return { x: p.x, y: p.y };
     }
 
     function mount(pageRoot) {
@@ -1461,8 +1463,42 @@ CA.UI.Plot = (() => {
     p.unmount();
     all.delete(`${id}~${key}`);
   }
-  /** The charts that can go on the left panel as a widget: [{ id, title, icon }]. */
-  const widgetable = () => [...all.values()].filter((p) => p.spec.widget).map((p) => ({ id: p.id, title: p.spec.widgetName || p.spec.title, icon: p.spec.icon }));
+  /** The charts that can go on the left panel as a widget: [{ id, title, short, icon, numbers }]. */
+  const widgetable = () =>
+    [...all.values()].filter((p) => p.spec.widget).map((p) => ({ id: p.id, title: p.spec.widgetName || p.spec.title, short: p.spec.title, icon: p.spec.icon, group: p.spec.widgetGroup || '', numbers: p.spec.numbers || [] }));
+
+  /**
+   * Chart `id` as its widget draws it, as a picture w × h px (a data: URL), drawn off screen and kept
+   * for two seconds; '' when it can't be drawn (no real canvas, as in tests).
+   */
+  const shots = {};
+  function snapshot(id, w, h) {
+    const key = `${id}:${w}x${h}`;
+    const last = shots[key];
+    if (last && Date.now() - last.t < 2000) return last.url;
+    const p = mini(id, 'shot');
+    if (!p || !document.body) return '';
+    const host = document.createElement('div');
+    host.style.cssText = `position:fixed;left:-10000px;top:0;width:${w}px;visibility:hidden`;
+    host.innerHTML = p.html();
+    const cv = host.querySelector('canvas');
+    cv.style.cssText = `display:block;width:${w}px;height:${h}px`;
+    document.body.appendChild(host);
+    let url = '';
+    try {
+      const real = typeof CanvasRenderingContext2D !== 'undefined' && cv.getContext('2d') instanceof CanvasRenderingContext2D;
+      if (real) {
+        p.mount(host);
+        url = cv.toDataURL('image/png');
+      }
+    } catch (e) {
+      url = '';
+    }
+    p.unmount();
+    host.remove();
+    shots[key] = { t: Date.now(), url };
+    return url;
+  }
 
   // Switching between wall-clock and active time invalidates every frozen view position.
   function init() {
@@ -1486,6 +1522,7 @@ CA.UI.Plot = (() => {
     mini,
     dropMini,
     widgetable,
+    snapshot,
     get: (id) => all.get(id),
     bucketize,
     movingAverage,

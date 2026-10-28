@@ -60,7 +60,7 @@ CA.UI.Tips = (() => {
   }
 
   function place(el, target, below) {
-    const r = target.getBoundingClientRect();
+    const r = CA.UI.Dom.rect(target); // on screen, also inside a widget's text size (CSS zoom)
     const W = window.innerWidth || 1000;
     const H = window.innerHeight || 800;
     const w = el.offsetWidth;

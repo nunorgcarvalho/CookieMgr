@@ -149,6 +149,14 @@ CA.GardenHistory = (() => {
     { k: 'buildingCost', n: 'building costs', color: '#ff7a59', rev: true },
   ];
 
+  // each effect as a statistic (the Chart widget's Stats): 'garden.goldenCookieFreq' …
+  EFFECTS.forEach((ef) =>
+    CA.StatInfo.define(`garden.${ef.k}`, {
+      label: ef.n[0].toUpperCase() + ef.n.slice(1),
+      desc: `What your garden’s plants do to ${ef.n} right now, as the game’s Garden information adds it up (soil, growth stage and tile boosts included)${ef.rev ? ' — lower is better' : ''}.`,
+    })
+  );
+
   /** Counts a garden tick whenever the next one moves on by more than half a tick. */
   function checkTick(M) {
     const next = M.nextStep || 0;

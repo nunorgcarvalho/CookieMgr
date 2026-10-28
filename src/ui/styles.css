@@ -6882,6 +6882,39 @@ body.ca-has-storebar #products {
 #CookieMgrWidgets .ca-w.sized .ca-graph-mini canvas.ca-graph {
   height: auto;
 }
+/* v3.42: the Chart widget's stats over its charts, one or two charts stacked (sharing a resized widget's height) */
+#CookieMgrWidgets .ca-wcharts {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+#CookieMgrWidgets .ca-wcharts > .ca-graph-mini {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+}
+#CookieMgrWidgets .ca-w.sized .ca-wcharts > .ca-graph-mini {
+  flex-basis: 0;
+}
+#CookieMgrWidgets .ca-wcharts > .ca-graph-mini + .ca-graph-mini {
+  margin-top: 4px;
+}
+#CookieMgrWidgets .ca-wcharts > .ca-tl-nums,
+#CookieMgrWidgets .ca-wcharts > .ca-w-empty {
+  flex: none;
+  margin-bottom: 4px;
+}
+#CookieMgrWidgets .ca-wcharts.two .ca-graph-mini canvas.ca-graph {
+  height: 110px;
+}
+#CookieMgrWidgets .ca-w.sized .ca-wcharts.two .ca-graph-mini canvas.ca-graph {
+  height: auto;
+}
+#CookieMgrMenu .ca-wsample .ca-wchart-shot {
+  display: block;
+  width: 100%;
+  height: auto;
+}
 #CookieMgrWidgets .ca-graph-mini .ca-legend {
   display: flex;
   flex-wrap: wrap;
