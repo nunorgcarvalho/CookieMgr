@@ -41,8 +41,8 @@ CA.UI.PaybackPage = (() => {
     purple: 'further down',
     gray: 'never pays back',
   };
-  /** A payback period, short: seconds as a number (Cookie Monster's way), ∞ when it never pays back. */
-  const ppText = (v) => (Number.isFinite(v) ? F().short(v) : '∞');
+  /** A payback period, as the Payback periods in setting writes it (999 s, 16.7 min), ∞ when it never pays back. */
+  const ppText = (v) => F().payback(v);
   const span = (s) => (!Number.isFinite(s) ? 'never' : s <= 0 ? 'now' : F().span(s));
   /** A row's payback period in parts, for a tip: " = 5m to afford + 20m to earn back (by CpS)". */
   const partsNote = (row) => {
@@ -160,6 +160,7 @@ CA.UI.PaybackPage = (() => {
       '<div class="ca-card">' +
       C().cardHead('Options', 'settings') +
       '<div class="ca-list">' +
+      `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('clock', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Payback periods in</div><div class="ca-row-desc">Time units: seconds, then minutes, hours, days, years — the next unit only past 999 (999 s, then 16.7 min). Seconds: plain seconds, Cookie Monster’s way (999, 1K).</div></div><span class="ca-pp-chips">${pick('ppUnits')}</span></div>` +
       `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('wrinkler', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Count wrinklers in the bank</div><div class="ca-row-desc">What popping them would give counts towards affording things.</div></div><span class="ca-pp-chips">${choice('none', 'No')}${choice('all', 'All')}${choice('fattest', 'The fattest')}</span></div>` +
       `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('graphs', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Actual income over</div><div class="ca-row-desc">The Actual income mode averages what you took in over this much of your latest play${Number.isFinite(P().actualRatio()) ? ` — now ×${P().actualRatio().toFixed(2)} your raw CpS` : ''}.</div></div><span class="ca-pp-chips">${pick('ppActualWindow')}</span></div>` +
       `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('cookie', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Clicks averaged over</div><div class="ca-row-desc">The CpS + clicking mode counts your clicks a second over this much of your latest play — now ${P().clicksOver(Math.max(1, Number(S.get('ppClickWindow')) || 60)).toFixed(1)} a second.</div></div><span class="ca-pp-chips">${pick('ppClickWindow')}</span></div>` +
