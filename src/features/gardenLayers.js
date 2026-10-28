@@ -254,7 +254,7 @@ else:
     { id: 'goldenClovers', name: 'Golden clover field', desc: 'Golden clover on every tile, for golden cookies.', data: () => ({ gardener: 'effects', soil: 'effects', template: 'fill', seeds: 'goldenClover' }) },
     { id: 'goldenCombos', name: 'Golden clover combos', desc: 'Golden clover on every tile, planted and replanted all together: the field is mature at once, for the most golden cookies in long high windows.', data: () => ({ gardener: 'cohort', soil: 'cohort', template: 'fill', seeds: 'goldenClover' }) },
     { id: 'mutationHunt', name: 'Mutation hunt', desc: 'Two parents in rows, wood chips once they’re mature; new seeds kept until unlocked. Pick the recipe in Seeds.', data: () => ({ gardener: 'mutations', soil: 'mutations', template: 'rows', seeds: 'to-cronerice' }) },
-    { id: 'juicyQueenbeet', name: 'Juicy queenbeet', desc: 'Rings of queenbeets on wood chips: each empty centre can grow a Juicy queenbeet (a sugar lump).', data: () => ({ gardener: 'mutations', soil: 'mutations', template: 'rings', seeds: 'queenbeet' }) },
+    { id: 'juicyQueenbeet', name: 'Juicy queenbeet', desc: 'Rings of queenbeets on wood chips: each empty center can grow a Juicy queenbeet (a sugar lump).', data: () => ({ gardener: 'mutations', soil: 'mutations', template: 'rings', seeds: 'queenbeet' }) },
     { id: 'weedFarm', name: 'Weed farm', desc: 'A bare garden on fertilizer, for meddleweed, brown mold and crumbspore.', data: () => ({ gardener: 'weeds', soil: 'fertilizer', template: 'bare', seeds: 'current' }) },
   ];
 
@@ -445,7 +445,7 @@ else:
    */
   function adopt(seedPlotNow, name, isOpen, origin) {
     const [ox, oy] = origin;
-    // the letters on the unlocked tiles, relative to the origin, labelled by first appearance
+    // the letters on the unlocked tiles, relative to the origin, labeled by first appearance
     const norm = (letterAt) => {
       const back = {};
       let n = 0;

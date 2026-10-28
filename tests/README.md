@@ -76,6 +76,6 @@ test what's recorded), `withPantheon`, `withGrimoire`, `localStorageSeed`, `full
 
 1. Register it (`CA.Actions.register`, `CA.UI.Pages.register`, `CA.Script.defineValue`…) — the
    contract tests pick it up.
-2. Write `e2e/vX.Y.Z.test.mjs` for the release: the behaviour, the UI, and save → reload.
-3. When a later release changes the behaviour on purpose, update the older test's expectation and
+2. Write `e2e/vX.Y.Z.test.mjs` for the release: the behavior, the UI, and save → reload.
+3. When a later release changes the behavior on purpose, update the older test's expectation and
    say why in a comment (`// v2.26: …`).

@@ -100,7 +100,7 @@
     ['24h', '1 day'],
   ];
 
-  /** The words, registered in the page's own registries — so the add-on's code editor colours, checks and lists them as in the game. */
+  /** The words, registered in the page's own registries — so the add-on's code editor colors, checks and lists them as in the game. */
   function installVocab(v) {
     v.actions.forEach((a) => CA.Actions.get(a.id) || CA.Actions.register({ ...a, run: () => 0 }));
     v.conditions.forEach((c) => CA.Conditions.get(c.id) || CA.Conditions.register({ ...c, test: () => false, describe: () => c.name }));

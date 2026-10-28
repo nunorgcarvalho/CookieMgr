@@ -21,12 +21,12 @@
 // counting what your wrinklers would give back. An upgrade that only makes clicks stronger is worth
 // its extra cookies per click × your clicks per second.
 //
-// **Colours** (Cookie Monster's): blue — better than the best building (only upgrades can be);
+// **Colors** (Cookie Monster's): blue — better than the best building (only upgrades can be);
 // green — the best building; yellow / orange / red — within the 10 / 20 / 30 best building PPs (one,
 // ten and a hundred of each count, sixty in all); purple — worse; gray — never pays back.
 //
 // The expensive part (the bonus incomes — about 90 CpS computations) is kept until the game state
-// changes (what's owned, buffs, the store, CpS by more than 0.1%) or a second has passed with CpS drifting; PPs and colours
+// changes (what's owned, buffs, the store, CpS by more than 0.1%) or a second has passed with CpS drifting; PPs and colors
 // are worked out from it on every read, so they follow your bank as it grows.
 
 CA.Payback = (() => {
@@ -173,7 +173,7 @@ CA.Payback = (() => {
    * Switches: the game's toggle upgrades (main.js pool 'toggle') — Elder Pledge, Elder Covenant and
    * its revoking, the Golden switch, Shimmering veil, Sugar frenzy, the season biscuits, the milk /
    * background / sound selectors, the Jukebox. Things you flip, not things you own: they get no
-   * payback period, no colour, no place in the rankings — never "the best buy". (A Chocolate egg is a
+   * payback period, no color, no place in the rankings — never "the best buy". (A Chocolate egg is a
    * real upgrade — owned once, it pays out once — so it isn't one: it just adds no CpS.)
    */
   const isSwitch = (u) => !!u && u.pool === 'toggle';
@@ -220,8 +220,8 @@ CA.Payback = (() => {
     ].join('|');
   // The bonus incomes are measured lazily, in batches, only as something asks for them: buying (the
   // ranking) asks for the buildings you can buy, at the amount you'd buy, and the store's upgrades;
-  // the full table (the colours, the Payback page) for every building at ×1, ×10 and ×100 — Cookie
-  // Monster's colour scale ranks all sixty. Whatever has been measured is kept until the state changes.
+  // the full table (the colors, the Payback page) for every building at ×1, ×10 and ×100 — Cookie
+  // Monster's color scale ranks all sixty. Whatever has been measured is kept until the state changes.
   let cache = null; // { key, t, cps, b: { 'name|n': income }, u: { name: { bonus, mouse, won } }, won: { 'name|n': [...] } }
 
   function fresh() {
@@ -311,7 +311,7 @@ CA.Payback = (() => {
     return c.b[`${b.name}|${n}`];
   }
 
-  // ---- payback periods, colours -------------------------------------------------------------------
+  // ---- payback periods, colors -------------------------------------------------------------------
 
   /** Cookies that count as the bank: the cookies in hand, plus your wrinklers' when that's chosen. */
   function bank() {
@@ -350,10 +350,10 @@ CA.Payback = (() => {
     return { bonus: e.bonus, mouse: e.mouse, gain: e.bonus + Math.max(0, e.mouse) * clickRate(), won: e.won };
   }
 
-  /** Every building at every bulk, and every store upgrade: PP, price, bonus, colour — Cookie Monster's table. */
+  /** Every building at every bulk, and every store upgrade: PP, price, bonus, color — Cookie Monster's table. */
   let memo = null; // { c, key, t, at } — the table, until the bank, the CpS or the settings move
   /**
-   * The table. opts.staleMs: one worked out at most that long ago will do (the store's colours and
+   * The table. opts.staleMs: one worked out at most that long ago will do (the store's colors and
    * sort, redrawn every half second: while purchases come one after another — an autobuyer with a
    * big bank — they'd otherwise measure sixty rows on each).
    */
@@ -426,7 +426,7 @@ CA.Payback = (() => {
     );
   }
   /**
-   * What to buy, lowest PP first: [{ kind, name, n, label, price, pp, bonus, colour }]. kind
+   * What to buy, lowest PP first: [{ kind, name, n, label, price, pp, bonus, color }]. kind
    * 'building' | 'upgrade' | 'all'; opts.bulk: 1 (default), 10, 100, 'round' (to the next multiple of 10)
    * or 'auto' — what CookieMgr's buyers buy (CA.Shop.buyAmount: the minimum bulk, rounded up with
    * Round to multiples); opts.skip: only what you can afford now (with opts.budget cookies, when
@@ -461,7 +461,7 @@ CA.Payback = (() => {
       [],
       us.map((u) => u.name)
     );
-    // colours come from the full table — when it's been worked out for this state (the store, the Payback page)
+    // colors come from the full table — when it's been worked out for this state (the store, the Payback page)
     const t = memo && memo.c === c ? memo.t : null;
     const out = [];
     bs.forEach(([name, n]) => {
@@ -629,7 +629,7 @@ CA.Payback = (() => {
       desc: 'The best (green) building is the lowest payback period you can afford right now; anything you can’t afford yet shows red.',
       default: false,
     });
-    CA.Settings.defineOption({ key: 'ppShowSwitches', group: 'payback', icon: 'filter', name: 'Show switches on the Payback page', desc: 'Switches (Elder Pledge, the Golden switch, season biscuits…) have no payback period; this shows them anyway, greyed.', default: false });
+    CA.Settings.defineOption({ key: 'ppShowSwitches', group: 'payback', icon: 'filter', name: 'Show switches on the Payback page', desc: 'Switches (Elder Pledge, the Golden switch, season biscuits…) have no payback period; this shows them anyway, grayed.', default: false });
     CA.Settings.defineOption({
       key: 'ppSecondsLowerLimit',
       group: 'payback',

@@ -1,5 +1,5 @@
 // The Macros page: every macro (features/macros.js) as a card or row with its trigger, steps,
-// hotkey, favourite star, switch and settings; a strip of what's running; and the editor for
+// hotkey, favorite star, switch and settings; a strip of what's running; and the editor for
 // building your own macros (or changing a built-in) out of actions, conditions and code.
 //
 // Macro rows (row()) are also used on the Stock market, Garden and Grimoire pages; their settings
@@ -200,7 +200,7 @@ CA.UI.MacrosPage = (() => {
       '<div class="ca-macro-status" data-macro-status></div>' +
       '</div>' +
       '<div class="ca-controls">' +
-      `<button type="button" class="ca-iconbtn ca-fav${fav ? ' on' : ''}" data-ca="macro-fav" data-id="${esc(m.id)}" data-tip="${fav ? 'Un-favourite (removes its button from the left panel)' : 'Favourite: gives it its own button on the left panel'}">${I(fav ? 'star' : 'starOutline', 15)}</button>`;
+      `<button type="button" class="ca-iconbtn ca-fav${fav ? ' on' : ''}" data-ca="macro-fav" data-id="${esc(m.id)}" data-tip="${fav ? 'Un-favorite (removes its button from the left panel)' : 'Favourite: gives it its own button on the left panel'}">${I(fav ? 'star' : 'starOutline', 15)}</button>`;
     if (m.builtin) h += `<button type="button" class="ca-iconbtn" data-ca="macro-dup" data-id="${esc(m.id)}" data-tip="Duplicate into your own editable macro">${I('plus', 14)}</button>`;
     else {
       h += `<button type="button" class="ca-iconbtn" data-ca="macro-edit" data-id="${esc(m.id)}" data-tip="Edit">${I('edit', 14)}</button>`;
@@ -241,7 +241,7 @@ CA.UI.MacrosPage = (() => {
       '<div class="ca-mtile-heat" data-macro-heat data-tip="How busy it has been lately"><i></i></div>' +
       '<div class="ca-macro-status" data-macro-status></div>' +
       '<div class="ca-mtile-foot">' +
-      `<button type="button" class="ca-iconbtn ca-fav${fav ? ' on' : ''}" data-ca="macro-fav" data-id="${esc(m.id)}" data-tip="${fav ? 'Un-favourite (removes its button from the left panel)' : 'Favourite: gives it its own button on the left panel'}">${I(fav ? 'star' : 'starOutline', 14)}</button>` +
+      `<button type="button" class="ca-iconbtn ca-fav${fav ? ' on' : ''}" data-ca="macro-fav" data-id="${esc(m.id)}" data-tip="${fav ? 'Un-favorite (removes its button from the left panel)' : 'Favourite: gives it its own button on the left panel'}">${I(fav ? 'star' : 'starOutline', 14)}</button>` +
       `<button type="button" class="ca-iconbtn" data-ca="macro-dup" data-id="${esc(m.id)}" data-tip="Duplicate into your own editable macro">${I('plus', 13)}</button>` +
       C().button(`${I('edit', 11)} Edit`, `data-ca="macro-edit" data-id="${esc(m.id)}"`, 'ca-btn-small') +
       C().hotkey(`macro.${m.id}`) +

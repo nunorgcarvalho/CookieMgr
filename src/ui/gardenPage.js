@@ -2,7 +2,7 @@
 //
 //   Effects         the plants' combined effects over time (the game's Garden information figures)
 //   Growth          a stacked bar chart over time: how many of each seed were at each stage (each
-//                   seed its own colour, young stages darker) — features/gardenHistory.js
+//                   seed its own color, young stages darker) — features/gardenHistory.js
 //   Garden          your plot as it is now, against the layout: each tile's plant and growth
 //                   stage, the layout's seed faded in on empty tiles, a red ring on tiles that don't
 //                   match, and the chance a mature plant dies on the coming tick; hover a tile for details
@@ -225,7 +225,7 @@ CA.UI.GardenPage = (() => {
     return (M && key && M.plants && M.plants[key]) || null;
   };
   const seedName = (key) => (plantOf(key) ? plantOf(key).name : L().NAMES[key] || key || '—');
-  /** A letter chip, in its colour. */
+  /** A letter chip, in its color. */
   const chip = (l) => `<b class="ca-gletter" style="--lc:${letterColor(l)}">${esc(l)}</b>`;
   /** A small grid of a template's letters. */
   function miniLetters(plot) {

@@ -1,6 +1,6 @@
 // What payback costs (v3.7.1): buying asks only for what it can buy — the unlocked buildings at the
-// amount a buy takes, and the store's upgrades — never the sixty rows of the colour table (every
-// building at ×1, ×10 and ×100, locked ones too), which only the store's colours and the Payback page
+// amount a buy takes, and the store's upgrades — never the sixty rows of the color table (every
+// building at ×1, ×10 and ×100, locked ones too), which only the store's colors and the Payback page
 // need. Counted in the real game: the game's CpS computations (Game.CalculateGains) per best() after a
 // purchase, in a fresh game and a late one; per buy.best pass with a bank that buys on every one (the
 // simulator's garden6 case); and the ranking the same as the full table's.
@@ -48,7 +48,7 @@ sim.run({ seconds: 6 });
 Game.UpgradesInStore.slice(0, 80).forEach((x) => x.pool !== 'toggle' && x.pool !== 'tech' && x.buy(1));
 sim.run({ seconds: 6 });
 const late = costOfBest();
-assert(late <= bound(unlocked(), store()) && late < 60 + store(), `late game: ${late} for best() (≤ ${bound(unlocked(), store())}: ${unlocked()} buildings, ${store()} upgrades — not the 60 rows of the colour table)`);
+assert(late <= bound(unlocked(), store()) && late < 60 + store(), `late game: ${late} for best() (≤ ${bound(unlocked(), store())}: ${unlocked()} buildings, ${store()} upgrades — not the 60 rows of the color table)`);
 const onlyB = costOfBest('building');
 assert(onlyB > 0 && onlyB <= unlocked() + 3, `best(building): the buildings only (${onlyB})`);
 // a bank too small for most upgrades: those whose wait alone outlasts the best building aren't measured

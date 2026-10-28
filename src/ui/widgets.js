@@ -29,7 +29,7 @@
 //     For the "Add a widget" picker on the Widgets page: group = the id of a shelf (see defineGroup; unknown or
 //     missing ones land in "More"); sprite = [col, row] of the game's img/icons.png, or { sheet, pos: [col, row] }
 //     for another 48px sheet (img/gardenPlants.png) — without one the `icon` is drawn instead; short = a one-line
-//     summary under the name; ring = the colour of a round (bare) widget's ring on its tile (default gold).
+//     summary under the name; ring = the color of a round (bare) widget's ring on its tile (default gold).
 //   CA.UI.Widgets.defineGroup({ id, name, sprite, order })   a shelf of the picker; shelves sort by order
 //
 // legacy: { oldTypeId: (saved) => settings } — saved widgets of a type it replaced load as this one (migrate()).
@@ -151,7 +151,7 @@ CA.UI.Widgets = (() => {
     return { x: fx(W - BUTTON_PX - 8), y: fy(bottom) };
   }
 
-  /** Keeps macro buttons in step with ★ favourites: one button per favourite, none for the rest. */
+  /** Keeps macro buttons in step with ★ favorites: one button per favorite, none for the rest. */
   function reconcile() {
     let dirty = false;
     widgets = widgets.filter((w) => {
@@ -863,7 +863,7 @@ CA.UI.Widgets = (() => {
 
   function load(data) {
     if (!Array.isArray(data)) return;
-    // v2.1 had one Shortcuts widget for all favourites; its buttons now start where it was
+    // v2.1 had one Shortcuts widget for all favorites; its buttons now start where it was
     const old = data.find((w) => okPos(w) && w.type === 'shortcuts');
     anchor = old ? { x: old.x, y: old.y } : null;
     widgets = fromSaved(data);
@@ -907,7 +907,7 @@ CA.UI.Widgets = (() => {
       const t = typeById[w.type];
       if (t && t.removed) t.removed(w);
     });
-    // favourites first: each change re-checks the buttons, which would drop the new layout's
+    // favorites first: each change re-checks the buttons, which would drop the new layout's
     const want = new Set(next.filter((w) => w.type === 'macro').map((w) => w.macro));
     CA.Macros.list().forEach((m) => {
       if (CA.Macros.isFav(m.id) !== want.has(m.id)) CA.Macros.setFav(m.id, want.has(m.id));

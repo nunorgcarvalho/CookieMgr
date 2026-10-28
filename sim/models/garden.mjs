@@ -7,7 +7,7 @@
 //     at 100; a tick lasts the soil's tick minutes (the soil at the tick); switching to a quicker
 //     soil pulls the next tick nearer; the soil can change once every 10 minutes
 //   - a plant's effect is × 0.1 / 0.25 / 0.5 / 1 by stage (⅓, ⅔, 1 × mature), × the soil's effMult
-//     (now), × the tile's power boost (a nursetulip: 1 + 0.2 × soil × its stage, on its 8 neighbours,
+//     (now), × the tile's power boost (a nursetulip: 1 + 0.2 × soil × its stage, on its 8 neighbors,
 //     as of the last tick)
 
 export const stageMult = (p, age) => (age >= p.mature ? 1 : age >= p.mature * 0.666 ? 0.5 : age >= p.mature * 0.333 ? 0.25 : 0.1);
@@ -51,7 +51,7 @@ export function plantPolicy(p, theta, ticks = 200000, rnd = Math.random) {
   return { effect: sum / ticks, replantsPerTick: replants / ticks };
 }
 
-/** The 8 neighbours of every tile of a w × h plot. */
+/** The 8 neighbors of every tile of a w × h plot. */
 export function neighbours(w, h) {
   return Array.from({ length: w * h }, (_, i) => {
     const x = i % w;

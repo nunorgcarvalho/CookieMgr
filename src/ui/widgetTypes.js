@@ -1,6 +1,6 @@
 // The built-in widget types (ui/widgets.js is the engine that places, drags, sizes and saves them).
 //
-//   macro      one per ★ favourite macro: a round icon button (on/off or run); name on hover
+//   macro      one per ★ favorite macro: a round icon button (on/off or run); name on hover
 //   status     "Running now" as a status bar: an icon per running macro, details on hover
 //   stats      Quick stats — you pick which (see STATS below)
 //   events     the latest events — how many and which types; as many of these as you like

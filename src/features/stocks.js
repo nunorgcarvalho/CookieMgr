@@ -1,8 +1,8 @@
 // Stock market helper: shows every stock's trend right on its box in the Bank minigame,
 // so you can trade at a glance instead of hovering for the tooltip.
 //
-//   - a coloured strip with a symbol + label (Stable, Slow rise, Fast rise, ...)
-//   - the whole box is tinted in the trend's colour, and glows brighter while you own the stock
+//   - a colored strip with a symbol + label (Stable, Slow rise, Fast rise, ...)
+//   - the whole box is tinted in the trend's color, and glows brighter while you own the stock
 //
 // The game keeps each stock's trend in `good.mode`:
 //   0 stable · 1 slow rise · 2 slow fall · 3 fast rise · 4 fast fall · 5 chaotic
@@ -10,7 +10,7 @@
 CA.Stocks = (() => {
   const TICK_MS = 250;
 
-  // Colours are paired with distinct symbols so the trend never depends on colour alone.
+  // Colors are paired with distinct symbols so the trend never depends on color alone.
   const MODES = [
     { key: 'stable', label: 'Stable', sym: '▬', color: '#7fa6c9', hint: 'Barely moves.' },
     { key: 'rise', label: 'Slow rise', sym: '▲', color: '#a6e35a', hint: 'Drifting up.' },
@@ -369,7 +369,7 @@ CA.Stocks = (() => {
       icon: 'drop',
       group: 'stocks',
       name: 'Tint stock boxes',
-      desc: 'Colours each stock box by its trend; boxes glow brighter while you hold that stock.',
+      desc: 'Colors each stock box by its trend; boxes glow brighter while you hold that stock.',
       default: true,
     });
     CA.Settings.defineOption({

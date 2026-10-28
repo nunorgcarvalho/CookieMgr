@@ -30,7 +30,7 @@ CA.GardenHistory = (() => {
   let saveId = null; // whose history this is (CA.Store.saveId())
   const keyOf = (s) => `${KV}.${s}`;
 
-  /** Each seed's colour, picked to match its sprite. Unknown seeds get a stable hashed hue. */
+  /** Each seed's color, picked to match its sprite. Unknown seeds get a stable hashed hue. */
   const COLORS = {
     bakerWheat: '#e3c46b',
     thumbcorn: '#f0d43c',
@@ -73,7 +73,7 @@ CA.GardenHistory = (() => {
     for (const ch of String(key)) h = (h * 31 + ch.charCodeAt(0)) % 360;
     return `hsl(${h}, 55%, 60%)`;
   }
-  /** A stage's shade of a seed's colour: young stages darker, mature the full colour. */
+  /** A stage's shade of a seed's color: young stages darker, mature the full color. */
   function shade(key, stage) {
     const base = colorOf(key);
     const dark = [0.62, 0.42, 0.2, 0][stage] || 0;
@@ -124,7 +124,7 @@ CA.GardenHistory = (() => {
     return out;
   }
 
-  /** The "Garden information" effects, named as the game names them, each with a chart colour. */
+  /** The "Garden information" effects, named as the game names them, each with a chart color. */
   const EFFECTS = [
     { k: 'cps', n: 'CpS', color: '#f5c451' },
     { k: 'click', n: 'cookies/click', color: '#7fe08b' },

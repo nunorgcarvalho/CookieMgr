@@ -279,7 +279,7 @@ CA.Macros = (() => {
     changed(id);
     return m;
   }
-  /** Back to the built-in as it comes (keeping only whether it's a favourite). */
+  /** Back to the built-in as it comes (keeping only whether it's a favorite). */
   function revert(id) {
     if (!baseDefs[id]) return null;
     const fav = prefs[id] && prefs[id].fav;

@@ -2,7 +2,7 @@
 // the macro editor and the Garden page's rules. Any number of editors can be on a page, each with
 // its own key.
 //
-//   CA.UI.CodeEditor.html(key, source, { title, hint })   the editor: numbered, coloured lines, the
+//   CA.UI.CodeEditor.html(key, source, { title, hint })   the editor: numbered, colored lines, the
 //                                                          problems under it, what it's doing when it
 //                                                          runs, and a "how it reads" crib sheet
 //   CA.UI.CodeEditor.libraryHtml(key, { first, mode })     every action / condition / value / keyword,
@@ -106,7 +106,7 @@ CA.UI.CodeEditor = (() => {
 
   // ---- the code ---------------------------------------------------------------------------
 
-  // syntax colouring (one line at a time)
+  // syntax coloring (one line at a time)
   const KW = new Set(['if', 'elif', 'else', 'for', 'in', 'def', 'repeat', 'until', 'while', 'times', 'forever', 'parallel', 'branch', 'wait', 'seconds', 'second', 'minutes', 'minute', 'stop', 'log', 'switch', 'on', 'off', 'and', 'or', 'not', 'true', 'false', 'return']);
   function highlightLine(line) {
     let out = '';
@@ -135,7 +135,7 @@ CA.UI.CodeEditor = (() => {
     return out;
   }
 
-  /** The code's lines, coloured; its problems. copts: how it compiles ({ mode: 'stat', item } for a statistic's). */
+  /** The code's lines, colored; its problems. copts: how it compiles ({ mode: 'stat', item } for a statistic's). */
   function view(src, vars, copts = {}) {
     const lines = String(src || '').split('\n');
     const { errors } = CA.Script.compile(src, { ...copts, vars });

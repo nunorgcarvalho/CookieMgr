@@ -3,7 +3,7 @@
 //
 // **Sort** — the order the store lists buildings in (ui/storeBar.js lays the rows out in it):
 //   default       the game's own order: Cursor, Grandma, Farm…
-//   value         best buy first: by payback period colour, then payback period (features/payback.js),
+//   value         best buy first: by payback period color, then payback period (features/payback.js),
 //                 for what a click buys now — ×1, ×10, ×100, or to the next multiple with Round to
 //                 multiples on (Cookie Monster's "PP of selected bulk mode")
 //   achievement   cheapest to reach the building's next achievement first; buildings more than 100

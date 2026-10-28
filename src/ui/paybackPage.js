@@ -3,19 +3,19 @@
 //
 //   Best buy      the lowest payback period of all (building or upgrade), what it adds, when you can
 //                 afford it — and the best building and the best upgrade
-//   Buildings     every building: owned, then ×1 / ×10 / ×100, each a cell coloured by its payback
-//                 colour with its payback period, the CpS it adds and its price (click one to buy that
+//   Buildings     every building: owned, then ×1 / ×10 / ×100, each a cell colored by its payback
+//                 color with its payback period, the CpS it adds and its price (click one to buy that
 //                 many); and how many more win the next achievement
-//   Upgrades      the store's upgrades as tiles, ringed in their colour, best first; click to buy —
-//                 switches (no payback period) only when the filter chip shows them, greyed
+//   Upgrades      the store's upgrades as tiles, ringed in their color, best first; click to buy —
+//                 switches (no payback period) only when the filter chip shows them, grayed
 //   Options       the minimum bulk, the wrinkler bank, "best = what you can afford", the cheap-enough floor
 //   Store tooltips  the tooltip block's two switches (Payback in tooltips, Bank warnings) and a link to
 //                 the Tooltips page (ui/tooltipsPage.js), where its lines are
 //
 // The "actual income" chip shows every payback period by what you've actually been taking in
-// (features/payback.js ppActual) instead of by CpS; colours stay CpS's.
+// (features/payback.js ppActual) instead of by CpS; colors stay CpS's.
 //
-// Colours (Cookie Monster's): blue better than the best building · green the best building ·
+// Colors (Cookie Monster's): blue better than the best building · green the best building ·
 // yellow / orange / red within the 10 / 20 / 30 best · purple worse · gray never pays back.
 
 CA.UI = CA.UI || {};
@@ -117,7 +117,7 @@ CA.UI.PaybackPage = (() => {
 
   function upgradesHtml(t) {
     const list = Object.values(t.upgrades).sort((a, b) => a.pp - b.pp);
-    // switches (Elder Pledge, the Golden switch, season biscuits…) have no payback period: shown only when asked, greyed, last
+    // switches (Elder Pledge, the Golden switch, season biscuits…) have no payback period: shown only when asked, grayed, last
     const sw = CA.Settings.get('ppShowSwitches') ? t.switches : [];
     if (!list.length && !sw.length) return '<div class="ca-card-note">No upgrades in the store.</div>';
     return (
@@ -153,7 +153,7 @@ CA.UI.PaybackPage = (() => {
     const ratio = a && C0 > 0 ? a.actual / C0 : NaN;
     const tip = `${on ? 'Back to' : 'Show'} payback periods by ${on ? 'CpS' : 'actual income'}. By actual income: the period × CpS ÷ what you actually took in (clicking, golden cookies, wrinklers — everything baked) over the last stretch of play as long as the period itself (at least 5 minutes). ${
       Number.isFinite(ratio) ? `Over the last 5 minutes you took in ${F().beautify(a.actual)}/s: ×${ratio.toFixed(2)} your CpS.` : 'Too little recorded yet (a minute of play).'
-    } Colours stay CpS's.`;
+    } Colors stay CpS's.`;
     return `<button type="button" class="ca-chip${on ? ' on' : ''}" data-pp-opt="ppActual" data-tip="${esc(tip)}">${I('graphs', 11)} actual income${Number.isFinite(ratio) ? ` ×${ratio.toFixed(2)}` : ''}</button>`;
   }
   /** The upgrades card's switch filter: a chip, on when switches are shown. */
@@ -194,7 +194,7 @@ CA.UI.PaybackPage = (() => {
       C().cardHead('Store tooltips', 'search', `<div class="ca-card-meta"><span class="ca-hint">what each line under the tooltips shows, and your own: ${C().link('the Tooltips page', 'tooltips')}</span></div>`) +
       '<div class="ca-list">' +
       `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('search', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Payback in tooltips</div><div class="ca-row-desc">The block at all (off: the game’s tooltips as they are).</div></div>${C().toggle(!!S.get('storeTooltips'), 'data-pp-opt="storeTooltips"', 'Payback in tooltips')}</div>` +
-      `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('bell', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Bank warnings</div><div class="ca-row-desc">A coloured “!” on items whose purchase would take your bank below what a Lucky!, Conjure or a Frenzy Lucky! needs.</div></div>${C().toggle(!!S.get('storeWarnings'), 'data-pp-opt="storeWarnings"', 'Bank warnings')}</div>` +
+      `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('bell', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Bank warnings</div><div class="ca-row-desc">A colored “!” on items whose purchase would take your bank below what a Lucky!, Conjure or a Frenzy Lucky! needs.</div></div>${C().toggle(!!S.get('storeWarnings'), 'data-pp-opt="storeWarnings"', 'Bank warnings')}</div>` +
       '</div></div>'
     );
   }

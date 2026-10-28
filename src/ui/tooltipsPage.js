@@ -11,7 +11,7 @@
 //                          the warnings) in one click,
 //                          duplicate it (yours, to change), ☆ put it on the left
 //                          panel as a Statistic widget. Filter by group, yours, on screen; search.
-//                          New, Edit / Customise, Paste: the statistic editor (ui/statEditor.js) opens
+//                          New, Edit / Customize, Paste: the statistic editor (ui/statEditor.js) opens
 //                          in place of the catalog.
 //   Values                 every value word a statistic can use (CA.Script.library, as the code editor
 //                          lists them), with its signature, what it is and its value now.
@@ -158,10 +158,10 @@ CA.UI.TooltipsPage = (() => {
 
   // ---- the warnings ---------------------------------------------------------------------------------
 
-  /** A warning's colour: its own, the item's payback colour, or red. */
+  /** A warning's color: its own, the item's payback color, or red. */
   const warnColour = (s) => (s.colour === 'payback' ? 'payback' : ST().COLOURS.includes(s.colour) ? s.colour : 'red');
   const COLOUR_TAG = (s) =>
-    `<span class="ca-tl-kind ca-tl-colour ${warnColour(s)}" data-tip="Its colour (the store’s “!” takes the first warning’s)">${warnColour(s) === 'payback' ? 'payback colour' : warnColour(s)}</span>`;
+    `<span class="ca-tl-kind ca-tl-colour ${warnColour(s)}" data-tip="Its color (the store’s “!” takes the first warning’s)">${warnColour(s) === 'payback' ? 'payback colour' : warnColour(s)}</span>`;
   function warnsHtml() {
     const list = SI().warningList();
     const btn = (attr, i, icon, tip, off) =>
@@ -221,7 +221,7 @@ CA.UI.TooltipsPage = (() => {
       '</div>' +
       '<div class="ca-list">' +
       `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('search', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Payback in tooltips</div><div class="ca-row-desc">The block at all (off: the game’s tooltips as they are).</div></div>${C().toggle(!!S.get('storeTooltips'), 'data-tl-opt="storeTooltips"', 'Payback in tooltips')}</div>` +
-      `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('bell', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Warnings</div><div class="ca-row-desc">A coloured “!” on the store’s items a warning is about (in the first one’s colour), and a ⚠ line in their tooltips with a tag for each. Warnings are statistics too: by default, a purchase that would take your bank below what a Lucky! (red), Conjure (orange) or a Frenzy Lucky! (yellow) needs.</div></div>${C().toggle(!!S.get('storeWarnings'), 'data-tl-opt="storeWarnings"', 'Warnings')}</div>` +
+      `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('bell', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Warnings</div><div class="ca-row-desc">A colored “!” on the store’s items a warning is about (in the first one’s color), and a ⚠ line in their tooltips with a tag for each. Warnings are statistics too: by default, a purchase that would take your bank below what a Lucky! (red), Conjure (orange) or a Frenzy Lucky! (yellow) needs.</div></div>${C().toggle(!!S.get('storeWarnings'), 'data-tl-opt="storeWarnings"', 'Warnings')}</div>` +
       '</div>' +
       `<div class="ca-tl-warns${S.get('storeWarnings') ? '' : ' off'}" data-tl-warns>${warnsHtml()}</div>` +
       '</div>'

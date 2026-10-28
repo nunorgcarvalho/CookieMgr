@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 3.39.1 — 2026-10-28
+
+- Spelling is American English throughout: the add-on's text, tooltips, settings and docs (colour → color,
+  favourite → favorite, neighbour → neighbor, customise → customize, centre → center, labelled → labeled,
+  greyed → grayed, cancelled → canceled, behaviour → behavior). Nothing else changes: saved settings, option ids,
+  statistic names (`item.colour`), code and API names keep their spelling.
+
 ## 3.39.0 — 2026-10-28
 
 - **One Golden cookies widget instead of three.** Next golden cookie, Golden timeline and Golden cookie frequency

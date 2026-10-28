@@ -1,19 +1,19 @@
 // The store, with what each purchase is worth (features/payback.js) — what Cookie Monster adds to it:
 //
-//   colours    each building's price in its payback colour, for what a click buys now (×1, ×10,
+//   colors    each building's price in its payback color, for what a click buys now (×1, ×10,
 //              ×100, or to the next multiple), and a small dot in each upgrade's corner
 //   tooltips   under the game's own building and upgrade tooltips, a CookieMgr block — by default
 //              Cookie Monster's: the CpS it adds (and what share of your CpS that is), its payback period
-//              and colour (and by actual income), when you can afford it, the achievements it wins; a
+//              and color (and by actual income), when you can afford it, the achievements it wins; a
 //              building's share of your production, and how many more win its next achievement. Every
 //              line is a statistic (features/stats.js); which, in what order — any value word too — is
 //              chosen on the Payback page.
 //   warnings   warning statistics (features/stats.js, warn) — by default, buying it would take your bank
 //              below what a Lucky! (Conjure Baked Goods, a Lucky! in a Frenzy) needs to pay its most:
-//              a small mark on the item in the store, in the colour of the first that warns, and one
+//              a small mark on the item in the store, in the color of the first that warns, and one
 //              line in the block with a tag for each (option storeWarningList: which, in what order)
 //
-//   sort       optionally, the upgrades in payback order (colour group, then payback period)
+//   sort       optionally, the upgrades in payback order (color group, then payback period)
 //
 // Options (Settings → Store): storeColours, storeTooltips, storeWarnings, storeUpgradeSort (and,
 // chosen on the Tooltips page: storeTooltipLines, storeWarningList).
@@ -25,7 +25,7 @@ CA.UI.StoreInsight = (() => {
   const COLOURS = ['blue', 'green', 'yellow', 'orange', 'red', 'purple', 'gray'];
   const S = (k) => CA.Settings.get(k);
 
-  // ---- colours -----------------------------------------------------------------------------------
+  // ---- colors -----------------------------------------------------------------------------------
 
   /** How many a click on a building buys now. */
   const clickAmount = (b) => CA.Shop.amountFor(b, Game.buyBulk === 10 || Game.buyBulk === 100 ? Game.buyBulk : 1) || 1;
@@ -39,7 +39,7 @@ CA.UI.StoreInsight = (() => {
     return { name: b.name, n, price, bonus, pp, colour: t.colourOf(pp, price), won: [] };
   }
 
-  /** An item's mark in the store: the colour of its first warning (or none). */
+  /** An item's mark in the store: the color of its first warning (or none). */
   function mark(host, warns) {
     let el = host.querySelector(':scope > .ca-bank-mark');
     if (!warns.length) {
@@ -66,7 +66,7 @@ CA.UI.StoreInsight = (() => {
       const host = document.getElementById(`product${b.id}`);
       if (host) mark(host, warn ? warnings({ kind: 'building', name: b.name, r: rowFor(b, t), t }) : []);
     });
-    // the upgrades in payback order (colour group, then payback period) — or the game's
+    // the upgrades in payback order (color group, then payback period) — or the game's
     const sorted = S('storeUpgradeSort') && Game.buyMode === 1;
     const tu = sorted ? t || P().table() : null;
     const rank = sorted
@@ -118,7 +118,7 @@ CA.UI.StoreInsight = (() => {
   const warningsOn = () => !!S('storeWarnings') && warningList().length > 0;
   /**
    * The warnings about an item (a context: { kind, name, r, t }), in order: [{ id, label, html,
-   * colour }] — none with the option off (opts.force: whatever the option).
+   * color }] — none with the option off (opts.force: whatever the option).
    */
   function warnings(c, opts = {}) {
     if (!c || (!opts.force && !S('storeWarnings'))) return [];
@@ -134,7 +134,7 @@ CA.UI.StoreInsight = (() => {
     return out;
   }
 
-  /** The tooltip's one warning line: a coloured tag for each warning, with what it shows. */
+  /** The tooltip's one warning line: a colored tag for each warning, with what it shows. */
   function warnLine(warns) {
     if (!warns.length) return '';
     const tags = warns.map((w) => `<span class="ca-tt-bank ca-tt-bank-${w.colour}">${w.label} <small>${w.html}</small></span>`);
@@ -254,12 +254,12 @@ CA.UI.StoreInsight = (() => {
 
   function init() {
     const D = (key, icon, name, desc) => CA.Settings.defineOption({ key, group: 'store', icon, name, desc, default: true });
-    D('storeColours', 'drop', 'Payback colours', 'Each building’s price in its payback colour (for what a click buys), and a dot in each upgrade’s corner — blue better than the best building, green the best, then yellow, orange, red, purple; gray never pays back.');
+    D('storeColours', 'drop', 'Payback colors', 'Each building’s price in its payback color (for what a click buys), and a dot in each upgrade’s corner — blue better than the best building, green the best, then yellow, orange, red, purple; gray never pays back.');
     D('storeTooltips', 'search', 'Payback in tooltips', 'Under the game’s building and upgrade tooltips: the CpS it adds, its payback period, when you can afford it, its share of production, the next achievement.');
-    CA.Settings.defineOption({ key: 'storeUpgradeSort', group: 'store', icon: 'sortList', name: 'Upgrades: best first', desc: 'The store lists its upgrades by payback period (best first, in colour groups) instead of by price.', default: false });
+    CA.Settings.defineOption({ key: 'storeUpgradeSort', group: 'store', icon: 'sortList', name: 'Upgrades: best first', desc: 'The store lists its upgrades by payback period (best first, in color groups) instead of by price.', default: false });
     CA.Settings.defineOption({ key: 'storeTooltipLines', group: 'store-hidden', name: 'Tooltip lines', desc: '', default: null });
     // off by default since the tooltip's lines became yours to choose: Cookie Monster's layout, without them)
-    CA.Settings.defineOption({ key: 'storeWarnings', group: 'store', icon: 'bell', name: 'Warnings', desc: 'A small coloured “!” on anything a warning is about — by default, whose purchase would take your bank below what a Lucky! (red), Conjure Baked Goods (orange) or a Lucky! in a Frenzy (yellow) needs to pay its most — and one line in its tooltip saying which, and by how much. Which warnings: the Tooltips page.', default: false });
+    CA.Settings.defineOption({ key: 'storeWarnings', group: 'store', icon: 'bell', name: 'Warnings', desc: 'A small colored “!” on anything a warning is about — by default, whose purchase would take your bank below what a Lucky! (red), Conjure Baked Goods (orange) or a Lucky! in a Frenzy (yellow) needs to pay its most — and one line in its tooltip saying which, and by how much. Which warnings: the Tooltips page.', default: false });
     CA.Settings.defineOption({ key: 'storeWarningList', group: 'store-hidden', name: 'Warnings', desc: '', default: null });
     wrapTooltips();
     setInterval(() => {

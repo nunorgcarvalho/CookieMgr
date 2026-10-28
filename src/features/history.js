@@ -21,7 +21,7 @@ CA.History = (() => {
   const open = {}; // buff name -> currently open interval
   let dirty = false;
 
-  // ---- colours -------------------------------------------------------------------
+  // ---- colors -------------------------------------------------------------------
 
   const KNOWN_COLORS = {
     Frenzy: '#f4c430',

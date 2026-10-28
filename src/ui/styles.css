@@ -1,6 +1,6 @@
 /* ==========================================================================
    CookieMgr — styles
-   Colours and borders borrow from the game's own "framed" look so the panel
+   Colors and borders borrow from the game's own "framed" look so the panel
    feels native. Everything is scoped under #CookieMgrTab / #CookieMgrMenu.
    ========================================================================== */
 
@@ -2046,7 +2046,7 @@
 
 /* ---------- v2.4: hover stacking, status popups, groups, stages, prestige target ---------- */
 
-/* whatever you hover comes to the front, so its label/popup is never under a neighbour */
+/* whatever you hover comes to the front, so its label/popup is never under a neighbor */
 #CookieMgrWidgets .ca-w:hover,
 #CookieMgrWidgets .ca-w.dragging {
   z-index: 20;
@@ -2517,7 +2517,7 @@
 #CookieMgrWidgets .ca-orb-label .neg {
   color: #ff9a8a;
 }
-/* garden: plants by stage, as four coloured dots with counts */
+/* garden: plants by stage, as four colored dots with counts */
 #CookieMgrWidgets .ca-orb-dots {
   display: flex;
   gap: 3px;
@@ -4685,7 +4685,7 @@ body.ca-has-storebar #products {
       0 0 18px rgba(255, 200, 100, 0.15);
   }
 }
-/* its header in the widget's own colour */
+/* its header in the widget's own color */
 #CookieMgrMenu .ca-weditor {
   --wt: #e0b45a;
 }
@@ -5249,9 +5249,9 @@ body.ca-has-storebar #products {
   color: #ffd98a;
 }
 
-/* ---------- payback colours, the Payback and Stats pages, the store (in-house Cookie Monster) ---------- */
+/* ---------- payback colors, the Payback and Stats pages, the store (in-house Cookie Monster) ---------- */
 
-/* the colours: blue better than the best building · green the best · yellow / orange / red the 10 / 20 /
+/* the colors: blue better than the best building · green the best · yellow / orange / red the 10 / 20 /
    30 best · purple further · gray never pays back */
 #CookieMgrMenu,
 #CookieMgrWidgets,
@@ -5397,7 +5397,7 @@ body.ca-has-storebar #products {
   font-weight: bold;
   text-align: right;
 }
-/* bank warnings: one line of coloured tags (the banks a purchase breaks, and by how much) */
+/* bank warnings: one line of colored tags (the banks a purchase breaks, and by how much) */
 #tooltip .ca-tt-warn,
 #CookieMgrMenu .ca-tl-preview .ca-tt-warn {
   display: block;
@@ -5444,7 +5444,7 @@ body.ca-has-storebar #products {
   color: #ffe066;
   background: rgba(255, 224, 102, 0.12);
 }
-/* the store's mark: a small "!" in the colour of the smallest bank buying it breaks */
+/* the store's mark: a small "!" in the color of the smallest bank buying it breaks */
 .ca-bank-mark {
   position: absolute;
   left: 3px;
@@ -6269,7 +6269,7 @@ body.ca-has-storebar #products {
   fill: #f2e9d4;
 }
 
-/* Effect timers: one slim bar per effect, in its colour (--c); its icon (.ca-et-ico) is shared with other views */
+/* Effect timers: one slim bar per effect, in its color (--c); its icon (.ca-et-ico) is shared with other views */
 #CookieMgrWidgets .ca-et-list {
   display: flex;
   flex-direction: column;
@@ -6620,7 +6620,7 @@ body.ca-has-storebar #products {
 #CookieMgrWidgets .ca-sp-lane.down .left {
   fill: rgba(255, 110, 110, 0.5);
 }
-/* the cycle chart's effects: each in its own colour (ui/effectTimers.js's), bad ones striped there, faded here */
+/* the cycle chart's effects: each in its own color (ui/effectTimers.js's), bad ones striped there, faded here */
 #CookieMgrMenu .ca-sp-lane.ca-sp-tinted .left,
 #CookieMgrWidgets .ca-sp-lane.ca-sp-tinted .left {
   fill: var(--c);
@@ -6690,7 +6690,7 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-sp {
   padding-bottom: 12px;
 }
-/* a switch on the Payback page: no payback period, greyed */
+/* a switch on the Payback page: no payback period, grayed */
 #CookieMgrMenu .ca-pp-up.ca-pp-switch {
   cursor: default;
   opacity: 0.4;
@@ -6789,7 +6789,7 @@ body.ca-has-storebar #products {
 
 /* ---------- v3.24.0: ☆ widget stars, the Chart widget, Golden cookie frequency ---------- */
 
-/* a page's ☆ (CA.UI.C.widgetStar): the macros' favourite star, a touch smaller in card heads */
+/* a page's ☆ (CA.UI.C.widgetStar): the macros' favorite star, a touch smaller in card heads */
 #CookieMgrMenu .ca-wstar {
   padding: 2px 4px;
   line-height: 0;
@@ -7108,7 +7108,7 @@ body.ca-has-storebar #products {
   border-bottom: none;
 }
 
-/* v3.29: warnings as statistics — tags in any colour, the Tooltips page's warning list */
+/* v3.29: warnings as statistics — tags in any color, the Tooltips page's warning list */
 #tooltip .ca-tt-bank-green,
 #CookieMgrMenu .ca-tl-preview .ca-tt-bank-green,
 #CookieMgrMenu .ca-se-result .ca-tt-bank-green {

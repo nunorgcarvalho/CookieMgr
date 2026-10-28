@@ -5,7 +5,7 @@
 //   Bank      cookies in the bank, what moved it per second (in by source / out), and cumulative
 //   Prestige  prestige level if you ascended now, and levels gained per hour
 //
-// Sources are coloured the same everywhere: production, clicking, golden cookies & reindeer, other.
+// Sources are colored the same everywhere: production, clicking, golden cookies & reindeer, other.
 
 CA.UI = CA.UI || {};
 
@@ -315,7 +315,7 @@ CA.UI.Graphs = (() => {
     const { cats, gains, losses, boosted } = ledgerView();
     const out = [];
     cats.forEach((c) => {
-      // merge: one tooltip row per category, labelled like the tables ("−bought / +sold", "raw / boosted")
+      // merge: one tooltip row per category, labeled like the tables ("−bought / +sold", "raw / boosted")
       const words = c.words || [];
       if (gains && c.in)
         out.push({

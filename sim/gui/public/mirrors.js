@@ -8,7 +8,7 @@
 //                  holds the streamed frames — its queries (frames, series, timeAt, activeAt, recent…)
 //                  are the real ones
 //   CA.EventLog    the simulated game's event log, as streamed (list, since, types)
-//   CA.History     golden cookie effects as recorded there (intervalsIn); colours: the add-on's own
+//   CA.History     golden cookie effects as recorded there (intervalsIn); colors: the add-on's own
 //   CA.UI.Menu     the two things the pages ask of the add-on's panel: render() and optionsCard()
 //   Date.now()     inside the add-on's code, the simulated moment (CookieSimClock — see /cm.js)
 //   Game           the few numbers the pages read straight from the game (bank, baked, prestige) and
@@ -64,7 +64,7 @@
     },
   };
 
-  // ---- golden cookie effects: the add-on's colours, the simulated game's intervals ---------------------
+  // ---- golden cookie effects: the add-on's colors, the simulated game's intervals ---------------------
   const H = CA.History;
   let intervals = [];
   CA.History = {
