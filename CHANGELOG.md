@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 3.50.1 — 2026-10-28
+
+- **README:** the Payback screenshot and its bullets show Buy all upgrades in the Auto buyer's queue with its own
+  payback period, as since 3.50.0. No change to the add-on itself.
+
 ## 3.50.0 — 2026-10-28
 
 - **Buy all upgrades has a payback period, and the Auto buyer ranks it.** It's measured the way a single upgrade
