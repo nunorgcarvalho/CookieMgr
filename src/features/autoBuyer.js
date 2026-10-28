@@ -532,5 +532,30 @@ CA.AutoBuyer = (() => {
     CA.Macros.rename('cmUpgrades', 'autoBuyer');
   }
 
+  // a profile's id in code (buyer.profile(payback), buyer.queue(buildings)…): the code editors' hover cards
+  CA.Words.defineKind('profile.buyer', {
+    name: 'Auto buyer profile',
+    info: (id) => {
+      const p = find(id);
+      if (!p) return null;
+      const mode = p.mode ? (P().modes().find((m) => m.id === p.mode || m.key === p.mode) || { label: p.mode }).label : 'the payback mode in use';
+      const kinds = Object.keys(p.kinds).filter((k) => p.kinds[k]);
+      const front = next(p.id);
+      return {
+        title: p.name,
+        sig: p.id,
+        desc: `Ranks ${kinds.length ? kinds.map((k) => ({ building: 'buildings', upgrade: 'upgrades', allUpgrades: 'Buy all upgrades' })[k] || k).join(', ') : 'nothing'} by payback period (${mode}) into one queue, and the Auto buyer buys the front.`,
+        rows: [
+          ['bulk', p.bulk === 'auto' ? 'auto' : `×${p.bulk}`],
+          ['reserve', reserveParts(p.id).length ? reserveParts(p.id).map((x) => x.label).join(', ') : 'none'],
+          ['rules', String(p.rules.length)],
+          ['front now', front ? front.name : '—'],
+          ['in use', p.id === active ? 'yes' : 'no'],
+        ],
+        note: 'Payback page, Auto buyer.',
+      };
+    },
+  });
+
   return { init, allUpgrades, buyAllUpgrades, list, find, use, create, update, remove, addRule, setRule, removeRule, moveRule, activeProfile, queue, next, buyNext, readiness, budget, keepOf, reserveParts, thingOf, ruleText, whatText, effectText, whenProblem, reserveOf, WHATS, EFFECTS, BULKS, BANKS, SEEDS, BULK_RULE };
 })();

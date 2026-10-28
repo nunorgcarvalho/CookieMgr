@@ -323,6 +323,22 @@ CA.CastTiers = (() => {
     });
   }
 
+  // a profile's id in code (grimoire.profile(default)…): the code editors' hover cards
+  CA.Words.defineKind('profile.grimoire', {
+    name: 'Grimoire profile',
+    info: (id) => {
+      const p = find(id);
+      if (!p) return null;
+      return {
+        title: p.name,
+        sig: p.id,
+        desc: 'When the auto-cast casts Force the Hand of Fate: each tier, the combos it waits for and the magic it keeps.',
+        rows: p.tiers.map((t, i) => [`tier ${i + 1}`, `${t.name}${t.pct ? ` · keeps ${t.pct}%` : ''}`]).concat([['in use', isActive(p.id) ? 'yes' : 'no']]),
+        note: 'Grimoire page, Cast tiers.',
+      };
+    },
+  });
+
   return {
     init,
     EFFECTS,

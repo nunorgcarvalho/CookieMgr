@@ -36,6 +36,7 @@ CA.UI.MacrosPage = (() => {
   const openSettings = new Set(); // cards whose ⚙ settings are unfolded
   let draft = null; // macro being edited (a copy), or null
   let draftError = '';
+  let draftWas = ''; // the draft as it opened, to tell unsaved changes
   let life = null; // the mounted page (CA.UI.Pages.scope)
 
   // ---- pieces shared with other pages ----------------------------------------------------
@@ -676,6 +677,7 @@ CA.UI.MacrosPage = (() => {
     if (!draft.steps.length) draft.steps = [{ action: 'pop.golden', params: {} }]; // a group switched to another mode
     if (CA.Settings.get('tab') !== 'clickers' && CA.UI.Menu.isOpen()) CA.Settings.set('tab', 'clickers');
     draftError = '';
+    draftWas = JSON.stringify(draft);
     rerender();
     const el = root && root.querySelector('[data-macro-editor]');
     if (el) CA.Util.scrollInPanel(el);
@@ -952,6 +954,29 @@ CA.UI.MacrosPage = (() => {
     CA.UI.Pages.register({ id: 'clickers', label: 'Macros', icon: 'bolt', order: 70, group: 'custom', html, mount, unmount, tick: () => sync(root) });
     // Cookie Monster arriving unlocks the macros that need it
     CA.Events.on('integrations', () => CA.Settings.get('tab') === 'clickers' && rerender());
+    // a code card's link leaving the editor (ui/codeEditor.js): unsaved changes are asked about first
+    CA.UI.CodeEditor.guard('clickers', {
+      dirty: () => !!draft && JSON.stringify(draft) !== draftWas,
+      name: () => (draft ? draft.name || 'the new macro' : 'Macros'),
+      leave(how) {
+        const d = draft;
+        const page = () => CA.UI.Menu.openPage('clickers');
+        if (!d) return { back: page };
+        if (how === 'save') {
+          onEditAct({ dataset: { editAct: 'save' } });
+          if (draft) return { error: draftError || 'It couldn’t be saved.' };
+          const m = (d.id && M().get(d.id)) || M().list().find((x) => x.name === d.name);
+          return { back: () => (m ? edit(m.id) : page()) };
+        }
+        if (how === 'discard') {
+          draft = null;
+          draftError = '';
+          return { back: () => (d.id ? edit(d.id) : page()) };
+        }
+        const copy = JSON.parse(JSON.stringify(d));
+        return { back: () => (d.id ? edit(d.id) : edit(null, copy)) };
+      },
+    });
   }
 
   return { init, row, tile, sync, handle, handleSetting, icon, edit, run, draft: () => draft };

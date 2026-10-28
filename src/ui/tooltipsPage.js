@@ -268,8 +268,10 @@ CA.UI.TooltipsPage = (() => {
   function codeHtml(src) {
     const lines = String(src).split('\n');
     const hl = (ls) => ls.map((l) => CA.UI.CodeEditor.highlightLine(l)).join('\n');
-    if (lines.length <= CODE_LINES) return `<pre class="ca-code-hl ca-st-code">${hl(lines)}</pre>`;
-    return `<details class="ca-st-more"><summary><pre class="ca-code-hl ca-st-code">${hl(lines.slice(0, CODE_LINES - 1))}</pre><span>${lines.length - CODE_LINES + 1} more lines</span></summary><pre class="ca-code-hl ca-st-code">${hl(lines.slice(CODE_LINES - 1))}</pre></details>`;
+    // data-code-view: hovering a word shows what it is (ui/codeEditor.js); the whole code, for its variables
+    const pre = (ls, first = 0) => `<pre class="ca-code-hl ca-st-code" data-code-view="${esc(src)}" data-code-vars="item"${first ? ` data-code-first="${first}"` : ''}>${hl(ls)}</pre>`;
+    if (lines.length <= CODE_LINES) return pre(lines);
+    return `<details class="ca-st-more"><summary>${pre(lines.slice(0, CODE_LINES - 1))}<span>${lines.length - CODE_LINES + 1} more lines</span></summary>${pre(lines.slice(CODE_LINES - 1), CODE_LINES - 1)}</details>`;
   }
 
   function cardHtml(s) {
@@ -800,6 +802,31 @@ CA.UI.TooltipsPage = (() => {
   function init() {
     defineWidget();
     CA.UI.Pages.register({ id: 'tooltips', label: 'Statistics', icon: 'tag', order: 75, group: 'custom', html, mount, unmount, tick: sync });
+    // a code card's link leaving the statistic editor (ui/codeEditor.js): unsaved changes are asked about first
+    const reopen = (fn) => () => {
+      fn();
+      CA.UI.Menu.openPage('tooltips');
+      CA.UI.Menu.render();
+    };
+    CA.UI.CodeEditor.guard('tooltips', {
+      dirty: () => SE().dirty(),
+      name: () => (SE().draft() ? SE().draft().label : 'Statistics'),
+      leave(how) {
+        const d = SE().draft();
+        if (!d) return { back: reopen(() => {}) };
+        if (how === 'save') {
+          const err = SE().saveNow();
+          if (err) return { error: err };
+          const st = (d.id && ST().get(d.id)) || ST().all().find((x) => x.key === d.key);
+          return { back: reopen(() => st && SE().open(st.id)) };
+        }
+        if (how === 'discard') {
+          SE().close();
+          return { back: reopen(() => d.id && SE().open(d.id)) };
+        }
+        return { back: reopen(() => (d.id ? SE().open(d.id) : SE().openNew(d))) };
+      },
+    });
   }
 
   return { init, sync, mount, unmount, layoutCard, showGroup };

@@ -4973,37 +4973,156 @@ body.ca-has-storebar #products {
   background: rgba(255, 210, 110, 0.3);
   color: transparent;
 }
+/* a code view's words show what they are on hover (ui/codeEditor.js) */
+#CookieMgrMenu .ca-code-hl[data-code-view] {
+  pointer-events: auto;
+}
+/* the hover card of a word of code */
+#CookieMgrLayer .ca-word-tip {
+  max-width: 320px;
+  pointer-events: auto;
+}
+#CookieMgrLayer .ca-word-open {
+  margin-top: 6px;
+  padding-top: 5px;
+  border-top: 1px solid rgba(255, 220, 150, 0.15);
+}
+#CookieMgrLayer .ca-word-go {
+  padding: 2px 8px;
+  border: 1px solid #6a4626;
+  border-radius: 4px;
+  background: rgba(255, 220, 150, 0.06);
+  color: #ffd98a;
+  font: inherit;
+  cursor: pointer;
+}
+#CookieMgrLayer .ca-word-go:hover {
+  background: rgba(255, 220, 150, 0.16);
+  color: #fff3cf;
+}
+#CookieMgrLayer .ca-word-go.on {
+  border-color: #b98a4e;
+  background: rgba(255, 200, 100, 0.18);
+}
+#CookieMgrLayer .ca-word-ask {
+  margin-top: 6px;
+  padding-top: 5px;
+  border-top: 1px solid rgba(255, 220, 150, 0.15);
+}
+#CookieMgrLayer .ca-word-ask-q {
+  margin-bottom: 5px;
+  color: #ffeab0;
+}
+#CookieMgrLayer .ca-word-ask-err {
+  margin-bottom: 5px;
+  color: #ff9a8a;
+}
+#CookieMgrLayer .ca-word-ask-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+/* Back to the code a card's link left */
+#CookieMgrLayer .ca-word-back {
+  position: fixed;
+  z-index: 100001;
+  display: none;
+  pointer-events: auto;
+  max-width: 340px;
+  padding: 5px 6px;
+  font-size: 11px;
+  color: #e6dcc6;
+  background: rgba(14, 10, 6, 0.95);
+  border: 1px solid #b98a4e;
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7);
+}
+#CookieMgrLayer .ca-word-x {
+  margin-left: 4px;
+  padding: 0 5px;
+  border: 0;
+  background: none;
+  color: #a89a83;
+  font-size: 13px;
+  cursor: pointer;
+}
+#CookieMgrLayer .ca-word-back .ca-word-ask {
+  margin-top: 5px;
+}
+/* where a card's link landed, for a moment */
+#CookieMgrLayer .ca-word-flash {
+  position: fixed;
+  border: 2px solid #ffd98a;
+  border-radius: 6px;
+  box-shadow: 0 0 14px rgba(255, 217, 138, 0.8);
+  animation: ca-word-flash 1.8s ease-out forwards;
+}
+@keyframes ca-word-flash {
+  0%,
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+#CookieMgrLayer .ca-word-sig {
+  margin: 0 0 4px;
+  padding: 3px 6px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.4);
+  font: 11px/16px Consolas, 'Cascadia Mono', Menlo, Monaco, monospace;
+  color: #e8d7b0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+#CookieMgrLayer .ca-word-sig code {
+  font: inherit;
+}
+#CookieMgrLayer .ca-word-desc {
+  margin: 0 0 4px;
+  color: #e6dcc6;
+}
 #CookieMgrMenu .ca-hl-line.err {
   text-decoration: underline wavy rgba(255, 110, 100, 0.7);
   text-underline-offset: 4px;
 }
-#CookieMgrMenu .ca-code-hl .hc {
+#CookieMgrMenu .ca-code-hl .hc,
+#CookieMgrLayer .ca-word-sig .hc {
   color: #7b8a6a;
   font-style: italic;
 }
-#CookieMgrMenu .ca-code-hl .hk {
+#CookieMgrMenu .ca-code-hl .hk,
+#CookieMgrLayer .ca-word-sig .hk {
   color: #ffb86b;
   font-weight: bold;
 }
-#CookieMgrMenu .ca-code-hl .ha {
+#CookieMgrMenu .ca-code-hl .ha,
+#CookieMgrLayer .ca-word-sig .ha {
   color: #9be89b;
 }
-#CookieMgrMenu .ca-code-hl .hq {
+#CookieMgrMenu .ca-code-hl .hq,
+#CookieMgrLayer .ca-word-sig .hq {
   color: #8fc3ea;
 }
-#CookieMgrMenu .ca-code-hl .hv {
+#CookieMgrMenu .ca-code-hl .hv,
+#CookieMgrLayer .ca-word-sig .hv {
   color: #6fe6ef;
 }
-#CookieMgrMenu .ca-code-hl .hn {
+#CookieMgrMenu .ca-code-hl .hn,
+#CookieMgrLayer .ca-word-sig .hn {
   color: #ff9a8a;
 }
-#CookieMgrMenu .ca-code-hl .hs {
+#CookieMgrMenu .ca-code-hl .hs,
+#CookieMgrLayer .ca-word-sig .hs {
   color: #e6c07b;
 }
-#CookieMgrMenu .ca-code-hl .ho {
+#CookieMgrMenu .ca-code-hl .ho,
+#CookieMgrLayer .ca-word-sig .ho {
   color: #ffd98a;
 }
-#CookieMgrMenu .ca-code-hl .hi {
+#CookieMgrMenu .ca-code-hl .hi,
+#CookieMgrLayer .ca-word-sig .hi {
   color: #d8cbb0;
 }
 #CookieMgrMenu .ca-code-status {

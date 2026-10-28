@@ -213,6 +213,15 @@ condition, value and keyword, searchable — click one to insert it (into the co
 step), ★ to pin it at the top. Its **Lookup** tab lists the names that go inside the parentheses — spells, effects,
 macros, seasons, buildings, soils… — each with where it's used; click one to write it where the cursor is.
 
+**Hover any word of code** — in a macro, a statistic, the gardener's rules, or a statistic's code on the Statistics
+page — and a card says what it is: an action or condition (what it does with the options written there), a value
+(and what it is now), a keyword, a variable (where it's set), a macro (`switch on golden`: its name, what it does,
+whether it's on), or a profile (`buyer.profile(payback)`, `dragon.profile(drops)`, `pantheon.profile(golden)`,
+`grimoire.profile(default)`: what's in it and whether it's in use), a spell, a spirit, an aura, a season, a
+building or an upgrade (its info card). Move onto the card to use its link: to the macro's editor, the profile's
+page, the statistic's editor, or the line a variable is set on. Unsaved code is asked about first (Save and go, Don't
+save, Stay), and a **Back to …** chip at the bottom of the panel returns to the code you left.
+
 **Every macro is algorithmic code underneath.** Repeat, When… and Once are shortcuts for the common shapes, and the
 editor shows what one amounts to under **As code**:
 

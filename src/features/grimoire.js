@@ -265,5 +265,26 @@ forever:
     watch();
   }
 
+  // a spell's key in code (spell.cast("hand of fate")…): the code editors' hover cards
+  CA.Words.defineKind('spell', {
+    name: 'Spell',
+    info: (id) => {
+      const k = String(id).toLowerCase();
+      const s = byKey[k] || SPELLS.find((x) => x.name.toLowerCase() === k);
+      if (!s) return null;
+      const sp = spellOf(s.key);
+      const m = minigame();
+      const cost = costOf(s.key);
+      const fail = failOf(s.key);
+      return {
+        title: s.name,
+        sig: CA.Script ? CA.Script.litText(s.key) : s.key,
+        desc: sp ? String(sp.desc || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() : 'A Grimoire spell.',
+        rows: m ? [['cost', `${Math.round(cost)} magic`], ['magic now', `${Math.floor(m.magic)} of ${Math.floor(m.magicM)}`], fail != null ? ['backfire', `${Math.round(fail * 100)}%`] : null].filter(Boolean) : [],
+        note: m ? '' : 'The Grimoire isn’t open yet.',
+      };
+    },
+  });
+
   return { init, minigame, spells, magicNow, secondsUntil, refillSeconds, SPELLS, AUTO_ID, COMBO_SOURCE, comboHint };
 })();

@@ -394,9 +394,377 @@ CA.UI.CodeEditor = (() => {
     if (box) CA.UI.Dom.morph(box, (live && live.html) || '');
   }
 
-  function init() {
-    CA.Settings.defineOption({ key: LIB_FAVS, group: 'ui', name: 'Pinned library items', desc: '', default: '' });
+  // ---- hover cards: what a word of the code is (CA.ScriptWords / CA.Words) --------------------------
+  //
+  // A card can have a link to where its word is edited or explained (openers, by kind: the macro's
+  // editor, a profile's page…). Leaving code with unsaved changes asks first: save, don't save, or
+  // stay (each page with an editor says how, with guard()). A Back chip then returns to the code.
+  //
+  //   CA.UI.CodeEditor.defineOpen(kind, fn(id, info) → { label, page, focus, go() } | null)
+  //       page: a page to open (CA.UI.Menu.openPage), focus: a selector on it to scroll to and flash,
+  //       go(): or anything else; { label, line } jumps to a line of the same code
+  //   CA.UI.CodeEditor.guard(page, { dirty() → bool, name() → text, leave(how) → { error } | { back() } })
+  //       how: 'save', 'discard', or 'keep' (nothing to save); back() reopens what was left
+
+  const HOVER_MS = 250;
+  const LEAVE_MS = 350; // time to move the mouse from the word onto its card
+  let card = null;
+  let hovered = null; // the highlighted word under the mouse (a span of the coloured copy)
+  let hoverTimer = null;
+  let hideTimer = null;
+  let hoveredAt = null; // where it was, to tell a scroll that moved it
+  let shown = null; // the card's word: { info, open, span }
+  let asking = null; // a question the card or Back chip is asking: { go(how) }
+  const openers = {};
+  const guards = {};
+  const trail = []; // where Back goes: [{ label, back() }]
+  let chip = null;
+
+  const defineOpen = (kind, fn) => (openers[kind] = fn);
+  const guard = (page, g) => (guards[page] = g);
+
+  /** The span of coloured code at a point: under an editor's textarea (which lies on top), or in a code view. */
+  function spanAt(t, x, y) {
+    if (t.matches && t.matches('[data-code]')) {
+      const ed = editorOf(t);
+      const hl = ed && ed.querySelector('[data-code-hl]');
+      if (!hl || !document.elementFromPoint) return null;
+      const was = t.style.pointerEvents;
+      t.style.pointerEvents = 'none';
+      hl.style.pointerEvents = 'auto';
+      const el = document.elementFromPoint(x, y);
+      t.style.pointerEvents = was;
+      hl.style.pointerEvents = '';
+      return el && el.parentElement && hl.contains(el) && el.closest('.ca-hl-line') !== el && el.matches('span:not(.ca-hl-line)') ? el : null;
+    }
+    const el = t.closest && t.closest('[data-code-view] span');
+    return el || null;
   }
 
-  return { init, html, libraryHtml, bind, setLive, insert, insertInline, refresh, view, highlightLine };
+  /** Where a span of coloured code is: { line (from 1), col (from 0), source, vars }. */
+  function placeOf(span) {
+    const box = span.closest('[data-code-hl], [data-code-view]');
+    let off = 0;
+    const walk = document.createTreeWalker(box, 4 /* text */);
+    let n;
+    while ((n = walk.nextNode()) && !span.contains(n)) off += n.nodeValue.length;
+    const before = box.textContent.slice(0, off);
+    const ed = editorOf(box);
+    const ta = box.matches('[data-code-hl]') && ed && ed.querySelector('[data-code]');
+    return {
+      line: before.split('\n').length + (Number(box.dataset.codeFirst) || 0),
+      col: off - before.lastIndexOf('\n') - 1,
+      source: ta ? ta.value : box.dataset.codeView || box.textContent,
+      vars: ((ed && ed.dataset.codeVars) || box.dataset.codeVars || '').split(',').filter(Boolean),
+    };
+  }
+
+  /** Where a word can be opened: { label, page, focus, go, line } or null. */
+  function openerOf(info) {
+    if (!info) return null;
+    if ((info.kind === 'variable' || info.kind === 'function') && info.rows && info.line) {
+      const at = /^line (\d+)$/.exec((info.rows[0] || [])[1] || '');
+      return at && Number(at[1]) !== info.line ? { label: `Go to line ${at[1]}`, line: Number(at[1]) } : null;
+    }
+    const fn = openers[info.kind];
+    try {
+      return fn ? fn(info.id, info) || null : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /** A word's card: what it is, how it's written, what it does, its live numbers, and where to open it. */
+  function cardHtml(info, open) {
+    return (
+      `<div class="ca-tip-head">${esc(info.title)}<span>${esc(info.tag || '')}</span></div>` +
+      (info.sig && info.sig.toLowerCase() !== String(info.title).toLowerCase() ? `<div class="ca-word-sig"><code>${highlightLine(info.sig)}</code></div>` : '') +
+      (info.desc ? `<div class="ca-word-desc">${esc(info.desc)}</div>` : '') +
+      (info.rows || []).map(([k, v]) => `<div class="ca-tip-row"><b>${esc(k)}</b><span>${esc(v)}</span></div>`).join('') +
+      (info.note ? `<div class="ca-tip-note">${esc(info.note)}</div>` : '') +
+      (open ? `<div class="ca-word-open"><button type="button" class="ca-word-go" data-word-open>${esc(open.label)} →</button></div>` : '')
+    );
+  }
+
+  /** The question before leaving unsaved code. */
+  const askHtml = (name, error) =>
+    `<div class="ca-word-ask"><div class="ca-word-ask-q">${I('edit', 11)} Unsaved changes${name ? ` to <b>${esc(name)}</b>` : ''}. Save them first?</div>` +
+    (error ? `<div class="ca-word-ask-err">${esc(error)}</div>` : '') +
+    '<div class="ca-word-ask-btns"><button type="button" class="ca-word-go on" data-word-leave="save">Save and go</button>' +
+    '<button type="button" class="ca-word-go" data-word-leave="discard">Don’t save</button>' +
+    '<button type="button" class="ca-word-go" data-word-leave="stay">Stay</button></div></div>';
+
+  function hideCard() {
+    clearTimeout(hoverTimer);
+    clearTimeout(hideTimer);
+    hoverTimer = hideTimer = null;
+    hovered = null;
+    shown = null;
+    if (asking && asking.where === 'card') asking = null;
+    if (card) card.style.display = 'none';
+  }
+
+  function showCard(span) {
+    if (!span.isConnected) return hideCard();
+    const at = placeOf(span);
+    const info = CA.ScriptWords.explain(at.source, at.line, at.col, { vars: at.vars });
+    if (!info) return;
+    clearTimeout(hideTimer);
+    const open = openerOf(info);
+    shown = { info, open, span };
+    // an upgrade: its info card (ui/upgradeTip.js), as everywhere else
+    const up = info.card && info.card.pop === 'upgrade' && CA.UI.UpgradeTip ? CA.UI.UpgradeTip.html(info.card.data.upgrade) : '';
+    if (!card || !card.isConnected) card = CA.UI.Tips.float('ca-tip ca-word-tip');
+    card.className = up ? 'ca-float ca-word-tip' : 'ca-tip ca-word-tip';
+    card.innerHTML = up || cardHtml(info, open);
+    card.style.display = 'block';
+    CA.UI.Tips.place(card, span, true);
+  }
+
+  // ---- going to a word's place, and back ----------------------------------------------------------
+
+  const tab = () => CA.Settings.get('tab');
+  const pageLabel = (id) => ((CA.UI.Pages.get && CA.UI.Pages.get(id)) || {}).label || id;
+
+  /** Scrolls to `sel` on the page now showing, and flashes it. */
+  function focusOn(sel) {
+    setTimeout(() => {
+      const el = sel && document.querySelector(`#CookieMgrMenu ${sel}`);
+      if (!el) return;
+      CA.Util.scrollInPanel(el, 'center');
+      // a ring drawn over it in the layer (the page redraws its own elements every tick), following
+      // it while the panel scrolls there
+      const ring = CA.UI.Tips.float('ca-word-flash');
+      const follow = () => {
+        const now = document.querySelector(`#CookieMgrMenu ${sel}`) || el;
+        const r = now.getBoundingClientRect();
+        Object.assign(ring.style, { left: `${r.left - 3}px`, top: `${r.top - 3}px`, width: `${r.width + 6}px`, height: `${r.height + 6}px` });
+      };
+      follow();
+      const t = setInterval(follow, 40);
+      setTimeout(() => {
+        clearInterval(t);
+        ring.remove();
+      }, 1800);
+    }, 30);
+  }
+
+  function arrive(open) {
+    if (open.go) open.go();
+    else if (open.page) CA.UI.Menu.openPage(open.page);
+    focusOn(open.focus);
+  }
+
+  /** Leaves the code for `then` — asking first when the page's code has unsaved changes. */
+  function leave(where, then) {
+    const from = tab();
+    const g = guards[from];
+    const label = (g && g.name && g.name()) || pageLabel(from); // what it is before it's saved or closed
+    const go = (how) => {
+      let back = () => CA.UI.Menu.openPage(from);
+      if (g) {
+        const r = g.leave(how) || {};
+        if (r.error) return askIn(where, g, go, r.error);
+        if (r.back) back = r.back;
+      }
+      asking = null;
+      then({ label, back });
+    };
+    let dirty = false;
+    try {
+      dirty = !!(g && g.dirty());
+    } catch (e) {
+      dirty = false;
+    }
+    if (dirty) askIn(where, g, go, '');
+    else go('keep');
+  }
+  function askIn(where, g, go, error) {
+    asking = { where, go };
+    const el = where === 'card' ? card : chip;
+    if (!el) return;
+    const box = el.querySelector('[data-word-asked]') || el;
+    if (where === 'card') {
+      const was = el.querySelector('.ca-word-ask');
+      if (was) was.remove();
+      const open = el.querySelector('.ca-word-open');
+      if (open) open.remove();
+      el.insertAdjacentHTML('beforeend', askHtml(g.name && g.name(), error));
+    } else box.innerHTML = askHtml(g.name && g.name(), error);
+  }
+
+  /** The card's link: to a line of this code, or away (with Back to here). */
+  function openShown() {
+    const s = shown;
+    if (!s || !s.open) return;
+    if (s.open.line) {
+      const ed = editorOf(s.span);
+      const ta = ed && ed.querySelector('[data-code]');
+      if (ta) {
+        const pos = ta.value.split('\n').slice(0, s.open.line - 1).join('\n').length + (s.open.line > 1 ? 1 : 0);
+        ta.focus({ preventScroll: true });
+        if (ta.setSelectionRange) ta.setSelectionRange(pos, pos);
+      }
+      return hideCard();
+    }
+    leave('card', (here) => {
+      hideCard();
+      trail.push(here);
+      arrive(s.open);
+      showChip();
+    });
+  }
+
+  /** The Back chip, at the bottom of the panel while there's somewhere to go back to. */
+  function showChip() {
+    if (!trail.length) return hideChip();
+    if (!chip || !chip.isConnected) chip = CA.UI.Tips.float('ca-word-back');
+    const last = trail[trail.length - 1];
+    chip.innerHTML =
+      `<button type="button" class="ca-word-go on" data-word-back>← Back to ${esc(last.label)}</button>` +
+      '<button type="button" class="ca-word-x" data-word-backx aria-label="Close">×</button><div data-word-asked></div>';
+    chip.style.display = 'block';
+    placeChip();
+  }
+  function placeChip() {
+    if (!chip || chip.style.display === 'none') return;
+    if (!CA.UI.Menu.isOpen() || !document.getElementById('CookieMgrMenu')) return hideChip();
+    const host = document.getElementById('centerArea') || document.getElementById('CookieMgrMenu');
+    const r = host.getBoundingClientRect();
+    chip.style.top = `${Math.round(Math.min(r.bottom, innerHeight) - chip.offsetHeight - 14)}px`; // at the bottom: out of the way
+    chip.style.left = `${Math.round(r.left + r.width / 2 - chip.offsetWidth / 2)}px`;
+  }
+  function hideChip() {
+    trail.length = 0;
+    if (asking && asking.where === 'chip') asking = null;
+    if (chip) chip.style.display = 'none';
+  }
+  function goBack() {
+    const last = trail[trail.length - 1];
+    if (!last) return hideChip();
+    leave('chip', () => {
+      trail.pop();
+      last.back();
+      if (trail.length) showChip();
+      else hideChip();
+    });
+  }
+
+  function onLayerClick(e) {
+    const t = e.target;
+    if (!t.closest || !t.closest('.ca-word-tip, .ca-word-back')) return;
+    e.stopPropagation();
+    if (t.closest('[data-word-open]')) openShown();
+    else if (t.closest('[data-word-back]')) goBack();
+    else if (t.closest('[data-word-backx]')) hideChip();
+    else if (t.closest('[data-word-leave]')) {
+      const how = t.closest('[data-word-leave]').dataset.wordLeave;
+      const a = asking;
+      if (!a) return;
+      if (how === 'stay') {
+        asking = null;
+        if (a.where === 'card') hideCard();
+        else showChip();
+      } else a.go(how);
+    }
+  }
+
+  function onHover(e) {
+    const t = e.target;
+    if (t && t.closest && t.closest('.ca-word-tip')) {
+      clearTimeout(hideTimer); // on its way to the card's link
+      return;
+    }
+    if (asking && asking.where === 'card') return; // a question waits for its answer
+    const inMenu = t && t.closest && t.closest('#CookieMgrMenu');
+    const span = inMenu ? spanAt(t, e.clientX, e.clientY) : null;
+    if (span && span === hovered) {
+      clearTimeout(hideTimer);
+      return;
+    }
+    clearTimeout(hoverTimer);
+    hoverTimer = null;
+    if (shown && card && card.style.display === 'block') {
+      if (!hideTimer) hideTimer = setTimeout(hideCard, LEAVE_MS);
+    } else if (hovered) hideCard();
+    hovered = null;
+    if (!span || span.classList.contains('hc') || span.classList.contains('ho')) return;
+    hovered = span;
+    hoveredAt = span.getBoundingClientRect();
+    // the page may redraw its code meanwhile (live status): look again at the same point
+    const x = e.clientX;
+    const y = e.clientY;
+    hoverTimer = setTimeout(() => {
+      const now = hovered === span && span.isConnected ? span : spanAt(t.isConnected ? t : document.elementFromPoint(x, y) || t, x, y);
+      if (now && now.textContent === span.textContent) {
+        hovered = now;
+        hoveredAt = now.getBoundingClientRect();
+        showCard(now);
+      }
+    }, HOVER_MS);
+  }
+
+  /** Where each kind of word is edited or explained. */
+  function defineOpeners() {
+    const prof = (page, sel) => (id) => ({ label: `Open on the ${pageLabel(page)} page`, page, focus: sel(id) });
+    const q = (s) => String(s).replace(/["\\]/g, '\\$&');
+    defineOpen('macro', (id) => {
+      const m = CA.Macros.get(id) || CA.Macros.list().find((x) => x.name.toLowerCase() === String(id).toLowerCase());
+      return m ? { label: m.mode === 'flow' || !m.builtin ? 'Edit it on the Macros page' : 'Open it on the Macros page', go: () => CA.UI.MacrosPage.edit(m.id) } : null;
+    });
+    defineOpen('profile.buyer', prof('payback', (id) => `[data-ab-use="${q(id)}"]`));
+    defineOpen('profile.dragon', prof('dragon', (id) => `[data-dragon-prof="${q(id)}"]`));
+    defineOpen('profile.pantheon', prof('pantheon', (id) => `[data-pp-row="${q(id)}"]`));
+    defineOpen('profile.grimoire', prof('wizard', (id) => `.ca-ct-prof[data-id="${q(id)}"]`));
+    defineOpen('spell', () => ({ label: 'Open the Grimoire page', page: 'wizard' }));
+    defineOpen('spirit', () => ({ label: 'Open the Pantheon page', page: 'pantheon' }));
+    defineOpen('aura', () => ({ label: 'Open the Dragon page', page: 'dragon' }));
+    // a statistic's word: its editor
+    defineOpen('value', (id) => {
+      const m = /^stat\.(.+)$/.exec(id);
+      const st = m && CA.Stats.all().find((x) => x.key === m[1]);
+      return st
+        ? {
+            label: 'Edit the statistic',
+            go: () => {
+              CA.UI.StatEditor.open(st.id);
+              CA.UI.Menu.openPage('tooltips');
+              CA.UI.Menu.render();
+            },
+            focus: '[data-stat-editor]',
+          }
+        : null;
+    });
+  }
+
+  function init() {
+    CA.Settings.defineOption({ key: LIB_FAVS, group: 'ui', name: 'Pinned library items', desc: '', default: '' });
+    defineOpeners();
+    document.addEventListener('mousemove', onHover, true);
+    document.addEventListener('click', onLayerClick, true);
+    document.addEventListener('keydown', () => !asking && hideCard(), true);
+    document.addEventListener('input', hideCard, true);
+    document.addEventListener(
+      'mousedown',
+      (e) => {
+        if (e.target.closest && e.target.closest('.ca-word-tip, .ca-word-back')) return;
+        if (!asking || asking.where === 'card') hideCard();
+      },
+      true
+    );
+    // only a scroll that moves the word (the game sends scroll events of its own all the time)
+    addEventListener(
+      'scroll',
+      () => {
+        placeChip();
+        if (!hovered || (asking && asking.where === 'card')) return;
+        const r = hovered.getBoundingClientRect();
+        if (!hoveredAt || Math.abs(r.top - hoveredAt.top) > 2 || Math.abs(r.left - hoveredAt.left) > 2) hideCard();
+      },
+      true
+    );
+    setInterval(placeChip, 1000); // follows the panel; gone when it closes
+  }
+
+  return { init, html, libraryHtml, bind, setLive, insert, insertInline, refresh, view, highlightLine, cardHtml, placeOf, showCard, hideCard, defineOpen, guard, goBack, trail: () => trail.slice() };
 })();
