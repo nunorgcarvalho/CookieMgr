@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+## 3.41.0 — 2026-10-28
+
+- **Widget settings show what each choice looks like.** The Shows section of a widget's settings is now a picker of
+  live tiles wherever there is something to see: each choice's name over what picking it shows, drawn exactly as the
+  widget draws it and refreshed along with it. Lit tiles are on; click one to toggle it.
+  - **Golden cookies**: a tile per part — Stats (the statistics you ticked, with their values), Graph (on the axis
+    picked), Effects (the bars running now) and Frequency Factors; **Graph** shows This cycle and From now as two
+    live graphs; **Stats** shows each statistic with its value now. The Graph and Stats pickers appear while their
+    part is on. Nothing ticked under Show now shows nothing (it used to fall back to the defaults).
+  - **Effect timers**: a sample row per column under Show, and the bar at each scale under A full bar is.
+  - **Quick stats**: each number with its value. **Latest events**: the newest event of each type.
+  Other settings (a count, the Grimoire's target, the order of the bars) stay fields and drop-downs.
+- For widget authors: an option with a `sample(inst)` turns a `multi` or `select` setting into the picker; a
+  setting's `when(inst)` hides it until it matters; `tile: 'small'` for value-sized tiles (`ui/widgets.js`).
+
 ## 3.40.0 — 2026-10-28
 
 - **A new garden profile: 8 nursetulips together + clover combos.** Two rows of four nursetulips with golden

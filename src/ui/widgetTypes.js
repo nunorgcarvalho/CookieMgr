@@ -183,25 +183,31 @@ CA.UI.WidgetTypes = (() => {
   ];
   const DEFAULT_STATS = ['cpsClick', 'actual', 'runStarted', 'upgrades', 'prestige', 'achievements', 'allTime'];
 
+  const statValue = (s) => {
+    try {
+      return s.value();
+    } catch (e) {
+      return '—';
+    }
+  };
   function statsHtml(inst) {
     const chosen = new Set(Array.isArray(inst.stats) && inst.stats.length ? inst.stats : DEFAULT_STATS);
     return STATS.filter((s) => chosen.has(s.id))
-      .map((s) => {
-        let v;
-        try {
-          v = s.value();
-        } catch (e) {
-          v = '—';
-        }
-        return `<div class="ca-w-stat"><span>${s.label}</span><b>${v}</b></div>`;
-      })
+      .map((s) => `<div class="ca-w-stat"><span>${s.label}</span><b>${statValue(s)}</b></div>`)
       .join('');
   }
+  // its settings' tiles (ui/widgets.js): each number's value now, as its row shows it
+  const statSample = (s) => () => `<div class="ca-w-stat"><b>${statValue(s)}</b></div>`;
 
   // ---- latest events ------------------------------------------------------------------------
 
   const DEFAULT_EVENTS = 8;
   const eventCount = (inst) => Math.max(1, Math.min(200, Math.round(inst.count || DEFAULT_EVENTS)));
+  // its settings' tiles (ui/widgets.js): the newest event of each type, as its row shows it
+  const typeSample = (k) => () => {
+    const e = CA.EventLog.list([k]).slice(-1)[0];
+    return e ? `<div class="ca-w-events">${CA.UI.EventsPage.rowHtml(e)}</div>` : '<div class="ca-w-empty">None yet.</div>';
+  };
 
   function eventsHtml(inst) {
     const kinds = Array.isArray(inst.types) && inst.types.length ? inst.types : null;
@@ -443,7 +449,7 @@ CA.UI.WidgetTypes = (() => {
       single: true,
       resize: 'free',
       html: statsHtml,
-      settings: [{ key: 'stats', label: 'Show', type: 'multi', default: DEFAULT_STATS, options: () => STATS.map((s) => ({ v: s.id, label: s.label })) }],
+      settings: [{ key: 'stats', label: 'Show', type: 'multi', default: DEFAULT_STATS, options: () => STATS.map((s) => ({ v: s.id, label: s.label, sample: statSample(s) })), tile: 'small' }],
     });
     D({
       id: 'events',
@@ -465,7 +471,7 @@ CA.UI.WidgetTypes = (() => {
           default: [],
           options: () => {
             const t = CA.EventLog.types();
-            return Object.keys(t).map((k) => ({ v: k, label: t[k].name, icon: t[k].icon, color: t[k].color }));
+            return Object.keys(t).map((k) => ({ v: k, label: t[k].name, icon: t[k].icon, color: t[k].color, sample: typeSample(k) }));
           },
         },
       ],

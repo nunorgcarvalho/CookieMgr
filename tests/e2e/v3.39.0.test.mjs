@@ -51,14 +51,18 @@ W.tick();
 const rows = [...box(a).querySelectorAll('.ca-wfq-row')];
 assert(rows.length === 2 && rows.every((r) => /×2/.test(r.querySelector('b').textContent)), 'What’s helping: a bar each for Lucky day and Serendipity, ×2');
 // its settings
+// (v3.41: tiles with live samples; the Graph's axis and the Stats show while their part is on)
+a.stats = ['numbers', 'chart', 'helping'];
 W.openSettings(a.id);
 const opts = (k) => [...doc.querySelectorAll(`[data-w-multi="${k}"]`)].map((x) => x.closest('label'));
-eq(opts('stats').map((l) => l.textContent), ['Stats', 'Graph', 'Effects', 'Frequency Factors'], 'settings, Show: Stats, Graph (top), Effects, Frequency Factors (bottom) — short, a tip each');
+const name = (l) => l.querySelector('.ca-wopt-head').textContent;
+eq(opts('stats').map(name), ['Stats', 'Graph', 'Effects', 'Frequency Factors'], 'settings, Show: Stats, Graph (top), Effects, Frequency Factors (bottom) — short, a tip each');
 assert(opts('stats').every((l) => l.dataset.tip), '…each with a tip');
-eq(opts('nums').map((l) => l.textContent), ['Expected wait', 'Within minute %', 'Window', 'Frequency', 'Multiplier', 'Median wait'], 'Stats: the six, named by CA.StatInfo');
+eq(opts('nums').map(name), ['Expected wait', 'Within minute %', 'Window', 'Frequency', 'Multiplier', 'Median wait'], 'Stats: the six, named by CA.StatInfo');
 assert(opts('nums').every((l, i) => l.dataset.tip === CA.StatInfo.desc(['golden.wait', 'golden.minute', 'golden.window', 'golden.interval', 'golden.frequency', 'golden.median'][i])), '…each hovering its description');
-const axisSel = doc.querySelector('select[data-w-opt="axis"]');
-assert(axisSel && [...axisSel.options].map((o) => o.textContent).join() === 'This cycle,From now' && axisSel.value === 'now', 'and Graph: This cycle / From now');
+const axisOpts = [...doc.querySelectorAll('[data-w-opt="axis"]')];
+assert(axisOpts.map((o) => name(o.closest('label'))).join() === 'This cycle,From now' && axisOpts.find((o) => o.checked).value === 'now', 'and Graph: This cycle / From now');
+a.stats = ['helping'];
 const saved = W.serialize().find((x) => x.id === a.id);
 eq([saved.axis, saved.stats], ['now', ['helping']], 'saved with the widget');
 

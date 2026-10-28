@@ -815,8 +815,13 @@ boxes take any width and height.
 **Place** (a grid that snaps it to a corner, an edge or the middle of the left panel), **Look** (text size and size,
 with S / M / L / XL presets, or a title and a **Background**: Solid, Faint or None — see-through boxes keep their text
 outlined so it reads over the game, and fade in, title bar too, while you hover them) and
-**Shows** (whatever that widget adds: which Quick stats, how many events, the Grimoire's target…). Changes apply at
-once, and the widget glows on the left panel while its settings are open.
+**Shows** (whatever that widget adds: which Quick stats, how many events, the Grimoire's target…). Where there is
+something to see, Shows is a picker of **live tiles**: each choice's name over what picking it shows, drawn as the
+widget draws it and ticking along with it — the Golden cookies widget's parts, its graph on either axis and each of
+its statistics with its value now; Effect timers' columns and bar scales; each Quick stat's value; the newest event
+of each type. Lit tiles are on; click to toggle. A setting that only matters with another on (the graph's axis, the
+golden statistics) shows while it does. Changes apply at once, and the widget glows on the left panel while its
+settings are open.
 
 **Your widgets** on the Widgets page is a small map of the left panel with every widget where it is (the big cookie
 drawn in for bearings), next to a chip for each. Hover a widget on the map, its chip, or the widget itself on the

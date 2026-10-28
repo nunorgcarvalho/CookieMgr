@@ -43,6 +43,14 @@
 //
 // Stars: a page's ☆ (CA.UI.C.widgetStar) adds a ready-made widget — a preset, its type and the
 // settings that make it that one — and takes it away again; hasPreset() says whether it's there.
+//
+// settings: [{ key, label, type: 'multi' | 'select' | 'number', default, options() | min, max, unit, when(inst), hint }]
+//   options(): [{ v, label, tip, icon, color, sample(inst) }]. An option with a sample(inst) — the HTML of what
+//   picking it shows, as the widget draws it — is a tile in a live picker (v3.41): its name over the sample,
+//   refreshed as the widget is, lit while it's picked; the tiles share the widget's own styles (.ca-wsample).
+//   Without samples it's a plain tick list / drop-down. when(inst): the field shows only while it's true
+//   (the Graph's axis, with the graph on). hint: a line under the label. tile: 'small' — narrower tiles, for
+//   samples that are a value (a statistic's).
 
 CA.UI = CA.UI || {};
 
@@ -580,6 +588,87 @@ CA.UI.Widgets = (() => {
     changed();
   }
 
+
+  /** An option's sample — what picking it shows — or a dash when it can't be drawn right now. */
+  function sampleHtml(o, w) {
+    try {
+      return o.sample(w) || '<span class="ca-w-empty">—</span>';
+    } catch (e) {
+      return '<span class="ca-w-empty">—</span>';
+    }
+  }
+
+  /** The settings a type lets you choose, each with what it has now (a hidden field is left out). */
+  const shownSettings = (w) => ((typeById[w.type] || {}).settings || []).filter((s) => !s.when || s.when(w)).map((s) => ({ s, opts: s.type === 'number' ? [] : s.options(), cur: w[s.key] !== undefined ? w[s.key] : s.default }));
+
+  /**
+   * The Shows section: a field per setting — a tick list, a drop-down, a number — or, when its options
+   * come with samples, a picker of live tiles: each option's name over what picking it shows, drawn as
+   * the widget draws it. Redrawn (in place) after every change, so a field that depends on another
+   * (the graph's axis, once the graph is on) comes and goes.
+   */
+  function showsHtml(w) {
+    const field = (label, input, hint) =>
+      `<div class="ca-wf"><span class="ca-wf-label">${label}</span><div class="ca-wf-input">${input}</div>${hint ? `<span class="ca-wf-hint">${hint}</span>` : ''}</div>`;
+    const wide = (label, body, hint) => `<div class="ca-wf ca-wf-wide"><span class="ca-wf-label">${label}${hint ? ` <span class="ca-wf-hint">${hint}</span>` : ''}</span>${body}</div>`;
+    const head = (o) => `${o.icon ? `<span style="color:${o.color || 'inherit'}">${I(o.icon, 13)}</span>` : ''}<span>${esc(o.label)}</span>`;
+    let h = '';
+    shownSettings(w).forEach(({ s, opts, cur }) => {
+      const hint = s.hint ? esc(s.hint) : '';
+      if (s.type === 'number') {
+        h += field(esc(s.label), `<input type="number" min="${s.min}" max="${s.max}" value="${esc(cur)}" data-w-opt="${s.key}" data-type="number" data-min="${s.min}" data-max="${s.max}">${s.unit ? `<em>${esc(s.unit)}</em>` : ''}`, hint);
+        return;
+      }
+      const multi = s.type === 'multi';
+      const chosen = new Set(multi ? cur || [] : [String(cur)]);
+      const on = (o) => chosen.has(multi ? o.v : String(o.v));
+      const input = (o) =>
+        multi
+          ? `<input type="checkbox" data-w-multi="${s.key}" value="${esc(o.v)}"${on(o) ? ' checked' : ''}>`
+          : `<input type="radio" name="ca-wopt-${esc(w.id)}-${s.key}" data-w-opt="${s.key}" data-type="choice" value="${esc(o.v)}"${on(o) ? ' checked' : ''}>`;
+      if (opts.some((o) => o.sample)) {
+        // the live picker: a tile per option, its sample refreshed with the widget (syncPage)
+        h += wide(
+          esc(s.label),
+          `<div class="ca-wopts${multi ? '' : ' ca-wopts-one'}${s.tile === 'small' ? ' ca-wopts-small' : ''}">${opts
+            .map(
+              (o) =>
+                `<label class="ca-wopt${on(o) ? ' on' : ''}"${o.tip ? ` data-tip="${esc(o.tip)}"` : ''}>${input(o)}` +
+                `<span class="ca-wopt-head"><i class="ca-wopt-mark"></i>${head(o)}</span>` +
+                `<div class="ca-wsample" data-w-sample="${s.key}:${esc(o.v)}">${o.sample ? sampleHtml(o, w) : ''}</div></label>`
+            )
+            .join('')}</div>`,
+          hint
+        );
+      } else if (multi) {
+        h += wide(esc(s.label), `<div class="ca-members">${opts.map((o) => `<label class="ca-member${on(o) ? ' on' : ''}"${o.tip ? ` data-tip="${esc(o.tip)}"` : ''}>${input(o)}${head(o)}</label>`).join('')}</div>`, hint);
+      } else {
+        h += field(esc(s.label), `<select data-w-opt="${s.key}" data-type="choice">${opts.map((o) => `<option value="${esc(o.v)}"${on(o) ? ' selected' : ''}>${esc(o.label)}</option>`).join('')}</select>`, hint);
+      }
+    });
+    return h;
+  }
+
+  /** After a change: the Shows section drawn again in place (fields that depend on the change come and go). */
+  function refreshShows(w) {
+    const box = pageRoot && pageRoot.querySelector(`[data-w-editor="${w.id}"] [data-w-shows]`);
+    if (box) CA.UI.Dom.morph(box, showsHtml(w));
+  }
+
+  /** Each tick: the picker tiles' samples, as the widget itself is refreshed. */
+  function refreshSamples() {
+    const w = editing && get(editing);
+    const box = w && pageRoot && pageRoot.querySelector(`[data-w-editor="${w.id}"] [data-w-shows]`);
+    if (!box) return;
+    shownSettings(w).forEach(({ s, opts }) =>
+      opts.forEach((o) => {
+        if (!o.sample) return;
+        const el = box.querySelector(`[data-w-sample="${s.key}:${o.v}"]`);
+        if (el) CA.UI.Dom.morph(el, sampleHtml(o, w));
+      })
+    );
+  }
+
   /**
    * A widget's settings: a header (what it is, Remove, Done) over two sections — Look (text size,
    * size or title) and Shows (what its type lets you choose). Changes apply at once; the widget
@@ -605,34 +694,7 @@ CA.UI.Widgets = (() => {
       look += field('Title', `<input type="text" maxlength="40" value="${esc(w.title || '')}" placeholder="${esc(t.name)}" data-w-opt="title" data-type="text">`);
       look += field('Background', presets('bg', BG, bgOf(w) * 100), 'see-through ones show it when you hover them; the text keeps a dark outline');
     }
-    let shows = '';
-    (t.settings || []).forEach((s) => {
-      const cur = w[s.key] !== undefined ? w[s.key] : s.default;
-      if (s.type === 'select') {
-        shows += field(
-          esc(s.label),
-          `<select data-w-opt="${s.key}" data-type="choice">${s
-            .options()
-            .map((o) => `<option value="${esc(o.v)}"${String(o.v) === String(cur) ? ' selected' : ''}>${esc(o.label)}</option>`)
-            .join('')}</select>`
-        );
-      } else if (s.type === 'number') {
-        shows += field(esc(s.label), `<input type="number" min="${s.min}" max="${s.max}" value="${esc(cur)}" data-w-opt="${s.key}" data-type="number" data-min="${s.min}" data-max="${s.max}">${s.unit ? `<em>${esc(s.unit)}</em>` : ''}`);
-      } else if (s.type === 'multi') {
-        const chosen = new Set(cur || []);
-        shows +=
-          `<div class="ca-wf ca-wf-wide"><span class="ca-wf-label">${esc(s.label)}</span><div class="ca-members">` +
-          s
-            .options()
-            .map(
-              (o) =>
-                `<label class="ca-member${chosen.has(o.v) ? ' on' : ''}"${o.tip ? ` data-tip="${esc(o.tip)}"` : ''}><input type="checkbox" data-w-multi="${s.key}" value="${esc(o.v)}"${chosen.has(o.v) ? ' checked' : ''}>` +
-                `${o.icon ? `<span style="color:${o.color || 'inherit'}">${I(o.icon, 13)}</span>` : ''}<span>${esc(o.label)}</span></label>`
-            )
-            .join('') +
-          '</div></div>';
-      }
-    });
+    const shows = showsHtml(w);
     // where it sits: snap to a corner, an edge or the middle of the left panel
     const spots = [0, 0.5, 1];
     const at = (v) => spots.reduce((a, b) => (Math.abs(b - v) < Math.abs(a - v) ? b : a));
@@ -652,7 +714,7 @@ CA.UI.Widgets = (() => {
       '</div>' +
       '<div class="ca-weditor-body">' +
       `<div class="ca-weditor-sec"><div class="ca-weditor-sec-head">${I('widget', 12)} Look</div>${look}</div>` +
-      (shows ? `<div class="ca-weditor-sec"><div class="ca-weditor-sec-head">${I('filter', 12)} Shows</div>${shows}</div>` : '') +
+      (shows ? `<div class="ca-weditor-sec${/ca-wopts/.test(shows) ? ' ca-weditor-sec-wide' : ''}"><div class="ca-weditor-sec-head">${I('filter', 12)} Shows</div><div class="ca-weditor-shows" data-w-shows>${shows}</div></div>` : '') +
       `<div class="ca-weditor-sec ca-weditor-place"><div class="ca-weditor-sec-head">${I('grip', 12)} Place</div>${place}</div>` +
       '</div></div>'
     );
@@ -747,6 +809,7 @@ CA.UI.Widgets = (() => {
     if (!pageRoot || !pageRoot.isConnected) return;
     const map = pageRoot.querySelector('[data-w-map]');
     if (map) CA.UI.Dom.morph(map, mapHtml());
+    refreshSamples();
     pageRoot.querySelectorAll('[data-wp-status]').forEach((st) => {
       const p = profileOf(st.dataset.wpStatus);
       if (!p) return;
@@ -775,8 +838,9 @@ CA.UI.Widgets = (() => {
       const set = new Set(w[key] !== undefined ? w[key] : def);
       if (el.checked) set.add(el.value);
       else set.delete(el.value);
-      el.closest('.ca-member').classList.toggle('on', el.checked);
+      el.closest('.ca-member,.ca-wopt').classList.toggle('on', el.checked);
       setOption(w, key, [...set]);
+      refreshShows(w);
       return;
     }
     const key = el.dataset.wOpt;
@@ -791,6 +855,7 @@ CA.UI.Widgets = (() => {
     const label = el.parentNode.querySelector('.ca-range-val');
     if (label) label.textContent = `${Math.round(el.dataset.type === 'percent' ? v * 100 : v)}%`;
     setOption(w, key, v);
+    if (el.dataset.type === 'choice') refreshShows(w);
   }
 
   // ---- save / load ------------------------------------------------------------------------
