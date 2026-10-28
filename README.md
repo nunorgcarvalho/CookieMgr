@@ -307,7 +307,9 @@ forever:
   of(thing)`, `pp.buy(thing)` (before v3.5 these were `cm.best`, `cm.kind`, `cm.price`, `cm.pp`, `cm.buy` — code using
   those names still works); `best(kind)`, `buy.best(kind)`; `building.price / gain / payback(building)` and, for n at
   once, `building.priceOf / gainOf / paybackOf(building, n)`; `building.toNextAchievement(building)`;
-  `upgrade.gain / payback(u)` (NaN for a switch); `paybackActual(seconds)`, `actualIncome(seconds)`;
+  `upgrade.gain / payback(u)` (NaN for a switch); `building.paybackIn(building, mode)`, `upgrade.paybackIn(u, mode)`,
+  `payback.mode()`, `payback.modes()`, `payback.income(mode)`, `payback.bank()`, `payback.clickRate()`,
+  `payback.perClick()`, `payback.actualRatio()`; `paybackActual(seconds)`, `actualIncome(seconds)`;
   `timeTo(price)`, `clickRate()`; `building.buy / sell(building, n)`; `upgrades()`,
   `upgrade.price(u)`, `upgrade.owned(name)`, `buy.upgrade(u)`; `research.next(stopBefore)`.
 - **The dragon** — `dragon.canPet()`, `dragon.dropNow()`, `dragon.pet()`; `dragon.level()`, `dragon.aura(slot)` (1 or 2),
@@ -384,11 +386,23 @@ its options: the minimum bulk, count your wrinklers in the bank (none, all, the 
 afford", and a "cheap enough to just buy" floor in seconds of CpS. Switches show among the upgrades only when their
 filter chip is on, grayed.
 
-The **actual income** chip shows every payback period by what you've actually been taking in instead of by CpS —
-clicking, golden cookies, wrinklers, everything baked, as the Recorder measures it (the chip says how it compares:
-×1.42 your CpS). By actual income, a payback period is **PP × CpS ÷ A**, A your actual income over the last stretch
-of play as long as the period itself (at least 5 minutes) — what you made over a wait that long is the best guess for
-it. An active player's purchases pay back sooner than CpS says; one away from the game, later. The colors stay CpS's.
+**Payback mode** is the page's main setting, at the top: what payback periods count in. A payback period is
+**max(price − bank, 0) ÷ income + price ÷ gain** — the time to afford it, plus the time to earn its price back — and
+the mode says what the income is and what a purchase adds to it:
+
+- **Raw CpS** — the game's raw CpS (no golden cookie effects, golden switch or Dragon's Fortune): steady, whatever is
+  running now.
+- **CpS** (the default) — the CpS the game shows now, buffs included: Cookie Monster's.
+- **CpS + clicking** — CpS plus your clicks a second (over the last minute; Options: 10 s to 15 min) × what a click is
+  worth; a purchase's gain counts what it adds to your clicks.
+- **Actual income** — what you've actually been taking in (clicking, golden cookies, wrinklers, everything baked, as
+  the Recorder measures it) over the last 30 minutes of play (Options: 5 minutes to 3 hours), projected forward; a
+  purchase's gain is what it adds to your raw CpS × actual ÷ raw CpS. Until a minute is recorded, CpS.
+
+The mode is the add-on's: the colors, the store's sort and tooltips, the best buy and the buyers all follow it. Each
+chip shows that mode's income now; hover a cell for its period's parts ("5m to afford + 20m to earn back"). The
+parts are words too: `item.timeToAfford(mode)`, `item.earnBack(mode)`, `item.gainIn(mode)`, `item.paybackIn(mode)`,
+`payback.income(mode)`, `payback.bank()` (mode "raw", "cps", "clicking" or "actual"; none: the mode in use).
 
 In the **store** itself (Settings → Store, each can be turned off): each building's price shows in its payback
 color for what a click buys now (×1, ×10, ×100, or to the next multiple with Round to multiples on), each upgrade

@@ -367,10 +367,15 @@ CA.Payback = (() => {
   /** A mode by id ('' or none: the one in use) — null for an unknown one. */
   const modeOf = (id) => (id === undefined || id === null || id === '' ? currentMode() : modeById(String(id)));
 
-  /** Clicks a second over the last secs seconds (the Recorder's when it has them; else the last ten seconds sampled). */
+  /** Clicks a second over the last secs seconds (the Recorder's when it has them; else the last ten seconds sampled) — read at most once a second. */
+  let clicksMemo = { at: -Infinity, secs: 0, v: 0 };
   function clicksOver(secs) {
+    const now = Date.now();
+    if (clicksMemo.secs === secs && now - clicksMemo.at < 1000) return clicksMemo.v;
     const r = CA.Recorder && typeof CA.Recorder.recent === 'function' ? CA.Recorder.recent(secs) : null;
-    return r && Number.isFinite(r.clickRate) && r.clickRate >= 0 && r.secs > 0 ? r.clickRate : sampledRate();
+    const v = r && Number.isFinite(r.clickRate) && r.clickRate >= 0 && r.secs > 0 ? r.clickRate : sampledRate();
+    clicksMemo = { at: now, secs, v };
+    return v;
   }
   const clickWindow = () => Math.max(1, Number(CA.Settings.get('ppClickWindow')) || 60);
   const actualWindow = () => Math.max(1, Number(CA.Settings.get('ppActualWindow')) || 30) * 60;
