@@ -83,13 +83,13 @@ Game.Has = () => false;
 delete Game.eff;
 
 // the widget's numbers, picked in its settings
-const inst = CA.UI.Widgets.list().find((x) => x.type === 'goldenNext');
+const inst = CA.UI.Widgets.list().find((x) => x.title === 'Next golden cookie');
 const nums = () => [...wg2.ownerDocument.querySelectorAll('#CookieMgrWidgets [data-widget]')].find((x) => /Next golden cookie/.test(x.textContent)).querySelector('.ca-tl-nums');
 assert(nums().querySelectorAll('span').length === 6, 'all six numbers by default (the Frequency since v3.30.0)');
 inst.nums = ['next', 'frequency'];
 CA.UI.Widgets.tick();
-assert(nums().querySelectorAll('span').length === 2 && /next in/.test(nums().textContent) && /multiplier/.test(nums().textContent) && !/median/.test(nums().textContent), 'two picked: next in and the multiplier (key frequency)');
-assert(CA.UI.Widgets.serialize().find((x) => x.type === 'goldenNext').nums.join() === 'next,frequency', 'saved with the widget');
+assert(nums().querySelectorAll('span').length === 2 && /Expected wait/.test(nums().textContent) && /Multiplier/.test(nums().textContent) && !/Median/.test(nums().textContent), 'two picked: next in and the multiplier (key frequency)');
+assert(CA.UI.Widgets.serialize().find((x) => x.title === 'Next golden cookie').nums.join() === 'next,frequency', 'saved with the widget');
 inst.nums = [];
 CA.UI.Widgets.tick();
 assert(!nums(), 'none picked: no numbers row');

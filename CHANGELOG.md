@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+## 3.39.0 — 2026-10-28
+
+- **One Golden cookies widget instead of three.** Next golden cookie, Golden timeline and Golden cookie frequency
+  are now a single **Golden cookies** widget; its settings pick what it shows:
+  - **Stats**, each on or off: Expected wait, Within minute %, Window, Frequency, Multiplier, Median wait (a new
+    one shows the first two and Frequency and Multiplier). Hover one for what it means.
+  - **Graph**: the odds of the next one, over **This cycle** (as Next golden cookie drew it) or **From now** (as
+    Golden timeline drew it).
+  - **Effects**: each effect's time left on the graph's axis, and the chance a golden cookie comes first.
+  - **Frequency Factors**: a bar for each thing making them come more often (the old frequency widget's bars).
+  Add as many as you like, each set up differently. Your saved widgets (and saved layouts) load as Golden cookies
+  widgets showing what they did before, titled with their old names (rename or clear the title in their
+  settings). The Stats page's ☆ adds one showing Frequency, Multiplier and Frequency Factors. **Effect timers**
+  stays its own widget.
+- Statistics are named and described in one place (`CA.StatInfo`): the widget's labels and hover tips and the
+  Stats page's Expected wait, Multiplier and Frequency tiles read from it.
+- Fixed: on a chart widget with a smaller (or larger) text size, the hover line sat beside the pointer instead of
+  under it.
+
 ## 3.38.0 — 2026-10-28
 
 - **Widget layouts.** A new **Layouts** card on the Widgets page saves the whole left panel as a named profile:

@@ -31,11 +31,11 @@ assert(nx && nx.querySelector('.ca-sp-cycle .ca-sp-now') && !nx.querySelector('.
 const et = el('effectTimers');
 assert(et && et.querySelector('.ca-et') && !et.querySelector('.ca-sp-pdf'), 'Effect timers: the bars alone');
 // parts, by its settings
-const inst = CA.UI.Widgets.list().find((x) => x.type === 'goldenTimeline');
+const inst = CA.UI.Widgets.list().find((x) => x.title === 'Golden timeline');
 inst.stats = ['numbers'];
 CA.UI.Widgets.tick();
 assert(el('goldenTimeline').querySelector('.ca-tl-nums') && !el('goldenTimeline').querySelector('.ca-sp-chart'), 'settings: the numbers alone');
-const saved = CA.UI.Widgets.serialize().find((x) => x.type === 'goldenTimeline');
+const saved = CA.UI.Widgets.serialize().find((x) => x.title === 'Golden timeline');
 assert(saved.stats.join() === 'numbers', 'saved with the settings');
 // nothing running
 Game.buffs = {};

@@ -12,7 +12,7 @@ await sleep(300);
 const css = [...doc.querySelectorAll('style')].map((s) => s.textContent).join('\n');
 
 // ---- the CSS: the muted classes get a bright colour only under .ca-w-clear; chart axis text gets a stroke
-['.ca-w-stat span', '.ca-tl-nums em', '.ca-w-empty', '.ca-ev-time', '.ca-sp-ticks text', '.ca-wfreq-sub', '.ca-graph-mini .ca-legend'].forEach((sel) =>
+['.ca-w-stat span', '.ca-tl-nums em', '.ca-w-empty', '.ca-ev-time', '.ca-sp-ticks text', '.ca-graph-mini .ca-legend'].forEach((sel) =>
   assert(css.includes(`#CookieMgrWidgets .ca-w-clear ${sel}`), `${sel} has a see-through override`)
 );
 assert(/\.ca-w-clear \.ca-sp-chart text \{[^}]*paint-order: stroke/.test(css), 'SVG chart text is outlined in see-through widgets');

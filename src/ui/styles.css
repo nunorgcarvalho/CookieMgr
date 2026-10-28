@@ -6245,7 +6245,6 @@ body.ca-has-storebar #products {
 #CookieMgrWidgets .ca-w-clear .ca-sp-chips,
 #CookieMgrWidgets .ca-w-clear .ca-sp-factors,
 #CookieMgrWidgets .ca-w-clear .ca-sp-note,
-#CookieMgrWidgets .ca-w-clear .ca-wfreq-sub,
 #CookieMgrWidgets .ca-w-clear .ca-graph-mini .ca-legend {
   color: #f2e9d4;
 }
@@ -6858,34 +6857,12 @@ body.ca-has-storebar #products {
   vertical-align: 2px;
 }
 
-/* Golden cookie frequency: the total big, a bar per thing helping (log scale: they add up) */
+/* the Golden cookies widget's What's helping: a bar per thing helping (log scale: they add up) */
 #CookieMgrWidgets .ca-wfreq {
   cursor: pointer;
 }
-#CookieMgrWidgets .ca-wfreq-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-#CookieMgrWidgets .ca-wfreq-big {
-  font: bold 22px Merriweather, Georgia, serif;
-  color: #ffd84a;
-  text-shadow: 0 0 10px rgba(255, 200, 60, 0.35), 0 1px 0 #000;
-  line-height: 1;
-}
-#CookieMgrWidgets .ca-wfreq-sub {
-  display: flex;
-  flex-direction: column;
-  font-size: 10px;
-  line-height: 1.3;
-  color: #a89a83;
-}
-#CookieMgrWidgets .ca-wfreq-sub em {
-  font-style: normal;
-}
-#CookieMgrWidgets .ca-wfreq-sub b {
-  color: #fff3d6;
+#CookieMgrWidgets .ca-tl-w > * + .ca-wfreq {
+  margin-top: 6px;
 }
 #CookieMgrWidgets .ca-wfq-row {
   display: grid;

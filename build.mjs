@@ -23,6 +23,7 @@ const VERSION_OUT = path.join(ROOT, 'dist', 'version.txt'); // tiny file CA.Upda
 const MODULES = [
   'core/util.js',
   'core/format.js',
+  'core/statInfo.js',
   'core/events.js',
   'core/actions.js',
   'core/conditions.js',

@@ -25,13 +25,14 @@
 // whatever is under the mouse — and its popup — stays put.
 //
 //   CA.UI.Widgets.defineType({ id, name, icon, desc, bare, width, single, hidden, resize, bg, settings, html(inst),
-//                              group, sprite, short, ring })
+//                              group, sprite, short, ring, legacy })
 //     For the "Add a widget" picker on the Widgets page: group = the id of a shelf (see defineGroup; unknown or
 //     missing ones land in "More"); sprite = [col, row] of the game's img/icons.png, or { sheet, pos: [col, row] }
 //     for another 48px sheet (img/gardenPlants.png) — without one the `icon` is drawn instead; short = a one-line
 //     summary under the name; ring = the colour of a round (bare) widget's ring on its tile (default gold).
 //   CA.UI.Widgets.defineGroup({ id, name, sprite, order })   a shelf of the picker; shelves sort by order
 //
+// legacy: { oldTypeId: (saved) => settings } — saved widgets of a type it replaced load as this one (migrate()).
 // iconOf(inst): an icon of its own per widget (a chart's: its chart's); nameOf(inst): a name of its own
 // (a Statistic widget's: its statistic's).
 // live(inst, body) runs after each render and refresh, for a widget that draws into its own nodes
@@ -57,7 +58,7 @@ CA.UI.Widgets = (() => {
   const FONT_MAX = 200;
   const MIN_W = 140;
   const MIN_H = 60;
-  const SAVED = ['plot', 'stat', 'item', 'count', 'types', 'stats', 'nums', 'font', 'title', 'target', 'targetMagic', 'bg', 'sort', 'barScale']; // per-widget settings that are saved
+  const SAVED = ['plot', 'stat', 'item', 'count', 'types', 'stats', 'nums', 'axis', 'font', 'title', 'target', 'targetMagic', 'bg', 'sort', 'barScale']; // per-widget settings that are saved
   const BG = [[100, 'Solid'], [40, 'Faint'], [0, 'None']]; // background opacity (%) while not hovered
   const S = () => CA.Settings;
   const I = (n, s) => CA.UI.Icons.html(n, s);
@@ -66,7 +67,7 @@ CA.UI.Widgets = (() => {
   const types = [];
   const typeById = {};
   const groups = [];
-  let widgets = []; // { id, type, x, y, collapsed, macro?, scale?, w?, h?, count?, types?, stats?, font?, title?, bg?, sort?, barScale? }
+  let widgets = []; // { id, type, x, y, collapsed, macro?, scale?, w?, h?, count?, types?, stats?, nums?, axis?, font?, title?, bg?, sort?, barScale? }
   let layer = null;
   let press = null; // { w, el, sx, sy, dx, dy, moved }
   let swallowClick = false;
@@ -93,7 +94,9 @@ CA.UI.Widgets = (() => {
 
   const newId = () => `w${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`;
 
-  function add(type, pos, extra) {
+  function add(type0, pos, extra0) {
+    // a replaced type's id (a v3.37 golden widget) adds the type that replaced it, set up the same
+    const [{ type, ...extra }] = typeById[type0] ? [{ ...(extra0 || {}), type: type0 }] : migrate([{ ...(extra0 || {}), type: type0 }]);
     const t = typeById[type];
     if (!t) return null;
     if (t.single) {
@@ -106,7 +109,7 @@ CA.UI.Widgets = (() => {
       const n = widgets.filter((w) => !typeById[w.type].bare).length;
       p = { x: 0.04, y: Math.min(0.85, 0.52 + n * 0.06) };
     }
-    const w = { id: newId(), type, x: p.x, y: p.y, collapsed: false, ...(extra || {}) };
+    const w = { id: newId(), type, x: p.x, y: p.y, collapsed: false, ...extra };
     widgets.push(w);
     changed();
     return w;
@@ -188,7 +191,9 @@ CA.UI.Widgets = (() => {
 
   // ---- stars: ready-made widgets from the pages --------------------------------------------------
 
-  const matches = (w, preset) => Object.keys(preset).every((k) => w[k] === preset[k]);
+  // (a list in a preset — which parts a widget shows — matches the same list, in the same order)
+  const same = (a, b) => a === b || (Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((x, i) => x === b[i]));
+  const matches = (w, preset) => Object.keys(preset).every((k) => same(w[k], preset[k]));
   const hasPreset = (preset) => widgets.some((w) => matches(w, preset));
   const presetOf = (el) => {
     try {
@@ -621,7 +626,7 @@ CA.UI.Widgets = (() => {
             .options()
             .map(
               (o) =>
-                `<label class="ca-member${chosen.has(o.v) ? ' on' : ''}"><input type="checkbox" data-w-multi="${s.key}" value="${esc(o.v)}"${chosen.has(o.v) ? ' checked' : ''}>` +
+                `<label class="ca-member${chosen.has(o.v) ? ' on' : ''}"${o.tip ? ` data-tip="${esc(o.tip)}"` : ''}><input type="checkbox" data-w-multi="${s.key}" value="${esc(o.v)}"${chosen.has(o.v) ? ' checked' : ''}>` +
                 `${o.icon ? `<span style="color:${o.color || 'inherit'}">${I(o.icon, 13)}</span>` : ''}<span>${esc(o.label)}</span></label>`
             )
             .join('') +
@@ -809,10 +814,23 @@ CA.UI.Widgets = (() => {
   }
   const serialize = () => serializeList(widgets);
 
+  /**
+   * Saved widgets of a type that's been replaced become the type that replaced it: a type's
+   * `legacy: { oldId: (saved) => settings }` gives the settings that make it show what the old one did
+   * (v3.39: Next golden cookie, Golden timeline and Golden cookie frequency → Golden cookies).
+   */
+  function migrate(data) {
+    if (!Array.isArray(data)) return data;
+    const by = {};
+    types.forEach((t) => Object.keys(t.legacy || {}).forEach((old) => (by[old] = { type: t.id, fn: t.legacy[old] })));
+    return data.map((w) => (w && by[w.type] ? { ...w, ...by[w.type].fn(w), type: by[w.type].type } : w));
+  }
+
   const okPos = (w) => w && Number.isFinite(w.x) && Number.isFinite(w.y);
 
   /** Saved widgets (the layout's, or a profile's) → clean widget objects; nothing else changes. */
-  function fromSaved(data) {
+  function fromSaved(saved) {
+    const data = migrate(saved); // a replaced type → the type that replaced it
     if (!Array.isArray(data)) return [];
     // a type that's gone is dropped (v3.19: the Golden cookies ring, now the Next golden cookie widget)
     return data
@@ -827,6 +845,7 @@ CA.UI.Widgets = (() => {
         if (Number.isFinite(w.h)) out.h = Math.max(MIN_H, w.h);
         if (Number.isFinite(w.count)) out.count = w.count;
         if (typeof w.target === 'string') out.target = w.target.slice(0, 40);
+        if (typeof w.axis === 'string') out.axis = w.axis.slice(0, 20);
         if (typeof w.stat === 'string') out.stat = w.stat.slice(0, 60);
         if (typeof w.item === 'string') out.item = w.item.slice(0, 120);
         if (Number.isFinite(w.targetMagic)) out.targetMagic = w.targetMagic;
@@ -1288,6 +1307,6 @@ CA.UI.Widgets = (() => {
     });
   }
 
-  return { init, defineType, defineGroup, types: () => types.slice(), add, remove, toggleStar, hasPreset, syncStars, list, get, has, serialize, load, fromSaved, render, tick, reconcile, openSettings, editing: () => editing,
+  return { init, defineType, defineGroup, types: () => types.slice(), add, remove, toggleStar, hasPreset, syncStars, list, get, has, serialize, migrate, load, fromSaved, render, tick, reconcile, openSettings, editing: () => editing,
     profiles: profileList, profileOf, profileActive, activeProfile, useProfile, undoProfile, addProfile, overwriteProfile, renameProfile, removeProfile };
 })();
