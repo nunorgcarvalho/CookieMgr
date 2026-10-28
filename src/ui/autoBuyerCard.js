@@ -5,8 +5,9 @@
 //   Queue        the active profile's queue: place, what (icon, name; an upgrade's info card on hover),
 //                payback period in its color, score, price, when, the rules that touched it — the first
 //                ten (all on "show all"), then what's held back, grayed, with why
-//   Profile      the active profile: name, what it buys, the bulk, save up or skip, the reserve, what it
-//                ranks by, and its rules (what → does, when …), reordered with ↑ ↓
+//   Profile      the active profile: name, what it buys, the bulk, save up or skip, the reserve
+//                (minutes of CpS and banks — the highest is kept), what it ranks by, and its rules
+//                (what → does, when …), reordered with ↑ ↓
 //
 // The first two follow the game every second (sync); the profile editor redraws only when it changes,
 // so typing into it isn't interrupted.
@@ -42,13 +43,14 @@ CA.UI.AutoBuyerCard = (() => {
     const p = B().find();
     const f = B().next();
     if (!f) return `<div class="ca-ab-next"><div class="ca-ab-next-text"><b>Nothing to buy</b><span class="ca-hint">${esc(B().readiness().text)}</span></div></div>`;
-    const keep = B().reserveOf(p.reserve);
+    const keep = B().keepOf(p.id);
+    const top = B().reserveParts(p.id).find((q) => q.wins);
     const need = f.price + keep;
     const pct = need > 0 ? Math.max(0, Math.min(1, (Game.cookies || 0) / need)) : 1;
     return (
       `<div class="ca-ab-next${pct >= 1 ? ' can' : ''}">` +
       `<div class="ca-ab-next-text"><b>Next: ${thingName(f)}</b>` +
-      `<span class="ca-hint">PP ${ppText(f.pp)} · +${F().short(f.gain)}/s · ${F().beautify(f.price)} · ${pct >= 1 ? 'affordable now' : `in ${when(need)}`}${keep > 0 ? ` · keeps ${F().short(keep)} in the bank` : ''}</span>` +
+      `<span class="ca-hint">PP ${ppText(f.pp)} · +${F().short(f.gain)}/s · ${F().beautify(f.price)} · ${pct >= 1 ? 'affordable now' : `in ${when(need)}`}${keep > 0 ? ` · keeps ${F().short(keep)} in the bank (${esc(top.label)})` : ''}</span>` +
       `<span class="ca-ab-bar"><i style="width:${(pct * 100).toFixed(1)}%"></i></span></div></div>`
     );
   }
@@ -178,6 +180,14 @@ CA.UI.AutoBuyerCard = (() => {
       '</span></div>'
     );
   }
+  /** The reserve's thresholds now, the highest (what it keeps) in bold. */
+  function keepHtml(p) {
+    const parts = B().reserveParts(p.id);
+    if (!parts.length) return 'no reserve: it may spend the whole bank';
+    return `keeps the highest — so the bank never drops below any of them: ${parts
+      .map((q) => (q.wins ? `<b>${esc(q.label)} ${F().beautify(q.amount)}</b>` : `${esc(q.label)} ${F().beautify(q.amount)}`))
+      .join(' · ')}`;
+  }
   function editorHtml() {
     const p = B().find();
     if (!p) return '';
@@ -191,7 +201,11 @@ CA.UI.AutoBuyerCard = (() => {
         .BULKS.map((b) => chip('data-ab-bulk', b, b === 'auto' ? 'auto' : `×${b}`, p.bulk === b, b === 'auto' ? `The store’s minimum bulk (Options below), rounded up with Round to multiples — now ×${CA.Shop.minBulk()}` : ''))
         .join('')}</span></div>` +
       `<div class="ca-ab-row"><span class="ca-ab-lbl">Can’t afford</span><span class="ca-pp-chips">${chip('data-ab-skip', 0, 'save up for the front', !p.skip)}${chip('data-ab-skip', 1, 'skip to what I can afford', p.skip)}</span></div>` +
-      `<div class="ca-ab-row"><span class="ca-ab-lbl">Bank reserve</span><input type="number" min="0" step="1" class="ca-pp-num" value="${p.reserve}" data-ab-f="reserve"><span class="ca-hint">minutes of unbuffed CpS it never spends${p.reserve > 0 ? ` — now ${F().beautify(B().reserveOf(p.reserve))}` : ''}</span></div>` +
+      `<div class="ca-ab-row"><span class="ca-ab-lbl">Bank reserve</span><input type="number" min="0" step="1" class="ca-pp-num" value="${p.reserve}" data-ab-f="reserve"><span class="ca-hint">minutes of unbuffed CpS</span>` +
+      `<span class="ca-pp-chips">${B()
+        .BANKS.map((b) => chip('data-ab-bank', b.id, esc(b.label), p.banks.includes(b.id), `Also keep ${b.tip}`))
+        .join('')}</span></div>` +
+      `<div class="ca-ab-row"><span class="ca-ab-lbl"></span><span class="ca-hint" data-ab-keep>${keepHtml(p)}</span></div>` +
       `<div class="ca-ab-row"><span class="ca-ab-lbl">Rank by</span><select data-ab-f="mode">${modes}</select><span class="ca-hint">the payback period the queue sorts on</span></div>` +
       `<div class="ca-ab-row ca-ab-rules-head"><span class="ca-ab-lbl">Rules</span><span class="ca-hint">top to bottom: what it applies to → what it does, when its condition holds. “never” and a reached cap stop there.</span></div>` +
       `<div class="ca-ab-rules">${p.rules.map((r, i) => ruleRow(p, r, i)).join('') || '<div class="ca-card-note">No rules: the queue is the payback ranking as it is.</div>'}</div>` +
@@ -216,6 +230,7 @@ CA.UI.AutoBuyerCard = (() => {
       ['[data-ab-buyer]', buyerHtml],
       ['[data-ab-queue]', queueHtml],
       ['[data-ab-qmeta]', queueMeta],
+      ['[data-ab-keep]', () => (B().find() ? keepHtml(B().find()) : '')],
     ].forEach(([sel, fn]) => {
       const el = root.querySelector(sel);
       if (el) CA.UI.Dom.morph(el, fn());
@@ -227,7 +242,7 @@ CA.UI.AutoBuyerCard = (() => {
 
   /** The page's clicks: true when it was one of these cards'. */
   function onClick(e) {
-    const t = e.target.closest('[data-ab-act],[data-ab-use],[data-ab-kind],[data-ab-bulk],[data-ab-skip],[data-ab-mv],[data-ab-rm],[data-ab-rule-on]');
+    const t = e.target.closest('[data-ab-act],[data-ab-use],[data-ab-kind],[data-ab-bulk],[data-ab-skip],[data-ab-bank],[data-ab-mv],[data-ab-rm],[data-ab-rule-on]');
     if (!t) return false;
     e.stopPropagation();
     const d = t.dataset;
@@ -241,6 +256,8 @@ CA.UI.AutoBuyerCard = (() => {
       B().update(p.id, { bulk: d.abBulk === 'auto' ? 'auto' : Number(d.abBulk) });
     } else if (d.abSkip !== undefined) {
       B().update(p.id, { skip: d.abSkip === '1' });
+    } else if (d.abBank) {
+      B().update(p.id, { banks: p.banks.includes(d.abBank) ? p.banks.filter((b) => b !== d.abBank) : p.banks.concat(d.abBank) });
     } else if (d.abMv !== undefined) {
       B().moveRule(p.id, Number(d.abMv), Number(d.abMv) + Number(d.d));
     } else if (d.abRm !== undefined) {

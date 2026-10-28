@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 3.45.0 — 2026-10-28
+
+- **Auto buyer reserve thresholds.** A profile's bank reserve can now combine several thresholds, each picked on or
+  off in its editor: minutes of unbuffed CpS (as before), the **Lucky!**, **Conjure** and **Frenzy Lucky!** banks
+  (the bank warnings' own: `bank.lucky`, `bank.conjure`, `bank.luckyFrenzy`) and **Garden replant**, what planting
+  the whole garden layout costs. The buyer keeps the highest, so the bank never drops below any of them; the editor
+  shows each one now with the winner in bold. New words `buyer.reserve(profile)` (what it keeps) and
+  `garden.layoutCost()`; profiles take `banks: [...]` (`lucky`, `conjure`, `luckyFrenzy`, `garden`).
+
 ## 3.44.0 — 2026-10-28
 
 - **The Auto buyer.** One buyer for buildings and upgrades replaces **Best building** and **Best upgrade**. Its

@@ -387,6 +387,17 @@ CA.Garden = (() => {
     return c;
   }
 
+  /** Cookies to plant the whole layout from scratch: every tile it has a seed for, at today's seed prices. */
+  function layoutCost() {
+    const M = minigame();
+    if (!M || typeof M.getCost !== 'function') return 0;
+    const p = active();
+    return tilesOf(M).reduce((sum, [x, y]) => {
+      const me = M.plants[wantAt(p, x, y)];
+      return me ? sum + M.getCost(me) : sum;
+    }, 0);
+  }
+
   /** Plants on the plot now: { planted, mature, young, empty, off } (empty: unlocked tiles with nothing). */
   function census() {
     const M = minigame();
@@ -562,6 +573,7 @@ CA.Garden = (() => {
     V('garden.empty', 'empty tiles', () => census().empty);
     V('garden.offProfile', 'tiles that aren’t as the layout has them', () => census().off);
     V('garden.layoutTiles', 'tiles the layout has a seed for', () => layoutCensus().tiles);
+    V('garden.layoutCost', 'cookies to replant the whole layout from scratch (every tile it has a seed for)', () => layoutCost());
     V('garden.layoutMature', 'the layout’s own plants that are mature', () => layoutCensus().mature);
     V('garden.layoutYoung', 'the layout’s own plants still growing', () => layoutCensus().young);
     V('garden.layoutYoungShare', 'share of the layout’s own plants not mature yet (0–1)', () => {
@@ -742,6 +754,7 @@ CA.Garden = (() => {
     setRules,
     defaultRules,
     census,
+    layoutCost,
     compileRules,
     serialize,
     load,
