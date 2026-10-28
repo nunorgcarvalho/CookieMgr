@@ -13,6 +13,10 @@
   same settings beside it and opens its settings. Round widgets get a **Name** field (they have no title bar), used
   in that list. Saves, layouts and ☆ stars keep every copy.
 
+## 3.51.1 — 2026-10-28
+
+- **README:** the Settings screenshot and summary show the new tabs.
+
 ## 3.51.0 — 2026-10-28
 
 - **The Settings page has tabs.** Instead of one long scroll, tabs at the top split it into **General** (the
