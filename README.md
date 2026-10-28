@@ -316,6 +316,8 @@ forever:
   `dragon.profileActive(profile)`, `dragon.activeProfile()`, `dragon.profiles()`.
 - **Pantheon** — `pantheon.gods()`, `pantheon.god(slot)`, `pantheon.slotOf(god)`, `pantheon.isSlotted(god)`,
   `pantheon.swaps()`; `pantheon.slot(god, slot)` (diamond, ruby, jade, or none).
+- **Widget layouts** — `widgets.profile(name)` (a saved layout from the Widgets page, its id or name),
+  `widgets.profileActive(name)`, `widgets.activeProfile()`, `widgets.profiles()`.
 - **Macros** — `macro.isOn(id)`, `switch on / off …`. The editor colours the code, numbers the lines,
 lists any problems as you type (click one to jump to it), indents for you (Tab, and Enter after a `:`), and while
 the macro runs lights up the lines it's on and shows what it's checking. Every pass (its interval) moves each branch
@@ -808,6 +810,13 @@ once, and the widget glows on the left panel while its settings are open.
 **Your widgets** on the Widgets page is a small map of the left panel with every widget where it is (the big cookie
 drawn in for bearings), next to a chip for each. Hover a widget on the map, its chip, or the widget itself on the
 left panel, and all three light up together; click one for its settings, × on a chip to remove it.
+
+**Layouts** on the Widgets page saves the whole left panel under a name — every widget, where it sits, its size and its
+settings, macro buttons too — so you can switch between setups. **Save current layout** adds one; each row has a
+small picture of it, its name (type to rename), **Use** (swaps the left panel for it: the macros it has buttons for
+get their ★, the others lose it), **Save** (puts the layout on the panel now over it) and **Delete**. **Undo** goes
+back to the layout you had before the last one you used. For macros: `widgets.profile(name)` (its id or name), and
+the values `widgets.profileActive(name)`, `widgets.activeProfile()`, `widgets.profiles()`.
 
 ### Notifications
 
