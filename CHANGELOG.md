@@ -20,6 +20,11 @@
   `payback.allUpgradesPrice()`, `payback.allUpgradesCount(budget)`; `pp.kind`, `pp.price`, `pp.of` and `pp.buy` take the
   thing `"allUpgrades"`.
 
+## 3.49.1 — 2026-10-28
+
+- **README:** the Payback and Statistics screenshots show payback periods in time units, as since 3.49.0. No change
+  to the add-on itself.
+
 ## 3.49.0 — 2026-10-28
 
 - **Payback periods read in time units.** Everywhere a payback period shows (the Payback page's tables, the Auto
