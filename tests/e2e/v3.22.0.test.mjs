@@ -45,11 +45,11 @@ assert(!tile('pantheon').classList.contains('placed') && !tile('pantheon').query
 click(w, tile('pantheon'));
 assert(CA.UI.Widgets.has('pantheon'), 'clicking the tile places the widget');
 assert(tile('pantheon').classList.contains('placed'), 'tile shows placed');
-eq(tile('pantheon').querySelector('.ca-wtag').textContent, '✓', 'single type badge');
+eq(tile('pantheon').querySelector('.ca-wtag').textContent, '×1', 'badge counts (v3.52: every kind takes copies)');
 eq(tile('pantheon').querySelector('.ca-wadd').textContent, 'Remove', 'pill says Remove');
 assert(/click to remove/.test(tile('pantheon').querySelector('.ca-wtip-act').textContent), 'action line says remove');
 click(w, tile('pantheon'));
-assert(!CA.UI.Widgets.has('pantheon') && !tile('pantheon').classList.contains('placed'), 'clicking a placed single tile removes it');
+assert(!CA.UI.Widgets.has('pantheon') && !tile('pantheon').classList.contains('placed'), 'clicking a placed tile removes it');
 
 click(w, tile('events'));
 click(w, tile('events').querySelector('.ca-wtile-add')); // v3.25: a placed tile removes; its small Add button adds another

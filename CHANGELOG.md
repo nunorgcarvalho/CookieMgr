@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 3.52.0 — 2026-10-28
+
+- **Place any widget more than once.** Running now, Quick stats, the Grimoire, Garden, Stock market and Pantheon
+  widgets were one-only; now every kind takes as many copies as you like, each with its own settings (a Grimoire
+  counting down to full magic and another to Force the Hand of Fate, say). Macro buttons stay one per starred macro.
+- **Copies are managed in one place on the Widgets page.** **Your widgets** groups the chips by kind, with a **+**
+  to add another of that kind; a second copy is listed as "Grimoire 2" until you name it. A widget's settings show
+  its copies as numbered buttons in the header to switch between them, and **Duplicate** places another with the
+  same settings beside it and opens its settings. Round widgets get a **Name** field (they have no title bar), used
+  in that list. Saves, layouts and ☆ stars keep every copy.
+
 ## 3.51.1 — 2026-10-28
 
 - **README:** the Settings screenshot and summary show the new tabs.

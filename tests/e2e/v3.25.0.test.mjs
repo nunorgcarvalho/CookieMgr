@@ -43,14 +43,14 @@ assert(tile('events').classList.contains('linked'), 'hovering a widget on the pa
 assert(onPanel(ids[1]).classList.contains('ca-w-linked') && !onPanel(ids[0]).classList.contains('ca-w-linked'), 'and only that widget');
 hover(doc.body);
 
-// ---- Remove takes the newest of a kind; a one-only kind just goes
+// ---- Remove takes the newest of a kind
 const newest = ids[2];
 click(w, tile('events'));
 eq(events().length, 2, 'Remove takes one');
 assert(!CA.UI.Widgets.get(newest) && CA.UI.Widgets.get(ids[0]) && CA.UI.Widgets.get(ids[1]), 'the newest one');
 eq(tile('events').querySelector('.ca-wtag').textContent, '×2', 'badge follows');
 click(w, tile('pantheon'));
-assert(tile('pantheon').matches('[data-w-page-remove]') && !tile('pantheon').querySelector('.ca-wtile-add'), 'a one-only kind: Remove, no small Add');
+assert(tile('pantheon').matches('[data-w-page-remove]') && tile('pantheon').querySelector('.ca-wtile-add'), 'v3.52: every kind gets the small Add (no one-only kinds)');
 click(w, tile('pantheon'));
 assert(!CA.UI.Widgets.has('pantheon'), 'gone');
 
