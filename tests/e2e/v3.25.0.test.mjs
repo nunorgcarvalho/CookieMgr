@@ -50,7 +50,7 @@ eq(events().length, 2, 'Remove takes one');
 assert(!CA.UI.Widgets.get(newest) && CA.UI.Widgets.get(ids[0]) && CA.UI.Widgets.get(ids[1]), 'the newest one');
 eq(tile('events').querySelector('.ca-wtag').textContent, '×2', 'badge follows');
 click(w, tile('pantheon'));
-assert(tile('pantheon').matches('[data-w-page-remove]') && tile('pantheon').querySelector('.ca-wtile-add'), 'v3.49: every kind gets the small Add (no one-only kinds)');
+assert(tile('pantheon').matches('[data-w-page-remove]') && tile('pantheon').querySelector('.ca-wtile-add'), 'v3.50: every kind gets the small Add (no one-only kinds)');
 click(w, tile('pantheon'));
 assert(!CA.UI.Widgets.has('pantheon'), 'gone');
 

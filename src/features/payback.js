@@ -782,6 +782,18 @@ CA.Payback = (() => {
       },
     });
     CA.Settings.defineOption({
+      key: 'ppUnits',
+      group: 'payback',
+      icon: 'clock',
+      name: 'Payback periods in',
+      desc: 'How payback periods read, everywhere: in time units (999 s, then 16.7 min, 41.6 h — the next unit only past 999) or in plain seconds (Cookie Monster’s way: 999, 1K).',
+      default: 'time',
+      choices: [
+        { v: 'time', label: 'Time units — 999 s, 16.7 min, 41.6 h', short: 'time units' },
+        { v: 'seconds', label: 'Seconds — 999, 1K, 150K', short: 'seconds' },
+      ],
+    });
+    CA.Settings.defineOption({
       key: 'ppActualWindow',
       group: 'payback',
       icon: 'graphs',

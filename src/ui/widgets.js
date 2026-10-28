@@ -41,7 +41,7 @@
 // Layouts: the whole panel saved under a name (profiles; see "layout profiles" below) — Use, Save over,
 // rename, delete, Undo; widgets.profile(name) in code.
 //
-// Copies (v3.49): every kind can be placed as often as you like, each copy with its own settings. The
+// Copies (v3.50): every kind can be placed as often as you like, each copy with its own settings. The
 // Widgets page lists them by kind (a second Grimoire is "Grimoire 2" until you name it), and a widget's
 // settings switch between its copies and Duplicate it (same settings, placed beside it).
 //

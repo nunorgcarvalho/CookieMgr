@@ -50,7 +50,7 @@ CA.UI.UpgradeTip = (() => {
         if (w.bonus > 0) row('Adds', `+${F().beautify(w.bonus)}/s${share}`);
         if (w.mouse > 0) row('Per click', `+${F().beautify(w.mouse)} (≈ ${F().beautify(w.mouse * CA.Payback.clickRate())}/s at your clicking)`);
         if (!(w.bonus > 0) && !(w.mouse > 0)) row('Adds', 'no CpS');
-        row('Payback period', `${Number.isFinite(w.pp) ? F().short(w.pp) : '∞'}${st === 'locked' ? ' <small>if you had it now</small>' : ''}`, w.colour ? `ca-pp-${w.colour}` : '');
+        row('Payback period', `${F().payback(w.pp)}${st === 'locked' ? ' <small>if you had it now</small>' : ''}`, w.colour ? `ca-pp-${w.colour}` : '');
         if (w.won && w.won.length) row('Wins', esc(w.won.join(', ')));
       }
     }

@@ -45,7 +45,7 @@ assert(!tile('pantheon').classList.contains('placed') && !tile('pantheon').query
 click(w, tile('pantheon'));
 assert(CA.UI.Widgets.has('pantheon'), 'clicking the tile places the widget');
 assert(tile('pantheon').classList.contains('placed'), 'tile shows placed');
-eq(tile('pantheon').querySelector('.ca-wtag').textContent, '×1', 'badge counts (v3.49: every kind takes copies)');
+eq(tile('pantheon').querySelector('.ca-wtag').textContent, '×1', 'badge counts (v3.50: every kind takes copies)');
 eq(tile('pantheon').querySelector('.ca-wadd').textContent, 'Remove', 'pill says Remove');
 assert(/click to remove/.test(tile('pantheon').querySelector('.ca-wtip-act').textContent), 'action line says remove');
 click(w, tile('pantheon'));
