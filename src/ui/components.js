@@ -69,5 +69,19 @@ CA.UI.C = (() => {
   const gameLink = (building, label = 'Open in game') =>
     `<button type="button" class="ca-btn ca-btn-small ca-btn-game" data-ca="open-mg" data-building="${esc(building)}">${CA.UI.Icons.html('open', 12)} ${label}</button>`;
 
-  return { icon, toggle, hotkey, button, cardHead, esc, link, gameLink, widgetStar, starTip };
+  /**
+   * A line of text naming an upgrade, as HTML: escaped, with the upgrade's name (its first mention)
+   * shown with its icon and its info card on hover (CA.UpgradeInfo.ref) — v3.43: everywhere the
+   * add-on names an upgrade. No upgrade (or no mention): just the text, escaped.
+   */
+  function withUpgrade(text, name) {
+    const t = esc(text);
+    const u = name && ((Game.Upgrades && Game.Upgrades[name]) || (Game.UpgradesInStore || []).find((x) => x && x.name === name));
+    if (!u) return t;
+    const shown = esc(u.dname || u.name);
+    const at = t.indexOf(shown);
+    return at < 0 ? t : t.slice(0, at) + CA.UpgradeInfo.ref(u.name) + t.slice(at + shown.length);
+  }
+
+  return { icon, toggle, hotkey, button, cardHead, esc, link, gameLink, widgetStar, starTip, withUpgrade };
 })();

@@ -6085,6 +6085,251 @@ body.ca-has-storebar #products {
   padding: 3px 6px;
 }
 
+/* the Auto buyer's cards, at the top of the Payback page (ui/autoBuyerCard.js) */
+#CookieMgrMenu .ca-ab-hero {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 12px 8px;
+  flex-wrap: wrap;
+}
+#CookieMgrMenu .ca-ab-state {
+  font: bold 11px Tahoma, Arial, sans-serif;
+  color: #9a8a70;
+  text-transform: uppercase;
+  min-width: 26px;
+}
+#CookieMgrMenu .ca-ab-state.on {
+  color: #8fe88a;
+}
+#CookieMgrMenu .ca-ab-next {
+  flex: 1 1 260px;
+  min-width: 0;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.15);
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+#CookieMgrMenu .ca-ab-next.can {
+  box-shadow: inset 0 0 0 1px rgba(130, 235, 120, 0.45);
+}
+#CookieMgrMenu .ca-ab-next-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+#CookieMgrMenu .ca-ab-next-text b {
+  font-size: 13px;
+  color: #fff;
+}
+#CookieMgrMenu .ca-ab-bar {
+  display: block;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+#CookieMgrMenu .ca-ab-bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(to right, #6fbf5f, #a6e86a);
+}
+#CookieMgrMenu .ca-ab-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  padding: 3px 12px;
+}
+#CookieMgrMenu .ca-ab .ca-ab-row.ca-pp-modebar {
+  padding: 3px 12px;
+}
+#CookieMgrMenu .ca-ab-lbl {
+  min-width: 96px;
+  font: bold 11px Tahoma, Arial, sans-serif;
+  color: #e8d9b5;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+#CookieMgrMenu .ca-ab-row .ca-pp-chips {
+  flex-wrap: wrap;
+  align-items: center;
+}
+#CookieMgrMenu .ca-ab-row .ca-btn small {
+  color: #c9b48d;
+  font-weight: normal;
+}
+#CookieMgrMenu .ca-ab-grow {
+  flex: 1;
+}
+#CookieMgrMenu .ca-ab-scroll {
+  overflow-x: auto;
+  padding: 0 8px 6px;
+}
+#CookieMgrMenu .ca-ab-queue {
+  width: 100%;
+  border-collapse: collapse;
+  font: 12px Tahoma, Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
+  color: #f0e2c0;
+}
+#CookieMgrMenu .ca-ab-queue th {
+  text-align: left;
+  font-size: 10px;
+  color: #a8987a;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+}
+#CookieMgrMenu .ca-ab-queue td {
+  padding: 3px 6px;
+  border-top: 1px solid rgba(255, 220, 150, 0.1);
+  white-space: nowrap;
+}
+#CookieMgrMenu .ca-ab-queue .n {
+  text-align: right;
+}
+#CookieMgrMenu .ca-ab-queue tr.front td {
+  background: rgba(130, 235, 120, 0.12);
+}
+#CookieMgrMenu .ca-ab-queue tr.held td {
+  opacity: 0.55;
+}
+#CookieMgrMenu .ca-ab-queue .ca-pp-dot {
+  margin-right: 4px;
+}
+#CookieMgrMenu .ca-ab-queue td.ca-ab-can {
+  color: #8fe88a;
+}
+#CookieMgrMenu .ca-ab-thing {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+#CookieMgrMenu .ca-ab-thing .ca-pp-ico {
+  zoom: 0.33;
+  width: 48px;
+  height: 48px;
+}
+#CookieMgrMenu .ca-ab-badges {
+  white-space: normal;
+}
+#CookieMgrMenu .ca-ab-badge {
+  display: inline-block;
+  font-size: 10px;
+  border-radius: 3px;
+  padding: 0 4px;
+  margin: 1px 3px 1px 0;
+  border: 1px solid;
+}
+#CookieMgrMenu .ca-ab-badge.first {
+  color: #9be7a5;
+  border-color: #4f9a5a;
+}
+#CookieMgrMenu .ca-ab-badge.weight {
+  color: #f2d48b;
+  border-color: #a58340;
+}
+#CookieMgrMenu .ca-ab-badge.cap {
+  color: #b8c8ff;
+  border-color: #5b6fb0;
+}
+#CookieMgrMenu .ca-ab-badge.never {
+  color: #f0a0a0;
+  border-color: #a04848;
+}
+#CookieMgrMenu .ca-ab-why {
+  font-size: 11px;
+  color: #c9a26b;
+}
+#CookieMgrMenu .ca-ab-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 2px 12px 4px;
+}
+#CookieMgrMenu .ca-ab-rule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 6px;
+  padding: 5px 8px;
+  background: rgba(0, 0, 0, 0.25);
+  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.12);
+}
+#CookieMgrMenu .ca-ab-rule.off {
+  opacity: 0.55;
+}
+#CookieMgrMenu .ca-ab-rule-mv {
+  display: flex;
+  flex-direction: column;
+}
+#CookieMgrMenu .ca-ab-mini {
+  font: 10px Tahoma, Arial, sans-serif;
+  line-height: 1;
+  color: #e8d9b5;
+  background: none;
+  border: none;
+  padding: 1px 3px;
+  cursor: pointer;
+}
+#CookieMgrMenu .ca-ab-mini:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+#CookieMgrMenu .ca-ab-rule-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px 6px;
+}
+#CookieMgrMenu .ca-ab-arrow {
+  color: #c9a26b;
+}
+#CookieMgrMenu .ca-ab-rule-end {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+#CookieMgrMenu .ca-ab-when {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+#CookieMgrMenu .ca-ab-rule select,
+#CookieMgrMenu .ca-ab .ca-gname,
+#CookieMgrMenu [data-ab-editor] select,
+#CookieMgrMenu [data-ab-editor] .ca-gname,
+#CookieMgrMenu .ca-ab-code {
+  font: 12px Tahoma, Arial, sans-serif;
+  color: #f0e2c0;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 220, 150, 0.25);
+  border-radius: 4px;
+  padding: 3px 6px;
+}
+#CookieMgrMenu [data-ab-editor] .ca-gname {
+  width: 150px;
+  font-weight: bold;
+}
+#CookieMgrMenu [data-ab-editor] select option {
+  background: #2a2015;
+}
+#CookieMgrMenu .ca-ab-code {
+  font-family: Consolas, 'Courier New', monospace;
+  width: 170px;
+}
+#CookieMgrMenu .ca-ab-code.bad {
+  border-color: #d0605a;
+}
+
 /* the Stats page */
 #CookieMgrMenu .ca-meters {
   display: grid;

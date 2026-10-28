@@ -37,7 +37,8 @@ function sideBySide(trials, setup, runJs, runCode, outcome) {
 }
 
 // ---- they're code
-['golden', 'wrath', 'reindeer', 'wrinklers', 'lumps', 'cmBuildings', 'cmUpgrades', 'research', 'cheapUpgrades', 'petDragon', 'stockTrader'].forEach((id) => {
+// v3.43: Best building + Best upgrade → the Auto buyer
+['golden', 'wrath', 'reindeer', 'wrinklers', 'lumps', 'autoBuyer', 'research', 'cheapUpgrades', 'petDragon', 'stockTrader'].forEach((id) => {
   const m = M.get(id);
   assert(m.mode === 'flow' && M.sourceOf(m).length > 20 && !M.compiledOf(m).errors.length, `${m.name}: algorithmic code that compiles`);
 });
@@ -208,10 +209,11 @@ Game.buyBulk = 1;
 const model = cpsModel(Game, { base: 1000 });
 CA.Recorder.recent = () => ({ clickRate: 0, actual: 1000 });
 const buyNow = () => `${Game.Objects.Cursor.amount},${Game.Objects.Grandma.amount}|${Game.UpgradesInStore.map((u) => u.name).join(',')}|${Math.round(Game.cookies)}`;
-M.setEvery('cmBuildings', 60000); // the other one is switched on in some trials: no timer runs in between
-M.setEvery('cmUpgrades', 60000);
-for (const [id, action] of [['cmBuildings', 'cm.buyBuilding'], ['cmUpgrades', 'cm.buyUpgrade']]) {
-  const other = id === 'cmBuildings' ? 'cmUpgrades' : 'cmBuildings';
+// v3.43: the Auto buyer (its profiles: buildings only, upgrades only, both) against buyer.buyNext
+M.setEvery('autoBuyer', 60000);
+{
+  const id = 'autoBuyer';
+  const action = 'buyer.buyNext';
   const r = sideBySide(
     200,
     () => {
@@ -220,9 +222,10 @@ for (const [id, action] of [['cmBuildings', 'cm.buyBuilding'], ['cmUpgrades', 'c
       const mults = { 'Kitten helpers': 1 + rnd() * 0.3, 'Lucky day': 1 + rnd() * 0.05 };
       const skip = rnd() < 0.5;
       const cookies = [30, 400, 5000, 1e6][pick(4)];
-      M.set(other, rnd() < 0.5, { silent: true });
-      M.setInput(id, 'skip', skip);
-      sideBySide.params = { skip };
+      const profile = ['payback', 'buildings', 'upgrades'][pick(3)];
+      CA.AutoBuyer.use(profile);
+      CA.AutoBuyer.update(profile, { skip });
+      sideBySide.params = { profile: '' };
       model.each = each;
       model.mults = mults;
       const build = () => {
@@ -239,10 +242,9 @@ for (const [id, action] of [['cmBuildings', 'cm.buyBuilding'], ['cmUpgrades', 'c
     () => M.runOnce(id),
     buyNow
   );
-  assert(r.same === 200 && r.busy > 50, `${M.get(id).name}: buys what ${action} buys — with the other on or off, skipping or saving up (${r.same}/200, ${r.busy} bought) ${r.diffs}`);
+  assert(r.same === 200 && r.busy > 50, `${M.get(id).name}: buys what ${action} buys — any profile, skipping or saving up (${r.same}/200, ${r.busy} bought) ${r.diffs}`);
 }
-M.set('cmBuildings', false, { silent: true });
-M.set('cmUpgrades', false, { silent: true });
+M.set('autoBuyer', false, { silent: true });
 
 // ---- the dragon: nothing to do without level 8
 Game.dragonLevel = 0;

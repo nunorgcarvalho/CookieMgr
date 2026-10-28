@@ -119,7 +119,7 @@ export async function createSim({ seed = 1, fps = 30, start, save = null, mgr = 
     return { done: F.done, trace: F.trace.map((x) => x.text), error: F.error };
   }
   /**
-   * Switches on a macro: a built-in by id ('golden', 'bigCookie', 'gardener', 'cmBuildings'…), or
+   * Switches on a macro: a built-in by id ('golden', 'bigCookie', 'gardener', 'autoBuyer'…), or
    * your own algorithmic one — { name, source, every (ms), pass (true: from the top each time) }.
    * Returns its id.
    */

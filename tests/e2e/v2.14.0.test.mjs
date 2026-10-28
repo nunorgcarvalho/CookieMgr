@@ -20,9 +20,9 @@ await sleep(3500);
 // ---- sidebar: data | minigames | customization
 const tab = doc.getElementById('CookieMgrTab');
 const order = [...tab.children].map((el) => (el.classList.contains('ca-tab-gap') ? '|' : el.dataset.tabItem)).join(',');
-// v3.6: + Stats, Payback
+// v3.6: + Stats, Payback; v3.43: Payback right above Macros (with the custom pages)
 // v3.27: + Tooltips
-assert(order === 'events,graphs,stats,payback,|,garden,stocks,pantheon,wizard,dragon,|,clickers,tooltips,widgets,settings', `sidebar (${order})`);
+assert(order === 'events,graphs,stats,|,garden,stocks,pantheon,wizard,dragon,|,payback,clickers,tooltips,widgets,settings', `sidebar (${order})`);
 assert(tab.querySelector('[data-tab-item="wizard"] .ca-tab-label').textContent === 'Grimoire', 'Wizard tower page is now “Grimoire”');
 
 // ---- Pantheon page

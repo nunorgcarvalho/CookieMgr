@@ -64,7 +64,8 @@ newState();
 const before = cursor.amount;
 const farmsBefore = Game.Objects.Farm.amount;
 const grBefore = Game.Objects.Grandma.amount;
-CA.Macros.runOnce('cmBuildings');
+CA.AutoBuyer.use('buildings'); // v3.43: Best building → the Auto buyer, Buildings only
+CA.Macros.runOnce('autoBuyer');
 await sleep(50);
 const bought = [cursor.amount - before, Game.Objects.Grandma.amount - grBefore, Game.Objects.Farm.amount - farmsBefore];
 const got = bought.find((x) => x > 0);

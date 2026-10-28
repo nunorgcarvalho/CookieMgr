@@ -62,6 +62,8 @@ CA.UI.TooltipsPage = (() => {
     const { b } = previewBuilding();
     return b ? ST().contextOf(b.name, 'building') : null;
   }
+  /** What a statistic is about, as HTML: a building's name, an upgrade's with its icon and info card. */
+  const aboutHtml = (c) => (c && c.kind !== 'building' ? CA.UpgradeInfo.ref(c.name) : esc(aboutName(c)));
   const aboutName = (c) => (c ? (c.kind === 'building' ? (Game.Objects[c.name] || {}).dname || c.name : c.name) : '');
 
   /** A statistic's value now, as its tooltip line has it: [html, class] ('—' when it shows nothing). */
@@ -153,7 +155,7 @@ CA.UI.TooltipsPage = (() => {
     return (
       `<div class="ca-tl-pv"><div class="ca-tl-pvhead">${sel}</div>${b ? SI().buildingBlock(b, { force: true }) : ''}</div>` +
       (u
-        ? `<div class="ca-tl-pv"><div class="ca-tl-pvhead">${esc(u.dname || u.name)} <em>the best upgrade</em></div>${SI().upgradeBlock(u, { force: true })}</div>`
+        ? `<div class="ca-tl-pv"><div class="ca-tl-pvhead">${CA.UpgradeInfo.ref(u.name)} <em>the best upgrade</em></div>${SI().upgradeBlock(u, { force: true })}</div>`
         : '')
     );
   }
@@ -280,7 +282,7 @@ CA.UI.TooltipsPage = (() => {
     return (
       `<div class="ca-st-card${s.builtin ? '' : ' yours'}" data-st-card="${esc(s.id)}">` +
       `<div class="ca-st-head"><b class="ca-st-name">${esc(s.label)}</b>${kindTag(s.scope)}${s.warn ? `<span class="ca-tl-kind ca-tl-colour ${warnColour(s)}" data-tip="A warning: it marks items in the store">⚠ warning</span>` : ''}${s.mode ? '<span class="ca-tl-kind ca-st-modetag" data-tip="A payback mode: it sets income (what payback periods count in) and returns what the item adds to it">payback mode</span>' : ''}${s.builtin ? (s.customized ? '<span class="ca-tl-kind yours" data-tip="A built-in you’ve changed (Edit → Reset brings back the original)">changed</span>' : '') : '<span class="ca-tl-kind yours">yours</span>'}${star}</div>` +
-      `<div class="ca-st-live"><span>${c ? esc(aboutName(c)) : 'the game'}</span><b class="${cls}" data-st-val="${esc(s.id)}">${v}</b></div>` +
+      `<div class="ca-st-live"><span>${c ? aboutHtml(c) : 'the game'}</span><b class="${cls}" data-st-val="${esc(s.id)}">${v}</b></div>` +
       `<div class="ca-st-desc">${esc(s.desc || '')}</div>` +
       codeHtml(s.source) +
       '<div class="ca-st-actions">' +
@@ -750,7 +752,7 @@ CA.UI.TooltipsPage = (() => {
       row = null;
     }
     const about =
-      s.scope === 'game' ? '' : c ? `${(w.item || 'best') === 'best' ? 'the best: ' : ''}${esc(aboutName(c))}` : 'nothing to show it about';
+      s.scope === 'game' ? '' : c ? `${(w.item || 'best') === 'best' ? 'the best: ' : ''}${aboutHtml(c)}` : 'nothing to show it about';
     return (
       `<div class="ca-w-stat"><span>${row ? row[0] : esc(s.label)}</span><b class="${row ? row[2] : ''}">${row ? row[1] : '—'}</b></div>` +
       (about ? `<div class="ca-w-stat-about">${about}</div>` : '')

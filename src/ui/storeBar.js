@@ -39,7 +39,7 @@ CA.UI.StoreBar = (() => {
     const mb = Number(CA.Settings.get('minBulk')) || 0;
     h +=
       `<button type="button" class="ca-sb-btn ca-sb-min${mb ? ' on' : ''}" data-ss-min data-tip="${CA.Util.escapeHtml(
-        `Minimum bulk: ${mb ? `×${mb}` : `auto (×${CA.Shop.minBulk()})`} — what CookieMgr’s buyers (Best building, buy.best, the Payback page) buy a building in${CA.Shop.roundUp() ? ', up to the next multiple of it' : ''}. Click for the next: auto, ×1, ×10, ×100.`
+        `Minimum bulk: ${mb ? `×${mb}` : `auto (×${CA.Shop.minBulk()})`} — what CookieMgr’s buyers (the Auto buyer, buy.best, the Payback page) buy a building in${CA.Shop.roundUp() ? ', up to the next multiple of it' : ''}. Click for the next: auto, ×1, ×10, ×100.`
       )}"><span class="ca-sb-txt">≥${CA.Shop.minBulk()}</span></button></div>`;
     return h;
   }

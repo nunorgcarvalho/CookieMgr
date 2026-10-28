@@ -55,7 +55,7 @@ await sleep(700); // the store's painter runs every half second
 // ---- the Payback page
 CA.UI.Menu.openPage('payback');
 const pg = () => doc.querySelector('[data-page="payback"]');
-assert(pg() && /Best buy/.test(pg().textContent) && /Kitten helpers/.test(pg().querySelector('[data-pp-best]').textContent), 'Payback: the best buy (an upgrade that beats every building)');
+assert(pg() && /Auto buyer/.test(pg().textContent) && /Kitten helpers/.test(pg().querySelector('[data-ab-buyer]').textContent), 'Payback: the best buy (an upgrade that beats every building) — v3.43: the Auto buyer’s Next');
 const cells = pg().querySelectorAll('.ca-pp-cell');
 assert(cells.length === 15 && pg().querySelectorAll('.ca-pp-cell.green').length === 1, `a cell per building and amount (${cells.length}), one green: the best building`);
 const t = CA.Payback.table();

@@ -127,7 +127,7 @@ async function main() {
     const firstLine = (f) => (fs.readFileSync(f, 'utf8').split('\n').find((l) => /^\s*(#|\/\/)/.test(l)) || '').replace(/^\s*(#|\/\/)\s*/, '');
     console.log('\nSTRATEGIES (sim/strategies/)');
     ls(STRATEGIES, /\.(cmgr|mjs)$/).forEach((f) => console.log(`  ${f.padEnd(28)} ${firstLine(path.join(STRATEGIES, f))}`));
-    console.log('  …or a built-in macro id (golden, bigCookie, gardener, cmBuildings…), or several joined with +');
+    console.log('  …or a built-in macro id (golden, bigCookie, gardener, autoBuyer…), or several joined with +');
     console.log('\nSCENARIOS (sim/scenarios/)');
     console.log(`  ${'fresh'.padEnd(28)} a new game`);
     ls(SCENARIOS, /\.mjs$/).forEach((f) => console.log(`  ${f.replace(/\.mjs$/, '').padEnd(28)} ${firstLine(path.join(SCENARIOS, f))}`));

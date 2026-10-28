@@ -67,8 +67,10 @@ await sleep(400);
 // ---- no Cookie Monster needed (v3.5)
 CA.UI.Menu.openPage('clickers');
 const card = (id) => doc.querySelector(`[data-page="clickers"] .ca-mtile[data-macro-row="${id}"]`);
-assert(card('cmBuildings') && card('cmUpgrades') && card('research') && card('cheapUpgrades') && card('petDragon'), 'the new built-ins');
-assert(!doc.querySelector('[data-page="clickers"] [data-ca="cm-load"]') && !card('cmBuildings').querySelector('.ca-switch[disabled]'), 'v3.5: the buyers work without Cookie Monster — no warning, switch enabled');
+// v3.43: Best building + Best upgrade → the Auto buyer (its profiles: buildings, upgrades, payback = both)
+assert(card('autoBuyer') && card('research') && card('cheapUpgrades') && card('petDragon'), 'the new built-ins');
+assert(!doc.querySelector('[data-page="clickers"] [data-ca="cm-load"]') && !card('autoBuyer').querySelector('.ca-switch[disabled]'), 'v3.5: the buyers work without Cookie Monster — no warning, switch enabled');
+const BU = CA.AutoBuyer;
 
 Game.cookies = 1e6;
 const AB = CA.AutoBuy;
@@ -81,39 +83,38 @@ const pm = AB.candidates(['upgrade']).find((c) => c.name === 'Plastic mouse');
 assert(pm && pm.estimated && Math.abs(pm.pp - 50) < 1e-9, `clicking upgrade priced by clicks/s (PP ${pm && pm.pp})`);
 assert(!plastic.bought, 'estimating doesn’t buy it');
 
-// buying; both on → only the overall best is bought, by its kind
-CA.Macros.set('cmUpgrades', true, { silent: true });
-CA.Macros.runOnce('cmBuildings');
-assert(Game.Objects.Grandma.amount === 0, 'with Best upgrade on, a building isn’t bought while an upgrade is better');
-CA.Macros.runOnce('cmUpgrades');
-assert(plastic.bought === 1, 'the best upgrade is bought');
-CA.Macros.set('cmUpgrades', false, { silent: true });
-CA.Macros.runOnce('cmBuildings');
-assert(Game.Objects.Grandma.amount === 1, 'alone, Best building buys its best');
+// buying; buildings and upgrades together → only the overall best is bought
+BU.use('payback');
+CA.Macros.runOnce('autoBuyer');
+assert(Game.Objects.Grandma.amount === 0 && plastic.bought === 1, 'both kinds: the best of all (an upgrade) is bought, not a building');
+BU.use('buildings');
+CA.Macros.runOnce('autoBuyer');
+assert(Game.Objects.Grandma.amount === 1, 'buildings only: its best');
 // round to multiples: ranked by what reaching the next multiple of 10 is worth, bought that far
 CA.Shop.setRoundUp(true);
-CA.Macros.runOnce('cmBuildings');
+CA.Macros.runOnce('autoBuyer');
 assert(Game.Objects.Grandma.amount === 10, `round to multiples: buys 9 to reach 10 (${Game.Objects.Grandma.amount})`);
 CA.Shop.setRoundUp(false);
 
-// can't afford: saves up, or skips (shift setting). At 2000: Kitten helpers (7000 / 1000 + 60 = 67) is
+// can't afford: saves up, or skips (the profile's setting). At 2000: Kitten helpers (7000 / 1000 + 60 = 67) is
 // best; Lucky day (500) is all it can afford
 Game.cookies = 2000;
-assert(CA.Macros.runOnce('cmUpgrades') === 0 && !kitten.bought && !lucky.bought, 'saves up for the best by default');
-CA.Macros.shiftToggle('cmUpgrades');
-CA.Macros.runOnce('cmUpgrades');
+BU.use('upgrades');
+assert(CA.Macros.runOnce('autoBuyer') === 0 && !kitten.bought && !lucky.bought, 'saves up for the best by default');
+BU.update('upgrades', { skip: true });
+CA.Macros.runOnce('autoBuyer');
 assert(lucky.bought && !kitten.bought, 'skip: buys the best it can afford');
-CA.Macros.shiftToggle('cmUpgrades');
+BU.update('upgrades', { skip: false });
 
 // ---- the button: tinted by whether the next buy is affordable; pressing it says so
-CA.Macros.setFav('cmUpgrades', true);
+CA.Macros.setFav('autoBuyer', true);
 CA.UI.Widgets.tick();
-const btn = () => doc.querySelector('#CookieMgrWidgets [data-w-trigger="cmUpgrades"]');
+const btn = () => doc.querySelector('#CookieMgrWidgets [data-w-trigger="autoBuyer"]');
 assert(btn().classList.contains('spell-cant') && /next: Kitten helpers — in/.test(btn().parentNode.textContent), `can’t afford yet: muted red, says what and when (${btn().parentNode.textContent})`);
 g.calls.notify.length = 0;
 click(w, btn());
-assert(CA.Macros.isOn('cmUpgrades') && btn().classList.contains('ca-shake') && g.calls.notify.some((n) => /nothing it can do yet/.test(n.desc)), 'switching it on: shakes and says why');
-CA.Macros.set('cmUpgrades', false, { silent: true });
+assert(CA.Macros.isOn('autoBuyer') && btn().classList.contains('ca-shake') && g.calls.notify.some((n) => /nothing it can do yet/.test(n.desc)), 'switching it on: shakes and says why');
+CA.Macros.set('autoBuyer', false, { silent: true });
 Game.cookies = 1e6;
 CA.UI.Widgets.tick();
 assert(btn().classList.contains('spell-can'), 'affordable: muted green');

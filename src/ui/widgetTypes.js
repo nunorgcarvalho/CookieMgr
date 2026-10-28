@@ -61,7 +61,7 @@ CA.UI.WidgetTypes = (() => {
       } catch (e) {
         r = null;
       }
-      return r ? { cls: r.ok ? 'can' : 'cant', text: r.text || '' } : null;
+      return r ? { cls: r.ok ? 'can' : 'cant', text: r.text || '', upgrade: r.upgrade || '' } : null;
     }
     const step = CA.Macros.stepsOf(m)[0];
     const a = step && CA.Actions.get(step.action);
@@ -71,7 +71,7 @@ CA.UI.WidgetTypes = (() => {
     } catch (e) {
       r = null;
     }
-    return r ? { cls: r.ok ? 'can' : 'cant', text: r.text || '' } : null;
+    return r ? { cls: r.ok ? 'can' : 'cant', text: r.text || '', upgrade: r.upgrade || '' } : null;
   }
 
   function macroHtml(inst) {
@@ -89,7 +89,7 @@ CA.UI.WidgetTypes = (() => {
       `<span class="ca-wb-heat h${heat}"></span>${CA.UI.MacrosPage.icon(m, true)}</button>` +
       `<span class="ca-wb-label ca-wt"><b>${esc(m.name)}</b><em class="${on ? 'on' : ''}">${state}${key ? ` · ${esc(CA.Hotkeys.format(key))}` : ''}</em>` +
       (heat ? `<em>lately ${rateText(rate)}</em>` : '') +
-      (ready && ready.text ? `<em class="${ready.cls === 'can' ? 'on' : 'off'}">${esc(ready.text)}</em>` : '') +
+      (ready && ready.text ? `<em class="${ready.cls === 'can' ? 'on' : 'off'}">${CA.UI.C.withUpgrade(ready.text, ready.upgrade)}</em>` : '') +
       (m.shift ? `<em class="${CA.Macros.shiftValue(m.id) ? '' : 'off'}">${esc(CA.Macros.shiftValue(m.id) ? m.shift.on : m.shift.off)} · shift-click to switch</em>` : '') +
       '</span>'
     );

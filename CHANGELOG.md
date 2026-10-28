@@ -2,6 +2,41 @@
 
 ## Unreleased
 
+## 3.44.0 — 2026-10-28
+
+- **The Auto buyer.** One buyer for buildings and upgrades replaces **Best building** and **Best upgrade**. Its
+  **profile** ranks everything it may buy into one **queue**, by payback period (in the payback mode in use, or
+  the one the profile names), then by the profile's **rules**, and the buyer buys the front of the queue.
+  - A profile says what it buys (buildings, upgrades), the building bulk (auto: the store's minimum bulk, as
+    before; or ×1 / ×10 / ×100), whether it saves up for the front or skips to what you can afford, a bank
+    reserve (minutes of unbuffed CpS it never spends) and what it ranks by. Three to start with: Payback (both
+    kinds), Buildings only, Upgrades only; make, rename and delete your own.
+  - Rules, top to bottom: what they apply to (anything, buildings, upgrades, one building, one upgrade, cookies,
+    kittens, synergies, clicking upgrades, anything costing under N s of CpS, anything that wins an achievement)
+    → what they do: **buy first**, **weight ×k** (its payback period times k: below 1 prefers, above 1 puts off),
+    **up to N owned** (a building; a bulk that would pass it buys up to it), **never**. Each can have a **when**,
+    a condition in the macro language (`thing` stands for what's ranked), so any statistic can switch it on.
+  - The **Payback page** now sits right above Macros and opens with the Auto buyer: its switch, what it buys
+    next (a bar filling as you save for it), the profiles, the payback mode, and **Buy all upgrades** (the game's
+    Inspired checklist button: every upgrade you can afford but switches, research and the vaulted, cheapest
+    first — no heavenly upgrade needed). Under it the **Queue** (place, payback period in its color, score,
+    price, when, the rules that touched it; what's held back, grayed, with why) and the active **Profile**'s
+    editor. The Buildings, Upgrades, Options and Store tooltips cards follow as before; the old Best buy tiles
+    are now the Next line.
+  - Words: `buyer.queue(profile)`, `buyer.next(profile)`, `buyer.rank(thing, profile)`, `buyer.score(thing,
+    profile)`, `buyer.budget(profile)`, `buyer.activeProfile()`, `buyer.profiles()`, `buyer.profileActive(x)`
+    (profile: id or name; none: the active one). Actions: `buyer.buyNext(profile)`, `buyer.profile(x)`,
+    `buy.allUpgrades()`. `pp.price`, `pp.of` and `pp.buy` take the queue's things. The Auto buyer macro is
+    those words in four lines of code — edit it like any built-in.
+  - **Moving over**: a save from before keeps working. Which of the two buyers ran picks the profile (both:
+    Payback; one: Buildings only or Upgrades only), their skip and bank reserve become its, and their hotkey,
+    ★ (left-panel button) and running state the Auto buyer's. The old ids `cmBuildings` / `cmUpgrades` (in
+    groups, code like `macro.isOn(cmUpgrades)`, buttons) now mean the Auto buyer; the actions
+    `cm.buyBuilding` / `cm.buyUpgrade` still work (hidden from the library).
+- **Upgrades with their icon, everywhere**: an upgrade the add-on names shows its game icon, and its info card
+  on hover — in the queue and the Next line, on the macro buttons' "next:" lines (Auto buyer, Research, Cheap
+  upgrades), in the Events log and the graphs' event markers, and on the Statistics page.
+
 ## 3.43.0 — 2026-10-28
 
 - **Payback modes.** A payback period is the time to afford something plus the time it takes to earn its price

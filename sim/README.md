@@ -115,7 +115,7 @@ A strategy is what CookieMgr does during a simulation:
   ```
 
 - **`name.mjs`** — `export default { name, desc, setup(sim) }`, for anything `sim` can do.
-- a built-in macro's id (`golden`, `bigCookie`, `gardener`, `cmBuildings`, `autoDragon`, `seasonCompletion`…), or several joined with
+- a built-in macro's id (`golden`, `bigCookie`, `gardener`, `autoBuyer`, `autoDragon`, `seasonCompletion`…), or several joined with
   `+` (`golden+payback`).
 
 Every `.cmgr` in `strategies/` is checked by the tests to compile with CookieMgr's own compiler.

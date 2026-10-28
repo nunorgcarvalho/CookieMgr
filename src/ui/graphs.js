@@ -93,7 +93,7 @@ CA.UI.Graphs = (() => {
   function eventTip(ev) {
     const { swatch, clock, row, beautify } = F();
     const type = CA.EventLog.types()[ev.type] || {};
-    let h = `<div class="ca-tip-head">${swatch(type.color || '#fff')}${esc(ev.title)}<span>${clock(ev.t, true)}</span></div>`;
+    let h = `<div class="ca-tip-head">${swatch(type.color || '#fff')}${CA.UI.C.withUpgrade(ev.title, ev.data && ev.data.upgrade)}<span>${clock(ev.t, true)}</span></div>`;
     if (ev.text) h += `<div class="ca-tip-note">${esc(ev.text)}</div>`;
     if (ev.type !== 'ascend' && Math.abs(ev.cookies) >= 1)
       h += row('transparent', ev.cookies >= 0 ? 'Cookies gained' : 'Cookies spent', (ev.cookies >= 0 ? '+' : '−') + beautify(Math.abs(ev.cookies)));
