@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 3.46.0 — 2026-10-28
+
+- **The chart widget's legend can be hidden.** A new **Legend** setting (Shown under each chart / Hidden) leaves the
+  legends out, giving the charts that room. Hovering a chart still names every line.
+- **Fixed: a resized chart widget (the Garden's growth or effects) could show a scroll bar.** When the widget was
+  smaller than its chart and legend needed (a long legend, a bigger text size, or stats on top), the body
+  scrolled. Now the legend gives up its room first and is cut off at the bottom, while the chart keeps at
+  least 70px. There's no scroll bar; make the widget taller to see the whole legend.
+
 ## 3.45.0 — 2026-10-28
 
 - **Auto buyer reserve thresholds.** A profile's bank reserve can now combine several thresholds, each picked on or

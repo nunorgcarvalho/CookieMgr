@@ -7171,6 +7171,22 @@ body.ca-has-storebar #products {
 #CookieMgrWidgets .ca-w.sized .ca-wcharts > .ca-graph-mini {
   flex-basis: 0;
 }
+/* v3.46.0: resized smaller than its charts and legends want — the legends give up their room first (cut off
+   at the bottom), the charts keep 70px; never a scroll bar */
+#CookieMgrWidgets .ca-w.sized .ca-wcharts {
+  overflow: hidden;
+}
+#CookieMgrWidgets .ca-w.sized .ca-wcharts .ca-graph-mini canvas.ca-graph {
+  min-height: 70px;
+}
+#CookieMgrWidgets .ca-wcharts.no-legend .ca-legend {
+  display: none;
+}
+#CookieMgrWidgets .ca-w.sized .ca-wcharts .ca-graph-mini .ca-legend {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
 #CookieMgrWidgets .ca-wcharts > .ca-graph-mini + .ca-graph-mini {
   margin-top: 4px;
 }

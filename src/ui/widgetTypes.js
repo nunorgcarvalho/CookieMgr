@@ -410,7 +410,8 @@ CA.UI.WidgetTypes = (() => {
 
   // ---- a page's charts, and their statistics --------------------------------------------------
   // Show (`stats`): Stats and/or the charts (the Garden's growth and effects), stacked; Stats (`nums`): the
-  // charts' statistics you tick (CA.UI.Plot's `numbers`: each garden effect now, plants…). Before v3.42 it
+  // charts' statistics you tick (CA.UI.Plot's `numbers`: each garden effect now, plants…); `legend` 'hide' (v3.46.0)
+  // leaves out the legends under the charts. Before v3.42 it
   // showed one chart (`plot`, still what a ☆ sets): a widget saved without `stats` shows that one.
 
   const DEFAULT_PLOT = 'garden';
@@ -446,7 +447,7 @@ CA.UI.WidgetTypes = (() => {
         return p ? p.html() : '<div class="ca-w-empty">This chart isn’t available.</div>';
       })
       .join('');
-    return `<div class="ca-wcharts${plots.length > 1 ? ' two' : ''}">${h || '<div class="ca-w-empty">Pick what to show in its settings.</div>'}</div>`;
+    return `<div class="ca-wcharts${plots.length > 1 ? ' two' : ''}${inst.legend === 'hide' ? ' no-legend' : ''}">${h || '<div class="ca-w-empty">Pick what to show in its settings.</div>'}</div>`;
   }
   /** After each refresh: draws each chart's copy into the widget (mounting it again after a re-render). */
   function chartLive(inst, body) {
@@ -577,6 +578,17 @@ CA.UI.WidgetTypes = (() => {
           options: () => chartNumbers().map((n) => ({ v: n.v, label: CA.StatInfo.label(n.stat), tip: CA.StatInfo.desc(n.stat), sample: chartNumSample(n) })),
           when: (inst) => chartPartsOf(inst).includes('numbers'),
           tile: 'small',
+        },
+        {
+          key: 'legend',
+          label: 'Legend',
+          type: 'select',
+          default: 'show',
+          options: () => [
+            { v: 'show', label: 'Shown under each chart' },
+            { v: 'hide', label: 'Hidden (hover a chart for the names)' },
+          ],
+          when: (inst) => plotsOf(inst).length > 0,
         },
       ],
     });
