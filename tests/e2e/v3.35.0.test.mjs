@@ -114,8 +114,8 @@ c = card('Heavenly cookies');
 assert(/heavenly chips/.test(c.textContent), 'heavenly: priced in heavenly chips');
 
 // ---- on hover, wherever the add-on shows an upgrade
-CA.UI.Menu.openPage('stats');
-const icons = [...doc.querySelectorAll('[data-page="stats"] .ca-col-ico')];
+CA.UI.Menu.openPage('graphs:misc'); // the collection: on the Stats page's Misc tab since v3.47
+const icons = [...doc.querySelectorAll('[data-page="graphs"] .ca-col-ico')];
 const kIco = icons.find((x) => x.dataset.upgrade === 'Kitten helpers');
 assert(kIco && kIco.dataset.popLive === 'upgrade' && !kIco.hasAttribute('data-tip'), 'Stats: a missing upgrade shows the card');
 kIco.dispatchEvent(new w.MouseEvent('mouseover', { bubbles: true }));

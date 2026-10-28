@@ -73,13 +73,18 @@ CA.UI.PaybackPage.sync();
 // ---- the Stats page
 Game.shimmerTypes.golden = Object.assign(Game.shimmerTypes.golden || {}, { time: 3000, minTime: 9000, maxTime: 27000, spawned: 0, n: 0, spawnConditions: () => true });
 CA.UI.Menu.openPage('stats');
-const st = () => doc.querySelector('[data-page="stats"]');
+const st = () => doc.querySelector('[data-page="graphs"]');
 assert(st() && st().querySelectorAll('.ca-meter').length >= 5 && /Lucky!/.test(st().textContent) && /Conjure Baked Goods/.test(st().textContent), 'Stats: the bank meters (Lucky!, chains, Conjure…)');
 const lucky = CA.GoldenMath.lucky().bank;
 assert(st().querySelector('.ca-meter .ca-meter-top span').textContent === CA.Format.beautify(lucky), 'a meter shows the bank it needs');
 // v3.8: the odds strip became a chart of the whole distribution (ui/spawnView.js)
 assert(/Next golden cookie/.test(st().textContent) && st().querySelector('[data-sp-chart="golden"] .ca-sp-now') && st().querySelector('.ca-sp-cdf'), 'the next golden cookie, with its odds over time');
-assert(/If you ascended now/.test(st().textContent) && /Still to collect/.test(st().textContent), 'prestige, what’s left to collect');
+// v3.47: the Stats page merged into Graphs (named Stats) — prestige on its Prestige tab, the rest on Misc
+CA.UI.Menu.openPage('graphs:prestige');
+assert(/If you ascended now/.test(st().textContent), 'prestige (the Prestige tab)');
+CA.UI.Menu.openPage('graphs:misc');
+assert(/Still to collect/.test(st().textContent) && /Wrinklers/.test(st().textContent) && /Timers/.test(st().textContent), 'what’s left to collect, wrinklers, timers (the Misc tab)');
+CA.UI.Menu.openPage('stats');
 Game.cookies = lucky * 2;
 CA.UI.StatsPage.sync();
 assert(st().querySelector('.ca-meter.ok'), 'a bank that covers it: marked');

@@ -33,7 +33,7 @@ assert(Math.abs(c.by - c.cdf(360)) < 1e-12 && c.by > 0 && c.by < 0.01, `the odds
 
 // ---- the card
 CA.UI.Menu.openPage('stats');
-const card = () => doc.querySelector('[data-page="stats"] [data-st-spawn]');
+const card = () => doc.querySelector('[data-page="graphs"] [data-st-spawn]');
 const text = () => card().textContent.replace(/\s+/g, ' ');
 const svg = () => card().querySelector('[data-sp-chart="golden"]');
 assert(svg() && svg().classList.contains('ca-sp-cycle') && svg().querySelector('.ca-sp-cdf') && svg().querySelector('.ca-sp-half') && svg().querySelector('.ca-sp-now line'), 'the chart: the curve, the dashed 50% line, the now line');

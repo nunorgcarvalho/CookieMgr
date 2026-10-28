@@ -25,7 +25,7 @@ let d = CA.Timers.distribution('golden');
 assert(Math.abs(V('golden.interval') - d.next.mean) < 1e-9 && d.next.mean > 300 && d.next.mean < 900, `golden.interval: a fresh cycle's mean (${span(d.next.mean)})`);
 
 CA.UI.Menu.openPage('stats');
-const card = () => doc.querySelector('[data-page="stats"] [data-st-spawn]');
+const card = () => doc.querySelector('[data-page="graphs"] [data-st-spawn]');
 const flat = () => card().textContent.replace(/\s+/g, '');
 assert(flat().includes('Multiplier×1') && flat().includes(`Frequency${span(d.next.mean).replace(/\s+/g, '')}`), 'the card: a Multiplier tile (×1) and a Frequency tile (the time between)');
 const before = d.next.mean;

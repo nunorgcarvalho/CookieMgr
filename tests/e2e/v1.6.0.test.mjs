@@ -52,7 +52,7 @@ const items = [...doc.querySelectorAll('#CookieMgrTab [data-tab-item]')].map((i)
 // v3.6: + Stats, Payback
 // v3.27: + Tooltips
 // v3.43: Payback moved right above Macros
-assert(items.join() === 'events,graphs,stats,garden,stocks,pantheon,wizard,dragon,payback,clickers,tooltips,widgets,settings', `sidebar order (${items})`);
+assert(items.join() === 'events,graphs,garden,stocks,pantheon,wizard,dragon,payback,clickers,tooltips,widgets,settings', `sidebar order (${items})`);
 CA.UI.Menu.openPage('events');
 await sleep(50);
 const page = doc.querySelector('[data-page="events"]');

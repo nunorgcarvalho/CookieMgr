@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 3.47.0 — 2026-10-28
+
+- **Graphs and Stats are one page, named Stats.** It keeps the Graphs icon and its place in the sidebar, right under
+  Events, and the old Stats page's cards move onto its tabs: **Cookies** (the charts, as before), **Prestige** (the
+  prestige statistics, then the target and the charts), **Golden cookies** (the next golden cookie and, at Christmas,
+  reindeer, then the bank meters), **What if** (Pantheon spirits and dragon auras) and **Misc** (timers, wrinklers,
+  still to collect). Chart options show only on the chart tabs. Saves that were on the old Stats page, and the
+  Golden cookies widget's link, open it on Golden cookies; ☆ stars and widgets are unchanged.
+
 ## 3.46.0 — 2026-10-28
 
 - **The chart widget's legend can be hidden.** A new **Legend** setting (Shown under each chart / Hidden) leaves the

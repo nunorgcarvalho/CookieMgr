@@ -1,10 +1,12 @@
 // Registry of CookieMgr pages (one sidebar entry each). A page is
-//   { id, label, icon, order, group, html(), mount(root), unmount(), tick(), parts }
+//   { id, label, icon, order, group, html(), mount(root), unmount(), tick(), parts, open(sub), aliases }
 // `group` ('data' | 'minigames' | 'custom') puts a small gap in the sidebar between kinds of page.
 // html() returns the page markup; mount/unmount/tick are optional lifecycle hooks for pages
 // with live parts (charts, logs) — or `parts: [a, b]`, objects with their own mount/unmount/tick,
 // for a page made of several. The panel (ui/menu.js) and the sidebar (ui/tab.js) both read
 // this list, so adding a page is just one register() call from the page's own module.
+// `open(sub)` picks one of the page's own tabs ('page:sub' names one, for openPage); `aliases` ({ oldId: sub }) are ids of pages merged
+// into it, so saves and links naming them still land there (on that tab).
 //
 // scope(root) is what a page's mount() uses to set itself up: everything added through it —
 // listeners, intervals, charts and other parts, unbind functions — is undone by close():
@@ -70,6 +72,15 @@ CA.UI.Pages = (() => {
 
   const list = () => pages.slice();
   const get = (id) => pages.find((p) => p.id === id) || null;
+  /** The page an id names — itself, 'page:tab', or an alias: { page, sub } (sub: the tab to open, or null), or null. */
+  function resolve(id) {
+    const page = get(id);
+    if (page) return { page, sub: null };
+    const i = typeof id === 'string' ? id.indexOf(':') : -1;
+    if (i > 0 && get(id.slice(0, i))) return { page: get(id.slice(0, i)), sub: id.slice(i + 1) };
+    const owner = pages.find((p) => p.aliases && Object.prototype.hasOwnProperty.call(p.aliases, id));
+    return owner ? { page: owner, sub: owner.aliases[id] } : null;
+  }
 
-  return { register, list, get, scope };
+  return { register, list, get, resolve, scope };
 })();

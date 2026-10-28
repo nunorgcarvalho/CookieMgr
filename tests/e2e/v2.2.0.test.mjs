@@ -12,7 +12,7 @@ await sleep(300);
 const items = [...doc.querySelectorAll('#CookieMgrTab [data-tab-item]')].map((i) => i.dataset.tabItem);
 // v3.6: + Stats, Payback; v3.43: Payback right above Macros
 // v3.27: + Tooltips
-assert(items.join() === 'events,graphs,stats,garden,stocks,pantheon,wizard,dragon,payback,clickers,tooltips,widgets,settings', `sidebar (${items})`);
+assert(items.join() === 'events,graphs,garden,stocks,pantheon,wizard,dragon,payback,clickers,tooltips,widgets,settings', `sidebar (${items})`);
 
 // ---- built-in spell macros
 const spellMacros = CA.Grimoire.SPELLS.map((s) => CA.Macros.get(s.id));

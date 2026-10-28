@@ -24,19 +24,19 @@ The same words mean the same things everywhere in the add-on and this README:
 ## Features (v3.1)
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
-the data pages **Events**, **Graphs** and **Stats**; the minigames **Garden**, **Stock market**, **Pantheon** and **Grimoire**, and the **Dragon**;
+the data pages **Events** and **Stats**; the minigames **Garden**, **Stock market**, **Pantheon** and **Grimoire**, and the **Dragon**;
 then **Payback** (the Auto buyer's hub), **Macros**, **Widgets** and **Settings** — a small gap between each kind. Hovering an icon slides its name out to
 the left. Wherever a page mentions another (a Macros section, a "Macros page" hint), the name is a link to it, and
 each minigame page has an **Open in game** button that closes the panel and takes you to the minigame.
 Clicking one opens the CookieMgr panel straight to that page (switching pages directly if it's already open on a
 different one); clicking the page that's already showing closes the panel.
 
-![Graphs page](docs/graph.png)
+![Stats page](docs/graph.png)
 
-### Graphs
+### Stats
 
-The Graphs page has two tabs — **Cookies** and **Prestige** — of charts drawn from the recorded history
-(see below), so they survive refreshes and browser restarts. Every chart works the same way:
+The Stats page (until v3.47.0 two pages, Graphs and Stats) has five tabs. **Cookies** and **Prestige** hold charts drawn from the recorded history
+(see below; Prestige also has the prestige statistics and a target), so they survive refreshes and browser restarts. Every chart works the same way:
 
 - **Window:** 1m, 5m, 15m, 1h, 3h, 12h, 1d, 7d or All. Older history is coarser (see Recorded history), and bars simply
   get wider where it is.
@@ -521,10 +521,12 @@ A **Statistic widget** (on the **Data** shelf of Add a widget, beside Quick stat
 would: about **the best** (the best building, the best upgrade or the best buy, as the statistic is about), or a
 building or store upgrade you pick in its settings. Add as many as you like.
 
-### Stats
+### Stats: Golden cookies, What if, Misc
 
-The **Stats** page is Cookie Monster's statistics, CookieMgr's way — every figure from the game's own formulas, and
-checked against Cookie Monster in the real game:
+The **Stats** page's statistics tabs are Cookie Monster's statistics, CookieMgr's way — every figure from the game's own formulas, and
+checked against Cookie Monster in the real game. **Golden cookies** has the Next golden cookie (and
+reindeer), then the Bank meters; **Prestige** (beside its charts) the prestige figures; **What if** the Pantheon and dragon comparisons; **Misc**
+the timers, wrinklers and what's still to collect:
 
 - **Bank** — a meter for each thing that pays out of your bank: **Lucky!** (15% of the bank, up to 15 minutes of
   CpS), **Lucky! in a Frenzy**, a **cookie chain** (up to 6 hours of CpS), a chain in a Frenzy, **Conjure Baked
@@ -963,7 +965,7 @@ The **Stock market** tab in the CookieMgr panel has:
   between them is your unrealized gain) with stat tiles for Value, Equity (cookies if sold now), Unrealized, Realized
   and Total gain — switch to
   "Per stock" for the individual price lines instead. Cost basis is tracked from whenever the mod is loaded, so it
-  only knows about trades made since then. Same controls as the Graphs page (window, active time, drag to zoom, shift-drag to look back, pause).
+  only knows about trades made since then. Same controls as the Stats page's charts (window, active time, drag to zoom, shift-drag to look back, pause).
 - **Portfolio performance** — the portfolio's return as a percentage of the cookies invested, over a rolling window
   (1m, 5m, 15m or 1h): green bars above zero while your holdings gain, red below while they lose. Standardized by the
   money at stake, so it reads the same for a tiny and a huge portfolio. Tiles: now, best, worst, and the share of time
@@ -1089,7 +1091,7 @@ src/
     chart.js         shared chart core: canvas sizing, axis padding, nice scales, scroll/live view
     tab.js           the sidebar of page icons on the left beam
     plot.js          the plotting engine every chart uses: bucketing, scales, overlays, tooltips, chips
-    graphs.js        the Graphs page: Cookies / Bank / Prestige tabs and their plot specs
+    graphs.js        the Stats page: Cookies / Prestige / Golden cookies / What if / Misc tabs, the plot specs
     eventsPage.js    the Events page: income-outside-CpS table and the filterable event log
     macrosPage.js    the Macros page: built-in cards with settings, the running strip, your macros, the editor
     widgets.js       widgets on the left panel (dragging, sizing, settings, saving) and the Widgets page
@@ -1105,7 +1107,7 @@ src/
     tooltipsPage.js  the Statistics page: the statistics catalog, the Values (and the tooltip's layout card, on Settings)
                      list; the Statistic widget
     statEditor.js    the statistic editor (on the Statistics page): fields, code, library, knobs, result, trace
-    statsPage.js     the Stats page: bank meters, golden cookie odds, prestige, wrinklers, what if, collection
+    statsPage.js     the Stats page's cards: bank meters, golden cookie odds, prestige, wrinklers, what if, collection
     stockGraph.js    the Stock market page charts: portfolio value / per-stock prices, rolling performance
     stockLog.js      the trade ticker + transaction history table, also on the Stock market page
     bankToolbar.js   Sell all / autobuyer / CookieMgr buttons inside the Bank minigame

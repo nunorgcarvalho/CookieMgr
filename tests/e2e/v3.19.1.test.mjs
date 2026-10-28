@@ -36,7 +36,7 @@ assert(after.length === 2 && fr && !fr.running && fr.endsIn <= 0 && fr.endsIn > 
 assert(after.find((e) => e.name === 'Click frenzy').running, 'the other still running');
 
 CA.UI.Menu.openPage('stats');
-const card = () => doc.querySelector('[data-page="stats"] [data-st-spawn]');
+const card = () => doc.querySelector('[data-page="graphs"] [data-st-spawn]');
 const lanes = () => [...card().querySelectorAll('[data-sp-chart="golden"] .ca-sp-lane')];
 const frLane = lanes().find((l) => /Frenzy/.test(l.textContent) && !/Click/.test(l.textContent));
 assert(lanes().length === 2 && frLane && frLane.classList.contains('ended') && /×7 income · ended/.test(frLane.textContent) && /ended .* ago/.test(frLane.getAttribute('data-tip')), `the card: the ended Frenzy still drawn, dimmed, “ended” (${frLane && frLane.textContent})`);

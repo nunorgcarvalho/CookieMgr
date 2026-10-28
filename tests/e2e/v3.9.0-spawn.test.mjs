@@ -31,7 +31,7 @@ assert(wt.soonest === 0 && wt.mean > 0 && wt.median > 0 && wt.mode > 0 && wt.pct
 assert(Math.abs(wt.pdf.reduce((a, b) => a + b, 0) - wt.cdf[wt.cdf.length - 1]) < 1e-9 && wt.cdf[wt.cdf.length - 1] > 0.998, 'the density sums to the cumulative chance (99.9% drawn)');
 assert(wt.hazard > 0 && wt.hazard < 1 && Math.abs(wt.within(1) - wt.hazard) < 1e-9, 'the chance in this second');
 CA.UI.Menu.openPage('stats');
-const card = () => doc.querySelector('[data-page="stats"] [data-st-spawn]');
+const card = () => doc.querySelector('[data-page="graphs"] [data-st-spawn]');
 // (v3.14.0 made the card’s chart this cycle’s cumulative chance with a now line — tests/e2e/v3.14.0.test.mjs)
 assert(card() && card().querySelector('[data-sp-chart="golden"] .ca-sp-cdf') && card().querySelector('.ca-sp-now'), 'the chart: cumulative chance, the now line');
 assert(/Expected wait/.test(card().textContent) && /Wrath chance/.test(card().textContent), 'the numbers: expected wait, wrath chance');
@@ -47,7 +47,7 @@ assert(card().querySelector('.ca-sp-factor.off') && /without Lucky day: 7m 2[67]
 Game.season = 'christmas';
 Game.shimmerTypes.reindeer = Object.assign(Game.shimmerTypes.reindeer || {}, { time: 0, minTime: 30 * 180, maxTime: 30 * 360, spawned: 0, n: 0, spawnConditions: () => Game.season === 'christmas' });
 CA.UI.Menu.render();
-assert(doc.querySelector('[data-page="stats"] [data-st-reindeer] [data-sp-chart="reindeer"]'), 'at Christmas: the next reindeer too');
+assert(doc.querySelector('[data-page="graphs"] [data-st-reindeer] [data-sp-chart="reindeer"]'), 'at Christmas: the next reindeer too');
 Game.season = '';
 // ---- the timer bars, on the chart's axis, and the chance of a golden cookie before each effect ends
 Game.buffs = {
