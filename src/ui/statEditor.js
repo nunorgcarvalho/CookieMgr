@@ -114,7 +114,7 @@ CA.UI.StatEditor = (() => {
     const earn = m.gain > 0 ? price / m.gain : Infinity;
     const pp = Number.isFinite(earn) && Number.isFinite(price) ? afford + earn : Infinity;
     const t = (x) => (!Number.isFinite(x) ? 'never' : x <= 0 ? 'now' : F.span(x));
-    return `<div class="ca-se-line ca-se-mode"><span>As a payback mode</span><b>income ${F.beautify(m.income)}/s · gain ${Number.isFinite(m.gain) ? `${F.beautify(m.gain)}/s` : '—'} · payback ${Number.isFinite(pp) ? F.short(pp) : '∞'} <small>(${t(afford)} to afford + ${t(earn)} to earn back)</small></b></div>`;
+    return `<div class="ca-se-line ca-se-mode"><span>As a payback mode</span><b>income ${F.beautify(m.income)}/s · gain ${Number.isFinite(m.gain) ? `${F.beautify(m.gain)}/s` : '—'} · payback ${F.payback(pp)} <small>(${t(afford)} to afford + ${t(earn)} to earn back)</small></b></div>`;
   }
 
   function resultHtml() {

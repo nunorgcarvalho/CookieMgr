@@ -79,7 +79,7 @@ ST.BUILTINS.forEach((b) => assert(!ST.compiled(b).errors.length, `${b.id} compil
 let r = rowsOf(tip('Farm'));
 const farm = CA.Payback.table().buildings[1].Farm;
 eq(r[0][0], 'Bonus income (×1)', 'the label a statistic sets');
-eq(r[1], ['Payback period', CA.Format.short(farm.pp), ` class="ca-pp-${farm.colour}"`], 'payback: short, in its colour');
+eq(r[1], ['Payback period', CA.Format.payback(farm.pp), ` class="ca-pp-${farm.colour}"`], 'payback: short, in its colour');
 SI.setLines(['bulks', 'price']);
 r = rowsOf(tip('Farm'));
 assert(/^<span class="ca-pp-\w+">.+<\/span> · <span/.test(r[0][1]), `×1 / 10 / 100: a list, each in its colour (${r[0][1]})`);

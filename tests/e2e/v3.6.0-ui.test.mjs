@@ -60,7 +60,7 @@ const cells = pg().querySelectorAll('.ca-pp-cell');
 assert(cells.length === 15 && pg().querySelectorAll('.ca-pp-cell.green').length === 1, `a cell per building and amount (${cells.length}), one green: the best building`);
 const t = CA.Payback.table();
 const g1 = pg().querySelector('.ca-pp-cell[data-pp-buy="Grandma"][data-n="1"]');
-assert(g1 && g1.classList.contains(t.buildings[1].Grandma.colour) && g1.querySelector('b').textContent === CA.Format.short(t.buildings[1].Grandma.pp), 'a cell: its colour and payback period');
+assert(g1 && g1.classList.contains(t.buildings[1].Grandma.colour) && g1.querySelector('b').textContent === CA.Format.payback(t.buildings[1].Grandma.pp), 'a cell: its colour and payback period');
 const before = Game.Objects.Grandma.amount;
 click(w, pg().querySelector('.ca-pp-cell[data-pp-buy="Grandma"][data-n="10"]'));
 assert(Game.Objects.Grandma.amount === before + 10, 'clicking ×10 buys ten');

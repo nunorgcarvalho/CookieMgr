@@ -40,7 +40,7 @@ CA.Stats = (() => {
     { id: 'number', name: 'number' },
     { id: 'time', name: 'time (seconds)' },
     { id: 'chance', name: 'chance (0–1)' },
-    { id: 'payback', name: 'payback period', desc: 'seconds, short, ∞ when it never pays back' },
+    { id: 'payback', name: 'payback period', desc: 'seconds, in time units (999 s, 16.7 min) or plain seconds as the Payback page sets, ∞ when it never pays back' },
     { id: 'text', name: 'text', desc: 'as written (numbers as numbers)' },
     { id: 'upgrade', name: 'an upgrade', desc: 'an upgrade’s name: its icon and name, its info on hover' },
   ];
@@ -531,7 +531,7 @@ if cookies() >= need and after < need:
     if (typeof x !== 'number' || Number.isNaN(x)) return '—';
     let f = fmt || 'auto';
     if (f === 'auto') f = /\bseconds\b/.test(desc || '') ? 'time' : /0–1|0-1/.test(desc || '') ? 'chance' : 'number';
-    if (f === 'payback') return Number.isFinite(x) ? F().short(x) : '∞';
+    if (f === 'payback') return F().payback(x);
     if (f === 'time') return !Number.isFinite(x) ? 'never' : x <= 0 ? 'now' : F().span(x);
     if (f === 'chance') return `${(x * 100).toFixed(x < 0.1 ? 1 : 0)}%`;
     return Number.isFinite(x) ? F().beautify(x) : '∞';
@@ -707,6 +707,7 @@ if cookies() >= need and after < need:
     V('fmt.number', 'a number as text, as the game writes it (1.23 M)', ['x'], (x) => F().beautify(n(x)));
     V('fmt.short', 'a number as short text (1.23M)', ['x'], (x) => F().short(n(x)));
     V('fmt.time', 'seconds as a time (3m 20s)', ['seconds'], (x) => F().span(n(x)));
+    V('fmt.payback', 'seconds as a payback period, as the Payback page writes them (16.7 min, or 1K in seconds)', ['seconds'], (x) => F().payback(n(x)));
     V('fmt.pct', 'a share (0–1) as a percentage, with so many decimals: fmt.pct(0.0741, 2) is 7.41%', ['x', 'decimals'], (x, d) => `${(n(x) * 100).toFixed(Math.max(0, Math.min(10, Math.floor(n(d)) || 0)))}%`);
     V('fmt.fixed', 'a number with so many decimals', ['x', 'decimals'], (x, d) => n(x).toFixed(Math.max(0, Math.min(10, Math.floor(n(d)) || 0))));
     V('finite', 'whether a number is finite (not ∞, not NaN)', ['x'], (x) => typeof x === 'number' && Number.isFinite(x), { bool: true, group: 'Numbers' });

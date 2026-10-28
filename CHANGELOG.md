@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 3.49.0 — 2026-10-28
+
+- **Payback periods read in time units.** Everywhere a payback period shows (the Payback page's tables, the Auto
+  buyer's queue, the store tooltips, the upgrade info card, statistics in the payback format) it's now in seconds,
+  then minutes, hours, days and years, and only steps up to the next unit once the number passes 999 in this one, so
+  it keeps three digits: 999 s, then 16.7 min; 999 min, then 16.7 h. A new option at the top of the Payback page's
+  **Options** card, **Payback periods in**, brings back the old plain seconds (Cookie Monster's way: 999, 1K, 150K).
+  The setting is `ppUnits` (`time`, the default, or `seconds`); scripts get `fmt.payback(seconds)`, which follows it.
+
 ## 3.48.1 — 2026-10-28
 
 - **README:** the Events page screenshot now shows the page as it is since 3.48.0, led by the Event log. No change to
