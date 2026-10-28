@@ -1,10 +1,12 @@
 # cookieMgr
 
-**A [Cookie Clicker](https://orteil.dashnet.org/cookieclicker/) add-on that plays the boring parts for you and shows
-you what's really going on.** It clicks golden cookies, buys the best building or upgrade, tends the garden, casts
-spells and trades stocks, and it charts where every cookie came from. It loads like
-[Cookie Monster](https://github.com/CookieMonsterTeam/CookieMonster): one click, nothing to download, and you always
-get the newest version.
+**A [Cookie Clicker](https://orteil.dashnet.org/cookieclicker/) add-on that provides customizable automation at all
+levels of gameplay.** Any action in Cookie Clicker that can be performed or statistic that can be calculated can be
+expressed programmatically in the add-on's pseudo coding language. Actions, Statistics, Macros and more can quickly be
+accessed through Widgets that get added to screen and can be fully customized as well.
+
+Also contains a lot of Quality-of-Life features, many of which are directly inspired or rebuilt from
+[Cookie Monster](https://github.com/CookieMonsterTeam/CookieMonster).
 
 ![cookieMgr in the game: the sidebar of pages next to the big cookie, a widget on the left panel](docs/readme/game.png)
 
@@ -45,92 +47,108 @@ Open the game, press **F12** (**Cmd+Option+I** on a Mac) and pick the **Console*
 Game.LoadMod('https://nunorgcarvalho.github.io/cookieMgr/dist/CookieMgr.js?v=' + Date.now());
 ```
 
-### It didn't load?
+## What's in it
 
-- **Clicking the bookmark does nothing.** Check that the bookmark's URL starts with `javascript:`. Some browsers
-  drop that part when you paste it into the address bar, so paste it into the bookmark's URL field instead.
-- **Clicked it before the game finished loading.** Wait until you can see the big cookie, then click it again.
-- **Clicked it twice.** cookieMgr only loads once per page. Reload the game page (your game is saved) and click the
-  bookmark once.
-- Still stuck? [Open an issue](https://github.com/nunorgcarvalho/cookieMgr/issues) and say which browser you use.
+cookieMgr adds a column of icons next to the big cookie, one per page. Hover an icon for its name and click it to open
+the page. [See every page with a screenshot](#pages).
 
-## Your first five minutes
+| Page | What it's for |
+| --- | --- |
+| **Stats** | Charts and numbers: cookies per second, where your cookies come from, golden cookie odds, prestige |
+| **Events** | A log of everything that happened, and your income outside CpS |
+| **Payback** | What each building and upgrade is worth, and the Auto buyer that buys the best one |
+| **Macros** | Automations: autoclickers, golden cookie popping, alerts, and your own scripts |
+| **Statistics** | What the store's tooltips show, and statistics you write yourself |
+| **Garden**, **Stock market**, **Grimoire**, **Pantheon**, **Dragon** | A page per minigame, each with its own automation |
+| **Widgets** | Small panels you place on the game's left side |
+| **Settings** | Number format, hotkeys, updates, and your history's export and import |
 
-Everything lives behind the **column of icons** on the left. Hover an icon for its name, click it to open that
-page, click it again to close it.
+## Pages
 
-1. **Macros** (⚡): switch on **Golden cookies**, and cookieMgr pops every golden cookie the moment it appears.
-   **Big cookie** clicks the cookie for you.
-2. **Payback** ($): switch on the **Auto buyer**. It buys whatever pays for itself fastest, and shows its queue so you
-   can see what's next and why.
-3. **Stats** (the bar chart icon): watch your cookies per second, where they come from, and what golden cookies are worth right now.
-4. **Widgets**: star (☆) anything you want to keep on screen, like a golden cookie timer or a macro's button,
-   and drag it where you like on the left panel.
+<table>
+<tr>
+<td width="50%" valign="top">
+<b>Stats</b><br>
+<img src="docs/readme/stats.png" alt="The Stats page" width="100%">
+<ul><li>Cookies per second, where every cookie came from, your bank and prestige, charted and kept between sessions</li><li>Zoom and look back; Frenzy and other effects shaded behind the chart</li><li>Golden cookie odds, Lucky! banks, what-ifs for spirits and auras, what's left to collect</li></ul>
+</td>
+<td width="50%" valign="top">
+<b>Events</b><br>
+<img src="docs/readme/events.png" alt="The Events page" width="100%">
+<ul><li>A log of golden cookies, wrinklers, sugar lumps, trades and ascensions</li><li>Filter, search and export it as CSV</li><li>Your income outside CpS, by source</li></ul>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<b>Payback</b><br>
+<img src="docs/readme/payback.png" alt="The Payback page" width="100%">
+<ul><li>An exact payback period for every building and upgrade</li><li>The Auto buyer: a queue, profiles with rules, and a bank reserve</li><li>Buy all upgrades in one click</li></ul>
+</td>
+<td width="50%" valign="top">
+<b>Macros</b><br>
+<img src="docs/readme/macros.png" alt="The Macros page" width="100%">
+<ul><li>Autoclickers for the big cookie, golden and wrath cookies, reindeer, fortunes and wrinklers</li><li>Alerts, hotkeys and buttons on the left panel</li><li>Write your own macros in cookieMgr's simple code</li></ul>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<b>Statistics</b><br>
+<img src="docs/readme/statistics.png" alt="The Statistics page" width="100%">
+<ul><li>Choose the lines the store's tooltips show</li><li>Write your own statistics, with a live preview</li><li>Pick how payback is measured</li></ul>
+</td>
+<td width="50%" valign="top">
+<b>Garden</b><br>
+<img src="docs/readme/garden.png" alt="The Garden page" width="100%">
+<ul><li>An Auto-gardener with layouts and profiles</li><li>Mutation odds on every empty tile</li><li>Growth charts and harvest counts</li></ul>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<b>Stock market</b><br>
+<img src="docs/readme/stock-market.png" alt="The Stock market page" width="100%">
+<ul><li>A stock autobuyer and Sell all</li><li>Trend badges on every stock in the Bank</li><li>Portfolio charts and your trade history</li></ul>
+</td>
+<td width="50%" valign="top">
+<b>Grimoire</b><br>
+<img src="docs/readme/grimoire.png" alt="The Grimoire page" width="100%">
+<ul><li>Magic, refill and every spell's cost at a glance</li><li>Cast from a button or a hotkey</li><li>Auto-cast Force the Hand of Fate when the combo is right</li></ul>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<b>Pantheon</b><br>
+<img src="docs/readme/pantheon.png" alt="The Pantheon page" width="100%">
+<ul><li>Your slotted spirits and what each does</li><li>Profiles that swap spirits for you</li></ul>
+</td>
+<td width="50%" valign="top">
+<b>Dragon</b><br>
+<img src="docs/readme/dragon.png" alt="The Dragon page" width="100%">
+<ul><li>Auto dragon trains it as you can afford</li><li>Pet the dragon for its drops</li><li>Aura profiles</li></ul>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<b>Widgets</b><br>
+<img src="docs/readme/widgets.png" alt="The Widgets page" width="100%">
+<ul><li>Place macro buttons, golden cookie odds, effect timers, charts and more on the left panel</li><li>Save and switch layouts</li></ul>
+</td>
+<td width="50%" valign="top">
+<b>Settings</b><br>
+<img src="docs/readme/settings.png" alt="The Settings page" width="100%">
+<ul><li>Number format, hotkeys and update checks</li><li>Export and import your history</li><li>Load Cookie Monster alongside</li></ul>
+</td>
+</tr>
+</table>
 
-Your settings and history are saved with your game, so they're there the next time you load cookieMgr.
+**Coming in v4.0.0:** managers that play a whole ascension for you in stages, switching macros and profiles as the
+run goes on.
 
-## What's inside
+## Additional information
 
-### Stats
-
-Charts of your cookies per second, where every cookie came from (buildings, clicking, golden cookies, stock
-trades…), your bank and your prestige, recorded every second and kept between sessions. Zoom in, look back as far as
-you like, and see each Frenzy and Click frenzy shaded behind the chart. Next to the charts: when the next golden
-cookie is due, how much bank Lucky! and other payouts need, what each Pantheon spirit or dragon aura would add, and
-what's still left to collect.
-
-![The Stats page: cookies per second with a Frenzy and a Click frenzy](docs/readme/stats.png)
-
-### Payback and the Auto buyer
-
-Every building and upgrade gets a **payback period**: how long until it has paid for itself. cookieMgr asks the game
-itself what each purchase adds, so the numbers are exact. The **Auto buyer** buys from a queue sorted by payback, with
-profiles (buildings only, upgrades only, your own rules) and a bank reserve so it never spends the cookies you're
-saving for Lucky!. The game's store is colored by payback too.
-
-![The Payback page: the Auto buyer, its queue and the active profile](docs/readme/payback.png)
-
-### Macros
-
-Everything cookieMgr automates is a **macro**: built-ins for clicking, golden and wrath cookies, reindeer,
-wrinklers, fortunes, alerts and stock trading, plus your own. Give any macro a hotkey or a button on the left panel.
-Need more than a switch? Write a macro in cookieMgr's own simple code, with a library of everything it can read and
-do.
-
-![The Macros page: the built-in autoclickers](docs/readme/macros.png)
-
-### Minigames
-
-- **Garden**: an Auto-gardener that plants layouts, harvests and hunts for new seeds, with the odds of each mutation
-  shown on the game's own tiles.
-- **Stock market**: trend badges on every stock, a stock trader, Sell all, and charts of your portfolio and trades.
-- **Grimoire**: cast spells from a button or a hotkey, and auto-cast Force the Hand of Fate at the right moment.
-- **Pantheon** and **Dragon**: what each spirit and aura would add right now, and profiles that swap them for you.
-
-### Events and Statistics
-
-**Events** is a log of everything that happened (golden cookies and what they did, wrinklers, sugar lumps, trades,
-ascensions), with a table of income outside your CpS. **Statistics** lets you choose what the store's tooltips show,
-and write your own statistics.
-
-### Widgets and Settings
-
-**Widgets** are small panels you place on the game's left side: macro buttons, golden cookie odds, effect timers,
-charts, the garden, the stock market and more. **Settings** has number notation (short scale, metric, scientific…),
-hotkeys, history export and import, and a button to load Cookie Monster alongside if you like both.
-
-**Coming in v4.0.0:** managers that play a whole ascension for you in stages, switching macros and profiles as
-the run goes on.
-
-## Good to know
-
-- **Fair play.** cookieMgr never reads the game's random seed to predict what comes next. It works from expected
-  values and your own history only.
-- **Your data stays with you.** Settings are saved inside your Cookie Clicker save (so they survive export and
-  import), and the recorded history stays in your browser.
-- **Updates.** cookieMgr checks for a newer version every 15 minutes and offers a one-click reload. It never updates
-  itself without asking.
-- **Cookie Monster is optional.** cookieMgr doesn't need it, but works fine next to it.
+- **Does not use in-game seed.** cookieMgr never reads the game's random seed to predict what comes next. It works
+  from expected values and your own history only.
+- **Data is stored locally.** Settings are saved inside your Cookie Clicker save (so they survive export and import),
+  and the recorded history stays in your browser.
 - **Turning it off.** Reload the game page without clicking the bookmark.
 
 ## Learn more
