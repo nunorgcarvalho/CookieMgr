@@ -199,7 +199,7 @@ assert(g.errors.length === k0, `pages without page errors ${errorsSince(k0)}`);
     return rel.apply(this, a);
   };
   const leftOn = () => [...listeners.values()].reduce((a, b) => a + Math.max(0, b), 0);
-  // what the Settings page itself sets up (v3.42: the store tooltip's layout card, live) — the baseline
+  // what the Settings page itself sets up (v3.43: the store tooltip's layout card, live) — the baseline
   CA.UI.Menu.openPage('settings');
   live.clear();
   listeners.clear();

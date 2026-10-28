@@ -1,4 +1,4 @@
-// v3.42.0: payback modes. A payback period is max(price − bank, 0) ÷ income + price ÷ gain, and the
+// v3.43.0: payback modes. A payback period is max(price − bank, 0) ÷ income + price ÷ gain, and the
 // Payback mode (the Payback page's main setting, ppMode) says what the income is and what a purchase
 // adds to it: raw CpS · CpS (the default, as before) · CpS + clicking · actual income (the Recorder's,
 // over ppActualWindow minutes; a gain scaled by actual ÷ raw CpS). Everything follows it — the table and

@@ -90,7 +90,7 @@ fresh();
 assert(near(CA.Script.VALUES.find((v) => v.id === 'paybackActual').get(1500), 1000), 'paybackActual(1500) at 1.5×: 1000');
 assert(near(CA.Script.VALUES.find((v) => v.id === 'actualIncome').get(600), 1.5 * C), 'actualIncome(600)');
 
-// ---- the Payback page: the chip, the cells (v3.42: the chip is the Actual income payback mode)
+// ---- the Payback page: the chip, the cells (v3.43: the chip is the Actual income payback mode)
 CA.Settings.set('ppMode', 'cps');
 CA.UI.Menu.openPage('payback');
 await sleep(100);

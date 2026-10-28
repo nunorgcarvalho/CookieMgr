@@ -37,7 +37,7 @@ const change = (el, v) => {
 // ---- the page
 const items = [...doc.querySelectorAll('#CookieMgrTab [data-tab-item]')].map((i) => i.dataset.tabItem);
 assert(items.indexOf('tooltips') === items.indexOf('clickers') + 1, `a Tooltips page, after Macros (${items})`);
-// v3.42: the layout is on the Settings page; the catalog on the Statistics page (id still 'tooltips')
+// v3.43: the layout is on the Settings page; the catalog on the Statistics page (id still 'tooltips')
 let pageId = 'settings';
 const goTo = async (id) => {
   pageId = id;
@@ -101,7 +101,7 @@ assert(bulks.querySelector('details.ca-st-more') === null || bulks.querySelector
 assert(card('bonus').querySelector('details.ca-st-more'), 'the long built-in (Bonus income): folded');
 // filters
 click(w, page().querySelector('[data-st-filter="Payback"]'));
-assert(cards().map((c) => c.dataset.stCard).join() === 'payback,actual,paybackRaw,paybackCps,paybackClicking,paybackModes,paybackParts,income,bulks', `the Payback group (v3.42: + the payback modes' lines) (${cards().map((c) => c.dataset.stCard)})`);
+assert(cards().map((c) => c.dataset.stCard).join() === 'payback,actual,paybackRaw,paybackCps,paybackClicking,paybackModes,paybackParts,income,bulks', `the Payback group (v3.43: + the payback modes' lines) (${cards().map((c) => c.dataset.stCard)})`);
 click(w, page().querySelector('[data-st-filter="yours"]'));
 assert(cards().length === 0 && /duplicate a statistic/.test(page().querySelector('[data-st-body]').textContent), 'none of yours yet: says how');
 click(w, page().querySelector('[data-st-filter="all"]'));
@@ -169,7 +169,7 @@ click(w, page().querySelector('[data-st-tab="stats"]'));
 CA.UI.Menu.openPage('payback');
 await sleep(30);
 const pp = doc.querySelector('[data-page="payback"]');
-assert(!pp.querySelector('[data-tl-lines]') && pp.querySelector('[data-ca="goto"][data-page="tooltips"]') && pp.querySelector('[data-pp-opt="storeWarnings"]'), 'Payback: the two switches and a link to Tooltips (v3.42: the Statistics page)');
+assert(!pp.querySelector('[data-tl-lines]') && pp.querySelector('[data-ca="goto"][data-page="tooltips"]') && pp.querySelector('[data-pp-opt="storeWarnings"]'), 'Payback: the two switches and a link to Tooltips (v3.43: the Statistics page)');
 
 // ---- the Statistic widget
 const W = CA.UI.Widgets;

@@ -74,7 +74,7 @@ ST.remove('warnLucky');
 assert(!ST.get('warnLucky').customized, 'back to the original');
 
 // ---- one of yours, from the editor
-// v3.42: the warnings in use are on the Settings page; the editor on the Statistics page
+// v3.43: the warnings in use are on the Settings page; the editor on the Statistics page
 let pageId = 'settings';
 const goTo = async (id) => {
   pageId = id;

@@ -24982,7 +24982,7 @@ CA.UI.TooltipsPage = (() => {
         : s.warn
         ? `<button type="button" class="ca-chip${inTt ? ' on' : ''}" data-st-tt="${esc(s.id)}" data-tip="${inTt ? 'Stop this warning' : 'Use this warning (at the end of the list)'}">${inTt ? '✓ warning on' : '+ use as a warning'}</button>`
         : `<button type="button" class="ca-chip${inTt ? ' on' : ''}" data-st-tt="${esc(s.id)}" data-tip="${inTt ? 'Take it out of the store tooltip' : 'Add it to the store tooltip, at the end'}">${inTt ? '✓ in the tooltip' : '+ add to the tooltip'}</button>`) +
-      `<button type="button" class="ca-chip" data-st-edit="${esc(s.id)}" data-tip="${s.builtin ? 'Change it: its label, code, how it reads (Reset brings back the original)' : 'Change it'}">${I('edit', 11)} ${s.builtin ? 'Customise' : 'Edit'}</button>` +
+      `<button type="button" class="ca-chip" data-st-edit="${esc(s.id)}" data-tip="${s.builtin ? 'Change it: its label, code, how it reads (Reset brings back the original)' : 'Change it'}">${I('edit', 11)} ${s.builtin ? 'Customize' : 'Edit'}</button>` +
       `<button type="button" class="ca-chip" data-st-dup="${esc(s.id)}" data-tip="A copy that’s yours to change">${I('plus', 11)} Duplicate</button>` +
       (s.builtin
         ? ''

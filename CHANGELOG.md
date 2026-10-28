@@ -18,17 +18,25 @@
     actual ÷ raw CpS (take in 10× your raw CpS and a gain counts 10×). Until a minute is recorded, CpS.
   - Cells and upgrade tiles say how their payback period breaks down ("5m to afford + 20m to earn back (by Raw
     CpS)"), and show the gain in the mode; the Best buy card shows your income in it.
+- **Payback modes are statistics.** Each is a statistic on the new **Payback modes** shelf: its code sets `income`
+  and returns what the item adds to it, so the four built-ins can be read, changed (Customize; Reset brings the
+  original back) and copied, and you can write your own (the editor's **Shows as: a payback mode**; it shows the
+  income, gain and payback period it gives). Every mode statistic is a chip on the Payback page and a choice of the
+  setting; a mode's card has **use as the payback mode**; the Payback page's **edit modes** opens the shelf.
+- **The Tooltips page is now the Statistics page** (the catalog, the editor, the values), and the store tooltip's
+  layout — which lines show, the warnings and their switches — moved to **Settings**, under Store.
 - The parts are words: `item.timeToAfford(mode)`, `item.earnBack(mode)`, `item.gainIn(mode)`,
-  `item.paybackIn(mode)` (mode "raw", "cps", "clicking" or "actual"; none: the mode in use), `building.paybackIn`,
+  `item.paybackIn(mode)`, `item.rawGain()` (mode: a mode's code name — `rawCps`, `cps`, `cpsClicking`,
+  `actualIncome` or yours — or `raw`, `clicking`, `actual`; none: the mode in use), `building.paybackIn`,
   `upgrade.paybackIn`, `payback.mode()`, `payback.modes()`, `payback.income(mode)`, `payback.bank()`,
-  `payback.clickRate()`, `payback.perClick()`, `payback.actualRatio()`. `timeTo` and `item.payback()` follow the
-  mode. New built-in statistics (Tooltips page, Payback shelf): Payback raw CpS / CpS / CpS + clicking, Payback in
-  every mode, Afford + earn back, Income. "Payback, actual income" now uses the Actual income mode's window.
+  `payback.clickRate()`, `payback.perClick()`, `payback.actualIncome()`, `payback.actualRatio()`,
+  `payback.actualWindow()`, `payback.clickWindow()`. `item.clickGain()` now tells a building's too (the fingers
+  upgrades). `timeTo` and `item.payback()` follow the mode. New built-in statistics: Payback raw CpS / CpS / CpS +
+  clicking, Payback in every mode, Afford + earn back, Income. "Payback, actual income" now uses the Actual income
+  mode.
 - The Payback page's old "actual income" chip (the period × CpS ÷ what you took in over a stretch as long as the
   period) is gone, and with it the option `ppActual`; the words `paybackActual` and `paybackActualRatio` still
   work as they did.
-- For add-on authors: `CA.Payback.defineMode({ id, label, desc, order, income(), gain(worth), ready() })` adds a
-  mode (it shows up on the page and in Settings); `CA.Payback.parts(price, worth, mode)` gives a period's parts.
 
 ## 3.42.0 — 2026-10-28
 
