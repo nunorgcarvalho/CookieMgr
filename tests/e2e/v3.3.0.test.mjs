@@ -24,7 +24,7 @@ const ids = (layer) => LY.list(layer).map((x) => x.id);
 Game.cookies = 1e12;
 
 // ---- the layers and their built-ins
-assert(ids('gardener').join() === 'effects,cohort,weeds,mutations', 'gardeners: the built-ins (v3.4: the Full-garden replanter too)');
+assert(ids('gardener').join() === 'effects,cohort,tulipRounds,weeds,mutations', 'gardeners: the built-ins (v3.4: the Full-garden replanter too; v3.40: Tulip and clover rounds)');
 assert(['effects', 'mutations', 'fertilizer', 'clay', 'woodchips', 'none'].every((id) => ids('soil').includes(id)), `soil rules (${ids('soil')})`);
 assert(['current', 'fill', 'bare', 'checker', 'rows', 'rings'].every((id) => ids('template').includes(id)), `templates (${ids('template')})`);
 assert(['current', 'goldenClover', 'bakerWheat', 'to-thumbcorn', 'to-cronerice', 'to-nursetulip'].every((id) => ids('seeds').includes(id)) && LY.get('seeds', 'to-cronerice').data.map.B === 'thumbcorn', 'seed sets: for their effects, and the game’s mutation recipes');

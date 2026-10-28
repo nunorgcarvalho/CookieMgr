@@ -298,11 +298,12 @@ CA.Garden = (() => {
   }
 
   const actions = {
-    plantEmpty: () =>
+    plantEmpty: (only) =>
       withGarden((M, p) => {
         let n = 0;
         tilesOf(M).forEach(([x, y]) => {
           const want = wantAt(p, x, y);
+          if (only && want !== only) return;
           if (want && M.plants[want] && !plantAt(M, x, y) && plant(M, M.plants[want], x, y)) n++;
         });
         count('planted', n);
@@ -365,13 +366,17 @@ CA.Garden = (() => {
     soilRule: () => withGarden(() => runSoilRule()),
   };
 
-  /** The layout's tiles (where it has a seed) and its own plants on them: { tiles, planted, young, mature }. */
-  function layoutCensus() {
+  /**
+   * The layout's tiles (where it has a seed — or, with `only`, that seed) and its own plants on
+   * them: { tiles, planted, young, mature }.
+   */
+  function layoutCensus(only) {
     const M = minigame();
     const c = { tiles: 0, planted: 0, young: 0, mature: 0 };
     if (!M) return c;
     const p = active();
     tilesOf(M).forEach(([x, y]) => {
+      if (only && wantAt(p, x, y) !== only) return;
       if (wantAt(p, x, y)) c.tiles++;
       const me = plantAt(M, x, y);
       if (!me || me.key !== wantAt(p, x, y)) return;
@@ -486,7 +491,16 @@ CA.Garden = (() => {
     });
     // the garden's words, for the gardeners (and any algorithmic macro)
     const A = CA.Actions.register;
-    A({ id: 'garden.plantEmpty', name: 'Plant the layout’s seed on every empty tile', icon: 'leaf', group: 'Garden', unit: 'planted', run: () => actions.plantEmpty() });
+    const seedOptions = () => Object.keys((minigame() || {}).plants || {}).map((k) => ({ v: k, label: minigame().plants[k].name }));
+    A({
+      id: 'garden.plantEmpty',
+      name: 'Plant the layout’s seed on every empty tile',
+      icon: 'leaf',
+      group: 'Garden',
+      unit: 'planted',
+      params: [{ key: 'seed', label: 'Only the tiles of', type: 'select', default: '', options: () => [{ v: '', label: 'every seed' }, ...seedOptions()] }],
+      run: (p) => actions.plantEmpty((p && p.seed) || ''),
+    });
     A({ id: 'garden.harvestNew', name: 'Harvest new seeds once mature (unlocks them)', icon: 'leaf', group: 'Garden', unit: 'unlocked', run: () => actions.harvestNew() });
     A({
       id: 'garden.pullMismatches',
@@ -554,6 +568,11 @@ CA.Garden = (() => {
       const c = layoutCensus();
       return c.planted ? Math.round((c.young / c.planted) * 1000) / 1000 : 0;
     });
+    // one seed of the layout (a garden of two kinds of rounds: nursetulips and golden clovers)
+    const ofSeed = (id, desc, f) => CA.Script.defineValue({ id, desc, params: ['seed'], get: (seed) => f(layoutCensus(String(seed || ''))) });
+    ofSeed('garden.seedTiles', 'tiles the layout has this seed for', (c) => c.tiles);
+    ofSeed('garden.seedMature', 'the layout’s plants of this seed that are mature', (c) => c.mature);
+    ofSeed('garden.seedYoung', 'the layout’s plants of this seed still growing', (c) => c.young);
     CA.Script.defineValue({
       id: 'garden.isUnlocked',
       desc: 'whether you’ve unlocked a seed',
@@ -622,7 +641,6 @@ CA.Garden = (() => {
       const me = M && M.plants[seed];
       return me && typeof M.getCost === 'function' ? M.getCost(me) : NaN;
     } });
-    const seedOptions = () => Object.keys((minigame() || {}).plants || {}).map((k) => ({ v: k, label: minigame().plants[k].name }));
     A({
       id: 'garden.harvest',
       name: 'Harvest a tile',

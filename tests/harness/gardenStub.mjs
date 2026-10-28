@@ -7,6 +7,7 @@ export function makeGarden(Game) {
     meddleweed: { name: 'Meddleweed', icon: 8, ageTick: 10, ageTickR: 10, mature: 50, cost: 1, costM: 0, unlocked: 1, weed: true },
     goldenClover: { name: 'Golden clover', icon: 5, ageTick: 4, ageTickR: 12, mature: 50, cost: 125, costM: 777, unlocked: 0 },
     elderwort: { name: 'Elderwort', icon: 20, ageTick: 0.3, ageTickR: 0.5, mature: 90, cost: 60, costM: 1, unlocked: 1, immortal: 1 },
+    nursetulip: { name: 'Nursetulip', icon: 21, ageTick: 0.5, ageTickR: 2, mature: 60, cost: 40, costM: 1e12, unlocked: 0 },
   };
   const plantsById = [];
   Object.keys(plants).forEach((k, i) => {

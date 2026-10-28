@@ -614,14 +614,16 @@ panel) is built from four layers, each picked on its own:
 
 | Layer | What it is | Built in |
 | --- | --- | --- |
-| **Gardener** | what it does: algorithmic code (the language of algorithmic macros, see [Macros](#macros)) run from the top every second | Steady replanter, Full-garden replanter, Weed collector, Mutation tracker |
-| **Soil rule** | a little code of its own that picks the soil — run when the gardener calls `garden.soilRule()` | Fertilizer, then clay · Grow together, then clay · Fertilizer, then wood chips · Always fertilizer / clay / wood chips · Leave the soil |
-| **Template** | where seeds go: a grid of letters (A, B, C…) — every one-seed garden is the same **Fill** template | Current garden, Fill, Bare, Checkerboard, Mutation rows, Rings |
-| **Seeds** | which seed each letter is | As planted; Golden clover, Baker's wheat, Bakeberry, Whiskerbloom, Queenbeet; every two-parent **mutation recipe** in the game (→ Cronerice = A Baker's wheat, B Thumbcorn…) |
+| **Gardener** | what it does: algorithmic code (the language of algorithmic macros, see [Macros](#macros)) run from the top every second | Steady replanter, Full-garden replanter, Tulip and clover rounds, Weed collector, Mutation tracker |
+| **Soil rule** | a little code of its own that picks the soil — run when the gardener calls `garden.soilRule()` | Fertilizer, then clay · Grow together, then clay · Clovers grow together, then clay · Fertilizer, then wood chips · Always fertilizer / clay / wood chips · Leave the soil |
+| **Template** | where seeds go: a grid of letters (A, B, C…) — every one-seed garden is the same **Fill** template | Current garden, Fill, Bare, Checkerboard, Two rows of four, Mutation rows, Rings |
+| **Seeds** | which seed each letter is | As planted; Golden clover, Golden clover + nursetulip, Baker's wheat, Bakeberry, Whiskerbloom, Queenbeet; every two-parent **mutation recipe** in the game (→ Cronerice = A Baker's wheat, B Thumbcorn…) |
 
 A **profile** is one of each, picked together: **Max effects · current garden** (the default), **Golden clover
 field**, **Golden clover combos** (the field planted and replanted all together — the most golden cookies, in long
-high windows), **Mutation hunt** (Mutation rows on wood chips — pick the recipe in Seeds), **Juicy queenbeet** (rings
+high windows), **8 nursetulips together + clover combos** (two rows of four nursetulips among golden clovers, each
+kind replanted all together on rounds of its own — a little more golden cookies on average, much higher peaks while
+the tulips are mature, CpS −11%), **Mutation hunt** (Mutation rows on wood chips — pick the recipe in Seeds), **Juicy queenbeet** (rings
 of queenbeets) and **Weed farm** — and yours.
 
 On the Garden page the Auto-gardener's card has the **profile bar** — pick a profile, **Save** the slots into it when
@@ -669,6 +671,14 @@ The gardeners:
   round, or every plant dead — is planted at once, and so is a round fertilizer can't come for (its cooldown). Planted together, the plants are mature together — for a level-6
   golden clover field, golden cookies +56% on average (+49% replanting one at a time) and +60% or more about 60% of
   the time (4%), so about 12% more chances for two effects to overlap. It replants about twice as often.
+- **Tulip and clover rounds** — two rounds side by side, for nursetulips among golden clovers (the seeds are its
+  variables `tulip` and `clover`). The tulips are planted all together and replanted all together, at once, once
+  fewer than `tulipReplantBelow` (50%) of their tiles hold a mature one — so they're mature at the same time, each
+  making the clovers around it stronger. The clovers run their own rounds as the Full-garden replanter does
+  (`replantBelow`, `replantAtTick`, `plantWindow`), and its soil rule, *Clovers grow together, then clay*, counts the
+  clovers only, so young tulips don't hold fertilizer on. The real game (Farm level 8, 6×5, 8 nursetulips,
+  1000 h × 3): golden cookies +84.8% on average against +83.6% for Golden clover combos, at CpS ×0.886; every tulip
+  mature 25% of the time, in stretches of about 1.8 h, up to +149%. Fertilizer for the tulips too drops it to +38%.
 - **Weed collector** — keeps the garden bare (with *Always fertilizer*: the most weeds), so meddleweed and fungi
   spring up. Meddleweed is left to grow old, then harvested — the older it is, the likelier it leaves brown mold or
   crumbspore behind; anything you haven't unlocked grows until it's mature and is harvested; everything else is
@@ -713,12 +723,13 @@ settings fill in `dyingOver` and `tickWindow`). Soil has a 10-minute cooldown in
 it. Garden profiles saved before v3.3 became profiles of the same name (a template and seeds that lay them out as
 they were); rules written for a profile before v3.2 became a gardener of yours.
 
-The garden's words: actions `garden.plantEmpty()`, `garden.harvestNew()`, `garden.pullMismatches(keepNew)`,
+The garden's words: actions `garden.plantEmpty(seed)` (every empty tile of the layout, or only that seed's), `garden.harvestNew()`, `garden.pullMismatches(keepNew)`,
 `garden.harvestDying(threshold)` (0–1), `garden.harvestMature()`, `garden.soil(type)` (dirt, fertilizer, clay,
 pebbles, woodchips, or `profile` for the soil rule's), `garden.soilRule()` (runs the soil rule); the condition `garden.soilIs(type)`; values
 `garden.tickIn()` (seconds), `garden.youngShare()` / `garden.matureShare()` (0–1 of the planted tiles),
 `garden.plants()`, `garden.mature()`, `garden.empty()`, `garden.offProfile()`, `garden.layoutTiles()` / `garden.layoutMature()` / `garden.layoutYoung()` (the
-layout's tiles, and its own plants on them), `garden.layoutYoungShare()` (0–1 of
+layout's tiles, and its own plants on them), `garden.seedTiles(seed)` / `garden.seedMature(seed)` / `garden.seedYoung(seed)` (the same for
+one seed of the layout), `garden.layoutYoungShare()` (0–1 of
 the layout's own plants), `garden.isUnlocked(seed)`, `garden.unlockedAgo(seed)` (seconds),
 `garden.soilAvailable(soil)`. They work in any algorithmic macro too.
 
