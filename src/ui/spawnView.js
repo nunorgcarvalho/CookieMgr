@@ -321,7 +321,7 @@ CA.UI.SpawnView = (() => {
   function onMove(e) {
     const svg = e.target && e.target.closest && e.target.closest('[data-sp-chart]');
     if (!svg) return false;
-    const r = svg.getBoundingClientRect();
+    const r = CA.UI.Dom.rect(svg);
     if (!r.width) return true;
     const f = (e.clientX - r.left - (r.width * PAD.l) / W) / ((r.width * (W - PAD.l - PAD.r)) / W);
     hover[svg.dataset.spChart] = Math.max(0, Math.min(1, f));

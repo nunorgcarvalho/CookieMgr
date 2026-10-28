@@ -872,12 +872,30 @@ CA.UI.GardenPage = (() => {
 
   const axisChoice = { key: 'axis', label: 'X axis', options: AXES, default: 'time' };
 
+  const pctFmt = (v) => `${v > 0 ? '+' : v < 0 ? '−' : ''}${Math.abs(v) >= 10 ? Math.round(Math.abs(v)) : Math.round(Math.abs(v) * 10) / 10}%`;
+
+  /** What the Chart widget can show over the garden's charts (its Stats): each plant effect now, then the plants. */
+  function gardenNumbers() {
+    const M = () => G().minigame();
+    const counts = () => (M() ? Object.entries(H().countsNow(M())) : []);
+    const effect = (k) => () => (M() ? pctFmt((H().effectsNow(M())[k] || 0) * 100) : '—');
+    return H()
+      .EFFECTS.map((ef) => ({ v: ef.k, stat: `garden.${ef.k}`, value: effect(ef.k), page: 'garden', on: ef.k === 'goldenCookieFreq' }))
+      .concat([
+        { v: 'plants', stat: 'garden.plants', value: () => (M() ? String(counts().reduce((a, [, n]) => a + n, 0)) : '—'), page: 'garden' },
+        { v: 'mature', stat: 'garden.mature', value: () => (M() ? String(counts().reduce((a, [k, n]) => a + (k.endsWith(':3') ? n : 0), 0)) : '—'), page: 'garden' },
+        { v: 'nextTick', stat: 'garden.nextTick', value: () => (M() && M().nextStep ? CA.Format.span(Math.max(0, (M().nextStep - Date.now()) / 1000)) : '—'), page: 'garden' },
+      ]);
+  }
+
   function createPlots() {
     plot = CA.UI.Plot.create({
       id: 'garden',
       title: 'Growth',
       widget: true, // its ☆: a Chart widget on the left panel
       widgetName: 'Garden growth',
+      widgetGroup: 'Garden',
+      numbers: gardenNumbers(), // the garden's statistics, for the Chart widget (both charts share them)
       icon: 'leaf',
       height: 210,
       windows: [3600, 6 * 3600, 86400, 3 * 86400, 0],
@@ -978,13 +996,13 @@ CA.UI.GardenPage = (() => {
       },
     });
 
-    const pctFmt = (v) => `${v > 0 ? '+' : v < 0 ? '−' : ''}${Math.abs(v) >= 10 ? Math.round(Math.abs(v)) : Math.round(Math.abs(v) * 10) / 10}%`;
     effectsPlot = CA.UI.Plot.create({
       id: 'gardenEffects',
       settingsOf: 'garden', // same window and x axis as the growth chart
       title: 'Effects',
       widget: true,
       widgetName: 'Garden effects',
+      widgetGroup: 'Garden',
       icon: 'sparkle',
       note: 'What your plants do, as the game’s Garden information adds it up (soil, growth stage and tile boosts included).',
       height: 190,

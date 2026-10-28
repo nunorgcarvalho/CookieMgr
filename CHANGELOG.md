@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## 3.42.0 — 2026-10-28
+
+- **The Garden's chart widget is customizable, like Golden cookies.** Its settings' **Show** picks **Stats**,
+  **Garden growth** and **Garden effects**, in any mix: both charts stack in one widget (named Garden). **Stats**
+  picks the numbers shown over the charts: each plant effect now, as the game's Garden information adds it up
+  (golden cookie frequency, ticked to start, so you can see how much of your golden cookie frequency comes from the
+  garden; CpS, golden cookie gains…), plants, mature plants and the time to the next tick. Each is a live tile with
+  its value; the charts' tiles are pictures of them. Hover a number for what it is; click it for the Garden page.
+  A chart widget from before shows its one chart, as it did; the ☆ on each Garden chart still adds just that chart.
+- **Fixed: a chart widget's hover line sat left (or right) of the pointer** in browsers that apply CSS zoom the
+  older way (Safari, Chrome before 128), whenever the widget's text size wasn't 100%. v3.39.0's fix only covered
+  browsers that follow the new standard. The mouse is now placed by `CA.UI.Dom.pointIn`, which works either way;
+  hover tips over a widget's numbers and the Stats page charts' hover use it too.
+
 ## 3.41.1 — 2026-10-28
 
 - Spelling is American English throughout: the add-on's text, tooltips, settings and docs (colour → color,
