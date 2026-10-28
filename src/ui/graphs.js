@@ -50,14 +50,18 @@ CA.UI.Graphs = (() => {
   const C_BASE = '#9db4cc';
   const C_SHOWN = '#ffffff';
 
-  // `plots`: its charts (and then the chart options); `top`: cards above them (statistics from ui/statsPage.js)
-  const TABS = [
+  // `plots`: its charts (and then the chart options); `top`: cards above them (statistics from ui/statsPage.js —
+  // not loaded where the page is hosted without the game, the simulator's GUI: its tabs then don't show)
+  const SP = () => CA.UI.StatsPage;
+  const cards = (tab) => (SP() ? SP().html(tab) : '');
+  const ALL_TABS = [
     { id: 'cookies', label: 'Cookies', icon: 'cookie', plots: ['cps', 'actual', 'ledgerCum'] },
-    { id: 'prestige', label: 'Prestige', icon: 'ascend', plots: ['prestige', 'prestigeRate'], top: () => CA.UI.StatsPage.html('prestige') + targetCardHtml() },
-    { id: 'golden', label: 'Golden cookies', icon: 'sparkle', plots: [], top: () => CA.UI.StatsPage.html('golden') },
-    { id: 'whatif', label: 'What if', icon: 'pantheon', plots: [], top: () => CA.UI.StatsPage.html('whatif') },
-    { id: 'misc', label: 'Misc', icon: 'puzzle', plots: [], top: () => CA.UI.StatsPage.html('misc') },
+    { id: 'prestige', label: 'Prestige', icon: 'ascend', plots: ['prestige', 'prestigeRate'], top: () => cards('prestige') + targetCardHtml() },
+    { id: 'golden', label: 'Golden cookies', icon: 'sparkle', plots: [], top: () => cards('golden') },
+    { id: 'whatif', label: 'What if', icon: 'pantheon', plots: [], top: () => cards('whatif') },
+    { id: 'misc', label: 'Misc', icon: 'puzzle', plots: [], top: () => cards('misc') },
   ];
+  const tabs = () => ALL_TABS.filter((t) => t.plots.length || SP());
 
   // ---- shared overlays --------------------------------------------------------------------
 
@@ -732,14 +736,14 @@ CA.UI.Graphs = (() => {
 
   const currentTab = () => {
     const t = S().get('graphTab');
-    return TABS.find((x) => x.id === t) || TABS[0];
+    return tabs().find((x) => x.id === t) || tabs()[0];
   };
 
   function html() {
     const cur = currentTab();
     return (
       '<div class="ca-subtabs" role="tablist">' +
-      TABS.map(
+      tabs().map(
         (t) =>
           `<button type="button" class="ca-subtab${t === cur ? ' on' : ''}" role="tab" aria-selected="${t === cur}" data-graph-tab="${t.id}">` +
           `${CA.UI.Icons.html(t.icon, 14)}<span>${t.label}</span></button>`
@@ -762,7 +766,7 @@ CA.UI.Graphs = (() => {
 
   /** Opens on tab `id` (the panel's openPage, and links to the old Stats page: 'stats' → Golden cookies). */
   function open(id) {
-    if (TABS.some((t) => t.id === id)) S().set('graphTab', id);
+    if (tabs().some((t) => t.id === id)) S().set('graphTab', id);
   }
 
   function mount(root) {
@@ -770,13 +774,13 @@ CA.UI.Graphs = (() => {
     mountedRoot = root;
     life = CA.UI.Pages.scope(root).on('click', onClick).on('input', onTargetInput).on('change', onTargetInput);
     currentTab().plots.forEach((id) => plots[id].mount(root));
-    CA.UI.StatsPage.mount(root);
+    if (SP()) SP().mount(root);
     refreshTarget();
   }
 
   function unmount() {
-    TABS.forEach((t) => t.plots.forEach((id) => plots[id] && plots[id].unmount()));
-    CA.UI.StatsPage.unmount();
+    ALL_TABS.forEach((t) => t.plots.forEach((id) => plots[id] && plots[id].unmount()));
+    if (SP()) SP().unmount();
     if (life) life.close();
     life = null;
     mountedRoot = null;
@@ -823,5 +827,5 @@ CA.UI.Graphs = (() => {
     });
   }
 
-  return { init, html, mount, unmount, tick, open, recent, TABS, SOURCES, CATS, plots };
+  return { init, html, mount, unmount, tick, open, recent, TABS: ALL_TABS, SOURCES, CATS, plots };
 })();
