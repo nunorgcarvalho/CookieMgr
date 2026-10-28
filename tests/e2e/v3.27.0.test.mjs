@@ -36,7 +36,7 @@ const change = (el, v) => {
 
 // ---- the page
 const items = [...doc.querySelectorAll('#CookieMgrTab [data-tab-item]')].map((i) => i.dataset.tabItem);
-assert(items.indexOf('tooltips') === items.indexOf('clickers') + 1, `a Tooltips page, after Macros (${items})`);
+assert(items.indexOf('tooltips') === items.indexOf('clickers') - 1, `a Tooltips page, right before Macros (v4.0) (${items})`);
 // v3.43: the layout is on the Settings page; the catalog on the Statistics page (id still 'tooltips')
 let pageId = 'settings';
 const goTo = async (id) => {

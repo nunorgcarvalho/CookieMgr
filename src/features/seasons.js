@@ -106,7 +106,7 @@ CA.Seasons = (() => {
   // ---- the SeasonCompletion flow ------------------------------------------------------------
 
   /** SeasonCompletion's code (an algorithmic macro — features/script.js). */
-  const DEFAULT_SOURCE = "# SeasonCompletion — every season's cookies and upgrades, one season after another.\n# The research starts right away, alongside: One mind starts the Grandmapocalypse,\n# and Halloween's cookies come from popping wrinklers.\n# The dragon's auras and the Pantheon follow along, from their profiles (Dragon and Pantheon pages):\n#   hunting drops     dragon drops (Mind Over Matter + Dragon Guts), Pantheon wrinklers (Skruuia)\n#   Christmas again   dragon dropsFlight (Mind Over Matter + Dragonflight)\n#   Business day      dragon dragonFlightHarvest (Dragonflight + Reaper of Fields), and Pantheon golden\n#                     (Vomitrax, Selebrak, Muridal) once the swaps are back to put it all in at once\nparallel:\n  branch research:\n    repeat until researchOwned() >= 9:\n      buy.research(none)\n  branch seasons:\n    # Christmas, first visit: Santa's upgrades, and Santa all the way to Final Claus\n    # (its reindeer cookies wait for a second visit, near the end)\n    switch on reindeer\n    repeat until owned(christmas, upgrades) >= total(christmas, upgrades) and santaLevel() >= 14:\n      dragon.profile(drops)\n      pantheon.profile(wrinklers)\n      season.keep(christmas)\n      season.buyDrops(christmas, upgrades)\n      santa.upgrade()\n    for season in [easter, halloween, valentines]:\n      if season == easter:\n        # eggs drop from golden and wrath cookies\n        switch on golden\n        switch on wrath\n      elif season == halloween:\n        # Halloween cookies drop from wrinklers that have eaten\n        switch on wrinklers\n      repeat until owned(season, all) >= total(season, all):\n        dragon.profile(drops)\n        pantheon.profile(wrinklers)\n        season.keep(season)\n        season.buyDrops(season, all)\n    # Christmas again, for the reindeer cookies — they don't need wrinklers, so the\n    # Grandmapocalypse can end here, and Dragonflight takes Dragon Guts' place\n    repeat until owned(christmas, cookies) >= total(christmas, cookies):\n      dragon.profile(dropsFlight)\n      season.keep(christmas)\n      season.buyDrops(christmas, cookies)\n      grandma.exit(pledge)\n    # and Business day for good, with the elders kept pledged: the golden cookie auras, and the\n    # golden Pantheon once there are swaps enough for all of it\n    forever:\n      dragon.profile(dragonFlightHarvest)\n      if not pantheon.profileActive(golden) and pantheon.swaps() >= pantheon.profileSwaps(golden):\n        pantheon.profile(golden)\n      season.keep(fools)\n      grandma.exit(pledge)\n";
+  const DEFAULT_SOURCE = "# SeasonCompletion — each season in turn until its drops are in, buying them as they unlock:\n# Christmas's upgrades (Santa's gifts — the Santa macro levels Santa up), Easter (eggs, from golden\n# cookies), Halloween (cookies, from wrinklers that have eaten, in the Grandmapocalypse), Valentine's\n# day, Christmas again for the reindeer cookies, then `then` for good (none: leaves it be).\n# It only does the seasons: what drops them (shimmers, wrinklers, research, the dragon, the Pantheon)\n# is up to the other macros — a manager (Nunix late game) switches them.\nforever:\n  if not season.complete(christmas, upgrades):\n    season.keep(christmas)\n    season.buyDrops(christmas, upgrades)\n  elif not season.complete(easter):\n    season.keep(easter)\n    season.buyDrops(easter, all)\n  elif not season.complete(halloween):\n    season.keep(halloween)\n    season.buyDrops(halloween, all)\n  elif not season.complete(valentines):\n    season.keep(valentines)\n    season.buyDrops(valentines, all)\n  elif not season.complete(christmas, cookies):\n    season.keep(christmas)\n    season.buyDrops(christmas, cookies)\n  elif then != \"none\":\n    season.keep(then)\n";
 
   // ---- Plain Business Day ----------------------------------------------------------------------
 
@@ -293,11 +293,22 @@ CA.Seasons = (() => {
     CA.Macros.addBuiltin({
       id: 'seasonCompletion',
       name: 'SeasonCompletion',
-      desc: 'An algorithmic macro that collects every season: research (and the Grandmapocalypse) right away, then Christmas’s upgrades and Final Claus, Easter, Halloween and Valentine’s day until each is complete, Christmas again for its cookies, and Business day for good, the elders kept pledged. Along the way it switches the dragon’s auras and the Pantheon to their profiles: drops and wrinklers while it hunts drops, drops and Dragonflight on the second Christmas, Dragonflight and Reaper of Fields with the golden Pantheon on Business day. Its code is yours to change — “Edit its code”.',
+      desc: 'Collects every season: keeps the next unfinished one on and buys its drops as they unlock — Christmas’s upgrades, Easter, Halloween, Valentine’s day, Christmas again for its cookies — then Business day for good. Only the seasons: what drops them (shimmers, wrinklers, research, the dragon, the Pantheon) is up to the other macros, or a manager. Its code is yours to change — “Edit its code”.',
       icon: { sprite: [16, 6] },
       mode: 'flow',
       every: 1000,
       defaultSource: DEFAULT_SOURCE,
+      inputs: [{ key: 'then', label: 'Then, for good', type: 'select', default: 'fools', options: () => SEASONS.concat({ v: 'none', label: 'leave it be' }) }],
+      section: 'upkeep',
+    });
+    CA.Macros.addBuiltin({
+      id: 'santa',
+      name: 'Santa',
+      desc: 'Levels Santa up during Christmas whenever you can afford it, all the way to Final Claus (needs A festive hat).',
+      icon: { sprite: [19, 9] },
+      mode: 'flow',
+      every: 1000,
+      defaultSource: '# Level Santa up during Christmas whenever it’s affordable, up to Final Claus (level 14).\nforever:\n  if santaLevel() < 14:\n    santa.upgrade()\n',
       section: 'upkeep',
     });
   }

@@ -60,6 +60,9 @@ CA.AutoBuyer = (() => {
     { id: 'payback', name: 'Payback', kinds: { building: true, upgrade: true, allUpgrades: true }, bulk: 'auto', skip: false, reserve: 0, banks: [], mode: '', rules: [cleanRule(BULK_RULE)] },
     { id: 'buildings', name: 'Buildings only', kinds: { building: true, upgrade: false, allUpgrades: false }, bulk: 'auto', skip: false, reserve: 0, banks: [], mode: '', rules: [] },
     { id: 'upgrades', name: 'Upgrades only', kinds: { building: false, upgrade: true, allUpgrades: true }, bulk: 'auto', skip: false, reserve: 0, banks: [], mode: '', rules: [cleanRule(BULK_RULE)] },
+    // v4.0: what Nunix late game buys with once it plays for golden cookie combos — ranked by actual
+    // income, never below what a Lucky! and a garden replant need
+    { id: 'combos', name: 'Golden cookie combos', kinds: { building: true, upgrade: true, allUpgrades: true }, bulk: 'auto', skip: false, reserve: 0, banks: ['lucky', 'garden'], mode: 'actualIncome', rules: [cleanRule(BULK_RULE)] },
   ];
   const copy = (x) => JSON.parse(JSON.stringify(x));
   let profiles = copy(SEEDS);
@@ -427,6 +430,9 @@ CA.AutoBuyer = (() => {
         return p;
       });
       active = profiles.some((p) => p.id === data.active) ? data.active : profiles[0].id;
+      // seeds added since the save was made (one you deleted stays deleted: the save lists what it was given)
+      const given = Array.isArray(data.seeded) ? data.seeded : ['payback', 'buildings', 'upgrades'];
+      SEEDS.forEach((s) => !given.includes(s.id) && !profiles.some((p) => p.id === s.id) && profiles.push(copy(s)));
     } else {
       profiles = copy(SEEDS);
       active = 'payback';
@@ -464,7 +470,7 @@ CA.AutoBuyer = (() => {
   const profileOptions = () => [{ v: '', label: 'the active profile' }].concat(profiles.map((p) => ({ v: p.id, label: p.name })));
 
   function init() {
-    CA.Settings.registerSection('buyer', { serialize: () => ({ profiles, active }), load, event: 'buyer' });
+    CA.Settings.registerSection('buyer', { serialize: () => ({ profiles, active, seeded: SEEDS.map((s) => s.id) }), load, event: 'buyer' });
     const V = (id, desc, params, get, more) => CA.Script.defineValue({ id, desc, params, get, group: 'Auto buyer', ...(more || {}) });
     V('buyer.queue', 'a list: the Auto buyer’s queue, front first — what a profile (id or name; none: the active one) would buy, in order', ['profile'], (x) => queue(x).items.map((i) => i.key), { list: true });
     V('buyer.next', 'the front of a profile’s queue (none: the active one): what the Auto buyer buys next ("": nothing)', ['profile'], (x) => (next(x) || { key: '' }).key);

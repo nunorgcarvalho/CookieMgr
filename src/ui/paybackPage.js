@@ -280,7 +280,7 @@ CA.UI.PaybackPage = (() => {
   }
 
   function init() {
-    CA.UI.Pages.register({ id: 'payback', label: 'Payback', icon: 'dollar', order: 68, group: 'custom', html, mount, unmount, tick: sync });
+    CA.UI.Pages.register({ id: 'payback', label: 'Payback', icon: 'dollar', order: 24, group: 'data', html, mount, unmount, tick: sync });
   }
 
   return { init, sync, modeBar };

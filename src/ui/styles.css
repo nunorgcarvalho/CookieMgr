@@ -8678,3 +8678,237 @@ body.ca-has-storebar #products {
   grid-column: auto;
   margin-left: 6px;
 }
+
+/* Managers page (v4.0.0) */
+#CookieMgrMenu .ca-mgr-live {
+  padding: 4px 14px 12px;
+}
+#CookieMgrMenu .ca-mgr-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 8px;
+}
+#CookieMgrMenu .ca-mgr-stage {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px 5px 6px;
+  font: inherit;
+  font-size: 12px;
+  color: #d8cbb0;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 220, 150, 0.18);
+  border-radius: 14px;
+  cursor: pointer;
+}
+#CookieMgrMenu .ca-mgr-stage b {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+  border-radius: 50%;
+  background: rgba(255, 220, 150, 0.15);
+}
+#CookieMgrMenu .ca-mgr-stage:hover {
+  border-color: rgba(255, 220, 150, 0.45);
+}
+#CookieMgrMenu .ca-mgr-stage.done {
+  color: #93866f;
+}
+#CookieMgrMenu .ca-mgr-stage.on {
+  color: #2b1d0e;
+  background: linear-gradient(#ffe39a, #f2b84b);
+  border-color: #ffd36b;
+  box-shadow: 0 0 10px rgba(255, 200, 90, 0.35);
+}
+#CookieMgrMenu .ca-mgr-stage.on b {
+  background: rgba(0, 0, 0, 0.18);
+}
+#CookieMgrMenu .ca-mgr-arrow {
+  color: #93866f;
+  font-size: 16px;
+}
+#CookieMgrMenu .ca-mgr-now {
+  font-size: 11px;
+  color: #b9ab93;
+  margin-top: 4px;
+  line-height: 1.6;
+}
+#CookieMgrMenu .ca-mgr-now em {
+  font-style: normal;
+  color: #ffeab0;
+}
+#CookieMgrMenu .ca-mgr-now code,
+#CookieMgrMenu .ca-mgr-desc code {
+  font-size: 10px;
+  color: #c9e6a0;
+}
+#CookieMgrMenu .ca-mgr-now i {
+  color: #93866f;
+}
+#CookieMgrMenu .ca-mgr-desc {
+  flex: 1 1 100%;
+  font-size: 11px;
+  color: #a39477;
+}
+#CookieMgrMenu .ca-mgr-shown {
+  background: rgba(255, 220, 150, 0.04);
+}
+#CookieMgrMenu .ca-mgr-stages {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 6px 14px 14px;
+}
+#CookieMgrMenu .ca-mgr-stagecard {
+  padding: 8px 10px 10px;
+  border: 1px solid rgba(255, 220, 150, 0.12);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.18);
+}
+#CookieMgrMenu .ca-mgr-stagecard.on {
+  border-color: rgba(255, 211, 107, 0.55);
+  box-shadow: inset 3px 0 0 #f2b84b;
+}
+#CookieMgrMenu .ca-mgr-stagehead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#CookieMgrMenu .ca-mgr-stagehead .ca-gname {
+  width: 200px;
+  font-weight: bold;
+}
+#CookieMgrMenu .ca-mgr-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  font-size: 11px;
+  color: #2b1d0e;
+  border-radius: 50%;
+  background: #e8c27a;
+}
+#CookieMgrMenu .ca-mgr-sub {
+  margin: 8px 0 4px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #93866f;
+}
+#CookieMgrMenu .ca-mgr-macros {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+#CookieMgrMenu .ca-mgr-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+#CookieMgrMenu .ca-mgr-group-name {
+  width: 150px;
+  font-size: 10px;
+  color: #a39477;
+}
+#CookieMgrMenu .ca-mgr-macro {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 7px 1px 3px;
+  font: inherit;
+  font-size: 10px;
+  color: #93866f;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px dashed rgba(255, 220, 150, 0.15);
+  border-radius: 10px;
+  cursor: pointer;
+}
+#CookieMgrMenu .ca-mgr-macro .ca-icon {
+  flex: none;
+  transform: scale(0.5);
+  margin: -9px;
+}
+#CookieMgrMenu .ca-mgr-macro.leave .ca-icon {
+  opacity: 0.45;
+}
+#CookieMgrMenu .ca-mgr-macro i {
+  font-style: normal;
+  font-weight: bold;
+  font-size: 9px;
+  text-transform: uppercase;
+}
+#CookieMgrMenu .ca-mgr-macro.on {
+  color: #d6f5b0;
+  background: rgba(110, 170, 60, 0.22);
+  border: 1px solid rgba(150, 210, 90, 0.55);
+}
+#CookieMgrMenu .ca-mgr-macro.off {
+  color: #f0b4a8;
+  background: rgba(170, 60, 50, 0.2);
+  border: 1px solid rgba(220, 110, 90, 0.5);
+}
+#CookieMgrMenu .ca-mgr-macro.off span {
+  text-decoration: line-through;
+}
+#CookieMgrMenu .ca-mgr-profs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+#CookieMgrMenu .ca-mgr-prof select {
+  max-width: 190px;
+}
+#CookieMgrMenu .ca-mgr-until {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 11px;
+  color: #b9ab93;
+}
+#CookieMgrMenu .ca-mgr-until input {
+  flex: 1 1 auto;
+  min-width: 200px;
+  font-family: monospace;
+  font-size: 11px;
+}
+#CookieMgrMenu .ca-mgr-until input.bad {
+  border-color: #d9665a;
+}
+#CookieMgrMenu .ca-mgr-until em {
+  font-style: normal;
+  color: #93866f;
+  white-space: nowrap;
+}
+#CookieMgrMenu .ca-mgr-until em.ca-mgr-problem {
+  color: #f0948a;
+}
+#CookieMgrMenu .ca-mgr-inputs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+#CookieMgrMenu .ca-mgr-input b {
+  color: #d8cbb0;
+  font-weight: normal;
+}
+#CookieMgrMenu .ca-mgr-input.set select,
+#CookieMgrMenu .ca-mgr-input.set input {
+  border-color: rgba(255, 211, 107, 0.6);
+}
+#CookieMgrMenu .ca-mgr-input select {
+  max-width: 220px;
+}
+#CookieMgrMenu .ca-mgr-input input {
+  width: 70px;
+}
+#CookieMgrMenu .ca-mgr-codehint {
+  padding: 6px 14px 0;
+}
