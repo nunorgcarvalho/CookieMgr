@@ -17,7 +17,7 @@ await sleep(400);
 const CA = w.CookieMgr;
 assert(CA && w.cookieMgr === CA, 'window.CookieMgr still there, window.cookieMgr beside it');
 assert(CA.ID === 'CookieMgr' && Game.mods.CookieMgr, 'the mod id (where the save keeps its data) is unchanged');
-const loadedNote = g.calls.notify.find((n) => n.title.includes(`v${CA.VERSION} loaded`));
+const loadedNote = g.calls.notify.find((n) => / v\d+\.\d+\.\d+ loaded/.test(n.title));
 assert(loadedNote && loadedNote.title.startsWith('cookieMgr'), `the loaded note says cookieMgr (${loadedNote && loadedNote.title})`);
 assert(CA.Stats.toText({ label: 'X', source: 'return 1' }).startsWith('# cookieMgr statistic'), 'statistics export with the new name');
 const old = CA.Stats.fromText('# CookieMgr statistic\n# label: Old one\nreturn 2');

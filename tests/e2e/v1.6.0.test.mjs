@@ -66,9 +66,7 @@ assert(row('wrinkler').count === 2 && Math.abs(row('wrinkler').cookies - 58300) 
 assert(row('trade').count === 2 && row('trade').cookies !== 0, 'income: stock trades (net)');
 assert(row('boost').cookies >= 0 && row('other').cookies >= 0, 'income: boosts and everything else, never negative');
 assert(inc.baked > 0, 'baked total for shares');
-const trs = page.querySelectorAll('[data-ev-income] tbody tr');
-assert(trs.length === 9, `income table rows: 8 sources + total (${trs.length})`);
-assert(/Total outside CpS/.test(page.querySelector('[data-ev-income]').textContent), 'total row');
+// v3.48: the table itself moved to the Stats page's Cookies tab (tests/e2e/v3.48.0.test.mjs)
 
 // log list + filters
 const rows = () => page.querySelectorAll('[data-ev-list] .ca-ev-row');
@@ -98,10 +96,6 @@ await sleep(500);
 assert(rows().length === 100 && page.querySelector('[data-ev-more]'), 'first 100 rows + "show more"');
 click(w, page.querySelector('[data-ev-more]'));
 assert(rows().length === Math.min(200, CA.EventLog.list().length), 'show more adds 100');
-
-// span chips
-click(w, page.querySelector('[data-ev-span="3600"]'));
-assert(CA.Settings.get('eventSpan') === '3600', 'income span chip');
 
 // CSV
 let downloaded = null;

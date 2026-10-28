@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## 3.48.0 — 2026-10-28
+## 3.49.0 — 2026-10-28
 
 - **Buy all upgrades has a payback period, and the Auto buyer ranks it.** It's measured the way a single upgrade
   is, as one purchase: every store upgrade the bank (the buyer's budget) affords, cheapest first, bought together in
@@ -19,6 +19,24 @@
 - **New words:** `payback.allUpgrades()`, `payback.allUpgradesIn(mode)`, `payback.allUpgradesGain()`,
   `payback.allUpgradesPrice()`, `payback.allUpgradesCount(budget)`; `pp.kind`, `pp.price`, `pp.of` and `pp.buy` take the
   thing `"allUpgrades"`.
+
+## 3.48.1 — 2026-10-28
+
+- **README:** the Events page screenshot now shows the page as it is since 3.48.0, led by the Event log. No change to
+  the add-on itself.
+
+## 3.48.0 — 2026-10-28
+
+- **The Events page leads with the Event log.** The **Income outside CpS** card moved to the Stats page's
+  **Cookies** tab, below the charts, where the rest of what you bake is broken down. It works as before: the span
+  chips (this session, 15m, 1h, 1d, all) and the live table per source.
+
+## 3.47.2 — 2026-10-28
+
+- **A new README for new players.** It says what cookieMgr does, puts the install steps first (bookmarklet,
+  userscript or console), sums up every page in a table, and shows each page with a fresh screenshot from the game
+  and its main features. The full feature reference moved to [docs/GUIDE.md](docs/GUIDE.md), and building, testing
+  and the project layout to [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md). No change to the add-on itself.
 
 ## 3.47.1 — 2026-10-28
 

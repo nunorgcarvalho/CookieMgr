@@ -34,7 +34,7 @@ assert(value('buyer.next') === front.key && value('buyer.rank', front.key) === 1
 assert(value('buyer.queue').length === q.items.length, 'buyer.queue lists it');
 
 // a weight pushes the front back; never holds it back; first pulls the last forward
-B.update('payback', { rules: [] }); // (the seeded Buy all upgrades rule, v3.48, aside)
+B.update('payback', { rules: [] }); // (the seeded Buy all upgrades rule, v3.49, aside)
 B.addRule('payback', { what: `b:${front.name}`, effect: 'weight', k: 1000 });
 q = B.queue();
 assert(q.items[q.items.length - 1].name === front.name && q.items[q.items.length - 1].rules.includes('weight ×1000'), 'weight ×1000: last');
