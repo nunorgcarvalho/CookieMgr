@@ -1,15 +1,15 @@
 // The Golden cookies widget (goldenCookies) — the Stats page's golden cookie numbers, chart and timer bars (ui/spawnView.js)
-// on the left panel, with the same numbers (CA.Timers). Its settings pick the parts:
+// on the left panel, with the same numbers (CA.Timers). Its settings pick the parts (Show):
 //
-//   numbers   each switched on or off: next in (the expected wait), the median, the chance within a minute,
-//             the window (soonest – latest), the multiplier (× vs nothing helping), the frequency (one
-//             every …, on average)
-//   chart     the odds of the next one over time, on one of two axes (`axis`): this cycle (its cumulative
-//             chance, a line sweeping across it at now) or from now (the odds ahead, its window and mean)
-//   bars      effect timers on the chart's axis: each effect running with its time left and the chance a
-//             golden cookie comes before it ends
-//   helping   what makes them come more often: a bar each (upgrades, the garden, spirits, the dragon…), on a
-//             log scale so they add up to the multiplier
+//   Stats (numbers)   the statistics you tick: expected wait, within minute %, window, frequency, multiplier,
+//                     median wait — named and explained (on hover) by CA.StatInfo
+//   Graph (chart)     the odds of the next one over time, on one of two axes (`axis`): this cycle (its cumulative
+//                     chance, a line sweeping across it at now) or from now (the odds ahead, its window and mean)
+//   Effects (bars)    each effect running on the graph's axis, with its time left and the chance a golden
+//                     cookie comes before it ends
+//   Frequency Factors (helping)
+//                     what makes them come more often: a bar each (upgrades, the garden, spirits, the dragon…),
+//                     on a log scale so they add up to the multiplier
 //
 // It replaces v3.38's three golden widgets — Next golden cookie, Golden timeline and Golden cookie frequency —
 // whose saved widgets load as this one with the same parts (`legacy` below). Effect timers, a bar per
@@ -25,28 +25,29 @@ CA.UI.TimelineWidget = (() => {
   const pc = (p) => `${p >= 0.9995 ? 100 : p > 0 && p < 0.0005 ? '<0.1' : (p * 100).toFixed(p < 0.1 ? 1 : 0)}%`;
   const WIDTH = 280;
   const PARTS = [
-    { v: 'numbers', label: 'Numbers (pick which below)' },
-    { v: 'chart', label: 'Chart: the odds of the next one' },
-    { v: 'bars', label: 'Effect timers on the chart’s axis' },
-    { v: 'helping', label: 'What’s helping (a bar each)' },
+    { v: 'numbers', label: 'Stats', tip: 'The statistics you tick under Stats' },
+    { v: 'chart', label: 'Graph', tip: 'The odds of the next golden cookie over time, on the axis picked under Graph' },
+    { v: 'bars', label: 'Effects', tip: 'A bar per effect running, on the graph’s axis: its time left and the chance a golden cookie comes before it ends' },
+    { v: 'helping', label: 'Frequency Factors', tip: 'A bar for each thing making golden cookies come more often (upgrades, the garden, spirits, the dragon…), on a log scale so they add up to the multiplier' },
   ];
   const DEFAULT_PARTS = ['numbers', 'chart'];
   const AXES = [
-    { v: 'cycle', label: 'This cycle (a line sweeps across it)' },
-    { v: 'now', label: 'From now (a timeline)' },
+    { v: 'cycle', label: 'This cycle' },
+    { v: 'now', label: 'From now' },
   ];
 
-  // the numbers — 'frequency' is the multiplier (its key from before v3.30.0, when it was called
-  // Frequency), 'every' the time between them
+  // the statistics (names and descriptions: CA.StatInfo) — 'frequency' is the multiplier (its key from before
+  // v3.30.0, when it was called Frequency), 'every' the time between them
   const NUMS = [
-    { v: 'next', label: 'Next in (the expected wait)' },
-    { v: 'median', label: 'Median' },
-    { v: 'minute', label: 'Chance within a minute' },
-    { v: 'window', label: 'Window (soonest – latest)' },
-    { v: 'frequency', label: 'Multiplier (× vs nothing helping)' },
-    { v: 'every', label: 'Frequency (one every …, on average)' },
+    { v: 'next', stat: 'golden.wait' },
+    { v: 'minute', stat: 'golden.minute' },
+    { v: 'window', stat: 'golden.window' },
+    { v: 'every', stat: 'golden.interval' },
+    { v: 'frequency', stat: 'golden.frequency' },
+    { v: 'median', stat: 'golden.median' },
   ];
-  const DEFAULT_NUMS = ['next', 'minute', 'frequency', 'every'];
+  const numOptions = () => NUMS.map((x) => ({ v: x.v, label: CA.StatInfo.label(x.stat), tip: CA.StatInfo.desc(x.stat) }));
+  const DEFAULT_NUMS = ['next', 'minute', 'every', 'frequency'];
 
   // (a part saved that's gone — v3.12's Force the Hand of Fate forecast — is left out)
   const partsOf = (inst) => {
@@ -61,16 +62,18 @@ CA.UI.TimelineWidget = (() => {
     if (d.spawned) return '<div class="ca-tl-line"><b class="ca-tl-now">A golden cookie is on screen!</b></div>';
     const w = d.wait;
     const on = new Set(numsOf(inst));
+    const why = d.factors.length ? ` Helping now: ${d.factors.map((x) => x.name).join(', ')}.` : '';
     const cells = {
-      next: `<span data-tip="On average (the mean), ± ${esc(when(w.sd))}"><em>next in</em><b>${when(w.mean)}</b></span>`,
-      median: `<span data-tip="Even odds by then"><em>median</em><b>${when(w.median)}</b></span>`,
-      minute: `<span data-tip="The chance one comes within a minute (this second: ${esc(pc(w.hazard))})"><em>≤ 1 min</em><b>${pc(w.within(60))}</b></span>`,
-      window: `<span data-tip="The soonest it can come, and the latest"><em>window</em><b>${when(w.soonest)}–${when(w.latest)}</b></span>`,
-      frequency: `<span data-tip="${esc(`How many times more often golden cookies come than with nothing helping (no upgrades, garden, spirits, aura…)${d.factors.length ? `: ${d.factors.map((x) => x.name).join(', ')}` : ''} — counted from the next one`)}"><em>multiplier</em><b>×${Math.round(d.frequency * 100) / 100}</b></span>`,
-      every: `<span data-tip="One golden cookie every ${esc(when(d.next.mean))} on average with what’s helping now (from one leaving to the next coming) — it doesn’t count down"><em>frequency</em><b>${when(d.next.mean)}</b></span>`,
+      next: [when(w.mean), ` ± ${when(w.sd)}.`],
+      minute: [pc(w.within(60)), ` This second: ${pc(w.hazard)}.`],
+      window: [`${when(w.soonest)}–${when(w.latest)}`, ''],
+      every: [when(d.next.mean), ''],
+      frequency: [`×${Math.round(d.frequency * 100) / 100}`, why],
+      median: [when(w.median), ''],
     };
+    const cell = (x) => `<span data-tip="${esc(CA.StatInfo.desc(x.stat) + cells[x.v][1])}"><em>${esc(CA.StatInfo.label(x.stat))}</em><b>${cells[x.v][0]}</b></span>`;
     const h = NUMS.filter((x) => on.has(x.v))
-      .map((x) => cells[x.v])
+      .map(cell)
       .join('');
     return h ? `<div class="ca-tl-nums" data-w-open="stats">${h}</div>` : '';
   }
@@ -135,10 +138,10 @@ CA.UI.TimelineWidget = (() => {
       id: 'goldenCookies',
       name: 'Golden cookies',
       icon: 'sparkle',
-      desc: 'Everything about the next golden cookie, picked in its settings: when it comes (on average, the median, the chance within a minute, its window), the multiplier and how often they come, a chart of its odds (this cycle, or from now with each effect’s time left on the same axis) and what’s helping. Add as many as you like, each showing different parts.',
+      desc: 'The next golden cookie: the stats, graph, effects and frequency factors you pick in its settings. Add as many as you like.',
       group: 'golden',
       sprite: [8, 14],
-      short: 'Next one, odds, frequency — you pick',
+      short: 'Stats, graph, effects — you pick',
       width: WIDTH,
       resize: 'free',
       single: false,
@@ -146,8 +149,8 @@ CA.UI.TimelineWidget = (() => {
       legacy,
       settings: [
         { key: 'stats', label: 'Show', type: 'multi', default: DEFAULT_PARTS, options: () => PARTS },
-        { key: 'axis', label: 'Chart', type: 'select', default: 'cycle', options: () => AXES },
-        { key: 'nums', label: 'Numbers', type: 'multi', default: DEFAULT_NUMS, options: () => NUMS },
+        { key: 'axis', label: 'Graph', type: 'select', default: 'cycle', options: () => AXES },
+        { key: 'nums', label: 'Stats', type: 'multi', default: DEFAULT_NUMS, options: numOptions },
       ],
     });
   }

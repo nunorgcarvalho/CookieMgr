@@ -292,8 +292,8 @@ CA.UI.SpawnView = (() => {
         : '';
     const wrath = type === 'golden' ? tile('Wrath chance', pc(d.wrathChance), 'that it’s a wrath cookie') : '';
     const freqTile =
-      tile('Multiplier', `×${mx(d.frequency)}`, d.factors.length ? 'vs nothing helping' : 'nothing helping yet') +
-      tile('Frequency', when(d.next.mean), `between ${type === 'golden' ? 'golden cookies' : 'reindeer'}, on average`);
+      tile('Multiplier', `×${mx(d.frequency)}`, d.factors.length ? 'vs nothing helping' : 'nothing helping yet', type === 'golden' ? CA.StatInfo.desc('golden.frequency') : '') +
+      tile('Frequency', when(d.next.mean), `between ${type === 'golden' ? 'golden cookies' : 'reindeer'}, on average`, type === 'golden' ? CA.StatInfo.desc('golden.interval') : '');
     if (d.spawned)
       return (
         `<div class="ca-stats">${tile(`Next ${name}`, 'on screen', 'pop it! — the timer starts again when it leaves')}${freqTile}${wrath}</div>` +
@@ -304,7 +304,7 @@ CA.UI.SpawnView = (() => {
     const w = d.wait;
     return (
       '<div class="ca-stats">' +
-      tile('Expected wait', when(w.mean), 'on average, from now') +
+      tile('Expected wait', when(w.mean), 'on average, from now', type === 'golden' ? CA.StatInfo.desc('golden.wait') : '') +
       tile('Odds so far', pc(d.cycle.by), `one has come by ${when(d.cycle.elapsed)}`) +
       freqTile +
       wrath +

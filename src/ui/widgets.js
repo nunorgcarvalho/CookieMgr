@@ -626,7 +626,7 @@ CA.UI.Widgets = (() => {
             .options()
             .map(
               (o) =>
-                `<label class="ca-member${chosen.has(o.v) ? ' on' : ''}"><input type="checkbox" data-w-multi="${s.key}" value="${esc(o.v)}"${chosen.has(o.v) ? ' checked' : ''}>` +
+                `<label class="ca-member${chosen.has(o.v) ? ' on' : ''}"${o.tip ? ` data-tip="${esc(o.tip)}"` : ''}><input type="checkbox" data-w-multi="${s.key}" value="${esc(o.v)}"${chosen.has(o.v) ? ' checked' : ''}>` +
                 `${o.icon ? `<span style="color:${o.color || 'inherit'}">${I(o.icon, 13)}</span>` : ''}<span>${esc(o.label)}</span></label>`
             )
             .join('') +

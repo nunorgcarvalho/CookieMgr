@@ -770,15 +770,18 @@ always grab them again). Drag them anywhere; hover for × and ⚙ (its settings)
   - **Stock market** — ring and label = the next market tick; after one, the label is what it did to the stocks you
     held going into it ($; cookies in the popup).
   - **Pantheon** — your three slotted spirits under a ring counting down to the next worship swap.
-- **Golden cookies** — everything about the next golden cookie, the parts picked in its settings: the numbers (next
-  in on average, the median, the chance within a minute, its window, the multiplier — × vs nothing helping — and the
-  frequency — one every …, on average — each switched on or off); a chart of its odds, either over **this cycle** (a
-  line sweeping across it) or **from now** (a timeline with its window and mean); a bar per effect running on the
-  chart's axis, with its time left and the chance a golden cookie comes before it ends; and **what's helping** — a bar
-  for each upgrade, plant, spirit or aura making them come more often, on a log scale so they add up to the
-  multiplier. Add as many as you like, each showing different parts. Click the numbers for the Stats page.
-  (Until v3.39.0 these were three widgets: Next golden cookie, Golden timeline and Golden cookie frequency; saved
-  ones load as Golden cookies widgets with their old names as titles.)
+- **Golden cookies** — everything about the next golden cookie; its settings pick the parts:
+  - **Stats**, each on or off: Expected wait, Within minute %, Window, Frequency (one every …, on average),
+    Multiplier (× vs nothing helping), Median wait. Hover one for what it means (the same text as on the Stats page).
+  - **Graph**: the odds of the next one, over **This cycle** (a line sweeping across it) or **From now** (a
+    timeline with its window and mean).
+  - **Effects**: a bar per effect running on the graph's axis, with its time left and the chance a golden cookie
+    comes before it ends.
+  - **Frequency Factors**: a bar for each upgrade, plant, spirit or aura making them come more often, on a log scale
+    so they add up to the multiplier.
+  Add as many as you like, each showing different parts. Click the stats for the Stats page. (Until v3.39.0 these
+  were three widgets: Next golden cookie, Golden timeline and Golden cookie frequency; saved ones load as Golden
+  cookies widgets with their old names as titles.)
 - **Effect timers** — a slim bar per effect running (Frenzy, Click frenzy, building specials, Dragon Harvest, Clot…),
   each in its own colour with the game's own icon, draining as it runs out: its name, what it multiplies (×7 CpS,
   ×777 clicks), the time left, and (ticked in its settings) the chance a golden cookie comes before it ends. Bad effects are striped.
@@ -790,7 +793,7 @@ always grab them again). Drag them anywhere; hover for × and ⚙ (its settings)
 
 **Stars:** a ☆ next to a chart or a section adds its ready-made widget in one click, as a macro's ★ gives it a
 button: the Garden page's Growth and Effects charts (a Chart widget each) and the golden cookie frequency row on the
-Stats page (a Golden cookies widget showing the multiplier, the frequency and what's helping). The star fills while the widget is on the left panel; click it again to take it
+Stats page (a Golden cookies widget showing Frequency, Multiplier and Frequency Factors). The star fills while the widget is on the left panel; click it again to take it
 away.
 
 Framed boxes (Quick stats, Latest events) are dragged by their title bar and folded with ▾. **Resize** any widget

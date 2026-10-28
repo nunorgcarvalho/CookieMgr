@@ -85,7 +85,7 @@ const fInst = () => W.list().find((x) => x.type === 'goldenCookies');
 assert(fInst() && fInst().stats.join() === 'numbers,helping' && fInst().nums.join() === 'frequency,every', 'clicking it adds the Golden cookie frequency widget (since v3.39.0 a Golden cookies widget: the multiplier, the frequency, what’s helping)');
 W.tick();
 const fw = () => doc.querySelector(`#CookieMgrWidgets [data-widget="${fInst().id}"]`);
-const mult = () => [...fw().querySelectorAll('.ca-tl-nums span')].find((s) => s.querySelector('em').textContent === 'multiplier').querySelector('b').textContent;
+const mult = () => [...fw().querySelectorAll('.ca-tl-nums span')].find((s) => s.querySelector('em').textContent === 'Multiplier').querySelector('b').textContent;
 eq(mult(), '×4', 'Lucky day and Serendipity: four times as often');
 eq(fw().querySelectorAll('.ca-wfq-row').length, 2, 'a row for each');
 assert(/×2/.test(fw().querySelector('.ca-wfq-row b').textContent), '…each ×2');

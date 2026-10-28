@@ -6,15 +6,18 @@
 
 - **One Golden cookies widget instead of three.** Next golden cookie, Golden timeline and Golden cookie frequency
   are now a single **Golden cookies** widget; its settings pick what it shows:
-  - **Numbers**, each on or off: next in, median, chance within a minute, window, the multiplier and the frequency
-    (a new one shows next in, ≤ 1 min, the multiplier and the frequency).
-  - **Chart**: the odds of the next one, on **This cycle**'s axis (a line sweeping across it, as Next golden cookie
-    drew it) or **From now** (the timeline, as Golden timeline drew it).
-  - **Effect timers on the chart's axis**: each effect's time left and the chance a golden cookie comes first.
-  - **What's helping**: a bar for each thing making them come more often (the old frequency widget's bars).
-  Add as many as you like, each set up differently. Your saved widgets load as Golden cookies widgets showing what
-  they did before, titled with their old names (rename or clear the title in their settings). The Stats page's ☆
-  adds one showing the multiplier, the frequency and what's helping. **Effect timers** stays its own widget.
+  - **Stats**, each on or off: Expected wait, Within minute %, Window, Frequency, Multiplier, Median wait (a new
+    one shows the first two and Frequency and Multiplier). Hover one for what it means.
+  - **Graph**: the odds of the next one, over **This cycle** (as Next golden cookie drew it) or **From now** (as
+    Golden timeline drew it).
+  - **Effects**: each effect's time left on the graph's axis, and the chance a golden cookie comes first.
+  - **Frequency Factors**: a bar for each thing making them come more often (the old frequency widget's bars).
+  Add as many as you like, each set up differently. Your saved widgets (and saved layouts) load as Golden cookies
+  widgets showing what they did before, titled with their old names (rename or clear the title in their
+  settings). The Stats page's ☆ adds one showing Frequency, Multiplier and Frequency Factors. **Effect timers**
+  stays its own widget.
+- Statistics are named and described in one place (`CA.StatInfo`): the widget's labels and hover tips and the
+  Stats page's Expected wait, Multiplier and Frequency tiles read from it.
 - Fixed: on a chart widget with a smaller (or larger) text size, the hover line sat beside the pointer instead of
   under it.
 

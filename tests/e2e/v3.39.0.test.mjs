@@ -36,7 +36,9 @@ const labels = (inst) => [...box(inst).querySelectorAll('.ca-tl-nums em')].map((
 const a = W.add('goldenCookies');
 W.render();
 W.tick();
-eq(labels(a), ['next in', '≤ 1 min', 'multiplier', 'frequency'], 'new: next in, ≤ 1 min, the multiplier, the frequency');
+eq(labels(a), ['Expected wait', 'Within minute %', 'Frequency', 'Multiplier'], 'new: expected wait, within minute %, frequency, multiplier');
+const tipOf = (inst, label) => [...box(inst).querySelectorAll('.ca-tl-nums span')].find((x) => x.querySelector('em').textContent === label).getAttribute('data-tip');
+assert(tipOf(a, 'Multiplier').startsWith(CA.StatInfo.desc('golden.frequency')) && /Lucky day, Serendipity/.test(tipOf(a, 'Multiplier')), 'hovering a statistic: its description from CA.StatInfo, and what’s helping now');
 assert(box(a).querySelector('.ca-sp-cycle .ca-sp-now') && !box(a).querySelector('.ca-sp-pdf') && !box(a).querySelector('.ca-wfq-row'), '…over this cycle’s chart; no helping bars');
 assert(box(a).querySelector('.ca-w-title').textContent === 'Golden cookies', '…titled Golden cookies');
 // the chart from now, with the effect bars
@@ -50,9 +52,13 @@ const rows = [...box(a).querySelectorAll('.ca-wfq-row')];
 assert(rows.length === 2 && rows.every((r) => /×2/.test(r.querySelector('b').textContent)), 'What’s helping: a bar each for Lucky day and Serendipity, ×2');
 // its settings
 W.openSettings(a.id);
-assert(doc.querySelectorAll('[data-w-multi="stats"]').length === 4 && doc.querySelectorAll('[data-w-multi="nums"]').length === 6, 'settings: four parts, six numbers');
+const opts = (k) => [...doc.querySelectorAll(`[data-w-multi="${k}"]`)].map((x) => x.closest('label'));
+eq(opts('stats').map((l) => l.textContent), ['Stats', 'Graph', 'Effects', 'Frequency Factors'], 'settings, Show: Stats, Graph (top), Effects, Frequency Factors (bottom) — short, a tip each');
+assert(opts('stats').every((l) => l.dataset.tip), '…each with a tip');
+eq(opts('nums').map((l) => l.textContent), ['Expected wait', 'Within minute %', 'Window', 'Frequency', 'Multiplier', 'Median wait'], 'Stats: the six, named by CA.StatInfo');
+assert(opts('nums').every((l, i) => l.dataset.tip === CA.StatInfo.desc(['golden.wait', 'golden.minute', 'golden.window', 'golden.interval', 'golden.frequency', 'golden.median'][i])), '…each hovering its description');
 const axisSel = doc.querySelector('select[data-w-opt="axis"]');
-assert(axisSel && [...axisSel.options].map((o) => o.value).join() === 'cycle,now' && axisSel.value === 'now', 'and the chart’s axis (This cycle / From now)');
+assert(axisSel && [...axisSel.options].map((o) => o.textContent).join() === 'This cycle,From now' && axisSel.value === 'now', 'and Graph: This cycle / From now');
 const saved = W.serialize().find((x) => x.id === a.id);
 eq([saved.axis, saved.stats], ['now', ['helping']], 'saved with the widget');
 
@@ -69,7 +75,7 @@ W.load([
 const L = W.list();
 const by = (id) => L.find((x) => x.id === id);
 eq(L.map((x) => x.type), ['goldenCookies', 'goldenCookies', 'goldenCookies', 'goldenCookies', 'goldenCookies', 'effectTimers'], 'every old golden widget loads as Golden cookies; Effect timers stays');
-const all = ['next', 'median', 'minute', 'window', 'frequency', 'every'];
+const all = ['next', 'minute', 'window', 'every', 'frequency', 'median'];
 eq([by('n1').axis, by('n1').stats, by('n1').nums, by('n1').title, by('n1').w, by('n1').x], ['cycle', ['numbers', 'chart'], all, 'Next golden cookie', 320, 0.1], 'Next golden cookie: this cycle’s chart and all six numbers (as before), its name, size and place');
 eq([by('n2').nums, by('n2').title], [['next'], 'Mine'], 'its numbers and title, when picked, kept');
 eq([by('t1').axis, by('t1').stats, by('t1').collapsed], ['now', ['numbers', 'bars'], true], 'Golden timeline: from now, its picked parts, folded');
@@ -83,6 +89,12 @@ assert(!JSON.stringify(W.serialize()).match(/goldenNext|goldenTimeline|goldenFre
 // adding by an old id (an old macro or script) gives the new one, set up the same
 const old = W.add('goldenTimeline');
 assert(old && old.type === 'goldenCookies' && old.axis === 'now' && old.title === 'Golden timeline', 'adding an old type adds its Golden cookies equivalent');
+
+// ---- the Stats page's tiles explain themselves the same way
+CA.UI.Menu.openPage('stats');
+await sleep(50);
+const tileTip = (label) => [...doc.querySelectorAll('[data-st-spawn] .ca-stat')].find((t) => t.querySelector('.ca-stat-label').textContent === label).getAttribute('data-tip');
+eq([tileTip('Multiplier'), tileTip('Frequency'), tileTip('Expected wait')], ['golden.frequency', 'golden.interval', 'golden.wait'].map(CA.StatInfo.desc), 'the Stats page’s Multiplier, Frequency and Expected wait tiles: the same descriptions');
 
 // ---- the Stats page's ☆: a Golden cookies widget showing how often they come
 W.list().forEach((x) => W.remove(x.id));
