@@ -36,6 +36,7 @@ CA.UI.StatEditor = (() => {
 
   let draft = null; // { id, builtin, label, key, desc, scope, format, color, group, source }
   let error = '';
+  let draftWas = ''; // the draft as it opened, to tell unsaved changes
   let item = 'best'; // what the result is about
   let sharing = false; // the "as text" panel open
   let lastSig = '';
@@ -64,6 +65,7 @@ CA.UI.StatEditor = (() => {
     const s = ST().get(id);
     if (!s) return false;
     draft = fields(s);
+    draftWas = JSON.stringify(draft);
     error = '';
     item = 'best';
     sharing = false;
@@ -72,6 +74,7 @@ CA.UI.StatEditor = (() => {
   /** A new statistic: from New (def empty) or pasted text. Nothing is saved until Save. */
   function openNew(def = {}) {
     draft = fields({ label: 'New statistic', scope: 'item', format: 'auto', source: NEW_SOURCE, ...def, id: null, builtin: false });
+    draftWas = def.label || def.source ? '' : JSON.stringify(draft); // pasted: unsaved from the start
     error = '';
     item = 'best';
     sharing = false;
@@ -492,5 +495,10 @@ CA.UI.StatEditor = (() => {
     CA.UI.Dom.morph(res, h);
   }
 
-  return { open, openNew, close, isOpen, html, bind, sync, draft: () => (draft ? { ...draft } : null) };
+  /** Unsaved changes? */
+  const dirty = () => !!draft && JSON.stringify(draft) !== draftWas;
+  /** Saves and closes: '' when it did, else why not. */
+  const saveNow = () => (save() ? (close(), '') : error || 'It couldn’t be saved.');
+
+  return { open, openNew, close, isOpen, html, bind, sync, dirty, saveNow, draft: () => (draft ? { ...draft } : null) };
 })();

@@ -249,5 +249,41 @@ CA.Pantheon = (() => {
     });
   }
 
+  // a profile's id in code (pantheon.profile(golden)…), and a spirit's key: the code editors' hover cards
+  const strip = (html) =>
+    String(html || '')
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  const godName = (k) => (godOf(k) ? strip(godOf(k).name).split(',')[0] : k);
+  CA.Words.defineKind('profile.pantheon', {
+    name: 'Pantheon profile',
+    info: (id) => {
+      const p = profileOf(id);
+      if (!p) return null;
+      return {
+        title: p.name,
+        sig: p.id,
+        desc: 'Puts these spirits in the Pantheon’s slots.',
+        rows: SLOTS.map((s, i) => [s, p.slots[i] ? godName(p.slots[i]) : '(left as it is)']).concat(minigame() ? [['in now', isActive(p.id) ? 'yes' : `no · ${swapsFor(p.id)} swap${swapsFor(p.id) === 1 ? '' : 's'} to go`]] : []),
+        note: 'Pantheon page.',
+      };
+    },
+  });
+  CA.Words.defineKind('spirit', {
+    name: 'Pantheon spirit',
+    info: (id) => {
+      const g = godOf(id);
+      if (!g) return null;
+      const M = minigame();
+      const at = M ? M.slot.indexOf(g.id != null ? g.id : M.godsById.indexOf(g)) : -1;
+      return {
+        title: strip(g.name),
+        desc: strip(g.descBefore),
+        rows: [g.desc1 && ['diamond', strip(g.desc1)], g.desc2 && ['ruby', strip(g.desc2)], g.desc3 && ['jade', strip(g.desc3)], ['slotted', at >= 0 ? SLOTS[at] : 'no']].filter(Boolean),
+      };
+    },
+  });
+
   return { init, minigame, slot, godOf, SLOTS, profiles: list, profileOf, current, isActive, swapsFor, apply, add, rename, remove, setSlot };
 })();

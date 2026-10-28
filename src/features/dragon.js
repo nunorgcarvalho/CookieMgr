@@ -328,5 +328,29 @@ CA.Dragon = (() => {
     });
   }
 
+  // a profile's id in code (dragon.profile(drops)…), and an aura's name: the code editors' hover cards
+  CA.Words.defineKind('profile.dragon', {
+    name: 'Dragon aura profile',
+    info: (id) => {
+      const p = find(id);
+      if (!p) return null;
+      const s = status(p);
+      return {
+        title: p.name,
+        sig: p.id,
+        desc: `Puts the dragon's auras ${p.auras.join(' and ')} in.`,
+        rows: [['in now', isActive(p) ? 'yes' : 'no'], s && s.untrained.length ? ['not trained yet', s.untrained.join(', ')] : null].filter(Boolean),
+        note: 'Dragon page.',
+      };
+    },
+  });
+  CA.Words.defineKind('aura', {
+    name: 'Dragon aura',
+    info: (id) => {
+      const a = auras().find((x) => x.id === auraId(id));
+      return a ? { title: a.dname, desc: strip(a.desc), rows: [['trained', a.trained ? 'yes' : 'no']] } : null;
+    },
+  });
+
   return { init, auras, auraId, slots, level, nextCost, nextAction, canTrain, train, setAura, switchCost, list, find, status, isActive, activeProfile, apply, add, update, remove, SEEDS, LAST };
 })();

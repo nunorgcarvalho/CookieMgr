@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+## 3.53.0 — 2026-10-28
+
+- **Hover any word of code to see what it is.** In every code editor (macros, statistics, the gardener and soil
+  rules) and in the statistics catalog's code, resting the mouse on a word shows a card: an **action** or
+  **condition** (its options, and what it does with the ones written there: `buff(Frenzy)` holds when Frenzy is
+  active), a **value** (and what it is now), a **keyword**, a **variable** (what it's set to, and on which line), a
+  **macro** after `switch on` (its name, what it does, how it runs, whether it's on), a **profile**
+  (`buyer.profile(payback)`: what it buys, its reserve, the front of its queue; `dragon.profile(drops)`: its auras;
+  `pantheon.profile(golden)`: its spirits; `grimoire.profile(default)`: its tiers — and whether each is in use), a
+  **spell**, **spirit**, **aura**, **season**, **building** or **upgrade** (its info card), and numbers like `2.5M`
+  in full. Typing, clicking or moving off the word hides it.
+- **A card's link takes you to where its word is edited.** A macro: its editor. A profile: its row on the Auto
+  buyer, Dragon, Pantheon or Grimoire page, flashed. A statistic's word: the statistic's editor. A variable: the
+  line it's set on. If the code you're leaving has unsaved changes, the card asks first: **Save and go**, **Don't
+  save** or **Stay** (a save that can't happen — the code has a problem — says why and stays). A **Back to …** chip
+  at the bottom of the panel then returns to the code you came from, as you left it.
+- **One registry behind it, `CA.Words`**: each part of cookieMgr says what its own words are
+  (`CA.Words.defineKind(kind, { name, info })`), and a param can name the kind of word it takes (`word: 'kind'`), so
+  new words (the ascension managers' among them) get cards by registering there.
+
 ## 3.52.0 — 2026-10-28
 
 - **Place any widget more than once.** Running now, Quick stats, the Grimoire, Garden, Stock market and Pantheon

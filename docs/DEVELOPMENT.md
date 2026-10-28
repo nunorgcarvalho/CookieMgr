@@ -55,6 +55,7 @@ src/
     hotkeys.js       hotkey bindables (macros, panel commands), keydown listener, capture mode
     ascension.js     detects ascending (wraps Game.Ascend + watchdog)
     update.js        polls GitHub for a newer build, notifies with a one-click reload
+    words.js         what every word of code is (CA.Words): the registry behind the code editors' hover cards
   features/
     gameActions.js   the game-facing actions and conditions
     macros.js        macros: built-ins, your own, running them, save/load
@@ -84,6 +85,7 @@ src/
     autoBuyer.js     the Auto buyer: profiles, rules, the queue, Buy all upgrades
     seasons.js       season drops and completion, the Grandmapocalypse, SeasonCompletion's code
     script.js        the language of algorithmic macros: parsing, values, explaining conditions
+    scriptWords.js   the word at a place in the code, and what it is (keywords, calls, choices → CA.Words)
     notifyTips.js    tooltips on the game's notifications about upgrades and achievements
   ui/
     components.js    HTML snippets: switch, hotkey chip, icon, button
@@ -144,6 +146,14 @@ If you add a file, add it to `MODULES` in `build.mjs` in the right order.
   — `list: true` for a list a `for` can loop over, `bool: true` for a yes / no that can stand alone as a condition.
   Actions, conditions and values all show up in the code editor's library; a select option's choices show up in its
   Lookup (`CA.Script.defineLookup({ name, uses, items() })` for other lists of names).
+- **What a word is, on hover:** `CA.Words.defineKind(kind, { name, info(id, ctx) })` describes a kind of name
+  (`'macro'`, `'profile.buyer'`, `'spell'`…) as `{ title, tag, sig, desc, rows: [[label, value]], note }`;
+  `CA.Words.define(kind, id, info)` adds one word. A name inside ( ) gets its kind from its param: `word: 'kind'`
+  (or `word(v) → { kind, id }`) on an action's or condition's param, `paramWords: { param: kind }` on a value,
+  else by the param's key (`profile` → `profile.<the call's prefix>`, `macro`, `spell`, `season`…).
+  `CA.Words.lookup(kind, id)` asks; `CA.ScriptWords.explain(source, line, col)` reads it out of code. Where a card's
+  link goes: `CA.UI.CodeEditor.defineOpen(kind, (id, info) => ({ label, page, focus, go }))`; a page with an editor
+  says how to leave it with unsaved changes: `CA.UI.CodeEditor.guard(page, { dirty, name, leave(how) })`.
 - **A building block** is a value or an action like those: game mechanics stay in JavaScript, verified against the
   game's own source; decisions go in code.
 - **A code editor** on a page: `CA.UI.CodeEditor.html(key, source)` + `libraryHtml(key)`, then `bind(root, { onChange })`

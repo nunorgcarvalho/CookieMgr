@@ -989,6 +989,26 @@ CA.Macros = (() => {
     });
   }
 
+  // what a macro id means in code (switch on bigCookie, macro.set(golden)…): the code editors' hover cards
+  CA.Words.defineKind('macro', {
+    name: 'Macro',
+    info: (id) => {
+      const m = get(id) || macros.find((x) => x.name.toLowerCase() === String(id).toLowerCase());
+      if (!m) return null;
+      return {
+        title: m.name,
+        sig: m.id,
+        desc: m.desc || '',
+        rows: [
+          ['runs', triggerText(m)],
+          m.mode === 'once' ? null : ['now', isOn(m.id) ? 'on' : 'off'],
+          m.mode === 'group' ? ['switches', membersOf(m).map((x) => x.id).join(', ')] : null,
+        ].filter(Boolean),
+        note: m.builtin ? 'A built-in macro (Macros page).' : 'One of your macros (Macros page).',
+      };
+    },
+  });
+
   return {
     init,
     ready,

@@ -1047,6 +1047,20 @@ CA.UI.GardenPage = (() => {
   function init() {
     createPlots();
     CA.UI.Pages.register({ id: 'garden', label: 'Garden', icon: 'leaf', order: 30, group: 'minigames', html, mount, unmount, tick: sync });
+    // a code card's link leaving an unsaved gardener / soil rule (ui/codeEditor.js): asked about first
+    CA.UI.CodeEditor.guard('garden', {
+      dirty: () => !!draft && isDirty(draft.layer, pickedItem(draft.layer)),
+      name: () => (draft ? pickedItem(draft.layer).name : 'Garden'),
+      leave(how) {
+        const back = () => CA.UI.Menu.openPage('garden');
+        if (how === 'save' && draft) {
+          slot = draft.layer;
+          detailAct('save');
+          if (draft) return { error: rulesError || 'It couldn’t be saved.' };
+        } else if (how === 'discard') draft = null;
+        return { back };
+      },
+    });
   }
 
   return { init, sync };

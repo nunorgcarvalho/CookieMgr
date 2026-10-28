@@ -163,5 +163,5 @@ CA.UI.Tips = (() => {
     addEventListener('scroll', hide, true);
   }
 
-  return { init, hide, float, provide, providePop, layer: getLayer };
+  return { init, hide, float, place, provide, providePop, layer: getLayer };
 })();
