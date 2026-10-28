@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+## 3.50.0 — 2026-10-28
+
+- **Buy all upgrades has a payback period, and the Auto buyer ranks it.** It's measured the way a single upgrade
+  is, as one purchase: every store upgrade the bank (the buyer's budget) affords, cheapest first, bought together in
+  the hypothetical, the game's CpS read (achievements and clicking included), then undone. So upgrades that multiply
+  each other count together, not added up apart. It shows beside the Buy all upgrades button, and as a row of its
+  own in the **Queue** ("Buy all upgrades (n)", the upgrades it buys on hover); when it's the front, the buyer buys
+  them all. Profiles have a **Buy all upgrades** chip under Buys (on where upgrades are bought, saved profiles
+  included), and rules can target it. When the budget affords only one upgrade, it's held back: that's just buying
+  that one.
+- **Lots of upgrades at once: buy them all first.** Profiles that buy upgrades come with a rule, *Buy all upgrades →
+  buy first when `payback.allUpgradesCount(buyer.budget()) >= 20`*. When 20 or more upgrades are affordable, the
+  buyer takes them all in one go instead of one a tick; otherwise the queue goes by payback period as usual. Saved
+  profiles that buy upgrades get it too, added at the end of their rules; edit or remove it like any rule.
+- **New words:** `payback.allUpgrades()`, `payback.allUpgradesIn(mode)`, `payback.allUpgradesGain()`,
+  `payback.allUpgradesPrice()`, `payback.allUpgradesCount(budget)`; `pp.kind`, `pp.price`, `pp.of` and `pp.buy` take the
+  thing `"allUpgrades"`.
+
 ## 3.49.1 — 2026-10-28
 
 - **README:** the Payback and Statistics screenshots show payback periods in time units, as since 3.49.0. No change

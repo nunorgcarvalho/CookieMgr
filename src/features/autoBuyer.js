@@ -4,7 +4,9 @@
 // A profile ranks everything it may buy into one **queue**, and the buyer buys the front:
 //
 //   rank by     a payback mode's payback period ("": the mode in use — features/payback.js)
-//   buys        buildings and/or upgrades; buildings in a bulk (auto: the store's minimum bulk,
+//   buys        buildings and/or upgrades, and "Buy all upgrades" as one thing (the game's button:
+//               every store upgrade the budget affords, cheapest first, measured as one purchase —
+//               features/payback.js allUpgrades); buildings in a bulk (auto: the store's minimum bulk,
 //               rounded up with Round to multiples — what the old buyers bought) or ×1 / ×10 / ×100
 //   skip        only what it can afford now (else it saves up for the front)
 //   reserve     minutes of unbuffed CpS it never spends
@@ -35,13 +37,13 @@
 //   buyer.buyNext(profile)        (action) buys the front when the budget covers it
 //   buyer.profile(profile)        (action) makes a profile the active one
 //   buy.allUpgrades()             (action) the game's "Buy all upgrades" (Inspired checklist), without needing it
-// A thing is "building:Cursor" or "upgrade:Kitten helpers" — what pp.best returns; pp.kind, pp.price,
+// A thing is "building:Cursor", "upgrade:Kitten helpers" or "allUpgrades" — what pp.best returns; pp.kind, pp.price,
 // pp.of and pp.buy take it (features/autoBuy.js).
 
 CA.AutoBuyer = (() => {
   const P = () => CA.Payback;
   const BULKS = ['auto', 1, 10, 100];
-  const WHATS = ['any', 'building', 'upgrade', 'cheap', 'achievement', 'cookie', 'kitten', 'synergy', 'clicking'];
+  const WHATS = ['any', 'building', 'upgrade', 'allUpgrades', 'cheap', 'achievement', 'cookie', 'kitten', 'synergy', 'clicking'];
   const EFFECTS = ['first', 'weight', 'cap', 'never'];
   const GM = () => CA.GoldenMath;
   /** The banks a profile may keep on top of its minutes of CpS (the bank warnings' own banks, and the garden's). */
@@ -52,10 +54,12 @@ CA.AutoBuyer = (() => {
     { id: 'garden', label: 'Garden replant', tip: 'what replanting the whole garden layout costs (garden.layoutCost)', get: () => (CA.Garden.minigame() ? CA.Garden.layoutCost() : 0) },
   ];
 
+  /** The rule profiles that buy upgrades come with (v3.50): lots of upgrades affordable → buy them all at once. */
+  const BULK_RULE = { what: 'allUpgrades', effect: 'first', when: 'payback.allUpgradesCount(buyer.budget()) >= 20' };
   const SEEDS = [
-    { id: 'payback', name: 'Payback', kinds: { building: true, upgrade: true }, bulk: 'auto', skip: false, reserve: 0, banks: [], mode: '', rules: [] },
-    { id: 'buildings', name: 'Buildings only', kinds: { building: true, upgrade: false }, bulk: 'auto', skip: false, reserve: 0, banks: [], mode: '', rules: [] },
-    { id: 'upgrades', name: 'Upgrades only', kinds: { building: false, upgrade: true }, bulk: 'auto', skip: false, reserve: 0, banks: [], mode: '', rules: [] },
+    { id: 'payback', name: 'Payback', kinds: { building: true, upgrade: true, allUpgrades: true }, bulk: 'auto', skip: false, reserve: 0, banks: [], mode: '', rules: [cleanRule(BULK_RULE)] },
+    { id: 'buildings', name: 'Buildings only', kinds: { building: true, upgrade: false, allUpgrades: false }, bulk: 'auto', skip: false, reserve: 0, banks: [], mode: '', rules: [] },
+    { id: 'upgrades', name: 'Upgrades only', kinds: { building: false, upgrade: true, allUpgrades: true }, bulk: 'auto', skip: false, reserve: 0, banks: [], mode: '', rules: [cleanRule(BULK_RULE)] },
   ];
   const copy = (x) => JSON.parse(JSON.stringify(x));
   let profiles = copy(SEEDS);
@@ -83,7 +87,8 @@ CA.AutoBuyer = (() => {
     return {
       id: String(x.id || `p${i + 1}`).slice(0, 40),
       name: String(x.name || `Profile ${i + 1}`).slice(0, 40),
-      kinds: { building: kinds.building !== false, upgrade: kinds.upgrade !== false },
+      // Buy all upgrades (v3.50): a profile saved before it buys it when it buys upgrades
+      kinds: { building: kinds.building !== false, upgrade: kinds.upgrade !== false, allUpgrades: kinds.allUpgrades === undefined ? kinds.upgrade !== false : !!kinds.allUpgrades },
       bulk: BULKS.includes(x.bulk) ? x.bulk : BULKS.includes(Number(x.bulk)) ? Number(x.bulk) : 'auto',
       skip: !!x.skip,
       reserve: Math.max(0, Number(x.reserve) || 0),
@@ -182,6 +187,7 @@ CA.AutoBuyer = (() => {
       any: 'Anything',
       building: 'Buildings',
       upgrade: 'Upgrades',
+      allUpgrades: 'Buy all upgrades',
       cheap: `Anything costing under ${r.secs} s of CpS`,
       achievement: 'Anything that wins an achievement',
       cookie: 'Cookie upgrades',
@@ -202,7 +208,7 @@ CA.AutoBuyer = (() => {
   function matches(r, x) {
     const w = r.what;
     if (w === 'any') return true;
-    if (w === 'building' || w === 'upgrade') return x.kind === w;
+    if (w === 'building' || w === 'upgrade' || w === 'allUpgrades') return x.kind === w;
     if (w.startsWith('b:')) return x.kind === 'building' && x.name === w.slice(2);
     if (w.startsWith('u:')) return x.kind === 'upgrade' && x.name === w.slice(2);
     if (w === 'cheap') return x.price <= rawCps() * r.secs;
@@ -243,7 +249,7 @@ CA.AutoBuyer = (() => {
 
   // ---- the queue -------------------------------------------------------------------------------
 
-  const thingKey = (x) => `${x.kind}:${x.name}`;
+  const thingKey = (x) => (x.kind === 'allUpgrades' ? 'allUpgrades' : `${x.kind}:${x.name}`);
   const kindsOf = (p) => ['building', 'upgrade'].filter((k) => p.kinds[k]);
   /** The cookies a reserve of `minutes` of unbuffed CpS keeps in the bank. */
   const reserveOf = (minutes) => Math.max(0, Number(minutes) || 0) * 60 * rawCps();
@@ -287,7 +293,7 @@ CA.AutoBuyer = (() => {
     const p = find(x);
     if (!p) return { profile: null, items: [], held: [] };
     const pass = CA.Macros && CA.Macros.passKey ? CA.Macros.passKey() : null;
-    const k = `${p.id}|${rev}|${Game.cookies}|${Game.cookiesPs}|${P().mode().id}|${pass}`;
+    const k = `${p.id}|${rev}|${Game.cookies}|${Game.cookiesPs}|${P().mode().id}|${pass}|${(Game.UpgradesInStore || []).length}`;
     const now = Date.now();
     if (memo && memo.k === k && now - memo.t < 1000) return memo.q;
     const q = build(p);
@@ -300,13 +306,19 @@ CA.AutoBuyer = (() => {
   function build(p) {
     const kinds = kindsOf(p);
     const kind = kinds.length === 2 ? 'all' : kinds[0];
-    if (!kind) return { profile: p, items: [], held: [] };
+    if (!kind && !p.kinds.allUpgrades) return { profile: p, items: [], held: [] };
     // a mode that isn't there (deleted) or not ready yet (actual income, under a minute recorded): the one in use
     const mode = p.mode && P().modeOf(p.mode) && Number.isFinite(P().income(p.mode)) ? p.mode : undefined;
     const b = budget(p.id);
-    const ranked = P().ranking(kind, { bulk: p.bulk, mode, all: true, skip: p.skip, budget: b });
+    const ranked = kind ? P().ranking(kind, { bulk: p.bulk, mode, all: true, skip: p.skip, budget: b }) : [];
     const items = [];
     const held = [];
+    // Buy all upgrades: what the budget affords now, as one thing — fewer than two is just buying that one
+    if (p.kinds.allUpgrades) {
+      const all = P().allUpgrades({ budget: b, mode });
+      if (all.n >= 2) ranked.push(all);
+      else held.push({ ...all, key: thingKey(all), score: NaN, first: false, rules: [], why: all.n ? 'affords only one upgrade: the same as buying it' : 'affords no upgrades', colour: 'gray' });
+    }
     const rules = p.rules.filter((r) => r.on);
     ranked.forEach((r0) => {
       let r = { ...r0, key: thingKey(r0), score: r0.pp, first: false, rules: [] };
@@ -407,7 +419,13 @@ CA.AutoBuyer = (() => {
 
   function load(data, whole) {
     if (data && Array.isArray(data.profiles) && data.profiles.length) {
-      profiles = data.profiles.map(cleanProfile);
+      profiles = data.profiles.map((raw, i) => {
+        const p = cleanProfile(raw, i);
+        // saved before Buy all upgrades (v3.50): one that buys upgrades gets its rule
+        const old = !(raw && raw.kinds && typeof raw.kinds === 'object' && 'allUpgrades' in raw.kinds);
+        if (old && p.kinds.upgrade && p.rules.length < 50) p.rules.push(cleanRule(BULK_RULE));
+        return p;
+      });
       active = profiles.some((p) => p.id === data.active) ? data.active : profiles[0].id;
     } else {
       profiles = copy(SEEDS);
@@ -514,5 +532,5 @@ CA.AutoBuyer = (() => {
     CA.Macros.rename('cmUpgrades', 'autoBuyer');
   }
 
-  return { init, allUpgrades, buyAllUpgrades, list, find, use, create, update, remove, addRule, setRule, removeRule, moveRule, activeProfile, queue, next, buyNext, readiness, budget, keepOf, reserveParts, thingOf, ruleText, whatText, effectText, whenProblem, reserveOf, WHATS, EFFECTS, BULKS, BANKS, SEEDS };
+  return { init, allUpgrades, buyAllUpgrades, list, find, use, create, update, remove, addRule, setRule, removeRule, moveRule, activeProfile, queue, next, buyNext, readiness, budget, keepOf, reserveParts, thingOf, ruleText, whatText, effectText, whenProblem, reserveOf, WHATS, EFFECTS, BULKS, BANKS, SEEDS, BULK_RULE };
 })();
