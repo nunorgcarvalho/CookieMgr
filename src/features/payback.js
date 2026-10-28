@@ -969,7 +969,7 @@ CA.Payback = (() => {
     PV('payback.allUpgradesIn', 'the payback period of “Buy all upgrades” in a payback mode: "raw", "cps", "clicking", "actual" or a mode statistic’s code name — none: the mode in use (seconds; NaN: it would buy nothing, or a mode not ready)', ['mode'], (m) => allUpgrades({ mode: m }).pp);
     PV('payback.allUpgradesGain', 'the CpS “Buy all upgrades” adds: what the store upgrades the bank affords add together (clicks counted at your click rate)', [], () => allUpgrades().bonus);
     PV('payback.allUpgradesPrice', 'what “Buy all upgrades” spends now: the store upgrades the bank affords, cheapest first', [], () => allUpgrades().price);
-    PV('payback.allUpgradesCount', 'how many upgrades “Buy all upgrades” would buy now', [], () => allUpgrades().n);
+    PV('payback.allUpgradesCount', 'how many upgrades “Buy all upgrades” would buy now (with budget cookies, if given — e.g. buyer.budget(): the bank less a reserve)', ['budget'], (b) => allUpgrades({ budget: b === undefined || b === '' ? undefined : Number(b) }).n);
     V('paybackActual', 'a payback period by actual income: the period × CpS ÷ what you took in over a stretch as long (NaN: too little recorded)', ['seconds'], (p) => (ppActual(Number(p)) || { pp: NaN }).pp);
     V('paybackActualRatio', 'what you actually took in over a payback period’s stretch, as a multiple of your CpS (NaN: too little recorded)', ['seconds'], (p) => (ppActual(Number(p)) || { ratio: NaN }).ratio);
     V('actualIncome', 'cookies a second you actually took in over about the last seconds of play (at least 5 minutes; NaN: too little recorded)', ['seconds'], (p) => (actualIncome(Number(p) || 0) || { actual: NaN }).actual);

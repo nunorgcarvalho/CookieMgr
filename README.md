@@ -385,7 +385,8 @@ Then the **Queue**: place, what (an
 upgrade with its icon and its info card on hover), payback period in its color, score (the payback period after the
 rules' weights — the order), price, when you can afford it, the rules that touched it; what's held back below,
 grayed, with why. **Buy all upgrades** is a row of its own: the upgrades the budget affords, bought at once and
-measured together (so upgrades that multiply each other count as one purchase). Then the active **Profile**: what it
+measured together (so upgrades that multiply each other count as one purchase). Profiles that buy upgrades come with the rule *Buy all upgrades
+→ buy first when `payback.allUpgradesCount(buyer.budget()) >= 20`*: with lots affordable, it takes them all at once. Then the active **Profile**: what it
 buys (buildings, upgrades, Buy all upgrades), the building bulk, save up or skip,
 the bank reserve (minutes of unbuffed CpS, plus any of the **Lucky!**, **Conjure**, **Frenzy Lucky!** and **Garden
 replant** banks — it keeps the highest, so the bank never drops below any of them), what it ranks by (a payback mode), and its **rules**, top to bottom: what
@@ -394,7 +395,7 @@ anything under N s of CpS, anything that wins an achievement) → **buy first**,
 **never**, each with an optional **when** in the macro language (`thing` is what's ranked). In code: `buyer.next()`,
 `buyer.queue()`, `buyer.rank(thing)`, `buyer.score(thing)`, `buyer.budget()`, `buyer.reserve()`, `buyer.profile(x)`, `buyer.buyNext()`,
 `buy.allUpgrades()`; Buy all upgrades' payback period: `payback.allUpgrades()` (`payback.allUpgradesIn(mode)`,
-`payback.allUpgradesGain()`, `payback.allUpgradesPrice()`, `payback.allUpgradesCount()`), and in the queue it is the
+`payback.allUpgradesGain()`, `payback.allUpgradesPrice()`, `payback.allUpgradesCount(budget)`), and in the queue it is the
 thing `"allUpgrades"`.
 
 Below it, what every purchase is worth (see [Payback periods](#payback-periods)): every

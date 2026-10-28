@@ -12,8 +12,12 @@
   them all. Profiles have a **Buy all upgrades** chip under Buys (on where upgrades are bought, saved profiles
   included), and rules can target it. When the budget affords only one upgrade, it's held back: that's just buying
   that one.
+- **Lots of upgrades at once: buy them all first.** Profiles that buy upgrades come with a rule, *Buy all upgrades →
+  buy first when `payback.allUpgradesCount(buyer.budget()) >= 20`*. When 20 or more upgrades are affordable, the
+  buyer takes them all in one go instead of one a tick; otherwise the queue goes by payback period as usual. Saved
+  profiles that buy upgrades get it too, added at the end of their rules; edit or remove it like any rule.
 - **New words:** `payback.allUpgrades()`, `payback.allUpgradesIn(mode)`, `payback.allUpgradesGain()`,
-  `payback.allUpgradesPrice()`, `payback.allUpgradesCount()`; `pp.kind`, `pp.price`, `pp.of` and `pp.buy` take the
+  `payback.allUpgradesPrice()`, `payback.allUpgradesCount(budget)`; `pp.kind`, `pp.price`, `pp.of` and `pp.buy` take the
   thing `"allUpgrades"`.
 
 ## 3.47.1 — 2026-10-28

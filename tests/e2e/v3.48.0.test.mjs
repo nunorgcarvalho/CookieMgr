@@ -45,6 +45,29 @@ assert(P.allUpgrades().names.join() === 'A', 'only what the bank affords');
 Game.cookies = 3500;
 
 // ---- in the Auto buyer's queue ----
+// the rule profiles that buy upgrades come with: 20+ affordable → buy them all first
+const bulk = B.ruleText(B.BULK_RULE);
+assert(B.find('payback').rules.length === 1 && B.ruleText(B.find('payback').rules[0]) === bulk && B.find('upgrades').rules.length === 1 && !B.find('buildings').rules.length, `seeded rule: ${bulk}`);
+assert(!B.whenProblem(B.BULK_RULE.when), 'its condition compiles');
+assert(B.find('payback').rules[0].on === true && B.find('payback').rules[0].k === 1, 'a whole rule, switched on');
+assert(value('payback.allUpgradesCount', 1500) === 1, 'payback.allUpgradesCount(budget)');
+assert(!B.queue().items.find((x) => x.key === 'allUpgrades').first, 'two affordable: the rule waits (it ranks by its payback period)');
+const many = Array.from({ length: 20 }, (_, i) => mk(`Cheap ${i}`, 1));
+Game.UpgradesInStore = ups.concat(many);
+assert(B.next().key === 'allUpgrades' && B.next().n === 22, `20+ affordable: Buy all upgrades goes first (${B.next().key})`);
+Game.UpgradesInStore = ups.slice();
+// a save from before v3.48: profiles that buy upgrades get the rule, the others don't
+const S = CA.Settings;
+const saved = JSON.parse(S.serialize());
+saved.buyer = { active: 'mine', profiles: [{ id: 'mine', name: 'Mine', kinds: { building: true, upgrade: true }, rules: [{ what: 'cheap', effect: 'first' }] }, { id: 'b', name: 'B', kinds: { building: true, upgrade: false }, rules: [] }] };
+S.load(JSON.stringify(saved));
+assert(B.find('mine').rules.length === 2 && B.ruleText(B.find('mine').rules[1]) === bulk && B.find('mine').kinds.allUpgrades, 'an old profile with upgrades: the rule added at the end');
+assert(!B.find('b').rules.length && !B.find('b').kinds.allUpgrades, 'one without: nothing');
+S.load(JSON.stringify({ ...saved, buyer: JSON.parse(S.serialize()).buyer }));
+assert(B.find('mine').rules.length === 2, 'saved again, it isn’t added twice');
+saved.buyer = { active: 'payback', profiles: B.SEEDS };
+S.load(JSON.stringify(saved));
+B.update('payback', { rules: [] });
 assert(B.find('payback').kinds.allUpgrades && B.find('upgrades').kinds.allUpgrades && !B.find('buildings').kinds.allUpgrades, 'seeded: on where upgrades are bought');
 const old = B.SEEDS.map((p) => ({ ...p, kinds: { building: p.kinds.building, upgrade: p.kinds.upgrade } }));
 B.update('buildings', { kinds: old[1].kinds });

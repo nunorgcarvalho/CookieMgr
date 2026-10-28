@@ -54,10 +54,12 @@ CA.AutoBuyer = (() => {
     { id: 'garden', label: 'Garden replant', tip: 'what replanting the whole garden layout costs (garden.layoutCost)', get: () => (CA.Garden.minigame() ? CA.Garden.layoutCost() : 0) },
   ];
 
+  /** The rule profiles that buy upgrades come with (v3.48): lots of upgrades affordable → buy them all at once. */
+  const BULK_RULE = { what: 'allUpgrades', effect: 'first', when: 'payback.allUpgradesCount(buyer.budget()) >= 20' };
   const SEEDS = [
-    { id: 'payback', name: 'Payback', kinds: { building: true, upgrade: true, allUpgrades: true }, bulk: 'auto', skip: false, reserve: 0, banks: [], mode: '', rules: [] },
+    { id: 'payback', name: 'Payback', kinds: { building: true, upgrade: true, allUpgrades: true }, bulk: 'auto', skip: false, reserve: 0, banks: [], mode: '', rules: [cleanRule(BULK_RULE)] },
     { id: 'buildings', name: 'Buildings only', kinds: { building: true, upgrade: false, allUpgrades: false }, bulk: 'auto', skip: false, reserve: 0, banks: [], mode: '', rules: [] },
-    { id: 'upgrades', name: 'Upgrades only', kinds: { building: false, upgrade: true, allUpgrades: true }, bulk: 'auto', skip: false, reserve: 0, banks: [], mode: '', rules: [] },
+    { id: 'upgrades', name: 'Upgrades only', kinds: { building: false, upgrade: true, allUpgrades: true }, bulk: 'auto', skip: false, reserve: 0, banks: [], mode: '', rules: [cleanRule(BULK_RULE)] },
   ];
   const copy = (x) => JSON.parse(JSON.stringify(x));
   let profiles = copy(SEEDS);
@@ -291,7 +293,7 @@ CA.AutoBuyer = (() => {
     const p = find(x);
     if (!p) return { profile: null, items: [], held: [] };
     const pass = CA.Macros && CA.Macros.passKey ? CA.Macros.passKey() : null;
-    const k = `${p.id}|${rev}|${Game.cookies}|${Game.cookiesPs}|${P().mode().id}|${pass}`;
+    const k = `${p.id}|${rev}|${Game.cookies}|${Game.cookiesPs}|${P().mode().id}|${pass}|${(Game.UpgradesInStore || []).length}`;
     const now = Date.now();
     if (memo && memo.k === k && now - memo.t < 1000) return memo.q;
     const q = build(p);
@@ -417,7 +419,13 @@ CA.AutoBuyer = (() => {
 
   function load(data, whole) {
     if (data && Array.isArray(data.profiles) && data.profiles.length) {
-      profiles = data.profiles.map(cleanProfile);
+      profiles = data.profiles.map((raw, i) => {
+        const p = cleanProfile(raw, i);
+        // saved before Buy all upgrades (v3.48): one that buys upgrades gets its rule
+        const old = !(raw && raw.kinds && typeof raw.kinds === 'object' && 'allUpgrades' in raw.kinds);
+        if (old && p.kinds.upgrade && p.rules.length < 50) p.rules.push(cleanRule(BULK_RULE));
+        return p;
+      });
       active = profiles.some((p) => p.id === data.active) ? data.active : profiles[0].id;
     } else {
       profiles = copy(SEEDS);
@@ -524,5 +532,5 @@ CA.AutoBuyer = (() => {
     CA.Macros.rename('cmUpgrades', 'autoBuyer');
   }
 
-  return { init, allUpgrades, buyAllUpgrades, list, find, use, create, update, remove, addRule, setRule, removeRule, moveRule, activeProfile, queue, next, buyNext, readiness, budget, keepOf, reserveParts, thingOf, ruleText, whatText, effectText, whenProblem, reserveOf, WHATS, EFFECTS, BULKS, BANKS, SEEDS };
+  return { init, allUpgrades, buyAllUpgrades, list, find, use, create, update, remove, addRule, setRule, removeRule, moveRule, activeProfile, queue, next, buyNext, readiness, budget, keepOf, reserveParts, thingOf, ruleText, whatText, effectText, whenProblem, reserveOf, WHATS, EFFECTS, BULKS, BANKS, SEEDS, BULK_RULE };
 })();
