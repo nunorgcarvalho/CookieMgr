@@ -444,6 +444,37 @@ CA.UI.ManagersPage = (() => {
 
   function init() {
     CA.UI.Pages.register({ id: 'managers', label: 'Managers', icon: 'ascend', order: 72, group: 'custom', html, mount, unmount, tick: sync });
+    // a hover card's link from any code (manager.use(nunixLateGame)): this page, that manager shown
+    const reopen = (fn) => () => {
+      fn();
+      CA.UI.Menu.openPage('managers');
+      CA.UI.Menu.render();
+    };
+    CA.UI.CodeEditor.defineOpen('manager', (id) => {
+      const m = G().find(id);
+      return m ? { label: 'Open it on the Managers page', go: reopen(() => (editing = m.id)), focus: '[data-mgr-code]' } : null;
+    });
+    CA.UI.CodeEditor.defineOpen('profile.garden', () => ({ label: 'Open the Garden page', page: 'garden' }));
+    // leaving the Code card with unsaved changes: asked first (ui/codeEditor.js)
+    CA.UI.CodeEditor.guard('managers', {
+      dirty: () => !!draft && !!G().find(draft.id) && isDirty(G().find(draft.id)),
+      name: () => (draft && G().find(draft.id) ? G().find(draft.id).name : 'Managers'),
+      leave(how) {
+        const d = draft;
+        if (!d) return { back: reopen(() => {}) };
+        if (how === 'save') {
+          const err = G().setCode(d.id, d.code);
+          if (err) return { error: err };
+          draft = null;
+          return { back: reopen(() => (editing = d.id)) };
+        }
+        if (how === 'discard') {
+          draft = null;
+          return { back: reopen(() => (editing = d.id)) };
+        }
+        return { back: reopen(() => ((editing = d.id), (draft = d))) };
+      },
+    });
   }
 
   return { init, html };

@@ -39,6 +39,9 @@ The start of cookieMgr playing the game for you: **managers**, a layer above the
 - **`switch on a, b, c`**: one line switches several macros. A manager's code uses it, so Nunix late game's
   four stages fit in about 60 lines.
 - **`veil()`**: whether the Shimmering veil is up.
+- **Hover cards** (v3.53.0's) know managers: a manager's id (its stages, whether it's in use, a link to the
+  Managers page), `manager.profile(kind, profile)`'s profile (of the kind it names, garden profiles too) and
+  `macro.setting`'s setting (what it is, what it's set to now). Leaving the Code card with unsaved changes asks first.
 - **A fourth Auto buyer profile**, Golden cookie combos (id `combos`). Saves from before get it once; delete it
   and it stays deleted.
 - **The Managers page** (between Macros and Widgets): the **Manager** macro's switch and the active manager,

@@ -91,7 +91,7 @@ CA.ScriptWords = (() => {
         const a = toks[argStart];
         const eq = toks[argStart + 1];
         const key = a && a.t === 'id' && eq && eq.t === 'op' && eq.v === '=' && argStart < i ? a.v : '';
-        return { call: fn.v, index: commas, key };
+        return { call: fn.v, index: commas, key, at: j - 1 };
       } else if (t.v === ',' && depth === 0) {
         if (argStart < 0) argStart = j + 1;
         commas++;
@@ -128,10 +128,10 @@ CA.ScriptWords = (() => {
 
   // the kind of word a param names, by its key (see the top)
   const BY_KEY = { macro: 'macro', spell: 'spell', season: 'season', god: 'spirit', aura: 'aura', building: 'building', upgrade: 'upgrade' };
-  function choiceKind(call, def, p, v) {
+  function choiceKind(call, def, p, v, args = {}) {
     if (!p) return null;
     if (p.word) {
-      const r = typeof p.word === 'function' ? p.word(v) : { kind: p.word, id: v };
+      const r = typeof p.word === 'function' ? p.word(v, args) : { kind: p.word, id: v };
       if (r) return r;
     }
     if (def && def.paramWords && def.paramWords[p.key]) return { kind: def.paramWords[p.key], id: v };
@@ -190,7 +190,7 @@ CA.ScriptWords = (() => {
       const def = callDef(enc.call);
       const ps = paramsOf(def);
       const p = enc.key ? ps.find((x) => x.key === enc.key) : ps[enc.index];
-      const ck = choiceKind(enc.call, def, p, v);
+      const ck = choiceKind(enc.call, def, p, v, def ? argsAt(toks, enc.at, def) : {});
       return out(ck ? ck.kind : 'choice', ck ? ck.id : v, { call: enc.call, param: p, index: enc.index, value: v, choice: true });
     }
     if (t.t === 'id' && CA.Actions.get(v)) return out('action', v);

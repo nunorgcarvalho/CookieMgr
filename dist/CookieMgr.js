@@ -12264,7 +12264,7 @@ CA.Managers = (() => {
       icon: 'ascend',
       group: 'Managers',
       unit: 'switched',
-      params: [{ key: 'manager', label: 'Manager', type: 'select', default: 'nunixLateGame', options: managerOptions }],
+      params: [{ key: 'manager', label: 'Manager', type: 'select', default: 'nunixLateGame', options: managerOptions, word: 'manager' }],
       describe: (p) => `Use the manager ${(find(p.manager) || { name: p.manager }).name}`,
       run: (p) => use(p.manager),
     });
@@ -12299,7 +12299,7 @@ CA.Managers = (() => {
       unit: 'switched',
       params: [
         { key: 'kind', label: 'Of', type: 'select', default: 'buyer', options: kindOptions },
-        { key: 'profile', label: 'Profile (id or name)', type: 'text', default: '' },
+        { key: 'profile', label: 'Profile (id or name)', type: 'text', default: '', word: (v, a) => ({ kind: `profile.${a.kind || 'buyer'}`, id: v }) },
       ],
       describe: (p) => `Put the ${(P[p.kind] || { label: p.kind }).label} profile ${p.profile} in`,
       run: (p) => putProfile(p.kind, p.profile),
@@ -12312,7 +12312,7 @@ CA.Managers = (() => {
       unit: 'changed',
       params: [
         { key: 'macro', label: 'Macro', type: 'select', default: '', options: () => CA.Macros.list().filter((x) => (x.inputs || []).length).map((x) => ({ v: x.id, label: x.name })) },
-        { key: 'key', label: 'Setting', type: 'text', default: '' },
+        { key: 'key', label: 'Setting', type: 'text', default: '', word: (v, a) => ({ kind: 'setting', id: `${a.macro || ''}.${v}` }) },
         { key: 'value', label: 'To', type: 'text', default: '' },
       ],
       describe: (p) => `Set ${(CA.Macros.get(p.macro) || { name: p.macro }).name}’s ${p.key} to ${p.value}`,
@@ -12349,6 +12349,60 @@ CA.Managers = (() => {
       section: 'managers',
     });
   }
+
+  // the code editors' hover cards: a manager's id (manager.use(nunixLateGame)), a macro's setting
+  // (macro.setting(research, stopBefore, none)), and a garden profile (manager.profile(garden, tulipCombos))
+  CA.Words.defineKind('manager', {
+    name: 'Manager',
+    info: (id) => {
+      const m = find(id);
+      if (!m) return null;
+      return {
+        title: m.name,
+        sig: m.id,
+        desc: m.desc || 'Plays the ascension in stages, switching macros and profiles.',
+        rows: m.stages
+          .map((st, i) => [`stage ${i + 1}`, `${st.name}${i < m.stages.length - 1 && st.until ? ` · until ${st.until}` : ''}`])
+          .concat([
+            ['code', typeof m.code === 'string' ? 'yours' : 'written from its stages'],
+            ['in use', m.id === active ? `yes, on stage ${run.id === m.id ? run.stage + 1 : 1}` : 'no'],
+          ]),
+        note: 'Managers page.',
+      };
+    },
+  });
+  CA.Words.defineKind('setting', {
+    name: 'Macro setting',
+    info: (id) => {
+      const [mid, key] = [id.slice(0, id.indexOf('.')), id.slice(id.indexOf('.') + 1)];
+      const x = CA.Macros.get(mid);
+      const inp = x && (x.inputs || []).find((i) => i.key === key);
+      if (!inp) return null;
+      const opts = typeof inp.options === 'function' ? inp.options() : inp.options;
+      return {
+        title: inp.label || key,
+        sig: key,
+        desc: `${x.name}’s setting${inp.desc ? `: ${inp.desc}` : ''}.`,
+        rows: [['now', String(CA.Macros.inputsOf(x)[key])]].concat(Array.isArray(opts) && opts.length ? [['one of', opts.map((o) => (o && typeof o === 'object' ? o.v : o)).join(', ')]] : []),
+        note: 'Its card on the Macros page.',
+      };
+    },
+  });
+  if (!CA.Words.kinds().includes('profile.garden'))
+    CA.Words.defineKind('profile.garden', {
+      name: 'Garden profile',
+      info: (id) => {
+        const p = CA.GardenLayers && CA.GardenLayers.list('profile').find((x) => x.id === id || x.name.toLowerCase() === String(id).toLowerCase());
+        if (!p) return null;
+        return {
+          title: p.name,
+          sig: p.id,
+          desc: p.desc || 'A garden profile: its layout, gardener and rules, loaded together.',
+          rows: [['in use', CA.GardenLayers.picked('profile') === p.id ? 'yes' : 'no']],
+          note: 'Garden page, Profiles.',
+        };
+      },
+    });
 
   return { init, list, find, current, use, add, update, remove, resetSeeds, addStage, updateStage, setStageMacro, setStageInput, setStageProfile, removeStage, moveStage, untilProblem, untilHolds, codeOf, sourceOf, setCode, step, enter, goTo, where, readiness, lastPass: () => lastPass, P, KINDS, SCOPES, SEEDS, MACRO, UNLOCKER };
 })();
@@ -13554,7 +13608,7 @@ CA.ScriptWords = (() => {
         const a = toks[argStart];
         const eq = toks[argStart + 1];
         const key = a && a.t === 'id' && eq && eq.t === 'op' && eq.v === '=' && argStart < i ? a.v : '';
-        return { call: fn.v, index: commas, key };
+        return { call: fn.v, index: commas, key, at: j - 1 };
       } else if (t.v === ',' && depth === 0) {
         if (argStart < 0) argStart = j + 1;
         commas++;
@@ -13591,10 +13645,10 @@ CA.ScriptWords = (() => {
 
   // the kind of word a param names, by its key (see the top)
   const BY_KEY = { macro: 'macro', spell: 'spell', season: 'season', god: 'spirit', aura: 'aura', building: 'building', upgrade: 'upgrade' };
-  function choiceKind(call, def, p, v) {
+  function choiceKind(call, def, p, v, args = {}) {
     if (!p) return null;
     if (p.word) {
-      const r = typeof p.word === 'function' ? p.word(v) : { kind: p.word, id: v };
+      const r = typeof p.word === 'function' ? p.word(v, args) : { kind: p.word, id: v };
       if (r) return r;
     }
     if (def && def.paramWords && def.paramWords[p.key]) return { kind: def.paramWords[p.key], id: v };
@@ -13653,7 +13707,7 @@ CA.ScriptWords = (() => {
       const def = callDef(enc.call);
       const ps = paramsOf(def);
       const p = enc.key ? ps.find((x) => x.key === enc.key) : ps[enc.index];
-      const ck = choiceKind(enc.call, def, p, v);
+      const ck = choiceKind(enc.call, def, p, v, def ? argsAt(toks, enc.at, def) : {});
       return out(ck ? ck.kind : 'choice', ck ? ck.id : v, { call: enc.call, param: p, index: enc.index, value: v, choice: true });
     }
     if (t.t === 'id' && CA.Actions.get(v)) return out('action', v);
@@ -27441,6 +27495,37 @@ CA.UI.ManagersPage = (() => {
 
   function init() {
     CA.UI.Pages.register({ id: 'managers', label: 'Managers', icon: 'ascend', order: 72, group: 'custom', html, mount, unmount, tick: sync });
+    // a hover card's link from any code (manager.use(nunixLateGame)): this page, that manager shown
+    const reopen = (fn) => () => {
+      fn();
+      CA.UI.Menu.openPage('managers');
+      CA.UI.Menu.render();
+    };
+    CA.UI.CodeEditor.defineOpen('manager', (id) => {
+      const m = G().find(id);
+      return m ? { label: 'Open it on the Managers page', go: reopen(() => (editing = m.id)), focus: '[data-mgr-code]' } : null;
+    });
+    CA.UI.CodeEditor.defineOpen('profile.garden', () => ({ label: 'Open the Garden page', page: 'garden' }));
+    // leaving the Code card with unsaved changes: asked first (ui/codeEditor.js)
+    CA.UI.CodeEditor.guard('managers', {
+      dirty: () => !!draft && !!G().find(draft.id) && isDirty(G().find(draft.id)),
+      name: () => (draft && G().find(draft.id) ? G().find(draft.id).name : 'Managers'),
+      leave(how) {
+        const d = draft;
+        if (!d) return { back: reopen(() => {}) };
+        if (how === 'save') {
+          const err = G().setCode(d.id, d.code);
+          if (err) return { error: err };
+          draft = null;
+          return { back: reopen(() => (editing = d.id)) };
+        }
+        if (how === 'discard') {
+          draft = null;
+          return { back: reopen(() => (editing = d.id)) };
+        }
+        return { back: reopen(() => ((editing = d.id), (draft = d))) };
+      },
+    });
   }
 
   return { init, html };

@@ -175,6 +175,17 @@ await sleep(300);
 assert(M.isOn('autoBuyer') && !M.problemOf('manager'), 'the Manager macro runs it (no problems)');
 M.set('manager', false, { silent: true });
 
+// ---- hover cards (v3.53.0's shared registry): a manager, a profile of the kind named, a macro's setting ----
+const hover = (code, l, word) => {
+  const line = code.split('\n')[l - 1];
+  return CA.ScriptWords.explain(code, l, line.indexOf(word) + 1);
+};
+const hsrc = 'manager.use(nunixLateGame)\nmanager.profile(garden, tulipCombos)\nmacro.setting(research, stopBefore, none)\nmanager.profile(dragon, drops)';
+assert(hover(hsrc, 1, 'nunixLateGame').kind === 'manager' && hover(hsrc, 1, 'nunixLateGame').title === 'Nunix late game', 'a manager’s id: its card');
+assert(hover(hsrc, 2, 'tulipCombos').kind === 'profile.garden' && hover(hsrc, 4, 'drops').kind === 'profile.dragon', 'manager.profile: the profile of the kind it names');
+assert(hover(hsrc, 3, 'stopBefore').kind === 'setting' && hover(hsrc, 3, 'stopBefore').title === 'Stop before', 'macro.setting: the macro’s setting');
+assert(hover(code, code.split('\n').findIndex((x) => x.includes('not veil()')) + 1, 'veil').kind === 'value', 'veil(): a value');
+
 // ---- the sidebar ----
 const pages = CA.UI.Pages.list().slice().sort((a, b) => a.order - b.order);
 const byGroup = (gr) => pages.filter((p) => p.group === gr).map((p) => p.label).join(',');

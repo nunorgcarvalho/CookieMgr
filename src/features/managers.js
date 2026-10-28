@@ -563,7 +563,7 @@ CA.Managers = (() => {
       icon: 'ascend',
       group: 'Managers',
       unit: 'switched',
-      params: [{ key: 'manager', label: 'Manager', type: 'select', default: 'nunixLateGame', options: managerOptions }],
+      params: [{ key: 'manager', label: 'Manager', type: 'select', default: 'nunixLateGame', options: managerOptions, word: 'manager' }],
       describe: (p) => `Use the manager ${(find(p.manager) || { name: p.manager }).name}`,
       run: (p) => use(p.manager),
     });
@@ -598,7 +598,7 @@ CA.Managers = (() => {
       unit: 'switched',
       params: [
         { key: 'kind', label: 'Of', type: 'select', default: 'buyer', options: kindOptions },
-        { key: 'profile', label: 'Profile (id or name)', type: 'text', default: '' },
+        { key: 'profile', label: 'Profile (id or name)', type: 'text', default: '', word: (v, a) => ({ kind: `profile.${a.kind || 'buyer'}`, id: v }) },
       ],
       describe: (p) => `Put the ${(P[p.kind] || { label: p.kind }).label} profile ${p.profile} in`,
       run: (p) => putProfile(p.kind, p.profile),
@@ -611,7 +611,7 @@ CA.Managers = (() => {
       unit: 'changed',
       params: [
         { key: 'macro', label: 'Macro', type: 'select', default: '', options: () => CA.Macros.list().filter((x) => (x.inputs || []).length).map((x) => ({ v: x.id, label: x.name })) },
-        { key: 'key', label: 'Setting', type: 'text', default: '' },
+        { key: 'key', label: 'Setting', type: 'text', default: '', word: (v, a) => ({ kind: 'setting', id: `${a.macro || ''}.${v}` }) },
         { key: 'value', label: 'To', type: 'text', default: '' },
       ],
       describe: (p) => `Set ${(CA.Macros.get(p.macro) || { name: p.macro }).name}’s ${p.key} to ${p.value}`,
@@ -648,6 +648,60 @@ CA.Managers = (() => {
       section: 'managers',
     });
   }
+
+  // the code editors' hover cards: a manager's id (manager.use(nunixLateGame)), a macro's setting
+  // (macro.setting(research, stopBefore, none)), and a garden profile (manager.profile(garden, tulipCombos))
+  CA.Words.defineKind('manager', {
+    name: 'Manager',
+    info: (id) => {
+      const m = find(id);
+      if (!m) return null;
+      return {
+        title: m.name,
+        sig: m.id,
+        desc: m.desc || 'Plays the ascension in stages, switching macros and profiles.',
+        rows: m.stages
+          .map((st, i) => [`stage ${i + 1}`, `${st.name}${i < m.stages.length - 1 && st.until ? ` · until ${st.until}` : ''}`])
+          .concat([
+            ['code', typeof m.code === 'string' ? 'yours' : 'written from its stages'],
+            ['in use', m.id === active ? `yes, on stage ${run.id === m.id ? run.stage + 1 : 1}` : 'no'],
+          ]),
+        note: 'Managers page.',
+      };
+    },
+  });
+  CA.Words.defineKind('setting', {
+    name: 'Macro setting',
+    info: (id) => {
+      const [mid, key] = [id.slice(0, id.indexOf('.')), id.slice(id.indexOf('.') + 1)];
+      const x = CA.Macros.get(mid);
+      const inp = x && (x.inputs || []).find((i) => i.key === key);
+      if (!inp) return null;
+      const opts = typeof inp.options === 'function' ? inp.options() : inp.options;
+      return {
+        title: inp.label || key,
+        sig: key,
+        desc: `${x.name}’s setting${inp.desc ? `: ${inp.desc}` : ''}.`,
+        rows: [['now', String(CA.Macros.inputsOf(x)[key])]].concat(Array.isArray(opts) && opts.length ? [['one of', opts.map((o) => (o && typeof o === 'object' ? o.v : o)).join(', ')]] : []),
+        note: 'Its card on the Macros page.',
+      };
+    },
+  });
+  if (!CA.Words.kinds().includes('profile.garden'))
+    CA.Words.defineKind('profile.garden', {
+      name: 'Garden profile',
+      info: (id) => {
+        const p = CA.GardenLayers && CA.GardenLayers.list('profile').find((x) => x.id === id || x.name.toLowerCase() === String(id).toLowerCase());
+        if (!p) return null;
+        return {
+          title: p.name,
+          sig: p.id,
+          desc: p.desc || 'A garden profile: its layout, gardener and rules, loaded together.',
+          rows: [['in use', CA.GardenLayers.picked('profile') === p.id ? 'yes' : 'no']],
+          note: 'Garden page, Profiles.',
+        };
+      },
+    });
 
   return { init, list, find, current, use, add, update, remove, resetSeeds, addStage, updateStage, setStageMacro, setStageInput, setStageProfile, removeStage, moveStage, untilProblem, untilHolds, codeOf, sourceOf, setCode, step, enter, goTo, where, readiness, lastPass: () => lastPass, P, KINDS, SCOPES, SEEDS, MACRO, UNLOCKER };
 })();
