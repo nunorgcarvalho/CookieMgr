@@ -37,6 +37,8 @@ const kids = [...p.children].map((c) => (c.matches('[data-plot]') ? `plot:${c.da
 assert(kids.indexOf('prestige') > 0 && kids.indexOf('prestige') < kids.indexOf('target') && kids.indexOf('target') < kids.indexOf('plot:prestige'), `Prestige: the statistics, the target, then the charts (${kids})`);
 p = open('golden');
 assert(p.querySelectorAll('.ca-meter').length >= 5 && p.querySelector('[data-st-spawn] [data-sp-chart="golden"]'), 'Golden cookies: the bank meters, the next golden cookie');
+const spawnFirst = p.querySelector('[data-st-spawn]').compareDocumentPosition(p.querySelector('[data-st-bank]')) & w.Node.DOCUMENT_POSITION_FOLLOWING;
+assert(spawnFirst, 'Next golden cookie above Bank');
 assert(p.querySelector('[data-w-star]') || /☆|★/.test(p.textContent), 'its ☆ (a Golden cookies widget) is still there');
 assert(!p.querySelector('[data-plot]') && !p.querySelector('[data-key="graphEffects"]'), 'no charts, no chart options');
 p = open('whatif');

@@ -524,8 +524,8 @@ building or store upgrade you pick in its settings. Add as many as you like.
 ### Stats: Golden cookies, What if, Misc
 
 The **Stats** page's statistics tabs are Cookie Monster's statistics, CookieMgr's way — every figure from the game's own formulas, and
-checked against Cookie Monster in the real game. **Golden cookies** has the Bank meters and the Next golden cookie (and
-reindeer); **Prestige** (beside its charts) the prestige figures; **What if** the Pantheon and dragon comparisons; **Misc**
+checked against Cookie Monster in the real game. **Golden cookies** has the Next golden cookie (and
+reindeer), then the Bank meters; **Prestige** (beside its charts) the prestige figures; **What if** the Pantheon and dragon comparisons; **Misc**
 the timers, wrinklers and what's still to collect:
 
 - **Bank** — a meter for each thing that pays out of your bank: **Lucky!** (15% of the bank, up to 15 minutes of

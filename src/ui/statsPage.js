@@ -2,7 +2,7 @@
 // timers.js, prestige.js, wrinklers.js, whatIf.js, collection.js). Until v3.47 they were a page of their own;
 // now they sit on the Stats page's tabs (ui/graphs.js), beside its charts:
 //
-//   Golden    Bank, Next golden cookie (and reindeer)
+//   Golden    Next golden cookie (and reindeer), Bank
 //   Prestige  Prestige (above the target and the charts)
 //   What if   What if
 //   Misc      Timers, Wrinklers, Still to collect
@@ -196,9 +196,9 @@ CA.UI.StatsPage = (() => {
   // each Stats tab's cards (a tab without any draws none)
   const CARDS = {
     golden: () =>
-      card('Bank', 'dollar', bankHtml(), 'class="ca-meters" data-st-bank', meta('what golden cookies and spells pay at their most — and the bank it takes')) +
       card('Next golden cookie', 'sparkle', CA.UI.SpawnView.html('golden'), 'class="ca-sp" data-st-spawn', meta('exact, from the game’s own odds — hover the chart')) +
-      (Game.season === 'christmas' ? card('Next reindeer', 'sparkle', CA.UI.SpawnView.html('reindeer'), 'class="ca-sp" data-st-reindeer') : ''),
+      (Game.season === 'christmas' ? card('Next reindeer', 'sparkle', CA.UI.SpawnView.html('reindeer'), 'class="ca-sp" data-st-reindeer') : '') +
+      card('Bank', 'dollar', bankHtml(), 'class="ca-meters" data-st-bank', meta('what golden cookies and spells pay at their most — and the bank it takes')),
     prestige: () => card('Prestige statistics', 'ascend', prestigeHtml(), 'class="ca-stats" data-st-prestige'),
     whatif: () => card('What if', 'pantheon', whatIfHtml(), 'data-st-whatif', meta('measured on the game itself, then put back')),
     misc: () =>
