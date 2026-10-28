@@ -1,4 +1,4 @@
-// Registry of **states**: named values CookieMgr can read from the game at any moment. Plots
+// Registry of **states**: named values cookieMgr can read from the game at any moment. Plots
 // are just ways of drawing recorded states, and (from v2) macro conditions test them.
 //
 //   CA.States.define({

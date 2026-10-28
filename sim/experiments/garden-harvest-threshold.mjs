@@ -3,7 +3,7 @@
 //   npm run sim -- experiment garden-harvest-threshold [--ticks 150000]
 //
 // A plant kept on one tile forever, harvested-and-replanted just before a tick when it's more than
-// θ likely to die on it (CookieMgr's garden.harvestDying(θ); the Effect maximizer uses 0.5), or let
+// θ likely to die on it (cookieMgr's garden.harvestDying(θ); the Effect maximizer uses 0.5), or let
 // die. Ages and death chances are the game's (models/garden.mjs, numbers from minigameGarden.js).
 import { gardenData } from '../models/gardenData.mjs';
 import { plantPolicy } from '../models/garden.mjs';

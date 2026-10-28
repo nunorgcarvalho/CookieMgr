@@ -3,11 +3,11 @@
 //
 //   run <strategy> [--span 2h] [--seed 1] [--scenario fresh] [--save file] [--save-out file] [--json file|-]
 //         one simulation, and what happened in it — --save starts from an exported save (your own
-//         game, CookieMgr's settings included); --save-out writes the end state as one
+//         game, cookieMgr's settings included); --save-out writes the end state as one
 //   compare <strategy> <strategy>… [--span 2h] [--seeds 5] [--scenario fresh] [--jobs N]
 //         each strategy over several seeds, side by side (in parallel processes)
 //   vocab [actions|values|conditions]
-//         CookieMgr's words — the actions, values and conditions a strategy is written in
+//         cookieMgr's words — the actions, values and conditions a strategy is written in
 //         (staging ones marked: sim-only until moved into the add-on)
 //   experiment <name> [args…]
 //         one of sim/experiments/ (garden models, …)
@@ -16,7 +16,7 @@
 //   fetch [--force]
 //         download the game's scripts (done automatically on first use)
 //
-// A strategy is a file in sim/strategies/ (.cmgr — CookieMgr's own algorithmic code — or .mjs),
+// A strategy is a file in sim/strategies/ (.cmgr — cookieMgr's own algorithmic code — or .mjs),
 // a built-in macro's id, or several joined with "+" ("golden+payback").
 import fs from 'node:fs';
 import path from 'node:path';

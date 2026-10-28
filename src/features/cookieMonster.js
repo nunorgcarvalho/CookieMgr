@@ -1,5 +1,5 @@
 // Loads Cookie Monster (https://github.com/CookieMonsterTeam/CookieMonster) on request, or
-// automatically when CookieMgr starts. Its dist URL always serves the latest release, and it
+// automatically when cookieMgr starts. Its dist URL always serves the latest release, and it
 // registers itself with the game as mod "CookieMonster" (verified against its built bundle),
 // which is how we tell whether it's already running.
 
@@ -22,7 +22,7 @@ CA.CookieMonster = (() => {
       },
       () => {
         loading = false;
-        CA.Util.notify('CookieMgr', "Couldn't load Cookie Monster — check your connection.", CA.ICON, 4);
+        CA.Util.notify('cookieMgr', "Couldn't load Cookie Monster — check your connection.", CA.ICON, 4);
       }
     );
     CA.Events.emit('integrations', 'cookieMonster');
@@ -35,7 +35,7 @@ CA.CookieMonster = (() => {
       icon: 'plug',
       group: 'integrations',
       name: 'Load Cookie Monster on start-up',
-      desc: 'Whenever CookieMgr starts, also load the latest Cookie Monster release — unless it is already running.',
+      desc: 'Whenever cookieMgr starts, also load the latest Cookie Monster release — unless it is already running.',
       default: false,
     });
     // The game calls our load() (restoring saved settings) right after init(), synchronously,

@@ -10,7 +10,7 @@
 //                 away from one last, in the game's order
 // While the store sells, it's the game's order.
 //
-// **Minimum bulk** — what CookieMgr's buyers (the Auto buyer, buy.best, the Payback page's ranking, the
+// **Minimum bulk** — what cookieMgr's buyers (the Auto buyer, buy.best, the Payback page's ranking, the
 // store's Best buy sort) buy a building in: ×1, ×10 or ×100 — single purchases out, if you like to buy
 // in tens. With Round to multiples on, up to the next multiple of it (37 owned, ×10 → 3, to 40); off,
 // exactly that many. "auto" (the default): ×10 with Round to multiples on, else ×1 — as before.
@@ -75,13 +75,13 @@ CA.Shop = (() => {
   // ---- round up ---------------------------------------------------------------------------
 
   const roundUp = () => !!CA.Settings.get('roundUpBulk');
-  /** The minimum bulk CookieMgr's buyers buy in: 1, 10 or 100. */
+  /** The minimum bulk cookieMgr's buyers buy in: 1, 10 or 100. */
   function minBulk() {
     const v = Number(CA.Settings.get('minBulk'));
     if (v === 1 || v === 10 || v === 100) return v;
     return roundUp() ? 10 : 1; // auto
   }
-  /** How many of a building one purchase by CookieMgr's buyers takes (minimum bulk, rounded up with Round to multiples). */
+  /** How many of a building one purchase by cookieMgr's buyers takes (minimum bulk, rounded up with Round to multiples). */
   function buyAmount(b) {
     const m = minBulk();
     if (m === 1) return 1;
@@ -150,7 +150,7 @@ CA.Shop = (() => {
       group: 'store',
       icon: 'building',
       name: 'Minimum bulk',
-      desc: 'What CookieMgr’s buyers buy a building in (the Auto buyer on auto bulk, the Payback page’s ranking, the Best buy sort): ×1, ×10 or ×100 — with Round to multiples on, up to the next multiple. Auto: ×10 with Round to multiples, else ×1.',
+      desc: 'What cookieMgr’s buyers buy a building in (the Auto buyer on auto bulk, the Payback page’s ranking, the Best buy sort): ×1, ×10 or ×100 — with Round to multiples on, up to the next multiple. Auto: ×10 with Round to multiples, else ×1.',
       default: 0,
       choices: [
         { v: 0, label: 'auto' },

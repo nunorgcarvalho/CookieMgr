@@ -1,5 +1,5 @@
 // The Legacy button's tooltip (the game's: how long this run has been, what ascending now would give,
-// cookies to the next level), with CookieMgr's additions under it (features/prestige.js): how long the
+// cookies to the next level), with cookieMgr's additions under it (features/prestige.js): how long the
 // next level takes at the rate you're baking, levels an hour, the CpS the new levels would add, your
 // heavenly chips after ascending, and how far the Lucky heavenly upgrades' levels are.
 //
@@ -35,7 +35,7 @@ CA.UI.AscendTip = (() => {
       .forEach((l) => rows.push([l.name, l.toGo <= 0 ? 'reached' : `${F().beautify(l.toGo)} to go <small>(${F().beautify(l.level)})</small>`, l.toGo <= 0 ? 'ca-mg-ok' : '']));
     return (
       '<div class="line"></div><div class="ca-tt ca-tt-ascend">' +
-      '<div class="ca-tt-head">CookieMgr</div>' +
+      '<div class="ca-tt-head">cookieMgr</div>' +
       rows.map(([k, v, cls]) => `<div class="ca-tt-row"><span>${k}</span><b${cls ? ` class="${cls}"` : ''}>${v}</b></div>`).join('') +
       '</div>'
     );

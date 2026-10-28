@@ -1,5 +1,5 @@
 // Virtual time: Date and the timers (setTimeout / setInterval) of a simulated page, on a clock that
-// only moves when the simulator moves it. Everything that runs in the page — the game, CookieMgr —
+// only moves when the simulator moves it. Everything that runs in the page — the game, cookieMgr —
 // sees this clock, so an hour of game takes as long as it takes to compute, not an hour.
 
 export function makeClock(start = Date.UTC(2026, 0, 1, 12)) {

@@ -1,4 +1,4 @@
-// An upgrade's info card — CookieMgr's own upgrade tooltip, the same wherever the add-on shows an
+// An upgrade's info card — cookieMgr's own upgrade tooltip, the same wherever the add-on shows an
 // upgrade (the Stats page's missing upgrades, the Payback page's tiles, a statistic naming one — the
 // store tooltip's next upgrade…): its icon and name, where it stands (owned, in the store, locked,
 // heavenly), what it does (the game's own description), what it costs, what it would add and its

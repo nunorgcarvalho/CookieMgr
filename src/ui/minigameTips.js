@@ -1,4 +1,4 @@
-// The minigames' own tooltips, with CookieMgr's additions under them (features/minigameInfo.js) — the
+// The minigames' own tooltips, with cookieMgr's additions under them (features/minigameInfo.js) — the
 // Grimoire's spells, the Stock market's stocks, the Pantheon's gods. The game's tooltips are wrapped
 // as they're asked for (each is built on hover from M.spellTooltip / goodTooltip / godTooltip), so
 // nothing of the game's is changed. Option (Settings → Store): minigameTips.
@@ -15,7 +15,7 @@ CA.UI.MinigameTips = (() => {
   function block(rows, note) {
     return (
       '<div class="ca-tt ca-tt-mg">' +
-      '<div class="ca-tt-head">CookieMgr</div>' +
+      '<div class="ca-tt-head">cookieMgr</div>' +
       rows.map(([k, v, cls]) => `<div class="ca-tt-row"><span>${k}</span><b${cls ? ` class="${cls}"` : ''}>${v}</b></div>`).join('') +
       (note ? `<div class="ca-tt-note">${note}</div>` : '') +
       '</div>'

@@ -122,7 +122,7 @@ assert(!SE.isOpen() && ST.get(mine[0].id).label === 'Quarter price', 'Cancel: as
 click(w, page().querySelector(`[data-st-edit="${mine[0].id}"]`));
 click(w, ed().querySelector('[data-se-act="share"]'));
 const text = ed().querySelector('[data-se-text]').value;
-assert(text.startsWith('# CookieMgr statistic\n# label: Quarter price\n# key: priceInCps') && /# group: Bank/.test(text) && text.endsWith('return item.price() * share / cps()'), `as text (${text.split('\n').slice(0, 3).join(' / ')})`);
+assert(text.startsWith('# cookieMgr statistic\n# label: Quarter price\n# key: priceInCps') && /# group: Bank/.test(text) && text.endsWith('return item.price() * share / cps()'), `as text (${text.split('\n').slice(0, 3).join(' / ')})`);
 const back = ST.fromText(text);
 assert(back.label === 'Quarter price' && back.scope === 'item' && back.format === 'time' && back.source === ST.get(mine[0].id).source, 'and back');
 assert(ST.fromText('return cps()').source === 'return cps()' && ST.fromText('') === null, 'just code pastes too; nothing does not');

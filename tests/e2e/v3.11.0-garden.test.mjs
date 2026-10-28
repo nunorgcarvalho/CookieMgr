@@ -57,7 +57,7 @@ assert(CA.Mutations.tile(0, 0) === null, 'a planted tile: none');
 
 // ---- the tile tooltip
 const tip = M.tileTooltip(1, 1)();
-assert(/Empty tile/.test(tip) && /CookieMgr · next tick/.test(tip) && /Thumbcorn <span class="ca-gi-new">★ new/.test(tip) && /Something grows/.test(tip) && /next tick in 1m 0\ds|next tick in 59s|next tick in 1m/.test(tip), 'an empty tile’s tooltip: the game’s, then what can grow, a new seed starred, the next tick');
+assert(/Empty tile/.test(tip) && /cookieMgr · next tick/.test(tip) && /Thumbcorn <span class="ca-gi-new">★ new/.test(tip) && /Something grows/.test(tip) && /next tick in 1m 0\ds|next tick in 59s|next tick in 1m/.test(tip), 'an empty tile’s tooltip: the game’s, then what can grow, a new seed starred, the next tick');
 const far = M.tileTooltip(5, 5)();
 assert(/nothing can/.test(far) || /Meddleweed|meddleweed/.test(far), 'a tile with nothing around: nothing (or weeds)');
 // ---- the seed tooltip

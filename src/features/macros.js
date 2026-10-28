@@ -636,7 +636,7 @@ CA.Macros = (() => {
     } catch (e) {
       failed = true;
       F.error = String((e && e.message) || e);
-      console.error(`[CookieMgr] macro "${m.name}" stopped`, e);
+      console.error(`[cookieMgr] macro "${m.name}" stopped`, e);
     } finally {
       depth--;
     }
@@ -985,7 +985,7 @@ CA.Macros = (() => {
       const stopping = runningIds();
       if (!stopping.length) return;
       stopping.forEach((id) => set(id, false, { silent: true }));
-      CA.Util.notify('CookieMgr', 'Your macros were turned off for your ascension.', [20, 7], 4);
+      CA.Util.notify('cookieMgr', 'Your macros were turned off for your ascension.', [20, 7], 4);
     });
   }
 

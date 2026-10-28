@@ -148,7 +148,7 @@ CA.Hotkeys = (() => {
     const combo = fromEvent(e);
     if (!combo) return;
     if (RESERVED.includes(combo)) {
-      CA.Util.notify('CookieMgr', `<b>${format(combo)}</b> is used by the game itself. Pick another key.`, [32, 17], 3);
+      CA.Util.notify('cookieMgr', `<b>${format(combo)}</b> is used by the game itself. Pick another key.`, [32, 17], 3);
       return; // keep listening
     }
     capture = null;
@@ -173,7 +173,7 @@ CA.Hotkeys = (() => {
       try {
         byId[id].run();
       } catch (err) {
-        console.error(`[CookieMgr] hotkey ${id} failed`, err);
+        console.error(`[cookieMgr] hotkey ${id} failed`, err);
       }
     });
   }

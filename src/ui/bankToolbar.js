@@ -1,5 +1,5 @@
 // A small toolbar inside the Bank minigame itself, right under its own header: Sell all, the
-// stock autobuyer switch, and a shortcut to the CookieMgr Stock market page. It reuses the
+// stock autobuyer switch, and a shortcut to the cookieMgr Stock market page. It reuses the
 // game's own .bankButton styling so it reads as part of the minigame, not an overlay.
 //
 // NOTE: this reaches into the Bank minigame's DOM (there's no mod API for adding to it), by
@@ -53,7 +53,7 @@ CA.UI.BankToolbar = (() => {
       bar.innerHTML =
         `<div class="bankButton bankButtonSell" data-cm-bt="sell" data-tip-live="sellAll">${I('dollar')}Sell all stocks</div>` +
         '<div class="bankButton bankButtonBuy" data-cm-bt="auto"></div>' +
-        `<div class="bankButton cm-bt-open" data-cm-bt="open" data-tip="Open the CookieMgr Stock market page">${I('open')}CookieMgr</div>`;
+        `<div class="bankButton cm-bt-open" data-cm-bt="open" data-tip="Open the cookieMgr Stock market page">${I('open')}cookieMgr</div>`;
       bar.addEventListener('click', onClick);
       head.insertAdjacentElement('afterend', bar);
     }
@@ -67,7 +67,7 @@ CA.UI.BankToolbar = (() => {
     const auto = bar.querySelector('[data-cm-bt="auto"]');
     auto.innerHTML = `${I('bolt')}Autobuyer: ${on ? 'on' : 'off'}`;
     auto.classList.toggle('bankButtonOff', !on);
-    auto.dataset.tip = 'Buys fast/slow-rising stocks and sells the rest, every second (same switch as on the CookieMgr page)';
+    auto.dataset.tip = 'Buys fast/slow-rising stocks and sells the rest, every second (same switch as on the cookieMgr page)';
   }
 
   function init() {
@@ -77,7 +77,7 @@ CA.UI.BankToolbar = (() => {
       icon: 'toolbar',
       group: 'stocks',
       name: 'Toolbar in the Stock market',
-      desc: 'Sell all, the autobuyer switch and a CookieMgr shortcut, right under the stock market header.',
+      desc: 'Sell all, the autobuyer switch and a cookieMgr shortcut, right under the stock market header.',
       default: true,
     });
     CA.Events.on('macros', sync);

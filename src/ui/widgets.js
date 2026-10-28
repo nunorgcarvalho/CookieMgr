@@ -123,7 +123,7 @@ CA.UI.Widgets = (() => {
     return w;
   }
 
-  /** Where columns of buttons stop going up: just below the CookieMgr sidebar on the right edge
+  /** Where columns of buttons stop going up: just below the cookieMgr sidebar on the right edge
    *  of the panel (or a third of the way down if it can't be measured). */
   function columnTop(host, H) {
     const tab = document.getElementById('CookieMgrTab');

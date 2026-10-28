@@ -129,7 +129,7 @@ CA.GameActions = (() => {
       group: 'Clicking',
       unit: 'clicks',
       // the game draws a falling cookie (prefs.particles) and a "+N" (prefs.numbers) per click;
-      // these switch them off for CookieMgr's clicks only, leaving your own clicks as they are
+      // these switch them off for cookieMgr's clicks only, leaving your own clicks as they are
       params: [
         {
           key: 'anim',

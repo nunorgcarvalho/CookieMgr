@@ -1,4 +1,4 @@
-// The CookieMgr panel. It lives in the game's own menu slot (the same place as
+// The cookieMgr panel. It lives in the game's own menu slot (the same place as
 // Options / Stats / Info), so it inherits the game's look and closes like any other menu.
 
 CA.UI = CA.UI || {};
@@ -147,12 +147,12 @@ CA.UI.Menu = (() => {
     const placed = CA.UI.Widgets.list().length;
     return (
       '<div class="ca-card ca-overview">' +
-      `<div class="ca-overview-brand"><span class="ca-overview-logo">${C.icon({ icon: CA.ICON })}</span><div><b>CookieMgr</b><span>v${CA.VERSION}</span></div></div>` +
+      `<div class="ca-overview-brand"><span class="ca-overview-logo">${C.icon({ icon: CA.ICON })}</span><div><b>cookieMgr</b><span>v${CA.VERSION}</span></div></div>` +
       '<div class="ca-stats">' +
       tile('Recording', CA.Settings.get('trackHistory') ? 'on' : 'off', '<span data-ca-history-short></span>') +
       tile('Macros running', String(running), C.link('Macros', 'clickers')) +
       tile('Widgets placed', String(placed), C.link('Widgets', 'widgets')) +
-      tile('Cookie Monster', cm ? 'running' : 'not needed', cm ? 'loaded alongside' : 'CookieMgr computes its numbers itself') +
+      tile('Cookie Monster', cm ? 'running' : 'not needed', cm ? 'loaded alongside' : 'cookieMgr computes its numbers itself') +
       '</div></div>'
     );
   }
@@ -167,7 +167,7 @@ CA.UI.Menu = (() => {
       '<div class="ca-row ca-row-option">' +
       rowIcon('panel') +
       '<div class="ca-row-text"><div class="ca-row-name">Open / close this panel</div>' +
-      '<div class="ca-row-desc">Optional hotkey for the CookieMgr panel.</div></div>' +
+      '<div class="ca-row-desc">Optional hotkey for the cookieMgr panel.</div></div>' +
       C.hotkey('panel.toggle') +
       '</div>' +
       '<div class="ca-row ca-row-option">' +
@@ -186,7 +186,7 @@ CA.UI.Menu = (() => {
       integrationsCard() +
       indexCard() +
       '<div class="ca-footer">' +
-      `<div>CookieMgr v${CA.VERSION} &middot; <a href="https://github.com/nunorgcarvalho/CookieMgr" target="_blank" rel="noopener">GitHub</a></div>` +
+      `<div>cookieMgr v${CA.VERSION} &middot; <a href="https://github.com/nunorgcarvalho/cookieMgr" target="_blank" rel="noopener">GitHub</a></div>` +
       '<div>Settings are stored inside your Cookie Clicker save; recorded history stays in this browser.</div>' +
       '</div>'
     );
@@ -271,7 +271,7 @@ CA.UI.Menu = (() => {
       '<div class="ca-row ca-row-option">' +
       rowIcon('puzzle') +
       '<div class="ca-row-text"><div class="ca-row-name">Cookie Monster</div>' +
-      `<div class="ca-row-desc" data-ca-cm-status>${loaded ? 'Running.' : 'Not loaded.'} Optional — CookieMgr works out payback periods and the store sort itself. Loads the latest release straight from Cookie Monster's own site, if you'd like its displays too.</div></div>` +
+      `<div class="ca-row-desc" data-ca-cm-status>${loaded ? 'Running.' : 'Not loaded.'} Optional — cookieMgr works out payback periods and the store sort itself. Loads the latest release straight from Cookie Monster's own site, if you'd like its displays too.</div></div>` +
       C.button(loaded ? 'Loaded' : 'Load now', 'data-ca="cm-load" data-ca-cm-load' + (loaded ? ' disabled' : ''), 'ca-btn-small') +
       '</div>' +
       CA.Settings.optionsIn('integrations').map(optionRow).join('') +
@@ -476,7 +476,7 @@ CA.UI.Menu = (() => {
       case 'reset-hotkeys':
         CA.Util.sound('snd/tick.mp3');
         CA.Settings.resetHotkeys();
-        CA.Util.notify('CookieMgr', 'Hotkeys reset to defaults.', CA.ICON, 2);
+        CA.Util.notify('cookieMgr', 'Hotkeys reset to defaults.', CA.ICON, 2);
         break;
       case 'cm-load':
         CA.Util.sound('snd/tick.mp3');

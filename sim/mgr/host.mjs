@@ -1,8 +1,8 @@
-// CookieMgr, headless, inside the simulated page: the add-on's own core and feature modules
+// cookieMgr, headless, inside the simulated page: the add-on's own core and feature modules
 // (src/core, src/features — the layers that never touch the UI, which a contract test guarantees),
 // straight from the source in this repo, registered through the game's real mod API
 // (Game.registerMod). So the simulator's actions, values, macros, gardeners and event log *are*
-// CookieMgr's: a strategy written for the simulator is code the add-on runs as it is, and back.
+// cookieMgr's: a strategy written for the simulator is code the add-on runs as it is, and back.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -48,8 +48,8 @@ export function startList() {
 export const RECORDING = ['Recorder', 'GardenHistory', 'StockLog'];
 
 /**
- * Loads CookieMgr into a booted game (game/boot.mjs). Options:
- *   save       CookieMgr's own save (CA.Settings.serialize()'s string — the add-on's export) to start from
+ * Loads cookieMgr into a booted game (game/boot.mjs). Options:
+ *   save       cookieMgr's own save (CA.Settings.serialize()'s string — the add-on's export) to start from
  *   record     also start the history recorders (RECORDING)
  *   logAll     log every action call, even ones that did nothing (default: only ones that did something)
  * Returns { CA, actions: [{ t, id, params, n }], events() }.
@@ -61,7 +61,7 @@ export function loadCookieMgr(game, { save = '', record = false, logAll = false 
   const staging = stagingModules();
   for (const m of staging) parts.push(`// ---- sim/mgr/staging/${path.basename(m.file)}\n${m.code}`);
   parts.push('globalThis.CookieMgr = CA;\n})();');
-  game.run(parts.join('\n'), 'CookieMgr (headless)');
+  game.run(parts.join('\n'), 'cookieMgr (headless)');
   const CA = game.ctx.CookieMgr;
   const Game = game.Game;
 
@@ -102,6 +102,6 @@ export function loadCookieMgr(game, { save = '', record = false, logAll = false 
   };
   Game.registerMod(CA.ID, mod);
   if (!loaded) mod.load('');
-  if (failed.length) console.error('[sim] CookieMgr modules that failed to start:', failed.join('; '));
+  if (failed.length) console.error('[sim] cookieMgr modules that failed to start:', failed.join('; '));
   return { CA, actions, failed, events: (types) => CA.EventLog.list(types) };
 }

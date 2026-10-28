@@ -344,7 +344,7 @@ CA.Recorder = (() => {
   /** Replaces this save's recorded data with an export (from any save/browser). */
   function importData(data) {
     if (!data || data.format !== EXPORT_FORMAT || !Array.isArray(data.chunks)) {
-      return Promise.reject(new Error('Not a CookieMgr history export.'));
+      return Promise.reject(new Error('Not a cookieMgr history export.'));
     }
     const s = saveId;
     const rekey = (r, rest) => ({ ...r, s, id: `${s}|${rest}` });

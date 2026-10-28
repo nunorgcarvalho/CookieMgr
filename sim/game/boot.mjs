@@ -19,7 +19,7 @@ import { makeRng } from './rng.mjs';
  *   start    the clock's start (ms since 1970) — the date matters for seasons
  *   save     a save string (Game.ExportSave()'s) to start from; none = a new game
  *   quiet    swallow the game's console.log
- *   idb      give the page an IndexedDB (in memory, fake-indexeddb) — what CookieMgr's recorder and
+ *   idb      give the page an IndexedDB (in memory, fake-indexeddb) — what cookieMgr's recorder and
  *            event log keep their history in
  * Returns { Game, ctx (the page's global), clock, run(code, name), frame(), dir }.
  */
@@ -93,7 +93,7 @@ export async function bootGame({ seed = 1, fps = 30, start, save = null, quiet =
     document,
     localStorage,
     sessionStorage: localStorage,
-    navigator: { userAgent: 'Mozilla/5.0 (CookieMgr simulator)', platform: 'sim', language: 'en-US', languages: ['en-US'] },
+    navigator: { userAgent: 'Mozilla/5.0 (cookieMgr simulator)', platform: 'sim', language: 'en-US', languages: ['en-US'] },
     location: { href: 'https://orteil.dashnet.org/cookieclicker/', pathname: '/cookieclicker/', protocol: 'https:', host: 'orteil.dashnet.org', hostname: 'orteil.dashnet.org', search: '', hash: '', origin: 'https://orteil.dashnet.org', reload: noop },
     Date: clock.Date,
     setTimeout: clock.setTimeout,

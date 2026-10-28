@@ -27,7 +27,7 @@ Object.keys(expect).forEach((k) => assert(homes[k] && homes[k][0] === expect[k],
 // ---- the Settings page
 CA.UI.Menu.openPage('settings');
 const st = page('settings');
-assert(st.querySelector('.ca-overview') && /CookieMgr/.test(st.querySelector('.ca-overview').textContent) && st.querySelectorAll('.ca-overview .ca-stat').length === 4, 'overview tiles on top');
+assert(st.querySelector('.ca-overview') && /cookieMgr/.test(st.querySelector('.ca-overview').textContent) && st.querySelectorAll('.ca-overview .ca-stat').length === 4, 'overview tiles on top');
 assert(st.querySelectorAll('.ca-optgrid .ca-opt').length >= 2, 'general options as tiles');
 const blocks = [...st.querySelectorAll('.ca-index-block')];
 assert(blocks.length >= 6 && blocks.every((b) => b.querySelector('.ca-index-head [data-ca="goto"]')), `All options: a block per page, titled with a link (${blocks.length})`);

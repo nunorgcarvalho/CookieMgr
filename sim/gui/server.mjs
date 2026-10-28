@@ -263,10 +263,10 @@ function snapshot(s, since) {
   };
   return out;
 }
-/** An event as plain data (what CookieMgr's event log holds). */
+/** An event as plain data (what cookieMgr's event log holds). */
 const plainEvent = (e) => ({ id: e.id, t: e.t, a: e.a, type: e.type, title: e.title, text: e.text, cookies: e.cookies, data: e.data });
 /**
- * CookieMgr's recorder frames, as a change to what the page already has: { active, reset, frames }
+ * cookieMgr's recorder frames, as a change to what the page already has: { active, reset, frames }
  * the first time, then { active, keep, head, drop, tail } — the page keeps its first `keep` frames,
  * puts `head` after them in place of its frames up to index `drop`, and appends `tail`. New frames
  * only ever come at the end; past 3 hours of play the recorder merges older frames into coarser
@@ -305,7 +305,7 @@ function recFrames(sim, since) {
   since.list = cur.slice();
   return out;
 }
-/** The golden cookie effects CookieMgr has recorded (start, end, multipliers), when they changed. */
+/** The golden cookie effects cookieMgr has recorded (start, end, multipliers), when they changed. */
 function intervalsIfChanged(sim, since) {
   const ivs = sim.CA.History.intervals || [];
   const sig = `${ivs.length}:${ivs.filter((iv) => iv.end).length}:${ivs.length ? ivs[ivs.length - 1].start : 0}`;
@@ -374,7 +374,7 @@ const emit = (j, event, data) => j.listeners.forEach((send) => send(event, data)
 function cmBundle() {
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
   const parts = [
-    `/* CookieMgr ${pkg.version} — the add-on's own UI code, for CookieSimMgr (built from src/ on request) */`,
+    `/* cookieMgr ${pkg.version} — the add-on's own UI code, for CookieSimMgr (built from src/ on request) */`,
     '(function () {',
     "'use strict';",
     'const CA = (window.CA = {});',

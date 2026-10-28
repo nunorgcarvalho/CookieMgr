@@ -1,6 +1,6 @@
-// Strategies: what CookieMgr does in a simulation, from a file.
+// Strategies: what cookieMgr does in a simulation, from a file.
 //
-//   name.cmgr   CookieMgr's algorithmic code — paste it into an algorithmic macro in the add-on and
+//   name.cmgr   cookieMgr's algorithmic code — paste it into an algorithmic macro in the add-on and
 //               it does the same there. Header comments set it up:
 //                 # every: 500          a pass every 500 ms (default 1000)
 //                 # with: golden, bigCookie     built-in macros switched on alongside it

@@ -1,6 +1,6 @@
 // Fast garden models: the garden's rules (minigameGarden.js), reduced to what matters for one
 // question, so thousands of simulated hours take seconds — for sweeping parameters before trying the
-// winner in the exact simulator (sim.mjs: the real game running CookieMgr).
+// winner in the exact simulator (sim.mjs: the real game running cookieMgr).
 //
 // The rules, as the game has them (numbers from gardenData.mjs — the game's own):
 //   - each tick a plant ages by randomFloor((ageTick + ageTickR·random) × tile age boost) and dies
@@ -13,7 +13,7 @@
 export const stageMult = (p, age) => (age >= p.mature ? 1 : age >= p.mature * 0.666 ? 0.5 : age >= p.mature * 0.333 ? 0.25 : 0.1);
 export const randomFloor = (x, rnd = Math.random) => Math.floor(x) + (rnd() < x - Math.floor(x) ? 1 : 0);
 
-/** P(a plant of this age reaches 100 on the next tick) — exact (as CookieMgr's garden.decay). */
+/** P(a plant of this age reaches 100 on the next tick) — exact (as cookieMgr's garden.decay). */
 export function decayChance(p, age, boost = 1) {
   if (p.immortal) return 0;
   const n = 100 - age;
@@ -70,7 +70,7 @@ export function neighbours(w, h) {
 
 /**
  * A field of golden clovers ('G') and nursetulips ('N') — `layout`, w × h, row by row — run as
- * CookieMgr's Effect maximizer runs it: every tile replanted as soon as it's empty, mature plants
+ * cookieMgr's Effect maximizer runs it: every tile replanted as soon as it's empty, mature plants
  * over `dyingOver` likely to die harvested and replanted 15 s before the tick, the soil
  * fertilizer while more than `theta` of the plants are young, else clay (theta < 0: always
  * fertilizer, ≥ 1: always clay). Or, policy 'cohort': the whole field planted together on

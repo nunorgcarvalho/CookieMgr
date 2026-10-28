@@ -1,5 +1,5 @@
 // A seeded random number generator (sfc32), so a simulation with the same seed plays out the same
-// way: it replaces Math.random in the simulated page — the game's and CookieMgr's.
+// way: it replaces Math.random in the simulated page — the game's and cookieMgr's.
 
 export function makeRng(seed = 1) {
   // seed → four 32-bit words (splitmix32)

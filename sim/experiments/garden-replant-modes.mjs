@@ -2,7 +2,7 @@
 //
 //   npm run sim -- experiment garden-replant-modes [--hours 24] [--seeds 3] [--jobs N]
 //
-// The exact simulator (the game's code, CookieMgr's code) on the garden6 scenario: a level-6
+// The exact simulator (the game's code, cookieMgr's code) on the garden6 scenario: a level-6
 // golden clover field. Three ways of keeping it, each the add-on's own built-ins as they come:
 //   end      the "Golden clover combos" profile — Full-garden replanter (replantAtTick = false: a
 //            new round planted the moment too few mature clovers are left) + "Grow together, then clay"

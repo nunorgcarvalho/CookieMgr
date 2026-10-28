@@ -245,7 +245,7 @@ CA.UI.CodeEditor = (() => {
   function onKey(e) {
     const ta = e.target;
     if (!ta.matches || !ta.matches('[data-code]')) return false;
-    e.stopPropagation(); // the game and CookieMgr's hotkeys don't see what you type
+    e.stopPropagation(); // the game and cookieMgr's hotkeys don't see what you type
     const v = ta.value;
     const a = ta.selectionStart;
     const b = ta.selectionEnd;

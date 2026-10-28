@@ -1,4 +1,4 @@
-// Entry point: waits for the game, then registers CookieMgr through the official mod API
+// Entry point: waits for the game, then registers cookieMgr through the official mod API
 // (Game.registerMod), which gives us init/save/load hooks tied to the game's save file.
 
 function removeLegacyBookmarklet() {
@@ -36,7 +36,7 @@ const mod = {
         m.init();
       } catch (e) {
         failed.push(i);
-        console.error('[CookieMgr] a module failed to start', e);
+        console.error('[cookieMgr] a module failed to start', e);
       }
     });
     CA.Macros.ready(); // every action is registered now
@@ -46,20 +46,20 @@ const mod = {
         m.init();
       } catch (e) {
         failed.push(m);
-        console.error('[CookieMgr] a module failed to start', e);
+        console.error('[cookieMgr] a module failed to start', e);
       }
     });
     CA.Settings.startAutoPersist();
 
     CA.Util.notify(
-      `CookieMgr v${CA.VERSION} loaded`,
+      `cookieMgr v${CA.VERSION} loaded`,
       hadLegacy
         ? 'Replaced the old v0.1 bookmarklet. Open the tab on the left beam for settings.'
         : 'Open the tab on the left beam for settings.',
       CA.ICON,
       4
     );
-    if (failed.length) CA.Util.notify('CookieMgr', `${failed.length} part${failed.length === 1 ? '' : 's'} of CookieMgr couldn’t start (see the browser console) — the rest works.`, CA.ICON, 6);
+    if (failed.length) CA.Util.notify('cookieMgr', `${failed.length} part${failed.length === 1 ? '' : 's'} of cookieMgr couldn’t start (see the browser console) — the rest works.`, CA.ICON, 6);
   },
 
   save() {
@@ -83,9 +83,10 @@ function register() {
 
 if (window.CookieMgr) {
   if (typeof Game !== 'undefined' && Game.Notify)
-    Game.Notify('CookieMgr', 'Already loaded — reload the page to load a new version.', CA.ICON, 3, 1);
+    Game.Notify('cookieMgr', 'Already loaded — reload the page to load a new version.', CA.ICON, 3, 1);
 } else {
-  window.CookieMgr = CA; // handy for debugging from the console
+  window.CookieMgr = CA; // handy for debugging from the console (scripts and saves use this name)
+  window.cookieMgr = CA;
   const start = () => {
     if (typeof Steam !== 'undefined')
       setTimeout(register, 2000); // same delay Cookie Monster uses on Steam

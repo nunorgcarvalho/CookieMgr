@@ -1,12 +1,12 @@
 // ==UserScript==
-// @name         CookieMgr
-// @description  Loads the CookieMgr add-on into Cookie Clicker.
-// @namespace    https://github.com/nunorgcarvalho/CookieMgr
+// @name         cookieMgr
+// @description  Loads the cookieMgr add-on into Cookie Clicker.
+// @namespace    https://github.com/nunorgcarvalho/cookieMgr
 // @include      /https?://orteil.dashnet.org/cookieclicker/
 // @grant        none
 // ==/UserScript==
 
-const COOKIE_MGR_URL = 'https://nunorgcarvalho.github.io/CookieMgr/dist/CookieMgr.js';
+const COOKIE_MGR_URL = 'https://nunorgcarvalho.github.io/cookieMgr/dist/CookieMgr.js';
 
 const readyCheck = setInterval(() => {
   const Game = (typeof unsafeWindow !== 'undefined' ? unsafeWindow : window).Game;

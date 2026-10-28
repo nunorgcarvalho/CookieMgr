@@ -217,7 +217,7 @@ CA.UI.TooltipsPage = (() => {
       C().cardHead(
         'In the store tooltip',
         'search',
-        '<div class="ca-card-meta"><span class="ca-hint">the lines CookieMgr adds under the store’s tooltips, in order — drag a row, or hover it for what it shows</span></div>'
+        '<div class="ca-card-meta"><span class="ca-hint">the lines cookieMgr adds under the store’s tooltips, in order — drag a row, or hover it for what it shows</span></div>'
       ) +
       '<div class="ca-tl">' +
       `<div data-tl-lines>${linesHtml()}</div>` +

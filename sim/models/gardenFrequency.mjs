@@ -1,5 +1,5 @@
 // Golden cookie frequency over time, gardener by gardener: a fast model of a golden clover garden
-// (with or without nursetulips) kept by one of CookieMgr's gardeners, run for thousands of hours,
+// (with or without nursetulips) kept by one of cookieMgr's gardeners, run for thousands of hours,
 // and how its golden cookie frequency bonus is spread over the time — a histogram weighted by game
 // time, its mean, and how long the nursetulips stay fully grown (the "golden zone").
 //

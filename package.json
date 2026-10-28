@@ -1,7 +1,7 @@
 {
   "name": "cookie-mgr",
-  "version": "3.47.0",
-  "description": "CookieMgr: a Cookie Clicker add-on for automating tasks and visualizing data.",
+  "version": "3.47.1",
+  "description": "cookieMgr: a Cookie Clicker add-on for automating tasks and visualizing data.",
   "private": true,
   "type": "module",
   "license": "MIT",

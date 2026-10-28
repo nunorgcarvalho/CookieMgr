@@ -1,16 +1,16 @@
-// The simulator: the real game (game/boot.mjs) with CookieMgr loaded into it (mgr/host.mjs), on a
-// virtual clock you move. One object to play it with — in CookieMgr's words:
+// The simulator: the real game (game/boot.mjs) with cookieMgr loaded into it (mgr/host.mjs), on a
+// virtual clock you move. One object to play it with — in cookieMgr's words:
 //
 //   const sim = await createSim({ seed: 1 });
-//   sim.act('click.bigCookie');                  // any CookieMgr action, by its id
-//   sim.value('garden.tickIn');                  // any CookieMgr value
+//   sim.act('click.bigCookie');                  // any cookieMgr action, by its id
+//   sim.value('garden.tickIn');                  // any cookieMgr value
 //   sim.code('for s in shimmers():\n  shimmer.pop(s)\n');   // algorithmic code, one pass
 //   sim.macro('golden');                         // a built-in macro, switched on
 //   sim.macro({ name: 'buyer', source: '…', every: 1000 });   // your own, switched on
 //   sim.run({ hours: 2 });                       // the game and the macros play on
 //   sim.stats(); sim.actions; sim.events();      // what happened
 //
-// Everything that happens is the game's own code or CookieMgr's own code; the simulator only owns
+// Everything that happens is the game's own code or cookieMgr's own code; the simulator only owns
 // the clock, the seed, and the bookkeeping.
 import { bootGame } from './game/boot.mjs';
 
@@ -20,14 +20,14 @@ import { loadCookieMgr } from './mgr/host.mjs';
 import { ensureMod } from './game/fetch.mjs';
 
 export async function createSim({ seed = 1, fps = 30, start, save = null, mgr = true, mgrSave = '', record = false, logAll = false, sampleEvery = 60, quiet = true, cookieMonster = false } = {}) {
-  // recording (CookieMgr's history recorder, for its charts) keeps its frames in IndexedDB, as in the browser
+  // recording (cookieMgr's history recorder, for its charts) keeps its frames in IndexedDB, as in the browser
   const game = await bootGame({ seed, fps, start, save, quiet, idb: record });
   const { Game, clock } = game;
   const host = mgr ? loadCookieMgr(game, { save: mgrSave, record, logAll }) : null;
   // the recorder starts once its (empty) history has loaded — asynchronously, as IndexedDB answers
   if (host && record && host.CA.Recorder.whenLoaded()) await host.CA.Recorder.whenLoaded();
   const CA = host && host.CA;
-  // Cookie Monster (CookieMgr's Best building / Best upgrade read its payback periods), loaded the way the add-on loads it
+  // Cookie Monster (cookieMgr's Best building / Best upgrade read its payback periods), loaded the way the add-on loads it
   if (cookieMonster) {
     await ensureMod('CookieMonster.js', { quiet });
     if (CA) CA.CookieMonster.load();
@@ -39,7 +39,7 @@ export async function createSim({ seed = 1, fps = 30, start, save = null, mgr = 
   let nextSample = t0;
 
   const need = () => {
-    if (!CA) throw new Error('CookieMgr is not loaded in this simulation (createSim({ mgr: false }))');
+    if (!CA) throw new Error('cookieMgr is not loaded in this simulation (createSim({ mgr: false }))');
     return CA;
   };
 
@@ -67,7 +67,7 @@ export async function createSim({ seed = 1, fps = 30, start, save = null, mgr = 
     nextSample += sampleEvery * 1000;
   }
 
-  /** One logic frame (1/fps of a second): the page's timers (CookieMgr's macros), then Game.Logic. */
+  /** One logic frame (1/fps of a second): the page's timers (cookieMgr's macros), then Game.Logic. */
   function frame() {
     game.frame();
     sample();
@@ -102,15 +102,15 @@ export async function createSim({ seed = 1, fps = 30, start, save = null, mgr = 
     return !!fn(sim);
   }
 
-  /** Runs a CookieMgr action once (logged in sim.actions): how many things it did. */
+  /** Runs a cookieMgr action once (logged in sim.actions): how many things it did. */
   const act = (id, params) => need().Actions.run(id, params);
-  /** A CookieMgr value now: value('garden.tickIn'), value('garden.plantAt', '2,3'). */
+  /** A cookieMgr value now: value('garden.tickIn'), value('garden.plantAt', '2,3'). */
   function value(id, ...args) {
     const C = need();
     const v = C.Script.compile(`x = ${id}(${args.map((a) => C.Script.litText(a)).join(', ')})\n`, {}).flow[0];
     return C.Script.value(v.e, {});
   }
-  /** Runs algorithmic code (CookieMgr's language) once from the top: { done, trace, error }. */
+  /** Runs algorithmic code (cookieMgr's language) once from the top: { done, trace, error }. */
   function code(source) {
     const C = need();
     const { flow, errors } = C.Script.compile(String(source));
@@ -157,12 +157,12 @@ export async function createSim({ seed = 1, fps = 30, start, save = null, mgr = 
     stats,
     samples,
     actions: host ? host.actions : [],
-    /** CookieMgr modules whose init() threw ("Name: message"); empty when all of them started. */
+    /** cookieMgr modules whose init() threw ("Name: message"); empty when all of them started. */
     failed: host ? host.failed : [],
     events: (types) => (CA ? CA.EventLog.list(types) : []),
-    /** The game's save (as Options → Export save gives it), CookieMgr's part included. */
+    /** The game's save (as Options → Export save gives it), cookieMgr's part included. */
     exportSave: () => Game.WriteSave(1),
-    /** CookieMgr's own save (the add-on's settings, macros, gardeners…). */
+    /** cookieMgr's own save (the add-on's settings, macros, gardeners…). */
     mgrSave: () => need().Settings.serialize(),
     errors: () => clock.errors.slice(),
   };

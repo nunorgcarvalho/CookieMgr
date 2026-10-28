@@ -1,8 +1,8 @@
-// The fast garden model against the real thing: CookieMgr's Auto-gardener keeping a golden clover field in the real game.
+// The fast garden model against the real thing: cookieMgr's Auto-gardener keeping a golden clover field in the real game.
 //
 //   npm run sim -- experiment garden-exact [--hours 12] [--seed 1] [--theta 0.67]
 //
-// The exact simulator — the game's own code with CookieMgr's own code in it — on the garden6
+// The exact simulator — the game's own code with cookieMgr's own code in it — on the garden6
 // scenario, the Auto-gardener running the built-in "Golden clover field" profile (Effect maximizer,
 // its soil rule with fertilizerAbove = θ). Every simulated second the garden's golden cookie
 // frequency effect is read off the game (Farm minigame M.effs, what Game.eff() multiplies in), and
@@ -49,6 +49,6 @@ const data = await gardenData();
 const { w, h } = plotAt(data, sim.Game.Objects.Farm.level);
 const model = cloverField(data, { layout: 'G'.repeat(w * h), w, h, theta, hours: 4000 });
 console.log(`\nGolden clover field, level ${sim.Game.Objects.Farm.level} (${w}×${h}), soil rule θ = ${theta}, seed ${seed}`);
-console.log(`  exact (the real game + CookieMgr's Auto-gardener), ${hours - 2} h after a 2 h start:  +${pct(sum / n)} golden cookie frequency, ${(planted / hours).toFixed(1)} plantings/h`);
+console.log(`  exact (the real game + cookieMgr's Auto-gardener), ${hours - 2} h after a 2 h start:  +${pct(sum / n)} golden cookie frequency, ${(planted / hours).toFixed(1)} plantings/h`);
 console.log(`  model (models/garden.mjs, 4000 h):                                   +${pct(model.gc)} golden cookie frequency, ${model.plantings.G.toFixed(1)} plantings/h`);
 console.log(`  simulated ${hours} h of game in ${((Date.now() - wall) / 1000).toFixed(0)} s`);

@@ -1,4 +1,4 @@
-// Numbers and times as CookieMgr writes them — for features and pages alike (charts re-export
+// Numbers and times as cookieMgr writes them — for features and pages alike (charts re-export
 // them as CA.UI.Plot.fmt).
 //
 // Long numbers follow the **Numbers** setting (Settings → General), Cookie Monster's notations:
@@ -49,7 +49,7 @@ CA.Format = (() => {
         group: 'general',
         icon: 'tag',
         name: 'Numbers',
-        desc: 'How CookieMgr writes long numbers (Cookie Monster’s notations).',
+        desc: 'How cookieMgr writes long numbers (Cookie Monster’s notations).',
         default: DEFAULT,
         choices: FORMATS,
       });

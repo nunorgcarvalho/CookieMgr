@@ -1,4 +1,4 @@
-// HTML snippets for the CookieMgr panel. Everything is plain strings; interactivity
+// HTML snippets for the cookieMgr panel. Everything is plain strings; interactivity
 // is handled by one delegated click listener in menu.js via data-ca="…" attributes.
 
 CA.UI = CA.UI || {};
@@ -62,7 +62,7 @@ CA.UI.C = (() => {
   }
   const starTip = (on, name) => (on ? `On the left panel as a widget — click to take it away` : `Put “${name}” on the left panel as a widget`);
 
-  /** A link to another CookieMgr page (menu.js handles data-ca="goto"). */
+  /** A link to another cookieMgr page (menu.js handles data-ca="goto"). */
   const link = (label, page) => `<a class="ca-link" data-ca="goto" data-page="${esc(page)}" role="link" tabindex="0">${label}</a>`;
 
   /** A small "open it in the game" button for a minigame page (closes the panel). */

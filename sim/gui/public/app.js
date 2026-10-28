@@ -4,14 +4,14 @@
 //
 //   Simulate      start a game (a new one, a scenario, or your own save) with a strategy, watch it
 //                 play — the add-on's own Graphs and Events pages (its charts: zoom, windows,
-//                 smoothing, effect bands, markers…) on what CookieMgr records in the simulated game,
-//                 buildings, upgrades, effects, the garden, CookieMgr's macros, every action it takes
+//                 smoothing, effect bands, markers…) on what cookieMgr records in the simulated game,
+//                 buildings, upgrades, effects, the garden, cookieMgr's macros, every action it takes
 //                 — and take part: switch macros, do actions, run code, export the save
 //   Compare       strategies side by side over several seeds, in parallel
-//   Strategies    the .cmgr files: CookieMgr's code editor, with its library
+//   Strategies    the .cmgr files: cookieMgr's code editor, with its library
 //   Garden        golden cookie frequency over game time, gardener by gardener: a histogram each
 //   Experiments   the fast models, run with their output
-//   Vocabulary    every word a strategy can use (CookieMgr's library)
+//   Vocabulary    every word a strategy can use (cookieMgr's library)
 
 (() => {
   const C = CA.UI.C;
@@ -155,7 +155,7 @@
   // Simulate
   // =====================================================================================================
 
-  const TEMPLATE = `# My strategy — CookieMgr's algorithmic code, run from the top every pass.
+  const TEMPLATE = `# My strategy — cookieMgr's algorithmic code, run from the top every pass.
 # with: golden, bigCookie
 # every: 500
 # Buy whatever pays itself back the quickest:
@@ -204,7 +204,7 @@ buy.best(all)
       if (S.actions.length > 3000) S.actions.splice(0, S.actions.length - 3000);
       s.events.forEach((x) => S.events.push(x));
       if (S.events.length > 3000) S.events.splice(0, S.events.length - 3000);
-      // the add-on's pages: what CookieMgr recorded there, in place (one snapshot after another)
+      // the add-on's pages: what cookieMgr recorded there, in place (one snapshot after another)
       S.feeding = S.feeding.then(() => CA.SimData.feed(s)).catch((err) => console.error(err));
       if (current === 'sim') live();
       topRun();
@@ -230,7 +230,7 @@ buy.best(all)
         `<div class="sim-runbar" data-sim-runbar>${runbarHtml()}</div>` +
         (S.snap && S.snap.error ? `<div class="sim-err">${esc(S.snap.error)}</div>` : '') +
         `<div class="ca-card"><div class="ca-stats" data-sim-stats>${statsHtml()}</div></div>` +
-        `<div class="sim-h2">${I('graphs', 16)} Graphs <small>CookieMgr’s own — drag across a chart to zoom in, the chips for windows and smoothing, hover for the details</small></div>` +
+        `<div class="sim-h2">${I('graphs', 16)} Graphs <small>cookieMgr’s own — drag across a chart to zoom in, the chips for windows and smoothing, hover for the details</small></div>` +
         '<div class="sim-host" data-host="graphs"></div>' +
         '<div class="sim-cols"><div>' +
         `<div class="ca-card">${C.cardHead('Buildings', 'building', '<span class="ca-hint" data-sim-bldsum></span>')}<div data-sim-bld></div></div>` +
@@ -238,11 +238,11 @@ buy.best(all)
         `<div class="ca-card">${C.cardHead('Upgrades', 'upgrade', '<span class="ca-hint" data-sim-upgsum></span>')}<div data-sim-upg></div></div>` +
         '<div data-sim-garden></div>' +
         '</div><div>' +
-        `<div class="ca-card">${C.cardHead("CookieMgr's macros", 'bolt', '<span class="ca-hint">switch them while it plays</span>')}<div data-sim-macros></div></div>` +
-        `<div class="ca-card ca-editor2">${C.cardHead('Do something', 'play', '<span class="ca-hint">any CookieMgr action, or code — now</span>')}${doHtml()}</div>` +
-        `<div class="ca-card">${C.cardHead('Actions', 'bolt', '<span class="ca-hint">what CookieMgr did, by its action ids</span>')}<div data-sim-actions></div></div>` +
+        `<div class="ca-card">${C.cardHead("cookieMgr's macros", 'bolt', '<span class="ca-hint">switch them while it plays</span>')}<div data-sim-macros></div></div>` +
+        `<div class="ca-card ca-editor2">${C.cardHead('Do something', 'play', '<span class="ca-hint">any cookieMgr action, or code — now</span>')}${doHtml()}</div>` +
+        `<div class="ca-card">${C.cardHead('Actions', 'bolt', '<span class="ca-hint">what cookieMgr did, by its action ids</span>')}<div data-sim-actions></div></div>` +
         '</div></div>' +
-        `<div class="sim-h2">${I('events', 16)} Events <small>CookieMgr’s Events page — everything its event log recorded in the simulated game</small></div>` +
+        `<div class="sim-h2">${I('events', 16)} Events <small>cookieMgr’s Events page — everything its event log recorded in the simulated game</small></div>` +
         '<div class="sim-host" data-host="events"></div>'
       );
     },
@@ -315,7 +315,7 @@ buy.best(all)
         : '') +
       '</button>';
     return (
-      `<div class="sim-h1">Simulate <small>the real game, with CookieMgr playing it — ${esc(meta.gameVersion)} · CookieMgr ${esc(meta.addonVersion)}</small></div>` +
+      `<div class="sim-h1">Simulate <small>the real game, with cookieMgr playing it — ${esc(meta.gameVersion)} · cookieMgr ${esc(meta.addonVersion)}</small></div>` +
       sessionsHtml() +
       `<div class="ca-card">${C.cardHead('1 · Start from', 'save')}<div class="sim-tiles">` +
       startTile('fresh', 'cookie', 'A new game', 'Nothing baked, nothing owned — the very start.') +
@@ -326,13 +326,13 @@ buy.best(all)
         'A prepared state from sim/scenarios/.',
         `<select class="sim-input" data-scenario>${sc.map((x) => `<option value="${esc(x.name)}"${st.scenario === x.name ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select><span class="ca-hint">${esc((sc.find((x) => x.name === st.scenario) || sc[0] || {}).desc || '')}</span>`
       ) +
-      startTile('save', 'upload', 'Your own game', 'Options → Export save in the game, then paste it below. CookieMgr’s settings, macros and gardeners come with it.') +
+      startTile('save', 'upload', 'Your own game', 'Options → Export save in the game, then paste it below. cookieMgr’s settings, macros and gardeners come with it.') +
       '</div>' +
       (st.start === 'save' ? `<textarea class="sim-save" data-save placeholder="Paste your exported save here…">${esc(st.save)}</textarea>` : '') +
       '</div>' +
-      `<div class="ca-card ca-editor2">${C.cardHead('2 · Strategy', 'bolt', '<span class="ca-hint">what CookieMgr does while it plays</span>')}<div class="sim-tiles">` +
+      `<div class="ca-card ca-editor2">${C.cardHead('2 · Strategy', 'bolt', '<span class="ca-hint">what cookieMgr does while it plays</span>')}<div class="sim-tiles">` +
       meta.strategies.map(strat).join('') +
-      `<button type="button" class="sim-tile${st.strategy === ':custom' ? ' on' : ''}" data-strategy=":custom"><b>${I('plus', 13)} Your own code</b><span class="ca-hint">Write it here, in CookieMgr’s language — the same code works in an algorithmic macro in the add-on.</span></button>` +
+      `<button type="button" class="sim-tile${st.strategy === ':custom' ? ' on' : ''}" data-strategy=":custom"><b>${I('plus', 13)} Your own code</b><span class="ca-hint">Write it here, in cookieMgr’s language — the same code works in an algorithmic macro in the add-on.</span></button>` +
       `<button type="button" class="sim-tile${st.strategy === ':none' ? ' on' : ''}" data-strategy=":none"><b>${I('pause', 13)} Nothing yet</b><span class="ca-hint">Start idle; switch macros on and do things yourself once it runs.</span></button>` +
       '</div>' +
       (st.strategy === ':custom' ? `<div class="ca-ed-layout sim-ed"><div class="ca-editor-body">${CE.html('setup', st.custom, { title: 'Your strategy', hint: '# with: / # every: lines set it up · Tab indents · click the library to insert' })}</div>${CE.libraryHtml('setup')}</div>` : '') +
@@ -445,7 +445,7 @@ buy.best(all)
       (s.until ? `<span class="ca-pill">until ${span(s.until)}</span>` : '') +
       '<span class="sim-spacer"></span>' +
       `<span class="ca-hint">${esc(s.strategy || 'no strategy')} · from ${esc(s.start)} · seed ${s.seed}</span>` +
-      `<a class="ca-btn ca-btn-small" href="/api/sessions/${s.id}/save" data-tip="The game's save as it is now (CookieMgr's part in it) — import it in the game, or start another simulation from it">${I('download', 12)} Export save</a>` +
+      `<a class="ca-btn ca-btn-small" href="/api/sessions/${s.id}/save" data-tip="The game's save as it is now (cookieMgr's part in it) — import it in the game, or start another simulation from it">${I('download', 12)} Export save</a>` +
       C.button(`${I('plus', 12)} New`, 'data-ctl="new"', 'ca-btn-small') +
       C.button('Close', 'data-ctl="close" data-arm-label="Close it?"', 'ca-btn-small ca-btn-off')
     );
@@ -650,7 +650,7 @@ buy.best(all)
     } else if (d.console === 'macro') {
       const every = Number(($('[data-console-every]') || {}).value) || 1000;
       await api.post(`/api/sessions/${S.id}/macro`, { source: S.consoleSrc, every, name: 'From the console' });
-      toast(`Running as a macro, every ${every} ms — it's in CookieMgr's macros, switch it off there`);
+      toast(`Running as a macro, every ${every} ms — it's in cookieMgr's macros, switch it off there`);
     }
   });
   function onSimChange(e) {
@@ -933,7 +933,7 @@ buy.best(all)
       const dirty = s && ST.draft != null && ST.draft !== s.source;
       const h = headerOf(src);
       return (
-        '<div class="sim-h1">Strategies <small>sim/strategies/ — CookieMgr’s algorithmic code: paste one into an algorithmic macro in the add-on and it does the same there</small></div>' +
+        '<div class="sim-h1">Strategies <small>sim/strategies/ — cookieMgr’s algorithmic code: paste one into an algorithmic macro in the add-on and it does the same there</small></div>' +
         '<div class="sim-strats"><div>' +
         `<div class="ca-card">${C.cardHead('Files', 'save')}${list
           .map((x) => `<button type="button" class="sim-strat-item${x.file === ST.file ? ' on' : ''}" data-sfile="${esc(x.file)}"><b>${I(x.kind === 'cmgr' ? 'edit' : 'puzzle', 11)} ${esc(x.name)}</b><span>${esc(x.desc || x.file)}</span></button>`)
@@ -1337,7 +1337,7 @@ buy.best(all)
       return (
         `<div class="sim-h1">Garden <small>golden cookie frequency over game time, gardener by gardener</small></div>` +
         `<div class="ca-card">${C.cardHead('Golden clovers and nursetulips', 'leaf', st ? `<span class="ca-pill">level ${st.level} · ${st.w}×${st.h}</span>` : '')}` +
-        `<div class="ca-card-note">Each gardener keeps a golden clover garden the way CookieMgr’s built-in gardeners do, for ${GD.hours.toLocaleString()} hours of game time × ${GD.seeds} garden${GD.seeds > 1 ? 's' : ''}; each histogram is how that time splits by the garden’s golden cookie frequency bonus (5-point bars), the line is its mean. All the charts share their scales, so they compare side by side; hover one to read the share of the time at that bonus or more — on every chart at once. The garden’s rules are the game’s, run in a fast model (models/gardenFrequency.mjs) rather than the whole game.</div>` +
+        `<div class="ca-card-note">Each gardener keeps a golden clover garden the way cookieMgr’s built-in gardeners do, for ${GD.hours.toLocaleString()} hours of game time × ${GD.seeds} garden${GD.seeds > 1 ? 's' : ''}; each histogram is how that time splits by the garden’s golden cookie frequency bonus (5-point bars), the line is its mean. All the charts share their scales, so they compare side by side; hover one to read the share of the time at that bonus or more — on every chart at once. The garden’s rules are the game’s, run in a fast model (models/gardenFrequency.mjs) rather than the whole game.</div>` +
         controls +
         (GD.error ? `<div class="sim-err">${esc(GD.error)}</div>` : '') +
         (st ? gardenSummaryHtml(st) : '') +
@@ -1440,7 +1440,7 @@ buy.best(all)
       const v = meta.vocab;
       const staged = v.library.filter((x) => x.staging).length;
       return (
-        '<div class="sim-h1">Vocabulary <small>the words a strategy is written in — CookieMgr’s own, as its code editor lists them</small></div>' +
+        '<div class="sim-h1">Vocabulary <small>the words a strategy is written in — cookieMgr’s own, as its code editor lists them</small></div>' +
         `<div class="ca-card"><div class="ca-stats">${tile('Actions', String(v.actions.length), 'things it can do')}${tile('Values', String(v.values.length), 'things it can read')}${tile('Conditions', String(v.conditions.length), 'things it can check')}${tile('Built-in macros', String(v.macros.length), 'ready to switch on')}${tile('Staging', String(staged), 'sim-only words, on their way into the add-on')}</div>` +
         '<div class="ca-card-note">Click a word to copy it. Words marked <span class="ca-pill">staging</span> come from sim/mgr/staging/ — the simulator has them; the add-on gets them when they’re promoted.</div></div>' +
         `<div class="ca-card sim-vocab">${CE.libraryHtml('vocab')}</div>` +
@@ -1490,7 +1490,7 @@ buy.best(all)
     CA.SimData.setup(meta, { render: () => rehost() });
     CE.init();
     CA.UI.Tips.init();
-    $('[data-sim-versions]').textContent = `the simulator ${meta.simVersion} · CookieMgr ${meta.addonVersion} · Cookie Clicker ${meta.gameVersion}`;
+    $('[data-sim-versions]').textContent = `the simulator ${meta.simVersion} · cookieMgr ${meta.addonVersion} · Cookie Clicker ${meta.gameVersion}`;
     $('[data-sim-nav]').addEventListener('click', (e) => {
       const t = e.target.closest('[data-nav]');
       if (t) go(t.dataset.nav);

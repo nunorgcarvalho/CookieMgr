@@ -1,4 +1,4 @@
-// Registry of **actions**: single things CookieMgr can do in the game, once — click the big
+// Registry of **actions**: single things cookieMgr can do in the game, once — click the big
 // cookie, pop the golden cookies on screen, trade stocks, cast a spell… Macros (features/macros.js)
 // are built by chaining actions; hotkeys trigger macros. The game-facing actions themselves are
 // defined in features/gameActions.js.

@@ -46,7 +46,7 @@ await sleep(1100); // wrapped within a second
 
 // ---- a spell
 const sp = G.spellTooltip(0)();
-assert(/Force the Hand of Fate/.test(sp) && /CookieMgr/.test(sp) && /Magic enough in/.test(sp), 'a spell you can’t cast yet: the game’s tooltip, then when there’s magic enough');
+assert(/Force the Hand of Fate/.test(sp) && /cookieMgr/.test(sp) && /Magic enough in/.test(sp), 'a spell you can’t cast yet: the game’s tooltip, then when there’s magic enough');
 G.magic = 50;
 const sp2 = G.spellTooltip(0)();
 assert(/Magic after casting/.test(sp2) && /Back to where it is in/.test(sp2) && /Full again in/.test(sp2), 'one you can: magic after, back to where it is, full again');
@@ -62,7 +62,7 @@ assert(/Diamond/.test(gd) && /Ruby/.test(gd) && /Jade/.test(gd) && /\+10\.0%/.te
 // ---- wrapped once
 const again = G.spellTooltip;
 await sleep(1100);
-assert(G.spellTooltip === again && (G.spellTooltip(0)().match(/CookieMgr/g) || []).length === 1, 'wrapped once (one block)');
+assert(G.spellTooltip === again && (G.spellTooltip(0)().match(/cookieMgr/g) || []).length === 1, 'wrapped once (one block)');
 // ---- the option
 CA.Settings.set('minigameTips', false);
 assert(!/CookieMgr/.test(G.spellTooltip(0)()) && !/CookieMgr/.test(B.goodTooltip(0)()), 'off: the game’s tooltips alone');

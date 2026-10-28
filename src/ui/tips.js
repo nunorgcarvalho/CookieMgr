@@ -1,8 +1,8 @@
 // Hover popups, drawn in one floating layer on top of everything (#CookieMgrLayer, a child of
 // <body>), so the game's panels and beams never cover them and card edges never clip them.
 //
-//   simple tips   anything with data-tip="…" inside CookieMgr's elements: a small styled tip next
-//                 to it (CookieMgr never emits title="…" — the browser's own tooltips; one that
+//   simple tips   anything with data-tip="…" inside cookieMgr's elements: a small styled tip next
+//                 to it (cookieMgr never emits title="…" — the browser's own tooltips; one that
 //                 slips through is converted on hover). data-tip-live="key" takes its text from
 //                 provide(key, fn(el)) instead, worked out while it shows (live numbers)
 //   rich popups   an element marked data-pop keeps its popup as a hidden child (.ca-gpop /

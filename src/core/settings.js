@@ -1,4 +1,4 @@
-// CookieMgr's save: options, hotkey bindings, and the sections features register (your macros,
+// cookieMgr's save: options, hotkey bindings, and the sections features register (your macros,
 // widgets, garden profiles… — registerSection). Saved inside the regular Cookie Clicker save
 // through the mod API (see main.js), so it follows exports/imports and cloud saves like any other
 // game data, and mirrored to localStorage so a quick refresh never loses a change.
@@ -156,11 +156,11 @@ CA.Settings = (() => {
     } catch (e) {
       /* storage blocked: the log line is all we can do */
     }
-    CA.Util.notify('CookieMgr', `Part of your saved settings (“${CA.Util.escapeHtml(key)}”) couldn’t be read, so it starts fresh. A copy is kept in this browser (localStorage “${UNREADABLE_KEY}”).`, CA.ICON, 8);
+    CA.Util.notify('cookieMgr', `Part of your saved settings (“${CA.Util.escapeHtml(key)}”) couldn’t be read, so it starts fresh. A copy is kept in this browser (localStorage “${UNREADABLE_KEY}”).`, CA.ICON, 8);
   }
 
   /**
-   * Loads CookieMgr's part of a game save (`str`, may be empty). On the first load of a session the
+   * Loads cookieMgr's part of a game save (`str`, may be empty). On the first load of a session the
    * local mirror is used instead when it's the same bakery's and not older — the game only saves
    * once a minute; a later load (an import, another save) always takes the game's.
    * @returns {object|null} the data that was loaded

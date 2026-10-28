@@ -141,7 +141,7 @@ CA.UI.Graphs = (() => {
     label: 'From',
     default: 'session',
     options: [
-      { v: 'session', label: 'This session', title: 'Since CookieMgr was loaded in this tab' },
+      { v: 'session', label: 'This session', title: 'Since cookieMgr was loaded in this tab' },
       { v: 'window', label: 'Window start', title: 'From the left edge of the chart' },
     ],
   };

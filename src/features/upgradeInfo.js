@@ -1,4 +1,4 @@
-// What an upgrade is and how you get it — the facts behind CookieMgr's upgrade tooltips (ui/upgradeTip.js):
+// What an upgrade is and how you get it — the facts behind cookieMgr's upgrade tooltips (ui/upgradeTip.js):
 //
 //   requirement   how the game unlocks it, as a sentence ("25 farms", "15 mines and a grandma", "1
 //                 billion cookies baked this ascension"…), with where you are when it counts something
@@ -131,7 +131,7 @@ CA.UpgradeInfo = (() => {
       if (a.text) return { text: String(a.text) };
     }
     if (u.pool === 'toggle') return { text: 'a switch — the game offers it when it applies' };
-    return { text: 'something the game checks for (CookieMgr doesn’t know what)' };
+    return { text: 'something the game checks for (cookieMgr doesn’t know what)' };
   }
 
   /** Where an upgrade stands: 'owned', 'store' (unlocked, not bought), 'locked'. */
