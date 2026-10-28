@@ -1,9 +1,10 @@
 # cookieMgr
 
 **A [Cookie Clicker](https://orteil.dashnet.org/cookieclicker/) add-on that provides customizable automation at all
-levels of gameplay.** Any action in Cookie Clicker that can be performed or statistic that can be calculated can be
+levels of Cookie Clicker gameplay.** Any action that can be performed or statistic that can be calculated can be
 expressed programmatically in the add-on's pseudo coding language. Actions, Statistics, Macros and more can quickly be
-accessed through Widgets that get added to screen and can be fully customized as well.
+accessed through Widgets that get added to screen and can be fully customized as well. Managers are high-level
+scripts that automatically play out strategies in-game.
 
 Also contains a lot of Quality-of-Life features, many of which are directly inspired or rebuilt from
 [Cookie Monster](https://github.com/CookieMonsterTeam/CookieMonster).
@@ -55,7 +56,7 @@ the page. [See every page with a screenshot](#pages).
 | Page | What it's for |
 | --- | --- |
 | **Stats** | Charts and numbers: cookies per second, where your cookies come from, golden cookie odds, prestige |
-| **Events** | A log of everything that happened, and your income outside CpS |
+| **Events** | A log of in-game events, like golden cookies, purchases, ascensions, etc. |
 | **Payback** | What each building and upgrade is worth, and the Auto buyer that buys the best one |
 | **Macros** | Automations: autoclickers, golden cookie popping, alerts, and your own scripts |
 | **Statistics** | What the store's tooltips show, and statistics you write yourself |
