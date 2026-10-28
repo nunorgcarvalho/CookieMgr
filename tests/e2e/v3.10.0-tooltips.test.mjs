@@ -75,7 +75,7 @@ Game.cookies = 1e4;
 
 // ---- the layout card (v3.27: on the Tooltips page; v3.43: on the Settings page)
 SI.setLines(null);
-CA.UI.Menu.openPage('settings');
+CA.UI.Menu.openPage('settings:store');
 await sleep(50);
 const card = () => doc.querySelector('[data-page="settings"] [data-tl-lines]');
 const names = () => [...card().querySelectorAll('.ca-tl-row')].map((x) => (x.querySelector('.ca-tl-name') || x.querySelector('.ca-tl-label')).textContent || x.querySelector('.ca-tl-label').value);

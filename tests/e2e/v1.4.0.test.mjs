@@ -80,7 +80,7 @@ CA.Settings.set('stockGraphMode', 'perStock');
 await sleep(300);
 CA.UI.Menu.openPage('graphs');
 await sleep(1100);
-CA.UI.Menu.openPage('settings');
+CA.UI.Menu.openPage('settings:data');
 const doc = a.window.document;
 const info = doc.querySelector('[data-ca-history-info]');
 assert(info && /active play/.test(info.textContent), `history info shown (${info && info.textContent})`);
@@ -112,7 +112,7 @@ const exported = await CB.Recorder.exportData();
 assert(exported.format === 'cookiemgr-history' && exported.chunks.length && exported.events.length === 3, 'exportData has chunks and events');
 
 // Clear needs two clicks
-CB.UI.Menu.openPage('settings');
+CB.UI.Menu.openPage('settings:data');
 const clr = b.window.document.querySelector('[data-ca="gclear"]');
 click(b.window, clr);
 await sleep(50);

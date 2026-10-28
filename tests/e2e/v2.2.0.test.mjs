@@ -144,7 +144,7 @@ const mp = CA.UI.Plot.get('magic').last();
 assert(mp && mp.data.lines.magic.length > 0 && mp.data.markers.length >= 1, 'magic plot with cast markers');
 
 // Wizard tower settings card
-CA.UI.Menu.openPage('settings');
+CA.UI.Menu.openPage('settings:all');
 assert(doc.querySelector('.ca-index [data-key="grimoireToolbar"]'), 'Grimoire options in the Settings index (v2.15: on the Grimoire page)');
 
 // no Grimoire at all

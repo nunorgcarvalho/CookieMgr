@@ -157,9 +157,18 @@ CA.UI.Menu = (() => {
     );
   }
 
-  function settingsPage() {
+  // The Settings page's tabs, each a few related cards (option settingsTab; 'settings:store' opens one).
+  const SETTINGS_TABS = [
+    { id: 'general', label: 'General', icon: 'settings', html: () => overviewCard() + generalCard() + optionsCard('Miscellaneous', 'calendar', 'misc') },
+    // the store tooltip's lines and warnings (ui/tooltipsPage.js — its handlers run here too)
+    { id: 'store', label: 'Store & tooltips', icon: 'dollar', html: () => optionsCard('Store', 'dollar', 'store') + CA.UI.TooltipsPage.layoutCard() },
+    { id: 'data', label: 'Data & integrations', icon: 'save', html: () => historyCard() + integrationsCard() },
+    { id: 'all', label: 'All options', icon: 'filter', html: () => indexCard() },
+  ];
+  const settingsTab = () => SETTINGS_TABS.find((t) => t.id === CA.Settings.get('settingsTab')) || SETTINGS_TABS[0];
+
+  function generalCard() {
     return (
-      overviewCard() +
       '<div class="ca-card">' +
       cardHead('General', 'settings') +
       `<div class="ca-optgrid">${CA.Settings.optionsIn('general').map(optionTile).join('')}</div>` +
@@ -177,19 +186,31 @@ CA.UI.Menu = (() => {
       C.button('Reset to defaults', 'data-ca="reset-hotkeys"', 'ca-btn-small') +
       '</div>' +
       '</div>' +
+      '</div>'
+    );
+  }
+
+  function settingsPage() {
+    const cur = settingsTab();
+    return (
+      '<div class="ca-subtabs" role="tablist">' +
+      SETTINGS_TABS.map(
+        (t) =>
+          `<button type="button" class="ca-subtab${t === cur ? ' on' : ''}" role="tab" aria-selected="${t === cur}" data-ca="settings-tab" data-settings-tab="${t.id}">` +
+          `${CA.UI.Icons.html(t.icon, 14)}<span>${t.label}</span></button>`
+      ).join('') +
       '</div>' +
-      historyCard() +
-      optionsCard('Store', 'dollar', 'store') +
-      // the store tooltip's lines and warnings (ui/tooltipsPage.js — its handlers run here too)
-      CA.UI.TooltipsPage.layoutCard() +
-      optionsCard('Miscellaneous', 'calendar', 'misc') +
-      integrationsCard() +
-      indexCard() +
+      cur.html() +
       '<div class="ca-footer">' +
       `<div>cookieMgr v${CA.VERSION} &middot; <a href="https://github.com/nunorgcarvalho/cookieMgr" target="_blank" rel="noopener">GitHub</a></div>` +
       '<div>Settings are stored inside your Cookie Clicker save; recorded history stays in this browser.</div>' +
       '</div>'
     );
+  }
+
+  /** Opens the Settings page on tab `id` ('settings:store'). */
+  function openSettingsTab(id) {
+    if (SETTINGS_TABS.some((t) => t.id === id)) CA.Settings.set('settingsTab', id);
   }
 
   // ---- history data ---------------------------------------------------------------
@@ -309,6 +330,7 @@ CA.UI.Menu = (() => {
     icon: 'settings',
     order: 90,
     group: 'custom',
+    open: (sub) => openSettingsTab(sub),
     html: () => settingsPage(),
     parts: [{ mount: (root) => CA.UI.TooltipsPage.mount(root), unmount: () => CA.UI.TooltipsPage.unmount(), tick() {} }],
   });
@@ -429,6 +451,11 @@ CA.UI.Menu = (() => {
         CA.Util.sound('snd/tick.mp3');
         openPage('clickers');
         break;
+      case 'settings-tab':
+        CA.Util.sound('snd/tick.mp3');
+        CA.Settings.set('settingsTab', t.dataset.settingsTab);
+        render();
+        break;
       case 'goto':
         CA.Util.sound('snd/tick.mp3');
         openPage(t.dataset.page);
@@ -500,6 +527,7 @@ CA.UI.Menu = (() => {
   function init() {
     CA.Hotkeys.register({ id: 'panel.toggle', name: 'Open / close panel', group: 'general', defaultKey: '', run: toggle });
     CA.Settings.defineOption({ key: 'tab', group: 'ui', name: 'Panel tab', desc: '', default: 'clickers' });
+    CA.Settings.defineOption({ key: 'settingsTab', group: 'ui', name: 'Settings tab', desc: '', default: 'general' });
 
     // Game.resPath points at wherever the game serves its images from (CDN on the web, local on Steam).
     CA.Util.injectCss('CookieMgrStyles', CA.CSS.replace(/url\(img\//g, `url(${CA.Util.res('img/')}`));

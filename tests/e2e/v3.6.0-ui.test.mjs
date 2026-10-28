@@ -113,7 +113,7 @@ CA.Settings.set('storeColours', false);
 CA.UI.StoreInsight.paint();
 assert(!colourOf(1) && !crate.querySelector('.ca-pp-updot'), 'option off: no colours, no dots');
 ['storeWarnings', 'storeTooltips', 'storeColours'].forEach((k) => CA.Settings.set(k, true));
-CA.UI.Menu.openPage('settings');
+CA.UI.Menu.openPage('settings:store');
 assert(['storeColours', 'storeTooltips', 'storeWarnings'].every((k) => doc.querySelector(`[data-page="settings"] [data-key="${k}"]`)), 'the options, in Settings → Store');
 
 // (the Golden cookies widget that was here went in v3.19: the Next golden cookie widget replaces it)

@@ -168,7 +168,7 @@ CA.UI.PaybackPage = (() => {
       `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('dollar', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Best = what you can afford</div><div class="ca-row-desc">The green building is the best you can buy now; what you can’t afford yet shows red.</div></div>${C().toggle(!!S.get('ppOnlyBuyable'), 'data-pp-opt="ppOnlyBuyable"', 'Best = what you can afford')}</div>` +
       `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('clock', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Cheap enough to just buy</div><div class="ca-row-desc">Anything costing less than this many seconds of CpS shows blue (0: off).</div></div><input type="number" min="0" step="1" class="ca-pp-num" data-pp-num="ppSecondsLowerLimit" value="${Number(S.get('ppSecondsLowerLimit')) || 0}"></div>` +
       '</div>' +
-      `<div class="ca-card-note">The store’s ${C().link('Best buy', 'settings')} sort and the ${C().link('Auto buyer', 'clickers')} use these numbers too.</div>` +
+      `<div class="ca-card-note">The store’s ${C().link('Best buy', 'settings:store')} sort and the ${C().link('Auto buyer', 'clickers')} use these numbers too.</div>` +
       '</div>'
     );
   }

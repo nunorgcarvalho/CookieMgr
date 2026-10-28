@@ -116,7 +116,7 @@ click(w, sw().querySelector('[data-ss-sort="achievement"]'));
 assert(CA.Settings.get('storeSort') === 'achievement' && CA.Shop.order().length === Object.keys(Game.Objects).length, 'next achievement: selected, every building placed');
 click(w, sw().querySelector('[data-ss-sort="default"]'));
 assert(CA.Settings.get('storeSort') === 'default' && rowOf('Grandma') === '' && products.style.display === '', 'back to game order: our layout undone');
-CA.UI.Menu.openPage('settings');
+CA.UI.Menu.openPage('settings:store');
 assert(doc.querySelector('[data-page="settings"] [data-key="roundUpBulk"]') && doc.querySelector('[data-page="settings"] [data-key="storeSwitch"]'), 'Settings: Store card');
 assert(!/Needed for the store's building sort/.test(doc.querySelector('[data-page="settings"]').textContent), 'v3.5: Settings no longer says the sort needs Cookie Monster');
 

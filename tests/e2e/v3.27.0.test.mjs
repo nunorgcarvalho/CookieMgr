@@ -40,11 +40,11 @@ assert(items.indexOf('tooltips') === items.indexOf('clickers') + 1, `a Tooltips 
 // v3.43: the layout is on the Settings page; the catalog on the Statistics page (id still 'tooltips')
 let pageId = 'settings';
 const goTo = async (id) => {
-  pageId = id;
+  pageId = id.split(':')[0];
   CA.UI.Menu.openPage(id);
   await sleep(30);
 };
-await goTo('settings');
+await goTo('settings:store');
 const page = () => doc.querySelector(`[data-page="${pageId}"]`);
 const rows = () => [...page().querySelectorAll('[data-tl-lines] .ca-tl-row')];
 assert(rows().length === SI.DEFAULT_LINES.length, `a row per line (${rows().length})`);
@@ -129,7 +129,7 @@ click(w, tt(mine[0].id));
 const last = SI.lines()[SI.lines().length - 1];
 assert(last && last.stat === mine[0].id, 'yours in the tooltip: { stat: id }');
 assert(/Payback period \(copy\)/.test(Game.Objects.Farm.tooltip()), 'in the tooltip');
-await goTo('settings');
+await goTo('settings:store');
 assert(![...page().querySelectorAll('[data-tl-add] option')].some((o) => o.value === `s:${mine[0].id}`), 'the add menu: not offered again');
 await goTo('tooltips');
 // delete it: two clicks, and its line goes
@@ -140,7 +140,7 @@ click(w, del);
 assert(!ST.get(mine[0].id) && !SI.lines().some((e) => e && e.stat === mine[0].id), 'deleted, and out of the tooltip');
 // the add menu offers yours
 const yours = ST.add({ label: 'Price in CpS', scope: 'item', format: 'time', source: 'return item.price() / cps()' });
-await goTo('settings');
+await goTo('settings:store');
 const opt = [...page().querySelectorAll('[data-tl-add] option')].find((o) => o.value === `s:${yours.id}`);
 assert(opt && opt.parentNode.label === 'Your statistics', 'the add menu: your statistics');
 change(page().querySelector('[data-tl-add]'), `s:${yours.id}`);

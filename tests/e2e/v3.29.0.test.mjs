@@ -77,11 +77,11 @@ assert(!ST.get('warnLucky').customized, 'back to the original');
 // v3.43: the warnings in use are on the Settings page; the editor on the Statistics page
 let pageId = 'settings';
 const goTo = async (id) => {
-  pageId = id;
+  pageId = id.split(':')[0];
   CA.UI.Menu.openPage(id);
   await sleep(30);
 };
-await goTo('settings');
+await goTo('settings:store');
 const page = () => doc.querySelector(`[data-page="${pageId}"]`);
 const ed = () => page().querySelector('[data-stat-editor]');
 const twRows = () => [...page().querySelectorAll('[data-tw-row]')];
@@ -103,7 +103,7 @@ assert(ids(SI.warnings(ctx('Cursor'))) === mine.id, 'it warns about the Cursor')
 assert(/# warn: yes/.test(ST.toText(mine)) && ST.fromText(ST.toText(mine)).warn === true, 'as text, and back');
 
 // ---- the list: up, remove, add, reset
-await goTo('settings');
+await goTo('settings:store');
 click(w, page().querySelector('[data-tw-up="3"]'));
 assert(SI.warningList()[2] === mine.id, 'moved up');
 SI.paint();
@@ -128,7 +128,7 @@ click(w, btn());
 assert(!SI.warningList().includes('warnConjure') && /use as a warning/.test(btn().textContent), 'stopped');
 click(w, btn());
 assert(SI.warningList().includes('warnConjure'), 'used again');
-await goTo('settings');
+await goTo('settings:store');
 click(w, page().querySelector('[data-tw-reset]'));
 assert(SI.warningsDefault() && SI.warningList().join() === 'warnLucky,warnConjure,warnFrenzy', 'Reset: the three bank warnings');
 

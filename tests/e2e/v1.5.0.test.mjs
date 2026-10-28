@@ -132,12 +132,17 @@ const perf = P.get('stockperf').last();
 assert(perf.data.bars.length > 0 && perf.data.bars.every((b) => Number.isFinite(b.pct)), `performance bars (${perf.data.bars.length})`);
 
 // ---- Settings icons
-CA.UI.Menu.openPage('settings');
-await sleep(50);
-// v2.15: options are tiles (and chips in the All options index)
-const rows = [...doc.querySelectorAll('#CookieMgrMenu .ca-row-option, #CookieMgrMenu .ca-opt')];
+// v2.15: options are tiles (and chips in the All options index); v3.51: over the Settings page's tabs
+const rows = [];
+let titled = 0;
+for (const tab of ['general', 'store', 'data', 'all']) {
+  CA.UI.Menu.openPage(`settings:${tab}`);
+  await sleep(50);
+  rows.push(...doc.querySelectorAll('#CookieMgrMenu .ca-row-option, #CookieMgrMenu .ca-opt'));
+  titled += doc.querySelectorAll('#CookieMgrMenu .ca-card-title .ca-card-ico').length;
+}
 assert(rows.length > 5 && rows.every((r) => r.querySelector('.ca-row-ico svg, .ca-row-ico .ca-ico-cookie, .ca-opt-ico svg')), `every settings row has an icon (${rows.length})`);
-assert(doc.querySelectorAll('#CookieMgrMenu .ca-card-title .ca-card-ico').length >= 5, 'card titles have icons');
+assert(titled >= 5, 'card titles have icons');
 assert(doc.querySelector('.ca-index [data-key="graphActiveTime"]'), 'Active time option in the Settings index (v2.15: it lives on the Graphs page)');
 
 // ---- sidebar under the cookie banner
