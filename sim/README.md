@@ -1,6 +1,6 @@
 # CookieMgr simulator
 
-*v0.5.0 (in step with add-on v3.34.0) — versioned apart from the add-on (`sim-v*` tags; `SIM_VERSION` in `sim.mjs`; [CHANGELOG](CHANGELOG.md)).*
+*v0.6.0 (in step with add-on v3.36.0) — versioned apart from the add-on (`sim-v*` tags; `SIM_VERSION` in `sim.mjs`; [CHANGELOG](CHANGELOG.md)).*
 
 A Cookie Clicker simulator for trying out strategies over long timescales — written in CookieMgr's
 own words, so what works here can be pasted into the add-on and run on the real game.
@@ -208,6 +208,11 @@ tests/sim/           the simulator's tests (part of npm test; SKIPPED where the 
   `models/garden.mjs`: over 28 simulated hours the real game averaged **+48.9%** golden cookie
   frequency, the model **+48.4%** (planting 12.5 vs 11.7 an hour — the difference is the first 20).
   30 hours of game took 400 s.
+- **The Garden page's model holds up in the real game.** `experiment garden-frequency-exact` keeps each of
+  its gardeners in the game's garden code (Farm level 8, 1000 h × 3 seeds, fps 1) and compares: every
+  mean within a point of the model's, and the share of time at +100% or more within 1.5 points. It caught
+  one model bug (a nursetulip's CpS cost is boosted by the nursetulips next to it: 8 tulips cost ×0.886,
+  not ×0.904), fixed in v0.6.0.
 - **The Full-garden replanter does better replanting just before a tick.** `experiment
   garden-replant-modes` (level-6 golden clover field, 24 h × 4 seeds each, the add-on's built-ins):
 
