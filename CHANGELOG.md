@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 3.41.1 — 2026-10-28
+
+- Spelling is American English throughout: the add-on's text, tooltips, settings and docs (colour → color,
+  favourite → favorite, neighbour → neighbor, customise → customize, centre → center, labelled → labeled,
+  greyed → grayed, cancelled → canceled, behaviour → behavior). The statistic words are now `item.color()` and
+  `item.colorOf(n)`, and statistic code sets `color`; the old `item.colour()`, `item.colourOf(n)` and `colour` still
+  work. Saved settings, option ids, saved statistics and code and API names keep their spelling.
+
 ## 3.41.0 — 2026-10-28
 
 - **Widget settings show what each choice looks like.** The Shows section of a widget's settings is now a picker of

@@ -2,16 +2,16 @@
 // game's own rules (minigameGarden.js M.logic), asking the game for its recipes (M.getMuts) rather than
 // copying them:
 //
-//   each tick, each empty unlocked tile looks at its 8 neighbours — how many of each plant, how many of
+//   each tick, each empty unlocked tile looks at its 8 neighbors — how many of each plant, how many of
 //   each mature — and M.getMuts lists what could grow, each with a chance. Every entry is drawn: a weed
 //   also needs a draw under the soil's weed multiplier, a weed or fungus one under the tile's boost
 //   (plotBoost[2]); one of the entries that came up grows (picked evenly — a plant listed twice counts
 //   twice). That repeats `loops` times a tick (wood chips 3, × the Supreme Intellect aura, randomly
-//   rounded; × M.loopsMult), each time able to replace the last. A tile with no neighbours at all can
+//   rounded; × M.loopsMult), each time able to replace the last. A tile with no neighbors at all can
 //   grow meddleweed instead (0.2% × weed multiplier × boost, once a tick).
-//   The tick ages the plants in reading order first — a neighbour above or to the left of a tile has
+//   The tick ages the plants in reading order first — a neighbor above or to the left of a tile has
 //   already aged when the tile looks (it may have just matured, or died of old age), one below or to
-//   the right hasn't: so for those four neighbours each outcome is weighed by its chance.
+//   the right hasn't: so for those four neighbors each outcome is weighed by its chance.
 //
 // What's left out (all rare, and none can be worked out from here): a plant spreading onto a tile
 // this same tick next to another, and contamination of planted tiles.
@@ -49,7 +49,7 @@ CA.Mutations = (() => {
   const dragonBoost = () => 1 + 0.05 * (typeof Game.auraMult === 'function' ? Game.auraMult('Supreme Intellect') : 0);
 
   /**
-   * A neighbour's possible states once the tick has aged it: [{ p, key, mature }] (key null: died).
+   * A neighbor's possible states once the tick has aged it: [{ p, key, mature }] (key null: died).
    * `aged`: whether the tick ages it before the tile looks (above, or left on the same row).
    */
   function states(M, boost, nx, ny, aged) {
@@ -113,7 +113,7 @@ CA.Mutations = (() => {
     if (M.plot[y][x][0] > 0) return null;
     const c = ctx || context(M);
     const boost2 = (c.boost[y] && c.boost[y][x] && c.boost[y][x][2]) ?? 1;
-    // the neighbours' states, and every combination of them (the aged ones can be in two or three)
+    // the neighbors' states, and every combination of them (the aged ones can be in two or three)
     let combos = [{ p: 1, neighs: {}, neighsM: {}, any: 0 }];
     OFFSETS.forEach(([dx, dy]) => {
       const nx = x + dx;
@@ -140,7 +140,7 @@ CA.Mutations = (() => {
         add('meddleweed', cb.p * clamp01(0.002 * c.weedMult * boost2));
         return;
       }
-      // the game's own recipes, for these neighbours (every plant counted, as the game does)
+      // the game's own recipes, for these neighbors (every plant counted, as the game does)
       const neighs = { ...c.zero, ...cb.neighs };
       const neighsM = { ...c.zero, ...cb.neighsM };
       const muts = M.getMuts(neighs, neighsM) || [];
@@ -167,7 +167,7 @@ CA.Mutations = (() => {
    * The tiles' boosts the next tick will work with: the tick first rebuilds M.plotBoost from the plot as
    * it is then (computeBoostPlot) — so the game's own function is run here too, but on a grid of our own:
    * M.plotBoost is swapped for a fresh one for the call and the game's put back (whatever happens), as
-   * the game's live boosts (what plants do to their neighbours' effects) must only change at a tick.
+   * the game's live boosts (what plants do to their neighbors' effects) must only change at a tick.
    */
   function nextBoost(M) {
     const fresh = () => Array.from({ length: 6 }, () => Array.from({ length: 6 }, () => [1, 1, 1]));

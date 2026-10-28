@@ -8,7 +8,7 @@
 //   the chart     this cycle's cumulative chance, over the time since the last one left (0 → the
 //                 latest it can come): a line sweeps left to right at now (the time since, at its
 //                 top), a dashed one at the expected moment (how long until it), and dashed ones
-//                 across at the curve's height at each (labelled);
+//                 across at the curve's height at each (labeled);
 //                 hover it for the moment under the pointer
 //   the bars      under the chart, on its axis: each effect that ran since the last one left — ended
 //                 ones dimmed — from when it started to when it ends, with what it multiplies your
@@ -41,7 +41,7 @@ CA.UI.SpawnView = (() => {
   /** A multiplier, short: ×777, ×12.3, ×1.85, ×0.5. */
   const mx = (m) => (!Number.isFinite(m) ? '?' : m >= 100 ? String(Math.round(m)) : m >= 10 ? String(Math.round(m * 10) / 10) : String(Math.round(m * 100) / 100));
 
-  /** An effect's bar colour: what it multiplies. */
+  /** An effect's bar color: what it multiplies. */
   const buffKind = (b) => (b.click > 1 ? 'click' : b.cps > 1 ? 'up' : b.cps < 1 || b.click < 1 ? 'down' : 'other');
 
   /**
@@ -144,7 +144,7 @@ CA.UI.SpawnView = (() => {
    * This cycle's chart: x is the time since the last one left, 0 → the latest it can come; the curve,
    * the chance one has come by then (0 → 100%); dashed lines at the expected moment and across at the
    * curve's height there; the now line where the cycle is,
-   * its height labelled — and under it, on the same axis, each effect running (golden cookies).
+   * its height labeled — and under it, on the same axis, each effect running (golden cookies).
    * d: CA.Timers.distribution's (not spawned). opts: width, height, hover, lane — as chart()'s.
    */
   function cycleChart(type, d, effects = [], opts = {}) {
@@ -229,7 +229,7 @@ CA.UI.SpawnView = (() => {
         : '';
       const label = `${esc(b.name)} · ×${mx(m)} income · ${ended ? 'ended' : when(b.secs)}${end > span + 0.5 ? ' →' : ''}`;
       const tx = Math.min(X(from) + 3, x1 - 150);
-      // in the effect's own colour, as the Effect timers widget draws it (ui/effectTimers.js)
+      // in the effect's own color, as the Effect timers widget draws it (ui/effectTimers.js)
       const tint = CA.UI.EffectTimers ? ` ca-sp-tinted" style="--c:${CA.UI.EffectTimers.colorOf(b)}` : '';
       bars +=
         `<g class="ca-sp-lane ${buffKind(b)}${ended ? ' ended' : ''}${tint}" data-tip="${esc(`${b.name}: ×${mx(m)} your income${why}; ${ended ? `ended ${when(-b.endsIn)} ago` : `${when(b.secs)} left`}`)}">` +

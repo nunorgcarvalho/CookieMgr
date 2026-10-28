@@ -32,7 +32,7 @@ CA.UI.CastTiers = (() => {
   };
   const comboIcons = (c) => c.map(effectIco).join('<span class="ca-ct-plus">+</span>');
   const span = (s) => (s === 0 ? 'now' : Number.isFinite(s) ? CA.Format.span(s) : 'never');
-  /** A tier's colour: by its place, lowest threshold first. */
+  /** A tier's color: by its place, lowest threshold first. */
   function colorOf(p, i) {
     const rank = T()
       .ordered(p)

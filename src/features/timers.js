@@ -368,7 +368,7 @@ CA.Timers = (() => {
       const em = effectiveMult(b.name);
       Object.assign(e, { type: b.type, icon: b.icon, cps: b.cps, click: b.click, mult: em ? em.mult : b.cps, rate: em ? em.rate : 0, start: Math.min(e.start, start), end: now + b.secs * 1000 });
     });
-    // gone before its time (cancelled, or the save reloaded): it ended now
+    // gone before its time (canceled, or the save reloaded): it ended now
     log.forEach((e) => {
       if (e.end > now && !live.some((b) => b.name === e.name)) e.end = now;
     });

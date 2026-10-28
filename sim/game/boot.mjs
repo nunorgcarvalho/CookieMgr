@@ -173,7 +173,7 @@ export async function bootGame({ seed = 1, fps = 30, start, save = null, quiet =
   // as index.html, then window.onload's launch steps, without the image loader
   run(read('main.js'), 'main.js');
   // The game swaps Math.random for a seeded one for what must be repeatable (a golden cookie's or
-  // Force the Hand of Fate's outcome comes from Game.seed — that's real game behaviour, kept), then
+  // Force the Hand of Fate's outcome comes from Game.seed — that's real game behavior, kept), then
   // calls Math.seedrandom() to go back to "random" — reseeded from the clock. Here that means
   // back to the simulation's own seeded generator, so a run depends on its seed.
   run(

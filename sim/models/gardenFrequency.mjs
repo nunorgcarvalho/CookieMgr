@@ -137,7 +137,7 @@ export function runGarden(
     sCps += cps * d;
     if (gc > peak) peak = gc;
     if (soil === 'fert') fertT += d;
-    // the golden zone: every nursetulip fully grown (and so boosting its neighbours all it can)
+    // the golden zone: every nursetulip fully grown (and so boosting its neighbors all it can)
     const zone = T.length > 0 && T.every(mature);
     if (zone) {
       zoneT += d;

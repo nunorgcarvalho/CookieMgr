@@ -1,5 +1,5 @@
 // The Effect timers widget: one slim bar per effect running (Frenzy, Click frenzy, a building special,
-// Elder frenzy, Clot…), in the effect's own colour with the game's own icon, draining as it runs out.
+// Elder frenzy, Clot…), in the effect's own color with the game's own icon, draining as it runs out.
 // On the bar: its name, what it multiplies (×7 CpS, ×777 clicks) and the time left; beside it, the
 // chance a golden cookie comes before it ends (CA.Timers.buffsWithGolden; off unless ticked in its
 // settings) — whether it can still be stacked. A full bar is the effect's own length, or (a setting)
@@ -8,7 +8,7 @@
 // effects stays short; it starts see-through (the Widgets engine's Background setting),
 // the text outlined so it reads over the game.
 //
-// Shared with other views of the effects: colorOf(buff) (its colour), iconHtml(buff) (its 16 px game
+// Shared with other views of the effects: colorOf(buff) (its color), iconHtml(buff) (its 16 px game
 // icon, .ca-et-ico), isBad(buff) — buff as CA.Timers.buffs() gives it.
 
 CA.UI = CA.UI || {};
@@ -16,7 +16,7 @@ CA.UI = CA.UI || {};
 CA.UI.EffectTimers = (() => {
   const esc = (s) => CA.Util.escapeHtml(s);
   const F = () => CA.Format;
-  // each effect's colour, by the game's buff type; anything else (a mod's, a new one) gets one from its name
+  // each effect's color, by the game's buff type; anything else (a mod's, a new one) gets one from its name
   const COLORS = {
     frenzy: '#f0b429',
     'click frenzy': '#3d9cf0',
@@ -155,7 +155,7 @@ CA.UI.EffectTimers = (() => {
       short: 'A draining bar per effect running',
       name: 'Effect timers',
       icon: 'clock',
-      desc: 'A slim bar per effect running (Frenzy, Click frenzy, building specials, Clot…) in its own colour and icon: what it multiplies and its time left (and, if you tick it, the chance a golden cookie comes before it ends). See-through until you hover it.',
+      desc: 'A slim bar per effect running (Frenzy, Click frenzy, building specials, Clot…) in its own color and icon: what it multiplies and its time left (and, if you tick it, the chance a golden cookie comes before it ends). See-through until you hover it.',
       width: 240,
       resize: 'free',
       single: false,

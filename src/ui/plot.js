@@ -53,7 +53,7 @@ CA.UI.Plot = (() => {
     return `<div class="ca-tip-row${strong ? ' strong' : ''}">${swatch(color, dash)}<b>${esc(name)}</b><span>${esc(value)}</span></div>`;
   }
   /**
-   * Several figures on one row, separated by a centred dot — with a unit they all share written
+   * Several figures on one row, separated by a centered dot — with a unit they all share written
    * once at the end: ["1.2K/s", "3.4M/s"] → "1.2K · 3.4M/s".
    */
   function joinFigures(values) {
@@ -174,7 +174,7 @@ CA.UI.Plot = (() => {
     return bars;
   }
 
-  /** Points for a line through bar values (at each bar's centre); `fn(bar)` → number|undefined. */
+  /** Points for a line through bar values (at each bar's center); `fn(bar)` → number|undefined. */
   function linePoints(bars, fn) {
     const pts = [];
     bars.forEach((b) => {
@@ -196,8 +196,8 @@ CA.UI.Plot = (() => {
   }
 
   /**
-   * Centered moving average: each value becomes the weighted mean of every value whose centre
-   * lies within ±half of its own centre. Weights are the active seconds each bar covers, so a
+   * Centered moving average: each value becomes the weighted mean of every value whose center
+   * lies within ±half of its own center. Weights are the active seconds each bar covers, so a
    * smoothed rate is exactly (cookies over the window) ÷ (seconds over the window). Values that
    * aren't numbers are left alone and don't count.
    */
@@ -985,7 +985,7 @@ CA.UI.Plot = (() => {
       ctx.font = FONT;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
-      // wall-clock axis: align ticks to the local clock; active axis: evenly spaced, labelled
+      // wall-clock axis: align ticks to the local clock; active axis: evenly spaced, labeled
       // with the wall-clock time at that point
       const tz = v.active ? 0 : new Date(v.x0).getTimezoneOffset() * 60000;
       for (let x = Math.ceil((v.x0 - tz) / stepMs) * stepMs + tz; x <= v.x1; x += stepMs) {

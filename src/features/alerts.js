@@ -5,12 +5,12 @@
 //   conditions  fortune (a fortune cookie is in the news ticker) · lumpRipe (the sugar lump is ripe) —
 //               with the ones there already: shimmer (a golden / wrath cookie, a reindeer on screen),
 //               magicPct (magic at a % of the maximum)
-//   actions     alert.flash(colour) · alert.sound(sound) · alert.notify(text, where) — where: the event
+//   actions     alert.flash(color) · alert.sound(sound) · alert.notify(text, where) — where: the event
 //               log only, the game's notifications, a desktop notification, or both (each logs an
 //               "Alert" event)
 //   built-ins   "When…" macros, one per alert (Macros page → Alerts — switch on the ones you want): a
 //               golden cookie, a wrath cookie, a reindeer, a fortune cookie, magic full, the sugar lump ripe — each
-//               flashes, plays a sound and notes it; its card picks the colour, the sound, where to note
+//               flashes, plays a sound and notes it; its card picks the color, the sound, where to note
 //   the tab     while a golden (or wrath) cookie is on screen the tab's title starts with ✦ (⚠) and its
 //               icon becomes the cookie — so you see it from another tab (option alertTab)
 
@@ -41,7 +41,7 @@ CA.Alerts = (() => {
 
   // ---- outputs ------------------------------------------------------------------------------------
 
-  /** Flashes the screen in a colour (a full-screen layer that fades out). */
+  /** Flashes the screen in a color (a full-screen layer that fades out). */
   function flash(colour) {
     const c = COLOURS.find((x) => x.v === colour) || COLOURS[0];
     if (typeof document === 'undefined' || !document.body || !document.createElement) return 0;

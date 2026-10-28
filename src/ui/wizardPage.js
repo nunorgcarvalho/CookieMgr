@@ -61,7 +61,7 @@ CA.UI.WizardPage = (() => {
             '<div class="ca-spell-meta" data-wiz-meta></div>' +
             '<div class="ca-spell-actions">' +
             C().button(`${I('wizard', 12)} Cast`, `data-ca="macro-run" data-id="${s.id}" data-wiz-cast-btn`, 'ca-btn-small ca-btn-run') +
-            `<button type="button" class="ca-iconbtn ca-fav" data-ca="macro-fav" data-id="${s.id}" data-wiz-fav data-tip="Favourite: its own button on the left panel">${I('starOutline', 14)}</button>` +
+            `<button type="button" class="ca-iconbtn ca-fav" data-ca="macro-fav" data-id="${s.id}" data-wiz-fav data-tip="Favorite: its own button on the left panel">${I('starOutline', 14)}</button>` +
             '</div></div>'
         )
         .join('') +

@@ -1,6 +1,6 @@
 // CookieMgr's own payback numbers (src/features/payback.js) against Cookie Monster's, in the real
 // game with Cookie Monster loaded as a mod: every building ×1 / ×10 / ×100 and every upgrade in the
-// store — bonus income, payback period, colour — in several states of the game (early, mid, with
+// store — bonus income, payback period, color — in several states of the game (early, mid, with
 // buildings not owned yet, a Frenzy, a pantheon god, heavenly upgrades).
 import { makeAssert } from '../harness/game.mjs';
 import { simWithCookieMonster, settle } from '../harness/cmSim.mjs';
@@ -42,7 +42,7 @@ function differences(counted) {
       n++;
       if (!close(a.bonus, b.bonus)) bad.push(`${name} ×${bulk} bonus ${fmt(a.bonus)} vs CM ${fmt(b.bonus)}`);
       else if (!close(a.pp, b.pp, 1e-5)) bad.push(`${name} ×${bulk} PP ${fmt(a.pp)} vs CM ${fmt(b.pp)}`);
-      else if (a.colour !== String(b.colour).toLowerCase()) bad.push(`${name} ×${bulk} colour ${a.colour} vs CM ${b.colour}`);
+      else if (a.colour !== String(b.colour).toLowerCase()) bad.push(`${name} ×${bulk} color ${a.colour} vs CM ${b.colour}`);
     }
   }
   let u = 0;

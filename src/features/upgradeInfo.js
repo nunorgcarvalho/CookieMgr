@@ -10,7 +10,7 @@
 //                 tiered ones, its grandma, its synergies (once everything else they need is there)
 //   ref           an upgrade as a hoverable name: its icon and name, marked for the info card on hover
 //   worth         what it would add if you bought it now (features/payback.js — measured even when
-//                 it isn't in the store yet), its payback period and colour
+//                 it isn't in the store yet), its payback period and color
 //
 // Nothing here changes the game; nothing reads the seed.
 
@@ -172,7 +172,7 @@ CA.UpgradeInfo = (() => {
 
   const price = (u) => (typeof u.getPrice === 'function' ? u.getPrice() : u.basePrice || 0);
   /**
-   * What it would add bought now: { price, bonus, mouse, gain, pp, colour, won } — null for one owned,
+   * What it would add bought now: { price, bonus, mouse, gain, pp, color, won } — null for one owned,
    * a heavenly upgrade, a switch.
    */
   function worth(name) {

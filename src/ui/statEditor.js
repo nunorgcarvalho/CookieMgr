@@ -5,7 +5,7 @@
 //
 //   head      the label, what it shows; Save, Cancel — Reset (a built-in you've changed: back to the
 //             original), Delete (yours), Copy as text
-//   fields    its code name (stat.<name>(item)), what it's about, how its value reads, its colour,
+//   fields    its code name (stat.<name>(item)), what it's about, how its value reads, its color,
 //             its group, whether it shows as a tooltip line or as a warning (a "!" in the store, a tag
 //             in the ⚠ line) — a built-in keeps its name, what it's about, its group and how it shows
 //   code      the statistic's code, checked as a statistic as you type; the library beside it lists
@@ -28,13 +28,13 @@ CA.UI.StatEditor = (() => {
   const KEY = 'stat'; // the code editor's key
   const COLOURS = [
     ['none', 'none'],
-    ['payback', 'its payback colour'],
+    ['payback', 'its payback color'],
     ...['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'].map((c) => [c, c]),
   ];
   const SCOPE_NAMES = { item: 'a building or an upgrade', building: 'a building', upgrade: 'an upgrade', game: 'the game' };
   const NEW_SOURCE = '# what it works out about the building or upgrade (item)\nreturn item.price() / cps()';
 
-  let draft = null; // { id, builtin, label, key, desc, scope, format, colour, group, source }
+  let draft = null; // { id, builtin, label, key, desc, scope, format, color, group, source }
   let error = '';
   let item = 'best'; // what the result is about
   let sharing = false; // the "as text" panel open
@@ -141,8 +141,8 @@ CA.UI.StatEditor = (() => {
       (trace
         ? `<div class="ca-se-trace"><div class="ca-se-tr-head">What it did <em>${r.steps} step${r.steps === 1 ? '' : 's'}</em></div>${trace}</div>`
         : '') +
-      (r.vars && (r.vars.label !== undefined || r.vars.note !== undefined || r.vars.colour !== undefined)
-        ? `<div class="ca-hint">sets ${['label', 'note', 'colour'].filter((k) => r.vars[k] !== undefined).join(', ')}</div>`
+      (r.vars && (r.vars.label !== undefined || r.vars.note !== undefined || r.vars.color !== undefined || r.vars.colour !== undefined)
+        ? `<div class="ca-hint">sets ${['label', 'note', 'color'].filter((k) => r.vars[k] !== undefined || (k === 'color' && r.vars.colour !== undefined)).join(', ')}</div>`
         : '')
     );
   }
@@ -165,7 +165,7 @@ CA.UI.StatEditor = (() => {
           ['yes', 'a warning'],
         ],
         d.warn ? 'yes' : '',
-        `${off} data-tip="A warning marks the store’s items it has something to show about, with a “!” in its colour, and a tag in their tooltips"`
+        `${off} data-tip="A warning marks the store’s items it has something to show about, with a “!” in its color, and a tag in their tooltips"`
       )}</label>` +
       `<label class="ca-field"><span>About</span>${sel(
         'scope',
@@ -180,7 +180,7 @@ CA.UI.StatEditor = (() => {
         ST().FORMATS.map((f) => [f.id, f.name]),
         d.format
       )}</label>` +
-      `<label class="ca-field"><span>Colour</span>${sel('colour', COLOURS, d.colour)}</label>` +
+      `<label class="ca-field"><span>Color</span>${sel('colour', COLOURS, d.colour)}</label>` +
       `<label class="ca-field"><span>Group</span>${sel('group', [['', '—']].concat(ST().GROUPS.map((g) => [g, g])), d.group, off)}</label>` +
       `<code class="ca-st-call" data-se-call data-tip="Use it in a macro or another statistic">${esc(call)}</code>` +
       '</div>'
@@ -199,7 +199,7 @@ CA.UI.StatEditor = (() => {
       `<input type="text" class="ca-ed-name" maxlength="80" data-se="label" value="${esc(d.label)}" placeholder="Name your statistic…">` +
       `<input type="text" class="ca-ed-desc" maxlength="200" data-se="desc" value="${esc(d.desc)}" placeholder="What it shows (optional)"${d.builtin ? ' disabled' : ''}>` +
       (d.builtin
-        ? '<span class="ca-ed-fixed-sub">a built-in — change its label, code, how it reads and its colour; Reset brings back the original</span>'
+        ? '<span class="ca-ed-fixed-sub">a built-in — change its label, code, how it reads and its color; Reset brings back the original</span>'
         : '') +
       '</div>' +
       '<div class="ca-ed-actions">' +

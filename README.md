@@ -318,7 +318,7 @@ forever:
   `pantheon.swaps()`; `pantheon.slot(god, slot)` (diamond, ruby, jade, or none).
 - **Widget layouts** — `widgets.profile(name)` (a saved layout from the Widgets page, its id or name),
   `widgets.profileActive(name)`, `widgets.activeProfile()`, `widgets.profiles()`.
-- **Macros** — `macro.isOn(id)`, `switch on / off …`. The editor colours the code, numbers the lines,
+- **Macros** — `macro.isOn(id)`, `switch on / off …`. The editor colors the code, numbers the lines,
 lists any problems as you type (click one to jump to it), indents for you (Tab, and Enter after a `:`), and while
 the macro runs lights up the lines it's on and shows what it's checking. Every pass (its interval) moves each branch
 on as far as it can without waiting; reaching the end (or `stop`) switches it off. Actions:
@@ -352,7 +352,7 @@ CookieMgr works payback periods out itself — the numbers Cookie Monster shows,
 purchase adds is asked of the game: CookieMgr makes the change (one more building, ten, a hundred, an upgrade
 bought), runs the game's own CpS calculation, reads the result and undoes it — so the numbers are exact for any game
 version, and it counts the achievements the purchase would win (their milk makes kittens stronger), as Cookie Monster
-does. The payback period is Cookie Monster's: **time until you can afford it + price ÷ the CpS it adds**. Colours
+does. The payback period is Cookie Monster's: **time until you can afford it + price ÷ the CpS it adds**. Colors
 follow Cookie Monster's too: blue (better than the best building), green (the best building), yellow / orange / red
 (within the 10 / 20 / 30 best building payback periods, counting ×1, ×10 and ×100), purple (worse), gray (never pays
 back). It's checked against Cookie Monster itself in the real game (the simulator's parity test): every building at
@@ -371,32 +371,32 @@ it has done and when it last did something (or that it can't run right now).
 **Hotkeys** — every macro can have one; one key can trigger several macros at once (binding a key that's in use shares
 it). Modifiers work (`Shift + G`): click a key chip and press the new key (`Esc` cancels, `Backspace` clears).
 
-**Favourites** — the ★ on a macro gives it its own button on the left panel (see Widgets).
+**Favorites** — the ★ on a macro gives it its own button on the left panel (see Widgets).
 
 ### Payback
 
 The **Payback** page lays out what every purchase is worth (see [Payback periods](#payback-periods)): the **best buy**
 of all (building or upgrade), the best building and the best upgrade, and when you can afford each; then every
-building with a cell for **×1**, **×10** and **×100** — coloured by its payback colour, with its payback period, the
+building with a cell for **×1**, **×10** and **×100** — colored by its payback color, with its payback period, the
 CpS it adds and its price (hover for the achievements it would win; **click a cell to buy that many**) — and how many
-more win its next achievement; the store's upgrades as tiles ringed in their colour, best first (click to buy); and
+more win its next achievement; the store's upgrades as tiles ringed in their color, best first (click to buy); and
 its options: the minimum bulk, count your wrinklers in the bank (none, all, the fattest), "best = what you can
 afford", and a "cheap enough to just buy" floor in seconds of CpS. Switches show among the upgrades only when their
-filter chip is on, greyed.
+filter chip is on, grayed.
 
 The **actual income** chip shows every payback period by what you've actually been taking in instead of by CpS —
 clicking, golden cookies, wrinklers, everything baked, as the Recorder measures it (the chip says how it compares:
 ×1.42 your CpS). By actual income, a payback period is **PP × CpS ÷ A**, A your actual income over the last stretch
 of play as long as the period itself (at least 5 minutes) — what you made over a wait that long is the best guess for
-it. An active player's purchases pay back sooner than CpS says; one away from the game, later. The colours stay CpS's.
+it. An active player's purchases pay back sooner than CpS says; one away from the game, later. The colors stay CpS's.
 
 In the **store** itself (Settings → Store, each can be turned off): each building's price shows in its payback
-colour for what a click buys now (×1, ×10, ×100, or to the next multiple with Round to multiples on), each upgrade
-has a coloured dot in its corner, and under the game's own building and upgrade tooltips a CookieMgr block adds the
+color for what a click buys now (×1, ×10, ×100, or to the next multiple with Round to multiples on), each upgrade
+has a colored dot in its corner, and under the game's own building and upgrade tooltips a CookieMgr block adds the
 CpS it adds (and its share of your CpS), its payback period (and by actual income, once a minute of play is
 recorded), when you can afford it (green now, red not yet), a building's share of your production, how many more win
-its next achievement (in the payback colour of buying that many) and the next upgrade more of it unlocks —
-and, with **Warnings** on, a coloured "!" on the item and a ⚠ line in its tooltip when a warning applies: by default,
+its next achievement (in the payback color of buying that many) and the next upgrade more of it unlocks —
+and, with **Warnings** on, a colored "!" on the item and a ⚠ line in its tooltip when a warning applies: by default,
 when buying it would take your bank below what a Lucky! (in a Frenzy too) or Conjure Baked Goods needs to pay its
 most. Warnings are statistics too (below): change a bank warning's `keep` (how many times that bank to keep), turn
 one off, or write your own.
@@ -410,7 +410,7 @@ in a building's) too. The Payback page keeps the block's two switches.
 
 **Every line is a statistic**: a few lines of algorithmic code (the language of [Macros](#macros)) that only read the
 game and end with `return` — in a tooltip, `item` is the building or upgrade hovered and the `item.*` words read it
-(`item.price()`, `item.gain()`, `item.payback()`, `item.colour()`, `item.bulk()`, `item.wins()`, `item.share()`,
+(`item.price()`, `item.gain()`, `item.payback()`, `item.color()`, `item.bulk()`, `item.wins()`, `item.share()`,
 `item.paybackOf(n)`…). The built-in lines are written that way; for example, *Affordable* is
 
 ```
@@ -422,7 +422,7 @@ if finite(s):
 return "not at this CpS"
 ```
 
-A statistic may set `label` (its line's label), `note` (small print after the value) and `colour` (a payback colour,
+A statistic may set `label` (its line's label), `note` (small print after the value) and `color` (a payback color,
 or a list of them for a list of values); with no `return` it shows nothing. It can't act, wait or loop without end
 (no actions, `wait`, `while`, `repeat until`, `forever`, `parallel`, `stop`) and stops after 5,000 steps. Every
 statistic is also a value word — `stat.payback(Farm)`, `stat.next(item)` — that macros and other statistics can use.
@@ -430,7 +430,7 @@ Text words build what a line says: `fmt.number(x)`, `fmt.short(x)`, `fmt.time(s)
 `finite(x)` and `known(x)` are yes / no.
 
 **A warning is a statistic that shows as a warning**: when it has something to show about an item, the item gets a
-"!" in the store (in the colour of the first warning that applies, in the order you chose) and a tag in its tooltip's
+"!" in the store (in the color of the first warning that applies, in the order you chose) and a tag in its tooltip's
 ⚠ line with what it returned. The built-in *Lucky! bank* is
 
 ```
@@ -441,7 +441,7 @@ if cookies() >= need and after < need:
   return "−" + fmt.number(need - after)
 ```
 
-**Upgrades: best first** orders the store's upgrades by colour, then payback period
+**Upgrades: best first** orders the store's upgrades by color, then payback period
 (switches last). The store's **Best buy** sort ranks buildings by what a click buys — or the minimum bulk, if more.
 
 ### Tooltips
@@ -452,14 +452,14 @@ The **Tooltips** page (next to Macros) is the store tooltip's block and every st
   upgrade, either, the game), **its value now** for the previewed building, how a value word reads, and ↑ ↓ ✕ — or drag
   a row. Beside it, two live previews drawn by the tooltip's own code: a building you pick, and the best upgrade. The
   block's switch (Payback in tooltips) is here too, and **Warnings**: a switch, and the warnings in use in order (each
-  with its colour and value now; ↑ ↓ ✕, add one, **Reset** to the three bank warnings).
+  with its color and value now; ↑ ↓ ✕, add one, **Reset** to the three bank warnings).
 - **Statistics**: a card per statistic — built-in and yours — with its value for the previewed building (an upgrade's:
-  for the best upgrade), what it shows, its code (coloured, as in the editor) and how to call it
+  for the best upgrade), what it shows, its code (colored, as in the editor) and how to call it
   (`stat.payback(item)`). Filter by group (Payback, Production, Achievements, Bank), **Warnings**, **Yours** or **On
   screen**, and search labels, descriptions and code. One click adds a statistic to the tooltip or takes it out (a
   warning: uses it or stops it); **Duplicate** makes
   a copy that's yours; yours can be deleted (its tooltip lines go too); ☆ puts it on the left panel as a widget.
-  **New**, **Edit** (yours) and **Customise** (a built-in) open the editor; **Paste** adds one copied as text.
+  **New**, **Edit** (yours) and **Customize** (a built-in) open the editor; **Paste** adds one copied as text.
 - **Values**: every word a statistic can read — the `item.*` words first, then statistics, text, and the game's —
   with its signature, what it is and its value now (for the previewed building).
 
@@ -467,8 +467,8 @@ The **Tooltips** page (next to Macros) is the store tooltip's block and every st
 
 - the label and what it shows; its **code name** (`stat.<name>(item)` in macros and other statistics — from the label
   until you give it one, and kept when you rename it), what it's **about** (a building, an upgrade, either, the game),
-  how its value **reads** (as it reads, a number, a time, a chance, a payback period, text), its **colour** (the
-  item's payback colour, or none) and its **group**;
+  how its value **reads** (as it reads, a number, a time, a chance, a payback period, text), its **color** (the
+  item's payback color, or none) and its **group**;
 - the **code**, checked as a statistic as you type (no actions or waits; `item.*` only in one about an item), with
   the **library** beside it listing what a statistic can use (the item's words first) and **knobs** for its top-level
   `name = 0.5` lines;
@@ -478,7 +478,7 @@ The **Tooltips** page (next to Macros) is the store tooltip's block and every st
 
 **Save** (refused while the code has a problem), **Cancel**, **As text** (copies it — a few `# label: …` lines, then the
 code — to share or keep; **Paste** on the page adds it back), **Delete** (yours), and for a built-in **Reset** (back
-to the original: a built-in keeps its code name, what it's about and its group; its label, code, format and colour are
+to the original: a built-in keeps its code name, what it's about and its group; its label, code, format and color are
 yours to change).
 
 A **Statistic widget** (on the **Data** shelf of Add a widget, beside Quick stats and Latest events) shows one statistic live, as its tooltip line
@@ -528,7 +528,7 @@ CookieMgr adds to the game's own tooltips (each with its option):
   you haven't unlocked yet starred ★), and when the next tick is; under a seed's: the chance it grows somewhere at
   the next tick, on how many tiles, and how long that takes on average. A small chip on each empty tile shows the
   chance it grows something — gold when a new seed could. Worked out exactly from the game's own rules: the game's
-  recipes (M.getMuts) for the tile's eight neighbours, the soil's weed multiplier and the tile's weed/fungus
+  recipes (M.getMuts) for the tile's eight neighbors, the soil's weed multiplier and the tile's weed/fungus
   repellent, wood chips' three tries a tick (and Supreme Intellect), and the plants the tick ages before it reaches
   the tile — a parent that matures or dies this very tick counts as it will be. Checked against the game's own
   ticks, thousands of them.
@@ -596,7 +596,7 @@ plants spring up on average, and the chance one is a new seed. The game garden's
 tiles*, *Mutation odds in tooltips*) switch them here too.
 
 Beside it, the **Growth** chart shows your garden over time as stacked bars: how many of each seed were at each
-growth stage. Every seed has its own colour (close to its sprite) and its younger stages are darker shades of it, with
+growth stage. Every seed has its own color (close to its sprite) and its younger stages are darker shades of it, with
 mature plants at the bottom of each seed's stack — so as a crop grows, its bars brighten from the bottom up. **Show**
 switches between seed × stage, seeds only, and stages only; like the other charts it has window chips, "% of total",
 a tooltip with one row per seed ("Thumbcorn (bud / … / mature)"), and markers where a new seed was unlocked (also
@@ -773,7 +773,7 @@ always grab them again). Drag them anywhere; hover for × and ⚙ (its settings)
   heavenly chips, achievements, sugar lumps, golden cookies clicked, wrinklers, all-time baked).
 - **Latest events** — the newest entries in the event log, scrollable. Its settings choose how many to keep and which
   event types to show; add as many as you like (one for golden cookies, one for trades…).
-- **Minigames** — one small round widget each, in its minigame's colours: the ring is a timer, a short label sits
+- **Minigames** — one small round widget each, in its minigame's colors: the ring is a timer, a short label sits
   under it, hover for details, click to open the minigame. Unlocked ones only (others say "locked").
   - **Grimoire** — ring = magic; label = time until it's full, or until there's enough for a spell (or a fixed
     amount) you pick in its settings — a tick on the ring marks it, and it glows once there's enough.
@@ -794,7 +794,7 @@ always grab them again). Drag them anywhere; hover for × and ⚙ (its settings)
   were three widgets: Next golden cookie, Golden timeline and Golden cookie frequency; saved ones load as Golden
   cookies widgets with their old names as titles.)
 - **Effect timers** — a slim bar per effect running (Frenzy, Click frenzy, building specials, Dragon Harvest, Clot…),
-  each in its own colour with the game's own icon, draining as it runs out: its name, what it multiplies (×7 CpS,
+  each in its own color with the game's own icon, draining as it runs out: its name, what it multiplies (×7 CpS,
   ×777 clicks), the time left, and (ticked in its settings) the chance a golden cookie comes before it ends. Bad effects are striped.
   One line of text per effect, so a big combo stays short; it starts see-through. Its settings pick what to show, what a full
   bar is (the effect's own length, or a fresh Frenzy's for every bar — longer effects then fill theirs and are
@@ -811,7 +811,7 @@ Framed boxes (Quick stats, Latest events) are dragged by their title bar and fol
 from its bottom-right corner: buttons, round widgets and the status bar scale up or down keeping their shape, framed
 boxes take any width and height.
 
-**Settings:** a widget's ⚙ opens its settings on the Widgets page, scrolled into view, in the widget's own colour —
+**Settings:** a widget's ⚙ opens its settings on the Widgets page, scrolled into view, in the widget's own color —
 **Place** (a grid that snaps it to a corner, an edge or the middle of the left panel), **Look** (text size and size,
 with S / M / L / XL presets, or a title and a **Background**: Solid, Faint or None — see-through boxes keep their text
 outlined so it reads over the game, and fade in, title bar too, while you hover them) and
@@ -843,7 +843,7 @@ that names an upgrade or achievement.
 **Alerts** tell you when something worth catching appears — a golden cookie, a wrath cookie, a reindeer, a fortune
 cookie in the news, the Grimoire's magic full, the sugar lump ripe. Each is a built-in macro (Macros page → **Alerts**;
 switch on the ones you want) that, when it appears, flashes the screen, plays a sound and notes it — in the event log,
-or also as a game or desktop notification; its card picks the colour, the sound and where. They're made of pieces
+or also as a game or desktop notification; its card picks the color, the sound and where. They're made of pieces
 your own macros can use: the conditions `fortune` and `lumpRipe` (with `shimmer` and `magicPct`), and the actions
 `alert.flash(colour)`, `alert.sound(sound)` and `alert.notify(text, where)`. And while a golden cookie is on screen
 the tab's title starts with ✦ (a wrath cookie: ⚠) and its icon becomes the cookie, so you see it from another tab
@@ -902,7 +902,7 @@ applies. Turn this off in Settings if you'd rather check manually.
 ### Stock market
 
 In the Bank minigame, every stock box shows its trend (stable / slow or fast rise / slow or fast fall / chaotic) as a
-coloured symbol strip and tint, brighter while you hold the stock — no more hovering each box for the tooltip. Both the
+colored symbol strip and tint, brighter while you hold the stock — no more hovering each box for the tooltip. Both the
 badge and the tint can be switched off separately in Settings.
 
 A small toolbar sits right under the Bank minigame's own header, styled like the game's buttons: **Sell all stocks**
@@ -1027,7 +1027,7 @@ src/
     pantheon.js      the Pantheon's building blocks: which spirit is where, slotting them
     gardenHistory.js snapshots of the garden (seed × stage counts) for the Growth chart; seed unlock events
     shop.js          the building store: its sort (best buy, next achievement), rounding bulk buys up
-    payback.js       what buying is worth: bonus income asked of the game, payback periods and colours
+    payback.js       what buying is worth: bonus income asked of the game, payback periods and colors
     goldenMath.js    what golden cookies, spells and plants pay at their most, and the bank each needs
     wrinklers.js     what popping wrinklers gives back (the game's formula), the wrinkler bank
     prestige.js      levels if you ascended now, the next one, the rate, the CpS they'd add
@@ -1059,7 +1059,7 @@ src/
     codeEditor.js    the code editor (colouring, line numbers, problems, live lines) and its library
     gardenPage.js    the Garden page: the plot against the active profile, the auto-gardener: profiles, its four layers and their editors
     storeBar.js      the store toolbar (building sort, rounding to multiples)
-    storeInsight.js  the store with payback colours, and a CookieMgr block under the game's tooltips
+    storeInsight.js  the store with payback colors, and a CookieMgr block under the game's tooltips
     paybackPage.js   the Payback page: best buy, every building ×1/×10/×100, upgrades, options
     tooltipsPage.js  the Tooltips page: the tooltip's layout and previews, the statistics catalog, the Values
                      list; the Statistic widget

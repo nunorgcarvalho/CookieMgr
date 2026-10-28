@@ -106,7 +106,7 @@ const got = Object.entries(counts)
   .reduce((s, [, c]) => s + c, 0);
 assert(weedTiles.length >= 30 && Math.abs(got - expected) <= 4.5 * Math.sqrt(expected) + 1, `a bare plot: ${got} meddleweeds grown in ${N * 4} ticks, ${expected.toFixed(1)} expected`);
 
-// ---- the live garden is only read (v3.11.2): the boosts plants give their neighbours change at a tick,
+// ---- the live garden is only read (v3.11.2): the boosts plants give their neighbors change at a tick,
 // never because the odds were worked out — a nursetulip that matured since the last tick boosts nothing
 // until the next one, though the odds use what the next tick will see
 plant(['NA....', 'A.....', '......', '......', '......', '......'], { N: ['nursetulip', 1], A: mature('bakerWheat') }, 'fertilizer');

@@ -945,7 +945,7 @@ CA.Script = (() => {
   /**
    * Runs a statistic's blocks (compiled with { mode: 'stat' }) start to finish. `env`: its variables
    * to start with (item). → { returned, value, vars, steps, error } — vars: every variable as it ended
-   * (a statistic may set label, note, colour); error: what stopped it (the step limit). opts.trace:
+   * (a statistic may set label, note, color); error: what stopped it (the step limit). opts.trace:
    * also → trace, what each line did in order ([{ line, text }], the first TRACE_MAX), for the editor.
    */
   function runStat(flow, env = {}, opts = {}) {

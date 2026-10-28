@@ -1,6 +1,6 @@
 // CookieSimMgr's charts: lines over simulated time, drawn with the add-on's chart helpers
 // (CA.UI.Chart: canvas fitting, nice scales, label margins) and its hover box (.ca-tip in the
-// tooltip layer), in the add-on's colours. Log or linear y axis; bands (effects that were on) and
+// tooltip layer), in the add-on's colors. Log or linear y axis; bands (effects that were on) and
 // markers (golden cookies) under the lines.
 //
 //   const ch = SimChart.create(canvas);

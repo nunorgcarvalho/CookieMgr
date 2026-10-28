@@ -1,24 +1,24 @@
 // Statistics: named bits of algorithmic code (features/script.js) that work out one thing to show —
 // the lines under the store's tooltips (ui/storeInsight.js) are statistics, and so are yours.
 //
-//   a statistic   { id, key, label, desc, scope, format, colour, source, group, warn }
+//   a statistic   { id, key, label, desc, scope, format, color, source, group, warn }
 //                 scope: 'building' | 'upgrade' | 'item' (either) | 'game' — what it's about; in a
 //                 statistic about an item, `item` is the name of the building / upgrade, and the
 //                 item.* words read it (its price, what it adds, its payback period…)
 //                 source: code compiled as a statistic — it reads, never acts, and ends with
 //                 `return <value>` (no return, or "": nothing to show). It may set `label` (the line's
-//                 label instead of its own), `note` (small print after the value) and `colour` (a
-//                 payback colour for the value — or a list of them, one per item of a list)
+//                 label instead of its own), `note` (small print after the value) and `color` (a
+//                 payback color for the value — or a list of them, one per item of a list)
 //                 format: how the value reads — auto, number, time, chance, payback, text, upgrade
 //                 (an upgrade's name: its icon and name, its info card on hover — ui/upgradeTip.js)
-//                 colour: 'payback' — the value in the item's payback colour; or one colour (red…)
+//                 color: 'payback' — the value in the item's payback color; or one color (red…)
 //                 group: the catalog's shelf (GROUPS: Payback, Production, Achievements, Upgrades, Bank)
 //                 warn: a warning, not a line — when it has something to show about an item, the
-//                 item gets a "!" in the store in its colour (red when it has none) and a tag in the
+//                 item gets a "!" in the store in its color (red when it has none) and a tag in the
 //                 tooltip's ⚠ line (ui/storeInsight.js: which warnings, in what order)
 //   built-ins     the lines CookieMgr shows, written in the language like any other (BUILTINS)
 //   yours         saved in the "stats" part of the save: { v, mine: [statistic…], builtin: { id:
-//                 { label, source, format, colour } } (your changes to a built-in), favs: [id…] }
+//                 { label, source, format, color } } (your changes to a built-in), favs: [id…] }
 //
 // Every statistic is a value word too — stat.<key>(item) (or stat.<key>() for one about the game) —
 // so macros and other statistics can use it. Formatting words (fmt.number(x), fmt.time(s)…) build
@@ -86,7 +86,7 @@ return sign + fmt.number(gain) + "/s" + share`,
 if m > 0:
   return "+" + fmt.number(m) + " (≈ " + fmt.number(m * clickRate()) + "/s at your clicking)"`,
     },
-    { id: 'payback', group: 'Payback', name: 'Payback period', label: 'Payback period', desc: 'in its payback colour', scope: 'item', format: 'payback', colour: 'payback', source: 'return item.payback()' },
+    { id: 'payback', group: 'Payback', name: 'Payback period', label: 'Payback period', desc: 'in its payback color', scope: 'item', format: 'payback', colour: 'payback', source: 'return item.payback()' },
     {
       id: 'actual',
       group: 'Payback',
@@ -105,10 +105,10 @@ if known(a):
       group: 'Payback',
       name: 'Payback ×1 / ×10 / ×100',
       label: 'Payback ×1 / 10 / 100',
-      desc: 'the payback period of one, ten and a hundred more, each in its colour',
+      desc: 'the payback period of one, ten and a hundred more, each in its color',
       scope: 'building',
       format: 'payback',
-      source: `colour = [item.colourOf(1), item.colourOf(10), item.colourOf(100)]
+      source: `color = [item.colorOf(1), item.colorOf(10), item.colorOf(100)]
 return [item.paybackOf(1), item.paybackOf(10), item.paybackOf(100)]`,
     },
     {
@@ -119,9 +119,9 @@ return [item.paybackOf(1), item.paybackOf(10), item.paybackOf(100)]`,
       desc: 'what it costs (what a click buys) — green when you can afford it, red when not',
       scope: 'item',
       format: 'number',
-      source: `colour = "red"
+      source: `color = "red"
 if timeTo(item.price()) <= 0:
-  colour = "green"
+  color = "green"
 return item.price()`,
     },
     {
@@ -134,9 +134,9 @@ return item.price()`,
       format: 'text',
       source: `s = timeTo(item.price())
 if s <= 0:
-  colour = "green"
+  color = "green"
   return "now"
-colour = "red"
+color = "red"
 if finite(s):
   return fmt.time(s)
 return "not at this CpS"`,
@@ -147,14 +147,14 @@ return "not at this CpS"`,
       group: 'Achievements',
       name: 'Next achievement',
       label: 'Next achievement',
-      desc: 'how many more win the next achievement, and for how much — in the payback colour of buying that many',
+      desc: 'how many more win the next achievement, and for how much — in the payback color of buying that many',
       scope: 'building',
       format: 'text',
       source: `n = building.toNextAchievement(item)
 if n > 100:
   return "none within 100"
 # buying that many, the achievement's milk counted: is its payback period good enough?
-colour = item.colourOf(n)
+color = item.colorOf(n)
 return n + " more (" + fmt.number(building.priceOf(item, n)) + ")"`,
     },
     {
@@ -172,7 +172,7 @@ n = building.toNextUpgrade(item)
 note = n + " more (" + fmt.number(building.priceOf(item, n)) + ")"
 return u`,
     },
-    { id: 'wins', group: 'Achievements', name: 'Wins', label: 'Wins', desc: 'the achievements buying it wins, in its payback colour', scope: 'item', format: 'text', colour: 'payback', source: 'return item.wins()' },
+    { id: 'wins', group: 'Achievements', name: 'Wins', label: 'Wins', desc: 'the achievements buying it wins, in its payback color', scope: 'item', format: 'text', colour: 'payback', source: 'return item.wins()' },
     // the bank warnings: buying it would take your bank below what a golden cookie (or a spell) needs
     // to pay its most — only when you have that bank now; keep: how many times that bank to keep
     ...[
@@ -310,7 +310,7 @@ if cookies() >= need and after < need:
   // ---- running one ------------------------------------------------------------------------------
   //
   // A context: what a statistic is about — { kind: 'building' | 'upgrade', name, r, t }: r its row of
-  // the payback table t (CA.Payback.table(): price, bonus, pp, colour, won…).
+  // the payback table t (CA.Payback.table(): price, bonus, pp, color, won…).
 
   let cur = null;
   let depth = 0;
@@ -428,7 +428,7 @@ if cookies() >= need and after < need:
     if (v === undefined || v === null || (v === '' && !s.showEmpty) || (Array.isArray(v) && !v.length)) return null;
     const vars = r.vars || {};
     const label = typeof vars.label === 'string' || typeof vars.label === 'number' ? String(vars.label) : s.label;
-    let colour = vars.colour !== undefined ? vars.colour : s.colour === 'payback' ? (c && c.r ? c.r.colour : '') : s.colour;
+    let colour = vars.color !== undefined ? vars.color : vars.colour !== undefined ? vars.colour : s.colour === 'payback' ? (c && c.r ? c.r.colour : '') : s.colour;
     let html;
     let cls = '';
     if (Array.isArray(v)) {
@@ -449,8 +449,8 @@ if cookies() >= need and after < need:
   }
 
   /**
-   * A warning statistic about `c`, when it has something to show: { id, label, html, colour } — the
-   * colour it set, or its own (red when none); null when it doesn't warn (or fails).
+   * A warning statistic about `c`, when it has something to show: { id, label, html, color } — the
+   * color it set, or its own (red when none); null when it doesn't warn (or fails).
    */
   function warning(s, c) {
     const row = line(s, c);
@@ -526,7 +526,9 @@ if cookies() >= need and after < need:
     V('item.price', 'what it costs (for a building: what a click buys)', () => (r() ? r().price : NaN));
     V('item.gain', 'the CpS it adds (an upgrade’s clicks not counted)', () => (r() ? r().bonus : NaN));
     V('item.payback', 'its payback period (seconds)', () => (r() ? r().pp : NaN));
-    V('item.colour', 'its payback colour: blue, green, yellow, orange, red, purple or gray', () => (r() ? r().colour || '' : ''));
+    const colorWord = () => (r() ? r().colour || '' : '');
+    V('item.color', 'its payback color: blue, green, yellow, orange, red, purple or gray', colorWord);
+    V('item.colour', 'the same as item.color()', colorWord, { hidden: true }); // the old spelling, still works
     V('item.bulk', 'how many a click buys (an upgrade: 1)', () => (isB() ? r().n || 1 : cur ? 1 : NaN));
     V('item.owned', 'how many you own (an upgrade: 1 or 0)', () => {
       if (!cur) return NaN;
@@ -553,7 +555,9 @@ if cookies() >= need and after < need:
       return { pp, colour: cur.t.colourOf ? cur.t.colourOf(pp, price) : '' };
     };
     V('item.paybackOf', 'the payback period of n more of the building (seconds; an upgrade: NaN)', (n) => (bulkRow(n) || { pp: NaN }).pp, { params: ['n'] });
-    V('item.colourOf', 'the payback colour of n more of the building', (n) => (bulkRow(n) || { colour: '' }).colour, { params: ['n'] });
+    const colorOfWord = (n) => (bulkRow(n) || { colour: '' }).colour;
+    V('item.colorOf', 'the payback color of n more of the building', colorOfWord, { params: ['n'] });
+    V('item.colourOf', 'the same as item.colorOf(n)', colorOfWord, { params: ['n'], hidden: true }); // the old spelling, still works
   }
 
   function defineFormatWords() {
