@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 3.37.0 — 2026-10-28
+
+- **A bank reserve for Best building and Best upgrade.** A new setting on each, **Bank reserve (minutes of
+  unbuffed CpS)**: the buyer never makes a purchase that would take the bank below that many minutes of your
+  unbuffed CpS (0, the default, keeps nothing, as before). Saving up, it waits until it can buy the best and still
+  keep the reserve (its button says how long); skipping what you can't afford, it picks from what fits above the
+  reserve. Unbuffed, so a Frenzy doesn't make it jump; 100 minutes is the bank a Lucky! pays the most from.
+  Also an option on their actions (`cm.buyBuilding`, `cm.buyUpgrade`), and in code `pp.best(kind, skip, budget)`
+  takes a budget: the cookies it may spend (the built-ins pass `cookies() - rawCps() * 60 * reserve`). If you've
+  edited either macro's code, reset it to get the reserve.
+
 ## 3.36.0 — 2026-10-27
 
 - **Cast tiers**: a new card on the Grimoire page that decides when **Force the Hand of Fate on combos** casts.

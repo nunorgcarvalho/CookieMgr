@@ -78,7 +78,7 @@ CA.UI.MacrosPage = (() => {
   /** One choice on a card (an input, or an action's option): its field and how it reads in the summary. */
   function choiceField(p, cur, attrs) {
     if (p.type === 'bool') return { html: `<input type="checkbox" ${attrs} data-type="bool"${cur ? ' checked' : ''}>`, summary: cur ? p.label : `no: ${p.label.toLowerCase()}` };
-    if (p.type === 'number') return { html: `<input type="number" step="any" ${attrs} data-type="number" value="${esc(cur)}"${p.min != null ? ` min="${p.min}"` : ''}>`, summary: `${p.label}: ${cur}` };
+    if (p.type === 'number') return { html: `<input type="number" step="any" ${attrs} data-type="number" value="${esc(cur)}"${p.min != null ? ` min="${p.min}"` : ''}>`, summary: typeof p.summary === 'function' ? p.summary(cur) : `${p.label}: ${cur}` };
     if (p.type === 'text') return { html: `<input type="text" ${attrs} data-type="string" value="${esc(cur)}">`, summary: `${p.label}: ${cur}` };
     const list = typeof p.options === 'function' ? p.options() : p.options || [];
     const sel = list.find((x) => String(x.v) === String(cur));
