@@ -1,5 +1,5 @@
 // The **Auto buyer**: one buyer for buildings and upgrades (and, later, other things you buy), driven
-// by profiles. It supersedes the Best building and Best upgrade macros (v3.43).
+// by profiles. It supersedes the Best building and Best upgrade macros (v3.44).
 //
 // A profile ranks everything it may buy into one **queue**, and the buyer buys the front:
 //
@@ -8,6 +8,9 @@
 //               rounded up with Round to multiples — what the old buyers bought) or ×1 / ×10 / ×100
 //   skip        only what it can afford now (else it saves up for the front)
 //   reserve     minutes of unbuffed CpS it never spends
+//   banks       more banks it keeps, each picked on or off: lucky, conjure, luckyFrenzy (what a
+//               golden cookie or the spell needs to pay its most) and garden (replanting the whole
+//               layout). The highest of these and the minutes is what it keeps (buyer.reserve).
 //   rules       top to bottom, each { what it applies to, what it does, when (code, optional) }:
 //                 first   jumps the queue (the ones that do are ordered by payback period)
 //                 weight  multiplies its payback period by k (below 1: preferred; above: put off)
@@ -27,6 +30,7 @@
 //   buyer.rank(thing, profile)    its place: 1 the front, 0 not in the queue (held back, or not there)
 //   buyer.score(thing, profile)   its score: payback period after the rules (seconds; NaN: not ranked)
 //   buyer.budget(profile)         what the buyer may spend: the bank less the profile's reserve
+//   buyer.reserve(profile)        the profile's reserve: the highest of its thresholds (cookies)
 //   buyer.activeProfile()  buyer.profiles()  buyer.profileActive(profile)
 //   buyer.buyNext(profile)        (action) buys the front when the budget covers it
 //   buyer.profile(profile)        (action) makes a profile the active one
@@ -39,11 +43,19 @@ CA.AutoBuyer = (() => {
   const BULKS = ['auto', 1, 10, 100];
   const WHATS = ['any', 'building', 'upgrade', 'cheap', 'achievement', 'cookie', 'kitten', 'synergy', 'clicking'];
   const EFFECTS = ['first', 'weight', 'cap', 'never'];
+  const GM = () => CA.GoldenMath;
+  /** The banks a profile may keep on top of its minutes of CpS (the bank warnings' own banks, and the garden's). */
+  const BANKS = [
+    { id: 'lucky', label: 'Lucky!', tip: 'what a Lucky! needs to pay its most (bank.lucky)', get: () => GM().lucky().bank },
+    { id: 'conjure', label: 'Conjure', tip: 'what Conjure Baked Goods needs to pay its most (bank.conjure)', get: () => GM().conjure().bank },
+    { id: 'luckyFrenzy', label: 'Frenzy Lucky!', tip: 'what a Lucky! in a Frenzy needs to pay its most (bank.luckyFrenzy)', get: () => GM().lucky(true).bank },
+    { id: 'garden', label: 'Garden replant', tip: 'what replanting the whole garden layout costs (garden.layoutCost)', get: () => (CA.Garden.minigame() ? CA.Garden.layoutCost() : 0) },
+  ];
 
   const SEEDS = [
-    { id: 'payback', name: 'Payback', kinds: { building: true, upgrade: true }, bulk: 'auto', skip: false, reserve: 0, mode: '', rules: [] },
-    { id: 'buildings', name: 'Buildings only', kinds: { building: true, upgrade: false }, bulk: 'auto', skip: false, reserve: 0, mode: '', rules: [] },
-    { id: 'upgrades', name: 'Upgrades only', kinds: { building: false, upgrade: true }, bulk: 'auto', skip: false, reserve: 0, mode: '', rules: [] },
+    { id: 'payback', name: 'Payback', kinds: { building: true, upgrade: true }, bulk: 'auto', skip: false, reserve: 0, banks: [], mode: '', rules: [] },
+    { id: 'buildings', name: 'Buildings only', kinds: { building: true, upgrade: false }, bulk: 'auto', skip: false, reserve: 0, banks: [], mode: '', rules: [] },
+    { id: 'upgrades', name: 'Upgrades only', kinds: { building: false, upgrade: true }, bulk: 'auto', skip: false, reserve: 0, banks: [], mode: '', rules: [] },
   ];
   const copy = (x) => JSON.parse(JSON.stringify(x));
   let profiles = copy(SEEDS);
@@ -75,6 +87,7 @@ CA.AutoBuyer = (() => {
       bulk: BULKS.includes(x.bulk) ? x.bulk : BULKS.includes(Number(x.bulk)) ? Number(x.bulk) : 'auto',
       skip: !!x.skip,
       reserve: Math.max(0, Number(x.reserve) || 0),
+      banks: BANKS.map((b) => b.id).filter((id) => Array.isArray(x.banks) && x.banks.includes(id)),
       mode: typeof x.mode === 'string' ? x.mode : '',
       rules: (Array.isArray(x.rules) ? x.rules : []).slice(0, 50).map(cleanRule),
     };
@@ -114,7 +127,7 @@ CA.AutoBuyer = (() => {
     changed();
     return p;
   }
-  /** Changes a profile's fields (name, kinds, bulk, skip, reserve, mode, rules); returns it. */
+  /** Changes a profile's fields (name, kinds, bulk, skip, reserve, banks, mode, rules); returns it. */
   function update(id, fields) {
     const i = profiles.findIndex((p) => p.id === id);
     if (i < 0) return null;
@@ -234,11 +247,27 @@ CA.AutoBuyer = (() => {
   const kindsOf = (p) => ['building', 'upgrade'].filter((k) => p.kinds[k]);
   /** The cookies a reserve of `minutes` of unbuffed CpS keeps in the bank. */
   const reserveOf = (minutes) => Math.max(0, Number(minutes) || 0) * 60 * rawCps();
-  /** What a profile's buyer may spend: the bank less its reserve. */
-  const budget = (x) => {
+  /**
+   * A profile's thresholds, each { id, label, amount } (cookies): its minutes of CpS (id 'cps', when
+   * above 0) and the banks it picked. `wins` marks the highest — the one its reserve is.
+   */
+  function reserveParts(x) {
     const p = find(x);
-    return (Game.cookies || 0) - (p ? reserveOf(p.reserve) : 0);
-  };
+    if (!p) return [];
+    const parts = [];
+    if (p.reserve > 0) parts.push({ id: 'cps', label: `${p.reserve} min of CpS`, amount: reserveOf(p.reserve) });
+    BANKS.filter((b) => p.banks.includes(b.id)).forEach((b) => {
+      const v = Number(b.get());
+      parts.push({ id: b.id, label: b.label, amount: Number.isFinite(v) ? Math.max(0, v) : 0 });
+    });
+    const top = parts.reduce((m, q) => (!m || q.amount > m.amount ? q : m), null);
+    if (top) top.wins = true;
+    return parts;
+  }
+  /** What a profile never spends: the highest of its thresholds — so the bank stays above every one. */
+  const keepOf = (x) => reserveParts(x).reduce((m, q) => Math.max(m, q.amount), 0);
+  /** What a profile's buyer may spend: the bank less its reserve. */
+  const budget = (x) => (Game.cookies || 0) - keepOf(x);
 
   /** n of a building, re-priced and re-measured (a cap that cuts a bulk short). */
   function resized(x, n, p) {
@@ -337,7 +366,7 @@ CA.AutoBuyer = (() => {
     const p = find(x);
     if (!p) return { ok: false, text: 'no such profile' };
     const f = next(p.id);
-    const keep = reserveOf(p.reserve);
+    const keep = keepOf(p.id);
     if (!f) return { ok: false, text: p.skip ? (keep > 0 ? 'nothing affordable above the reserve' : 'nothing affordable') : 'nothing to buy' };
     const ok = f.price + keep <= (Game.cookies || 0);
     const wait = P().timeTo(f.price + keep);
@@ -388,7 +417,7 @@ CA.AutoBuyer = (() => {
     changed();
   }
   /**
-   * A save from before v3.43: Best building (cmBuildings) and Best upgrade (cmUpgrades). Which
+   * A save from before v3.44: Best building (cmBuildings) and Best upgrade (cmUpgrades). Which
    * were on picks the profile (both or neither: payback; one: buildings / upgrades only), their
    * skip and reserve become its; their hotkeys the Auto buyer's. Whether it runs: the running
    * list (CA.Macros.rename maps the old ids).
@@ -428,6 +457,7 @@ CA.AutoBuyer = (() => {
       return i ? i.score : NaN;
     });
     V('buyer.budget', 'what the Auto buyer may spend with a profile: the bank less its reserve', ['profile'], (x) => budget(x));
+    V('buyer.reserve', 'what the Auto buyer keeps in the bank with a profile: the highest of its thresholds (minutes of CpS, Lucky!, Conjure, Frenzy Lucky!, garden replant)', ['profile'], (x) => keepOf(x));
     V('buyer.activeProfile', 'the id of the Auto buyer’s active profile', [], () => activeProfile());
     V('buyer.profiles', 'a list: the Auto buyer’s profiles’ ids', [], () => profiles.map((p) => p.id), { list: true });
     V('buyer.profileActive', 'whether a profile (its id or name) is the Auto buyer’s active one', ['profile'], (x) => !!find(x) && find(x).id === active, { bool: true });
@@ -484,5 +514,5 @@ CA.AutoBuyer = (() => {
     CA.Macros.rename('cmUpgrades', 'autoBuyer');
   }
 
-  return { init, allUpgrades, buyAllUpgrades, list, find, use, create, update, remove, addRule, setRule, removeRule, moveRule, activeProfile, queue, next, buyNext, readiness, budget, thingOf, ruleText, whatText, effectText, whenProblem, reserveOf, WHATS, EFFECTS, BULKS, SEEDS };
+  return { init, allUpgrades, buyAllUpgrades, list, find, use, create, update, remove, addRule, setRule, removeRule, moveRule, activeProfile, queue, next, buyNext, readiness, budget, keepOf, reserveParts, thingOf, ruleText, whatText, effectText, whenProblem, reserveOf, WHATS, EFFECTS, BULKS, BANKS, SEEDS };
 })();

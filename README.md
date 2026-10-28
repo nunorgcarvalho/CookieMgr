@@ -340,7 +340,7 @@ to the next multiple of it when Round to multiples is on (37 owned, ×10: 3, to 
 many; auto (the default) is ×10 with Round to multiples on, else ×1. Switches (Elder Pledge, the Golden switch, season
 biscuits…) have no payback period: they're never ranked and never bought. Upgrades that only make clicks stronger are
 judged by what they add per click × your clicks per second. A profile saves up for the front, or skips to what you
-can afford, and can keep a bank reserve. (It replaced Best building and Best upgrade in v3.43; old saves move over.)
+can afford, and can keep a bank reserve. (It replaced Best building and Best upgrade in v3.44; old saves move over.)
 **Hold** a
 buying macro's button (instead of clicking it) and it buys again and again, fast, until you let go. Their buttons
 are tinted muted green or red for whether the next purchase is affordable now (hover for what and when), and
@@ -384,11 +384,12 @@ can afford but switches, research and what you've vaulted, cheapest first). Then
 upgrade with its icon and its info card on hover), payback period in its color, score (the payback period after the
 rules' weights — the order), price, when you can afford it, the rules that touched it; what's held back below,
 grayed, with why. Then the active **Profile**: what it buys (buildings, upgrades), the building bulk, save up or skip,
-the bank reserve (minutes of unbuffed CpS), what it ranks by (a payback mode), and its **rules**, top to bottom: what
+the bank reserve (minutes of unbuffed CpS, plus any of the **Lucky!**, **Conjure**, **Frenzy Lucky!** and **Garden
+replant** banks — it keeps the highest, so the bank never drops below any of them), what it ranks by (a payback mode), and its **rules**, top to bottom: what
 they apply to (anything, buildings, upgrades, one building or upgrade, cookies, kittens, synergies, clicking upgrades,
 anything under N s of CpS, anything that wins an achievement) → **buy first**, **weight ×k**, **up to N owned** or
 **never**, each with an optional **when** in the macro language (`thing` is what's ranked). In code: `buyer.next()`,
-`buyer.queue()`, `buyer.rank(thing)`, `buyer.score(thing)`, `buyer.budget()`, `buyer.profile(x)`, `buyer.buyNext()`,
+`buyer.queue()`, `buyer.rank(thing)`, `buyer.score(thing)`, `buyer.budget()`, `buyer.reserve()`, `buyer.profile(x)`, `buyer.buyNext()`,
 `buy.allUpgrades()`.
 
 Below it, what every purchase is worth (see [Payback periods](#payback-periods)): every
