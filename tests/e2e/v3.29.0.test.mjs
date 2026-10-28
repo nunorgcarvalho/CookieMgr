@@ -74,13 +74,20 @@ ST.remove('warnLucky');
 assert(!ST.get('warnLucky').customized, 'back to the original');
 
 // ---- one of yours, from the editor
-CA.UI.Menu.openPage('tooltips');
-await sleep(50);
-const page = () => doc.querySelector('[data-page="tooltips"]');
+// v3.43: the warnings in use are on the Settings page; the editor on the Statistics page
+let pageId = 'settings';
+const goTo = async (id) => {
+  pageId = id;
+  CA.UI.Menu.openPage(id);
+  await sleep(30);
+};
+await goTo('settings');
+const page = () => doc.querySelector(`[data-page="${pageId}"]`);
 const ed = () => page().querySelector('[data-stat-editor]');
 const twRows = () => [...page().querySelectorAll('[data-tw-row]')];
 assert(twRows().length === 3 && /Lucky! bank/.test(twRows()[0].textContent) && twRows()[0].querySelector('.ca-tl-colour.red'), 'the page: the warnings in use, with their colours');
 assert(/−/.test(page().querySelector('[data-tw-val="0"]').textContent), `with their value now (${page().querySelector('[data-tw-val="0"]').textContent})`);
+await goTo('tooltips');
 click(w, page().querySelector('[data-st-new]'));
 change(ed().querySelector('[data-se="warn"]'), 'yes');
 assert(SE.draft().warn && SE.draft().colour === 'red' && !ed().querySelector('[data-se="scope"] option[value="game"]'), 'Shows as: a warning (red; never about the game)');
@@ -96,7 +103,7 @@ assert(ids(SI.warnings(ctx('Cursor'))) === mine.id, 'it warns about the Cursor')
 assert(/# warn: yes/.test(ST.toText(mine)) && ST.fromText(ST.toText(mine)).warn === true, 'as text, and back');
 
 // ---- the list: up, remove, add, reset
-await sleep(20);
+await goTo('settings');
 click(w, page().querySelector('[data-tw-up="3"]'));
 assert(SI.warningList()[2] === mine.id, 'moved up');
 SI.paint();
@@ -111,6 +118,7 @@ change(page().querySelector('[data-tw-add]'), 'warnLucky');
 assert(SI.warningList().slice(-1)[0] === 'warnLucky', 'added back, at the end');
 
 // ---- the catalog: a Warnings filter; its button stops / uses one
+await goTo('tooltips');
 click(w, page().querySelector('[data-st-filter="warnings"]'));
 const cards = [...page().querySelectorAll('[data-st-card]')];
 assert(cards.length === 4 && cards.every((c) => /⚠ warning/.test(c.textContent)), `the Warnings filter (${cards.length})`);
@@ -120,11 +128,13 @@ click(w, btn());
 assert(!SI.warningList().includes('warnConjure') && /use as a warning/.test(btn().textContent), 'stopped');
 click(w, btn());
 assert(SI.warningList().includes('warnConjure'), 'used again');
+await goTo('settings');
 click(w, page().querySelector('[data-tw-reset]'));
 assert(SI.warningsDefault() && SI.warningList().join() === 'warnLucky,warnConjure,warnFrenzy', 'Reset: the three bank warnings');
 
 // ---- deleting yours takes it out of the warnings
 SI.setWarnings(SI.warningList().concat([mine.id]));
+await goTo('tooltips');
 click(w, page().querySelector('[data-st-filter="yours"]'));
 const del = page().querySelector(`[data-st-del="${mine.id}"]`);
 click(w, del);

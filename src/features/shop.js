@@ -65,7 +65,7 @@ CA.Shop = (() => {
         const n = amountFor(b, bulk) || 1;
         const row = t.buildings[n] && t.buildings[n][b.name];
         const price = row ? row.price : CA.Payback.sumPrice(b, n);
-        const v = row ? row.pp : CA.Payback.pp(price, CA.Payback.buildingBonus(b.name, n));
+        const v = row ? row.pp : CA.Payback.ppOf(price, CA.Payback.buildingWorth(b.name, n));
         return { b, v, c: C.indexOf(row ? row.colour : t.colourOf(v, price)) };
       })
       .sort((a, b) => (a.c === b.c ? a.v - b.v || a.b.id - b.b.id : a.c - b.c))

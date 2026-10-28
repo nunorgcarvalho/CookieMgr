@@ -2,6 +2,42 @@
 
 ## Unreleased
 
+## 3.43.0 — 2026-10-28
+
+- **Payback modes.** A payback period is the time to afford something plus the time it takes to earn its price
+  back — `max(price − bank, 0) ÷ income + price ÷ gain` — and the **Payback mode** now says what income it counts
+  in. It's the Payback page's main setting (chips at the top, each with its income now) and it drives everything:
+  the Payback page, the store's colors and sort, its tooltips, the best buy, buy.best and the buyers.
+  - **Raw CpS**: the game's raw CpS (no golden cookie effects, golden switch or Dragon's Fortune), and what a
+    purchase adds to it.
+  - **CpS** (the default, as before): the CpS the game shows now, buffs included — Cookie Monster's.
+  - **CpS + clicking**: CpS plus your clicks a second (averaged over the last minute; 10 s to 15 min in Options)
+    × what a click is worth; a purchase's gain counts what it adds to your clicks.
+  - **Actual income**: what you actually took in (everything baked) over the last 30 minutes of play (5 minutes
+    to 3 hours in Options), projected forward. A purchase's gain scales with it: what it adds to your raw CpS ×
+    actual ÷ raw CpS (take in 10× your raw CpS and a gain counts 10×). Until a minute is recorded, CpS.
+  - Cells and upgrade tiles say how their payback period breaks down ("5m to afford + 20m to earn back (by Raw
+    CpS)"), and show the gain in the mode; the Best buy card shows your income in it.
+- **Payback modes are statistics.** Each is a statistic on the new **Payback modes** shelf: its code sets `income`
+  and returns what the item adds to it, so the four built-ins can be read, changed (Customize; Reset brings the
+  original back) and copied, and you can write your own (the editor's **Shows as: a payback mode**; it shows the
+  income, gain and payback period it gives). Every mode statistic is a chip on the Payback page and a choice of the
+  setting; a mode's card has **use as the payback mode**; the Payback page's **edit modes** opens the shelf.
+- **The Tooltips page is now the Statistics page** (the catalog, the editor, the values), and the store tooltip's
+  layout — which lines show, the warnings and their switches — moved to **Settings**, under Store.
+- The parts are words: `item.timeToAfford(mode)`, `item.earnBack(mode)`, `item.gainIn(mode)`,
+  `item.paybackIn(mode)`, `item.rawGain()` (mode: a mode's code name — `rawCps`, `cps`, `cpsClicking`,
+  `actualIncome` or yours — or `raw`, `clicking`, `actual`; none: the mode in use), `building.paybackIn`,
+  `upgrade.paybackIn`, `payback.mode()`, `payback.modes()`, `payback.income(mode)`, `payback.bank()`,
+  `payback.clickRate()`, `payback.perClick()`, `payback.actualIncome()`, `payback.actualRatio()`,
+  `payback.actualWindow()`, `payback.clickWindow()`. `item.clickGain()` now tells a building's too (the fingers
+  upgrades). `timeTo` and `item.payback()` follow the mode. New built-in statistics: Payback raw CpS / CpS / CpS +
+  clicking, Payback in every mode, Afford + earn back, Income. "Payback, actual income" now uses the Actual income
+  mode.
+- The Payback page's old "actual income" chip (the period × CpS ÷ what you took in over a stretch as long as the
+  period) is gone, and with it the option `ppActual`; the words `paybackActual` and `paybackActualRatio` still
+  work as they did.
+
 ## 3.42.0 — 2026-10-28
 
 - **The Garden's chart widget is customizable, like Golden cookies.** Its settings' **Show** picks **Stats**,

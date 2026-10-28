@@ -37,9 +37,15 @@ const change = (el, v) => {
 // ---- the page
 const items = [...doc.querySelectorAll('#CookieMgrTab [data-tab-item]')].map((i) => i.dataset.tabItem);
 assert(items.indexOf('tooltips') === items.indexOf('clickers') + 1, `a Tooltips page, after Macros (${items})`);
-CA.UI.Menu.openPage('tooltips');
-await sleep(50);
-const page = () => doc.querySelector('[data-page="tooltips"]');
+// v3.43: the layout is on the Settings page; the catalog on the Statistics page (id still 'tooltips')
+let pageId = 'settings';
+const goTo = async (id) => {
+  pageId = id;
+  CA.UI.Menu.openPage(id);
+  await sleep(30);
+};
+await goTo('settings');
+const page = () => doc.querySelector(`[data-page="${pageId}"]`);
 const rows = () => [...page().querySelectorAll('[data-tl-lines] .ca-tl-row')];
 assert(rows().length === SI.DEFAULT_LINES.length, `a row per line (${rows().length})`);
 assert(rows().every((r) => r.children.length === 9), 'every row: the same nine columns (grip, #, name, about, now, format, ↑ ↓ ✕)');
@@ -82,6 +88,7 @@ click(w, page().querySelector('[data-tl-opt="storeWarnings"]'));
 assert(CA.Settings.get('storeWarnings') === warn, '…and back');
 
 // ---- the catalog
+await goTo('tooltips');
 const cards = () => [...page().querySelectorAll('[data-st-card]')];
 assert(cards().length === ST.all().length, `a card per statistic (${cards().length})`);
 const card = (id) => page().querySelector(`[data-st-card="${id}"]`);
@@ -94,7 +101,7 @@ assert(bulks.querySelector('details.ca-st-more') === null || bulks.querySelector
 assert(card('bonus').querySelector('details.ca-st-more'), 'the long built-in (Bonus income): folded');
 // filters
 click(w, page().querySelector('[data-st-filter="Payback"]'));
-assert(cards().map((c) => c.dataset.stCard).join() === 'payback,actual,bulks', `the Payback group (${cards().map((c) => c.dataset.stCard)})`);
+assert(cards().map((c) => c.dataset.stCard).join() === 'payback,actual,paybackRaw,paybackCps,paybackClicking,paybackModes,paybackParts,income,bulks', `the Payback group (v3.43: + the payback modes' lines) (${cards().map((c) => c.dataset.stCard)})`);
 click(w, page().querySelector('[data-st-filter="yours"]'));
 assert(cards().length === 0 && /duplicate a statistic/.test(page().querySelector('[data-st-body]').textContent), 'none of yours yet: says how');
 click(w, page().querySelector('[data-st-filter="all"]'));
@@ -122,7 +129,9 @@ click(w, tt(mine[0].id));
 const last = SI.lines()[SI.lines().length - 1];
 assert(last && last.stat === mine[0].id, 'yours in the tooltip: { stat: id }');
 assert(/Payback period \(copy\)/.test(Game.Objects.Farm.tooltip()), 'in the tooltip');
+await goTo('settings');
 assert(![...page().querySelectorAll('[data-tl-add] option')].some((o) => o.value === `s:${mine[0].id}`), 'the add menu: not offered again');
+await goTo('tooltips');
 // delete it: two clicks, and its line goes
 const del = card(mine[0].id).querySelector('[data-st-del]');
 click(w, del);
@@ -131,7 +140,7 @@ click(w, del);
 assert(!ST.get(mine[0].id) && !SI.lines().some((e) => e && e.stat === mine[0].id), 'deleted, and out of the tooltip');
 // the add menu offers yours
 const yours = ST.add({ label: 'Price in CpS', scope: 'item', format: 'time', source: 'return item.price() / cps()' });
-await sleep(10);
+await goTo('settings');
 const opt = [...page().querySelectorAll('[data-tl-add] option')].find((o) => o.value === `s:${yours.id}`);
 assert(opt && opt.parentNode.label === 'Your statistics', 'the add menu: your statistics');
 change(page().querySelector('[data-tl-add]'), `s:${yours.id}`);
@@ -139,6 +148,7 @@ assert(SI.lines().some((e) => e && e.stat === yours.id), 'add yours from it');
 assert(rows().some((r) => /Price in CpS/.test(r.textContent)), 'its row');
 
 // ---- values
+await goTo('tooltips');
 click(w, page().querySelector('[data-st-tab="values"]'));
 await sleep(10);
 const vrow = (id) => [...page().querySelectorAll('.ca-vl-row')].find((r) => r.querySelector('code').textContent.startsWith(`${id}(`));
@@ -159,7 +169,7 @@ click(w, page().querySelector('[data-st-tab="stats"]'));
 CA.UI.Menu.openPage('payback');
 await sleep(30);
 const pp = doc.querySelector('[data-page="payback"]');
-assert(!pp.querySelector('[data-tl-lines]') && pp.querySelector('[data-ca="goto"][data-page="tooltips"]') && pp.querySelector('[data-pp-opt="storeWarnings"]'), 'Payback: the two switches and a link to Tooltips');
+assert(!pp.querySelector('[data-tl-lines]') && pp.querySelector('[data-ca="goto"][data-page="tooltips"]') && pp.querySelector('[data-pp-opt="storeWarnings"]'), 'Payback: the two switches and a link to Tooltips (v3.43: the Statistics page)');
 
 // ---- the Statistic widget
 const W = CA.UI.Widgets;
@@ -193,8 +203,7 @@ const sel = doc.querySelector('[data-w-editor] select[data-w-opt="stat"]');
 const about = doc.querySelector('[data-w-editor] select[data-w-opt="item"]');
 assert(sel && about && [...about.options].some((o) => o.value === 'b:Farm') && [...about.options].some((o) => o.value === 'u:Kitten helpers'), 'its settings: the statistic, and what it’s about');
 // the catalog's ☆ (the shared star, CA.UI.C.widgetStar)
-CA.UI.Menu.openPage('tooltips');
-await sleep(30);
+await goTo('tooltips');
 click(w, page().querySelector('[data-st-filter="all"]'));
 const star = () => card('share').querySelector('[data-w-star]');
 assert(star() && !star().classList.contains('on'), 'a ☆ on each card');

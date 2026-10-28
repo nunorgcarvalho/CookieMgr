@@ -34,9 +34,9 @@ CA.UI.StoreInsight = (() => {
     const n = clickAmount(b);
     if (t.buildings[n] && t.buildings[n][b.name]) return t.buildings[n][b.name];
     const price = P().sumPrice(b, n);
-    const bonus = P().buildingBonus(b.name, n);
-    const pp = P().pp(price, bonus);
-    return { name: b.name, n, price, bonus, pp, colour: t.colourOf(pp, price), won: [] };
+    const worth = P().buildingWorth(b.name, n);
+    const x = P().parts(price, worth);
+    return { name: b.name, n, price, bonus: worth.bonus, gain: x.gain, afford: x.afford, earn: x.earn, mode: x.mode, worth, pp: x.pp, colour: t.colourOf(x.pp, price), won: worth.won };
   }
 
   /** An item's mark in the store: the color of its first warning (or none). */

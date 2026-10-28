@@ -198,14 +198,21 @@ assert(g.errors.length === k0, `pages without page errors ${errorsSince(k0)}`);
     if (listeners.has(this)) listeners.set(this, listeners.get(this) - 1);
     return rel.apply(this, a);
   };
+  const leftOn = () => [...listeners.values()].reduce((a, b) => a + Math.max(0, b), 0);
+  // what the Settings page itself sets up (v3.43: the store tooltip's layout card, live) — the baseline
+  CA.UI.Menu.openPage('settings');
+  live.clear();
+  listeners.clear();
+  CA.UI.Menu.openPage('settings');
+  const base = [live.size, leftOn()];
   every('page cleans up when you leave it', pages.filter((p) => p.id !== 'settings'), (p) => {
     CA.UI.Menu.openPage('settings');
     live.clear();
     listeners.clear();
     CA.UI.Menu.openPage(p.id);
     CA.UI.Menu.openPage('settings');
-    const leftOn = [...listeners.values()].reduce((a, b) => a + Math.max(0, b), 0);
-    return !live.size && !leftOn ? true : `${live.size} interval(s), ${leftOn} listener(s) left running`;
+    const [n, l] = [live.size - base[0], leftOn() - base[1]];
+    return !n && !l ? true : `${n} interval(s), ${l} listener(s) left running`;
   });
   w.setInterval = si;
   w.clearInterval = ci;

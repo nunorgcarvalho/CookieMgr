@@ -307,7 +307,9 @@ forever:
   of(thing)`, `pp.buy(thing)` (before v3.5 these were `cm.best`, `cm.kind`, `cm.price`, `cm.pp`, `cm.buy` — code using
   those names still works); `best(kind)`, `buy.best(kind)`; `building.price / gain / payback(building)` and, for n at
   once, `building.priceOf / gainOf / paybackOf(building, n)`; `building.toNextAchievement(building)`;
-  `upgrade.gain / payback(u)` (NaN for a switch); `paybackActual(seconds)`, `actualIncome(seconds)`;
+  `upgrade.gain / payback(u)` (NaN for a switch); `building.paybackIn(building, mode)`, `upgrade.paybackIn(u, mode)`,
+  `payback.mode()`, `payback.modes()`, `payback.income(mode)`, `payback.bank()`, `payback.clickRate()`,
+  `payback.perClick()`, `payback.actualIncome()`, `payback.actualRatio()`; `paybackActual(seconds)`, `actualIncome(seconds)`;
   `timeTo(price)`, `clickRate()`; `building.buy / sell(building, n)`; `upgrades()`,
   `upgrade.price(u)`, `upgrade.owned(name)`, `buy.upgrade(u)`; `research.next(stopBefore)`.
 - **The dragon** — `dragon.canPet()`, `dragon.dropNow()`, `dragon.pet()`; `dragon.level()`, `dragon.aura(slot)` (1 or 2),
@@ -384,11 +386,28 @@ its options: the minimum bulk, count your wrinklers in the bank (none, all, the 
 afford", and a "cheap enough to just buy" floor in seconds of CpS. Switches show among the upgrades only when their
 filter chip is on, grayed.
 
-The **actual income** chip shows every payback period by what you've actually been taking in instead of by CpS —
-clicking, golden cookies, wrinklers, everything baked, as the Recorder measures it (the chip says how it compares:
-×1.42 your CpS). By actual income, a payback period is **PP × CpS ÷ A**, A your actual income over the last stretch
-of play as long as the period itself (at least 5 minutes) — what you made over a wait that long is the best guess for
-it. An active player's purchases pay back sooner than CpS says; one away from the game, later. The colors stay CpS's.
+**Payback mode** is the page's main setting, at the top: what payback periods count in. A payback period is
+**max(price − bank, 0) ÷ income + price ÷ gain** — the time to afford it, plus the time to earn its price back — and
+the mode says what the income is and what a purchase adds to it:
+
+- **Raw CpS** — the game's raw CpS (no golden cookie effects, golden switch or Dragon's Fortune): steady, whatever is
+  running now.
+- **CpS** (the default) — the CpS the game shows now, buffs included: Cookie Monster's.
+- **CpS + clicking** — CpS plus your clicks a second (over the last minute; Options: 10 s to 15 min) × what a click is
+  worth; a purchase's gain counts what it adds to your clicks.
+- **Actual income** — what you've actually been taking in (clicking, golden cookies, wrinklers, everything baked, as
+  the Recorder measures it) over the last 30 minutes of play (Options: 5 minutes to 3 hours), projected forward; a
+  purchase's gain is what it adds to your raw CpS × actual ÷ raw CpS. Until a minute is recorded, CpS.
+
+The mode is the add-on's: the colors, the store's sort and tooltips, the best buy and the buyers all follow it. Each
+chip shows that mode's income now; hover a cell for its period's parts ("5m to afford + 20m to earn back").
+
+**Payback modes are statistics** (the Statistics page's Payback modes shelf — **edit modes** on the Payback page):
+each one's code sets `income` and returns what the item adds to it. Change a built-in one, copy it, or write your own
+(Shows as: a payback mode) and it's a chip here. The parts are words too: `item.timeToAfford(mode)`,
+`item.earnBack(mode)`, `item.gainIn(mode)`, `item.paybackIn(mode)`, `item.rawGain()`, `payback.income(mode)`,
+`payback.bank()` (mode: a mode's code name — `rawCps`, `cps`, `cpsClicking`, `actualIncome`, yours — or `raw`,
+`clicking`, `actual`; none: the mode in use).
 
 In the **store** itself (Settings → Store, each can be turned off): each building's price shows in its payback
 color for what a click buys now (×1, ×10, ×100, or to the next multiple with Round to multiples on), each upgrade
@@ -401,8 +420,8 @@ when buying it would take your bank below what a Lucky! (in a Frenzy too) or Con
 most. Warnings are statistics too (below): change a bank warning's `keep` (how many times that bank to keep), turn
 one off, or write your own.
 
-**Which lines that block shows, and in what order, is yours to choose** — on the **Tooltips** page (see
-[Tooltips](#tooltips)): add a line (a built-in statistic, one of yours, or **any value word** that takes the building
+**Which lines that block shows, and in what order, is yours to choose** — on the **Settings** page, under Store (see
+[Statistics](#statistics)): add a line (a built-in statistic, one of yours, or **any value word** that takes the building
 or upgrade, or nothing: `building.toNextAchievement`, `clickRate`, `golden.expected`, `golden.interval`…), drag it into place, rename a
 word's line and choose how its value reads, remove it; **Reset** goes back to Cookie Monster's layout. A line with
 nothing to say (no wins, too little recorded) is left out; a word that doesn't fit the tooltip (one taking an upgrade,
@@ -444,19 +463,22 @@ if cookies() >= need and after < need:
 **Upgrades: best first** orders the store's upgrades by color, then payback period
 (switches last). The store's **Best buy** sort ranks buildings by what a click buys — or the minimum bulk, if more.
 
-### Tooltips
+### Statistics
 
-The **Tooltips** page (next to Macros) is the store tooltip's block and every statistic it can show.
+The **Statistics** page (next to Macros; it was the Tooltips page until v3.43) is every statistic — the store
+tooltip's lines, the warnings, the payback modes and yours. The store tooltip's layout is a card on the **Settings**
+page (Store tooltips):
 
-- **In the store tooltip**: the block's lines in order, in fixed columns: the line, what it's about (a building, an
+- **In the store tooltip** (Settings): the block's lines in order, in fixed columns: the line, what it's about (a building, an
   upgrade, either, the game), **its value now** for the previewed building, how a value word reads, and ↑ ↓ ✕ — or drag
   a row. Beside it, two live previews drawn by the tooltip's own code: a building you pick, and the best upgrade. The
   block's switch (Payback in tooltips) is here too, and **Warnings**: a switch, and the warnings in use in order (each
   with its color and value now; ↑ ↓ ✕, add one, **Reset** to the three bank warnings).
 - **Statistics**: a card per statistic — built-in and yours — with its value for the previewed building (an upgrade's:
   for the best upgrade), what it shows, its code (colored, as in the editor) and how to call it
-  (`stat.payback(item)`). Filter by group (Payback, Production, Achievements, Bank), **Warnings**, **Yours** or **On
-  screen**, and search labels, descriptions and code. One click adds a statistic to the tooltip or takes it out (a
+  (`stat.payback(item)`). Filter by group (Payback, Production, Achievements, Upgrades, Bank), **Warnings**,
+  **Payback modes**, **Yours** or **On screen**, and search labels, descriptions and code. A payback mode's card can
+  make it **the payback mode** (see [Payback](#payback)). One click adds a statistic to the tooltip or takes it out (a
   warning: uses it or stops it); **Duplicate** makes
   a copy that's yours; yours can be deleted (its tooltip lines go too); ☆ puts it on the left panel as a widget.
   **New**, **Edit** (yours) and **Customize** (a built-in) open the editor; **Paste** adds one copied as text.
@@ -1064,9 +1086,9 @@ src/
     storeBar.js      the store toolbar (building sort, rounding to multiples)
     storeInsight.js  the store with payback colors, and a CookieMgr block under the game's tooltips
     paybackPage.js   the Payback page: best buy, every building ×1/×10/×100, upgrades, options
-    tooltipsPage.js  the Tooltips page: the tooltip's layout and previews, the statistics catalog, the Values
+    tooltipsPage.js  the Statistics page: the statistics catalog, the Values (and the tooltip's layout card, on Settings)
                      list; the Statistic widget
-    statEditor.js    the statistic editor (on the Tooltips page): fields, code, library, knobs, result, trace
+    statEditor.js    the statistic editor (on the Statistics page): fields, code, library, knobs, result, trace
     statsPage.js     the Stats page: bank meters, golden cookie odds, prestige, wrinklers, what if, collection
     stockGraph.js    the Stock market page charts: portfolio value / per-stock prices, rolling performance
     stockLog.js      the trade ticker + transaction history table, also on the Stock market page

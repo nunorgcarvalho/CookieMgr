@@ -174,6 +174,8 @@ CA.UI.Menu = (() => {
       '</div>' +
       historyCard() +
       optionsCard('Store', 'dollar', 'store') +
+      // the store tooltip's lines and warnings (ui/tooltipsPage.js — its handlers run here too)
+      CA.UI.TooltipsPage.layoutCard() +
       optionsCard('Miscellaneous', 'calendar', 'misc') +
       integrationsCard() +
       indexCard() +
@@ -293,7 +295,15 @@ CA.UI.Menu = (() => {
     html: () => stocksPage(),
     parts: [CA.UI.StockGraph, CA.UI.StockPerf, CA.UI.StockLog, { mount: wireSellAll, unmount() {}, tick() {} }],
   });
-  CA.UI.Pages.register({ id: 'settings', label: 'Settings', icon: 'settings', order: 90, group: 'custom', html: () => settingsPage() });
+  CA.UI.Pages.register({
+    id: 'settings',
+    label: 'Settings',
+    icon: 'settings',
+    order: 90,
+    group: 'custom',
+    html: () => settingsPage(),
+    parts: [{ mount: (root) => CA.UI.TooltipsPage.mount(root), unmount: () => CA.UI.TooltipsPage.unmount(), tick() {} }],
+  });
 
   let mounted = null; // the page whose mount() ran for the current render
 
