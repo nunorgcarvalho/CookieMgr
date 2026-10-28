@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 3.48.1 — 2026-10-28
+
+- **README:** the Events page screenshot now shows the page as it is since 3.48.0, led by the Event log. No change to
+  the add-on itself.
+
 ## 3.48.0 — 2026-10-28
 
 - **The Events page leads with the Event log.** The **Income outside CpS** card moved to the Stats page's
