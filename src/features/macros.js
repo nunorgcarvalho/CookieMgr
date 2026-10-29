@@ -167,6 +167,9 @@ CA.Macros = (() => {
   // (time constant ACTIVITY_S), so rate() ≈ things per second over the last few minutes
   const ACTIVITY_S = 300;
   const activity = {}; // id -> { h, t }
+  // what each macro did last (for the Manager widget): its last RECENT_MAX actions that did something
+  const RECENT_MAX = 8;
+  const recentDone = {}; // id -> [{ t, action, params, k }], newest first
 
   // ---- definitions --------------------------------------------------------------------
 
@@ -318,6 +321,7 @@ CA.Macros = (() => {
     delete prefs[id];
     delete flowRuns[id];
     delete activity[id];
+    delete recentDone[id];
     delete problems[id];
     CA.Hotkeys.unregister(`macro.${id}`);
     changed(id);
@@ -500,6 +504,7 @@ CA.Macros = (() => {
           F.done += k;
           F.error = '';
           if (F.pass && k) trace(F, n, `${n.action}: ${k}`);
+          if (k) (F.did || (F.did = [])).push({ action: n.action, params: CA.Script.resolve(n.params, F.vars), k });
           if (s) {
             s.runs++;
             s.last = k;
@@ -618,6 +623,7 @@ CA.Macros = (() => {
     status[m.id].runs++;
     status[m.id].lastRun = F.t;
     if (F.done > 0) bump(m.id, F.done);
+    remember(m.id, F);
     if (m.afterPass) m.afterPass(F);
   }
 
@@ -643,6 +649,7 @@ CA.Macros = (() => {
     status[m.id].runs++;
     status[m.id].lastRun = Date.now();
     if (F.done > before) bump(m.id, F.done - before);
+    remember(m.id, F);
     if (failed) {
       problems[m.id] = F.error;
       set(m.id, false, { silent: true });
@@ -799,6 +806,24 @@ CA.Macros = (() => {
   const runningIds = () => Object.keys(running);
   const statusOf = (id) => status[id] || null;
   const since = (id) => (running[id] ? running[id].since : 0);
+  /** Keeps the actions a run did (F.did) as the macro's latest, and empties F.did for its next run. */
+  function remember(id, F) {
+    if (!F.did || !F.did.length) return;
+    const t = Date.now();
+    recentDone[id] = F.did
+      .slice()
+      .reverse()
+      .map((x) => ({ t, ...x }))
+      .concat(recentDone[id] || [])
+      .slice(0, RECENT_MAX);
+    F.did = [];
+  }
+  /** The last things a macro did, newest first: [{ t, action, params, k }] (a group: its members' together). */
+  function recent(id) {
+    const m = byId[rid(id)];
+    if (m && m.mode === 'group') return [].concat(...membersOf(m).map((x) => recent(x.id))).sort((a, b) => b.t - a.t).slice(0, RECENT_MAX);
+    return (recentDone[rid(id)] || []).slice();
+  }
   function bump(id, n) {
     const now = Date.now();
     const a = activity[id] || { h: 0, t: now };
@@ -1053,6 +1078,7 @@ CA.Macros = (() => {
     flowStatus,
     runPass,
     rate,
+    recent,
     activityLevel,
     triggerText,
     serialize,

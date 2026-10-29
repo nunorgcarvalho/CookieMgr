@@ -8767,7 +8767,8 @@ body.ca-has-storebar #products {
   gap: 10px;
   padding: 6px 14px 14px;
 }
-#CookieMgrMenu .ca-mgr-stagecard {
+#CookieMgrMenu .ca-mgr-stagecard,
+#CookieMgrMenu .ca-mgr-watchcard {
   padding: 8px 10px 10px;
   border: 1px solid rgba(255, 220, 150, 0.12);
   border-radius: 6px;
@@ -9007,6 +9008,340 @@ body.ca-has-storebar #products {
 }
 #CookieMgrMenu .ca-code-gutter {
   cursor: default;
+/* Manager widget: what the active manager is doing */
+#CookieMgrWidgets .ca-mw,
+#CookieMgrMenu .ca-wsample .ca-mw {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 11px;
+  color: #b9ab93;
+}
+#CookieMgrWidgets .ca-mw-part + .ca-mw-part,
+#CookieMgrMenu .ca-wsample .ca-mw-part + .ca-mw-part {
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+#CookieMgrWidgets .ca-mw-strip,
+#CookieMgrMenu .ca-wsample .ca-mw-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  row-gap: 4px;
+  cursor: pointer;
+}
+#CookieMgrWidgets .ca-mw-st,
+#CookieMgrMenu .ca-wsample .ca-mw-st {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  box-sizing: border-box;
+  font-size: 10px;
+  font-weight: bold;
+  color: #93866f;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 220, 150, 0.2);
+  border-radius: 9px;
+}
+#CookieMgrWidgets .ca-mw-st.done,
+#CookieMgrMenu .ca-wsample .ca-mw-st.done {
+  color: #9be15d;
+  border-color: rgba(155, 225, 93, 0.45);
+}
+#CookieMgrWidgets .ca-mw-st.on,
+#CookieMgrMenu .ca-wsample .ca-mw-st.on {
+  padding: 0 8px 0 6px;
+  color: #2b1d0e;
+  background: linear-gradient(#ffe39a, #f2b84b);
+  border-color: #ffd36b;
+  box-shadow: 0 0 8px rgba(255, 200, 90, 0.45);
+}
+#CookieMgrWidgets .ca-mw-st em,
+#CookieMgrMenu .ca-wsample .ca-mw-st em {
+  font-style: normal;
+  font-weight: bold;
+  white-space: nowrap;
+}
+#CookieMgrWidgets .ca-mw-link,
+#CookieMgrMenu .ca-wsample .ca-mw-link {
+  flex: 1 1 6px;
+  min-width: 6px;
+  max-width: 22px;
+  height: 2px;
+  background: rgba(255, 220, 150, 0.18);
+}
+#CookieMgrWidgets .ca-mw-link.done,
+#CookieMgrMenu .ca-wsample .ca-mw-link.done {
+  background: rgba(155, 225, 93, 0.55);
+}
+#CookieMgrWidgets .ca-mw-now,
+#CookieMgrMenu .ca-wsample .ca-mw-now {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+}
+#CookieMgrWidgets .ca-mw-now b,
+#CookieMgrMenu .ca-wsample .ca-mw-now b {
+  font-size: 13px;
+  color: #ffeab0;
+}
+#CookieMgrWidgets .ca-mw-now span,
+#CookieMgrMenu .ca-wsample .ca-mw-now span {
+  color: #93866f;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+#CookieMgrWidgets .ca-mw-warn,
+#CookieMgrMenu .ca-wsample .ca-mw-warn {
+  margin-top: 3px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #f0948a;
+}
+#CookieMgrWidgets .ca-mw-dim,
+#CookieMgrMenu .ca-wsample .ca-mw-dim {
+  margin-top: 2px;
+  color: #93866f;
+  font-style: italic;
+}
+#CookieMgrWidgets .ca-mw-profs,
+#CookieMgrMenu .ca-wsample .ca-mw-profs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 4px;
+}
+#CookieMgrWidgets .ca-mw-prof,
+#CookieMgrMenu .ca-wsample .ca-mw-prof {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  font-size: 10px;
+  color: #d8cbb0;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(155, 225, 93, 0.35);
+  border-radius: 8px;
+}
+#CookieMgrWidgets .ca-mw-prof.wait,
+#CookieMgrMenu .ca-wsample .ca-mw-prof.wait {
+  color: #93866f;
+  border-style: dashed;
+  border-color: rgba(255, 220, 150, 0.3);
+}
+#CookieMgrWidgets .ca-mw-prof i,
+#CookieMgrMenu .ca-wsample .ca-mw-prof i {
+  font-style: normal;
+}
+#CookieMgrWidgets .ca-mw-head,
+#CookieMgrMenu .ca-wsample .ca-mw-head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 3px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #a39477;
+}
+#CookieMgrWidgets .ca-mw-head em,
+#CookieMgrMenu .ca-wsample .ca-mw-head em {
+  font-style: normal;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #ffeab0;
+}
+#CookieMgrWidgets .ca-mw-cond,
+#CookieMgrMenu .ca-wsample .ca-mw-cond {
+  display: grid;
+  grid-template-columns: 12px 1fr auto;
+  align-items: center;
+  column-gap: 5px;
+  padding: 1px 0;
+  color: #d8cbb0;
+}
+#CookieMgrWidgets .ca-mw-cond b,
+#CookieMgrMenu .ca-wsample .ca-mw-cond b {
+  color: #93866f;
+  text-align: center;
+}
+#CookieMgrWidgets .ca-mw-cond.ok b,
+#CookieMgrMenu .ca-wsample .ca-mw-cond.ok b {
+  color: #9be15d;
+}
+#CookieMgrWidgets .ca-mw-cond.ok span,
+#CookieMgrMenu .ca-wsample .ca-mw-cond.ok span {
+  color: #93866f;
+}
+#CookieMgrWidgets .ca-mw-cond em,
+#CookieMgrMenu .ca-wsample .ca-mw-cond em {
+  font-style: normal;
+  color: #ffeab0;
+  font-variant-numeric: tabular-nums;
+}
+#CookieMgrWidgets .ca-mw-cond .ca-mw-bar,
+#CookieMgrMenu .ca-wsample .ca-mw-cond .ca-mw-bar {
+  grid-column: 2 / 4;
+}
+#CookieMgrWidgets .ca-mw-bar,
+#CookieMgrMenu .ca-wsample .ca-mw-bar {
+  display: block;
+  height: 3px;
+  margin: 2px 0 1px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+}
+#CookieMgrWidgets .ca-mw-bar i,
+#CookieMgrMenu .ca-wsample .ca-mw-bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(to right, #f2b84b, #ffe39a);
+  border-radius: 2px;
+}
+#CookieMgrWidgets .ca-mw-watch,
+#CookieMgrMenu .ca-wsample .ca-mw-watch {
+  flex-wrap: wrap;
+  row-gap: 0;
+}
+#CookieMgrWidgets .ca-mw-watch .ca-mw-bar,
+#CookieMgrMenu .ca-wsample .ca-mw-watch .ca-mw-bar {
+  flex: 1 1 100%;
+}
+#CookieMgrWidgets .ca-mw-macros,
+#CookieMgrMenu .ca-wsample .ca-mw-macros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 3px 2px;
+}
+#CookieMgrWidgets .ca-wbar-item.ca-mw-mac,
+#CookieMgrMenu .ca-wsample .ca-wbar-item.ca-mw-mac {
+  position: relative;
+  display: inline-flex;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow:
+    0 0 0 2px #4dff5e,
+    0 0 7px rgba(77, 255, 94, 0.6);
+}
+#CookieMgrWidgets .ca-wbar-item.ca-mw-mac .ca-icon,
+#CookieMgrWidgets .ca-wbar-item.ca-mw-mac .ca-icon-ico,
+#CookieMgrWidgets .ca-wbar-item.ca-mw-mac .ca-img,
+#CookieMgrMenu .ca-wsample .ca-wbar-item.ca-mw-mac .ca-icon,
+#CookieMgrMenu .ca-wsample .ca-wbar-item.ca-mw-mac .ca-icon-ico,
+#CookieMgrMenu .ca-wsample .ca-wbar-item.ca-mw-mac .ca-img {
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+}
+#CookieMgrWidgets .ca-wbar-item.ca-mw-mac .ca-sprite,
+#CookieMgrMenu .ca-wsample .ca-wbar-item.ca-mw-mac .ca-sprite {
+  transform: scale(0.45);
+}
+#CookieMgrWidgets .ca-wbar-item.ca-mw-mac.off,
+#CookieMgrMenu .ca-wsample .ca-wbar-item.ca-mw-mac.off {
+  opacity: 0.45;
+  box-shadow: 0 0 0 2px rgba(255, 220, 150, 0.25);
+}
+#CookieMgrWidgets .ca-mw-act,
+#CookieMgrMenu .ca-wsample .ca-mw-act {
+  display: grid;
+  grid-template-columns: 16px 1fr auto;
+  align-items: center;
+  column-gap: 5px;
+  padding: 1px 0;
+  color: #d8cbb0;
+}
+#CookieMgrWidgets .ca-mw-act span,
+#CookieMgrMenu .ca-wsample .ca-mw-act span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#CookieMgrWidgets .ca-mw-act em,
+#CookieMgrMenu .ca-wsample .ca-mw-act em {
+  font-style: normal;
+  color: #93866f;
+  white-space: nowrap;
+}
+#CookieMgrWidgets .ca-mw-act > .ca-icon,
+#CookieMgrMenu .ca-wsample .ca-mw-act > .ca-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  overflow: hidden;
+}
+#CookieMgrWidgets .ca-mw-act .ca-sprite,
+#CookieMgrMenu .ca-wsample .ca-mw-act .ca-sprite {
+  transform: scale(0.33);
+}
+#CookieMgrWidgets .ca-mw-act .ca-img,
+#CookieMgrMenu .ca-wsample .ca-mw-act .ca-img {
+  width: 16px;
+  height: 16px;
+}
+#CookieMgrWidgets .ca-mw-act.hot span,
+#CookieMgrMenu .ca-wsample .ca-mw-act.hot span {
+  color: #b6ff9e;
+}
+#CookieMgrWidgets .ca-wbar-item.ca-mw-mac:hover .ca-wpop {
+  display: block;
+}
+#CookieMgrWidgets .ca-mw-macros .ca-wpop {
+  left: -6px;
+  transform: none;
+}
+#CookieMgrWidgets .ca-mw-macros .ca-wpop.ca-wt {
+  bottom: auto;
+  top: calc(100% + 10px);
+}
+
+/* Managers page: what the Manager widget watches, per stage */
+#CookieMgrMenu .ca-mgr-watches {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+#CookieMgrMenu .ca-mgr-watch {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+}
+#CookieMgrMenu .ca-mgr-watch .ca-gname {
+  width: 150px;
+}
+#CookieMgrMenu .ca-mgr-watch .ca-code-input {
+  flex: 1 1 220px;
+  min-width: 160px;
+}
+#CookieMgrMenu .ca-mgr-watch .ca-code-input {
+  font-family: monospace;
+  font-size: 11px;
+}
+#CookieMgrMenu .ca-mgr-watch .ca-code-input.bad {
+  border-color: #d9665a;
+}
+#CookieMgrMenu .ca-mgr-watch em {
+  font-style: normal;
+  font-size: 11px;
+  color: #93866f;
+  white-space: nowrap;
+}
+#CookieMgrMenu .ca-mgr-watch em.ca-mgr-problem {
+  color: #f0948a;
+  white-space: normal;
 }
 
 /* ---------- v4.1: code colored by where each word comes from (ui/codeEditor.js LEGEND) ---------- */

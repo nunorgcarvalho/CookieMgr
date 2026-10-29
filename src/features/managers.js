@@ -11,6 +11,9 @@
 //             the rest carries over until a later stage changes it back (effective() adds them up).
 //             until is a condition in the macro language (features/script.js); the last stage lasts
 //             for good. Older saves (each stage a full list) are turned into changes on loading.
+//             watch: [{ label, value, format }] — what the Manager widget shows while the stage is on
+//             (not carried over: each stage its own): each value an expression in the macro language,
+//             format auto | time (seconds) | percent (0–1) | progress ([have, of], or 0–100).
 //
 // A manager is code in the macro language (features/script.js), run pass by pass like a garden
 // profile's rules. The stage editor writes that code (codeOf) — or you write it yourself (code: then
@@ -56,6 +59,13 @@ CA.Managers = (() => {
   const MACRO = 'manager';
   const SCOPES = [{ v: 'ascension', label: 'This ascension' }];
   const KINDS = ['buyer', 'pantheon', 'dragon', 'grimoire', 'garden'];
+  const FORMATS = [
+    { v: 'auto', label: 'as it is' },
+    { v: 'time', label: 'a time (seconds)' },
+    { v: 'percent', label: 'a share (0–1)' },
+    { v: 'progress', label: 'progress ([have, of] or 0–100)' },
+  ];
+  const WATCH_MAX = 8;
 
   // the profiles a stage can pick, by kind: their list, whether one is in, and putting it in
   const P = {
@@ -73,7 +83,7 @@ CA.Managers = (() => {
       isIn: (id) => CA.Pantheon.isActive(id),
       // all of it at once: wait until the worship swaps are back for every spirit it moves
       use: (id) => (CA.Pantheon.minigame() && (CA.Pantheon.minigame().swaps || 0) >= CA.Pantheon.swapsFor(id) ? CA.Pantheon.apply(id) : 0),
-      waits: (id) => (!CA.Pantheon.minigame() ? 'the Pantheon' : `${CA.Pantheon.swapsFor(id)} worship swaps`),
+      waits: (id) => (!CA.Pantheon.minigame() ? 'the Pantheon' : `${CA.Pantheon.swapsFor(id)} worship swap${CA.Pantheon.swapsFor(id) === 1 ? '' : 's'}`),
     },
     dragon: {
       label: 'Dragon auras',
@@ -135,6 +145,11 @@ CA.Managers = (() => {
           },
           profiles: { buyer: 'payback', pantheon: 'wrinklers', dragon: 'drops' },
           until: 'not veil()',
+          watch: [
+            { label: 'Next golden cookie in', value: 'golden.expected()', format: 'time' },
+            { label: 'Easter eggs', value: '[owned(easter), total(easter)]', format: 'progress' },
+            { label: 'Santa', value: '[santaLevel(), 14]', format: 'progress' },
+          ],
         },
         {
           name: 'Drops',
@@ -142,6 +157,11 @@ CA.Managers = (() => {
           inputs: {},
           profiles: {},
           until: 'season.complete(christmas, upgrades) and season.complete(easter) and season.complete(halloween) and season.complete(valentines)',
+          watch: [
+            { label: 'Santa', value: '[santaLevel(), 14]', format: 'progress' },
+            { label: 'Grandmapocalypse', value: 'elderWrath()', format: 'auto' },
+            { label: 'Next golden cookie in', value: 'golden.expected()', format: 'time' },
+          ],
         },
         {
           name: 'Reindeer',
@@ -149,6 +169,10 @@ CA.Managers = (() => {
           inputs: {},
           profiles: { dragon: 'dropsFlight' },
           until: 'season.complete(christmas)',
+          watch: [
+            { label: 'Reindeer cookies', value: '[owned(christmas, cookies), total(christmas, cookies)]', format: 'progress' },
+            { label: 'Next reindeer in', value: 'reindeer.expected()', format: 'time' },
+          ],
         },
         {
           name: 'Golden cookie combos',
@@ -156,6 +180,12 @@ CA.Managers = (() => {
           inputs: {},
           profiles: { buyer: 'combos', pantheon: 'golden', dragon: 'dragonFlightHarvest', grimoire: 'default', garden: 'tulipCombos' },
           until: '',
+          watch: [
+            { label: 'Combo on', value: 'grimoire.fthofCombo()', format: 'auto' },
+            { label: 'Magic for FtHoF', value: 'grimoire.fill()', format: 'progress' },
+            { label: 'Buying next', value: 'buyer.next()', format: 'auto' },
+            { label: 'Garden mature', value: 'garden.matureShare()', format: 'percent' },
+          ],
         },
       ],
     },
@@ -184,7 +214,13 @@ CA.Managers = (() => {
       Object.keys(v).forEach((k) => ['string', 'number', 'boolean'].includes(typeof v[k]) && (keep[k] = v[k]));
       if (Object.keys(keep).length) inputs[id] = keep;
     });
-    return { name: String(s.name || `Stage ${i + 1}`).slice(0, 40), macros, inputs, profiles, until: typeof s.until === 'string' ? s.until.slice(0, 500) : '' };
+    return { name: String(s.name || `Stage ${i + 1}`).slice(0, 40), macros, inputs, profiles, until: typeof s.until === 'string' ? s.until.slice(0, 500) : '', watch: cleanWatch(s.watch) };
+  }
+  function cleanWatch(list) {
+    return (Array.isArray(list) ? list : [])
+      .filter((x) => x && typeof x === 'object')
+      .slice(0, WATCH_MAX)
+      .map((x) => ({ label: String(x.label || '').slice(0, 40), value: String(x.value || '').slice(0, 300), format: FORMATS.some((f) => f.v === x.format) ? x.format : 'auto' }));
   }
   /** What stages up to i (0 = the first) add up to: { macros, inputs, profiles } — i < 0: nothing. */
   function addUp(stages, i) {
@@ -342,6 +378,14 @@ CA.Managers = (() => {
     else delete s.profiles[kind];
     changed();
   }
+  /** What a stage's widget shows: replaces its watch list ([{ label, value, format }]). */
+  function setStageWatch(id, i, list) {
+    const s = stageOf(id, i);
+    if (!s) return null;
+    s.watch = cleanWatch(list);
+    changed();
+    return s.watch;
+  }
   function removeStage(id, i) {
     const m = managers.find((x) => x.id === id);
     if (!m || m.stages.length <= 1 || !m.stages[i]) return false;
@@ -392,6 +436,54 @@ CA.Managers = (() => {
     if (c.errors.length) return false;
     const out = CA.Script.runStat(c.flow, {});
     return !out.error && !!out.value && !(typeof out.value === 'number' && !Number.isFinite(out.value));
+  }
+
+  /**
+   * An "until", taken apart for the Manager widget: the conditions joined by its top `and` (or `or`),
+   * each with whether it holds now — { join: 'and' | 'or', parts: [{ ok, text, have, of }] }; have /
+   * of: a season's drops counted ("Christmas complete (12/21)"). Null: no until, or one with a problem.
+   */
+  function untilParts(code) {
+    if (!code || !code.trim()) return null;
+    const c = compileUntil(code);
+    const r0 = !c.errors.length && c.flow[0];
+    const top = r0 && (r0.cond || (r0.e && { t: 'val', e: r0.e }));
+    if (!top) return null;
+    const join = top.t === 'or' ? 'or' : 'and';
+    const flat = (e) => (e.t === join ? flat(e.a).concat(flat(e.b)) : [e]);
+    const parts = flat(top).map((e) => {
+      let r;
+      try {
+        r = CA.Script.evaluate(e, {});
+      } catch (err) {
+        r = { ok: false, text: '?' };
+      }
+      let text = String(r.text || '').replace(/ [✓✗]$/, '');
+      // not veil(): "not veil() (now yes)" rather than "not (veil() = yes ✓)"
+      if (e.t === 'not' && e.a && e.a.t === 'val') {
+        const v = CA.Script.value(e.a.e, {});
+        text = `not ${CA.Script.exprText(e.a.e)} (now ${typeof v === 'boolean' ? (v ? 'yes' : 'no') : v})`;
+      }
+      const m = /\((\d+)\/(\d+)\)/.exec(text);
+      return { ok: !!r.ok, text, ...(m ? { have: Number(m[1]), of: Number(m[2]) } : {}) };
+    });
+    return { join, parts };
+  }
+
+  /** A stage's watch list, worked out now: [{ label, value, format, error }] (value as the code gave it). */
+  const compiledWatch = new Map();
+  function watchOf(stage) {
+    return ((stage && stage.watch) || []).map((x) => {
+      if (!x.value.trim()) return { ...x, value: undefined, error: 'no value' };
+      if (!compiledWatch.has(x.value)) {
+        if (compiledWatch.size > 100) compiledWatch.clear();
+        compiledWatch.set(x.value, CA.Script.compile(`return ${x.value}`, { mode: 'stat' }));
+      }
+      const c = compiledWatch.get(x.value);
+      if (c.errors.length) return { ...x, value: undefined, error: c.errors[0].message };
+      const out = CA.Script.runStat(c.flow, {});
+      return { ...x, value: out.value, error: out.error || '' };
+    });
   }
 
   // ---- the code ---------------------------------------------------------------------------------
@@ -576,9 +668,15 @@ CA.Managers = (() => {
     const obj = (x) => (x && typeof x === 'object' ? { ...x } : {});
     return { id: String(r.id || ''), stage: Math.max(0, Number(r.stage) || 0), resets: Number.isFinite(Number(r.resets)) ? Number(r.resets) : -1, since: Number(r.since) || 0, entering: !!r.entering, entered: false, jumped: !!r.jumped, put: obj(r.put), waiting: obj(r.waiting), want: {} };
   }
+  /** A seeded manager saved before the Manager widget (its stages without a watch list): the seed's, stage by stage name. */
+  function withSeedWatch(m) {
+    const seed = SEEDS.find((x) => x.id === m.id);
+    if (!seed || !Array.isArray(m.stages)) return m;
+    return { ...m, stages: m.stages.map((st) => (st && typeof st === 'object' && !Array.isArray(st.watch) ? { ...st, watch: (seed.stages.find((x) => x.name === st.name) || {}).watch || [] } : st)) };
+  }
   function load(data) {
     if (data && Array.isArray(data.managers)) {
-      managers = data.managers.filter((m) => m && m.id).map(clean);
+      managers = data.managers.filter((m) => m && m.id).map((m) => clean(withSeedWatch(m)));
       active = typeof data.active === 'string' && (data.active === '' || managers.some((m) => m.id === data.active)) ? data.active : managers.length ? managers[0].id : '';
       run = cleanRun(data.run);
     } else {
@@ -769,5 +867,5 @@ CA.Managers = (() => {
       },
     });
 
-  return { init, list, find, current, use, add, update, remove, resetSeeds, addStage, updateStage, setStageMacro, setStageInput, setStageProfile, removeStage, moveStage, untilProblem, untilHolds, codeOf, sourceOf, setCode, step, enter, goTo, where, readiness, lastPass: () => lastPass, P, KINDS, SCOPES, SEEDS, MACRO, UNLOCKER, effective };
+  return { init, list, find, current, use, add, update, remove, resetSeeds, addStage, updateStage, setStageMacro, setStageInput, setStageProfile, setStageWatch, removeStage, moveStage, untilProblem, untilHolds, untilParts, watchOf, codeOf, sourceOf, setCode, step, enter, goTo, where, readiness, lastPass: () => lastPass, P, KINDS, SCOPES, SEEDS, MACRO, UNLOCKER, FORMATS, effective };
 })();
