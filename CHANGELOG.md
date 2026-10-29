@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 4.22.1 — 2026-10-29
+
+- **README:** the Settings picture shows the Up to date badge and the Simple cookie background option.
+
 ## 4.22.0 — 2026-10-29
 
 - **Up to date badge:** the version at the top of Settings now says "Up to date" in green once an update check finds
