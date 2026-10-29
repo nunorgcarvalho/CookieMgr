@@ -851,7 +851,7 @@ CA.UI.GardenPage = (() => {
     };
     // things that happened at a time, placed in the tick they happened in
     xAxis.at = (t) => {
-      let n = kStart;
+      let n = -Infinity; // before every tick: off the axis
       ticks.forEach((x) => x.t <= t && (n = x.k));
       return n + 0.5;
     };
