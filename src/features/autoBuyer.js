@@ -14,8 +14,9 @@
 //   skip        only what it can afford now (else it saves up for the front)
 //   reserve     minutes of unbuffed CpS it keeps
 //   banks       more banks it keeps, each picked on or off: lucky, conjure, luckyFrenzy (what a
-//               golden cookie or the spell needs to pay its most) and garden (replanting the whole
-//               layout). The highest of these and the minutes is the most it keeps (buyer.reserve).
+//               golden cookie or the spell needs to pay its most), garden (replanting the whole
+//               layout) and gardenRounds (the garden's rounds: the nursetulips' while not all planted,
+//               plus roundsMargin × the golden clovers' — features/garden.js roundsReserve). The highest of these and the minutes is the most it keeps (buyer.reserve).
 //   at          where each of those thresholds sits in the queue (its **priority**): "first" (the
 //               default — ahead of everything: nothing is bought into it, as before) or a score
 //               0–100 (what scores at least that may go ahead of it and spend into it; what scores
@@ -69,12 +70,21 @@ CA.AutoBuyer = (() => {
   const WHATS = ['any', 'building', 'upgrade', 'allUpgrades', 'cheap', 'achievement', 'cookie', 'kitten', 'synergy', 'clicking'];
   const EFFECTS = ['first', 'weight', 'cap', 'never'];
   const GM = () => CA.GoldenMath;
+  /** The Garden rounds bank's default margin (features/garden.js roundsReserve): × a golden clover round. */
+  const ROUNDS_MARGIN = 1.25;
   /** The banks a profile may keep on top of its minutes of CpS (the bank warnings' own banks, and the garden's). */
   const BANKS = [
     { id: 'lucky', label: 'Lucky!', tip: 'what a Lucky! needs to pay its most (bank.lucky)', get: () => GM().lucky().bank },
     { id: 'conjure', label: 'Conjure', tip: 'what Conjure Baked Goods needs to pay its most (bank.conjure)', get: () => GM().conjure().bank },
     { id: 'luckyFrenzy', label: 'Frenzy Lucky!', tip: 'what a Lucky! in a Frenzy needs to pay its most (bank.luckyFrenzy)', get: () => GM().lucky(true).bank },
     { id: 'garden', label: 'Garden replant', tip: 'what replanting the whole garden layout costs (garden.layoutCost)', get: () => (CA.Garden.minigame() ? CA.Garden.layoutCost() : 0), detail: gardenDetail },
+    {
+      id: 'gardenRounds',
+      label: 'Garden rounds',
+      tip: 'what the garden’s rounds need, at unbuffed prices: the nursetulips’ round while they aren’t all planted, plus the margin × a round of the other seeds (golden clovers) — seeds cost minutes of CpS, so CpS bought doesn’t bring a round closer; the buyer spends what’s above (garden.roundsReserve)',
+      get: (p) => (CA.Garden.minigame() ? CA.Garden.roundsReserve(p && p.roundsMargin) : 0),
+      detail: roundsDetail,
+    },
   ];
   /** What a garden replant plants: "30 seeds: 22 Golden clover, 8 Nursetulip · 3 to plant now". */
   function gardenDetail() {
@@ -83,6 +93,16 @@ CA.AutoBuyer = (() => {
     const n = seeds.reduce((m, x) => m + x.n, 0);
     const missing = seeds.reduce((m, x) => m + x.missing, 0);
     return `${n} seed${n === 1 ? '' : 's'}: ${seeds.map((x) => `${x.n} ${x.name}`).join(', ')}${missing ? ` · ${missing} to plant now` : ' · all planted'}`;
+  }
+  /** What the Garden rounds bank keeps: "8 Nursetulip (all planted) + 1.25 × 22 Golden clover". */
+  function roundsDetail() {
+    const seeds = CA.Garden.minigame() ? CA.Garden.layoutSeeds() : [];
+    if (!seeds.length) return '';
+    const p = find();
+    const m = p && p.roundsMargin !== undefined ? p.roundsMargin : ROUNDS_MARGIN;
+    return seeds
+      .map((x) => (x.key === 'nursetulip' ? `${x.n} ${x.name} (${x.missing ? `${x.missing} to plant` : 'all planted: not kept'})` : `${m} × ${x.n} ${x.name}`))
+      .join(' + ');
   }
   /** Every threshold's id: the minutes of CpS ('cps') and the banks. */
   const THRESHOLDS = ['cps'].concat(BANKS.map((b) => b.id));
@@ -98,8 +118,9 @@ CA.AutoBuyer = (() => {
     { id: 'buildings', name: 'Buildings only', kinds: { building: true, upgrade: false, allUpgrades: false }, bulk: 'auto', cheapBulk: 1, skip: false, reserve: 0, banks: [], mode: '', rules: [] },
     { id: 'upgrades', name: 'Upgrades only', kinds: { building: false, upgrade: true, allUpgrades: true }, bulk: 'auto', cheapBulk: 1, skip: false, reserve: 0, banks: [], mode: '', rules: [cleanRule(BULK_RULE)] },
     // v4.0: what Nunix late game buys with once it plays for golden cookie combos — ranked by actual
-    // income, never below what a Lucky! and a garden replant need
-    { id: 'combos', name: 'Golden cookie combos', kinds: { building: true, upgrade: true, allUpgrades: true }, bulk: 'auto', cheapBulk: 1, skip: false, reserve: 0, banks: ['lucky', 'garden'], mode: 'actualIncome', rules: [cleanRule(BULK_RULE)] },
+    // income, never below what a Lucky! and the garden's rounds need (the tulips first, the clovers'
+    // round with a quarter on top: CpS bought only raises their price)
+    { id: 'combos', name: 'Golden cookie combos', kinds: { building: true, upgrade: true, allUpgrades: true }, bulk: 'auto', cheapBulk: 1, skip: false, reserve: 0, banks: ['lucky', 'gardenRounds'], roundsMargin: 1.25, mode: 'actualIncome', rules: [cleanRule(BULK_RULE)] },
   ].map(cleanProfile);
   const copy = (x) => JSON.parse(JSON.stringify(x));
   let profiles = copy(SEEDS);
@@ -137,6 +158,8 @@ CA.AutoBuyer = (() => {
       banks: BANKS.map((b) => b.id).filter((id) => Array.isArray(x.banks) && x.banks.includes(id)),
       // where each threshold sits in the queue (saved before priorities: first, as they all were)
       at: Object.fromEntries(THRESHOLDS.map((id) => [id, cleanAt(x.at && typeof x.at === 'object' ? x.at[id] : undefined)])),
+      // the Garden rounds bank's margin: × a round of the golden clovers (the default: a quarter on top)
+      roundsMargin: x.roundsMargin === undefined || !Number.isFinite(Number(x.roundsMargin)) ? ROUNDS_MARGIN : Math.max(0, Number(x.roundsMargin)),
       // the Actual 15 min / 1 h / 3 h modes are one Actual income now (its window: core/settings.js)
       mode: typeof x.mode !== 'string' ? '' : /^actualIncome(15m|1h|3h)$/.test(x.mode) ? 'actualIncome' : x.mode,
       rules: (Array.isArray(x.rules) ? x.rules : []).slice(0, 50).map(cleanRule),
@@ -177,7 +200,7 @@ CA.AutoBuyer = (() => {
     changed();
     return p;
   }
-  /** Changes a profile's fields (name, kinds, bulk, cheapBulk, skip, reserve, banks, at, mode, rules); returns it. */
+  /** Changes a profile's fields (name, kinds, bulk, cheapBulk, skip, reserve, banks, at, roundsMargin, mode, rules); returns it. */
   function update(id, fields) {
     const i = profiles.findIndex((p) => p.id === id);
     if (i < 0) return null;
@@ -312,7 +335,7 @@ CA.AutoBuyer = (() => {
     const parts = [];
     if (p.reserve > 0) parts.push({ id: 'cps', label: `${p.reserve} min of CpS`, amount: reserveOf(p.reserve), at: at('cps') });
     BANKS.filter((b) => p.banks.includes(b.id)).forEach((b) => {
-      const v = Number(b.get());
+      const v = Number(b.get(p));
       parts.push({ id: b.id, label: b.label, amount: Number.isFinite(v) ? Math.max(0, v) : 0, at: at(b.id) });
     });
     const top = parts.reduce((m, q) => (!m || q.amount > m.amount ? q : m), null);
@@ -592,6 +615,11 @@ CA.AutoBuyer = (() => {
     if (data && Array.isArray(data.profiles) && data.profiles.length) {
       profiles = data.profiles.map((raw, i) => {
         const p = cleanProfile(raw, i);
+        // Golden cookie combos saved before the Garden rounds bank: its garden replant becomes that
+        if (p.id === 'combos' && raw && raw.roundsMargin === undefined && p.banks.join() === 'lucky,garden') {
+          p.banks = ['lucky', 'gardenRounds'];
+          p.at = { ...p.at, gardenRounds: p.at.garden };
+        }
         // saved before Buy all upgrades (v3.50): one that buys upgrades gets its rule
         const old = !(raw && raw.kinds && typeof raw.kinds === 'object' && 'allUpgrades' in raw.kinds);
         if (old && p.kinds.upgrade && p.rules.length < 50) p.rules.push(cleanRule(BULK_RULE));
