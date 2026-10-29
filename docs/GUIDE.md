@@ -516,7 +516,13 @@ replant — with the seeds it plants…), "✓ kept" once the bank covers it. Th
 for** and what it buys after. **Buy all upgrades** is a row of its own: the upgrades the budget affords, bought at once and
 measured together (so upgrades that multiply each other count as one purchase). Profiles that buy upgrades come with
 the rule *Buy all upgrades → buy first when `payback.allUpgradesCount(buyer.budget()) >= 20`*: with lots affordable,
-it takes them all at once. Then the active **Profile**: what it buys (buildings, upgrades, Buy all upgrades), the building bulk, save up or skip,
+it takes them all at once. With **Garden** on (Golden cookie combos has it), what the gardener plants next is a row
+too: a seed's empty tiles while its round grows (*Plant 9 Golden clover*), or a new round once one is due (*Replant 22
+Golden clover*). Its payback period is its price over the golden cookie income the grown plants add — the Actual
+income less CpS + clicking, × how much they raise the garden's golden cookie frequency (nursetulips' boost counted).
+Buying it plants them. It may spend the garden's own banks (Garden replant, Garden rounds); it waits while an effect
+makes seeds dearer, and the clovers wait while the nursetulips have planting to do.
+Then the active **Profile**: what it buys (buildings, upgrades, Buy all upgrades, garden), the building bulk, save up or skip,
 what it **keeps** (minutes of unbuffed CpS, plus any of the **Lucky!**, **Conjure**, **Frenzy Lucky!**, **Garden
 replant** and **Garden rounds** banks) and each one's **priority**: **first** (the default — nothing is bought until the bank covers it, so
 the bank never drops below it) or **after what scores N+** (things scoring N or more are bought ahead of it and may
@@ -876,7 +882,8 @@ The gardeners:
   Each round goes down whole or not at all (`wholeRounds`): it waits until the bank covers all of it, and until no
   effect makes seeds dearer (`waitOutEffects`: a seed costs minutes of the CpS the game shows, so a Frenzy makes it 7
   times dearer — `garden.priceBoost()`). The tulips go first (`tulipsFirst`): no clover round starts while a tulip
-  round is due. `garden.roundCost(seed)` is what a round costs.
+  round is due. `garden.roundCost(seed)` is what a round costs. While a round is still growing it fills its empty
+  tiles (a weed cleared, cookies short at the time), even with part of it mature already.
 - **Weed collector** — keeps the garden bare (with *Always fertilizer*: the most weeds), so meddleweed and fungi
   spring up. Meddleweed is left to grow old, then harvested — the older it is, the likelier it leaves brown mold or
   crumbspore behind; anything you haven't unlocked grows until it's mature and is harvested; everything else is

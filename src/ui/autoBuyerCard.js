@@ -36,9 +36,15 @@ CA.UI.AutoBuyerCard = (() => {
   /** A threshold's tip: what it is, and why it's where it is. */
   const bankTip = (x) => `${x.detail ? `${x.detail} — ` : ''}keeps ${F().beautify(x.price)} in the bank: ${B().whyText(x)}${x.kept ? ' (kept now)' : ''}`;
   const sprite = (pos) => `<span class="ca-pp-ico" style="background-image:url(${CA.Util.res('img/icons.png')});background-position:${-pos[0] * 48}px ${-pos[1] * 48}px"></span>`;
+  /** A seed's picture (the garden's seed sprite). */
+  const seedIcon = (icon) => `<span class="ca-pp-ico" style="background-image:url(${CA.Util.res('img/gardenPlants.png')});background-position:-192px ${-(icon || 0) * 48}px"></span>`;
   /** A queue entry's name: a building's icon and name, an upgrade's (hoverable: its info card). */
   function thingName(x) {
     if (x.kind === 'upgrade') return CA.UpgradeInfo.ref(x.name);
+    if (x.kind === 'garden') {
+      const tip = `${x.round ? 'A new round: the old ones harvested, every tile of it planted' : 'Its tiles without it, planted while its round grows'} — its gain: the golden cookie income the grown plants add`;
+      return `<span class="ca-ab-thing" data-tip="${esc(tip)}">${seedIcon(x.icon)}${esc(x.label)}</span>`;
+    }
     if (x.kind === 'bank') return `<span class="ca-ab-thing" data-tip="${esc(bankTip(x))}">${bankIcon(x.name)}${esc(x.label)}</span>`;
     if (x.kind === 'allUpgrades') {
       const names = (x.names || []).map((n) => (Game.Upgrades && Game.Upgrades[n] && Game.Upgrades[n].dname) || n);
@@ -57,7 +63,7 @@ CA.UI.AutoBuyerCard = (() => {
   // ---- the Auto buyer card ----
 
   /** The thresholds kept ahead of a thing in the queue (what it may only spend above). */
-  const keptAhead = (q, f) => q.items.slice(0, Math.max(0, q.items.indexOf(f))).filter((y) => y.kind === 'bank');
+  const keptAhead = (q, f) => q.items.slice(0, Math.max(0, q.items.indexOf(f))).filter((y) => B().holdsBack(y, f));
   const bar = (pct) => `<span class="ca-ab-bar"><i style="width:${(pct * 100).toFixed(1)}%"></i></span>`;
   function nextHtml() {
     const q = B().queue();
@@ -146,7 +152,7 @@ CA.UI.AutoBuyerCard = (() => {
     const badges = rules.map((r) => `<span class="ca-ab-badge ${badgeClass(r)}">${esc(r)}</span>`).join('') + (held ? `<span class="ca-ab-why">${esc(x.why)}</span>` : '');
     const cls = [q && x === q.next ? 'front' : '', q && x === q.wait && bank ? 'saving' : '', held ? 'held' : '', bank ? 'bank' : '', bank && x.kept ? 'kept' : ''].filter(Boolean).join(' ');
     // when the buyer could buy it: its price above what's kept ahead of it
-    const ahead = q && !held ? q.items.slice(0, Math.max(0, i)).reduce((m, y) => (y.kind === 'bank' ? Math.max(m, y.price) : m), 0) : 0;
+    const ahead = q && !held ? q.items.slice(0, Math.max(0, i)).reduce((m, y) => (B().holdsBack(y, x) ? Math.max(m, y.price) : m), 0) : 0;
     const whenText = held ? '' : bank && x.kept ? '✓ kept' : when(x.price + (bank ? 0 : ahead));
     return (
       `<tr class="${cls}">` +
@@ -269,7 +275,7 @@ CA.UI.AutoBuyerCard = (() => {
     return (
       '<div class="ca-list">' +
       `<div class="ca-ab-row"><span class="ca-ab-lbl">Name</span><input type="text" class="ca-gname" maxlength="40" value="${esc(p.name)}" data-ab-f="name" data-tip="${esc(`macros use its name or its id: ${p.id}`)}"><span class="ca-hint">id ${esc(p.id)}</span></div>` +
-      `<div class="ca-ab-row"><span class="ca-ab-lbl">Buys</span><span class="ca-pp-chips">${chip('data-ab-kind', 'building', 'Buildings', p.kinds.building)}${chip('data-ab-kind', 'upgrade', 'Upgrades', p.kinds.upgrade)}${chip('data-ab-kind', 'allUpgrades', 'Buy all upgrades', p.kinds.allUpgrades, 'Every store upgrade the budget affords, bought at once — ranked by its own payback period, measured together')}</span></div>` +
+      `<div class="ca-ab-row"><span class="ca-ab-lbl">Buys</span><span class="ca-pp-chips">${chip('data-ab-kind', 'building', 'Buildings', p.kinds.building)}${chip('data-ab-kind', 'upgrade', 'Upgrades', p.kinds.upgrade)}${chip('data-ab-kind', 'allUpgrades', 'Buy all upgrades', p.kinds.allUpgrades, 'Every store upgrade the budget affords, bought at once — ranked by its own payback period, measured together')}${chip('data-ab-kind', 'garden', 'Garden', p.kinds.garden, 'What the gardener plants next — a seed’s empty tiles while its round grows, or a new round once one is due — ranked by the golden cookie income the grown plants add. It may spend the garden’s own banks (Garden replant, Garden rounds)')}</span></div>` +
       `<div class="ca-ab-row"><span class="ca-ab-lbl">Building bulk</span><span class="ca-pp-chips">${B()
         .BULKS.map((b) => chip('data-ab-bulk', b, b === 'auto' ? 'auto' : `×${b}`, p.bulk === b, b === 'auto' ? `The store’s minimum bulk (Options below), rounded up with Round to multiples — now ×${CA.Shop.minBulk()}` : ''))
         .join('')}</span></div>` +

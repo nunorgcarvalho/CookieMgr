@@ -34,6 +34,7 @@ CA.UI.BuyerRow = (() => {
       const b = (Game.Objects || {})[x.name];
       return b ? cell([b.iconColumn || 0, 0]) : I('building', 12);
     }
+    if (x.kind === 'garden') return cell([4, x.icon || 0], CA.Util.res('img/gardenPlants.png'));
     const u = up(x.kind === 'allUpgrades' ? 'Inspired checklist' : x.name);
     return u && u.icon ? cell(u.icon, u.icon[2]) : I('upgrade', 12);
   }
@@ -91,7 +92,7 @@ CA.UI.BuyerRow = (() => {
     const f = B().next();
     if (!f) return `<span class="ca-wbuy-item ca-wbuy-next none">${I('dollar', 14)}</span><span class="ca-wbuy-text"><b>Nothing to buy</b><span>${esc(B().readiness().text)}</span></span>`;
     const keep = q.keep;
-    const ahead = q.items.slice(0, Math.max(0, q.items.indexOf(f))).filter((y) => y.kind === 'bank');
+    const ahead = q.items.slice(0, Math.max(0, q.items.indexOf(f))).filter((y) => CA.AutoBuyer.holdsBack(y, f));
     const need = f.price + keep;
     const pct = need > 0 ? Math.max(0, Math.min(1, (Game.cookies || 0) / need)) : 1;
     const wait = P().timeTo(need);

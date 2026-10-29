@@ -182,8 +182,9 @@ if tulipDue and tulipReady:
     if garden.wantAt(tile) == tulip and not garden.isEmpty(tile):
       garden.harvest(tile)
   garden.plantEmpty(tulip)
-# while a tulip round is still young, fill any tile it couldn't plant (not enough cookies at the time)
-if garden.seedYoung(tulip) > 0 and garden.seedMature(tulip) == 0:
+# while a tulip round is still growing, fill any tile it couldn't plant (not enough cookies at the
+# time, or a weed cleared) — even with some of it mature already, so a round never sits half planted
+if garden.seedYoung(tulip) > 0:
   garden.plantEmpty(tulip)
 # the clovers: a new round may go down once the tulips are (tulipsFirst), and the cookies left cover it
 tulipDue = garden.seedYoung(tulip) == 0 and garden.seedMature(tulip) < tulipReplantBelow * garden.seedTiles(tulip)
@@ -201,8 +202,8 @@ if cloverReady and garden.seedYoung(clover) == 0 and garden.seedMature(clover) <
     garden.plantEmpty(clover)
 else:
   garden.soilRule()
-# while a clover round is still young, fill any tile it couldn't plant
-if garden.seedYoung(clover) > 0 and garden.seedMature(clover) == 0:
+# while a clover round is still growing, fill any tile it couldn't plant (some of it may be mature)
+if garden.seedYoung(clover) > 0:
   garden.plantEmpty(clover)
 `;
   const GARDENERS = [
