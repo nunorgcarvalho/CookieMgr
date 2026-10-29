@@ -103,6 +103,10 @@ CA.UI.Plot = (() => {
     };
   }
 
+  // the simulator's GUI (sim/gui/server.mjs) loads this file without core/ascension.js
+  const ascensions = () => (CA.Ascension ? CA.Ascension.times() : []);
+  const lastAscension = () => (CA.Ascension ? CA.Ascension.last() : null);
+
   const niceUp = (ms) => NICE_MS.find((n) => n >= ms) || NICE_MS[NICE_MS.length - 1];
 
   // ---- bucketing --------------------------------------------------------------------------
@@ -408,7 +412,7 @@ CA.UI.Plot = (() => {
       if (zoomW) return zoomW;
       const s = opt('win');
       if (s > 0) return s * SEC;
-      const asc = s === SINCE_ASCENSION ? CA.Ascension.last() : null;
+      const asc = s === SINCE_ASCENSION ? lastAscension() : null;
       // the ascension a little in from the left edge, so its line shows (none yet: all history)
       if (asc) return Math.max(60 * SEC, (ax.now - asc[ax.key]) / 0.97);
       const min = ax.min;
@@ -911,7 +915,7 @@ CA.UI.Plot = (() => {
     function ascensionsIn(v) {
       const place = v.custom ? (typeof v.custom.at === 'function' ? (e) => v.custom.at(e.t) : null) : (e) => (v.active ? e.a : e.t);
       if (!place) return [];
-      return CA.Ascension.times()
+      return ascensions()
         .map((e) => ({ x: place(e), t: e.t }))
         .filter((e) => Number.isFinite(e.x) && e.x >= v.x0 && e.x <= v.x1);
     }
