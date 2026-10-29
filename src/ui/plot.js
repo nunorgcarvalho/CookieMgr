@@ -41,18 +41,7 @@ CA.UI.Plot = (() => {
   const NICE_MS = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 10800, 21600, 43200, 86400, 172800].map((s) => s * SEC);
   const SINCE_ASCENSION = -1; // the window that starts at the last ascension
   const ASC_COLOR = '#c9bcff'; // the event log's ascension color
-  const WINDOW_LABELS = {
-    [SINCE_ASCENSION]: 'Since last ascension',
-    60: '1m',
-    300: '5m',
-    900: '15m',
-    3600: '1h',
-    10800: '3h',
-    43200: '12h',
-    86400: '1d',
-    604800: '7d',
-    0: 'All',
-  };
+  const WINDOW_LABELS = { [SINCE_ASCENSION]: 'Since last ascension', 60: '1m', 300: '5m', 900: '15m', 3600: '1h', 10800: '3h', 43200: '12h', 86400: '1d', 604800: '7d', 0: 'All' };
   const SMOOTH = [0, 5, 15, 60, 300, 900, 3600];
   const SMOOTH_LABELS = { 0: 'Off', 5: '5s', 15: '15s', 60: '1m', 300: '5m', 900: '15m', 3600: '1h' };
 
@@ -137,16 +126,7 @@ CA.UI.Plot = (() => {
     });
     const bars = [];
     let cur = null;
-    const open = (bx0, bx1, idx) => ({
-      idx,
-      x0: bx0,
-      x1: bx1,
-      secs: 0,
-      n: 0,
-      t0: Infinity,
-      t1: -Infinity,
-      acc: fields.map(() => ({ s: 0, w: 0, c: 0, last: undefined, first: undefined })),
-    });
+    const open = (bx0, bx1, idx) => ({ idx, x0: bx0, x1: bx1, secs: 0, n: 0, t0: Infinity, t1: -Infinity, acc: fields.map(() => ({ s: 0, w: 0, c: 0, last: undefined, first: undefined })) });
     const add = (bar, f) => {
       const dt = f.dt || 0;
       bar.secs += dt;
@@ -276,12 +256,7 @@ CA.UI.Plot = (() => {
       series
         .filter((s) => s.type === 'bar' && s.smooth !== false)
         .forEach((s) => {
-          const out = movingAverage(
-            centers,
-            weights,
-            bars.map((b) => b.parts[s.key]),
-            half
-          );
+          const out = movingAverage(centers, weights, bars.map((b) => b.parts[s.key]), half);
           bars.forEach((b, i) => {
             if (Number.isFinite(out[i])) b.parts[s.key] = out[i];
           });
@@ -415,10 +390,7 @@ CA.UI.Plot = (() => {
     let tipFmt = baseTipFmt;
 
     // persisted per-plot choices (kept out of the generic Settings list)
-    const def = (k, d) =>
-      S()
-        .optionsIn('plot')
-        .some((o) => o.key === key(k)) || S().defineOption({ key: key(k), group: 'plot', name: k, desc: '', default: d });
+    const def = (k, d) => S().optionsIn('plot').some((o) => o.key === key(k)) || S().defineOption({ key: key(k), group: 'plot', name: k, desc: '', default: d });
     def('win', spec.window != null ? spec.window : (spec.windows || [300])[0]);
     if (spec.smooth !== false) def('smooth', spec.smooth || 0);
     if (spec.stacked) def('prop', false);
@@ -462,11 +434,7 @@ CA.UI.Plot = (() => {
       return `<button type="button" class="ca-chip" ${attrs}${title ? ` data-tip="${esc(title)}"` : ''}>${label}</button>`;
     }
     const setChip = (k, val, label, title) =>
-      chip(
-        label,
-        `data-plot-set="${key(k)}" data-val="${esc(String(val))}" data-pressed-key="${key(k)}" data-pressed-val="${esc(String(val))}"`,
-        title
-      );
+      chip(label, `data-plot-set="${key(k)}" data-val="${esc(String(val))}" data-pressed-key="${key(k)}" data-pressed-val="${esc(String(val))}"`, title);
     const boolChip = (fullKey, label, title) => chip(label, `data-plot-toggle="${fullKey}" data-pressed-key="${fullKey}"`, title);
 
     function html() {
@@ -518,28 +486,15 @@ CA.UI.Plot = (() => {
           '</div>';
       }
       h += '<div class="ca-chipgroup">';
-      if (spec.log != null)
-        h += boolChip(key('log'), 'Log scale', 'Logarithmic vertical axis — handy when values grow by orders of magnitude');
+      if (spec.log != null) h += boolChip(key('log'), 'Log scale', 'Logarithmic vertical axis — handy when values grow by orders of magnitude');
       if (spec.stacked) h += boolChip(key('prop'), '% of total', 'Show each bar as shares of its total instead of amounts');
       (spec.toggles || []).forEach((t) => (h += boolChip(t.setting || key(t.key), t.label, t.title)));
-      h += boolChip(
-        'graphActiveTime',
-        `${CA.UI.Icons.html('clock', 12)} Active time`,
-        'Leave out time the game wasn’t running (closed, asleep, background tab) — the window then covers that much actual play'
-      );
+      h += boolChip('graphActiveTime', `${CA.UI.Icons.html('clock', 12)} Active time`, 'Leave out time the game wasn’t running (closed, asleep, background tab) — the window then covers that much actual play');
       h += '</div>';
       h +=
         '<div class="ca-chipgroup">' +
-        chip(
-          `${CA.UI.Icons.html('search', 12)} Zoom out`,
-          'data-plot-unzoom hidden',
-          'Back to how it was before the last zoom (or double-click the chart)'
-        ) +
-        chip(
-          '',
-          'data-plot-pause',
-          'Drag across the chart to zoom into that stretch · shift-drag (or scroll sideways) to look further back · double-click to zoom out'
-        ) +
+        chip(`${CA.UI.Icons.html('search', 12)} Zoom out`, 'data-plot-unzoom hidden', 'Back to how it was before the last zoom (or double-click the chart)') +
+        chip('', 'data-plot-pause', 'Drag across the chart to zoom into that stretch · shift-drag (or scroll sideways) to look further back · double-click to zoom out') +
         '</div>';
       h += '</div>';
       h += '<div class="ca-legend" data-plot-legend></div>';
@@ -618,16 +573,7 @@ CA.UI.Plot = (() => {
       let v = viewFor(Math.max(50, w - padL - PAD.r));
       const data = spec.build(v) || {};
       // the build chose its own x axis (still windowed by time; drawn and hovered in its units)
-      if (data.xAxis)
-        v = {
-          ...v,
-          x0: data.xAxis.x0,
-          x1: data.xAxis.x1,
-          W: Math.max(1e-9, data.xAxis.x1 - data.xAxis.x0),
-          active: false,
-          bucket: 1,
-          custom: data.xAxis,
-        };
+      if (data.xAxis) v = { ...v, x0: data.xAxis.x0, x1: data.xAxis.x1, W: Math.max(1e-9, data.xAxis.x1 - data.xAxis.x0), active: false, bucket: 1, custom: data.xAxis };
       if (v.smoothMs > 0) smoothData(data, v.smoothMs);
       const prop = !!(spec.stacked && opt('prop'));
       fmt = prop ? pct : baseFmt;
@@ -1075,7 +1021,7 @@ CA.UI.Plot = (() => {
       // a stretch that ends within a bar of now: zoomed, but still live
       const nearNow = r.x1 >= ax.now - Math.max(2 * SEC, (layout.v.bucket || 0) * 1.5);
       if (nearNow) view.resume();
-      else view.freeze(Math.max(r.x1, ax.min == null ? r.x1 : ax.min + zoomW));
+      else view.freeze(Math.max(r.x1, (ax.min == null ? r.x1 : ax.min + zoomW)));
       return true;
     }
     /** One zoom back (none: nothing to do). */
@@ -1279,8 +1225,7 @@ CA.UI.Plot = (() => {
       const asc = (layout.ascRects || []).find((r) => Math.abs(r.x - hover.x) <= 4);
       let h = barHead(x, bar) + effects + (effects && body.html ? '<div class="ca-tip-sec"></div>' : '') + body.html;
       if (!effects && !body.any && !asc) h += '<div class="ca-tip-note">No data here.</div>';
-      else if (body.any && layout.v.smoothMs > 0)
-        h += `<div class="ca-tip-note">Averaged over the ${windowLabel(layout.v.smoothMs / SEC)} around this point</div>`;
+      else if (body.any && layout.v.smoothMs > 0) h += `<div class="ca-tip-note">Averaged over the ${windowLabel(layout.v.smoothMs / SEC)} around this point</div>`;
       // the lane / marker right under the cursor: its details, as a section
       if (hitLane && hitLane.iv.tip) h += `<div class="ca-tip-sec">${hitLane.iv.tip()}</div>`;
       if (hitEv && hitEv.m.tip) h += `<div class="ca-tip-sec">${hitEv.m.tip()}</div>`;
@@ -1290,8 +1235,7 @@ CA.UI.Plot = (() => {
       }
       // the game off within this bar (active-time axis): one line
       const g = gapAt(x, bar);
-      if (g)
-        h += `<div class="ca-tip-note ca-tip-off">Game off for ${span(g.away / SEC)} here (${clock(g.from)} – ${clock(g.to)}), left out of this axis</div>`;
+      if (g) h += `<div class="ca-tip-note ca-tip-off">Game off for ${span(g.away / SEC)} here (${clock(g.from)} – ${clock(g.to)}), left out of this axis</div>`;
       return h;
     }
     /** A stretch the active-time axis cut out within the hovered bar (or right at x without one). */
@@ -1601,16 +1545,7 @@ CA.UI.Plot = (() => {
   }
   /** The charts that can go on the left panel as a widget: [{ id, title, short, icon, numbers }]. */
   const widgetable = () =>
-    [...all.values()]
-      .filter((p) => p.spec.widget)
-      .map((p) => ({
-        id: p.id,
-        title: p.spec.widgetName || p.spec.title,
-        short: p.spec.title,
-        icon: p.spec.icon,
-        group: p.spec.widgetGroup || '',
-        numbers: p.spec.numbers || [],
-      }));
+    [...all.values()].filter((p) => p.spec.widget).map((p) => ({ id: p.id, title: p.spec.widgetName || p.spec.title, short: p.spec.title, icon: p.spec.icon, group: p.spec.widgetGroup || '', numbers: p.spec.numbers || [] }));
 
   /**
    * Chart `id` as its widget draws it, as a picture w × h px (a data: URL), drawn off screen and kept
