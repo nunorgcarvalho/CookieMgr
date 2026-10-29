@@ -1068,7 +1068,9 @@ cookieMgr-wide, in four tabs (it reopens on the one you last had open):
 
 - **General:** an overview (recording, macros running, widgets placed, Cookie Monster), general options (record
   history, check for updates, **Numbers** — below), the panel hotkey and resetting hotkeys, and **Miscellaneous**
-  (**Plain Business Day** — below).
+  (**Plain Business Day** — below), and **Simple cookie background** (off by default; it can have a hotkey): it
+  switches off the game's Cursors, Particles, Numbers and Milk options, leaving a plain cookie with nothing circling
+  or popping out of it, and puts them back as they were when you switch it off.
 - **Store & tooltips:** the Store options and **In the store tooltip** (the tooltip's lines and warnings).
 - **Data & integrations:** the History data card (export / import / clear) and **Integrations**.
 - **All options:** every page's options as quick on/off chips, each group titled with a link to its page.

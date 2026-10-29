@@ -145,7 +145,7 @@ the page. [See every page with a screenshot](#pages).
 <td width="50%" valign="top">
 <b>Settings</b><br>
 <img src="docs/readme/settings.png" alt="The Settings page" width="100%">
-<ul><li>Tabs for General, Store &amp; tooltips, Data &amp; integrations and All options</li><li>Number format, hotkeys and update checks</li><li>Export and import your history, and load Cookie Monster alongside</li></ul>
+<ul><li>Tabs for General, Store &amp; tooltips, Data &amp; integrations and All options</li><li>Number format, hotkeys, update checks and a simple cookie background</li><li>Export and import your history, and load Cookie Monster alongside</li></ul>
 </td>
 </tr>
 </table>
