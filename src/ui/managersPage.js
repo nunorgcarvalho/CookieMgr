@@ -118,7 +118,8 @@ CA.UI.ManagersPage = (() => {
       '<span class="ca-dprof-acts">' +
       C().button('Stages', `data-mgr-act="show" data-id="${esc(m.id)}"`, `ca-btn-small${isShown ? ' on' : ''}`) +
       C().button('Duplicate', `data-mgr-act="dup" data-id="${esc(m.id)}"`, 'ca-btn-small') +
-      C().useButton(isActive, `data-mgr-act="use" data-id="${esc(m.id)}"`, isActive ? 'The active manager' : 'Make it the active manager') +
+      C().useButton(isActive, `data-mgr-act="use" data-id="${esc(m.id)}"`, isActive ? 'The active manager' : 'Make it the active manager (and switch the Manager macro on)') +
+      (isActive ? C().button(`${I('refresh', 12)} Set up again`, `data-mgr-act="setup" data-id="${esc(m.id)}" data-tip="Its stage set up again on the next pass, as it is: the macros it switches, its settings and profiles (what you flipped by hand since too), and the Manager macro on"`, 'ca-btn-small') : '') +
       (G().isBuiltin(m)
         ? G().isEdited(m)
           ? C().button(`${I('refresh', 12)} Revert to default`, `data-mgr-act="revert" data-id="${esc(m.id)}" data-arm-label="Back to the built-in?" data-tip="Undo your changes: back to how it comes with cookieMgr"`, 'ca-btn-small')
@@ -571,6 +572,9 @@ CA.UI.ManagersPage = (() => {
         break;
       case 'revert':
         G().revert(d.id);
+        break;
+      case 'setup':
+        G().setUp();
         break;
       case 'flip':
         // a chip: the other way in this stage

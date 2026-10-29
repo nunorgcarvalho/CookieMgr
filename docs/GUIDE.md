@@ -415,6 +415,9 @@ When the manager at work changes (you edit what a stage switches, sets or puts i
 default, or an update changes a built-in), its stage sets up again on the next pass, as it is now, so what runs
 always matches what it says; a macro flipped by hand is flipped back then. Renaming a stage or editing its watches
 changes nothing that runs.
+**Set up again** (on the active manager's row) does it by hand: its stage sets up again as it is, whatever you
+flipped since, and the Manager macro switches on. Revert to default and picking a manager (Use) switch the Manager
+macro on too.
 These are **ascension managers**: ascending starts them over at stage 1. Managers saved earlier (each stage a
 full list) are turned into changes when loaded, and run as before.
 
