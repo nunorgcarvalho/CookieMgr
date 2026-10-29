@@ -84,7 +84,7 @@ the page. [See every page with a screenshot](#pages).
 <td width="50%" valign="top">
 <b>Payback</b><br>
 <img src="docs/readme/payback.png" alt="The Payback page" width="100%">
-<ul><li>An exact payback period for every building and upgrade</li><li>The Auto buyer: a queue, profiles with rules, and a bank reserve</li><li>Buy all upgrades in one click, ranked in the queue by its own payback period</li></ul>
+<ul><li>An exact payback period for every building and upgrade</li><li>The Auto buyer: a queue, profiles with rules, and a bank reserve</li><li>Payback measured by CpS, clicking, or what you actually took in over the last 15 min, 1 h or 3 h</li><li>Buy all upgrades in one click, ranked in the queue by its own payback period</li></ul>
 </td>
 <td width="50%" valign="top">
 <b>Garden</b><br>
@@ -120,24 +120,25 @@ the page. [See every page with a screenshot](#pages).
 <td width="50%" valign="top">
 <b>Statistics</b><br>
 <img src="docs/readme/statistics.png" alt="The Statistics page" width="100%">
-<ul><li>Choose the lines the store's tooltips show</li><li>Write your own statistics, with a live preview</li><li>Pick how payback is measured</li></ul>
+<ul><li>Choose the lines the store's tooltips show</li><li>Write your own statistics, with a live preview, in code colored by where each word comes from</li><li>Pick how payback is measured</li></ul>
 </td>
 <td width="50%" valign="top">
 <b>Macros</b><br>
 <img src="docs/readme/macros.png" alt="The Macros page" width="100%">
-<ul><li>Autoclickers for the big cookie, golden and wrath cookies, reindeer, fortunes and wrinklers</li><li>The Upgrade unlocker: one switch for Santa, Research, the dragon, fortunes and cheap upgrades</li><li>Alerts, hotkeys and buttons on the left panel</li><li>Write your own macros in cookieMgr's simple code, and hover any word in it to see what it is</li></ul>
+<ul><li>Autoclickers for the big cookie, golden and wrath cookies, reindeer, fortunes and wrinklers</li><li>The Upgrade unlocker: one switch for Santa, Research, the dragon, fortunes and cheap upgrades</li><li>Alerts, hotkeys and buttons on the left panel</li><li>Write your own macros in cookieMgr's simple code: colored by where each word comes from, and hover any word to see what it is</li></ul>
 </td>
 </tr>
 <tr>
 <td width="50%" valign="top">
 <b>Managers</b><br>
 <img src="docs/readme/managers.png" alt="The Managers page" width="100%">
-<ul><li>A manager plays an ascension in stages: each one switches macros, puts in profiles, and lasts until a condition holds</li><li>Nunix late game comes ready: Shimmering veil, season drops, reindeer, then golden cookie combos</li><li>Edit the stages, or the code they write</li></ul>
+<ul><li>A manager plays an ascension in stages: stage 1 sets things up, each later stage changes only what it needs, and moves on when a condition holds</li><li>Nunix late game comes ready: Shimmering veil, season drops, reindeer, then golden cookie combos</li><li>The Manager widget shows the stage, what moves it on, the numbers it watches and the macros at work</li><li>Edit the stages, or the code they write</li></ul>
+<img src="docs/readme/manager-widget.png" alt="The Manager widget" width="50%">
 </td>
 <td width="50%" valign="top">
 <b>Widgets</b><br>
 <img src="docs/readme/widgets.png" alt="The Widgets page" width="100%">
-<ul><li>Place macro buttons, golden cookie odds, effect timers, charts and more on the left panel</li><li>Place any widget more than once, each copy with its own settings</li><li>Save and switch layouts</li></ul>
+<ul><li>Place macro buttons, golden cookie odds, effect timers, charts, the Manager and more on the left panel</li><li>Place any widget more than once, each copy with its own settings</li><li>Save and switch layouts</li></ul>
 </td>
 </tr>
 <tr>
