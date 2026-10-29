@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 4.9.3 — 2026-10-29
+
+- **Fixed:** in the Manager widget with Background on Faint or None, the current stage's name (e.g. “Drops”) on its
+  gold pill no longer carries the black outline that made it look blurry.
+
 ## 4.9.2 — 2026-10-29
 
 - **Fixed:** levelling Santa (the Santa macro, SeasonCompletion) put up the game's Santa/dragon menu, empty and stuck,
