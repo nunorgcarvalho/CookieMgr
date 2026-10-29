@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 4.13.1 — 2026-10-29
+
+- **README:** the Manager widget picture shows the trimmed widget (no Santa, Easter egg and reindeer lines).
+- **README:** the Statistics tile mentions saved tooltip layouts with a built-in Default.
+
 ## 4.13.0 — 2026-10-29
 
 - **Tooltip layouts:** the store tooltip's lines can be saved as layouts, like the other profiles. The built-in
