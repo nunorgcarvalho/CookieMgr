@@ -452,16 +452,23 @@ card puts the widget on the left panel.
    Pantheon's Diamond slot, makes every golden cookie a wrath cookie); the Auto buyer, the Upgrade unlocker (Santa,
    research, Auto dragon, Pet the dragon, Fortunes and cheap upgrades), SeasonCompletion, wrinklers and sugar lumps.
    Research goes all the way, the Elder Pact too: it keeps the Grandmapocalypse going (wrinklers come more often at its
-   last stage) and puts the Elder Pledge up for sale for Reindeer. No
-   garden, Grimoire or stock market. Pantheon wrinklers, dragon drops. Until Christmas's upgrades, Easter, Halloween
+   last stage) and puts the Elder Pledge up for sale for Reindeer. The garden isn't ready for combos yet, so it's a
+   **Weed farm**: the Auto-gardener harvests mature weeds and any new seed that springs up (a mutation can unlock
+   one). No Grimoire or stock market. Pantheon wrinklers, dragon drops. Until Christmas's upgrades, Easter, Halloween
    and Valentine's day are in.
-2. **Reindeer**: Christmas again for its cookies, with the elders pledged and Dragon drops & flight.
-3. **Golden cookie combos**, for good: golden and wrath cookies clicked again, the Auto buyer's Golden cookie combos profile, 8 nursetulips together +
-   clover combos in the garden, the golden Pantheon, Dragonflight & Harvest, and Force the Hand of Fate on combos.
+2. **Reindeer**: Christmas again for its cookies, with the elders pledged, and golden cookies from here on: golden
+   and wrath cookies clicked again, the Auto buyer's Golden cookie combos profile, the golden Pantheon (no wrinklers
+   are left for Scorn), 8 nursetulips together + clover combos in the garden and Force the Hand of Fate on combos.
+   Only the dragon waits: Dragon drops & flight (Mind Over Matter still helps the reindeer drop cookies).
+3. **Golden cookie combos**, for good: Dragonflight & Harvest.
+
+A garden profile a manager puts in waits for the garden to be ready for it: while its seeds aren't unlocked yet (or
+there's no garden yet), the **Weed farm** is in instead, and the Manager widget says which seeds it's waiting for.
 
 The Auto buyer buys by payback, so it doesn't buy research or upgrades that give no CpS; the Upgrade unlocker does.
 
-Its stages watch: the research (how far along, and the next one) (Drops); the next reindeer (Reindeer); the combo
+Its stages watch: the research (how far along, and the next one) (Drops); the next reindeer, the combo on, the magic for
+Force the Hand of Fate and what the Auto buyer buys next (Reindeer); the combo
 on, the magic for Force the Hand of Fate, what the Auto buyer buys next and how much of the garden is mature (Golden
 cookie combos). The seasons' drops (Santa's gifts, the Easter eggs, the reindeer cookies) aren't watched: the
 widget's **Next stage when** counts them already.

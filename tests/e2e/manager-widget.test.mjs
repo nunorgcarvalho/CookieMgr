@@ -138,7 +138,7 @@ const S = CA.Settings;
 const saved = JSON.parse(S.serialize());
 S.load(JSON.stringify(saved));
 eq(G.find('nunixLateGame').stages[0].watch.length, 0, 'an emptied list stays empty');
-eq(G.find('nunixLateGame').stages[1].watch.length, 1, 'the others kept');
+eq(G.find('nunixLateGame').stages[1].watch.length, 4, 'the others kept');
 saved.managers.managers.forEach((m) => m.stages.forEach((st) => delete st.watch));
 S.load(JSON.stringify(saved));
 assert(G.find('nunixLateGame').stages.every((st, i) => st.watch.length === G.SEEDS[0].stages[i].watch.length), 'a save from v4.0: Nunix’s stages get their watch lists');
