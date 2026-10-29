@@ -31,6 +31,25 @@ assert(Game.prefs.cursors === 0, 'loading a save keeps them off');
 CA.Hotkeys.get('look.simple').run();
 assert(Game.prefs.cursors === 1 && Game.prefs.milk === 1, 'and off again');
 
+// the white glow behind the cookie (shine.png) has no game switch: it's skipped while drawing
+const shine = { alt: 'shine' };
+const cookie = { alt: 'cookie' };
+const drawn = [];
+Game.Loader = { assets: { 'shine.png': shine, 'perfectCookie.png': cookie } };
+Game.LeftBackground = { drawImage: (img) => drawn.push(img.alt) };
+Game.DrawBackground = () => {
+  Game.LeftBackground.drawImage(shine);
+  Game.LeftBackground.drawImage(cookie);
+};
+S.set('simpleLook', true);
+Game.DrawBackground();
+assert(drawn.join() === 'cookie', `on: no glow, the cookie still drawn (${drawn})`);
+assert(!('drawImage' in Game.LeftBackground) || Game.LeftBackground.drawImage.length === 1, 'drawImage put back after drawing');
+drawn.length = 0;
+S.set('simpleLook', false);
+Game.DrawBackground();
+assert(drawn.join() === 'shine,cookie', `off: the glow is back (${drawn})`);
+
 // the Settings page shows it
 CA.UI.Menu.openPage('settings:general');
 await sleep(50);
