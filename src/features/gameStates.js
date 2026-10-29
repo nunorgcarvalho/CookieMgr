@@ -78,7 +78,7 @@ CA.GameStates = (() => {
   }
 
   /**
-   * The ledger: this frame's change to the bank split into the categories the Actual CpS chart
+   * The ledger: this frame's change to the bank split into the categories the Bank flows chart
    * shows, money in and money out kept apart (outs are positive amounts):
    *   building CpS   production; split into unboosted (unbuffed CpS) and the extra from CpS
    *                  effects (Frenzy & co.)

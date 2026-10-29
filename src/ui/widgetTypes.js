@@ -6,6 +6,7 @@
 //   events     the latest events — how many and which types; as many of these as you like
 //   chart      a page's chart on the left panel (its ☆ — the Garden's growth and effects): a live copy
 //              of it, sharing the page chart's window and choices (ui/plot.js mini())
+//   income     the Stats page's Actual income chart, the same way (its ☆ on Stats → Actual income)
 //   grimoire / garden / market / pantheon
 //              one compact round widget per minigame: a ring for its timer (magic, next tick,
 //              next worship swap), a short label under it, details on hover; click to open it
@@ -156,7 +157,7 @@ CA.UI.WidgetTypes = (() => {
   const STATS = [
     { id: 'cpsClick', label: 'CpS + clicking', value: () => { const f = lastFrame(); return f ? perS((f.cps || 0) + (f.click || 0)) : '—'; } },
     { id: 'cps', label: 'CpS', value: () => perS(Game.cookiesPs) },
-    { id: 'actual', label: 'Actual CpS', value: () => { const r = CA.Recorder.recent(60); return r ? `${perS(r.actual)} <em>last min</em>` : '—'; } },
+    { id: 'actual', label: 'Actual income', value: () => { const r = CA.Recorder.recent(60); return r ? `${perS(r.actual)} <em>last min</em>` : '—'; } },
     { id: 'clickRate', label: 'Clicks / second', value: () => { const r = CA.Recorder.recent(10); return r && Number.isFinite(r.clickRate) ? r.clickRate.toFixed(1) : '—'; } },
     { id: 'bank', label: 'Bank', value: () => F().beautify(Game.cookies || 0) },
     { id: 'runStarted', label: 'Run started', value: () => (Game.startDate ? `${F().span((Date.now() - Game.startDate) / 1000)} <em>ago</em>` : '—') },
@@ -587,6 +588,33 @@ CA.UI.WidgetTypes = (() => {
             { v: 'hide', label: 'Hidden (hover a chart for the names)' },
           ],
           when: (inst) => plotsOf(inst).length > 0,
+        },
+      ],
+    });
+    // the Stats page's Actual income chart, live: a Chart widget showing just it (its ☆ on the page)
+    const incomeOf = (inst) => ({ ...inst, stats: ['income'] });
+    D({
+      id: 'income',
+      name: 'Actual income',
+      icon: 'bolt',
+      group: 'game',
+      short: 'What you really bake, the payback line',
+      desc: 'The Stats page’s Actual income chart, live on the left panel: what you really baked a second by source, with the income payback periods count in as a line. It shows the window, smoothing and scale you pick on Stats → Actual income; hover it for the details.',
+      width: 300,
+      resize: 'free',
+      html: (inst) => chartHtml(incomeOf(inst)),
+      live: (inst, body) => chartLive(incomeOf(inst), body),
+      removed: (inst) => chartRemoved(incomeOf(inst)),
+      settings: [
+        {
+          key: 'legend',
+          label: 'Legend',
+          type: 'select',
+          default: 'show',
+          options: () => [
+            { v: 'show', label: 'Shown under the chart' },
+            { v: 'hide', label: 'Hidden (hover the chart for the names)' },
+          ],
         },
       ],
     });

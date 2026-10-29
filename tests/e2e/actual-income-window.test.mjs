@@ -67,7 +67,7 @@ assert(near(value('payback.actualIncome', 15), 20 * RAW), 'payback.actualIncome(
 // ---- any window, kept to whole minutes from 1 to a day
 P.setActualWindow(45);
 assert(CA.Settings.get('ppActualWindow') === '45', 'a typed window');
-assert(CA.Settings.definitions().find((d) => d.key === 'ppActualWindow').choices.map((x) => x.v).join() === '15,30,45,60,180', 'the Settings page lists it among the presets');
+assert(CA.Settings.definitions().find((d) => d.key === 'ppActualWindow').choices.map((x) => x.v).join() === '15,30,45,60,180,run', 'the Settings page lists it among the presets');
 P.setActualWindow(0);
 assert(CA.Settings.get('ppActualWindow') === '1', 'at least a minute');
 P.setActualWindow(99999);
@@ -86,7 +86,7 @@ assert(P.mode().id === 'actualIncome' && near(P.income(), 3 * RAW), '20 minutes 
 CA.UI.Menu.openPage('payback');
 await sleep(100);
 const presets = () => [...doc.querySelectorAll('[data-pp-pick="ppActualWindow"]')];
-assert(presets().map((b) => b.textContent).join() === '15 min,30 min,1 h,3 h', `the presets (${presets().map((b) => b.textContent)})`);
+assert(presets().map((b) => b.textContent).join() === '15m,30m,1h,3h,Since ascension', `the presets (${presets().map((b) => b.textContent)})`);
 assert(presets().find((b) => b.classList.contains('on')).dataset.v === '180', 'the one in use is on');
 presets()
   .find((b) => b.dataset.v === '15')
@@ -94,12 +94,12 @@ presets()
 await sleep(50);
 assert(CA.Settings.get('ppActualWindow') === '15', 'clicking a preset sets it');
 const chip = () => doc.querySelector('[data-pp-mode="actualIncome"]');
-assert(chip().textContent.includes('Actual income · 15 min'), `the mode's chip names its window (${chip().textContent})`);
+assert(chip().textContent.includes('Actual income · 15m'), `the mode's chip names its window (${chip().textContent})`);
 const box = doc.querySelector('[data-pp-window]');
 box.value = '90';
 box.dispatchEvent(new w.Event('change', { bubbles: true }));
 await sleep(50);
-assert(CA.Settings.get('ppActualWindow') === '90' && chip().textContent.includes('1.5 h'), 'typing minutes sets any window');
+assert(CA.Settings.get('ppActualWindow') === '90' && chip().textContent.includes('1.5h'), 'typing minutes sets any window');
 assert(!presets().some((b) => b.classList.contains('on')), 'no preset on for a typed window');
 CA.UI.Menu.close();
 
