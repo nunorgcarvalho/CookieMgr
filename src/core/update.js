@@ -19,6 +19,7 @@ CA.Update = (() => {
 
   let notifiedVersion = null;
   let lastCheck = 0;
+  let latest = null; // the version the last successful check saw
 
   /** True if `a` (e.g. "0.4.0") is a newer semver-ish version than `b`. */
   function isNewer(a, b) {
@@ -39,7 +40,13 @@ CA.Update = (() => {
       const res = await fetch(`${VERSION_URL}?t=${Date.now()}`, { cache: 'no-store' });
       if (!res.ok) return;
       const remote = (await res.text()).trim();
-      if (!/^\d+\.\d+\.\d+$/.test(remote) || remote === notifiedVersion || !isNewer(remote, CA.VERSION)) return;
+      if (!/^\d+\.\d+\.\d+$/.test(remote)) return;
+      const known = latest !== null;
+      latest = remote;
+      if (remote === notifiedVersion || !isNewer(remote, CA.VERSION)) {
+        if (!known) CA.Events.emit('update', null); // first answer: now known to be up to date
+        return;
+      }
       notifiedVersion = remote;
       CA.Events.emit('update', remote);
       CA.Util.notify(
@@ -57,6 +64,12 @@ CA.Update = (() => {
   /** The newer version found (e.g. "4.11.0"), or null if you're up to date or it isn't known yet. */
   function available() {
     return notifiedVersion && isNewer(notifiedVersion, CA.VERSION) ? notifiedVersion : null;
+  }
+
+  /** 'available' (a newer release was found), 'current' (a check found nothing newer) or null (not known: no check has answered yet, or Check for updates is off). */
+  function status() {
+    if (available()) return 'available';
+    return latest !== null && CA.Settings.get('updateCheck') ? 'current' : null;
   }
 
   /** Checks now unless the last check was under a minute ago (the Settings page calls this as it opens). */
@@ -77,5 +90,5 @@ CA.Update = (() => {
     setInterval(check, CHECK_MS);
   }
 
-  return { init, check, checkSoon, available, isNewer };
+  return { init, check, checkSoon, available, status, isNewer };
 })();

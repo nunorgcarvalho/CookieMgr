@@ -3777,6 +3777,12 @@ body.ca-has-storebar #products {
   color: #b8f0a8;
   white-space: nowrap;
 }
+/* a newer release: red, in place of the green "Up to date" */
+#CookieMgrMenu .ca-overview-brand .ca-update-note.ca-update-new {
+  border-color: rgba(240, 110, 100, 0.55);
+  background: rgba(190, 50, 40, 0.22);
+  color: #ffb4a8;
+}
 #CookieMgrMenu .ca-overview-brand .ca-update-note[hidden] {
   display: none;
 }

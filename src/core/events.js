@@ -5,7 +5,8 @@
 //   'settings'  (key)         an option changed
 //   'hotkeys'   (actionId)    a hotkey binding changed (or capture started/stopped)
 //   'ascend'    ()            the player just started ascending
-//   'update'    (version)     a newer cookieMgr release was found (CA.Update.available())
+//   'update'    (version)     a newer cookieMgr release was found (CA.Update.available()), or null once
+//                             the first check finds you up to date (CA.Update.status())
 //   'stockTrade' (entry)      a stock was bought or sold, by the autoclicker or by hand
 
 CA.Events = (() => {
