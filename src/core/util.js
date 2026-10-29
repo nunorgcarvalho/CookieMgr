@@ -104,8 +104,11 @@ CA.Util = {
     if (!el || !el.getBoundingClientRect) return;
     let box = el.parentElement;
     while (box && box !== document.body && box !== document.documentElement) {
-      const oy = getComputedStyle(box).overflowY;
-      if ((oy === 'auto' || oy === 'scroll') && box.scrollHeight > box.clientHeight) break;
+      // the cheap size check first: getComputedStyle is costly (jsdom recomputes the cascade every call)
+      if (box.scrollHeight > box.clientHeight) {
+        const oy = getComputedStyle(box).overflowY;
+        if (oy === 'auto' || oy === 'scroll') break;
+      }
       box = box.parentElement;
     }
     if (!box || box === document.body || box === document.documentElement) return;

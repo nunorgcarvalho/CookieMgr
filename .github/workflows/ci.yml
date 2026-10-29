@@ -5,8 +5,14 @@ on:
     branches: [main, sim]
   pull_request:
 
+# a newer push to the same pull request or branch makes the running check moot
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
-  build:
+  # build, lint and the pull request rules: seconds, beside the tests
+  checks:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,11 +23,6 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      # the game's scripts, for the simulator's tests (tests/sim) — downloaded once per pinned version
-      - uses: actions/cache@v4
-        with:
-          path: sim/.game
-          key: game-${{ hashFiles('sim/game/fetch.mjs') }}
       # versions, CHANGELOG.md and dist/ are the Release workflow's (release.yml): a PR adds changes/<slug>.md
       - name: Pull request rules (no version bumps, a changelog fragment)
         if: github.event_name == 'pull_request'
@@ -32,5 +33,36 @@ jobs:
         run: node --check dist/CookieMgr.js
       - name: Lint
         run: npm run lint
-      - name: Tests (contract, unit, end-to-end in jsdom)
-        run: npm test -- --no-build
+
+  # the suite in four shards side by side, split by each file's time (tests/timings.json)
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    name: tests (${{ matrix.shard }}/4)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # the game's scripts, for the simulator's tests (tests/sim) — downloaded once per pinned version
+      - uses: actions/cache@v4
+        with:
+          path: sim/.game
+          key: game-${{ hashFiles('sim/game/fetch.mjs') }}
+      - name: Tests (contract, unit, end-to-end in jsdom, simulator)
+        run: npm test -- --shard=${{ matrix.shard }}/4
+
+  # one check that is green when everything above is: the name a branch rule can require
+  build:
+    if: always()
+    needs: [checks, tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: All checks and test shards passed
+        run: |
+          [ "${{ needs.checks.result }}" = success ] && [ "${{ needs.tests.result }}" = success ] || exit 1

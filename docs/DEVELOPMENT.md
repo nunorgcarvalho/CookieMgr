@@ -187,8 +187,16 @@ If you add a file, add it to `MODULES` in `build.mjs` in the right order.
 - **Layers:** `core/` and `features/` never use `CA.UI` (formatting is `CA.Format`); `core/` doesn't use features. The
   source contract test checks it, along with no `title=` tooltips, no `scrollIntoView`, and no unused CSS.
 
-CI (`.github/workflows/ci.yml`) builds `dist/` from `src/`, lints and runs every test; on a pull request it also checks
-the [release rules](#releasing). Run `npm test` and `npm run lint` before pushing.
+CI (`.github/workflows/ci.yml`) builds `dist/` from `src/`, lints and runs every test, in four shards side by side
+(about a minute and a half); on a pull request it also checks the [release rules](#releasing).
+
+**Before pushing, test what you touched, not everything:** `npm run lint` and `npm test -- contract <words>` (the
+contract tests plus the files for your feature: `npm test -- garden payback`). CI runs the full suite on every push.
+Run it all locally (`npm test`, ~3 min on 4 cores) only for a change that reaches everywhere (`src/core/`, the test
+harness, `build.mjs`) or to chase a CI failure. A merge of `main` into your branch needs no local re-run.
+
+`tests/timings.json` holds each file's time; the runner starts the slow ones first and CI splits the shards by it.
+Refresh it now and then with `npm test -- --save-timings` (a new file counts as an average one until then).
 
 ## Releasing
 

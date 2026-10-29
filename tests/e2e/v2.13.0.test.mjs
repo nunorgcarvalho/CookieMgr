@@ -44,6 +44,7 @@ assert(Game.prefs.particles === 1 && Game.prefs.numbers === 1, 'your own clicks 
 assert(/no animation/.test(CA.Actions.describe(CA.Macros.stepsOf(CA.Macros.get('bigCookie'))[0])), 'the step says so');
 
 // ---- activity rings
+CA.UI.Menu.close(); // 400 runs with the menu open would re-sync its page 400 times (slow in jsdom)
 for (let i = 0; i < 400; i++) CA.Macros.runOnce('bigCookie');
 assert(CA.Macros.activityLevel('bigCookie') >= 3 && CA.Macros.activityLevel('wrath') === 0, `busy vs idle (${CA.Macros.rate('bigCookie').toFixed(2)}/s)`);
 ['bigCookie', 'wrath'].forEach((id) => CA.Macros.setFav(id, true));
