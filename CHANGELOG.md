@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 4.14.1 — 2026-10-29
+
+- **Guide:** the store section explains Start at the minimum bulk and tooltips that follow the buy amount.
+
 ## 4.14.0 — 2026-10-29
 
 - **Start at the minimum bulk:** the game starts every session at ×1; with a minimum bulk of ×10 or ×100 (set on
