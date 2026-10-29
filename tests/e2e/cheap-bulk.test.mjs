@@ -61,6 +61,9 @@ assert(!B.queue().items.some((x) => x.first) && B.find('payback').cheapBulk === 
 B.update('payback', { cheapBulk: -3 });
 assert(B.find('payback').cheapBulk === 0, 'never below 0');
 
+// the Auto buyer runs every 0.05 s by default (a speed you set yourself is kept)
+assert(CA.Macros.everyOf(CA.Macros.get('autoBuyer')) === 50, 'the Auto buyer: every 50 ms');
+
 // ---- saves ----
 const S = CA.Settings;
 const saved = JSON.parse(S.serialize());

@@ -540,7 +540,7 @@ CA.AutoBuyer = (() => {
       desc: 'Buys the front of the queue on the Payback page: its active profile ranks every building and upgrade by payback period, then its rules (buy first, weights, caps, never). Replaces Best building and Best upgrade.',
       icon: { ico: 'dollar' },
       mode: 'flow',
-      every: 500,
+      every: 50,
       defaultSource: '# Buy the front of the Auto buyer’s queue (the Payback page): the active profile ranks every\n# building and upgrade by payback period, then by its rules. buyer.budget(): the bank less\n# the profile’s reserve.\nforever:\n  pick = buyer.next()\n  if pick != "" and pp.price(pick) <= buyer.budget():\n    pp.buy(pick)\n',
       readiness: () => readiness(),
       holdRepeat: true,
