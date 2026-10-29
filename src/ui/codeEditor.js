@@ -5,6 +5,10 @@
 //   CA.UI.CodeEditor.html(key, source, { title, hint })   the editor: numbered, colored lines, the
 //                                                          problems under it, what it's doing when it
 //                                                          runs, and a "how it reads" crib sheet
+//   CA.UI.CodeEditor.lineHtml(key, source, { placeholder, bad })
+//                                                          a one-line editor (a condition, a value):
+//                                                          colored, its words hover like the editor's;
+//                                                          Enter leaves it (its change event fires)
 //   CA.UI.CodeEditor.libraryHtml(key, { first, mode })     every action / condition / value / keyword,
 //                                                          searchable, ★ to pin; `first`: group names
 //                                                          (or prefixes) to list first; mode 'stat': a
@@ -238,6 +242,17 @@ CA.UI.CodeEditor = (() => {
     );
   }
 
+  const lineHl = (src) => `<span class="ca-hl-line">${highlightLine(String(src || '')) || ' '}</span>`;
+  /** A one-line editor: no gutter or problems list (the page says what it makes of the code). */
+  function lineHtml(key, source, opts = {}) {
+    return (
+      `<div class="ca-code-line${opts.bad ? ' bad' : ''}" data-code-ed="${esc(key)}" data-code-line>` +
+      `<pre class="ca-code-hl" data-code-hl aria-hidden="true">${lineHl(source)}</pre>` +
+      `<textarea class="ca-code-ta" data-code rows="1" spellcheck="false" wrap="off" autocomplete="off" placeholder="${esc(opts.placeholder || '')}">${esc(source || '')}</textarea>` +
+      '</div>'
+    );
+  }
+
   const editorOf = (el) => el && el.closest && el.closest('[data-code-ed]');
   const compileOpts = (mode, item) => (mode ? { mode, item: !!item } : {});
 
@@ -245,6 +260,14 @@ CA.UI.CodeEditor = (() => {
   function refresh(ta) {
     const ed = editorOf(ta);
     if (!ed) return;
+    if (ed.dataset.codeLine !== undefined) {
+      const hl = ed.querySelector('[data-code-hl]');
+      if (hl) {
+        hl.innerHTML = lineHl(ta.value);
+        hl.scrollLeft = ta.scrollLeft;
+      }
+      return;
+    }
     const v = view(ta.value, (ed.dataset.codeVars || '').split(',').filter(Boolean), compileOpts(ed.dataset.codeMode, ed.dataset.codeItem !== undefined));
     const hl = ed.querySelector('[data-code-hl]');
     if (hl) hl.innerHTML = v.hl;
@@ -295,6 +318,15 @@ CA.UI.CodeEditor = (() => {
     const ta = e.target;
     if (!ta.matches || !ta.matches('[data-code]')) return false;
     e.stopPropagation(); // the game and cookieMgr's hotkeys don't see what you type
+    const ed = editorOf(ta);
+    if (ed && ed.dataset.codeLine !== undefined) {
+      // one line: Enter is done (no new line), Tab moves on
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        ta.blur();
+      }
+      return false;
+    }
     const v = ta.value;
     const a = ta.selectionStart;
     const b = ta.selectionEnd;
@@ -432,13 +464,22 @@ CA.UI.CodeEditor = (() => {
         }
       }
     };
+    // a one-line editor scrolls sideways: its colored copy follows
+    const onScroll = (e) => {
+      const t = e.target;
+      const ed = t.matches && t.matches('[data-code]') && editorOf(t);
+      const hl = ed && ed.dataset.codeLine !== undefined && ed.querySelector('[data-code-hl]');
+      if (hl) hl.scrollLeft = t.scrollLeft;
+    };
     root.addEventListener('input', onInput);
     root.addEventListener('keydown', onKeyDown);
     root.addEventListener('click', onClick, true);
+    root.addEventListener('scroll', onScroll, true);
     return () => {
       root.removeEventListener('input', onInput);
       root.removeEventListener('keydown', onKeyDown);
       root.removeEventListener('click', onClick, true);
+      root.removeEventListener('scroll', onScroll, true);
     };
   }
 
@@ -862,5 +903,5 @@ CA.UI.CodeEditor = (() => {
     setInterval(placeChip, 1000); // follows the panel; gone when it closes
   }
 
-  return { init, html, libraryHtml, legendHtml, highlightCode, bind, setLive, insert, insertInline, refresh, view, highlightLine, cardHtml, placeOf, showCard, hideCard, defineOpen, guard, goBack, trail: () => trail.slice() };
+  return { init, html, lineHtml, libraryHtml, legendHtml, highlightCode, bind, setLive, insert, insertInline, refresh, view, highlightLine, cardHtml, placeOf, showCard, hideCard, defineOpen, guard, goBack, trail: () => trail.slice() };
 })();

@@ -415,16 +415,27 @@ The **Managers** page has:
 - **Manager**: the **Manager** macro's switch and which manager is active, its stages in a strip (the one it's on
   is lit; click one to go there), what it moves on once, and what it still has to put in.
 - **Managers**: rename, scope, **Use**, **Duplicate**, **Delete**, **New manager** and **Put Nunix late game back**.
-- **Stages**: for the shown manager, a card per stage with its rules. Later stages start with a folded **Carries
-  over from stage N** line (open it to see everything in force). Then **Switch on** and **Switch off** chips (click a
-  chip to flip it, × to drop it), **Settings** and **Profiles** rows (× drops one), each with a "+" list to add a
-  rule, and **Until**. A new stage changes nothing until you add to it; deleting a stage hands its changes to the
-  next one, so the stages after it run as before.
+- **Stages**: for the shown manager, a **tab per stage** (the one it's on has a dot; **+** adds one), the picked
+  stage beside a **macro library**. A stage shows what's in force there, with its own changes marked:
+  - **At work**: the macros on (new here: marked **NEW**). Click a chip to switch it the other way here; × takes it
+    out from this stage on (or undoes this stage's change). The ones it switches off are struck through, and the
+    ones still off are listed under them (click one to switch it on). The library on the right lists every macro,
+    the **most used** first, searchable: click one to switch it on (or off) from this stage.
+  - **Settings**: the macro settings in force (**as before**, or set here, where × undoes it); **+ a setting…** adds
+    one. Research's **Stop before** shows the research as icons: hover one for its card, click one to stop there.
+  - **Profiles**: a card per kind (Auto buyer, Pantheon, dragon, Grimoire, garden): what the stage puts in, or **as
+    before**, at a glance (its spirits, auras, what it buys…), and a link to its page.
+  - **Moves on when**: the "until", one line of code; hover its words for what they are, as in the code editor.
+  - **Widget watches**, folded away until you open them (below).
+
+  A new stage changes nothing until you add to it; deleting a stage hands its changes to the next one, so the stages
+  after it run as before. The fields are dark, like the code editor's.
 - **Code**: a manager is code. The stage editor writes it, a block per stage, and the Manager macro runs it each
   second. Change it and Save to make it yours (the stage editor is then off until **Back to stages**).
 
 Each stage also has **Widget watches**: what the **Manager widget** (see Widgets) shows while that stage is on. A
-watch is a label, a value in the macro language and how to show it: **as it is**, **a time** (seconds, e.g.
+watch is a label, a value in the macro language (one line of code, its words hovering like the editor's) and how
+to show it: **as it is**, **a time** (seconds, e.g.
 `golden.expected()`), **a share** (0–1, e.g. `garden.matureShare()`) or **progress** (`[have, of]`, e.g.
 `[owned(easter), total(easter)]`, or 0–100), drawn with a bar. Its value now shows beside it. The ☆ on the Manager
 card puts the widget on the left panel.

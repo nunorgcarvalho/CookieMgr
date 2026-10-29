@@ -2,7 +2,6 @@
 // changes, and the rest carries over until a later stage changes it back. The code has a block per
 // stage for it and every stage after it (manager.arriving(N) on its first pass); a jump runs the blocks
 // before it too. Nunix late game clicks reindeer from the start and researches up to the Elder Pact.
-// The stage editor shows rules: switch on / off, settings, profiles — each with × and a "+" list.
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
 import { boot, sleep, makeAssert } from '../harness/game.mjs';
 
@@ -84,36 +83,7 @@ assert(mine && JSON.stringify(mine.stages[1].macros) === '{"bigCookie":"on"}' &&
 assert(G.effective(mine, 1).macros.autoBuyer === 'on' && G.effective(mine, 1).inputs.research.stopBefore === 'none', 'and run as they did');
 S.load(snap);
 
-// ---- the page: rules ----
-const doc = w.document;
-const click = (el) => el.dispatchEvent(new w.MouseEvent('click', { bubbles: true }));
-const change = (el, v) => {
-  el.value = v;
-  el.dispatchEvent(new w.Event('change', { bubbles: true }));
-};
-const menu = () => doc.getElementById('CookieMgrMenu');
-G.use('nunixLateGame');
-CA.UI.Menu.openPage('managers');
-await sleep(50);
-const cards = () => menu().querySelectorAll('.ca-mgr-stagecard');
-assert(cards().length === 4, 'four stage cards');
-assert(!cards()[0].querySelector('.ca-mgr-carry') && cards()[1].querySelector('.ca-mgr-carry'), 'later stages say what carries over');
-assert(/Carries over from stage 1: \d+ on/.test(cards()[1].querySelector('.ca-mgr-carry summary').textContent), 'counted');
-assert(cards()[1].querySelectorAll('.ca-mgr-macro').length === 1, 'Drops shows only its change');
-change(cards()[1].querySelector('[data-mgr-addmacro][data-to="off"]'), 'wrinklers');
-assert(G.find('nunixLateGame').stages[1].macros.wrinklers === 'off', '“+ switch off…” adds a change');
-click(cards()[1].querySelector('[data-mgr-act="unmacro"][data-macro="wrinklers"]'));
-assert(G.find('nunixLateGame').stages[1].macros.wrinklers === undefined, '× drops it');
-change(cards()[1].querySelector('[data-mgr-addprofile]'), 'grimoire');
-assert(G.find('nunixLateGame').stages[1].profiles.grimoire, '“+ a profile…” adds one');
-click(cards()[1].querySelector('[data-mgr-act="unprofile"][data-kind="grimoire"]'));
-assert(!G.find('nunixLateGame').stages[1].profiles.grimoire, '× drops it');
-change(cards()[1].querySelector('[data-mgr-addinput]'), 'research|stopBefore');
-assert(G.find('nunixLateGame').stages[1].inputs.research && G.find('nunixLateGame').stages[1].inputs.research.stopBefore === 'Elder Pact', '“+ a setting…” adds one, at what carries over');
-change(cards()[1].querySelector('[data-mgr-input][data-macro="research"]'), 'none');
-assert(G.find('nunixLateGame').stages[1].inputs.research.stopBefore === 'none', 'and it changes there');
-const opt = [...cards()[1].querySelectorAll('[data-mgr-addmacro][data-to="on"] option')].find((o) => o.value === 'autoBuyer');
-assert(opt && opt.disabled && /already on/.test(opt.textContent), 'what’s already on can’t be switched on again');
+// (the page: tests/e2e/manager-stage-tabs.test.mjs)
 
 Game.Has = has;
 M.list().forEach((m) => M.isOn(m.id) && M.set(m.id, false, { silent: true }));

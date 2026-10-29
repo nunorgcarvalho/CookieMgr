@@ -203,14 +203,15 @@ const menu = () => doc.getElementById('CookieMgrMenu');
 CA.UI.Menu.openPage('managers');
 await sleep(50);
 assert(/Nunix late game/.test(menu().textContent), 'the page shows Nunix late game');
-assert(menu().querySelectorAll('.ca-mgr-stagecard').length === 4, 'its four stages');
-const rs = menu().querySelector('[data-mgr-input][data-macro="research"][data-key="stopBefore"]');
-assert(rs && rs.value === 'Elder Pact', 'Research’s setting, set by the stage');
-// (v4.1: rules — × drops one, a chip click flips it)
-click(rs.closest('label').querySelector('[data-mgr-act="uninput"]'));
+assert(menu().querySelectorAll('[data-mgr-act="tab"]').length === 4, 'its four stages (a tab each)');
+click(menu().querySelector('[data-mgr-act="tab"][data-i="0"]'));
+const rs = menu().querySelector('[data-mgr-input][data-macro="research"][data-key="stopBefore"]') || menu().querySelector('[data-mgr-act="pick"][data-macro="research"].sel');
+assert(rs && (rs.value || rs.dataset.v) === 'Elder Pact', 'Research’s setting, set by the stage');
+// (stage tabs: × drops a setting, a chip click flips a macro)
+click(rs.closest('.ca-mgr-set').querySelector('[data-mgr-act="uninput"]'));
 assert(!G.find('nunixLateGame').stages[0].inputs.research, 'a setting back to left as it is');
-assert(menu().querySelector('.ca-mgr-macro.off [data-mgr-act="flip"][data-macro="bigCookie"]'), 'Big cookie: off in a chip');
-click(menu().querySelector('[data-mgr-act="flip"][data-i="0"][data-macro="lumps"]'));
+assert(menu().querySelector('.ca-mgr-chip.off [data-mgr-act="flip"][data-macro="bigCookie"]'), 'Big cookie: off in a chip');
+click(menu().querySelector('.ca-mgr-chip [data-mgr-act="flip"][data-i="0"][data-macro="lumps"]'));
 assert(G.find('nunixLateGame').stages[0].macros.lumps === 'off', 'clicking a chip: on → off');
 click(menu().querySelector('[data-mgr-act="goto"][data-i="2"]'));
 assert(value('manager.stage') === 3, 'a stage chip goes there');
@@ -220,11 +221,11 @@ ta.value = ta.value.replace('switch on bigCookie', 'switch on bigCookie, stockTr
 ta.dispatchEvent(new w.Event('input', { bubbles: true }));
 click(menu().querySelector('[data-mgr-act="saveCode"]'));
 assert(typeof G.find('nunixLateGame').code === 'string' && /switch on bigCookie, stockTrader/.test(G.find('nunixLateGame').code), 'Save makes the code yours');
-assert(!menu().querySelector('.ca-mgr-stagecard') && menu().querySelector('[data-mgr-act="uncode"]'), 'the stage editor is off, Back to stages instead');
+assert(!menu().querySelector('.ca-mgr-lib') && menu().querySelector('[data-mgr-act="uncode"]'), 'the stage editor is off, Back to stages instead');
 const back = menu().querySelector('[data-mgr-act="uncode"]');
 click(back);
 click(menu().querySelector('[data-mgr-act="uncode"]') || back);
-assert(G.find('nunixLateGame').code === undefined && menu().querySelectorAll('.ca-mgr-stagecard').length === 4, 'Back to stages');
+assert(G.find('nunixLateGame').code === undefined && menu().querySelector('.ca-mgr-lib'), 'Back to stages');
 
 M.list().forEach((m) => M.isOn(m.id) && M.set(m.id, false, { silent: true }));
 assert(g.errors.length === 0, 'no runtime errors' + (g.errors.length ? `: ${g.errors.slice(0, 3).join(' | ')}` : ''));
