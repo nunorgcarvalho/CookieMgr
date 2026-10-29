@@ -38,8 +38,9 @@
 //                          Christmas's upgrades, Easter, Halloween and Valentine's are in
 //   Reindeer               Christmas again for its cookies, golden cookie combos already: + the elders
 //                          pledged, golden and wrath cookies clicked again, the buyer ranking by actual
-//                          income and never dipping below the Lucky! and garden replant banks (buyer
-//                          profile combos), Pantheon golden (no wrinklers left for Scorn), the garden on
+//                          income and never dipping below the Lucky! and garden rounds banks (buyer
+//                          profile combos: the nursetulips' round first, then 1.25 × the golden
+//                          clovers' — CpS bought only raises their price), Pantheon golden (no wrinklers left for Scorn), the garden on
 //                          8 nursetulips together + clover combos (the weed farm until their seeds are
 //                          unlocked), FtHoF on combos; the dragon still on drops & flight
 //   Golden cookie combos   for good: dragon Dragonflight & Harvest
@@ -136,7 +137,7 @@ CA.Managers = (() => {
     {
       id: 'nunixLateGame',
       name: 'Nunix late game',
-      desc: 'Clicks the big cookie from the start, not golden cookies (Scorn makes them all wrath cookies), while it hunts every season’s drops in the Grandmapocalypse, the Auto buyer spending freely and the Upgrade unlocker on, the garden a weed farm (mature weeds and new seeds harvested); then Christmas again for the reindeer cookies with golden cookie combos already, the elders pledged: golden cookies clicked again, the buyer ranks by actual income and keeps the Lucky! and garden replant banks, the golden Pantheon, the garden on tulip and clover combos (the weed farm until their seeds are unlocked) and Force the Hand of Fate on combos, the dragon still on Mind Over Matter & Dragonflight for the drops; then Dragonflight & Harvest, for good.',
+      desc: 'Clicks the big cookie from the start, not golden cookies (Scorn makes them all wrath cookies), while it hunts every season’s drops in the Grandmapocalypse, the Auto buyer spending freely and the Upgrade unlocker on, the garden a weed farm (mature weeds and new seeds harvested); then Christmas again for the reindeer cookies with golden cookie combos already, the elders pledged: golden cookies clicked again, the buyer ranks by actual income and keeps the Lucky! and garden rounds banks, the golden Pantheon, the garden on tulip and clover combos (the weed farm until their seeds are unlocked) and Force the Hand of Fate on combos, the dragon still on Mind Over Matter & Dragonflight for the drops; then Dragonflight & Harvest, for good.',
       scope: 'ascension',
       v: 2,
       stages: [

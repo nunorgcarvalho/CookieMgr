@@ -477,6 +477,10 @@ card puts the widget on the left panel.
    and wrath cookies clicked again, the Auto buyer's Golden cookie combos profile, the golden Pantheon (no wrinklers
    are left for Scorn), 8 nursetulips together + clover combos in the garden and Force the Hand of Fate on combos.
    Only the dragon waits: Dragon drops & flight (Mind Over Matter still helps the reindeer drop cookies).
+   The garden comes before CpS: a seed costs minutes of CpS, so CpS bought never brings a round closer, it only
+   raises its price. Golden cookie combos keeps the **Garden rounds** bank: the nursetulips' round while they aren't all planted
+   (they go down first, as soon as the bank covers all 8), plus the **Rounds margin** (1.25) × a round of golden
+   clovers, at unbuffed prices. The buyer spends only what's above it.
 3. **Golden cookie combos**, for good: Dragonflight & Harvest.
 
 A garden profile a manager puts in waits for the garden to be ready for it: while its seeds aren't unlocked yet (or
@@ -513,8 +517,8 @@ for** and what it buys after. **Buy all upgrades** is a row of its own: the upgr
 measured together (so upgrades that multiply each other count as one purchase). Profiles that buy upgrades come with
 the rule *Buy all upgrades → buy first when `payback.allUpgradesCount(buyer.budget()) >= 20`*: with lots affordable,
 it takes them all at once. Then the active **Profile**: what it buys (buildings, upgrades, Buy all upgrades), the building bulk, save up or skip,
-what it **keeps** (minutes of unbuffed CpS, plus any of the **Lucky!**, **Conjure**, **Frenzy Lucky!** and **Garden
-replant** banks) and each one's **priority**: **first** (the default — nothing is bought until the bank covers it, so
+what it **keeps** (minutes of unbuffed CpS, plus any of the **Lucky!**, **Conjure**, **Frenzy Lucky!**, **Garden
+replant** and **Garden rounds** banks) and each one's **priority**: **first** (the default — nothing is bought until the bank covers it, so
 the bank never drops below it) or **after what scores N+** (things scoring N or more are bought ahead of it and may
 spend into it; the rest waits until it's kept), what it ranks by (a payback mode), and its **rules**, top to bottom: what
 they apply to (anything, buildings, upgrades, Buy all upgrades, one building or upgrade, cookies, kittens, synergies, clicking upgrades,
@@ -869,6 +873,10 @@ The gardeners:
   clovers only, so young tulips don't hold fertilizer on. The real game (Farm level 8, 6×5, 8 nursetulips,
   1000 h × 3): golden cookies +84.8% on average against +83.6% for Golden clover combos, at CpS ×0.886; every tulip
   mature 25% of the time, in stretches of about 1.8 h, up to +149%. Fertilizer for the tulips too drops it to +38%.
+  Each round goes down whole or not at all (`wholeRounds`): it waits until the bank covers all of it, and until no
+  effect makes seeds dearer (`waitOutEffects`: a seed costs minutes of the CpS the game shows, so a Frenzy makes it 7
+  times dearer — `garden.priceBoost()`). The tulips go first (`tulipsFirst`): no clover round starts while a tulip
+  round is due. `garden.roundCost(seed)` is what a round costs.
 - **Weed collector** — keeps the garden bare (with *Always fertilizer*: the most weeds), so meddleweed and fungi
   spring up. Meddleweed is left to grow old, then harvested — the older it is, the likelier it leaves brown mold or
   crumbspore behind; anything you haven't unlocked grows until it's mature and is harvested; everything else is
