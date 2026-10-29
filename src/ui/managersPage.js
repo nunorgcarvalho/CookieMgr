@@ -5,7 +5,8 @@
 //              strip (the one it's on lit; click one to go there), what the stage still has to
 //              put in, and what moves it on
 //   Managers   one row per manager: its name (and id, for manager.use), its scope, Duplicate,
-//              Use (In use on the active one) and a trash can; New manager, and Put Nunix late game back
+//              Use (In use on the active one) and a trash can (a built-in, like Nunix late game,
+//              can't be deleted: once edited, Revert to default instead); New manager
 //   Code       what the Manager macro runs: the shown manager as code — written from its stages, or
 //              by you (Save makes it yours; the stage editor is then off until Back to stages); its
 //              last pass's lines lit while it runs
@@ -113,11 +114,16 @@ CA.UI.ManagersPage = (() => {
       `<div class="ca-dprof-name"><input type="text" class="ca-gname" maxlength="40" value="${esc(m.name)}" data-mgr-name="${esc(m.id)}" aria-label="Manager name"><code data-tip="Its id, for macros: manager.use(${esc(m.id)})">${esc(m.id)}</code></div>` +
       `<label class="ca-field" data-tip="Legacy managers, which carry on across ascensions, come later"><span>Scope</span><select data-mgr-scope="${esc(m.id)}">${scope}</select></label>` +
       `<span class="ca-hint">${m.stages.length} stage${m.stages.length === 1 ? '' : 's'}</span>` +
+      (G().isBuiltin(m) ? `<span class="ca-pill" data-tip="Comes with cookieMgr: always here, can't be deleted${G().isEdited(m) ? '; you changed it' : ''}">built-in${G().isEdited(m) ? ' · edited' : ''}</span>` : '') +
       '<span class="ca-dprof-acts">' +
       C().button('Stages', `data-mgr-act="show" data-id="${esc(m.id)}"`, `ca-btn-small${isShown ? ' on' : ''}`) +
       C().button('Duplicate', `data-mgr-act="dup" data-id="${esc(m.id)}"`, 'ca-btn-small') +
       C().useButton(isActive, `data-mgr-act="use" data-id="${esc(m.id)}"`, isActive ? 'The active manager' : 'Make it the active manager') +
-      C().trash(`data-mgr-act="delete" data-id="${esc(m.id)}"`, 'Delete this manager?', 'Delete this manager') +
+      (G().isBuiltin(m)
+        ? G().isEdited(m)
+          ? C().button(`${I('refresh', 12)} Revert to default`, `data-mgr-act="revert" data-id="${esc(m.id)}" data-arm-label="Back to the built-in?" data-tip="Undo your changes: back to how it comes with cookieMgr"`, 'ca-btn-small')
+          : ''
+        : C().trash(`data-mgr-act="delete" data-id="${esc(m.id)}"`, 'Delete this manager?', 'Delete this manager')) +
       '</span>' +
       (m.desc ? `<div class="ca-mgr-desc">${esc(m.desc)}</div>` : '') +
       '</div>'
@@ -132,7 +138,6 @@ CA.UI.ManagersPage = (() => {
       (list.length ? `<div class="ca-list">${list.map(managerRow).join('')}</div>` : '<div class="ca-card-note">No managers — make one below.</div>') +
       '<div class="ca-dprof-foot">' +
       C().button(`${I('plus', 12)} New manager`, 'data-mgr-act="new"', 'ca-btn-small') +
-      C().button(`${I('refresh', 12)} Put Nunix late game back`, 'data-mgr-act="seeds" data-arm-label="Put it back as it came?"', 'ca-btn-small') +
       '</div></div>'
     );
   }
@@ -401,7 +406,7 @@ CA.UI.ManagersPage = (() => {
     const add = s.watch.length < 8 ? C().button(`${I('plus', 12)} Watch a value`, `data-mgr-act="addWatch" data-id="${esc(m.id)}" data-i="${i}"`, 'ca-btn-small') : '';
     return (
       `<details class="ca-mgr-watchbox" data-mgr-watchbox${watchOpen ? ' open' : ''}><summary>${I('widget', 11)} Widget watches <span class="ca-hint">${s.watch.length} · what the Manager widget shows during this stage</span></summary>` +
-      `<div class="ca-mgr-watches">${rows}${add}</div></details>`
+      `<div class="ca-mgr-watches">${rows}<div class="ca-mgr-watchfoot">${add}<span class="ca-mgr-watchstar">${C().widgetStar(CA.UI.ManagerWidget.PRESET, 'Manager')} <span class="ca-hint">the Manager widget on the left panel</span></span></div></div></details>`
     );
   }
 
@@ -441,7 +446,7 @@ CA.UI.ManagersPage = (() => {
       : `<div class="ca-mgr-ed"><div class="ca-mgr-panel">${panelHtml(m, i)}</div>${libraryHtml(m, i)}</div>`;
     return (
       '<div class="ca-card ca-mgr-edcard" data-mgr-stages>' +
-      C().cardHead(`Stages · ${esc(m.name)}`, 'sortList', `<div class="ca-card-meta"><span class="ca-hint">${mine ? 'its code is yours' : 'stage 1 sets things up; each stage after it changes things, the rest carries over'}</span></div>`) +
+      C().cardHead(`Stages · ${esc(m.name)}`, 'sortList', `<div class="ca-card-meta"><span class="ca-hint">${mine ? 'its code is yours' : 'stage 1 sets things up; each stage after it changes things, the rest carries over'}</span>${C().widgetStar(CA.UI.ManagerWidget.PRESET, 'Manager')}</div>`) +
       tabsHtml(m, i) +
       body +
       '</div>'
@@ -523,7 +528,7 @@ CA.UI.ManagersPage = (() => {
 
   function act(t) {
     const d = t.dataset;
-    if ((d.mgrAct === 'delete' || d.mgrAct === 'delStage' || d.mgrAct === 'seeds' || d.mgrAct === 'uncode') && !CA.UI.Dom.armed(t)) return;
+    if ((d.mgrAct === 'delete' || d.mgrAct === 'delStage' || d.mgrAct === 'revert' || d.mgrAct === 'uncode') && !CA.UI.Dom.armed(t)) return;
     const i = Number(d.i);
     const m = d.id ? G().find(d.id) : null;
     const st = m && m.stages[i];
@@ -563,8 +568,8 @@ CA.UI.ManagersPage = (() => {
         G().remove(d.id);
         if (editing === d.id) editing = '';
         break;
-      case 'seeds':
-        G().resetSeeds();
+      case 'revert':
+        G().revert(d.id);
         break;
       case 'flip':
         // a chip: the other way in this stage

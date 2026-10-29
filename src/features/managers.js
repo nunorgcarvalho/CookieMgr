@@ -149,7 +149,9 @@ CA.Managers = (() => {
           watch: [
             { label: 'Santa', value: '[santaLevel(), 14]', format: 'progress' },
             { label: 'Easter eggs', value: '[owned(easter), total(easter)]', format: 'progress' },
-            { label: 'Grandmapocalypse', value: 'elderWrath()', format: 'auto' },
+            // the research, up to the Elder Pact (8 of the 9), and the one it's on
+            { label: 'Research', value: '[researchOwned(), 8]', format: 'progress' },
+            { label: 'Next research', value: 'researchNext()', format: 'auto' },
           ],
         },
         {
@@ -294,21 +296,42 @@ CA.Managers = (() => {
     changed();
     return m;
   }
+  /** A built-in manager (one that comes with cookieMgr): always there, can't be deleted, can be reverted. */
+  const builtinOf = (x) => {
+    const m = typeof x === 'object' ? x : find(x);
+    return (m && SEEDS.find((s) => s.id === m.id)) || null;
+  };
+  const isBuiltin = (x) => !!builtinOf(x);
+  /** A built-in changed from how it comes (its name, stages or code). */
+  function isEdited(x) {
+    const m = typeof x === 'object' ? x : find(x);
+    const seed = builtinOf(m);
+    return !!seed && JSON.stringify(clean(m)) !== JSON.stringify(clean(seed));
+  }
+  /** A built-in back as it comes (where it is in the list, and active or not, kept). */
+  function revert(id) {
+    const i = managers.findIndex((x) => x.id === id);
+    const seed = builtinOf(id);
+    if (i < 0 || !seed) return false;
+    managers[i] = copy(seed);
+    changed();
+    return true;
+  }
+  /** Built-ins missing from a list (an older save that deleted one) go back at the top. */
+  const withBuiltins = (list) => [...SEEDS.filter((s) => !list.some((m) => m.id === s.id)).map(copy), ...list];
+
   function remove(id) {
     const i = managers.findIndex((x) => x.id === id);
-    if (i < 0) return false;
+    if (i < 0 || isBuiltin(id)) return false;
     managers.splice(i, 1);
     if (active === id) active = managers.length ? managers[0].id : '';
     changed();
     return true;
   }
-  /** Puts the seeded managers back as they came (yours are kept). */
+  /** Every built-in back as it comes (yours are kept). */
   function resetSeeds() {
-    SEEDS.forEach((s) => {
-      const i = managers.findIndex((m) => m.id === s.id);
-      if (i >= 0) managers[i] = copy(s);
-      else managers.unshift(copy(s));
-    });
+    managers = withBuiltins(managers);
+    SEEDS.forEach((s) => revert(s.id));
     changed();
   }
 
@@ -665,7 +688,7 @@ CA.Managers = (() => {
   }
   function load(data) {
     if (data && Array.isArray(data.managers)) {
-      managers = data.managers.filter((m) => m && m.id).map((m) => clean(withSeedWatch(m)));
+      managers = withBuiltins(data.managers.filter((m) => m && m.id).map((m) => clean(withSeedWatch(m))));
       active = typeof data.active === 'string' && (data.active === '' || managers.some((m) => m.id === data.active)) ? data.active : managers.length ? managers[0].id : '';
       run = cleanRun(data.run);
     } else {
@@ -856,5 +879,5 @@ CA.Managers = (() => {
       },
     });
 
-  return { init, list, find, current, use, add, update, remove, resetSeeds, addStage, updateStage, setStageMacro, setStageInput, setStageProfile, setStageWatch, removeStage, moveStage, untilProblem, untilHolds, untilParts, watchOf, codeOf, sourceOf, setCode, step, enter, goTo, where, readiness, lastPass: () => lastPass, P, KINDS, SCOPES, SEEDS, MACRO, UNLOCKER, FORMATS, effective };
+  return { init, list, find, current, use, add, update, remove, resetSeeds, revert, isBuiltin, isEdited, addStage, updateStage, setStageMacro, setStageInput, setStageProfile, setStageWatch, removeStage, moveStage, untilProblem, untilHolds, untilParts, watchOf, codeOf, sourceOf, setCode, step, enter, goTo, where, readiness, lastPass: () => lastPass, P, KINDS, SCOPES, SEEDS, MACRO, UNLOCKER, FORMATS, effective };
 })();

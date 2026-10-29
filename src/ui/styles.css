@@ -9841,3 +9841,17 @@ body.ca-has-storebar #products {
 #CookieMgrLayer .ca-word-how b {
   color: #c9aaff;
 }
+
+/* Managers page: the widget watches' foot — + Watch a value, and the Manager widget's star */
+#CookieMgrMenu .ca-mgr-watchfoot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+#CookieMgrMenu .ca-mgr-watchstar {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}

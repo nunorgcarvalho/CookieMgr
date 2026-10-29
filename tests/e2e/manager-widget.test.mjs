@@ -50,7 +50,20 @@ assert(inst && Wd.labelOf(inst) === 'Nunix late game', 'the widget is named afte
 let h = CA.UI.ManagerWidget.html(inst);
 assert(/ca-mw-st on[^>]*>1<em>Drops<\/em>/.test(h), 'the strip lights stage 1 with its name');
 assert(/The Manager macro is off/.test(h), 'it says while the Manager macro is off');
-assert(/0 of 4|[1-4] of 4/.test(h) && /ca-mw-bar/.test(h) && /Grandmapocalypse/.test(h), 'what moves it on (how many of its four conditions hold, with bars), and what it watches');
+assert(/0 of 4|[1-4] of 4/.test(h) && /ca-mw-bar/.test(h) && /Research/.test(h) && /Next research/.test(h), 'what moves it on (how many of its four conditions hold, with bars), and what it watches (the research)');
+{
+  // the research: how far along (up to the Elder Pact), and the next one
+  const val = (id) => CA.Script.VALUES.find((v) => v.id === id).get();
+  const before = Game.Has;
+  Game.Has = (n) => ['Specialized chocolate chips', 'Designer cocoa beans', 'Ritual rolling pins'].includes(n) || before(n);
+  const rw = G.watchOf(nunix.stages[0]).find((x) => x.label === 'Research');
+  const nx = G.watchOf(nunix.stages[0]).find((x) => x.label === 'Next research');
+  assert(JSON.stringify(rw.value) === '[3,8]' && rw.format === 'progress', `Research: 3 of 8 (${JSON.stringify(rw.value)})`);
+  assert(nx.value === 'Underworld ovens' && val('researchNext') === 'Underworld ovens', `Next research: Underworld ovens (${nx.value})`);
+  Game.Has = (n) => CA.AutoBuy.RESEARCH.includes(n) || before(n);
+  assert(val('researchNext') === '', 'all done: ""');
+  Game.Has = before;
+}
 assert(/ca-mw-mac/.test(h) && !/ca-mw-act/.test(h), 'the macros it switched on; not the activity by default');
 G.goTo(2);
 G.step();
@@ -93,16 +106,16 @@ CA.UI.Menu.render();
 assert(page().querySelector('[data-mgr-watchbox]').open, 'opened, it stays open');
 eq(page().querySelectorAll('.ca-mgr-watch').length, nunix.stages[0].watch.length, 'a row per watched value');
 click(w, page().querySelector('[data-mgr-act="addWatch"][data-i="0"]'));
-eq(G.find('nunixLateGame').stages[0].watch.length, 4, '+ Watch a value');
+eq(G.find('nunixLateGame').stages[0].watch.length, 5, '+ Watch a value');
 // the value is a line of code (its words hover like the editor's)
-const input = page().querySelector('[data-code-ed="watch:0:3"] [data-code]');
+const input = page().querySelector('[data-code-ed="watch:0:4"] [data-code]');
 input.value = 'lumps()';
 input.dispatchEvent(new w.Event('input', { bubbles: true }));
 input.dispatchEvent(new w.Event('change', { bubbles: true }));
-const label = page().querySelector('[data-mgr-watch][data-i="0"][data-j="3"][data-field="label"]');
+const label = page().querySelector('[data-mgr-watch][data-i="0"][data-j="4"][data-field="label"]');
 label.value = 'Lumps';
 label.dispatchEvent(new w.Event('change', { bubbles: true }));
-eq(JSON.stringify(G.find('nunixLateGame').stages[0].watch[3]), JSON.stringify({ label: 'Lumps', value: 'lumps()', format: 'auto' }), 'edited');
+eq(JSON.stringify(G.find('nunixLateGame').stages[0].watch[4]), JSON.stringify({ label: 'Lumps', value: 'lumps()', format: 'auto' }), 'edited');
 G.setStageWatch('nunixLateGame', 0, [{ label: 'Bad', value: 'cookies( >' }]);
 CA.UI.Menu.render();
 assert(page().querySelector('.ca-mgr-watch .ca-mgr-problem'), 'a broken value is reported');
