@@ -111,7 +111,7 @@ CA.Settings.set('ppMode', 'cps');
 CA.Settings.set('storeTooltips', true);
 Game.buyMode = 1;
 const tt = CA.UI.StoreInsight.buildingBlock(Game.Objects.Grandma);
-assert(/Payback, actual income/.test(tt) && /×1\.50 CpS/.test(tt), 'the store tooltip: Payback, actual income (×1.50 CpS)');
+assert(/Payback period, actual income/.test(tt) && !/×1\.50 CpS/.test(tt), 'the store tooltip: Payback period, actual income (upgrade income line: no ×CpS note)');
 
 R.recent = recent;
 Date.now = realNow;

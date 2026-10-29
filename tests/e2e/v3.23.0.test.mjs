@@ -74,7 +74,7 @@ assert(!macroLib.some((x) => x.id === 'item.price') && macroLib.some((x) => x.id
 assert(statLib.some((x) => x.id === 'return …') && !macroLib.some((x) => x.id === 'return …'), 'return: for statistics');
 
 // ---- the built-ins: today's lines, as statistics --------------------------------------------------
-eq(ST.BUILTINS.filter((b) => !b.warn).map((b) => b.id), ['bonus', 'click', 'payback', 'actual', 'rawCps', 'cps', 'cpsClicking', 'actualIncome15m', 'actualIncome1h', 'actualIncome3h', 'actualIncome', 'paybackRaw', 'paybackCps', 'paybackClicking', 'paybackModes', 'paybackParts', 'income', 'bulks', 'price', 'afford', 'share', 'next', 'nextUpgrade', 'wins'], 'the built-in statistics'); // v3.29: + the bank warnings (warn); v3.35: + nextUpgrade; v3.43: + the payback modes and their lines; actual-income depths: + actual income at 15 min, 1 h, 3 h
+eq(ST.BUILTINS.filter((b) => !b.warn).map((b) => b.id), ['bonus', 'click', 'actualGain', 'payback', 'actual', 'rawCps', 'cps', 'cpsClicking', 'actualIncome15m', 'actualIncome1h', 'actualIncome3h', 'actualIncome', 'paybackRaw', 'paybackCps', 'paybackClicking', 'paybackModes', 'paybackParts', 'income', 'bulks', 'price', 'afford', 'share', 'next', 'nextUpgrade', 'wins'], 'the built-in statistics'); // v3.29: + the bank warnings (warn); v3.35: + nextUpgrade; v3.43: + the payback modes and their lines; actual-income depths: + actual income at 15 min, 1 h, 3 h; upgrade income line: + actualGain
 ST.BUILTINS.forEach((b) => assert(!ST.compiled(b).errors.length, `${b.id} compiles`));
 let r = rowsOf(tip('Farm'));
 const farm = CA.Payback.table().buildings[1].Farm;
