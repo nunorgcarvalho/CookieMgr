@@ -33,7 +33,7 @@ let q = B.queue();
 const f = q.items[0];
 assert(f.key === 'building:Cursor' && f.n === 100 && f.first && f.price === hundred('Cursor'), `a cheap building: its next 100 at the front (${f.label})`);
 assert(f.label === '100 × Cursor' && f.rules[0] === `cheap: ×100 under ${cut} s`, `with a badge (${f.rules})`);
-assert(Math.abs(f.pp - P.parts(f.price, P.buildingWorth('Cursor', 100)).pp) < 1e-9 && f.score === f.pp, 'its PP is the 100’s');
+assert(Math.abs(f.pp - P.parts(f.price, P.buildingWorth('Cursor', 100)).pp) < 1e-9 && f.ipp === f.pp, 'its PP is the 100’s (its implied PP: no weights)');
 assert(q.items.filter((x) => x.first).length === 1 && q.items.find((x) => x.key === 'building:Grandma').n !== 100, 'a building whose 100 cost more: ranked as usual');
 assert(q.items.filter((x) => x.key === 'building:Cursor').length === 1, 'one Cursor row, not two');
 

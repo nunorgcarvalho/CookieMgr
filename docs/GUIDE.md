@@ -493,18 +493,25 @@ buys next (a bar filling as you save for it), the **profiles** (click one to mak
 payback mode, and **Buy all upgrades** (the game's Inspired checklist button, without needing it: every upgrade you
 can afford but switches, research and what you've vaulted, cheapest first), with its own payback period beside it.
 Then the **Queue**: place, what (an
-upgrade with its icon and its info card on hover), payback period in its color, score (the payback period after the
-rules' weights — the order), price, when you can afford it, the rules that touched it; what's held back below,
-grayed, with why. **Buy all upgrades** is a row of its own: the upgrades the budget affords, bought at once and
+upgrade with its icon and its info card on hover), payback period in its color, **implied payback period** (the
+payback period after the rules' weights — the order), **score** (one standard scale, 0–100: 100 for the best payback
+period in the queue, 10 points less for each doubling — 90 is twice as long, 80 four times; a weight ×2 costs 10
+points), price, when you can afford it, the rules that touched it; what's held back below, grayed, with why. What the
+profile keeps in the bank is in the queue too, as **priorities** it saves up for: a row each (Lucky! bank, Garden
+replant — with the seeds it plants…), "✓ kept" once the bank covers it. The Auto buyer card says what it's **saving
+for** and what it buys after. **Buy all upgrades** is a row of its own: the upgrades the budget affords, bought at once and
 measured together (so upgrades that multiply each other count as one purchase). Profiles that buy upgrades come with
 the rule *Buy all upgrades → buy first when `payback.allUpgradesCount(buyer.budget()) >= 20`*: with lots affordable,
 it takes them all at once. Then the active **Profile**: what it buys (buildings, upgrades, Buy all upgrades), the building bulk, save up or skip,
-the bank reserve (minutes of unbuffed CpS, plus any of the **Lucky!**, **Conjure**, **Frenzy Lucky!** and **Garden
-replant** banks — it keeps the highest, so the bank never drops below any of them), what it ranks by (a payback mode), and its **rules**, top to bottom: what
+what it **keeps** (minutes of unbuffed CpS, plus any of the **Lucky!**, **Conjure**, **Frenzy Lucky!** and **Garden
+replant** banks) and each one's **priority**: **first** (the default — nothing is bought until the bank covers it, so
+the bank never drops below it) or **after what scores N+** (things scoring N or more are bought ahead of it and may
+spend into it; the rest waits until it's kept), what it ranks by (a payback mode), and its **rules**, top to bottom: what
 they apply to (anything, buildings, upgrades, Buy all upgrades, one building or upgrade, cookies, kittens, synergies, clicking upgrades,
 anything under N s of CpS, anything that wins an achievement) → **buy first**, **weight ×k**, **up to N owned** or
 **never**, each with an optional **when** in the macro language (`thing` is what's ranked). In code: `buyer.next()`,
-`buyer.queue()`, `buyer.rank(thing)`, `buyer.score(thing)`, `buyer.budget()`, `buyer.reserve()`, `buyer.profile(x)`, `buyer.buyNext()`,
+`buyer.queue()`, `buyer.rank(thing)`, `buyer.score(thing)`, `buyer.impliedPayback(thing)`, `buyer.waitingFor()`
+(what it's saving for: a thing, or a priority like `"bank:garden"`), `buyer.budget()`, `buyer.reserve()`, `buyer.profile(x)`, `buyer.buyNext()`,
 `buy.allUpgrades()`; Buy all upgrades' payback period: `payback.allUpgrades()` (`payback.allUpgradesIn(mode)`,
 `payback.allUpgradesGain()`, `payback.allUpgradesPrice()`, `payback.allUpgradesCount(budget)`), and in the queue it is
 the thing `"allUpgrades"`.
@@ -991,9 +998,11 @@ for production and one for prestige (see **Copies** below). Macro buttons are th
   open the Managers page.
   **Auto buyer** (on by default, right under the strip) shows while the stage has the Auto buyer on, even with the
   Manager macro off: the last three things it bought (the newest flashing as it lands), then what it buys next,
-  big, with its name, price, payback period, when you can afford it and a bar filling as you save up (green once
-  you can). Hover a picture for its card (price, payback period, +CpS, the reserve it keeps, or how long ago it
-  was bought); click the row for the Payback page.
+  big, with its name, price, payback period, score, when you can afford it and a bar filling as you save up (green
+  once you can). While it saves up for a priority first (a Lucky! bank, the garden's replant), that's what it shows:
+  **Saving: Garden replant**, how far along, and what it buys after. Hover a picture for its card (price, payback
+  period, score, why it's next, +CpS, what's kept ahead of it, or how long ago it was bought); click the row for the
+  Payback page.
 
 **Stars:** a ☆ next to a chart or a section adds its ready-made widget in one click, as a macro's ★ gives it a
 button: the Garden page's Growth and Effects charts (a Chart widget each) and the golden cookie frequency row on the
