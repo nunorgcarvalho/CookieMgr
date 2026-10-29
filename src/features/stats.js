@@ -56,11 +56,11 @@ CA.Stats = (() => {
       group: 'Production',
       name: 'Bonus income',
       label: 'Bonus income',
-      desc: 'the CpS it adds, and its share of your CpS',
+      desc: 'the raw CpS it adds (no golden cookie effects), and its share of your raw CpS',
       scope: 'item',
       format: 'text',
-      source: `# the CpS it adds, and what share of your CpS that is
-gain = item.gain()
+      source: `# the raw CpS it adds, and what share of your raw CpS that is
+gain = item.rawGain()
 if item.kind() == "upgrade" and gain == 0:
   return
 sign = ""
@@ -70,8 +70,8 @@ if item.kind() == "building":
 elif gain > 0:
   sign = "+"
 share = ""
-if cps() > 0:
-  share = " (" + fmt.pct(gain / cps(), 2) + ")"
+if rawCps() > 0:
+  share = " (" + fmt.pct(gain / rawCps(), 2) + ")"
 return sign + fmt.number(gain) + "/s" + share`,
     },
     {
@@ -218,7 +218,19 @@ if item.kind() == "upgrade" and item.clickGain() > 0 and cps() > 0:
   gain = gain + item.clickGain() * clickRate() * rawCps() / cps()
 return gain * a / rawCps()`,
     },
-    { id: 'paybackRaw', group: 'Payback', name: 'Payback, raw CpS', label: 'Payback, raw CpS', desc: 'the payback period by your raw CpS (no golden cookie effects)', scope: 'item', format: 'payback', source: 'return item.paybackIn("raw")' },
+    {
+      id: 'paybackRaw',
+      group: 'Payback',
+      name: 'Payback, raw CpS',
+      label: 'Payback period',
+      desc: 'the payback period by your raw CpS (no golden cookie effects) — in its payback color while the payback mode is Raw CpS',
+      scope: 'item',
+      format: 'payback',
+      source: `p = item.paybackIn("raw")
+if payback.mode() == "rawCps":
+  color = item.color()
+return p`,
+    },
     { id: 'paybackCps', group: 'Payback', name: 'Payback, CpS', label: 'Payback, CpS', desc: 'the payback period by the CpS the game shows (Cookie Monster’s)', scope: 'item', format: 'payback', source: 'return item.paybackIn("cps")' },
     { id: 'paybackClicking', group: 'Payback', name: 'Payback, CpS + clicking', label: 'Payback, CpS + clicking', desc: 'the payback period by your CpS plus your clicking', scope: 'item', format: 'payback', source: 'return item.paybackIn("clicking")' },
     {
