@@ -411,6 +411,10 @@ carries over, until a later stage changes it back. A stage lasts **until** a con
 (the last stage lasts for good). Moving on to a stage makes only its own changes, once, so a macro you flipped by
 hand stays flipped; jumping to a stage (clicking it in the strip) sets up the stages before it too. Profiles are
 retried each pass until they're in, then left alone; where stages name the same kind, the latest stage's wins.
+When the manager at work changes (you edit what a stage switches, sets or puts in, or its until or code, Revert to
+default, or an update changes a built-in), its stage sets up again on the next pass, as it is now, so what runs
+always matches what it says; a macro flipped by hand is flipped back then. Renaming a stage or editing its watches
+changes nothing that runs.
 These are **ascension managers**: ascending starts them over at stage 1. Managers saved earlier (each stage a
 full list) are turned into changes when loaded, and run as before.
 

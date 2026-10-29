@@ -56,6 +56,12 @@ G.step();
 assert(value('manager.stage') === 3 && M.isOn('autoBuyer') && M.isOn('lumps') && M.isOn('gardener') && M.isOn('elderPledge') && M.isOn('golden'), 'a jump to stage 3: stages 1–2 set up again, then its own');
 assert(CA.AutoBuyer.activeProfile() === 'combos', 'profiles: the last stage’s wins (combos, not stage 1’s payback)');
 assert(value('manager.arriving', 1) === false && value('manager.arriving', 3) === false, 'arriving: only on the first pass');
+// Revert to default on the one at work: its stage sets up again, as it comes
+M.set('autoBuyer', false, { silent: true });
+G.updateStage('nunixLateGame', 2, { macros: { ...G.find('nunixLateGame').stages[2].macros, autoBuyer: 'off' } });
+G.revert('nunixLateGame');
+G.step();
+assert(!G.isEdited('nunixLateGame') && value('manager.stage') === 3 && M.isOn('autoBuyer') && CA.AutoBuyer.activeProfile() === 'combos', 'reverting the manager at work: its stage set up again');
 G.resetSeeds();
 
 // ---- editing: changes, not copies ----
@@ -98,6 +104,33 @@ S.load(JSON.stringify(pact));
 const drops = G.find('nunixLateGame').stages[0];
 assert(drops.inputs.research.stopBefore === 'none' && drops.watch[0].value === '[researchOwned(), 9]' && !G.isEdited('nunixLateGame'), 'saved Nunix: all the research, as seeded now');
 S.load(snap);
+
+// ---- the manager at work keeps in step with what it says ----
+G.goTo(1);
+G.step();
+G.step();
+// a game from before (its stage set up when Drops still stopped before the Elder Pact): set up again, as it is now
+M.setInput('research', 'stopBefore', 'Elder Pact');
+const pact2 = JSON.parse(S.serialize());
+delete pact2.managers.run.sig;
+S.load(JSON.stringify(pact2));
+G.step();
+assert(M.inputsOf(M.get('research')).stopBefore === 'none' && value('manager.stage') === 1, 'a save from before: its stage set up again (Research: all of it)');
+M.setInput('research', 'stopBefore', 'Elder Pact');
+S.load(S.serialize());
+G.step();
+assert(M.inputsOf(M.get('research')).stopBefore === 'Elder Pact', 'nothing changed: a setting changed by hand stays');
+// an edit to it: the stage sets up again
+G.setStageInput('nunixLateGame', 0, 'research', 'stopBefore', 'One mind');
+G.step();
+assert(M.inputsOf(M.get('research')).stopBefore === 'One mind', 'an edit to the stage it’s on: applied on the next pass');
+M.set('lumps', false, { silent: true });
+G.updateStage('nunixLateGame', 0, { name: 'Drops!' });
+G.step();
+assert(!M.isOn('lumps'), 'a name (or a watch) isn’t what it does: nothing set up again');
+G.revert('nunixLateGame');
+G.step();
+assert(M.inputsOf(M.get('research')).stopBefore === 'none' && M.isOn('lumps'), 'Revert to default: set up again, as it comes');
 
 // ---- a save whose Nunix kept the garden off until the combos: the weed farm from the start ----
 const weeds = JSON.parse(snap);

@@ -86,7 +86,7 @@ q('[data-mgr-libsearch]').dispatchEvent(new w.Event('input', { bubbles: true }))
 click(q('[data-mgr-act="tab"][data-i="0"]'));
 assert(q('.ca-mgr-tab.sel').dataset.i === '0', 'a tab click shows that stage');
 const tiles = qa('.ca-mgr-uptile');
-assert(tiles.length === R.length + 1 && tiles.slice(1).every((t) => t.dataset.popLive === 'upgrade'), 'Research: “all”, then each research’s icon (hover: its card)');
+assert(tiles.length === R.length + 1 && tiles.slice(0, -1).every((t) => t.dataset.popLive === 'upgrade') && tiles[R.length].dataset.v === 'none', 'Research: each research’s icon (hover: its card), then “all” last');
 assert(q('.ca-mgr-uptile.sel').dataset.v === 'none', 'the stop picked (none: all of it)');
 click(q('.ca-mgr-uptile[data-v="One mind"]'));
 assert(nunix().stages[0].inputs.research.stopBefore === 'One mind', 'click one: stop there');
