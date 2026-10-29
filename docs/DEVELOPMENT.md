@@ -83,7 +83,8 @@ src/
     alerts.js        alerts: flash / sound / notify actions, fortune & lump conditions, the built-in alerts, the tab
     autoBuy.js       buying macros (research, cheap upgrades), pp.best and petting the dragon
     autoBuyer.js     the Auto buyer: profiles, rules, the queue, Buy all upgrades
-    seasons.js       season drops and completion, the Grandmapocalypse, SeasonCompletion's code
+    seasons.js       season drops and completion, the Grandmapocalypse, SeasonCompletion and Santa
+    managers.js      managers: an ascension in stages (as code) that switch macros and profiles; Nunix late game
     script.js        the language of algorithmic macros: parsing, values, explaining conditions
     scriptWords.js   the word at a place in the code, and what it is (keywords, calls, choices → CA.Words)
     notifyTips.js    tooltips on the game's notifications about upgrades and achievements
@@ -108,6 +109,7 @@ src/
     storeBar.js      the store toolbar (building sort, rounding to multiples)
     storeInsight.js  the store with payback colors, and a cookieMgr block under the game's tooltips
     paybackPage.js   the Payback page: every building ×1/×10/×100, upgrades, options (under the Auto buyer)
+    managersPage.js  the Managers page: the Manager switch, where it is, the managers, their stages and code
     autoBuyerCard.js the Payback page's top: the Auto buyer, its queue, the profile editor
     tooltipsPage.js  the Statistics page: the statistics catalog, the Values (and the tooltip's layout card, on Settings)
                      list; the Statistic widget

@@ -21,6 +21,7 @@ CA.UI.MacrosPage = (() => {
     { id: 'garden', title: 'Garden', icon: 'leaf', page: 'garden' },
     { id: 'buying', title: 'Buying', icon: 'dollar' },
     { id: 'upkeep', title: 'Seasons, lumps & the dragon', icon: 'calendar' },
+    { id: 'managers', title: 'Managers', icon: 'ascend', page: 'managers' },
     { id: 'alerts', title: 'Alerts', icon: 'bell' },
   ];
   const ICONS = ['bolt', 'cookie', 'star', 'sparkle', 'play', 'clock', 'stocks', 'dollar', 'wizard', 'wrinkler', 'lump', 'trophy', 'graphs', 'tag', 'marker', 'ascend'];

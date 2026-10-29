@@ -2,6 +2,59 @@
 
 ## Unreleased
 
+## 4.0.0 — 2026-10-28
+
+The start of cookieMgr playing the game for you: **managers**, a layer above the macros and profiles.
+
+- **Managers.** A manager plays an ascension in **stages**. Each stage switches macros on or off, sets their
+  **settings** (Research's "stop before", SeasonCompletion's last season…), puts in the Auto buyer, Pantheon,
+  dragon, Grimoire and garden profiles it names, then lasts **until** a condition in the macro language holds
+  (the last stage lasts for good). Entering a stage switches its macros once, so you can still flip one by hand;
+  its profiles are retried each pass until they're in, then left alone (a Pantheon profile waits for the worship
+  swaps to do it all at once). These are **ascension managers**: ascending starts them over at stage 1. Each
+  manager has a scope, ready for legacy managers (across ascensions) later.
+- **A manager is code.** The stage editor writes it — a block per stage, in the macro language — and the
+  **Manager** macro runs it each second, on the same engine as every macro. The Managers page shows it in the
+  code editor, with the library and the lines its last pass went through; change it and Save to make it yours
+  (the stage editor is then off until **Back to stages**).
+- **Nunix late game**, seeded and active:
+  1. **Shimmering veil**, while it lasts: golden and wrath cookies clicked (their upgrades bring more of them, so
+     more drops), not the big cookie or reindeer (clicking them breaks the veil); the Auto buyer spending freely
+     (Payback profile), the Upgrade unlocker, SeasonCompletion, wrinklers (once they've eaten) and sugar lumps;
+     Pantheon wrinklers, dragon drops. No garden, stocks or spells. Until the veil breaks.
+  2. **Drops**: the same, the big cookie and reindeer clicked too. Until Christmas's upgrades, Easter, Halloween
+     and Valentine's day are in.
+  3. **Reindeer**: Christmas again for its cookies — the elders pledged (Elder Pledge), dragon drops & flight.
+  4. **Golden cookie combos**, for good: the Auto buyer on the new **Golden cookie combos** profile (ranks by
+     actual income, never dips below the Lucky! and garden replant banks); the Auto-gardener on 8 nursetulips
+     together + clover combos, the golden Pantheon, Dragonflight & Harvest, and Force the Hand of Fate on combos
+     (the Default Grimoire profile).
+- **SeasonCompletion only does the seasons now.** It keeps the next unfinished season on and buys its drops —
+  Christmas's upgrades, Easter, Halloween, Valentine's day, Christmas again for its cookies — then its **Then**
+  season for good (Business day; or leave it be). Research, Santa, the pledge, the shimmers, the dragon and the
+  Pantheon are their own macros and profiles, which a manager switches (its on/off and hotkey carry over).
+- **Santa**, a new macro: levels Santa up during Christmas, to Final Claus.
+- **Upgrade unlocker**, a new macro group: one switch for the macros that unlock upgrades and buy the cheap ones —
+  Santa, Research, Auto dragon, Pet the dragon, Fortunes and Cheap upgrades (the Auto buyer stays its own).
+- **`switch on a, b, c`**: one line switches several macros. A manager's code uses it, so Nunix late game's
+  four stages fit in about 60 lines.
+- **`veil()`**: whether the Shimmering veil is up.
+- **Hover cards** (v3.53.0's) know managers: a manager's id (its stages, whether it's in use, a link to the
+  Managers page), `manager.profile(kind, profile)`'s profile (of the kind it names, garden profiles too) and
+  `macro.setting`'s setting (what it is, what it's set to now). Leaving the Code card with unsaved changes asks first.
+- **A fourth Auto buyer profile**, Golden cookie combos (id `combos`). Saves from before get it once; delete it
+  and it stays deleted.
+- **The Managers page** (between Macros and Widgets): the **Manager** macro's switch and the active manager,
+  its stages in a strip (the one it's on lit; click one to go there) with what it still has to put in; the
+  managers (rename, scope, Use, Duplicate, Delete, New manager, Put Nunix late game back); and the shown
+  manager's stages: name, macro chips (click: left as it is → on → off), their settings, profile pickers and
+  **Until**; and its **Code**.
+- Words: `manager.active()`, `manager.stage()`, `manager.stageName()`, `manager.entering()` (a stage's first
+  pass), `manager.stages()`, `manager.list()`. Actions: `manager.use(manager)`, `manager.goTo(stage)`,
+  `manager.next()`, `manager.profile(kind, profile)` (put in once a stage), `macro.setting(macro, key, value)`.
+- **The sidebar's new order**: Events, Stats, Payback · Garden, Stock market, Pantheon, Grimoire,
+  Dragon · Statistics, Macros, Managers, Widgets, Settings. (Payback is back with the data pages.)
+
 ## 3.53.1 — 2026-10-28
 
 - **README:** the Widgets screenshot shows copies grouped by kind, and the Macros and Widgets summaries mention

@@ -96,14 +96,15 @@ assert(card, 'its row');
 
 // ---- SeasonCompletion: code, editable, Christmas twice
 const SC = M.get('seasonCompletion');
-assert(SC.defaultSource && /for season in \[easter, halloween, valentines\]:/.test(M.sourceOf(SC)) && /elif season == halloween:/.test(M.sourceOf(SC)), 'SeasonCompletion is an algorithm: a for loop with if / elif');
+// (v4.0: SeasonCompletion only does the seasons — Santa, research and the pledge are their own macros, switched by a manager)
+assert(SC.defaultSource && /if not season\.complete\(christmas, upgrades\):/.test(M.sourceOf(SC)) && /elif not season\.complete\(halloween\):/.test(M.sourceOf(SC)), 'SeasonCompletion is an algorithm: an if / elif chain');
 CA.UI.Menu.openPage('clickers');
 const scCard = () => doc.querySelector('.ca-mtile[data-macro-row="seasonCompletion"]');
 click(w, scCard().querySelector('[data-ca="macro-edit"]'));
 assert(ed() && ed().querySelector('[data-code]') && ed().querySelector('[data-edit-act="revert"]'), 'Edit: its code, Revert to default (v2.25)');
-setVal('[data-code]', ta().value.replace('grandma.exit(pledge)', 'grandma.exit(covenant)'));
+setVal('[data-code]', ta().value.replace('season.keep(then)', 'season.keep(fools)'));
 click(w, ed().querySelector('[data-edit-act="save"]'));
-assert(/grandma\.exit\(covenant\)/.test(M.sourceOf(M.get('seasonCompletion'))) && M.flowOf(M.get('seasonCompletion')).length === 1, 'your change is kept and runs');
+assert(/season\.keep\(fools\)/.test(M.sourceOf(M.get('seasonCompletion'))) && M.flowOf(M.get('seasonCompletion')).length === 1, 'your change is kept and runs');
 click(w, scCard().querySelector('[data-ca="macro-edit"]'));
 click(w, ed().querySelector('[data-edit-act="revert"]'));
 click(w, ed().querySelector('[data-edit-act="revert"]'));
@@ -153,21 +154,27 @@ Game.cookies = 1e20; // Santa's last level alone costs 14^14 ≈ 1e16
 // everything drops as soon as it's looked for
 ['A festive hat', 'Santa gift', 'Reindeer cookie', 'Skull cookies', 'Chicken egg', 'Pure heart biscuits'].forEach((n) => (Game.Upgrades[n].unlocked = 1));
 M.setEvery('seasonCompletion', 100);
+M.setEvery('santa', 100);
+M.setEvery('elderPledge', 100);
 M.set('seasonCompletion', true, { silent: true });
+M.set('santa', true, { silent: true });
+M.set('elderPledge', true, { silent: true });
 // Christmas's upgrades bought (Santa's 14 levels take more passes than that)
-await waitFor(() => Game.season === 'christmas' && Game.Upgrades['Santa gift'].bought && (M.flowStatus('seasonCompletion') || { at: [] }).at.some((x) => /owned\(christmas, upgrades\) = 2 /.test(x)), 4000);
+await waitFor(() => Game.season === 'christmas' && Game.Upgrades['Santa gift'].bought, 4000);
 assert(Game.season === 'christmas' && Game.Upgrades['Santa gift'].bought && !Game.Upgrades['Reindeer cookie'].bought, 'Christmas first: its upgrades, not yet the reindeer cookies');
 let st = M.flowStatus('seasonCompletion');
-assert(st.at.some((a) => /owned\(christmas, upgrades\) = 2 ≥ total\(christmas, upgrades\) = 2 ✓ and santaLevel\(\) = \d+ ≥ 14 ✗/.test(a)), `shows the counts it checks (${st.at.join(' | ')})`);
+assert(st.trace.some((x) => /Christmas upgrades complete \(\d\/2\)/.test(x.text)), `shows the counts it checks (${st.trace.map((x) => x.text).join(' | ')})`);
 await waitFor(() => seen.join() === 'christmas,easter,halloween,valentines,christmas,fools' && Game.Upgrades['Elder Pledge'].bought, 6000);
 st = M.flowStatus('seasonCompletion');
 assert(seen.join() === 'christmas,easter,halloween,valentines,christmas,fools', `then Easter, Halloween, Valentine’s day, Christmas again, Business day (${seen})`);
 assert(Game.Upgrades['Reindeer cookie'].bought && Game.santaLevel >= 14, 'the reindeer cookies on the second visit; Santa to Final Claus on the first');
-assert(st.trace.some((x) => /if halloween = easter ✗ → no: else/.test(x.text)) && st.trace.some((x) => /if halloween = halloween ✓ → yes/.test(x.text)), `its trace shows the if / elif it went through (${st.trace.map((x) => x.text).join(' | ')})`);
+assert(st.trace.some((x) => /Valentine/.test(x.text) || /valentines/i.test(x.text)), `its trace shows the if / elif it went through (${st.trace.map((x) => x.text).join(' | ')})`);
 assert(Game.Upgrades['Elder Pledge'].bought && Game.elderWrath === 0 && M.isOn('seasonCompletion'), 'on Business day for good, the elders pledged');
 CA.UI.MacrosPage.sync(doc.querySelector('[data-page="clickers"]'));
 assert(/repeating/.test(scCard().querySelector('[data-macro-status]').textContent) && scCard().querySelector('.ca-trace'), 'its card shows where it is and what it decided');
 M.set('seasonCompletion', false, { silent: true });
+M.set('santa', false, { silent: true });
+M.set('elderPledge', false, { silent: true });
 
 // ---- saved
 Game.WriteSave();

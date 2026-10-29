@@ -24,7 +24,8 @@ Game.cookies = 50;
 Game.CalculateGains();
 
 // ---- the queue ----
-assert(B.activeProfile() === 'payback' && B.list().map((p) => p.id).join() === 'payback,buildings,upgrades', 'three seeded profiles, Payback active');
+// (v4.0.0 seeds a fourth, combos, for Nunix late game)
+assert(B.activeProfile() === 'payback' && B.list().map((p) => p.id).slice(0, 3).join() === 'payback,buildings,upgrades', 'three seeded profiles first, Payback active');
 let q = B.queue();
 assert(q.items.length >= 3, `the queue has every building (${q.items.length})`);
 const pps = q.items.map((x) => x.pp);
@@ -107,7 +108,8 @@ CA.Macros.set('autoBuyer', false, { silent: true });
 
 // ---- the page ----
 const ids = CA.UI.Pages.list().slice().sort((a, b) => a.order - b.order).map((p) => p.id);
-assert(ids.indexOf('payback') === ids.indexOf('clickers') - 1 && CA.UI.Pages.get('payback').group === 'custom', `Payback right above Macros (${ids.join(',')})`);
+// (v4.0.0 put Payback back with the data pages, after Stats)
+assert(ids.indexOf('payback') === ids.indexOf('graphs') + 1 && CA.UI.Pages.get('payback').group === 'data', `Payback right after Stats (${ids.join(',')})`);
 
 // the hub at the top of the page
 const doc = w.document;

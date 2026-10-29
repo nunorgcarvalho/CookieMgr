@@ -5,6 +5,7 @@
 //   pop.golden()                      run an action — its options by position or by name:
 //   season.keep(christmas)            season.keep(season=christmas)
 //   switch on reindeer                switch another macro on / off (by id or "its name")
+//   switch off a, b, c                several at once
 //   wait until magic() >= 80          wait for something
 //   wait 30 seconds                   (or minutes)
 //   repeat until <condition>:         run the block on every pass until the condition holds
@@ -48,6 +49,7 @@ CA.Script = (() => {
     { id: 'magic', desc: 'Grimoire magic', get: () => (CA.Util.minigame('Wizard tower') || {}).magic || 0 },
     { id: 'lumps', desc: 'sugar lumps', get: () => Game.lumps || 0 },
     { id: 'santaLevel', desc: 'Santa’s level (14 = Final Claus)', get: () => Game.santaLevel || 0 },
+    { id: 'veil', bool: true, desc: 'whether the Shimmering veil is up (clicking the big cookie, a golden cookie or a reindeer can break it)', get: () => typeof Game.Has === 'function' && !!Game.Has('Shimmering veil [off]') },
     { id: 'elderWrath', desc: 'the Grandmapocalypse’s stage (0 none … 3 angered)', get: () => Game.elderWrath || 0 },
     { id: 'researchOwned', desc: 'research upgrades owned (of 9)', get: () => (CA.AutoBuy ? CA.AutoBuy.RESEARCH.filter(has).length : 0) },
     {
@@ -678,11 +680,19 @@ CA.Script = (() => {
       c.next();
       const to = c.take('id', undefined, '“on” or “off”').v;
       if (to !== 'on' && to !== 'off') throw new Err('switch on … / switch off …');
-      const which = c.next();
-      if (!which) throw new Err('which macro? (its id, or its name in quotes)');
-      const m = CA.Macros.get(which.v) || CA.Macros.list().find((x) => x.name.toLowerCase() === String(which.v).toLowerCase());
-      if (!m) throw new Err(`there’s no macro “${which.v}”`);
-      return { node: { type: 'do', action: 'macro.set', params: { macro: m.id, to }, line } };
+      // switch on a, b, "c d": several macros, one line
+      const nodes = [];
+      for (;;) {
+        const which = c.next();
+        if (!which) throw new Err('which macro? (its id, or its name in quotes)');
+        const m = CA.Macros.get(which.v) || CA.Macros.list().find((x) => x.name.toLowerCase() === String(which.v).toLowerCase());
+        if (!m) throw new Err(`there’s no macro “${which.v}”`);
+        nodes.push({ type: 'do', action: 'macro.set', params: { macro: m.id, to }, line });
+        if (c.done()) break;
+        if (!c.is('p', ',')) throw new Err('macros in a list are split by commas');
+        c.next();
+      }
+      return { node: nodes.length === 1 ? nodes[0] : nodes };
     }
     // an action
     const a = CA.Actions.get(kw);
@@ -1016,7 +1026,7 @@ CA.Script = (() => {
       ['parallel:', 'branches side by side', 'parallel:\n  branch a:\n    \n  branch b:\n    '],
       ['wait until …', 'wait for something', 'wait until magic() >= 80'],
       ['wait N seconds', 'pause', 'wait 30 seconds'],
-      ['switch on / off …', 'switch another macro', 'switch on golden'],
+      ['switch on / off …', 'switch other macros, one or several', 'switch on golden, wrath'],
       ['stop', 'end the macro here', 'stop'],
       ['log …', 'write to its trace (text, or a value)', 'log "here"'],
       ['return …', 'a statistic’s result (no return: nothing to show)', 'return '],

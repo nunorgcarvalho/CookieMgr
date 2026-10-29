@@ -801,7 +801,7 @@ CA.UI.TooltipsPage = (() => {
 
   function init() {
     defineWidget();
-    CA.UI.Pages.register({ id: 'tooltips', label: 'Statistics', icon: 'tag', order: 75, group: 'custom', html, mount, unmount, tick: sync });
+    CA.UI.Pages.register({ id: 'tooltips', label: 'Statistics', icon: 'tag', order: 68, group: 'custom', html, mount, unmount, tick: sync });
     // a code card's link leaving the statistic editor (ui/codeEditor.js): unsaved changes are asked about first
     const reopen = (fn) => () => {
       fn();

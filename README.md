@@ -60,6 +60,7 @@ the page. [See every page with a screenshot](#pages).
 | **Payback** | What each building and upgrade is worth, and the Auto buyer that buys the best one |
 | **Macros** | Automations: autoclickers, golden cookie popping, alerts, and your own scripts |
 | **Statistics** | What the store's tooltips show, and statistics you write yourself |
+| **Managers** | Strategies that play a whole ascension in stages, switching macros and profiles (Nunix late game comes with it) |
 | **Garden**, **Stock market**, **Grimoire**, **Pantheon**, **Dragon** | A page per minigame, each with its own automation |
 | **Widgets** | Small panels you place on the game's left side |
 | **Settings** | Options in tabs: number format, hotkeys, updates, store tooltips, and your history's export and import |

@@ -69,18 +69,18 @@ assert(M.everyOf(M.get('wrath')) === 100, 'and revert');
 // a built-in algorithm: its code, and revert
 click(w, card('seasonCompletion').querySelector('[data-ca="macro-edit"]'));
 const ta = ed().querySelector('[data-code]');
-assert(ta && /grandma\.exit\(pledge\)/.test(ta.value), 'SeasonCompletion: its code in the editor');
-ta.value = ta.value.replace('switch on reindeer', 'switch on reindeer\n    log "my version"');
+assert(ta && /season\.keep\(christmas\)/.test(ta.value), 'SeasonCompletion: its code in the editor');
+ta.value = ta.value.replace('forever:', 'log "my version"\nforever:');
 ta.dispatchEvent(new w.Event('input', { bubbles: true }));
 click(w, ed().querySelector('[data-edit-act="save"]'));
 assert(/my version/.test(M.sourceOf(M.get('seasonCompletion'))) && M.isCustomized('seasonCompletion'), 'code saved');
 M.revert('seasonCompletion');
 assert(M.sourceOf(M.get('seasonCompletion')) === M.get('seasonCompletion').defaultSource, 'reverted');
 
-// ---- SeasonCompletion: the second Christmas visit ends the Grandmapocalypse
-const src = M.get('seasonCompletion').defaultSource;
-const xmas2 = src.slice(src.indexOf('# Christmas again'), src.indexOf('# and Business day'));
-assert(/repeat until owned\(christmas, cookies\)[\s\S]*grandma\.exit\(pledge\)/.test(xmas2), 'second Christmas visit: leaves the Grandmapocalypse');
+// ---- the second Christmas visit ends the Grandmapocalypse (v4.0: Nunix late game's Reindeer stage
+// switches the Elder Pledge macro on; SeasonCompletion only does the seasons)
+const reindeerStage = CA.Managers.find('nunixLateGame').stages.find((st) => st.name === 'Reindeer');
+assert(reindeerStage && reindeerStage.macros.elderPledge === 'on' && /season\.complete\(christmas\)/.test(reindeerStage.until), 'second Christmas visit: leaves the Grandmapocalypse');
 
 // ---- the Elder Pledge macro
 assert(card('elderPledge'), 'an Elder Pledge macro');

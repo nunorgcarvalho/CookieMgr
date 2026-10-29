@@ -22,8 +22,9 @@ The same words mean the same things everywhere in the add-on and this README:
 ## The sidebar and its pages
 
 A column of small icons sticks out of the left beam just below the game's cookie counter, one per page:
-the data pages **Events** and **Stats**; the minigames **Garden**, **Stock market**, **Pantheon** and **Grimoire**, and the **Dragon**;
-then **Payback** (the Auto buyer's hub), **Macros**, **Widgets** and **Settings** — a small gap between each kind. Hovering an icon slides its name out to
+the data pages **Events**, **Stats** and **Payback** (the Auto buyer's hub); the minigames **Garden**, **Stock market**,
+**Pantheon** and **Grimoire**, and the **Dragon**; then **Statistics**, **Macros**, **Managers** (managers play an ascension in
+stages, switching macros and profiles — Nunix late game comes with it), **Widgets** and **Settings** — a small gap between each kind. Hovering an icon slides its name out to
 the left. Wherever a page mentions another (a Macros section, a "Macros page" hint), the name is a link to it, and
 each minigame page has an **Open in game** button that closes the panel and takes you to the minigame.
 Clicking one opens the cookieMgr panel straight to that page (switching pages directly if it's already open on a
@@ -161,7 +162,9 @@ default brings the original back):
 | Stock market autobuyer | —           | Hires brokers, buys fast/slow-rising stocks, sells the rest, every second |
 | Sell all stocks        | —           | Once: autobuyer off, then sells every stock                          |
 | Cast … (one per spell) | —           | Once: casts that Grimoire spell                                      |
-| SeasonCompletion       | —           | An algorithmic macro: research, then every season until complete      |
+| SeasonCompletion       | —           | An algorithmic macro: every season in turn until complete, buying its drops |
+| Santa                  | —           | Levels Santa up during Christmas, to Final Claus                     |
+| Upgrade unlocker       | —           | A group: Santa, Research, Auto dragon, Pet the dragon, Fortunes and Cheap upgrades, one switch |
 | Sugar lump harvester   | —           | Harvests your lump when ripe — or when mature, if you pick that      |
 | Elder Pledge           | —           | Buys the Elder Pledge whenever the Grandmapocalypse is on            |
 | FtHoF on combos        | —           | An algorithmic macro: Force the Hand of Fate when two effects line up |
@@ -193,13 +196,13 @@ harvester** picks: **ripe** (always pays) or
 **mature** (about 3 hours sooner, but with the game's 50% chance of getting nothing).
 
 **SeasonCompletion** is an **algorithmic macro** (below) — its code is yours to change ("Edit" on its card;
-"Revert to default" brings the original back). Switched on, it buys the Bingo center's research right away (which
-starts the Grandmapocalypse — Halloween's cookies come from wrinklers), and alongside goes through the seasons:
-Christmas first for Santa's upgrades and Santa all the way to Final Claus, then Easter, Halloween and Valentine's day
-each until every one of its cookies is owned (switching on what collects them: golden and wrath cookies for Easter,
-wrinklers for Halloween), then Christmas again for its reindeer cookies — leaving the Grandmapocalypse there, as
-those don't need wrinklers — and finally Business day for good, keeping the elders pledged. Its card shows the line it's on with the counts it's checking ("owned(christmas, upgrades) = 12 ≥
-total(christmas, upgrades) = 15 ✗") and the if / elif decisions it took.
+"Revert to default" brings the original back). Switched on, it keeps the next unfinished season on and buys its
+drops as they unlock: Christmas's upgrades (Santa's gifts — the **Santa** macro levels Santa up to Final Claus),
+then Easter, Halloween and Valentine's day each until every one of its cookies is owned, then Christmas again for
+its reindeer cookies, and finally its **Then** season (Business day) for good. It only does the seasons (since
+v4.0): what drops them — golden and wrath cookies for Easter, wrinklers in the Grandmapocalypse (the research) for
+Halloween — and the pledge, the dragon and the Pantheon are the other macros and profiles, which a **manager**
+(Nunix late game, on the Managers page) switches stage by stage. Its card shows the if / elif decisions it took.
 
 **Every built-in can be edited** like your own macros: **Edit** on its card opens the full editor (its steps, kind,
 code…); your version replaces it, its card says "edited", and **Revert to default** (in the editor) brings back the
@@ -262,7 +265,7 @@ parallel:
 ```
 
 Lines: an action with its options (`pop.golden()`, `season.keep(christmas)` or `season.keep(season=christmas)`),
-`switch on / off <macro>`, `wait until …`, `wait 30 seconds`, `repeat until …:`, `while …:`, `repeat 5 times:`,
+`switch on / off <macro>` (or several: `switch on a, b, c`), `wait until …`, `wait 30 seconds`, `repeat until …:`, `while …:`, `repeat 5 times:`,
 `forever:`, `if …: / elif …: / else:`, `for x in [a, b]:`, `parallel:` with `branch:` blocks, `stop`, `log "…"` and
 `# comments`. Conditions join with `and` / `or` / `not` and brackets, and compare **values** — `cookies()`, `cps()`,
 `magic()`, `owned(season, part)`, `total(season, part)`, `santaLevel()`, `building(Farm)`, `state(…)` and more —

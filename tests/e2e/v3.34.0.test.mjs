@@ -1,6 +1,8 @@
 // v3.34.0: SeasonCompletion switches the dragon's auras and the Pantheon to their profiles as it goes:
 // drops + wrinklers while it hunts drops, dropsFlight on the second Christmas, and on Business day the
 // dragonFlightHarvest auras, with the golden Pantheon once there are swaps enough to put it all in at once.
+// (v4.0: that's Nunix late game's stages now — the manager switches the profiles, SeasonCompletion
+// only does the seasons; a profile is put in once per stage, so a switch by hand stays.)
 import { boot, sleep, makeAssert } from '../harness/game.mjs';
 
 const { assert, done } = makeAssert();
@@ -9,9 +11,12 @@ const { window: w, P, Game } = g;
 const CA = w.CookieMgr;
 await sleep(400);
 const M = CA.Macros;
-const flow = CA.Script.compile(M.get('seasonCompletion').defaultSource).flow;
-// a pass from the top: it walks past the stages that are done and runs the first one that isn't
-const pass = () => M.runPass(flow);
+// a pass of the manager: the stage it's on, and on to the next once its "until" holds
+const pass = () => {
+  CA.Managers.step();
+  CA.Managers.step();
+};
+const stopAll = () => M.list().forEach((m) => M.isOn(m.id) && M.set(m.id, false, { silent: true }));
 
 // ---- what's owned
 const owned = new Set(CA.AutoBuy.RESEARCH);
@@ -61,12 +66,13 @@ Game.santaLevel = 14;
 Game.dragonAura = 10; // someone switched to Dragonflight by hand
 P.slotGod(P.gods.labor, 1);
 pass();
-assert(auras() === 'Dragon Guts + Mind Over Matter', `Easter: drops auras back (${auras()})`);
-assert(temple() === 'scorn,,', `Easter: the wrinklers Pantheon back (${temple()})`);
-['Egg', 'Ghost cookie'].forEach((n) => owned.add(n));
-Game.dragonAura = 4;
+assert(auras() === 'Dragon Guts + Dragonflight' && temple() === 'scorn,labor,', `Easter, same stage: a switch by hand stays (${auras()}; ${temple()})`);
+CA.Managers.goTo(2); // Drops (no Shimmering veil here, so its stage passes straight on)
 pass();
-assert(auras() === 'Dragon Guts + Mind Over Matter', 'Valentine’s day: drops auras');
+assert(auras() === 'Dragon Guts + Mind Over Matter' && temple() === 'scorn,,', `going into the stage again puts its profiles back (${auras()}; ${temple()})`);
+['Egg', 'Ghost cookie'].forEach((n) => owned.add(n));
+pass();
+assert(auras() === 'Dragon Guts + Mind Over Matter' && CA.Managers.where().index === 1, 'Valentine’s day: still the drops stage');
 
 // ---- the second Christmas: reindeer only, Dragonflight in for Dragon Guts
 owned.add('Heart biscuit');
@@ -88,12 +94,16 @@ P.swaps = 3;
 pass();
 assert(P.swaps === 3 && temple() === 'decadence,seasons,labor', 'then left as it is');
 
+stopAll();
+
 // ---- no dragon, no Pantheon: the seasons still go on
 const g2 = boot();
 await sleep(400);
 const M2 = g2.window.CookieMgr.Macros;
 const F = M2.runPass(g2.window.CookieMgr.Script.compile(M2.get('seasonCompletion').defaultSource).flow);
+g2.window.CookieMgr.Managers.step();
 assert(F && !g2.errors.length, 'without a dragon or a Temple: runs, no errors');
+M2.list().forEach((m) => M2.isOn(m.id) && M2.set(m.id, false, { silent: true }));
 
 assert(g.errors.length === 0, 'no runtime errors' + (g.errors.length ? `: ${g.errors.slice(0, 3).join(' | ')}` : ''));
 done();
