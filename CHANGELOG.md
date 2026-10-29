@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 4.7.3 — 2026-10-29
+
+- **Faster CI:** the real-game Garden check plays 24 hours instead of 48 (about 30 s less per run; it still lands
+  within 2 points of the model, against an 8-point tolerance).
+
 ## 4.7.2 — 2026-10-29
 
 - **README:** the Managers screenshot, the Manager widget picture and the Managers summary show Nunix late game's
