@@ -38,7 +38,7 @@ const labels = (html) => rowsOf(html).map((r) => r[0]);
 assert(SI.isDefault() && SI.lines().join() === SI.DEFAULT_LINES.join(), 'the default lines');
 let l = labels(tip('Grandma'));
 assert(/^Bonus income/.test(l[0]) && l[1] === 'Payback period' && l.includes('Affordable') && l.includes('Share of production') && l.includes('Next achievement'), `Cookie Monster's layout: ${l.join(' · ')}`);
-assert(!l.includes('Adds'), 'a building has no clicking Adds line (an upgrade’s)');
+assert(!l.includes('Income'), 'a building has no per-click Income line (an upgrade’s)');
 assert(CA.Settings.get('storeWarnings') === false, 'bank warnings: off by default');
 
 // ---- your lines, in your order

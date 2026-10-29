@@ -77,8 +77,8 @@ return sign + fmt.number(gain) + "/s" + share`,
     {
       id: 'click',
       group: 'Production',
-      name: 'Adds (clicking)',
-      label: 'Adds',
+      name: 'Income per click',
+      label: 'Income',
       desc: 'what a clicking upgrade adds to a click, and (in parentheses) the income it adds at your clicking',
       scope: 'upgrade',
       format: 'text',
@@ -93,18 +93,29 @@ if m > 0:
       more = "+" + fmt.number(r * 100) + "% per click"
   return more + " (+" + fmt.number(m * clickRate()) + "/s)"`,
     },
+    {
+      id: 'actualGain',
+      group: 'Production',
+      name: 'Income, actual income',
+      label: 'Income, actual income',
+      desc: 'what it adds to what you’ve really been taking in: its bonus income (and a clicking upgrade’s clicks) scaled by your actual income (the Actual income mode; once a minute of play is recorded)',
+      scope: 'item',
+      format: 'text',
+      source: `g = item.gainIn("actual")
+if known(g) and g > 0:
+  return "+" + fmt.number(g) + "/s"`,
+    },
     { id: 'payback', group: 'Payback', name: 'Payback period', label: 'Payback period', desc: 'in the payback mode in use, in its payback color', scope: 'item', format: 'payback', colour: 'payback', source: 'return item.payback()' },
     {
       id: 'actual',
       group: 'Payback',
-      name: 'Payback, actual income',
-      label: 'Payback, actual income',
+      name: 'Payback period, actual income',
+      label: 'Payback period, actual income',
       desc: 'the payback period by what you’ve really been taking in (the Actual income mode; once a minute of play is recorded)',
       scope: 'item',
       format: 'payback',
       source: `a = item.paybackIn("actual")
 if known(a):
-  note = "(×" + fmt.fixed(payback.income("actual") / cps(), 2) + " CpS)"
   return a`,
     },
     // ---- the payback modes (features/payback.js): what payback periods count in. A mode's code sets
