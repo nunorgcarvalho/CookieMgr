@@ -56,7 +56,7 @@ the page. [See every page with a screenshot](#pages).
 | Page | What it's for |
 | --- | --- |
 | **Events** | A log of in-game events, like golden cookies, purchases, ascensions, etc. |
-| **Stats** | Charts and numbers: cookies per second, where your cookies come from, golden cookie odds, prestige |
+| **Stats** | Charts and numbers: cookies per second, actual income, where your cookies come from, golden cookie odds, prestige |
 | **Payback** | What each building and upgrade is worth, and the Auto buyer that buys the best one |
 | **Garden**, **Stock market**, **Pantheon**, **Grimoire**, **Dragon** | A page per minigame, each with its own automation |
 | **Statistics** | What the store's tooltips show, and statistics you write yourself |
@@ -77,14 +77,14 @@ the page. [See every page with a screenshot](#pages).
 <td width="50%" valign="top">
 <b>Stats</b><br>
 <img src="docs/readme/stats.png" alt="The Stats page" width="100%">
-<ul><li>Cookies per second, where every cookie came from, your bank and prestige, charted and kept between sessions</li><li>Zoom and look back, or since your last ascension (ascensions are marked on every chart); Frenzy and other effects shaded behind it</li><li>Your income outside CpS, by source</li><li>Golden cookie odds, Lucky! banks, what-ifs for spirits and auras, what's left to collect</li></ul>
+<ul><li>Cookies per second, where every cookie came from, your bank and prestige, charted and kept between sessions</li><li>Zoom and look back, or since your last ascension (ascensions are marked on every chart); Frenzy and other effects shaded behind it</li><li>Your actual income, charted over any window, and your income outside CpS, by source</li><li>Golden cookie odds, Lucky! banks, what-ifs for spirits and auras, what's left to collect</li></ul>
 </td>
 </tr>
 <tr>
 <td width="50%" valign="top">
 <b>Payback</b><br>
 <img src="docs/readme/payback.png" alt="The Payback page" width="100%">
-<ul><li>An exact payback period for every building and upgrade</li><li>The Auto buyer: a queue, profiles with rules, and a bank reserve</li><li>Payback measured by CpS, clicking, or what you actually took in over a window you set (30 min by default; 15 min, 1 h, 3 h or any time)</li><li>Buy all upgrades in one click, ranked in the queue by its own payback period</li></ul>
+<ul><li>An exact payback period for every building and upgrade</li><li>The Auto buyer: a queue ranked by one 0–100 priority score, profiles with rules, and savings (bank reserve, Lucky! banks) ranked in the same queue</li><li>Payback measured by CpS, clicking, or what you actually took in over a window you set (30 min by default; 15 min, 1 h, 3 h, since your last ascension or any time)</li><li>Buy all upgrades in one click, ranked in the queue by its own payback period</li></ul>
 </td>
 <td width="50%" valign="top">
 <b>Garden</b><br>
@@ -138,7 +138,7 @@ the page. [See every page with a screenshot](#pages).
 <td width="50%" valign="top">
 <b>Widgets</b><br>
 <img src="docs/readme/widgets.png" alt="The Widgets page" width="100%">
-<ul><li>Place macro buttons, golden cookie odds, effect timers, charts, the Manager and more on the left panel</li><li>Place any widget more than once, each copy with its own settings</li><li>Save and switch layouts</li></ul>
+<ul><li>Place macro buttons, golden cookie odds, effect timers, charts, actual income, the Manager and more on the left panel</li><li>Place any widget more than once, each copy with its own settings</li><li>Save and switch layouts</li></ul>
 </td>
 </tr>
 <tr>
