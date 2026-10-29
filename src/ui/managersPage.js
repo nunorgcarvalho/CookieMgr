@@ -384,7 +384,7 @@ CA.UI.ManagersPage = (() => {
     const rows = s.watch
       .map((w, j) => {
         const fmts = G()
-          .FORMATS.map((f) => `<option value="${f.v}" title="${esc(f.tip)}"${w.format === f.v ? ' selected' : ''}>${esc(f.label)}</option>`)
+          .FORMATS.map((f) => `<option value="${f.v}"${w.format === f.v ? ' selected' : ''}>${esc(f.label)}</option>`)
           .join('');
         const v = now[j] || {};
         return (
