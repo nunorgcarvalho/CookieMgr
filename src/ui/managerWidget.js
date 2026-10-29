@@ -6,8 +6,9 @@
 //              warning while the Manager macro is switched off (under the strip: only for how long — the
 //              strip already names the stage and where it is)
 //   until      what moves it on: each condition of the stage's "until", ticked once it holds, a season's
-//              drops counted with a bar (Christmas upgrades 12/21) — so you see how far it is (left out on
-//              the last stage under the strip: nothing moves it on)
+//              drops counted with a bar (Christmas upgrades 12/21) — so you see how far it is — or, with
+//              few left, named (the reindeer cookies still to get) (left out on the last stage under the
+//              strip: nothing moves it on)
 //   watch      the stage's own numbers: its watch list (Managers page, under each stage) — Nunix late
 //              game's are the research, the next reindeer, the combo and magic… (not what the "until" counts)
 //   buyer      while the stage has the Auto buyer on (itself, or in a group; even with the Manager macro
@@ -99,6 +100,22 @@ CA.UI.ManagerWidget = (() => {
     );
   }
 
+  // a season with this many drops or fewer still to get: named (the reindeer cookies), not counted
+  const NAME_LEFT = 8;
+  /** The drops still to get, each with its icon (dim: not dropped yet; bright: in the store to buy). */
+  function leftHtml(names) {
+    const items = names
+      .map((n) => {
+        const u = Game.Upgrades && Game.Upgrades[n];
+        const pic = u && Array.isArray(u.icon) ? u.icon : null;
+        const ico = pic ? `<span class="ca-mw-leftico"><span style="background-image:url(${CA.Util.res('img/icons.png')});background-position:${-pic[0] * 48}px ${-pic[1] * 48}px"></span></span>` : '';
+        const store = !!(u && u.unlocked);
+        return `<span class="ca-mw-leftitem${store ? ' store' : ''}" data-tip="${esc(store ? `${n}: in the store, to buy` : `${n}: not dropped yet`)}">${ico}<span>${esc(n)}</span></span>`;
+      })
+      .join('');
+    return `<div class="ca-mw-left">${items}</div>`;
+  }
+
   function untilHtml(w, parts = []) {
     const head = (text, extra = '') => `<div class="ca-mw-head"><span>${text}</span>${extra}</div>`;
     // the last stage: the strip already shows it's the last, and nothing moves it on
@@ -110,12 +127,14 @@ CA.UI.ManagerWidget = (() => {
     if (!u) return head('Next stage when') + `<div class="ca-mw-warn">${esc(G().untilProblem(until) || 'its “until” has a problem')}</div>`;
     const met = u.parts.filter((p) => p.ok).length;
     const rows = u.parts
-      .map(
-        (p) =>
+      .map((p) => {
+        const named = !p.ok && p.missing && p.missing.length && p.missing.length <= NAME_LEFT;
+        return (
           `<div class="ca-mw-cond${p.ok ? ' ok' : ''}"><b>${p.ok ? '✓' : '○'}</b><span>${esc(p.text.replace(/ \(\d+\/\d+\)$/, ''))}</span>` +
-          (p.of ? `<em>${p.have}/${p.of}</em>${bar(p.have / p.of)}` : '') +
+          (named ? `<em>${p.missing.length} left</em>${leftHtml(p.missing)}` : p.of ? `<em>${p.have}/${p.of}</em>${bar(p.have / p.of)}` : '') +
           '</div>'
-      )
+        );
+      })
       .join('');
     const count = u.parts.length > 1 ? `<em>${u.join === 'or' ? 'any of' : `${met} of ${u.parts.length}`}</em>` : '';
     return head('Next stage when', count) + rows;

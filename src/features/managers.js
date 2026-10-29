@@ -452,8 +452,9 @@ CA.Managers = (() => {
 
   /**
    * An "until", taken apart for the Manager widget: the conditions joined by its top `and` (or `or`),
-   * each with whether it holds now — { join: 'and' | 'or', parts: [{ ok, text, have, of }] }; have /
-   * of: a season's drops counted ("Christmas complete (12/21)"). Null: no until, or one with a problem.
+   * each with whether it holds now — { join: 'and' | 'or', parts: [{ ok, text, have, of, missing }] }; have /
+   * of: a season's drops counted ("Christmas complete (12/21)"), missing: the names of those still to get.
+   * Null: no until, or one with a problem.
    */
   function untilParts(code) {
     if (!code || !code.trim()) return null;
@@ -477,7 +478,13 @@ CA.Managers = (() => {
         text = `not ${CA.Script.exprText(e.a.e)} (now ${typeof v === 'boolean' ? (v ? 'yes' : 'no') : v})`;
       }
       const m = /\((\d+)\/(\d+)\)/.exec(text);
-      return { ok: !!r.ok, text, ...(m ? { have: Number(m[1]), of: Number(m[2]) } : {}) };
+      // a season's drops: also which ones are still to get (the widget names them when few are left)
+      let missing;
+      if (e.t === 'cond' && e.id === 'season.complete') {
+        const p = CA.Script.resolve(e.params, {}) || {};
+        missing = CA.Seasons.missing(p.season, p.part || 'all');
+      }
+      return { ok: !!r.ok, text, ...(m ? { have: Number(m[1]), of: Number(m[2]) } : {}), ...(missing ? { missing } : {}) };
     });
     return { join, parts };
   }
