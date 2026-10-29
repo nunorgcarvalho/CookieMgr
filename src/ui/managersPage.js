@@ -14,6 +14,10 @@
 //              its "Carries over" line says what): macros it switches on and off (click a chip to
 //              flip it, × to drop it, the "+" lists to add one), macro settings, profiles, and its
 //              "until" condition in the macro language (the last stage lasts for good)
+//              It also lists what the Manager widget watches while it's on (a label, a value in the macro
+//              language, a format).
+//
+// The Manager card's ☆ puts the Manager widget (ui/managerWidget.js) on the left panel.
 
 CA.UI = CA.UI || {};
 
@@ -79,7 +83,7 @@ CA.UI.ManagersPage = (() => {
       .join('');
     return (
       '<div class="ca-card">' +
-      C().cardHead('Manager', 'ascend', `<div class="ca-card-meta"><label class="ca-field"><span>Active</span><select data-mgr-active>${opts}</select></label></div>`) +
+      C().cardHead('Manager', 'ascend', `<div class="ca-card-meta">${C().widgetStar(CA.UI.ManagerWidget.PRESET, 'Manager')}<label class="ca-field"><span>Active</span><select data-mgr-active>${opts}</select></label></div>`) +
       (m ? `<div class="ca-list">${CA.UI.MacrosPage.row(m)}</div>` : '') +
       `<div class="ca-mgr-live" data-mgr-live>${stripHtml()}</div>` +
       '</div>'
@@ -256,6 +260,33 @@ CA.UI.ManagersPage = (() => {
     );
   }
 
+  /** What the Manager widget watches while the stage is on: label, value (code), format; its value now. */
+  function watchFields(m, i) {
+    const s = m.stages[i];
+    const at = (j) => `data-mgr-watch="${esc(m.id)}" data-i="${i}" data-j="${j}"`;
+    const now = G().watchOf(s);
+    const rows = s.watch
+      .map((x, j) => {
+        const fmts = G()
+          .FORMATS.map((f) => `<option value="${f.v}"${x.format === f.v ? ' selected' : ''}>${esc(f.label)}</option>`)
+          .join('');
+        const v = now[j] || {};
+        const shown = v.error ? `<em class="ca-mgr-problem">${esc(v.error)}</em>` : `<em>now ${CA.UI.ManagerWidget.watchText(v)}</em>`;
+        return (
+          '<div class="ca-mgr-watch">' +
+          `<input type="text" class="ca-gname" maxlength="40" placeholder="label" value="${esc(x.label)}" ${at(j)} data-field="label" aria-label="Label">` +
+          `<input type="text" spellcheck="false" class="ca-code-input${v.error ? ' bad' : ''}" placeholder="a value, e.g. santaLevel()" value="${esc(x.value)}" ${at(j)} data-field="value" aria-label="Value">` +
+          `<select ${at(j)} data-field="format" aria-label="Shown as">${fmts}</select>` +
+          shown +
+          C().button('×', `data-mgr-act="delWatch" data-id="${esc(m.id)}" data-i="${i}" data-j="${j}" data-tip="Stop watching it"`, 'ca-btn-small ca-btn-off') +
+          '</div>'
+        );
+      })
+      .join('');
+    const add = s.watch.length < 8 ? C().button(`${I('plus', 12)} Watch a value`, `data-mgr-act="addWatch" data-id="${esc(m.id)}" data-i="${i}"`, 'ca-btn-small') : '';
+    return `<div class="ca-mgr-watches">${rows}${add}</div>`;
+  }
+
   function stageHtml(m, i) {
     const s = m.stages[i];
     const last = i === m.stages.length - 1;
@@ -285,6 +316,7 @@ CA.UI.ManagersPage = (() => {
       settingRule(m, i) +
       profileRule(m, i) +
       until +
+      `<div class="ca-mgr-sub" data-tip="What the Manager widget shows while this stage is on">Widget watches</div>${watchFields(m, i)}` +
       '</div>'
     );
   }
@@ -298,6 +330,8 @@ CA.UI.ManagersPage = (() => {
         C().cardHead(`Stages · ${esc(m.name)}`, 'sortList') +
         `<div class="ca-card-note">Its code is yours (the Code card below), so these stages are only names: ${m.stages.map((s, i) => `<b>${i + 1}</b> ${esc(s.name)}`).join(' · ')}. ` +
         `${C().button(`${I('refresh', 12)} Back to stages`, `data-mgr-act="uncode" data-id="${esc(m.id)}" data-arm-label="Drop your code, back to the stages’ own?"`, 'ca-btn-small')}</div>` +
+        // what the Manager widget watches still goes by stage
+        `<div class="ca-mgr-stages">${m.stages.map((s, i) => `<div class="ca-mgr-watchcard"><div class="ca-mgr-stagehead"><b class="ca-mgr-num">${i + 1}</b> ${esc(s.name)}</div><div class="ca-mgr-sub">Widget watches</div>${watchFields(m, i)}</div>`).join('')}</div>` +
         '</div>'
       );
     return (
@@ -433,6 +467,16 @@ CA.UI.ManagersPage = (() => {
       case 'delStage':
         G().removeStage(d.id, i);
         break;
+      case 'addWatch': {
+        const st = G().find(d.id) && G().find(d.id).stages[i];
+        if (st) G().setStageWatch(d.id, i, st.watch.concat([{ label: '', value: '', format: 'auto' }]));
+        break;
+      }
+      case 'delWatch': {
+        const st = G().find(d.id) && G().find(d.id).stages[i];
+        if (st) G().setStageWatch(d.id, i, st.watch.filter((x, j) => j !== Number(d.j)));
+        break;
+      }
       case 'saveCode': {
         if (!draft || draft.id !== d.id) return;
         codeError = G().setCode(d.id, draft.code);
@@ -493,6 +537,10 @@ CA.UI.ManagersPage = (() => {
       const was = i ? G().effective(mgr, i - 1).profiles[t.value] : '';
       const pick = profilesOf(t.value).find((p) => p.id !== was);
       if (pick) G().setStageProfile(d.mgrAddprofile, i, t.value, pick.id);
+    } else if (d.mgrWatch) {
+      const st = G().find(d.mgrWatch) && G().find(d.mgrWatch).stages[Number(d.i)];
+      if (!st) return;
+      G().setStageWatch(d.mgrWatch, Number(d.i), st.watch.map((x, j) => (j === Number(d.j) ? { ...x, [d.field]: t.value } : x)));
     } else if (d.mgrInput) {
       const v = t.value === '' ? '' : d.type === 'bool' ? t.value === 'true' : d.type === 'number' ? Number(t.value) : t.value;
       G().setStageInput(d.mgrInput, Number(d.i), d.macro, d.key, v);

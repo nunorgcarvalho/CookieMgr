@@ -486,6 +486,12 @@ The **Managers** page has:
 - **Code**: a manager is code. The stage editor writes it, a block per stage, and the Manager macro runs it each
   second. Change it and Save to make it yours (the stage editor is then off until **Back to stages**).
 
+Each stage also has **Widget watches**: what the **Manager widget** (see Widgets) shows while that stage is on. A
+watch is a label, a value in the macro language and how to show it: **as it is**, **a time** (seconds, e.g.
+`golden.expected()`), **a share** (0–1, e.g. `garden.matureShare()`) or **progress** (`[have, of]`, e.g.
+`[owned(easter), total(easter)]`, or 0–100), drawn with a bar. Its value now shows beside it. The ☆ on the Manager
+card puts the widget on the left panel.
+
 **Nunix late game** comes seeded and active:
 
 1. **Shimmering veil**, while it lasts: golden and wrath cookies clicked, but not the big cookie or reindeer
@@ -496,6 +502,11 @@ The **Managers** page has:
 3. **Reindeer**: Christmas again for its cookies, with the elders pledged and Dragon drops & flight.
 4. **Golden cookie combos**, for good: the Auto buyer's Golden cookie combos profile, 8 nursetulips together +
    clover combos in the garden, the golden Pantheon, Dragonflight & Harvest, and Force the Hand of Fate on combos.
+
+Its stages watch: the next golden cookie, the Easter eggs and Santa's level (Shimmering veil); Santa, the
+Grandmapocalypse and the next golden cookie (Drops); the reindeer cookies and the next reindeer (Reindeer); the combo
+on, the magic for Force the Hand of Fate, what the Auto buyer buys next and how much of the garden is mature (Golden
+cookie combos).
 
 Words: `manager.active()`, `manager.stage()`, `manager.stageName()`, `manager.entering()`, `manager.stages()`,
 `manager.list()`. Actions: `manager.use(manager)`, `manager.goTo(stage)`, `manager.next()`,
@@ -983,10 +994,19 @@ for production and one for prestige (see **Copies** below). Macro buttons are th
   over them: each plant effect now as the game's Garden information adds it up (golden cookie frequency, ticked to
   start, CpS, golden cookie gains…), plants, mature plants and the time to the next tick. The charts show the same
   window, X axis and choices as on the Garden page; hover them for the details.
+- **Manager** — what the active manager is doing; it takes that manager's name as its title. Its settings pick the
+  parts: **Stages** (a strip: done ✓, the one it's on lit with its name, still to come), **Now** (the stage, how
+  long it's been on it, its profiles in ✓ or still waiting ⌛, and a warning while the Manager macro is off),
+  **Next stage when** (each condition of the stage's **Until**, ticked once it holds, with a season's drops
+  counted on a bar: "Christmas upgrades 12/21"), **Watching** (the stage's own numbers, from its watch list on the
+  Managers page), **Macros** (the macros the stage switched on, pulsing while they work, dim if you switched one
+  off; hover for what they did) and **Lately** (the last things those macros did). Click the strip or the stage to
+  open the Managers page.
 
 **Stars:** a ☆ next to a chart or a section adds its ready-made widget in one click, as a macro's ★ gives it a
 button: the Garden page's Growth and Effects charts (a Chart widget each) and the golden cookie frequency row on the
-Stats page (a Golden cookies widget showing Frequency, Multiplier and Frequency Factors). The star fills while the widget is on the left panel; click it again to take it
+Stats page (a Golden cookies widget showing Frequency, Multiplier and Frequency Factors), and the Managers page's
+Manager card (a Manager widget). The star fills while the widget is on the left panel; click it again to take it
 away.
 
 Framed boxes (Quick stats, Latest events) are dragged by their title bar and folded with ▾. **Resize** any widget
