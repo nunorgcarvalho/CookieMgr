@@ -6,32 +6,37 @@
 //             scope 'ascension': its stages start over when you ascend (legacy managers, which carry
 //             on from one ascension to the next, are for later — the scope is there for them).
 //   Stage     { name, macros: { id: 'on'|'off' }, inputs: { id: { key: value } } (a macro's settings),
-//             profiles: { buyer, pantheon, dragon, grimoire, garden } (''/missing: left as it is),
-//             until } — until is a condition in the macro language (features/script.js); the last
-//             stage lasts for good.
+//             profiles: { buyer, pantheon, dragon, grimoire, garden }, until } — what the stage
+//             CHANGES: stage 1 sets things up, each later stage only lists what it changes, and
+//             the rest carries over until a later stage changes it back (effective() adds them up).
+//             until is a condition in the macro language (features/script.js); the last stage lasts
+//             for good. Older saves (each stage a full list) are turned into changes on loading.
 //
 // A manager is code in the macro language (features/script.js), run pass by pass like a garden
-// profile's rules: each pass runs the block of the stage it's on. The stage editor writes that code
-// (codeOf) — or you write it yourself (code: then the stages are only names). On a stage's first pass
-// (manager.entering()) its block sets its macros' settings and switches its macros, once, so you can
-// still flip one by hand afterwards; manager.profile(kind, id) puts a profile in, retrying each pass
-// until it's in and then leaving it alone (a Pantheon profile waits for the worship swaps to do it all
-// at once, a dragon one for its aura slots); `if <until>: manager.next()` moves on.
+// profile's rules. The stage editor writes that code (codeOf) — or you write it yourself (code: then
+// the stages are only names). It has a block per stage, `if manager.stage() >= N:`, so a stage's
+// changes hold for the stages after it: on the stage's first pass (manager.arriving(N)) the block sets
+// its macros' settings and switches its macros, once, so you can still flip one by hand afterwards
+// (jumping to a stage runs the blocks before it too, so what they set up is there);
+// manager.profile(kind, id) puts a profile in (the last block's wins), retrying each pass until it's in
+// and then leaving it alone (a Pantheon profile waits for the worship swaps to do it all at once, a
+// dragon one for its aura slots); `if <until>: manager.next()` moves on.
 //
 // The built-in macro `manager` runs the active manager's code each second, so it has a switch, a
 // hotkey and macro.set like any other. One seeded manager, Nunix late game:
-//   Shimmering veil        while the veil lasts: golden and wrath cookies clicked (their upgrades bring
-//                          more of them, so more drops), the big cookie and reindeer not; the Auto buyer
-//                          spending freely (Payback), the Upgrade unlocker (Santa, research, the dragon
-//                          trained and petted, fortunes, cheap upgrades), SeasonCompletion, wrinklers and
-//                          sugar lumps; Pantheon wrinklers, dragon drops — until the veil breaks
-//   Drops                  the same, the big cookie and reindeer clicked too — until Christmas's upgrades,
-//                          Easter, Halloween and Valentine's are in
-//   Reindeer               Christmas again for its cookies: the elders pledged, dragon drops & flight
+//   Shimmering veil        everything clicked but the big cookie (it breaks the veil): golden and wrath
+//                          cookies and reindeer; the Auto buyer spending freely (Payback), the Upgrade
+//                          unlocker (Santa, research up to the Elder Pact, the dragon trained and petted,
+//                          fortunes, cheap upgrades), SeasonCompletion, wrinklers and sugar lumps; no
+//                          garden, spells, stocks or Elder Pledge (the Grandmapocalypse's wrinklers drop
+//                          Halloween's cookies); Pantheon wrinklers, dragon drops — until the veil breaks
+//   Drops                  + the big cookie — until Christmas's upgrades, Easter, Halloween and
+//                          Valentine's are in
+//   Reindeer               Christmas again for its cookies: + the elders pledged, dragon drops & flight
 //   Golden cookie combos   for good: the buyer ranks by actual income and never dips below the Lucky! and
-//                          garden replant banks (buyer profile combos); the Auto-gardener (8 nursetulips
-//                          together + clover combos), Pantheon golden, dragon Dragonflight & Harvest, and
-//                          FtHoF on combos
+//                          garden replant banks (buyer profile combos); + the Auto-gardener (8
+//                          nursetulips together + clover combos), Pantheon golden, dragon Dragonflight &
+//                          Harvest, and FtHoF on combos
 //
 //   For algorithmic code:
 //     manager.use(manager)            makes a manager the active one (an action; its id or name)
@@ -43,6 +48,7 @@
 //     manager.active()                the active manager's id ("": none)
 //     manager.stage()                 the stage it's on (1 = the first; 0: no manager)
 //     manager.entering()              whether this is the stage's first pass
+//     manager.arriving(stage)         whether this pass is that stage's first (or a later one's, jumped to)
 //     manager.stageName()             that stage's name
 //     manager.stages()                how many stages the active manager has
 
@@ -96,57 +102,58 @@ CA.Managers = (() => {
   // Upgrade unlocker: the macros that unlock (and buy the cheap) upgrades, one switch for them all
   const UNLOCKER = { id: 'upgradeUnlocker', members: ['santa', 'research', 'autoDragon', 'petDragon', 'fortune', 'cheapUpgrades'] };
 
-  // Nunix late game: what every stage switches on (or off), then what each changes
-  const NUNIX_SHARED = {
-    autoBuyer: 'on',
-    upgradeUnlocker: 'on',
-    seasonCompletion: 'on',
-    golden: 'on',
-    wrath: 'on',
-    wrinklers: 'on',
-    lumps: 'on',
-    stockTrader: 'off',
-  };
-  const NUNIX_INPUTS = {
-    research: { stopBefore: 'none' }, // One mind and on: the Grandmapocalypse, for Halloween's wrinklers
-    seasonCompletion: { then: 'fools' },
-    wrinklers: { fed: true },
-  };
-  // the Shimmering veil's stage clicks only golden and wrath cookies (for their upgrades, which bring
-  // more of them and so more drops): the big cookie and reindeer wait until it breaks
-  const NUNIX_LATER = { bigCookie: 'on', reindeer: 'on' };
+  // Nunix late game: stage 1 sets everything up; the stages after it only change a few things
   const SEEDS = [
     {
       id: 'nunixLateGame',
       name: 'Nunix late game',
-      desc: 'Keeps the Shimmering veil as long as it lasts, clicking only golden and wrath cookies; then hunts every season’s drops, the Auto buyer spending freely and the Upgrade unlocker on; then Christmas again for the reindeer cookies, the elders pledged; then golden cookie combos for good: the buyer ranks by actual income and keeps the Lucky! and garden replant banks, with the garden, the golden Pantheon, Dragonflight & Harvest and Force the Hand of Fate on combos.',
+      desc: 'Keeps the Shimmering veil as long as it lasts, clicking everything but the big cookie; then the big cookie too while it hunts every season’s drops in the Grandmapocalypse, the Auto buyer spending freely and the Upgrade unlocker on; then Christmas again for the reindeer cookies, the elders pledged; then golden cookie combos for good: the buyer ranks by actual income and keeps the Lucky! and garden replant banks, with the garden, the golden Pantheon, Dragonflight & Harvest and Force the Hand of Fate on combos.',
       scope: 'ascension',
+      v: 2,
       stages: [
         {
           name: 'Shimmering veil',
-          macros: { ...NUNIX_SHARED, bigCookie: 'off', reindeer: 'off', elderPledge: 'off', gardener: 'off', fthofOnClickFrenzy: 'off' },
-          inputs: NUNIX_INPUTS,
+          macros: {
+            autoBuyer: 'on',
+            upgradeUnlocker: 'on', // Santa, research, the dragon trained and petted, fortunes, cheap upgrades
+            seasonCompletion: 'on',
+            golden: 'on',
+            wrath: 'on',
+            reindeer: 'on',
+            wrinklers: 'on',
+            lumps: 'on',
+            bigCookie: 'off', // clicking it breaks the Shimmering veil
+            elderPledge: 'off', // the Grandmapocalypse: its wrinklers drop Halloween's cookies
+            gardener: 'off',
+            fthofOnClickFrenzy: 'off',
+            stockTrader: 'off',
+          },
+          inputs: {
+            research: { stopBefore: 'Elder Pact' }, // all the research but the last
+            seasonCompletion: { then: 'fools' },
+            wrinklers: { fed: true },
+          },
           profiles: { buyer: 'payback', pantheon: 'wrinklers', dragon: 'drops' },
           until: 'not veil()',
         },
         {
           name: 'Drops',
-          macros: { ...NUNIX_SHARED, ...NUNIX_LATER, elderPledge: 'off', gardener: 'off', fthofOnClickFrenzy: 'off' },
-          inputs: NUNIX_INPUTS,
-          profiles: { buyer: 'payback', pantheon: 'wrinklers', dragon: 'drops' },
+          macros: { bigCookie: 'on' },
+          inputs: {},
+          profiles: {},
           until: 'season.complete(christmas, upgrades) and season.complete(easter) and season.complete(halloween) and season.complete(valentines)',
         },
         {
           name: 'Reindeer',
-          macros: { ...NUNIX_SHARED, ...NUNIX_LATER, elderPledge: 'on', gardener: 'off', fthofOnClickFrenzy: 'off' },
-          inputs: NUNIX_INPUTS,
-          profiles: { buyer: 'payback', dragon: 'dropsFlight' },
+          macros: { elderPledge: 'on' },
+          inputs: {},
+          profiles: { dragon: 'dropsFlight' },
           until: 'season.complete(christmas)',
         },
         {
           name: 'Golden cookie combos',
-          macros: { ...NUNIX_SHARED, ...NUNIX_LATER, elderPledge: 'on', gardener: 'on', fthofOnClickFrenzy: 'on' },
-          inputs: NUNIX_INPUTS,
+          macros: { gardener: 'on', fthofOnClickFrenzy: 'on' },
+          inputs: {},
           profiles: { buyer: 'combos', pantheon: 'golden', dragon: 'dragonFlightHarvest', grimoire: 'default', garden: 'tulipCombos' },
           until: '',
         },
@@ -179,9 +186,39 @@ CA.Managers = (() => {
     });
     return { name: String(s.name || `Stage ${i + 1}`).slice(0, 40), macros, inputs, profiles, until: typeof s.until === 'string' ? s.until.slice(0, 500) : '' };
   }
+  /** What stages up to i (0 = the first) add up to: { macros, inputs, profiles } — i < 0: nothing. */
+  function addUp(stages, i) {
+    const out = { macros: {}, inputs: {}, profiles: {} };
+    stages.slice(0, i + 1).forEach((s) => {
+      Object.assign(out.macros, s.macros);
+      Object.assign(out.profiles, s.profiles);
+      Object.keys(s.inputs).forEach((id) => (out.inputs[id] = { ...(out.inputs[id] || {}), ...s.inputs[id] }));
+    });
+    return out;
+  }
+  /** Older stages (each its full list) as changes: what each sets that the ones before it don't already. */
+  function toChanges(stages) {
+    return stages.map((s, i) => {
+      if (!i) return s;
+      const before = addUp(stages, i - 1);
+      const macros = {};
+      Object.keys(s.macros).forEach((id) => before.macros[id] !== s.macros[id] && (macros[id] = s.macros[id]));
+      const profiles = {};
+      Object.keys(s.profiles).forEach((k) => before.profiles[k] !== s.profiles[k] && (profiles[k] = s.profiles[k]));
+      const inputs = {};
+      Object.keys(s.inputs).forEach((id) =>
+        Object.keys(s.inputs[id]).forEach((k) => {
+          if (!before.inputs[id] || before.inputs[id][k] !== s.inputs[id][k]) inputs[id] = { ...(inputs[id] || {}), [k]: s.inputs[id][k] };
+        })
+      );
+      return { ...s, macros, inputs, profiles };
+    });
+  }
   function clean(m) {
-    const stages = (Array.isArray(m.stages) ? m.stages : []).slice(0, 20).map(cleanStage);
+    let stages = (Array.isArray(m.stages) ? m.stages : []).slice(0, 20).map(cleanStage);
+    if (m.v !== 2) stages = toChanges(stages);
     return {
+      v: 2,
       id: String(m.id),
       name: String(m.name || 'Manager').slice(0, 40),
       desc: String(m.desc || '').slice(0, 400),
@@ -260,8 +297,8 @@ CA.Managers = (() => {
     const m = managers.find((x) => x.id === id);
     if (!m || m.stages.length >= 20) return null;
     const at = after == null ? m.stages.length : Math.min(m.stages.length, Number(after) + 1);
-    const base = m.stages[at - 1];
-    const s = cleanStage({ ...(base ? copy(base) : {}), name: `Stage ${m.stages.length + 1}`, until: '' }, at);
+    // it changes nothing yet: what the stage before it runs with carries over
+    const s = cleanStage({ name: `Stage ${m.stages.length + 1}` }, at);
     m.stages.splice(at, 0, s);
     if (run.id === id && at <= run.stage) run.stage++;
     changed();
@@ -275,19 +312,22 @@ CA.Managers = (() => {
     changed();
     return s;
   }
-  /** A macro in a stage: 'on', 'off', or '' (left as it is). */
+  /** What a manager's stage i inherits from the ones before it. */
+  const before = (id, i) => addUp(managers.find((x) => x.id === id).stages, i - 1);
+  /** A macro in a stage: 'on', 'off', or '' (no change: as the stage before it has it). */
   function setStageMacro(id, i, macro, to) {
     const s = stageOf(id, i);
     if (!s || macro === MACRO) return;
-    if (to === 'on' || to === 'off') s.macros[macro] = to;
+    if ((to === 'on' || to === 'off') && before(id, i).macros[macro] !== to) s.macros[macro] = to;
     else delete s.macros[macro];
     changed();
   }
-  /** A macro's setting in a stage (undefined / '' : left as it is). */
+  /** A macro's setting in a stage (undefined / '' : no change). */
   function setStageInput(id, i, macro, key, value) {
     const s = stageOf(id, i);
     if (!s || macro === MACRO) return;
     const cur = { ...(s.inputs[macro] || {}) };
+    // (one the stage before already sets is kept too: you added it, so it shows)
     if (value === undefined || value === '') delete cur[key];
     else cur[key] = value;
     if (Object.keys(cur).length) s.inputs[macro] = cur;
@@ -298,14 +338,21 @@ CA.Managers = (() => {
   function setStageProfile(id, i, kind, profile) {
     const s = stageOf(id, i);
     if (!s || !P[kind]) return;
-    if (profile) s.profiles[kind] = String(profile);
+    if (profile && before(id, i).profiles[kind] !== String(profile)) s.profiles[kind] = String(profile);
     else delete s.profiles[kind];
     changed();
   }
   function removeStage(id, i) {
     const m = managers.find((x) => x.id === id);
     if (!m || m.stages.length <= 1 || !m.stages[i]) return false;
-    m.stages.splice(i, 1);
+    // what it changed still holds for the stages after it: the next one takes it over
+    const [gone] = m.stages.splice(i, 1);
+    const next = m.stages[i];
+    if (next) {
+      next.macros = { ...gone.macros, ...next.macros };
+      next.profiles = { ...gone.profiles, ...next.profiles };
+      Object.keys(gone.inputs).forEach((x) => (next.inputs[x] = { ...gone.inputs[x], ...(next.inputs[x] || {}) }));
+    }
     if (run.id === id && run.stage >= m.stages.length) run.stage = m.stages.length - 1;
     changed();
     return true;
@@ -318,6 +365,9 @@ CA.Managers = (() => {
     changed();
     return true;
   }
+
+  /** What a manager's stage i (0 = the first) runs with — its changes and those before it: { macros, inputs, profiles }. */
+  const effective = (m, i) => addUp(m.stages, i);
 
   // ---- "until" ----------------------------------------------------------------------------------
 
@@ -353,12 +403,12 @@ CA.Managers = (() => {
   function codeOf(m) {
     const out = [
       `# ${m.name}: its stages as code (the stage editor writes this; edit it to make it yours).`,
-      '# Each pass runs the stage the manager is on, manager.stage(): on its first pass (manager.entering())',
-      '# it switches macros and their settings; manager.profile() puts a profile in once per stage (a',
-      '# Pantheon one waits for the worship swaps to do it all at once); manager.next() moves on.',
+      '# A block per stage, for it and every stage after it: what it changes holds until a later stage changes',
+      '# it back. On a stage\'s first pass (manager.arriving(N)) it sets settings and switches macros, once;',
+      '# manager.profile() puts a profile in (the last block\'s wins) once per stage; manager.next() moves on.',
     ];
     m.stages.forEach((st, i) => {
-      out.push('', `# ---- stage ${i + 1}: ${st.name}`, `if manager.stage() == ${i + 1}:`);
+      out.push('', `# ---- stage ${i + 1}: ${st.name}${i ? ' (what it changes)' : ''}`, `if manager.stage() >= ${i + 1}:`);
       const body = [];
       const entering = [];
       Object.keys(st.inputs).forEach((id) => {
@@ -376,9 +426,9 @@ CA.Managers = (() => {
           });
         if (line) entering.push(line);
       });
-      if (entering.length) body.push('if manager.entering():', ...entering.map((l) => `  ${l}`));
+      if (entering.length) body.push(`if manager.arriving(${i + 1}):`, ...entering.map((l) => `  ${l}`));
       KINDS.forEach((k) => st.profiles[k] && body.push(`manager.profile(${k}, ${word(st.profiles[k])})`));
-      if (i < m.stages.length - 1 && st.until.trim()) body.push(`if ${st.until.trim()}:`, '  manager.next()');
+      if (i < m.stages.length - 1 && st.until.trim()) body.push(`if manager.stage() == ${i + 1}:`, `  if ${st.until.trim()}:`, '    manager.next()');
       if (!body.length) body.push(`log ${JSON.stringify(st.name)}`);
       body.forEach((l) => out.push(`  ${l}`));
     });
@@ -415,15 +465,16 @@ CA.Managers = (() => {
   const resets = () => Game.resets || 0;
   /** The macros a stage switches, that exist (one you deleted is skipped). */
   const stageMacros = (s) => Object.keys(s.macros).filter((id) => CA.Macros.get(id) && CA.Macros.get(id).mode !== 'once');
-  const fresh = (id, stage) => ({ id, stage, resets: resets(), since: Date.now(), entering: true, entered: false, put: {}, waiting: {} });
+  // jumped: reached by manager.goTo (so the stages before it set up again), not by moving on
+  const fresh = (id, stage, jumped) => ({ id, stage, resets: resets(), since: Date.now(), entering: true, entered: false, jumped: !!jumped, put: {}, waiting: {}, want: {} });
   let lastPass = null; // the last pass of the manager's code: { t, lines, trace, at, error, done }
 
   /** Goes into stage i (0 = the first) of the active manager: its next pass is that stage's first. */
-  function enter(i) {
+  function enter(i, jumped) {
     const m = current();
     if (!m) return 0;
     const at = Math.max(0, Math.min(19, Math.floor(Number(i) || 0)));
-    run = fresh(m.id, at);
+    run = fresh(m.id, at, jumped && at > 0);
     const st = m.stages[at];
     CA.EventLog.add({ type: 'manager', title: `${m.name}: ${st ? st.name : `stage ${at + 1}`}`, text: `stage ${at + 1} of ${m.stages.length}`, data: { manager: m.id, stage: at + 1 } });
     changed();
@@ -438,28 +489,39 @@ CA.Managers = (() => {
   }
   /** After a pass: its first pass is over (unless it just moved on, so the next is the new stage's first). */
   function afterPass(F) {
+    putWanted();
     if (run.entered) run.entered = false;
     else run.entering = false;
     lastPass = { t: Date.now(), lines: (F.trace || []).map((x) => x.line).filter(Boolean), trace: F.trace || [], at: F.at || [], error: F.error || '', done: F.done || 0 };
   }
 
-  /** Puts a profile in (once per stage: once it's in, it's left alone): what changed. */
-  function putProfile(k, id) {
-    const kind = P[k];
-    if (!kind || run.put[k] === String(id)) return 0;
-    const p = kind.list().find((x) => x.id === String(id) || String(x.name).toLowerCase() === String(id).toLowerCase());
-    if (!p) return 0;
-    let n = 0;
-    try {
-      if (!kind.isIn(p.id)) n = kind.use(p.id) || 0;
-      if (kind.isIn(p.id)) {
-        run.put[k] = String(id);
-        delete run.waiting[k];
-      } else run.waiting[k] = p.id;
-    } catch (e) {
-      run.waiting[k] = p.id; // a minigame that isn't there yet: next pass
-    }
-    return n;
+  /** A profile this pass's code asks for (the last one asked, by kind, is put in after the pass). */
+  function wantProfile(k, id) {
+    if (!P[k]) return 0;
+    run.want = run.want || {};
+    run.want[k] = String(id);
+    return 0;
+  }
+  /** After a pass: puts the profiles it asked for in (once per stage: once one's in, it's left alone). */
+  function putWanted() {
+    const want = run.want || {};
+    run.want = {};
+    Object.keys(want).forEach((k) => {
+      const id = want[k];
+      const kind = P[k];
+      if (run.put[k] === id) return;
+      const p = kind.list().find((x) => x.id === id || String(x.name).toLowerCase() === id.toLowerCase());
+      if (!p) return;
+      try {
+        if (!kind.isIn(p.id)) kind.use(p.id);
+        if (kind.isIn(p.id)) {
+          run.put[k] = id;
+          delete run.waiting[k];
+        } else run.waiting[k] = p.id;
+      } catch (e) {
+        run.waiting[k] = p.id; // a minigame that isn't there yet: next pass
+      }
+    });
   }
 
   /** One pass of the active manager's code, by hand (the Manager macro runs it each second). Returns what it did. */
@@ -473,7 +535,7 @@ CA.Managers = (() => {
   }
 
   /** Goes to stage n (1 = the first) of the active manager. */
-  const goTo = (n) => (current() ? enter(Math.floor(Number(n) || 1) - 1) : 0);
+  const goTo = (n) => (current() ? enter(Math.floor(Number(n) || 1) - 1, true) : 0);
 
   /** Where the active manager is: { manager, stage, index, of, since, started, pending: [{ kind, label, id, name, waits }] } or null. */
   function where() {
@@ -512,7 +574,7 @@ CA.Managers = (() => {
   function cleanRun(r) {
     r = r && typeof r === 'object' ? r : {};
     const obj = (x) => (x && typeof x === 'object' ? { ...x } : {});
-    return { id: String(r.id || ''), stage: Math.max(0, Number(r.stage) || 0), resets: Number.isFinite(Number(r.resets)) ? Number(r.resets) : -1, since: Number(r.since) || 0, entering: !!r.entering, entered: false, put: obj(r.put), waiting: obj(r.waiting) };
+    return { id: String(r.id || ''), stage: Math.max(0, Number(r.stage) || 0), resets: Number.isFinite(Number(r.resets)) ? Number(r.resets) : -1, since: Number(r.since) || 0, entering: !!r.entering, entered: false, jumped: !!r.jumped, put: obj(r.put), waiting: obj(r.waiting), want: {} };
   }
   function load(data) {
     if (data && Array.isArray(data.managers)) {
@@ -553,6 +615,10 @@ CA.Managers = (() => {
       return w ? w.stage.name : '';
     });
     V('manager.entering', 'whether this is the first pass of the stage the manager is on (when it switches its macros)', () => !!run.entering, { bool: true });
+    V('manager.arriving', 'whether this pass is the first of that stage (1 = the first) — or of a later one, jumped to, so the stages before it set up too', (n) => {
+      const at = Math.floor(Number(n)) - 1;
+      return !!run.entering && (at === run.stage || (run.jumped && at >= 0 && at < run.stage));
+    }, { bool: true, params: ['stage'] });
     V('manager.stages', 'how many stages the active manager has', () => (current() ? current().stages.length : 0));
     V('manager.list', 'a list: every manager’s id', () => managers.map((m) => m.id), { list: true });
 
@@ -601,7 +667,7 @@ CA.Managers = (() => {
         { key: 'profile', label: 'Profile (id or name)', type: 'text', default: '', word: (v, a) => ({ kind: `profile.${a.kind || 'buyer'}`, id: v }) },
       ],
       describe: (p) => `Put the ${(P[p.kind] || { label: p.kind }).label} profile ${p.profile} in`,
-      run: (p) => putProfile(p.kind, p.profile),
+      run: (p) => wantProfile(p.kind, p.profile),
     });
     A({
       id: 'macro.setting',
@@ -703,5 +769,5 @@ CA.Managers = (() => {
       },
     });
 
-  return { init, list, find, current, use, add, update, remove, resetSeeds, addStage, updateStage, setStageMacro, setStageInput, setStageProfile, removeStage, moveStage, untilProblem, untilHolds, codeOf, sourceOf, setCode, step, enter, goTo, where, readiness, lastPass: () => lastPass, P, KINDS, SCOPES, SEEDS, MACRO, UNLOCKER };
+  return { init, list, find, current, use, add, update, remove, resetSeeds, addStage, updateStage, setStageMacro, setStageInput, setStageProfile, removeStage, moveStage, untilProblem, untilHolds, codeOf, sourceOf, setCode, step, enter, goTo, where, readiness, lastPass: () => lastPass, P, KINDS, SCOPES, SEEDS, MACRO, UNLOCKER, effective };
 })();
