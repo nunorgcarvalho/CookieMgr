@@ -10160,3 +10160,15 @@ body.ca-has-storebar #products {
 #CookieMgrLayer .ca-wpop-val i {
   color: #93866f;
 }
+/* Buy all upgrades' card: the upgrades it covers wrap inside the card */
+#CookieMgrLayer .ca-wbuy-covers {
+  align-items: flex-start;
+}
+#CookieMgrLayer .ca-wbuy-covers .ca-wpop-name {
+  flex: none;
+}
+#CookieMgrLayer .ca-wbuy-covers .ca-wpop-val {
+  flex: 1;
+  min-width: 0;
+  text-align: right;
+}
