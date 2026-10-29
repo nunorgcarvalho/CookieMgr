@@ -18,6 +18,8 @@
 // whose saved widgets load as this one with the same parts (`legacy` below). Effect timers, a bar per
 // effect running, stays its own widget: ui/effectTimers.js.
 // It resizes freely (the chart is drawn at the widget's width) and opens the Stats page from its numbers.
+// While one is on screen it holds still at the beginning of the next cycle (SpawnView.atStart: the stats and graph
+// from when it leaves), under a "Golden cookie present" overlay.
 
 CA.UI = CA.UI || {};
 
@@ -64,7 +66,6 @@ CA.UI.TimelineWidget = (() => {
   const widthOf = (inst) => Math.max(160, (inst.w || WIDTH) - 18);
 
   function numbersHtml(d, inst) {
-    if (d.spawned) return '<div class="ca-tl-line"><b class="ca-tl-now">A golden cookie is on screen!</b></div>';
     const w = d.wait;
     const on = new Set(numsOf(inst));
     const why = d.factors.length ? ` Helping now: ${d.factors.map((x) => x.name).join(', ')}.` : '';
@@ -85,9 +86,8 @@ CA.UI.TimelineWidget = (() => {
 
   /** One statistic's value now, as its cell shows it (the picker's tile for it; its name is the tile's). */
   function numSample(v) {
-    const d = CA.Timers.distribution('golden', 60);
+    const d = CA.UI.SpawnView.atStart(CA.Timers.distribution('golden', 60));
     if (!d) return '<div class="ca-tl-nums"><span><b>—</b></span></div>';
-    if (d.spawned) return '<div class="ca-tl-nums"><span><b class="ca-tl-now">on screen</b></span></div>';
     const w = d.wait;
     const val = { next: `${when(w.mean)} ± ${when(w.sd)}`, minute: pc(w.within(60)), window: `${when(w.soonest)}–${when(w.latest)}`, every: when(d.next.mean), frequency: `×${Math.round(d.frequency * 100) / 100}`, median: when(w.median) }[v];
     return `<div class="ca-tl-nums"><span><b>${val}</b></span></div>`;
@@ -120,7 +120,7 @@ CA.UI.TimelineWidget = (() => {
    */
   function graphHtml(d, inst, parts, axis, width) {
     const effects = parts.includes('bars') ? CA.Timers.buffsWithGolden() : [];
-    const wait = !d.spawned ? d.wait : null;
+    const wait = d.wait;
     const showChart = parts.includes('chart') && wait;
     if (showChart && axis === 'cycle') return CA.UI.SpawnView.cycleChart('golden', d, effects, { width, height: 74, hover: false, lane: 13 });
     if (showChart || effects.length) {
@@ -134,30 +134,30 @@ CA.UI.TimelineWidget = (() => {
 
   function html(inst) {
     const parts = partsOf(inst);
-    const d = CA.Timers.distribution('golden', 60);
+    const d = CA.UI.SpawnView.atStart(CA.Timers.distribution('golden', 60));
     if (!d) return '<div class="ca-tl-w"><div class="ca-tl-line">No golden cookies: the Golden switch is on.</div></div>';
     let h = '';
     if (parts.includes('numbers')) h += numbersHtml(d, inst);
     h += graphHtml(d, inst, parts, axisOf(inst), widthOf(inst));
     if (parts.includes('helping')) h += helpingHtml(d);
-    return `<div class="ca-tl-w">${h || '<div class="ca-tl-line ca-tl-dim">Pick what to show in its settings.</div>'}</div>`;
+    if (!h) return '<div class="ca-tl-w"><div class="ca-tl-line ca-tl-dim">Pick what to show in its settings.</div></div>';
+    return d.present ? `<div class="ca-tl-w ca-present">${h}${CA.UI.SpawnView.presentHtml('golden')}</div>` : `<div class="ca-tl-w">${h}</div>`;
   }
 
   // ---- the settings' samples: each part (and each axis) as the widget draws it, at a tile's width
   const SAMPLE_W = 200;
   const OFF = '<div class="ca-tl-line ca-tl-dim">No golden cookies: the Golden switch is on.</div>';
-  const ON_SCREEN = '<div class="ca-tl-line"><b class="ca-tl-now">A golden cookie is on screen!</b></div>';
   const withData = (fn) => (inst) => {
-    const d = CA.Timers.distribution('golden', 60);
+    const d = CA.UI.SpawnView.atStart(CA.Timers.distribution('golden', 60));
     return d ? fn(d, inst) : OFF;
   };
   const SAMPLES = {
     numbers: withData((d, inst) => numbersHtml(d, inst) || '<div class="ca-tl-line ca-tl-dim">None ticked under Stats.</div>'),
-    chart: withData((d, inst) => graphHtml(d, inst, ['chart'], axisOf(inst), SAMPLE_W) || ON_SCREEN),
+    chart: withData((d, inst) => graphHtml(d, inst, ['chart'], axisOf(inst), SAMPLE_W)),
     bars: withData((d, inst) => graphHtml(d, inst, ['bars'], axisOf(inst), SAMPLE_W)),
     helping: withData((d) => helpingHtml(d)),
   };
-  const axisSample = (axis) => withData((d, inst) => graphHtml(d, inst, ['chart'], axis, SAMPLE_W) || ON_SCREEN);
+  const axisSample = (axis) => withData((d, inst) => graphHtml(d, inst, ['chart'], axis, SAMPLE_W));
 
   // the parts each of v3.38's golden widgets showed (saved without settings = its defaults then), and
   // its name as the title, so you still know which is which (and its width then)

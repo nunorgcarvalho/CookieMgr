@@ -121,10 +121,10 @@ assert(nx && nx.querySelector('.ca-sp-cycle .ca-sp-now') && nx.querySelector('.c
 const tl = wEl('Golden timeline');
 assert(tl && tl.querySelector('.ca-sp-pdf rect') && !tl.querySelector('.ca-sp-cycle'), 'Golden timeline widget: the wait from now, as before');
 
-// ---- on screen: the numbers alone
+// ---- on screen: (since golden-present) the chart holds at the next cycle's beginning, under an overlay
 Game.shimmerTypes.golden.spawned = 1;
 CA.UI.Menu.render();
-assert(/on screen/.test(text()) && /Wrath chance/.test(text()) && !card().querySelector('.ca-sp-cycle'), 'on screen: no chart');
+assert(/Golden cookie present/.test(text()) && /Wrath chance/.test(text()) && card().querySelector('.ca-sp-held .ca-sp-cycle'), 'on screen: the chart, held under “Golden cookie present”');
 
 assert(g.errors.length === 0, 'no runtime errors' + (g.errors.length ? `: ${g.errors.slice(0, 3).join(' | ')}` : ''));
 done();

@@ -6781,7 +6781,6 @@ body.ca-has-storebar #products {
    like the rest. Chart canvases do the same in ui/plot.js (axisText). */
 #CookieMgrWidgets .ca-w-clear .ca-w-stat span,
 #CookieMgrWidgets .ca-w-clear .ca-tl-nums em,
-#CookieMgrWidgets .ca-w-clear .ca-sp-chips,
 #CookieMgrWidgets .ca-w-clear .ca-sp-factors,
 #CookieMgrWidgets .ca-w-clear .ca-sp-note,
 #CookieMgrWidgets .ca-w-clear .ca-graph-mini .ca-legend {
@@ -7194,9 +7193,7 @@ body.ca-has-storebar #products {
   stroke: rgba(0, 0, 0, 0.8);
   stroke-width: 2.5px;
 }
-#CookieMgrMenu .ca-sp-chips,
 #CookieMgrMenu .ca-sp-factors,
-#CookieMgrWidgets .ca-sp-chips,
 #CookieMgrWidgets .ca-sp-factors {
   display: flex;
   flex-wrap: wrap;
@@ -7206,18 +7203,14 @@ body.ca-has-storebar #products {
   font-size: 11px;
   color: #a89a83;
 }
-#CookieMgrMenu .ca-sp-chip,
 #CookieMgrMenu .ca-sp-factor,
-#CookieMgrWidgets .ca-sp-chip,
 #CookieMgrWidgets .ca-sp-factor {
   padding: 2px 7px;
   border-radius: 10px;
   color: #e8dcc0;
   background: rgba(0, 0, 0, 0.3);
 }
-#CookieMgrMenu .ca-sp-chip b,
 #CookieMgrMenu .ca-sp-factor b,
-#CookieMgrWidgets .ca-sp-chip b,
 #CookieMgrWidgets .ca-sp-factor b {
   color: #ffe066;
 }
@@ -7345,10 +7338,6 @@ body.ca-has-storebar #products {
 #CookieMgrWidgets .ca-tl-dim,
 #CookieMgrMenu .ca-wsample .ca-tl-dim {
   color: #8a7d68;
-}
-#CookieMgrWidgets .ca-tl-now,
-#CookieMgrMenu .ca-wsample .ca-tl-now {
-  color: #ffd56a;
 }
 
 /* ---------- v3.24.0: ☆ widget stars, the Chart widget, Golden cookie frequency ---------- */
@@ -9856,4 +9845,42 @@ body.ca-has-storebar #products {
   align-items: center;
   gap: 4px;
   margin-left: auto;
+}
+
+/* ---------- a golden cookie (or reindeer) on screen: the charts hold at the next cycle's beginning, under an overlay ---------- */
+
+#CookieMgrMenu .ca-sp-held,
+#CookieMgrWidgets .ca-tl-w.ca-present,
+#CookieMgrMenu .ca-wsample .ca-tl-w.ca-present {
+  position: relative;
+}
+#CookieMgrMenu .ca-sp-present,
+#CookieMgrWidgets .ca-sp-present {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(16, 10, 4, 0.5);
+  border-radius: 4px;
+  pointer-events: none; /* the numbers under it still open the Stats page */
+}
+#CookieMgrMenu .ca-sp-present span,
+#CookieMgrWidgets .ca-sp-present span {
+  pointer-events: auto;
+  padding: 3px 10px;
+  border: 1px solid #ffd56a;
+  border-radius: 10px;
+  background: rgba(40, 26, 6, 0.92);
+  color: #ffd56a;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 0.03em;
+  text-shadow: 0 0 6px rgba(255, 200, 80, 0.6);
+  box-shadow: 0 0 10px rgba(255, 200, 80, 0.35);
+  white-space: nowrap;
+}
+/* the Stats page's chart sits inside a margin: the overlay covers the chart alone */
+#CookieMgrMenu .ca-sp-held > .ca-sp-present {
+  inset: 8px 12px 0;
 }
