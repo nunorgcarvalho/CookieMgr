@@ -130,16 +130,23 @@ CA.Settings = (() => {
 
   // Up to v3.16 the Numbers option started on the abbreviated short scale (ODe), which every save
   // kept; v3.17 starts on Cookie Monster's default, the short scale (Octodec), saves before it too.
-  function migrateOptions(saved, v) {
+  // The Actual, 15 min / 1 h / 3 h payback modes are gone: one Actual income window for all. A save
+  // in one of them (or with an Auto buyer profile ranking by one) keeps that window, in the one mode.
+  const RETIRED_ACTUAL = { actualIncome15m: '15', actualIncome1h: '60', actualIncome3h: '180' };
+  function migrateOptions(saved, v, data) {
     const out = { ...saved };
     if (!(v >= 2) && out.numberFormat === 'abbr') out.numberFormat = 'short';
+    const profiles = data && data.buyer && Array.isArray(data.buyer.profiles) ? data.buyer.profiles : [];
+    const retired = [out.ppMode].concat(profiles.map((p) => p && p.mode)).find((m) => RETIRED_ACTUAL[m]);
+    if (retired) out.ppActualWindow = RETIRED_ACTUAL[retired];
+    if (RETIRED_ACTUAL[out.ppMode]) out.ppMode = 'actualIncome';
     return out;
   }
 
   /** Options and hotkeys from parsed save data. */
   function applyBasics(data) {
     if (data.options && typeof data.options === 'object' && !Array.isArray(data.options)) {
-      savedOptions = migrateOptions(data.options, data.v);
+      savedOptions = migrateOptions(data.options, data.v, data);
       optionDefs.forEach((d) => {
         if (typeof savedOptions[d.key] === typeof d.default) options[d.key] = savedOptions[d.key];
       });
