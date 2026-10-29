@@ -190,6 +190,12 @@ CA.UI.Menu = (() => {
       C.hotkey('panel.toggle') +
       '</div>' +
       '<div class="ca-row ca-row-option">' +
+      rowIcon('sparkle') +
+      '<div class="ca-row-text"><div class="ca-row-name">Simple cookie background on / off</div>' +
+      '<div class="ca-row-desc">Optional hotkey for the Simple cookie background option above.</div></div>' +
+      C.hotkey('look.simple') +
+      '</div>' +
+      '<div class="ca-row ca-row-option">' +
       rowIcon('keyboard') +
       '<div class="ca-row-text"><div class="ca-row-name">Hotkeys</div>' +
       '<div class="ca-row-desc">Click a key chip, then press the new key. <kbd>Esc</kbd> cancels, <kbd>Backspace</kbd> removes it; modifiers work too.</div></div>' +

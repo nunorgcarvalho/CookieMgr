@@ -64,6 +64,7 @@ const MODULES = [
   'features/autoBuy.js',
   'features/autoBuyer.js',
   'features/seasons.js',
+  'features/simpleLook.js',
   'features/dragon.js',
   'features/managers.js',
   'features/script.js',
