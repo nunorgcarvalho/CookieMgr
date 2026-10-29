@@ -9476,6 +9476,8 @@ body.ca-has-storebar #products {
   background: linear-gradient(#ffe39a, #f2b84b);
   border-color: #ffd36b;
   box-shadow: 0 0 8px rgba(255, 200, 90, 0.45);
+  /* dark text on the gold pill: the Faint/None outline would only blur it */
+  text-shadow: none;
 }
 #CookieMgrWidgets .ca-mw-st em,
 #CookieMgrMenu .ca-wsample .ca-mw-st em {
