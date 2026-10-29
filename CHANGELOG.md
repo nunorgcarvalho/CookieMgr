@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 4.17.1 — 2026-10-29
+
+- **README:** the Manager widget picture and bullet show its new Auto buyer row.
+
 ## 4.17.0 — 2026-10-29
 
 - **Manager widget: Auto buyer row.** A new part, on by default right under the stages, shows while the stage has
