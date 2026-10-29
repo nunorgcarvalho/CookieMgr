@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 4.16.1 — 2026-10-29
+
+- **README:** the Payback picture shows the single Actual income mode, and the Payback tile names its 30 min default window.
+
 ## 4.16.0 — 2026-10-29
 
 - **New version available:** once a newer cookieMgr release is out, Settings shows "New version vX available ·
