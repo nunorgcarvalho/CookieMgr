@@ -225,7 +225,7 @@ CA.UI.AutoBuyerCard = (() => {
       `<div class="ca-ab-row ca-ab-rules-head"><span class="ca-ab-lbl">Rules</span><span class="ca-hint">top to bottom: what it applies to → what it does, when its condition holds. “never” and a reached cap stop there.</span></div>` +
       `<div class="ca-ab-rules">${p.rules.map((r, i) => ruleRow(p, r, i)).join('') || '<div class="ca-card-note">No rules: the queue is the payback ranking as it is.</div>'}</div>` +
       `<div class="ca-ab-row">${C().button(`${I('plus', 12)} Add rule`, 'data-ab-act="rule"', 'ca-btn-small')}${C().button(`${I('plus', 12)} Cheap first`, 'data-ab-act="rule-cheap"', 'ca-btn-small')}` +
-      `<span class="ca-ab-grow"></span>${B().list().length > 1 ? C().button('Delete profile', `data-ab-act="delete" data-arm-label="Delete ${esc(p.name)}?"`, 'ca-btn-small ca-btn-off') : ''}</div>` +
+      `<span class="ca-ab-grow"></span>${B().list().length > 1 ? C().trash('data-ab-act="delete"', `Delete ${p.name}?`, 'Delete this profile') : ''}</div>` +
       '</div>'
     );
   }

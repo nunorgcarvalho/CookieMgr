@@ -3,7 +3,8 @@
 //   Spirits      the three slots — Diamond, Ruby, Jade — with the spirit in each and what it does in
 //                that slot
 //   Profiles     named combinations of the three slots (features/pantheon.js): one row each —
-//                its name, a spirit per slot, whether it's on (or the swaps it takes), Use, Delete —
+//                its name, a spirit per slot, Use (In use when it's on; the swaps
+//                it takes on hover), a trash can —
 //                and New profile / From current
 //   Worship      swaps left, when the next one comes back, how long a swap takes to refill
 //   All spirits  every spirit, the slot it's in (if any), and on hover what it does in each slot
@@ -60,12 +61,12 @@ CA.UI.PantheonPage = (() => {
   // ---- profiles ----
 
   const P = () => CA.Pantheon;
-  /** A profile's state: on, or the swaps it takes (and whether there are that many now). */
-  function statusHtml(M, p) {
-    if (P().isActive(p.id)) return '<span class="ca-pill on">in use</span>';
-    const n = P().swapsFor(p.id);
-    if (!n) return '<span class="ca-pill">free to use</span>';
-    return `<span class="ca-pill${n > M.swaps ? ' ca-pill-warn' : ''}">needs ${n} swap${n === 1 ? '' : 's'}</span>`;
+  /** A profile's Use button (an "In use" badge when it's slotted); its tip says the swaps it takes. */
+  function useHtml(M, p) {
+    const on = P().isActive(p.id);
+    const n = on ? 0 : P().swapsFor(p.id);
+    const tip = on ? '' : !n ? 'Slot it in — free: no worship swap' : `Slot it in — ${n} worship swap${n === 1 ? '' : 's'}${n > M.swaps ? `, ${M.swaps} left now: it waits for the rest` : ''}`;
+    return C().useButton(on, `data-pp-act="use" data-id="${esc(p.id)}"`, tip);
   }
   function slotPick(M, p, i) {
     const k = p.slots[i];
@@ -90,9 +91,8 @@ CA.UI.PantheonPage = (() => {
       `<input type="text" class="ca-gname" maxlength="40" value="${esc(p.name)}" data-pp-name="${esc(p.id)}" data-tip="the profile’s name — macros use it, or its id: ${esc(p.id)}">` +
       `<div class="ca-pprof-slots">${[0, 1, 2].map((i) => slotPick(M, p, i)).join('')}</div>` +
       '<span class="ca-pprof-end">' +
-      `<span data-pp-status="${esc(p.id)}">${statusHtml(M, p)}</span>` +
-      C().button(`${I('play', 12)} Use`, `data-pp-act="use" data-id="${esc(p.id)}"${on ? ' disabled' : ''}`, 'ca-btn-small') +
-      C().button('Delete', `data-pp-act="delete" data-id="${esc(p.id)}" data-arm-label="Delete it?"`, 'ca-btn-small ca-btn-off') +
+      `<span class="ca-use-slot" data-pp-status="${esc(p.id)}">${useHtml(M, p)}</span>` +
+      C().trash(`data-pp-act="delete" data-id="${esc(p.id)}"`, 'Delete it?', 'Delete this profile') +
       '</span></div>'
     );
   }
@@ -170,7 +170,7 @@ CA.UI.PantheonPage = (() => {
     if (!M) return;
     root.querySelectorAll('[data-pp-status]').forEach((st) => {
       const p = P().profileOf(st.dataset.ppStatus);
-      if (p) CA.UI.Dom.morph(st, statusHtml(M, p));
+      if (p) CA.UI.Dom.morph(st, useHtml(M, p));
     });
   }
 

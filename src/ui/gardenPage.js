@@ -278,7 +278,7 @@ CA.UI.GardenPage = (() => {
       C().button(`${I('plus', 12)} Save as new`, 'data-gp-pact="new"', 'ca-btn-small') +
       C().button(`${I('leaf', 12)} From the garden`, 'data-gp-pact="snapshot"', 'ca-btn-small') +
       (p.builtin && p.edited ? C().button(`${I('refresh', 12)} Revert`, 'data-gp-pact="revert" data-arm-label="Back to the built-in?"', 'ca-btn-small') : '') +
-      (p.builtin ? '' : C().button('Delete', 'data-gp-pact="delete" data-arm-label="Delete this profile?"', 'ca-btn-small ca-btn-off')) +
+      (p.builtin ? '' : C().trash('data-gp-pact="delete"', 'Delete this profile?', 'Delete this profile')) +
       '</span>' +
       (p.builtin ? '' : `<input type="text" class="ca-gname" maxlength="40" value="${esc(p.name)}" data-gp-iname="profile">`) +
       `<div class="ca-hint ca-gprof-desc">${esc(p.desc || 'Yours: a gardener, a soil rule, a template and seeds.')}${changed ? ' — the slots below differ from it: Save puts them in it.' : ''}</div>` +
@@ -301,7 +301,7 @@ CA.UI.GardenPage = (() => {
       (dirty ? C().button('Discard', 'data-gp-act="discard"', 'ca-btn-small') : '') +
       C().button(`${I('plus', 12)} Save as new`, 'data-gp-act="new"', 'ca-btn-small') +
       (it.builtin && it.edited ? C().button(`${I('refresh', 12)} Revert to default`, `data-gp-act="revert" data-arm-label="Back to the built-in ${esc(noun)}?"`, 'ca-btn-small') : '') +
-      (it.builtin ? '' : C().button('Delete', `data-gp-act="delete" data-arm-label="Delete this ${esc(noun)}?"`, 'ca-btn-small ca-btn-off')) +
+      (it.builtin ? '' : C().trash('data-gp-act="delete"', `Delete this ${noun}?`, `Delete this ${noun}`)) +
       '</span>' +
       (it.builtin ? '' : `<input type="text" class="ca-gname" maxlength="40" value="${esc(it.name)}" data-gp-iname="${layer}">`) +
       '</div>'

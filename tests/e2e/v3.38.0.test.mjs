@@ -54,8 +54,8 @@ assert(savedStats.title === 'My stats' && savedStats.bg === 0.4 && savedStats.fo
 assert(ps[0].widgets.some((x) => x.type === 'macro' && x.macro === 'golden' && x.x === 0.33), 'the macro button too, where it was');
 assert(row(A) && row(A).querySelector('.ca-wthumb') && row(A).querySelectorAll('.ca-wthumb i').length === 4, 'its row: a picture with a box per widget');
 eq(row(A).querySelector('code').textContent, '3 widgets · 1 macro button', 'what it holds');
-assert(row(A).classList.contains('on') && /on the panel/.test(row(A).textContent), 'it’s the one on the panel');
-assert(act(A, 'use').disabled && act(A, 'save').disabled, 'on the panel: Use and Save have nothing to do');
+assert(row(A).classList.contains('on') && row(A).querySelector('.ca-inuse'), 'it’s the one on the panel: In use');
+assert(!act(A, 'use') && act(A, 'save').disabled, 'on the panel: no Use, and Save has nothing to do');
 assert(val('widgets.profileActive("Layout 1")') && val(`widgets.activeProfile() == "${A}"`), 'profileActive / activeProfile');
 
 // ---- rename
@@ -70,7 +70,7 @@ CA.Macros.setFav('golden', false);
 W.add('effectTimers', { x: 0.5, y: 0.5 });
 CA.Macros.setFav('bigCookie', true);
 await sleep(700);
-assert(!row(A).classList.contains('on') && !act(A, 'use').disabled, 'changed: no longer on the panel, Use is back');
+assert(!row(A).classList.contains('on') && act(A, 'use') && !row(A).querySelector('.ca-inuse'), 'changed: no longer on the panel, Use is back');
 assert(!val('widgets.profileActive(A)') && val('widgets.activeProfile() == ""'), 'profileActive false, activeProfile ""');
 const before = kinds();
 
