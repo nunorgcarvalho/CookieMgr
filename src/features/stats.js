@@ -153,13 +153,39 @@ rate = payback.clickRate()
 income = cps() + rate * payback.perClick()
 return item.gain() + item.clickGain() * rate`,
     },
+    // actual income at three set depths: the last 15 minutes, hour and 3 hours of play
+    ...[
+      ['actualIncome15m', 15, 'Actual, 15 min', 'the last 15 minutes of play: what you’ve been doing just now'],
+      ['actualIncome1h', 60, 'Actual, 1 h', 'the last hour of play'],
+      ['actualIncome3h', 180, 'Actual, 3 h', 'the last 3 hours of play: your longer habits, a lucky streak smoothed out'],
+    ].map(([id, mins, label, over]) => ({
+      id,
+      group: 'Payback modes',
+      mode: true,
+      name: `Actual income, ${label.slice(8)}`,
+      label,
+      desc: `Payback periods count in what you’ve actually been taking in — everything baked: production, clicking, golden cookies, wrinklers — averaged over ${over}, projected forward. A purchase’s gain scales the same way: what it adds to your raw CpS × your actual income ÷ your raw CpS. Needs a minute of play recorded (until then CpS); with less than ${label.slice(8)} recorded, it averages what there is.`,
+      scope: 'item',
+      format: 'number',
+      source: `# a payback mode: income is what payback periods count in, the return what the item adds to it
+# what you actually took in (everything baked) over the last ${mins} minutes of play, projected forward
+a = payback.actualIncome(${mins})
+if not known(a) or rawCps() <= 0:
+  return
+income = a
+# what it adds scales the same way: its raw gain × actual ÷ raw CpS
+gain = item.rawGain()
+if item.kind() == "upgrade" and item.clickGain() > 0 and cps() > 0:
+  gain = gain + item.clickGain() * clickRate() * rawCps() / cps()
+return gain * a / rawCps()`,
+    })),
     {
       id: 'actualIncome',
       group: 'Payback modes',
       mode: true,
-      name: 'Actual income',
-      label: 'Actual income',
-      desc: 'Payback periods count in what you’ve actually been taking in — everything baked: production, clicking, golden cookies, wrinklers — averaged over the last 30 minutes of play (or what the option says), projected forward. A purchase’s gain scales the same way: what it adds to your raw CpS × your actual income ÷ your raw CpS. Needs a minute of play recorded; until then CpS.',
+      name: 'Actual income, your window',
+      label: 'Actual, custom',
+      desc: 'Payback periods count in what you’ve actually been taking in — everything baked: production, clicking, golden cookies, wrinklers — averaged over as much of your latest play as the Payback page’s “Actual income over” option says (30 minutes at first; 5 minutes to 3 hours), projected forward. A purchase’s gain scales the same way: what it adds to your raw CpS × your actual income ÷ your raw CpS. Needs a minute of play recorded; until then CpS.',
       scope: 'item',
       format: 'number',
       source: `# a payback mode: income is what payback periods count in, the return what the item adds to it

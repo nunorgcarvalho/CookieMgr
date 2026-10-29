@@ -338,15 +338,17 @@ CA.Payback = (() => {
   //   rawCps        the game's raw CpS (no buffs, no golden switch…): steady, whatever's running now
   //   cps           the CpS the game shows now, buffs and all (Cookie Monster's; the default)
   //   cpsClicking   CpS + your clicks a second (over the last ppClickWindow seconds) × a click
-  //   actualIncome  what you've actually taken in (the Recorder's baked cookies) over the last
-  //                 ppActualWindow minutes of play, projected forward; a gain is its raw gain ×
+  //   actualIncome15m, actualIncome1h, actualIncome3h
+  //                 what you've actually taken in (the Recorder's baked cookies) over the last
+  //                 15 minutes, hour or 3 hours of play, projected forward; a gain is its raw gain ×
   //                 actual ÷ raw CpS (take in 10× your raw CpS and what it adds counts 10×)
-  // "raw", "clicking" and "actual" name them too. A mode is ready when its income is known (actual
+  //   actualIncome  the same over the last ppActualWindow minutes (the custom window)
+  // "raw", "clicking", "actual" (the custom one), "actual15m", "actual1h" and "actual3h" name them too. A mode is ready when its income is known (actual
   // income: once a minute is recorded); the one chosen (ppMode) is used while it's
   // ready, cps otherwise — and without any (no statistics), Cookie Monster's formula. A mode's
   // results are kept for a second. History is only read; nothing is predicted.
 
-  const ALIASES = { raw: 'rawCps', clicking: 'cpsClicking', actual: 'actualIncome' };
+  const ALIASES = { raw: 'rawCps', clicking: 'cpsClicking', actual: 'actualIncome', actual15m: 'actualIncome15m', actual1h: 'actualIncome1h', actual3h: 'actualIncome3h' };
   // Cookie Monster's formula, for when no mode statistic can be had
   const LEGACY = { id: 'cps', key: 'cps', label: 'CpS', desc: '', legacy: true };
   const modeStats = () => (CA.Stats && typeof CA.Stats.modes === 'function' ? CA.Stats.modes() : []);
@@ -372,7 +374,8 @@ CA.Payback = (() => {
     const now = Date.now();
     // what the built-in modes read: kept while none of it moves (and a second at most)
     const a = incomeOver(actualWindow());
-    const sig = `${cache ? cache.gen : 0}|${Game.cookiesPs}|${rawNow()}|${perClick()}|${clickRate()}|${clicksOver(clickWindow())}|${a ? a.actual : ''}`;
+    // (incomeMemo.at: actual incomes over other windows are re-read with it)
+    const sig = `${cache ? cache.gen : 0}|${Game.cookiesPs}|${rawNow()}|${perClick()}|${clickRate()}|${clicksOver(clickWindow())}|${a ? a.actual : ''}|${incomeMemo.at}`;
     if (now - modeMemo.at > 1000 || modeMemo.sig !== sig) modeMemo = { at: now, sig, m: new Map() };
     const w = worth || NOTHING;
     const k = `${m.id}|${worth ? `${w.kind}|${w.name || ''}|${w.n || 1}|${price}` : ''}`;
@@ -404,6 +407,8 @@ CA.Payback = (() => {
   }
   const clickWindow = () => Math.max(1, Number(CA.Settings.get('ppClickWindow')) || 60);
   const actualWindow = () => Math.max(1, Number(CA.Settings.get('ppActualWindow')) || 30) * 60;
+  /** A window in seconds from minutes (none, or not a number: the custom Actual income window). */
+  const minutesWindow = (mins) => (mins === undefined || mins === null || mins === '' || !(Number(mins) > 0) ? actualWindow() : Math.max(1, Number(mins)) * 60);
   /** What a click is worth now (the game's). */
   const perClick = () => (Number.isFinite(Game.computedMouseCps) ? Game.computedMouseCps : typeof Game.mouseCps === 'function' ? Game.mouseCps() : 0);
   // the actual income over exactly the window asked for, read at most every 5 s
@@ -851,7 +856,7 @@ CA.Payback = (() => {
       group: 'payback',
       icon: 'graphs',
       name: 'Actual income over',
-      desc: 'The Actual income payback mode averages what you took in over this much of your latest play.',
+      desc: 'The custom Actual income payback mode (“Actual, custom”) averages what you took in over this much of your latest play. The 15 min, 1 h and 3 h modes keep their own windows.',
       default: '30',
       choices: ['5', '15', '30', '60', '120', '180'].map((v) => ({ v, label: Number(v) < 60 ? `${v} minutes` : `${v / 60} hour${v === '60' ? '' : 's'}` })),
     });
@@ -967,13 +972,13 @@ CA.Payback = (() => {
     V('clickRate', 'big cookie clicks per second (last 10 s)', [], clickRate);
     V('timeTo', 'seconds until you can afford a price at your income in the payback mode in use (0: now)', ['price'], (p) => timeTo(Number(p)));
     const PV = (id, desc, params, get, more) => V(id, desc, params, get, { group: 'Payback', ...(more || {}) });
-    PV('payback.mode', 'the code name of the payback mode in use: rawCps, cps, cpsClicking, actualIncome or one of yours (the Payback page’s; cps while the one chosen isn’t ready)', [], () => currentMode().key);
+    PV('payback.mode', 'the code name of the payback mode in use: rawCps, cps, cpsClicking, actualIncome15m, actualIncome1h, actualIncome3h, actualIncome or one of yours (the Payback page’s; cps while the one chosen isn’t ready)', [], () => currentMode().key);
     PV('payback.modes', 'the payback modes there are (the payback mode statistics), as a list of code names', [], () => modes().map((m) => m.key));
     PV('payback.income', 'cookies a second in a payback mode — "raw", "cps", "clicking", "actual" or a mode statistic’s code name (none: the mode in use): what its payback periods count in (NaN: not ready)', ['mode'], (m) => income(m));
     PV('payback.bank', 'cookies that count as the bank for payback periods: in hand, plus your wrinklers’ when that’s chosen', [], bank);
     PV('payback.clickRate', 'clicks a second, averaged as the CpS + clicking mode counts them (the option’s window)', [], () => clicksOver(clickWindow()));
     PV('payback.perClick', 'what a click on the big cookie is worth now', [], perClick);
-    PV('payback.actualIncome', 'cookies a second you actually took in over the Actual income window (the option’s; NaN: under a minute recorded)', [], () => (incomeOver(actualWindow()) || { actual: NaN }).actual);
+    PV('payback.actualIncome', 'cookies a second you actually took in over the last minutes of play — e.g. 15, 60, 180; none: the custom Actual income window (the option’s). NaN: under a minute recorded; with less than the window recorded, what there is', ['minutes'], (mins) => (incomeOver(minutesWindow(mins)) || { actual: NaN }).actual);
     PV('payback.actualWindow', 'the Actual income window, in seconds (the option’s)', [], actualWindow);
     PV('payback.clickWindow', 'how many seconds the CpS + clicking mode averages your clicks over (the option’s)', [], clickWindow);
     PV('payback.actualRatio', 'your actual income (over the Actual income window) as a multiple of your raw CpS: what the Actual income mode scales gains by (NaN: too little recorded)', [], actualRatio);
