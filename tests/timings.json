@@ -7,7 +7,7 @@
   "e2e/manager-widget.test.mjs": 11.6,
   "sim/effect-duration.test.mjs": 1.1,
   "sim/game.test.mjs": 6.3,
-  "sim/garden-exact.test.mjs": 57.8,
+  "sim/garden-exact.test.mjs": 29,
   "sim/garden-frequency.test.mjs": 1.1,
   "sim/golden-spawn.test.mjs": 42.3,
   "sim/gui.test.mjs": 16.5,

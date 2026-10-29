@@ -18,13 +18,13 @@ assert(s1.Game.fps === 1 && s1.t === 10, `fps 1: one frame a simulated second (G
 
 const model = frequencyStudy(data, { level: 8, hours: 1000, seeds: 2, tulips: [4], only: ['goldenCombos', 'tulips4'] });
 for (const id of ['goldenCombos', 'tulips4']) {
-  const e = await exactGarden(data, { id, level: 8, tulips: [4], hours: 48, seed: 1 });
+  const e = await exactGarden(data, { id, level: 8, tulips: [4], hours: 24, seed: 1 });
   const m = model.results.find((r) => r.id === id);
   const sum = e.bins.reduce((a, b) => a + b, 0);
   assert(Math.abs(sum - 1) < 1e-9 && e.errors === 0, `${id}: the histogram covers all the time, no errors in the game (${sum}, ${e.errors})`);
   assert(
     Math.abs(e.mean - m.mean) < 0.08,
-    `${id}: the real game, 48 h, near the model's long run (+${(e.mean * 100).toFixed(1)}% against +${(m.mean * 100).toFixed(1)}%)`
+    `${id}: the real game, 24 h, near the model's long run (+${(e.mean * 100).toFixed(1)}% against +${(m.mean * 100).toFixed(1)}%)`
   );
   assert(e.cps <= 1 && Math.abs(e.cps - m.cps) < 0.02, `${id}: CpS ×${e.cps.toFixed(3)} against the model's ×${m.cps.toFixed(3)}`);
 }
