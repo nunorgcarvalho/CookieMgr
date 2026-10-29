@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 4.16.0 — 2026-10-29
+
+- **New version available:** once a newer cookieMgr release is out, Settings shows "New version vX available ·
+  Reload" under the version number on Settings → General, with a link that reloads the page onto it.
+- **Update check every 5 minutes** (was 15), plus a check as the Settings page opens (at most once a minute).
+
 ## 4.15.0 — 2026-10-29
 
 - **One actual-income window:** the Actual, 15 min / 1 h / 3 h payback modes are gone; there's one **Actual income**
