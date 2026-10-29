@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 4.22.3 — 2026-10-29
+
+- **Guide:** Simple cookie background mentions the hidden glow behind the big cookie.
+
 ## 4.22.2 — 2026-10-29
 
 - **Simple cookie background** also hides the white glow behind the big cookie (the game draws it when its
