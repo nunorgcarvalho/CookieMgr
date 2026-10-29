@@ -132,7 +132,7 @@ the page. [See every page with a screenshot](#pages).
 <td width="50%" valign="top">
 <b>Managers</b><br>
 <img src="docs/readme/managers.png" alt="The Managers page: the Drops stage's tab with its macros, settings and profiles, and the macro library" width="100%">
-<ul><li>A manager plays an ascension in stages: stage 1 sets things up, each later stage changes only what it needs, and moves on when a condition holds</li><li>Nunix late game is built in, in three stages: season drops, reindeer, then golden cookie combos (duplicate it to make your own; Revert to default undoes your edits)</li><li>The Manager widget shows the stage, what moves it on, the numbers it watches and the macros at work</li><li>Edit each stage in its own tab, with a library of macros to switch on or off beside it, or edit the code the stages write</li></ul>
+<ul><li>A manager plays an ascension in stages: stage 1 sets things up, each later stage changes only what it needs, and moves on when a condition holds</li><li>Nunix late game is built in, in three stages: season drops, reindeer, then golden cookie combos (duplicate it to make your own; Revert to default undoes your edits)</li><li>The Manager widget shows the stage, what moves it on, the numbers it watches, the macros at work, and the Auto buyer's last three buys and next one</li><li>Edit each stage in its own tab, with a library of macros to switch on or off beside it, or edit the code the stages write</li></ul>
 <img src="docs/readme/manager-widget.png" alt="The Manager widget" width="50%">
 </td>
 <td width="50%" valign="top">
