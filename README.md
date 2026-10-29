@@ -55,13 +55,13 @@ the page. [See every page with a screenshot](#pages).
 
 | Page | What it's for |
 | --- | --- |
-| **Stats** | Charts and numbers: cookies per second, where your cookies come from, golden cookie odds, prestige |
 | **Events** | A log of in-game events, like golden cookies, purchases, ascensions, etc. |
+| **Stats** | Charts and numbers: cookies per second, where your cookies come from, golden cookie odds, prestige |
 | **Payback** | What each building and upgrade is worth, and the Auto buyer that buys the best one |
-| **Macros** | Automations: autoclickers, golden cookie popping, alerts, and your own scripts |
+| **Garden**, **Stock market**, **Pantheon**, **Grimoire**, **Dragon** | A page per minigame, each with its own automation |
 | **Statistics** | What the store's tooltips show, and statistics you write yourself |
-| **Managers** | Strategies that play a whole ascension in stages, switching macros and profiles (Nunix late game comes with it) |
-| **Garden**, **Stock market**, **Grimoire**, **Pantheon**, **Dragon** | A page per minigame, each with its own automation |
+| **Macros** | Automations: autoclickers, golden cookie popping, alerts, and your own scripts |
+| **Managers** | Strategies that play a whole ascension for you in stages (Nunix late game comes with it) |
 | **Widgets** | Small panels you place on the game's left side |
 | **Settings** | Options in tabs: number format, hotkeys, updates, store tooltips, and your history's export and import |
 
@@ -70,14 +70,14 @@ the page. [See every page with a screenshot](#pages).
 <table>
 <tr>
 <td width="50%" valign="top">
-<b>Stats</b><br>
-<img src="docs/readme/stats.png" alt="The Stats page" width="100%">
-<ul><li>Cookies per second, where every cookie came from, your bank and prestige, charted and kept between sessions</li><li>Zoom and look back; Frenzy and other effects shaded behind the chart</li><li>Your income outside CpS, by source</li><li>Golden cookie odds, Lucky! banks, what-ifs for spirits and auras, what's left to collect</li></ul>
-</td>
-<td width="50%" valign="top">
 <b>Events</b><br>
 <img src="docs/readme/events.png" alt="The Events page" width="100%">
 <ul><li>A log of golden cookies, wrinklers, sugar lumps, trades and ascensions</li><li>Filter, search and export it as CSV</li></ul>
+</td>
+<td width="50%" valign="top">
+<b>Stats</b><br>
+<img src="docs/readme/stats.png" alt="The Stats page" width="100%">
+<ul><li>Cookies per second, where every cookie came from, your bank and prestige, charted and kept between sessions</li><li>Zoom and look back; Frenzy and other effects shaded behind the chart</li><li>Your income outside CpS, by source</li><li>Golden cookie odds, Lucky! banks, what-ifs for spirits and auras, what's left to collect</li></ul>
 </td>
 </tr>
 <tr>
@@ -85,18 +85,6 @@ the page. [See every page with a screenshot](#pages).
 <b>Payback</b><br>
 <img src="docs/readme/payback.png" alt="The Payback page" width="100%">
 <ul><li>An exact payback period for every building and upgrade</li><li>The Auto buyer: a queue, profiles with rules, and a bank reserve</li><li>Buy all upgrades in one click, ranked in the queue by its own payback period</li></ul>
-</td>
-<td width="50%" valign="top">
-<b>Macros</b><br>
-<img src="docs/readme/macros.png" alt="The Macros page" width="100%">
-<ul><li>Autoclickers for the big cookie, golden and wrath cookies, reindeer, fortunes and wrinklers</li><li>Alerts, hotkeys and buttons on the left panel</li><li>Write your own macros in cookieMgr's simple code, and hover any word in it to see what it is</li></ul>
-</td>
-</tr>
-<tr>
-<td width="50%" valign="top">
-<b>Statistics</b><br>
-<img src="docs/readme/statistics.png" alt="The Statistics page" width="100%">
-<ul><li>Choose the lines the store's tooltips show</li><li>Write your own statistics, with a live preview</li><li>Pick how payback is measured</li></ul>
 </td>
 <td width="50%" valign="top">
 <b>Garden</b><br>
@@ -111,16 +99,16 @@ the page. [See every page with a screenshot](#pages).
 <ul><li>A stock autobuyer and Sell all</li><li>Trend badges on every stock in the Bank</li><li>Portfolio charts and your trade history</li></ul>
 </td>
 <td width="50%" valign="top">
-<b>Grimoire</b><br>
-<img src="docs/readme/grimoire.png" alt="The Grimoire page" width="100%">
-<ul><li>Magic, refill and every spell's cost at a glance</li><li>Cast from a button or a hotkey</li><li>Auto-cast Force the Hand of Fate when the combo is right</li></ul>
+<b>Pantheon</b><br>
+<img src="docs/readme/pantheon.png" alt="The Pantheon page" width="100%">
+<ul><li>Your slotted spirits and what each does</li><li>Profiles that swap spirits for you</li></ul>
 </td>
 </tr>
 <tr>
 <td width="50%" valign="top">
-<b>Pantheon</b><br>
-<img src="docs/readme/pantheon.png" alt="The Pantheon page" width="100%">
-<ul><li>Your slotted spirits and what each does</li><li>Profiles that swap spirits for you</li></ul>
+<b>Grimoire</b><br>
+<img src="docs/readme/grimoire.png" alt="The Grimoire page" width="100%">
+<ul><li>Magic, refill and every spell's cost at a glance</li><li>Cast from a button or a hotkey</li><li>Auto-cast Force the Hand of Fate when the combo is right</li></ul>
 </td>
 <td width="50%" valign="top">
 <b>Dragon</b><br>
@@ -130,10 +118,29 @@ the page. [See every page with a screenshot](#pages).
 </tr>
 <tr>
 <td width="50%" valign="top">
+<b>Statistics</b><br>
+<img src="docs/readme/statistics.png" alt="The Statistics page" width="100%">
+<ul><li>Choose the lines the store's tooltips show</li><li>Write your own statistics, with a live preview</li><li>Pick how payback is measured</li></ul>
+</td>
+<td width="50%" valign="top">
+<b>Macros</b><br>
+<img src="docs/readme/macros.png" alt="The Macros page" width="100%">
+<ul><li>Autoclickers for the big cookie, golden and wrath cookies, reindeer, fortunes and wrinklers</li><li>The Upgrade unlocker: one switch for Santa, Research, the dragon, fortunes and cheap upgrades</li><li>Alerts, hotkeys and buttons on the left panel</li><li>Write your own macros in cookieMgr's simple code, and hover any word in it to see what it is</li></ul>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<b>Managers</b><br>
+<img src="docs/readme/managers.png" alt="The Managers page" width="100%">
+<ul><li>A manager plays an ascension in stages: each one switches macros, puts in profiles, and lasts until a condition holds</li><li>Nunix late game comes ready: Shimmering veil, season drops, reindeer, then golden cookie combos</li><li>Edit the stages, or the code they write</li></ul>
+</td>
+<td width="50%" valign="top">
 <b>Widgets</b><br>
 <img src="docs/readme/widgets.png" alt="The Widgets page" width="100%">
 <ul><li>Place macro buttons, golden cookie odds, effect timers, charts and more on the left panel</li><li>Place any widget more than once, each copy with its own settings</li><li>Save and switch layouts</li></ul>
 </td>
+</tr>
+<tr>
 <td width="50%" valign="top">
 <b>Settings</b><br>
 <img src="docs/readme/settings.png" alt="The Settings page" width="100%">
@@ -141,9 +148,6 @@ the page. [See every page with a screenshot](#pages).
 </td>
 </tr>
 </table>
-
-**Coming in v4.0.0:** managers that play a whole ascension for you in stages, switching macros and profiles as the
-run goes on.
 
 ## Additional information
 

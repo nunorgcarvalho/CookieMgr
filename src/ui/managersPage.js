@@ -94,7 +94,7 @@ CA.UI.ManagersPage = (() => {
       .SCOPES.map((s) => `<option value="${s.v}"${m.scope === s.v ? ' selected' : ''}>${esc(s.label)}</option>`)
       .join('');
     return (
-      `<div class="ca-row ca-dprof${isActive ? ' on' : ''}${isShown ? ' ca-mgr-shown' : ''}">` +
+      `<div class="ca-row ca-dprof ca-mgr-row${isActive ? ' on' : ''}${isShown ? ' ca-mgr-shown' : ''}">` +
       `<div class="ca-dprof-name"><input type="text" class="ca-gname" maxlength="40" value="${esc(m.name)}" data-mgr-name="${esc(m.id)}" aria-label="Manager name"><code data-tip="Its id, for macros: manager.use(${esc(m.id)})">${esc(m.id)}</code></div>` +
       `<label class="ca-field" data-tip="Legacy managers, which carry on across ascensions, come later"><span>Scope</span><select data-mgr-scope="${esc(m.id)}">${scope}</select></label>` +
       `<span class="ca-pill${isActive ? ' on' : ''}">${isActive ? 'active · ' : ''}${m.stages.length} stage${m.stages.length === 1 ? '' : 's'}</span>` +

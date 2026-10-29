@@ -8750,6 +8750,9 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-mgr-now i {
   color: #93866f;
 }
+#CookieMgrMenu .ca-dprof.ca-mgr-row {
+  flex-wrap: wrap;
+}
 #CookieMgrMenu .ca-mgr-desc {
   flex: 1 1 100%;
   font-size: 11px;

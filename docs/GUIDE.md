@@ -392,6 +392,40 @@ it). Modifiers work (`Shift + G`): click a key chip and press the new key (`Esc`
 
 **Favorites** — the ★ on a macro gives it its own button on the left panel (see Widgets).
 
+### Managers
+
+A **manager** plays an ascension for you in **stages**. Each stage switches macros on or off, sets their settings
+(Research's "stop before", SeasonCompletion's last season…), puts in the Auto buyer, Pantheon, dragon, Grimoire and
+garden profiles it names, then lasts **until** a condition in the macro language holds (the last stage lasts for
+good). Entering a stage switches its macros once, so you can still flip one by hand; its profiles are retried each
+pass until they're in, then left alone. These are **ascension managers**: ascending starts them over at stage 1.
+
+The **Managers** page has:
+
+- **Manager**: the **Manager** macro's switch and which manager is active, its stages in a strip (the one it's on
+  is lit; click one to go there), what it moves on once, and what it still has to put in.
+- **Managers**: rename, scope, **Use**, **Duplicate**, **Delete**, **New manager** and **Put Nunix late game back**.
+- **Stages**: for the shown manager, each stage's name, macro chips (click: left as it is → on → off), their
+  settings, profile pickers and **Until**.
+- **Code**: a manager is code. The stage editor writes it, a block per stage, and the Manager macro runs it each
+  second. Change it and Save to make it yours (the stage editor is then off until **Back to stages**).
+
+**Nunix late game** comes seeded and active:
+
+1. **Shimmering veil**, while it lasts: golden and wrath cookies clicked, but not the big cookie or reindeer
+   (clicking them breaks the veil); the Auto buyer, the Upgrade unlocker, SeasonCompletion, wrinklers and sugar
+   lumps; Pantheon wrinklers, dragon drops.
+2. **Drops**: the same, with the big cookie and reindeer clicked too, until Christmas's upgrades, Easter,
+   Halloween and Valentine's day are in.
+3. **Reindeer**: Christmas again for its cookies, with the elders pledged and Dragon drops & flight.
+4. **Golden cookie combos**, for good: the Auto buyer's Golden cookie combos profile, 8 nursetulips together +
+   clover combos in the garden, the golden Pantheon, Dragonflight & Harvest, and Force the Hand of Fate on combos.
+
+Words: `manager.active()`, `manager.stage()`, `manager.stageName()`, `manager.entering()`, `manager.stages()`,
+`manager.list()`. Actions: `manager.use(manager)`, `manager.goTo(stage)`, `manager.next()`,
+`manager.profile(kind, profile)`, `macro.setting(macro, key, value)`. `switch on a, b, c` switches several macros in
+one line, and `veil()` tells whether the Shimmering veil is up.
+
 ### Payback
 
 The **Payback** page sits right above Macros and is the hub of the **Auto buyer**. At the top: its switch, what it

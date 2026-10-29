@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 4.0.1 — 2026-10-29
+
+- **README:** a Managers screenshot and summary, a new Macros screenshot (a manager running 15 macros), and the
+  pages in the sidebar's new order. The full guide has a Managers section.
+- **Managers page:** a manager's description no longer squeezes into a narrow column beside its buttons; it wraps
+  onto its own line.
+
 ## 4.0.0 — 2026-10-28
 
 The start of cookieMgr playing the game for you: **managers**, a layer above the macros and profiles.
