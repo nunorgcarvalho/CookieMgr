@@ -12,10 +12,15 @@
 //               that, and that the budget affords, is bought 100 at a time ahead of the queue — no
 //               ranking by payback period for what costs next to nothing
 //   skip        only what it can afford now (else it saves up for the front)
-//   reserve     minutes of unbuffed CpS it never spends
+//   reserve     minutes of unbuffed CpS it keeps
 //   banks       more banks it keeps, each picked on or off: lucky, conjure, luckyFrenzy (what a
 //               golden cookie or the spell needs to pay its most) and garden (replanting the whole
-//               layout). The highest of these and the minutes is what it keeps (buyer.reserve).
+//               layout). The highest of these and the minutes is the most it keeps (buyer.reserve).
+//   at          where each of those thresholds sits in the queue (its **priority**): "first" (the
+//               default — ahead of everything: nothing is bought into it, as before) or a score
+//               0–100 (what scores at least that may go ahead of it and spend into it; what scores
+//               less waits until it's kept). Thresholds are things the queue "buys" by saving up:
+//               one the bank already covers is kept, and the buyer moves on below it.
 //   rules       top to bottom, each { what it applies to, what it does, when (code, optional) }:
 //                 first   jumps the queue (the ones that do are ordered by payback period)
 //                 weight  multiplies its payback period by k (below 1: preferred; above: put off)
@@ -23,8 +28,17 @@
 //                 never   held back
 //               "when" is a condition in the macro language (features/script.js), with `thing`
 //               standing for what's ranked — so any statistic can switch a rule on.
-// A thing's **score** is its payback period after the weights; the queue is sorted by it. What
-// never pays back is held back, unless a "first" rule takes it.
+// A thing's **implied payback period** is its payback period after the weights; the queue is sorted by it
+// ("first" ones ahead). Its **score** puts that on one standard scale: 100 for the best payback period
+// in the queue, 10 points less for each doubling (90: twice as long, 80: four times, 0: 1024 times
+// or worse) — so a weight ×2 costs 10 points. A threshold placed at a score is the other way round:
+// its implied payback period is the one that score stands for. What never pays back is held back,
+// unless a "first" rule takes it.
+//
+// The buyer walks the queue from the front: a threshold the bank covers is kept (what's below it may
+// only spend above it); one it doesn't yet is what it's **waiting for** — saving up, nothing below
+// is bought; otherwise the first thing is what it buys next (skip: the first it can afford above
+// what's kept). buyer.waitingFor() names what it's saving for.
 //
 // Profiles are saved in the settings section 'buyer' ({ profiles, active }), seeded with stable ids:
 // payback (both kinds — the old two buyers together), buildings, upgrades.
@@ -33,9 +47,12 @@
 //   buyer.queue(profile)          a list: the queue's things, front first (profile: id or name; none: the active one)
 //   buyer.next(profile)           the front ("": nothing)
 //   buyer.rank(thing, profile)    its place: 1 the front, 0 not in the queue (held back, or not there)
-//   buyer.score(thing, profile)   its score: payback period after the rules (seconds; NaN: not ranked)
-//   buyer.budget(profile)         what the buyer may spend: the bank less the profile's reserve
-//   buyer.reserve(profile)        the profile's reserve: the highest of its thresholds (cookies)
+//   buyer.score(thing, profile)   its score: 0–100, 100 the best payback period (NaN: not ranked)
+//   buyer.impliedPayback(thing, profile)  its implied payback period (seconds; NaN: not ranked, or first)
+//   buyer.waitingFor(profile)     what the buyer is saving up for ("": it can buy now) — a thing, or a
+//                                 threshold ("bank:lucky", "bank:garden", "bank:cps"…)
+//   buyer.budget(profile)         what the buyer may spend on what it buys next: the bank less what's kept ahead of it
+//   buyer.reserve(profile)        the most the profile keeps: the highest of its thresholds (cookies)
 //   buyer.activeProfile()  buyer.profiles()  buyer.profileActive(profile)
 //   buyer.buyNext(profile)        (action) buys the front when the budget covers it
 //   buyer.profile(profile)        (action) makes a profile the active one
@@ -43,7 +60,8 @@
 // What it bought last (buyer.buyNext, or pp.buy of what buyer.next named) is kept: recentBought(), newest first —
 // the Manager widget's Auto buyer row (ui/buyerRow.js).
 // A thing is "building:Cursor", "upgrade:Kitten helpers" or "allUpgrades" — what pp.best returns; pp.kind, pp.price,
-// pp.of and pp.buy take it (features/autoBuy.js).
+// pp.of and pp.buy take it (features/autoBuy.js). A threshold in the queue is "bank:<id>": pp.price gives what
+// it keeps; it can't be bought.
 
 CA.AutoBuyer = (() => {
   const P = () => CA.Payback;
@@ -56,8 +74,22 @@ CA.AutoBuyer = (() => {
     { id: 'lucky', label: 'Lucky!', tip: 'what a Lucky! needs to pay its most (bank.lucky)', get: () => GM().lucky().bank },
     { id: 'conjure', label: 'Conjure', tip: 'what Conjure Baked Goods needs to pay its most (bank.conjure)', get: () => GM().conjure().bank },
     { id: 'luckyFrenzy', label: 'Frenzy Lucky!', tip: 'what a Lucky! in a Frenzy needs to pay its most (bank.luckyFrenzy)', get: () => GM().lucky(true).bank },
-    { id: 'garden', label: 'Garden replant', tip: 'what replanting the whole garden layout costs (garden.layoutCost)', get: () => (CA.Garden.minigame() ? CA.Garden.layoutCost() : 0) },
+    { id: 'garden', label: 'Garden replant', tip: 'what replanting the whole garden layout costs (garden.layoutCost)', get: () => (CA.Garden.minigame() ? CA.Garden.layoutCost() : 0), detail: gardenDetail },
   ];
+  /** What a garden replant plants: "30 seeds: 22 Golden clover, 8 Nursetulip · 3 to plant now". */
+  function gardenDetail() {
+    const seeds = CA.Garden.minigame() ? CA.Garden.layoutSeeds() : [];
+    if (!seeds.length) return '';
+    const n = seeds.reduce((m, x) => m + x.n, 0);
+    const missing = seeds.reduce((m, x) => m + x.missing, 0);
+    return `${n} seed${n === 1 ? '' : 's'}: ${seeds.map((x) => `${x.n} ${x.name}`).join(', ')}${missing ? ` · ${missing} to plant now` : ' · all planted'}`;
+  }
+  /** Every threshold's id: the minutes of CpS ('cps') and the banks. */
+  const THRESHOLDS = ['cps'].concat(BANKS.map((b) => b.id));
+  /** The places a threshold may take: first, or among the ranked things at a score. */
+  const PLACES = ['first', 90, 80, 70, 60, 50, 40, 30, 20, 10, 0];
+  /** A threshold's place: 'first', or a score 0–100. */
+  const cleanAt = (v) => (v === undefined || v === null || v === '' || v === 'first' || !Number.isFinite(Number(v)) ? 'first' : Math.max(0, Math.min(100, Math.round(Number(v)))));
 
   /** The rule profiles that buy upgrades come with (v3.50): lots of upgrades affordable → buy them all at once. */
   const BULK_RULE = { what: 'allUpgrades', effect: 'first', when: 'payback.allUpgradesCount(buyer.budget()) >= 20' };
@@ -68,7 +100,7 @@ CA.AutoBuyer = (() => {
     // v4.0: what Nunix late game buys with once it plays for golden cookie combos — ranked by actual
     // income, never below what a Lucky! and a garden replant need
     { id: 'combos', name: 'Golden cookie combos', kinds: { building: true, upgrade: true, allUpgrades: true }, bulk: 'auto', cheapBulk: 1, skip: false, reserve: 0, banks: ['lucky', 'garden'], mode: 'actualIncome', rules: [cleanRule(BULK_RULE)] },
-  ];
+  ].map(cleanProfile);
   const copy = (x) => JSON.parse(JSON.stringify(x));
   let profiles = copy(SEEDS);
   let active = 'payback';
@@ -103,6 +135,8 @@ CA.AutoBuyer = (() => {
       skip: !!x.skip,
       reserve: Math.max(0, Number(x.reserve) || 0),
       banks: BANKS.map((b) => b.id).filter((id) => Array.isArray(x.banks) && x.banks.includes(id)),
+      // where each threshold sits in the queue (saved before priorities: first, as they all were)
+      at: Object.fromEntries(THRESHOLDS.map((id) => [id, cleanAt(x.at && typeof x.at === 'object' ? x.at[id] : undefined)])),
       // the Actual 15 min / 1 h / 3 h modes are one Actual income now (its window: core/settings.js)
       mode: typeof x.mode !== 'string' ? '' : /^actualIncome(15m|1h|3h)$/.test(x.mode) ? 'actualIncome' : x.mode,
       rules: (Array.isArray(x.rules) ? x.rules : []).slice(0, 50).map(cleanRule),
@@ -143,7 +177,7 @@ CA.AutoBuyer = (() => {
     changed();
     return p;
   }
-  /** Changes a profile's fields (name, kinds, bulk, cheapBulk, skip, reserve, banks, mode, rules); returns it. */
+  /** Changes a profile's fields (name, kinds, bulk, cheapBulk, skip, reserve, banks, at, mode, rules); returns it. */
   function update(id, fields) {
     const i = profiles.findIndex((p) => p.id === id);
     if (i < 0) return null;
@@ -267,26 +301,30 @@ CA.AutoBuyer = (() => {
   /** The cookies a reserve of `minutes` of unbuffed CpS keeps in the bank. */
   const reserveOf = (minutes) => Math.max(0, Number(minutes) || 0) * 60 * rawCps();
   /**
-   * A profile's thresholds, each { id, label, amount } (cookies): its minutes of CpS (id 'cps', when
-   * above 0) and the banks it picked. `wins` marks the highest — the one its reserve is.
+   * A profile's thresholds, each { id, label, amount, at } (cookies): its minutes of CpS (id 'cps', when
+   * above 0) and the banks it picked; `at` its place in the queue ('first' or a score). `wins` marks the
+   * highest — the most it keeps.
    */
   function reserveParts(x) {
     const p = find(x);
     if (!p) return [];
+    const at = (id) => cleanAt((p.at || {})[id]);
     const parts = [];
-    if (p.reserve > 0) parts.push({ id: 'cps', label: `${p.reserve} min of CpS`, amount: reserveOf(p.reserve) });
+    if (p.reserve > 0) parts.push({ id: 'cps', label: `${p.reserve} min of CpS`, amount: reserveOf(p.reserve), at: at('cps') });
     BANKS.filter((b) => p.banks.includes(b.id)).forEach((b) => {
       const v = Number(b.get());
-      parts.push({ id: b.id, label: b.label, amount: Number.isFinite(v) ? Math.max(0, v) : 0 });
+      parts.push({ id: b.id, label: b.label, amount: Number.isFinite(v) ? Math.max(0, v) : 0, at: at(b.id) });
     });
     const top = parts.reduce((m, q) => (!m || q.amount > m.amount ? q : m), null);
     if (top) top.wins = true;
     return parts;
   }
-  /** What a profile never spends: the highest of its thresholds — so the bank stays above every one. */
+  /** The most a profile keeps: the highest of its thresholds. */
   const keepOf = (x) => reserveParts(x).reduce((m, q) => Math.max(m, q.amount), 0);
-  /** What a profile's buyer may spend: the bank less its reserve. */
-  const budget = (x) => (Game.cookies || 0) - keepOf(x);
+  /** What its thresholds placed first keep: what nothing in the queue may spend. */
+  const keepFirst = (x) => reserveParts(x).reduce((m, q) => (q.at === 'first' ? Math.max(m, q.amount) : m), 0);
+  /** What a profile's buyer may spend on what it buys next: the bank less what's kept ahead of it. */
+  const budget = (x) => (Game.cookies || 0) - (find(x) ? queue(x).keep : 0);
 
   /** n of a building, re-priced and re-measured (a cap that cuts a bulk short). */
   function resized(x, n, p) {
@@ -297,14 +335,26 @@ CA.AutoBuyer = (() => {
     return { ...x, n, label: n > 1 ? `${n} × ${b.dname || x.name}` : b.dname || x.name, price, bonus: worth.bonus, gain: parts.gain, pp: parts.pp, colour: null };
   }
 
+  // ---- the score ------------------------------------------------------------------------------
+
+  /** Points a doubling of the payback period costs. */
+  const PER_DOUBLING = 10;
+  /** The score of an implied payback period, against the best one (100 — and 10 points less a doubling, 0 at the least). */
+  const scoreOf = (ipp, best) => (Number.isFinite(ipp) && ipp > 0 && best > 0 ? Math.max(0, Math.min(100, 100 - PER_DOUBLING * Math.log2(ipp / best))) : ipp === 0 && best >= 0 ? 100 : NaN);
+  /** The implied payback period a score stands for, against the best one. */
+  const ippOf = (score, best) => (best > 0 && Number.isFinite(score) ? best * Math.pow(2, (100 - score) / PER_DOUBLING) : NaN);
+
   /**
-   * A profile's queue: { profile, items: [{ key, kind, name, n, label, price, pp, score, first, rules: [text], … }]
-   * front first, held: [{ …, why }] } — memoized for a moment (same bank, same profiles, same macro pass).
+   * A profile's queue: { profile, items: [{ key, kind, name, n, label, price, pp, ipp, score, first, rules: [text], … }]
+   * front first — thresholds among them as { kind 'bank', key 'bank:<id>', price: what it keeps, kept, at } —
+   * held: [{ …, why }], best (the best implied payback period: score 100), and the walk: next (what it buys next),
+   * wait (what it's saving for: a threshold or next; null: it can buy now), keep (what's kept ahead of next) }
+   * — memoized for a moment (same bank, same profiles, same macro pass).
    */
   let memo = null; // { k, t, q }
   function queue(x) {
     const p = find(x);
-    if (!p) return { profile: null, items: [], held: [] };
+    if (!p) return { profile: null, items: [], held: [], best: NaN, next: null, wait: null, keep: 0 };
     const pass = CA.Macros && CA.Macros.passKey ? CA.Macros.passKey() : null;
     const k = `${p.id}|${rev}|${Game.cookies}|${Game.cookiesPs}|${P().mode().id}|${pass}|${(Game.UpgradesInStore || []).length}`;
     const now = Date.now();
@@ -319,10 +369,13 @@ CA.AutoBuyer = (() => {
   function build(p) {
     const kinds = kindsOf(p);
     const kind = kinds.length === 2 ? 'all' : kinds[0];
-    if (!kind && !p.kinds.allUpgrades) return { profile: p, items: [], held: [] };
+    const thresholds = reserveParts(p.id).filter((t) => t.amount > 0);
+    if (!kind && !p.kinds.allUpgrades) return walk(p, thresholds.map((t) => bankItem(t, NaN)), [], NaN);
     // a mode that isn't there (deleted) or not ready yet (actual income, under a minute recorded): the one in use
     const mode = p.mode && P().modeOf(p.mode) && Number.isFinite(P().income(p.mode)) ? p.mode : undefined;
-    const b = budget(p.id);
+    // what anything may spend at most: the bank less the thresholds placed first (one placed at a
+    // score holds back only what's below it — the walk sees to that)
+    const b = (Game.cookies || 0) - keepFirst(p.id);
     const ranked = kind ? P().ranking(kind, { bulk: p.bulk, mode, all: true, skip: p.skip, budget: b }) : [];
     const items = [];
     const held = [];
@@ -330,16 +383,16 @@ CA.AutoBuyer = (() => {
     if (p.kinds.allUpgrades) {
       const all = P().allUpgrades({ budget: b, mode });
       if (all.n >= 2) ranked.push(all);
-      else held.push({ ...all, key: thingKey(all), score: NaN, first: false, rules: [], why: all.n ? 'affords only one upgrade: the same as buying it' : 'affords no upgrades', colour: 'gray' });
+      else held.push({ ...all, key: thingKey(all), ipp: NaN, score: NaN, first: false, rules: [], why: all.n ? 'affords only one upgrade: the same as buying it' : 'affords no upgrades', colour: 'gray' });
     }
     const rules = p.rules.filter((r) => r.on);
     // cheap ×100: what the next 100 of a building may cost at most (0: off)
     const cheap = p.cheapBulk > 0 ? rawCps() * p.cheapBulk : 0;
     ranked.forEach((r0) => {
-      let r = { ...r0, key: thingKey(r0), score: r0.pp, first: false, rules: [] };
+      let r = { ...r0, key: thingKey(r0), ipp: r0.pp, first: false, rules: [] };
       if (cheap > 0 && r.kind === 'building') {
         const price = P().sumPrice(buildingNamed(r.name), 100);
-        if (price <= cheap && price <= b) r = { ...(r.n === 100 ? r : resized(r, 100, p)), key: r.key, first: true, rules: [cheapBulkText(p)] };
+        if (price <= cheap && price <= b) r = { ...(r.n === 100 ? r : resized(r, 100, p)), key: r.key, first: true, rules: [cheapBulkText(p)], why: 'cheap' };
       }
       let why = Number.isFinite(r.pp) ? '' : 'never pays back';
       for (const rule of rules) {
@@ -357,7 +410,7 @@ CA.AutoBuyer = (() => {
             r.rules.push(effectText(rule));
             break;
           }
-          if (room < r.n) r = { ...resized(r, room, p), key: r.key, score: NaN, first: r.first, rules: r.rules };
+          if (room < r.n) r = { ...resized(r, room, p), key: r.key, ipp: NaN, first: r.first, rules: r.rules, why: r.why };
           r.rules.push(effectText(rule));
         } else if (rule.effect === 'first') {
           r.first = true;
@@ -367,23 +420,96 @@ CA.AutoBuyer = (() => {
           r.rules.push(effectText(rule));
         }
       }
-      r.score = r.pp * (r.weight || 1);
-      if (why && !(r.first && why === 'never pays back')) held.push({ ...r, why });
+      r.ipp = r.pp * (r.weight || 1);
+      if (why && !(r.first && why === 'never pays back')) held.push({ ...r, score: NaN, why });
       else items.push(r);
     });
-    const order = (a, b2) => (a.score === b2.score ? a.pp - b2.pp || 0 : a.score - b2.score);
+    const order = (a, b2) => (a.ipp === b2.ipp ? a.pp - b2.pp || 0 : a.ipp - b2.ipp);
     items.sort((a, b2) => (a.first !== b2.first ? (a.first ? -1 : 1) : a.first ? (a.pp === b2.pp ? 0 : a.pp - b2.pp) : order(a, b2)));
     if (p.skip) {
       // a capped bulk may have grown dearer than the budget; skip still means "only what it can afford"
-      for (let i = items.length - 1; i >= 0; i--) if (items[i].price > b) held.push({ ...items.splice(i, 1)[0], why: 'can’t afford it yet' });
+      for (let i = items.length - 1; i >= 0; i--) if (items[i].price > b) held.push({ ...items.splice(i, 1)[0], score: NaN, why: 'can’t afford it yet' });
     }
-    return { profile: p, items, held };
+    // the score: against the best implied payback period of what's ranked by it (not "first")
+    const best = items.reduce((m, x) => (!x.first && Number.isFinite(x.ipp) && x.ipp >= 0 ? Math.min(m, x.ipp) : m), Infinity);
+    const bestOk = Number.isFinite(best) ? best : NaN;
+    items.forEach((x) => (x.score = scoreOf(x.ipp, bestOk)));
+    // the thresholds, each in its place: first ones ahead of everything (the smallest first: the
+    // one the bank reaches first), one at a score right after what scores at least that
+    const out = items.slice();
+    thresholds
+      .filter((t) => t.at === 'first')
+      .sort((a, c) => c.amount - a.amount)
+      .forEach((t) => out.unshift(bankItem(t, bestOk)));
+    thresholds
+      .filter((t) => t.at !== 'first')
+      .sort((a, c) => c.at - a.at)
+      .forEach((t) => {
+        let i = out.length;
+        for (let j = 0; j < out.length; j++) {
+          const y = out[j];
+          if (y.kind === 'bank' || y.first) continue;
+          if (!(y.score >= t.at)) {
+            i = j;
+            break;
+          }
+        }
+        // after the other thresholds at the same place, too
+        while (i < out.length && out[i].kind === 'bank' && out[i].at !== 'first' && out[i].at >= t.at) i++;
+        out.splice(i, 0, bankItem(t, bestOk));
+      });
+    return walk(p, out, held, bestOk);
+  }
+  /** A threshold as a thing in the queue: what it keeps as its price, kept once the bank covers it. */
+  function bankItem(t, best) {
+    const first = t.at === 'first';
+    return {
+      key: `bank:${t.id}`,
+      kind: 'bank',
+      name: t.id,
+      n: 1,
+      label: t.id === 'cps' || t.id === 'garden' ? `Keep ${t.label}` : `Keep ${t.label} bank`,
+      price: t.amount,
+      pp: NaN,
+      gain: NaN,
+      at: t.at,
+      first,
+      score: first ? NaN : t.at,
+      ipp: first ? NaN : ippOf(t.at, best),
+      kept: (Game.cookies || 0) >= t.amount,
+      detail: (BANKS.find((x) => x.id === t.id) || {}).detail ? BANKS.find((x) => x.id === t.id).detail() : t.id === 'cps' ? `${t.label}, unbuffed` : '',
+      rules: [first ? 'priority: first' : `priority: after ${t.at}+`],
+    };
+  }
+  /** Walks a queue from the front: what's kept, what it's saving for, what it buys next (see the top). */
+  function walk(p, items, held, best) {
+    let keep = 0;
+    let wait = null;
+    let nextOne = null;
+    const cookies = Game.cookies || 0;
+    for (const x of items) {
+      if (x.kind === 'bank') {
+        if (!wait && cookies < x.price) wait = x;
+        keep = Math.max(keep, x.price);
+        continue;
+      }
+      if (p.skip && x.price + keep > cookies) continue;
+      nextOne = x;
+      break;
+    }
+    if (!wait && nextOne && nextOne.price + keep > cookies) wait = nextOne;
+    // what's kept ahead of next (or of all, when nothing is next)
+    if (!nextOne) keep = items.reduce((m, x) => (x.kind === 'bank' ? Math.max(m, x.price) : m), 0);
+    return { profile: p, items, held, best, next: nextOne, wait, keep };
   }
 
-  const next = (x) => queue(x).items[0] || null;
+  /** What the buyer buys next with a profile: the first thing past the thresholds (skip: the first it can afford above what's kept). */
+  const next = (x) => queue(x).next || null;
+  /** What it's saving up for: a threshold the bank doesn't cover yet, or what it buys next (null: it can buy now). */
+  const waitingFor = (x) => queue(x).wait || null;
   /** A thing of the latest queue worked out (any profile), by key. */
   const thingOf = (k) => (last ? last.items.concat(last.held).find((x) => x.key === String(k)) || null : null);
-  /** Buys the front of a profile's queue when the budget covers it: how many things it bought. */
+  /** Buys what's next in a profile's queue when the budget covers it: how many things it bought. */
   function buyNext(x) {
     const p = find(x);
     const f = next(x);
@@ -393,7 +519,15 @@ CA.AutoBuyer = (() => {
     if (got > 0) noteBought(f, p);
     return got > 0 ? 1 : 0;
   }
-
+  /** Why a thing is where it is in the queue, in words: its score, a rule, cheap ×100, a threshold's place. */
+  function whyText(f, q) {
+    if (!f) return '';
+    if (f.kind === 'bank') return f.at === 'first' ? 'a priority: kept before anything is bought' : `a priority: only what scores ${f.at} or more is bought before it`;
+    if (f.why === 'cheap') return 'cheap ×100: costs next to nothing';
+    if (f.first) return `a rule: ${(f.rules || []).filter((r) => !/^up to/.test(r)).join(', ') || 'buy first'}`;
+    const best = q && q.items.find((y) => y.kind !== 'bank' && !y.first) === f;
+    return best ? 'the best payback period in the queue' : 'the best score of what it may buy now';
+  }
   // what it bought last (the widgets' corner): [{ t, key, kind, name, n, label, names, price, pp, gain, profile }], newest first
   const BOUGHT_MAX = 8;
   let bought = [];
@@ -409,14 +543,19 @@ CA.AutoBuyer = (() => {
   function readiness(x) {
     const p = find(x);
     if (!p) return { ok: false, text: 'no such profile' };
-    const f = next(p.id);
-    const keep = keepOf(p.id);
-    if (!f) return { ok: false, text: p.skip ? (keep > 0 ? 'nothing affordable above the reserve' : 'nothing affordable') : 'nothing to buy' };
-    const ok = f.price + keep <= (Game.cookies || 0);
-    const wait = P().timeTo(f.price + keep);
+    const q = queue(p.id);
+    const f = q.next;
+    const w = q.wait;
+    if (w && w.kind === 'bank') {
+      const t = P().timeTo(w.price);
+      return { ok: false, text: `saving for: ${w.label}${Number.isFinite(t) ? ` — in ${CA.Format.span(t)}` : ''}${f ? `, then ${f.label}` : ''}` };
+    }
+    if (!f) return { ok: false, text: p.skip ? (q.keep > 0 ? 'nothing affordable above what it keeps' : 'nothing affordable') : 'nothing to buy' };
+    const ok = f.price + q.keep <= (Game.cookies || 0);
+    const wait = P().timeTo(f.price + q.keep);
     return {
       ok,
-      text: `next: ${f.label}${f.estimated ? ' (PP from your clicking)' : ''}${!ok && Number.isFinite(wait) ? ` — in ${CA.Format.span(wait)}${keep > 0 ? ' (keeping the reserve)' : ''}` : ''}`,
+      text: `next: ${f.label}${f.estimated ? ' (PP from your clicking)' : ''}${!ok && Number.isFinite(wait) ? ` — in ${CA.Format.span(wait)}${q.keep > 0 ? ' (keeping the reserve)' : ''}` : ''}`,
       upgrade: f.kind === 'upgrade' ? f.name : '',
     };
   }
@@ -504,13 +643,15 @@ CA.AutoBuyer = (() => {
     V('buyer.queue', 'a list: the Auto buyer’s queue, front first — what a profile (id or name; none: the active one) would buy, in order', ['profile'], (x) => queue(x).items.map((i) => i.key), { list: true });
     V('buyer.next', 'the front of a profile’s queue (none: the active one): what the Auto buyer buys next ("": nothing)', ['profile'], (x) => (next(x) || { key: '' }).key);
     V('buyer.rank', 'a thing’s place in a profile’s queue: 1 the front, 0 not in it (held back by a rule, or not for sale)', ['thing', 'profile'], (t, x) => queue(x).items.findIndex((i) => i.key === String(t)) + 1);
-    V('buyer.score', 'a thing’s score in a profile’s queue: its payback period after the rules’ weights (seconds; NaN: not ranked)', ['thing', 'profile'], (t, x) => {
+    const inQueue = (t, x) => {
       const q = queue(x);
-      const i = q.items.concat(q.held).find((y) => y.key === String(t));
-      return i ? i.score : NaN;
-    });
-    V('buyer.budget', 'what the Auto buyer may spend with a profile: the bank less its reserve', ['profile'], (x) => budget(x));
-    V('buyer.reserve', 'what the Auto buyer keeps in the bank with a profile: the highest of its thresholds (minutes of CpS, Lucky!, Conjure, Frenzy Lucky!, garden replant)', ['profile'], (x) => keepOf(x));
+      return q.items.concat(q.held).find((y) => y.key === String(t)) || null;
+    };
+    V('buyer.score', 'a thing’s score in a profile’s queue, 0–100: 100 for the best payback period, 10 less for each doubling of it (a threshold: the score it’s placed at; NaN: not ranked, or first)', ['thing', 'profile'], (t, x) => (inQueue(t, x) || { score: NaN }).score);
+    V('buyer.impliedPayback', 'a thing’s implied payback period in a profile’s queue: its payback period after the rules’ weights — a threshold placed at a score: the one that score stands for (seconds; NaN: not ranked, or first)', ['thing', 'profile'], (t, x) => (inQueue(t, x) || { ipp: NaN }).ipp);
+    V('buyer.waitingFor', 'what the Auto buyer is saving up for with a profile: a threshold the bank doesn’t cover yet ("bank:lucky", "bank:garden"…) or what it buys next ("": it can buy now)', ['profile'], (x) => (waitingFor(x) || { key: '' }).key);
+    V('buyer.budget', 'what the Auto buyer may spend on what it buys next with a profile: the bank less what’s kept ahead of it', ['profile'], (x) => budget(x));
+    V('buyer.reserve', 'the most the Auto buyer keeps in the bank with a profile: the highest of its thresholds (minutes of CpS, Lucky!, Conjure, Frenzy Lucky!, garden replant)', ['profile'], (x) => keepOf(x));
     V('buyer.activeProfile', 'the id of the Auto buyer’s active profile', [], () => activeProfile());
     V('buyer.profiles', 'a list: the Auto buyer’s profiles’ ids', [], () => profiles.map((p) => p.id), { list: true });
     V('buyer.profileActive', 'whether a profile (its id or name) is the Auto buyer’s active one', ['profile'], (x) => !!find(x) && find(x).id === active, { bool: true });
@@ -553,7 +694,7 @@ CA.AutoBuyer = (() => {
     CA.Macros.addBuiltin({
       id: 'autoBuyer',
       name: 'Auto buyer',
-      desc: 'Buys the front of the queue on the Payback page: its active profile ranks every building and upgrade by payback period, then its rules (buy first, weights, caps, never). Replaces Best building and Best upgrade.',
+      desc: 'Buys what’s next in the queue on the Payback page: its active profile scores every building and upgrade by payback period (100: the best), then its rules (buy first, weights, caps, never) — with what it keeps (Lucky! bank, garden replant…) in the queue as priorities it saves up for. Replaces Best building and Best upgrade.',
       icon: { ico: 'dollar' },
       mode: 'flow',
       every: 50,
@@ -579,7 +720,7 @@ CA.AutoBuyer = (() => {
       return {
         title: p.name,
         sig: p.id,
-        desc: `Ranks ${kinds.length ? kinds.map((k) => ({ building: 'buildings', upgrade: 'upgrades', allUpgrades: 'Buy all upgrades' })[k] || k).join(', ') : 'nothing'} by payback period (${mode}) into one queue, and the Auto buyer buys the front.`,
+        desc: `Scores ${kinds.length ? kinds.map((k) => ({ building: 'buildings', upgrade: 'upgrades', allUpgrades: 'Buy all upgrades' })[k] || k).join(', ') : 'nothing'} by payback period (${mode}) into one queue, with what it keeps as priorities, and the Auto buyer buys what’s next.`,
         rows: [
           ['bulk', p.bulk === 'auto' ? 'auto' : `×${p.bulk}`],
           ['cheap ×100', p.cheapBulk > 0 ? `next 100 under ${p.cheapBulk} s of CpS` : 'off'],
@@ -593,5 +734,5 @@ CA.AutoBuyer = (() => {
     },
   });
 
-  return { init, allUpgrades, buyAllUpgrades, list, find, use, create, update, remove, addRule, setRule, removeRule, moveRule, activeProfile, queue, next, buyNext, noteBought, recentBought, readiness, budget, keepOf, reserveParts, thingOf, ruleText, whatText, effectText, whenProblem, reserveOf, WHATS, EFFECTS, BULKS, BANKS, SEEDS, BULK_RULE };
+  return { init, allUpgrades, buyAllUpgrades, list, find, use, create, update, remove, addRule, setRule, removeRule, moveRule, activeProfile, queue, next, waitingFor, whyText, buyNext, noteBought, recentBought, readiness, budget, keepOf, keepFirst, reserveParts, thingOf, ruleText, whatText, effectText, whenProblem, reserveOf, scoreOf, ippOf, WHATS, EFFECTS, BULKS, BANKS, THRESHOLDS, PLACES, SEEDS, BULK_RULE };
 })();

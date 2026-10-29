@@ -398,6 +398,27 @@ CA.Garden = (() => {
     }, 0);
   }
 
+  /**
+   * The layout's seeds: [{ key, name, n (tiles), missing (tiles without it now), cost (one seed now) }], most
+   * tiles first — what a garden replant plants, and what planting would cost now.
+   */
+  function layoutSeeds() {
+    const M = minigame();
+    if (!M) return [];
+    const p = active();
+    const by = {};
+    tilesOf(M).forEach(([x, y]) => {
+      const k = wantAt(p, x, y);
+      const me = k && M.plants[k];
+      if (!me) return;
+      const e = (by[k] = by[k] || { key: k, name: me.name || k, n: 0, missing: 0, cost: typeof M.getCost === 'function' ? M.getCost(me) : 0 });
+      e.n++;
+      const at = plantAt(M, x, y);
+      if (!at || at.key !== k) e.missing++;
+    });
+    return Object.values(by).sort((a, b) => b.n - a.n);
+  }
+
   /** Plants on the plot now: { planted, mature, young, empty, off } (empty: unlocked tiles with nothing). */
   function census() {
     const M = minigame();
@@ -755,6 +776,7 @@ CA.Garden = (() => {
     defaultRules,
     census,
     layoutCost,
+    layoutSeeds,
     compileRules,
     serialize,
     load,
