@@ -20,6 +20,7 @@
   "scripts": {
     "build": "node build.mjs",
     "check": "node build.mjs --check",
+    "changes": "node scripts/changes.mjs next",
     "test": "node tests/run.mjs",
     "lint": "eslint .",
     "watch": "node build.mjs --watch",
