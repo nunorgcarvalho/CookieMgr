@@ -9930,3 +9930,192 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-sp-held > .ca-sp-present {
   inset: 8px 12px 0;
 }
+
+
+/* ---------- the Manager widget's Auto buyer row (ui/buyerRow.js): last three bought, then what's next ---------- */
+#CookieMgrWidgets .ca-wbuy,
+#CookieMgrMenu .ca-wsample .ca-wbuy {
+  cursor: pointer;
+}
+#CookieMgrWidgets .ca-wbuy-line,
+#CookieMgrMenu .ca-wsample .ca-wbuy-line {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 0;
+}
+#CookieMgrWidgets .ca-wbuy-past-list,
+#CookieMgrMenu .ca-wsample .ca-wbuy-past-list {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+#CookieMgrWidgets .ca-wbuy-none,
+#CookieMgrMenu .ca-wsample .ca-wbuy-none {
+  font-size: 10px;
+  font-style: italic;
+  color: #7d7262;
+}
+#CookieMgrWidgets .ca-wbuy-arrow,
+#CookieMgrMenu .ca-wsample .ca-wbuy-arrow {
+  flex: none;
+  margin: 0 2px;
+  font-size: 16px;
+  line-height: 1;
+  color: #a39477;
+}
+#CookieMgrWidgets .ca-wbuy-item,
+#CookieMgrMenu .ca-wsample .ca-wbuy-item {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.3);
+}
+#CookieMgrWidgets .ca-wbuy-spr,
+#CookieMgrMenu .ca-wsample .ca-wbuy-spr {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  transform: scale(0.45);
+}
+#CookieMgrWidgets .ca-wbuy-item em,
+#CookieMgrMenu .ca-wsample .ca-wbuy-item em {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  padding: 0 2px;
+  font-size: 8px;
+  font-style: normal;
+  font-weight: bold;
+  line-height: 10px;
+  color: #fff3cf;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 3px;
+}
+#CookieMgrWidgets .ca-wbuy-past,
+#CookieMgrMenu .ca-wsample .ca-wbuy-past {
+  opacity: 0.7;
+}
+#CookieMgrWidgets .ca-wbuy-past:hover,
+#CookieMgrMenu .ca-wsample .ca-wbuy-past:hover {
+  opacity: 1;
+}
+#CookieMgrWidgets .ca-wbuy-past.hot,
+#CookieMgrMenu .ca-wsample .ca-wbuy-past.hot {
+  opacity: 1;
+  animation: caWbuyLand 1.5s ease-out;
+}
+@keyframes caWbuyLand {
+  0% {
+    box-shadow:
+      0 0 0 2px #4dff5e,
+      0 0 10px rgba(77, 255, 94, 0.9);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(77, 255, 94, 0);
+  }
+}
+/* what's next: big and framed, its name, price, payback period and when beside it, a bar under them */
+#CookieMgrWidgets .ca-wbuy-next,
+#CookieMgrMenu .ca-wsample .ca-wbuy-next {
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px rgba(255, 220, 150, 0.5);
+}
+#CookieMgrWidgets .ca-wbuy-next .ca-wbuy-spr,
+#CookieMgrMenu .ca-wsample .ca-wbuy-next .ca-wbuy-spr {
+  transform: scale(0.7);
+}
+#CookieMgrWidgets .ca-wbuy-next.can,
+#CookieMgrMenu .ca-wsample .ca-wbuy-next.can {
+  box-shadow:
+    0 0 0 1px #4dff5e,
+    0 0 8px rgba(77, 255, 94, 0.55);
+}
+#CookieMgrWidgets .ca-wbuy-next.none,
+#CookieMgrMenu .ca-wsample .ca-wbuy-next.none {
+  color: #93866f;
+}
+#CookieMgrWidgets .ca-wbuy-text,
+#CookieMgrMenu .ca-wsample .ca-wbuy-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-left: 4px;
+}
+#CookieMgrWidgets .ca-wbuy-text b,
+#CookieMgrMenu .ca-wsample .ca-wbuy-text b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: #fff3cf;
+}
+#CookieMgrWidgets .ca-wbuy-text > span,
+#CookieMgrMenu .ca-wsample .ca-wbuy-text > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  color: #c9bba0;
+}
+#CookieMgrWidgets .ca-wbuy-text .ok,
+#CookieMgrMenu .ca-wsample .ca-wbuy-text .ok {
+  font-style: normal;
+  color: #4dff5e;
+}
+#CookieMgrWidgets .ca-wbuy-text > .ca-wbuy-when,
+#CookieMgrMenu .ca-wsample .ca-wbuy-text > .ca-wbuy-when {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 1px;
+}
+#CookieMgrWidgets .ca-wbuy-when > i,
+#CookieMgrMenu .ca-wsample .ca-wbuy-when > i {
+  flex: none;
+  font-style: normal;
+  color: #ffeab0;
+}
+#CookieMgrWidgets .ca-wbuy-when > .ca-wbuy-bar,
+#CookieMgrMenu .ca-wsample .ca-wbuy-when > .ca-wbuy-bar {
+  flex: 1;
+  min-width: 20px;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 2px;
+  overflow: hidden;
+}
+#CookieMgrWidgets .ca-wbuy-bar i,
+#CookieMgrMenu .ca-wsample .ca-wbuy-bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #f2b84b, #ffe39a);
+}
+#CookieMgrWidgets .ca-wbuy-bar.can i,
+#CookieMgrMenu .ca-wsample .ca-wbuy-bar.can i {
+  background: #4dff5e;
+}
+/* its cards float in the layer (ui/tips.js): the thing's picture in the card's head */
+#CookieMgrLayer .ca-wpop-head .ca-wbuy-spr {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  margin: -15px;
+  transform: scale(0.375);
+}
+#CookieMgrLayer .ca-wpop-head .ca-wbuy-spr + b {
+  margin-left: 2px;
+}
+#CookieMgrLayer .ca-wpop-val i {
+  color: #93866f;
+}

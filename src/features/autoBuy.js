@@ -204,7 +204,15 @@ CA.AutoBuy = (() => {
     const hit = memo && memo.pass === CA.Macros.passKey() ? [...memo.lists.values()].flat().find((c) => thingKey(c) === String(k)) : null;
     // the Auto buyer's queue (its profile's bulk): what buyer.next() named
     const queued = !hit && CA.AutoBuyer ? CA.AutoBuyer.thingOf(k) : null;
-    if (queued) return { ...queued, buy: () => P().buy(queued) };
+    if (queued)
+      return {
+        ...queued,
+        buy: () => {
+          const got = P().buy(queued);
+          if (got > 0) CA.AutoBuyer.noteBought(queued);
+          return got;
+        },
+      };
     if (String(k) === 'allUpgrades') {
       const all = P().allUpgrades();
       return all.n ? { ...all, buy: () => P().buy(all) } : null;
