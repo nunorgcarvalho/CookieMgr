@@ -2854,7 +2854,8 @@
 
 /* the auto-gardener: a profile bar, four slots, the selected one in detail (v3.3) */
 #CookieMgrMenu .ca-gardener select,
-#CookieMgrMenu .ca-gardener .ca-gname {
+#CookieMgrMenu .ca-gardener .ca-gname,
+#CookieMgrMenu .ca-ttprofs .ca-gname {
   font: 12px Tahoma, Arial, sans-serif;
   color: #f0e2c0;
   background: rgba(0, 0, 0, 0.45);
@@ -7868,6 +7869,21 @@ body.ca-has-storebar #products {
   display: flex;
   gap: 6px;
   padding: 8px 14px 10px;
+}
+
+/* Store tooltip layouts: the built-in Default and yours, above the lines of the one in use */
+#CookieMgrMenu .ca-ttprofs {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+#CookieMgrMenu .ca-ttprofs .ca-dprof-foot {
+  align-items: center;
+}
+#CookieMgrMenu .ca-ttprof-fixed {
+  display: inline-block;
+  width: 150px;
+  padding: 3px 0;
+  font-weight: bold;
+  color: #f3e6c8;
 }
 
 /* Pantheon: profiles, a row each (v3.31) */
