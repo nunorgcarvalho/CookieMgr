@@ -187,6 +187,7 @@ CA.Managers = (() => {
   // where the active manager is: its stage, the ascension it's for (Game.resets), and the profiles
   // of the stage still to put in
   let run = cleanRun(null);
+  let fixes = []; // one-off fixes to a game's settings already made (saved): 'researchPact'
 
   // ---- managers -----------------------------------------------------------------------------
 
@@ -314,6 +315,8 @@ CA.Managers = (() => {
     const seed = builtinOf(id);
     if (i < 0 || !seed) return false;
     managers[i] = copy(seed);
+    // the one at work: its stage sets up again, as it comes (its settings, switches and profiles)
+    if (id === active && run.id === id) enter(run.stage, true);
     changed();
     return true;
   }
@@ -631,6 +634,7 @@ CA.Managers = (() => {
   /** One pass of the active manager's code, by hand (the Manager macro runs it each second). Returns what it did. */
   function step() {
     if (!ready()) return 0;
+    fixResearchStop();
     const { flow, errors } = compiledOf(current());
     if (errors.length) return 0;
     const F = CA.Macros.runPass(flow);
@@ -708,7 +712,23 @@ CA.Managers = (() => {
     const out = r && r.stopBefore === 'Elder Pact' ? { ...st, inputs: { ...st.inputs, research: { ...r, stopBefore: 'none' } } } : st;
     return { ...out, watch: out.watch.map((x) => (x.label === 'Research' && x.value === '[researchOwned(), 8]' ? { ...x, value: '[researchOwned(), 9]' } : x)) };
   }
+  /**
+   * A game where Nunix late game set the Research macro to stop before the Elder Pact (before it bought all the
+   * research): the macro keeps that setting, as the manager sets it only on a stage's first pass — so, once,
+   * all of it, when Nunix runs a stage that wants all of it.
+   */
+  function fixResearchStop() {
+    if (fixes.includes('researchPact') || active !== 'nunixLateGame' || run.id !== active) return;
+    const m = current();
+    const want = m && m.stages[run.stage] ? (effective(m, run.stage).inputs.research || {}).stopBefore : null;
+    if (want !== 'none') return;
+    fixes.push('researchPact');
+    const R = CA.Macros.get('research');
+    if (R && CA.Macros.inputsOf(R).stopBefore === 'Elder Pact') CA.Macros.setInput('research', 'stopBefore', 'none');
+    changed();
+  }
   function load(data) {
+    fixes = data && Array.isArray(data.fixes) ? data.fixes.filter((x) => typeof x === 'string') : [];
     if (data && Array.isArray(data.managers)) {
       managers = withBuiltins(data.managers.filter((m) => m && m.id).map((m) => clean(withSeedWatch(m))));
       active = typeof data.active === 'string' && (data.active === '' || managers.some((m) => m.id === data.active)) ? data.active : managers.length ? managers[0].id : '';
@@ -720,7 +740,7 @@ CA.Managers = (() => {
     }
     changed();
   }
-  const serialize = () => ({ managers, active, run });
+  const serialize = () => ({ managers, active, run, fixes });
 
   // ---- building blocks ----------------------------------------------------------------------------
 

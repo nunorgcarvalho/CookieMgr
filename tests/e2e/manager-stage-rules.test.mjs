@@ -54,6 +54,12 @@ G.step();
 assert(value('manager.stage') === 3 && M.isOn('autoBuyer') && M.isOn('lumps') && M.isOn('gardener') && M.isOn('elderPledge') && M.isOn('golden'), 'a jump to stage 3: stages 1–2 set up again, then its own');
 assert(CA.AutoBuyer.activeProfile() === 'combos', 'profiles: the last stage’s wins (combos, not stage 1’s payback)');
 assert(value('manager.arriving', 1) === false && value('manager.arriving', 3) === false, 'arriving: only on the first pass');
+// Revert to default on the one at work: its stage sets up again, as it comes
+M.set('autoBuyer', false, { silent: true });
+G.updateStage('nunixLateGame', 2, { macros: { ...G.find('nunixLateGame').stages[2].macros, autoBuyer: 'off' } });
+G.revert('nunixLateGame');
+G.step();
+assert(!G.isEdited('nunixLateGame') && value('manager.stage') === 3 && M.isOn('autoBuyer') && CA.AutoBuyer.activeProfile() === 'combos', 'reverting the manager at work: its stage set up again');
 G.resetSeeds();
 
 // ---- editing: changes, not copies ----
@@ -95,6 +101,21 @@ pact.managers = { managers: [nx], active: 'nunixLateGame' };
 S.load(JSON.stringify(pact));
 const drops = G.find('nunixLateGame').stages[0];
 assert(drops.inputs.research.stopBefore === 'none' && drops.watch[0].value === '[researchOwned(), 9]' && !G.isEdited('nunixLateGame'), 'saved Nunix: all the research, as seeded now');
+S.load(snap);
+
+// ---- a game Nunix had set to stop before the Elder Pact: the Research macro's setting too, once ----
+G.goTo(1);
+G.step();
+M.setInput('research', 'stopBefore', 'Elder Pact');
+const pact2 = JSON.parse(S.serialize());
+delete pact2.managers.fixes;
+S.load(JSON.stringify(pact2));
+G.step();
+assert(M.inputsOf(M.get('research')).stopBefore === 'none', 'Research: all of it (it kept the old stop, set on the stage’s first pass)');
+M.setInput('research', 'stopBefore', 'Elder Pact');
+S.load(S.serialize());
+G.step();
+assert(M.inputsOf(M.get('research')).stopBefore === 'Elder Pact', 'once: set by hand afterwards, it stays');
 S.load(snap);
 
 // (the page: tests/e2e/manager-stage-tabs.test.mjs)
