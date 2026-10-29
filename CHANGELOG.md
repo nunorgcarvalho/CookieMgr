@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+## 4.10.0 — 2026-10-29
+
+- **Golden cookie on screen:** the Golden cookies widget and the Stats page's Next golden cookie card keep their stats,
+  graph and effect bars while one is on screen, held still at the beginning of the next cycle (what comes once it
+  leaves), under a "Golden cookie present" overlay, instead of switching to a one-line "on screen" message.
+
+## 4.9.3 — 2026-10-29
+
+- **Fixed:** in the Manager widget with Background on Faint or None, the current stage's name (e.g. “Drops”) on its
+  gold pill no longer carries the black outline that made it look blurry.
+
+## 4.9.2 — 2026-10-29
+
+- **Fixed:** levelling Santa (the Santa macro, SeasonCompletion) put up the game's Santa/dragon menu, empty and stuck,
+  when no menu was open: the game redraws it after every level, and its × did nothing. It's closed again now; a
+  menu you had open stays open.
+
+## 4.9.1 — 2026-10-29
+
+- **README:** new Managers, Manager widget (with the research watches), Pantheon, Dragon and Payback screenshots
+  showing the In use badges and trash cans; the Managers summary says Nunix late game is built in.
+
 ## 4.9.0 — 2026-10-29
 
 - **Managers page: built-in managers.** Nunix late game is built in: it's always on the list, marked **built-in**,
