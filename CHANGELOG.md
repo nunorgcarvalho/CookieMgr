@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 4.22.2 — 2026-10-29
+
+- **Simple cookie background** also hides the white glow behind the big cookie (the game draws it when its
+  particles are off, and has no switch for it); it comes back when you turn the option off.
+
 ## 4.22.1 — 2026-10-29
 
 - **README:** the Settings picture shows the Up to date badge and the Simple cookie background option.
