@@ -151,24 +151,26 @@ CA.Format = (() => {
     return `${Math.floor(sec / 86400)}d ${Math.floor((sec % 86400) / 3600)}h`;
   }
 
-  // a payback period in time units: seconds, then minutes, hours, days, years — the next unit only
-  // once the number passes 999 in this one (999 s, then 16.7 min), so it keeps three digits
-  const UNITS = [
-    ['s', 1],
-    ['min', 60],
-    ['h', 3600],
-    ['d', 86400],
-    ['y', 365 * 86400],
-  ];
+  // a payback period in compact lowercase time units, the largest two that apply: 500ms, 45s, 16m 40s,
+  // 3h 12m, 2d 5h, 1y 23d (100y on, years alone: 345y, 12,345y); a zero second part is left out (3h)
   function inUnits(sec) {
-    let i = 0;
-    while (i < UNITS.length - 1 && Number((sec / UNITS[i][1]).toPrecision(SIG)) >= 1000) i++;
-    const v = sec / UNITS[i][1];
-    return `${v >= 1000 ? short(v) : v === 0 ? '0' : v < 0.001 ? scientific(v, false) : sig(v)} ${UNITS[i][0]}`;
+    const pair = (v, unit, sub, n) => `${Math.floor(v / n)}${unit}` + (v % n ? ` ${v % n}${sub}` : '');
+    if (sec === 0) return '0s';
+    if (Math.round(sec * 1000) < 1000) {
+      const ms = sec * 1000;
+      return (ms < 0.001 ? scientific(ms, false) : ms < 10 ? small(ms, 1) : String(Math.round(ms))) + 'ms';
+    }
+    if (Math.round(sec) < 60) return (sec < 10 ? small(sec, 1) : String(Math.round(sec))) + 's';
+    if (Math.round(sec) < 3600) return pair(Math.round(sec), 'm', 's', 60);
+    if (Math.round(sec / 60) < 1440) return pair(Math.round(sec / 60), 'h', 'm', 60);
+    if (Math.round(sec / 3600) < 365 * 24) return pair(Math.round(sec / 3600), 'd', 'h', 24);
+    if (Math.round(sec / 86400) < 365 * 100) return pair(Math.round(sec / 86400), 'y', 'd', 365);
+    const y = sec / (365 * 86400);
+    return Math.round(y) < 1e6 ? `${grouped(y)}y` : `${short(y)} y`;
   }
   /**
    * A payback period (seconds) as the Payback units setting writes it: time units (the default —
-   * 999 s, 16.7 min, 41.6 h) or plain seconds, short (Cookie Monster's way: 999, 1K); ∞ when it
+   * 45s, 16m 40s, 3h 12m, 2d 5h, 1y 23d) or plain seconds, short (Cookie Monster's way: 999, 1K); ∞ when it
    * never pays back.
    */
   function payback(sec) {

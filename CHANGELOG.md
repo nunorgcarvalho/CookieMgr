@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 4.23.1 — 2026-10-29
+
+- **README:** the Payback picture shows payback periods in the short units (57m 34s, 2h 34m).
+
+## 4.23.0 — 2026-10-29
+
+- **Payback periods in short time units:** the largest two that apply, in lowercase ms, s, m, h, d and y, wherever a
+  payback period shows (500ms, 45s, 16m 40s, 3h 12m, 2d 5h, 1y 23d); from 100 years on, years alone (345y). The plain
+  seconds option is unchanged.
+- **Charts:** a small dip below zero (nursetulips' CpS beside a big golden cookie frequency boost on the Garden
+  effects chart and its widget) no longer pulls the axis a whole step down to −20% or −50%: it ends just past the
+  lowest value, and the ticks come from the big side. The same for a small rise on a mostly negative chart.
+
 ## 4.22.3 — 2026-10-29
 
 - **Guide:** Simple cookie background mentions the hidden glow behind the big cookie.

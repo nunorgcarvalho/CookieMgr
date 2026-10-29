@@ -138,7 +138,7 @@ assert(!compiled.errors.length, 'payback.* words compile in a statistic');
 Game.buyMode = 1;
 CA.Settings.set('ppMode', 'rawCps');
 const block = CA.UI.StoreInsight.buildingBlock(Game.Objects.Farm);
-assert(block && block.includes(CA.Format.short(farm().pp)), 'the store tooltip’s Payback period is the raw-CpS one');
+assert(block && block.includes(CA.Format.payback(farm().pp)), 'the store tooltip’s Payback period is the raw-CpS one');
 
 // ---- the Payback page: the mode is its main setting
 CA.Settings.set('ppMode', 'cps');
