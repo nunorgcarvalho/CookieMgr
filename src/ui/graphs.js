@@ -2,8 +2,11 @@
 // recorded states, and of statistics cards (ui/statsPage.js — the old Stats page, now merged in).
 //
 //   Cookies   CpS (production + clicking, unbuffed line, effects, events) with an averages table,
-//             Actual CpS (what really got baked per second, by source), Cookies baked (cumulative),
-//             and Income outside CpS (ui/eventsPage.js — on the Events page until v3.48)
+//             Bank flows (everything that moved the bank, by category — "Actual CpS" until the
+//             Actual income tab), the Cookie bank (cumulative), and Income outside CpS (ui/eventsPage.js)
+//   Actual income  what you really baked a second, by source — the income payback periods count in
+//             (features/payback.js: the Actual income window, picked here too), a table of it over
+//             spans of play, and its widget (ui/widgetTypes.js)
 //   Prestige  the prestige statistics, a target, prestige level if you ascended now, levels gained per hour
 //   Golden    what golden cookies and spells pay and the bank it takes, when the next one comes
 //   What if   every Pantheon spirit and dragon aura, the CpS each would bring
@@ -59,6 +62,7 @@ CA.UI.Graphs = (() => {
   const INCOME = () => CA.UI.EventsPage && CA.UI.EventsPage.income;
   const ALL_TABS = [
     { id: 'cookies', label: 'Cookies', icon: 'cookie', plots: ['cps', 'actual', 'ledgerCum'], parts: () => [INCOME()].filter(Boolean) },
+    { id: 'income', label: 'Actual income', icon: 'bolt', plots: ['income'], top: () => paybackCardHtml() },
     { id: 'prestige', label: 'Prestige', icon: 'ascend', plots: ['prestige', 'prestigeRate'], top: () => cards('prestige') + targetCardHtml() },
     { id: 'golden', label: 'Golden cookies', icon: 'sparkle', plots: [], top: () => cards('golden') },
     { id: 'whatif', label: 'What if', icon: 'pantheon', plots: [], top: () => cards('whatif') },
@@ -236,9 +240,9 @@ CA.UI.Graphs = (() => {
   ];
 
   /** A table of measures × time spans; rows: { n?, x?, label, desc, color, fn(r), strong, mult, sign }. */
-  function spansTable(rows, vals) {
-    let h = '<div class="ca-table-wrap"><table class="ca-table ca-stages"><thead><tr><th>Average over the last…</th>';
-    TABLE_COLS.forEach((c) => (h += `<th>${c.label}</th>`));
+  function spansTable(rows, vals, cols = TABLE_COLS, cls = '') {
+    let h = `<div class="ca-table-wrap"><table class="ca-table ca-stages${cls ? ' ' + cls : ''}"><thead><tr><th>Average over the last…</th>`;
+    cols.forEach((c) => (h += `<th>${c.label}</th>`));
     h += '</tr></thead><tbody>';
     rows.forEach((r) => {
       const cls = [r.strong ? 'strong' : '', r.mult ? 'mult' : '', r.sep ? 'sep' : '', r.desc ? '' : 'thin'].filter(Boolean).join(' ');
@@ -309,7 +313,7 @@ CA.UI.Graphs = (() => {
     return out;
   }
 
-  // ---- the ledger: Actual CpS and the cookie bank ------------------------------------------
+  // ---- the ledger: Bank flows and the cookie bank ------------------------------------------
   // One chart of everything that moves the bank, by category — pick which categories, gains
   // and/or losses, and whether the CpS-boosted extra is shown on top of building CpS and
   // clicking — and below it the same, accumulated: the bank. Both share every setting.
@@ -413,9 +417,9 @@ CA.UI.Graphs = (() => {
   const actualPlot = () =>
     P().create({
       id: 'actual',
-      title: 'Actual CpS',
+      title: 'Bank flows',
       icon: 'bolt',
-      note: 'Everything that moved the bank each second, by category. Building CpS and clicking can show the extra that CpS effects add (✦ CpS-boosted) on top of their unboosted part. Losses show below the line.',
+      note: 'Everything that moved the bank each second, by category — spending too (for what you baked, the income payback periods count in, see the Actual income tab). Building CpS and clicking can show the extra that CpS effects add (✦ CpS-boosted) on top of their unboosted part. Losses show below the line.',
       windows: WINDOWS,
       window: 900,
       smooth: 15,
@@ -491,7 +495,7 @@ CA.UI.Graphs = (() => {
   const ledgerCumPlot = () =>
     P().create({
       id: 'ledgerCum',
-      settingsOf: 'actual', // same window, log scale and choices as Actual CpS
+      settingsOf: 'actual', // same window, log scale and choices as Bank flows
       title: 'Cookie bank',
       icon: 'dollar',
       note: 'The same categories, added up from the start: how the bank got to where it is. With everything included it traces the real bank (dashed).',
@@ -554,6 +558,154 @@ CA.UI.Graphs = (() => {
         );
       },
     });
+
+  // ---- Actual income tab ------------------------------------------------------------------------
+  // What you really baked a second (the Recorder's `earned`: cookies baked, by source) — exactly what
+  // the Actual income payback mode and payback.actualIncome() average over the Actual income window.
+  // The chart has every window (Since last ascension too); a line marks the income payback periods
+  // use now. Its ☆ puts it on the left panel as the Actual income widget, drawn the way it is here.
+
+  const INCOME_FIELDS = SOURCES.map((x) => x.key);
+  const PB = () => CA.Payback;
+  /** The actual income payback periods use now: { actual, secs, window } or null (under a minute recorded). */
+  const paybackIncome = () => (PB() ? PB().incomeOver(PB().actualWindow()) : null);
+  const paybackWindowText = () => (PB() ? PB().actualWindowText() : '');
+  /** Seconds of play since the last ascension (all recorded play before the first one). */
+  function runSecs() {
+    const run = CA.Ascension && CA.Ascension.runStart();
+    return run ? Math.max(1, (CA.Recorder.activeNow() - run.a) / SEC) : 1e10;
+  }
+
+  const incomePlot = () =>
+    P().create({
+      id: 'income',
+      title: 'Actual income',
+      icon: 'bolt',
+      note: 'What you really baked each second, by where it came from: buildings with every effect on, clicking, golden cookies and reindeer, and the rest (wrinklers, spells…). Payback periods by actual income count in its average over the window you pick above (the line).',
+      windows: WINDOWS,
+      window: 3600,
+      smooth: 60,
+      stacked: true,
+      unit: '/s',
+      widgetType: 'income', // its ☆: the Actual income widget
+      widgetName: 'Actual income',
+      build(v) {
+        const raw = v.bucketize(INCOME_FIELDS.concat(['earned', 'base']));
+        const ivs = effects(v);
+        const bars = raw.map((b) => {
+          const o = {};
+          SOURCES.forEach((x) => (o[x.key] = rate(b, x.key)));
+          return { x0: b.x0, x1: b.x1, parts: o, raw: b };
+        });
+        let sum = 0;
+        let secs = 0;
+        let base = 0;
+        let baseSecs = 0;
+        raw.forEach((b) => {
+          if (Number.isFinite(b.v.earned)) {
+            sum += b.v.earned;
+            secs += coverOf(b, 'earned');
+          }
+          if (Number.isFinite(b.v.base)) {
+            base += b.v.base * b.secs;
+            baseSecs += b.secs;
+          }
+        });
+        const avg = secs ? sum / secs : NaN;
+        const pb = paybackIncome();
+        const hlines = [];
+        if (pb && Number.isFinite(pb.actual)) hlines.push({ v: pb.actual, label: `payback ${F().beautify(pb.actual)}/s · ${paybackWindowText()}`, color: 'rgba(120,220,255,0.85)' });
+        // the window's average, unless it's (about) the payback line
+        if (Number.isFinite(avg) && !(pb && Math.abs(avg - pb.actual) <= 0.01 * Math.abs(pb.actual)))
+          hlines.push({ v: avg, label: `avg ${F().beautify(avg)}/s`, color: 'rgba(255,200,120,0.7)' });
+        return {
+          series: SOURCES.map((x) => ({ key: x.key, name: x.name, color: x.color, type: 'bar' })).concat([
+            { key: 'base', name: 'Unbuffed CpS', color: C_BASE, type: 'line', dash: true, width: 1.4 },
+          ]),
+          bars,
+          lines: { base: P().linePoints(raw, (b) => b.v.base) },
+          hlines,
+          intervals: ivs,
+          markers: markers(v, ['golden', 'wrath', 'reindeer'], ivs),
+          legendExtra: effectLegend(ivs),
+          raw,
+          avg,
+          base: baseSecs ? base / baseSecs : NaN,
+          pb,
+        };
+      },
+      stats(v, data) {
+        const { tile, beautify } = F();
+        let golden = 0;
+        let all = 0;
+        data.raw.forEach((b) => {
+          golden += b.v.earnGolden || 0;
+          all += Number.isFinite(b.v.earned) ? b.v.earned : 0;
+        });
+        const pb = data.pb;
+        return (
+          tile('For payback', pb ? beautify(pb.actual) + '/s' : '—', pb ? `over ${paybackWindowText() === 'since ascension' ? 'play since ascension' : `the last ${paybackWindowText()}`}` : 'a minute of play first') +
+          tile('Average', Number.isFinite(data.avg) ? beautify(data.avg) + '/s' : '—', 'this window') +
+          tile('× raw CpS', Number.isFinite(data.avg) && data.base > 0 ? '×' + (data.avg / data.base).toFixed(data.avg / data.base >= 10 ? 1 : 2) : '—', 'average ÷ unbuffed CpS') +
+          tile('Golden cookies', all > 0 ? Math.round((golden / all) * 100) + '%' : '—', 'of it, this window')
+        );
+      },
+      footer: () => incomeTable(),
+    });
+
+  const INCOME_COLS = [
+    { s: 60, label: '1m' },
+    { s: 300, label: '5m' },
+    { s: 900, label: '15m' },
+    { s: 3600, label: '1h' },
+    { s: 10800, label: '3h' },
+    { s: 43200, label: '12h' },
+    { s: 'run', label: 'This run' },
+  ];
+
+  /** The actual income over spans of play, by source, and as a multiple of raw CpS. */
+  function incomeTable() {
+    const { beautify } = F();
+    const vals = INCOME_COLS.map((c) => {
+      const secs = c.s === 'run' ? runSecs() : c.s;
+      const fl = recentFlows(secs, INCOME_FIELDS.concat(['earned']), 'earned');
+      const r = recent(secs);
+      return fl && r ? { ...fl, base: r.base } : null;
+    });
+    const times = (a, b) => (b > 0 && Number.isFinite(a) ? `×${(a / b).toFixed(a / b >= 10 ? 1 : 2)}` : '—');
+    return spansTable(
+      SOURCES.map((x) => ({ label: x.name, fn: (r) => beautify(r[x.key]) + '/s', color: x.color })).concat([
+        { label: 'Actual income', fn: (r) => beautify(r.earned) + '/s', strong: true, sign: '=', sep: true },
+        { label: '× raw CpS', desc: 'actual income ÷ unbuffed CpS', fn: (r) => times(r.earned, r.base), mult: true },
+      ]),
+      vals,
+      INCOME_COLS,
+      'ca-spans-units' // 1m, 1h: not upper case (1M reads as a million)
+    );
+  }
+
+  /** The card above the chart: the income payback periods count in, and its window (the Payback page's option). */
+  function paybackCardHtml() {
+    if (!PB()) return '';
+    const { beautify } = F();
+    const set = S().get('ppActualWindow');
+    const choices = (S().definitions().find((d) => d.key === 'ppActualWindow') || { choices: [] }).choices;
+    const pb = paybackIncome();
+    const ratio = PB().actualRatio();
+    const chips = choices
+      .map((c) => `<button type="button" class="ca-chip${set === c.v ? ' on' : ''}" data-income-window="${esc(c.v)}">${esc(c.v === PB().SINCE_ASCENSION ? 'Since ascension' : c.label)}</button>`)
+      .join('');
+    return (
+      '<div class="ca-card" data-income-card>' +
+      CA.UI.C.cardHead('Actual income for payback periods', 'dollar') +
+      '<div class="ca-row ca-row-option"><div class="ca-row-text">' +
+      `<div class="ca-row-name">Averaged over</div><div class="ca-row-desc">Every actual income — the Actual income payback mode, the tooltips’ income lines, payback.actualIncome() — counts what you baked over this much of your latest play${
+        pb ? `: now <b data-income-now>${beautify(pb.actual)}/s</b>${Number.isFinite(ratio) ? `, ×${ratio.toFixed(2)} your raw CpS` : ''}` : ' (once a minute is recorded)'
+      }. Also on the ${CA.UI.C.link('Payback', 'payback')} page.</div></div>` +
+      `<span class="ca-pp-chips">${chips}</span></div>` +
+      '</div>'
+    );
+  }
 
   // ---- Prestige tab ---------------------------------------------------------------------------
 
@@ -765,6 +917,14 @@ CA.UI.Graphs = (() => {
   }
 
   function onClick(e) {
+    const win = e.target.closest('[data-income-window]');
+    if (win && PB()) {
+      e.stopPropagation();
+      CA.Util.sound('snd/tick.mp3');
+      PB().setActualWindow(win.dataset.incomeWindow);
+      CA.UI.Menu.render();
+      return;
+    }
     const tab = e.target.closest('[data-graph-tab]');
     if (!tab) return;
     e.stopPropagation();
@@ -801,6 +961,16 @@ CA.UI.Graphs = (() => {
     currentTab().plots.forEach((id) => plots[id].tick());
     partsOf(currentTab()).forEach((p) => p.tick());
     refreshTarget();
+    refreshIncomeCard();
+  }
+
+  /** The Actual income tab's card, its figures kept current. */
+  function refreshIncomeCard() {
+    const card = mountedRoot && mountedRoot.querySelector('[data-income-card]');
+    if (!card) return;
+    const fresh = document.createElement('div');
+    fresh.innerHTML = paybackCardHtml();
+    if (fresh.firstElementChild) CA.UI.Dom.morph(card, fresh.firstElementChild.innerHTML);
   }
 
   function init() {
@@ -808,10 +978,10 @@ CA.UI.Graphs = (() => {
     S().defineOption({ key: 'graphTab', group: 'ui', name: 'Stats tab', desc: '', default: 'cookies' });
     S().defineOption({ key: 'prestigeTargetNum', group: 'ui', name: 'Prestige target (number)', desc: '', default: 0 });
     S().defineOption({ key: 'prestigeTargetUnit', group: 'ui', name: 'Prestige target (magnitude)', desc: '', default: 0 });
-    S().defineOption({ key: 'actualGains', group: 'plot', name: 'Actual CpS: gains', desc: '', default: true });
-    S().defineOption({ key: 'actualLosses', group: 'plot', name: 'Actual CpS: losses', desc: '', default: false });
-    S().defineOption({ key: 'cpsBoosted', group: 'plot', name: 'Actual CpS: CpS-boosted', desc: '', default: true });
-    CATS.forEach((c) => S().defineOption({ key: `cat.${c.id}`, group: 'plot', name: `Actual CpS: ${c.name}`, desc: '', default: !c.offByDefault }));
+    S().defineOption({ key: 'actualGains', group: 'plot', name: 'Bank flows: gains', desc: '', default: true });
+    S().defineOption({ key: 'actualLosses', group: 'plot', name: 'Bank flows: losses', desc: '', default: false });
+    S().defineOption({ key: 'cpsBoosted', group: 'plot', name: 'Bank flows: CpS-boosted', desc: '', default: true });
+    CATS.forEach((c) => S().defineOption({ key: `cat.${c.id}`, group: 'plot', name: `Bank flows: ${c.name}`, desc: '', default: !c.offByDefault }));
     S().defineOption({
       key: 'graphEffects',
       group: 'graph',
@@ -832,6 +1002,7 @@ CA.UI.Graphs = (() => {
     plots.cps = cpsPlot();
     plots.actual = actualPlot();
     plots.ledgerCum = ledgerCumPlot();
+    plots.income = incomePlot();
     plots.prestige = prestigePlot();
     plots.prestigeRate = prestigeRatePlot();
     CA.Events.on('history', (why) => {

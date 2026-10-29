@@ -12,7 +12,8 @@
 // the chart and its legend, sharing the page chart's window and choices. A spec's `numbers` —
 // [{ v, stat (a CA.StatInfo id), value() → html, page, on }] — are the statistics that widget can show
 // over its charts (on: ticked in a new one); snapshot(id, w, h) is a picture of the copy, for the
-// widget's settings.
+// widget's settings. A spec with `widgetType` stars a widget type of its own instead (the Stats
+// page's Actual income: ui/widgetTypes.js), drawing the same copy.
 //
 // The x axis is either wall-clock time (frame.t) or **active play time** (frame.a, see
 // core/recorder.js) — the global "Active time" toggle (setting graphActiveTime). In active-time
@@ -220,6 +221,8 @@ CA.UI.Plot = (() => {
     let hi = 0;
     let sw = 0;
     let swv = 0;
+    // running sums of big values leave rounding crumbs: a series that never goes negative mustn't seem to
+    const nonNeg = values.every((v) => !Number.isFinite(v) || v >= 0);
     for (let i = 0; i < n; i++) {
       while (hi < n && centers[hi] <= centers[i] + half) {
         if (Number.isFinite(values[hi])) {
@@ -235,7 +238,7 @@ CA.UI.Plot = (() => {
         }
         lo++;
       }
-      out[i] = Number.isFinite(values[i]) && sw > 1e-12 ? swv / sw : values[i];
+      out[i] = Number.isFinite(values[i]) && sw > 1e-12 ? (nonNeg ? Math.max(0, swv / sw) : swv / sw) : values[i];
     }
     return out;
   }
@@ -443,7 +446,8 @@ CA.UI.Plot = (() => {
         return `<div class="ca-graph-mini" data-plot="${id}"><canvas class="ca-graph" data-plot-canvas data-keep></canvas><div class="ca-legend" data-plot-legend data-keep></div></div>`;
       const wins = (spec.windows || [300]).concat(spec.sinceAscension === false ? [] : [SINCE_ASCENSION]);
       const winTip = (s) => (s === SINCE_ASCENSION ? 'From your last ascension to now (all history when there hasn’t been one)' : '');
-      const star = spec.widget ? CA.UI.C.widgetStar({ type: 'chart', plot: id }, spec.widgetName || spec.title) : '';
+      // (a chart with its own widget type — `widgetType` — stars that one instead of the Chart widget)
+      const star = spec.widgetType ? CA.UI.C.widgetStar({ type: spec.widgetType }, spec.widgetName || spec.title) : spec.widget ? CA.UI.C.widgetStar({ type: 'chart', plot: id }, spec.widgetName || spec.title) : '';
       let h =
         `<div class="ca-card ca-graph-card" data-plot="${id}">` +
         CA.UI.C.cardHead(spec.title, spec.icon, `<div class="ca-card-meta">${star}<span class="ca-live" data-plot-live></span></div>`) +
@@ -811,7 +815,8 @@ CA.UI.Plot = (() => {
         });
       ctx.restore();
 
-      // horizontal reference lines (averages)
+      // horizontal reference lines (averages); a label too close to an earlier one goes at the right end
+      const labelYs = [];
       (data.hlines || []).forEach((l) => {
         if (!Number.isFinite(l.v)) return;
         const y = Math.round(yOf(l.v)) + 0.5;
@@ -826,11 +831,13 @@ CA.UI.Plot = (() => {
         ctx.setLineDash([]);
         if (l.label) {
           ctx.font = 'bold 9px Tahoma, Arial, sans-serif';
-          ctx.textAlign = 'left';
+          const right = labelYs.some((ly) => Math.abs(ly - y) < 12);
+          labelYs.push(y);
+          ctx.textAlign = right ? 'right' : 'left';
           const above = y - plot.y >= 12;
           ctx.textBaseline = above ? 'bottom' : 'top';
           ctx.fillStyle = 'rgba(255,255,255,0.8)';
-          ctx.fillText(l.label, plot.x + 4, y + (above ? -2 : 2));
+          ctx.fillText(l.label, right ? plot.x + plot.w - 4 : plot.x + 4, y + (above ? -2 : 2));
         }
         ctx.restore();
       });

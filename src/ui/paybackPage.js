@@ -65,8 +65,8 @@ CA.UI.PaybackPage = (() => {
         const inc = P().income(m.id);
         const ready = Number.isFinite(inc);
         // the actual income's chip names its window (the Options card's Actual income over)
-        const win = m.id === 'actualIncome' ? P().windowText(P().actualWindow() / 60) : '';
-        const tip = `${m.desc}${win ? ` Now over the last ${win} (Options below: Actual income over).` : ''}${ready ? ` Now: ${F().beautify(inc)}/s.` : ' Not ready yet: too little recorded.'}`;
+        const win = m.id === 'actualIncome' ? P().actualWindowText() : '';
+        const tip = `${m.desc}${win ? ` Now ${win === 'since ascension' ? 'since your last ascension' : `over the last ${win}`} (Options below: Actual income over).` : ''}${ready ? ` Now: ${F().beautify(inc)}/s.` : ' Not ready yet: too little recorded.'}`;
         const cls = `ca-chip${chosen === m.id ? ' on' : ''}${ready ? '' : ' ca-pp-notready'}`;
         return `<button type="button" class="${cls}" data-pp-mode="${esc(m.id)}" data-tip="${esc(tip)}">${esc(m.label)}${win ? ` · ${esc(win)}` : ''}<small>${ready ? `${F().short(inc)}/s` : '—'}</small></button>`;
       })
@@ -160,9 +160,11 @@ CA.UI.PaybackPage = (() => {
     };
     // the actual-income window: its presets, and any number of minutes typed in
     const actualWindowPick = () => {
-      const mins = P().actualWindow() / 60;
-      const chips = P().ACTUAL_PRESETS.map((v) => `<button type="button" class="ca-chip${mins === Number(v) ? ' on' : ''}" data-pp-pick="ppActualWindow" data-v="${v}">${esc(P().windowText(Number(v)))}</button>`).join('');
-      return `${chips}<label class="ca-pp-window" data-tip="Any window, in minutes: 1 to 1440 (a day)"><input type="number" min="1" max="1440" step="1" class="ca-pp-num" data-pp-window value="${mins}"> min</label>`;
+      const run = S.get('ppActualWindow') === P().SINCE_ASCENSION;
+      const mins = run ? '' : P().actualWindow() / 60;
+      const chip = (v, label, tip) => `<button type="button" class="ca-chip${String(mins) === v || (run && v === P().SINCE_ASCENSION) ? ' on' : ''}" data-pp-pick="ppActualWindow" data-v="${v}"${tip ? ` data-tip="${esc(tip)}"` : ''}>${esc(label)}</button>`;
+      const chips = P().ACTUAL_PRESETS.map((v) => chip(v, P().windowText(Number(v)))).join('') + chip(P().SINCE_ASCENSION, 'Since ascension', 'Everything since your last ascension (all recorded play before the first one)');
+      return `${chips}<label class="ca-pp-window" data-tip="Any window, in minutes: 1 to 1440 (a day)"><input type="number" min="1" max="1440" step="1" class="ca-pp-num" data-pp-window value="${mins}" placeholder="—"> m</label>`;
     };
     const bulkChip = (v) => `<button type="button" class="ca-chip${mb === v ? ' on' : ''}" data-pp-bulk="${v}">${v ? `×${v}` : 'auto'}</button>`;
     return (
@@ -171,7 +173,7 @@ CA.UI.PaybackPage = (() => {
       '<div class="ca-list">' +
       `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('clock', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Payback periods in</div><div class="ca-row-desc">Time units: ms, s, m, h, d and y, the largest two that apply (45s, 16m 40s, 3h 12m, 2d 5h, 1y 23d). Seconds: plain seconds, Cookie Monster’s way (999, 1K).</div></div><span class="ca-pp-chips">${pick('ppUnits')}</span></div>` +
       `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('wrinkler', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Count wrinklers in the bank</div><div class="ca-row-desc">What popping them would give counts towards affording things.</div></div><span class="ca-pp-chips">${choice('none', 'No')}${choice('all', 'All')}${choice('fattest', 'The fattest')}</span></div>` +
-      `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('graphs', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Actual income over</div><div class="ca-row-desc">The one window for every actual income: the Actual income payback mode, the tooltips’ Income and Payback period by actual income, payback.actualIncome(). Pick a preset or type any number of minutes (up to a day)${Number.isFinite(P().actualRatio()) ? ` — now ×${P().actualRatio().toFixed(2)} your raw CpS` : ''}.</div></div><span class="ca-pp-chips">${actualWindowPick()}</span></div>` +
+      `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('graphs', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Actual income over</div><div class="ca-row-desc">The one window for every actual income: the Actual income payback mode, the tooltips’ Income and Payback period by actual income, payback.actualIncome(). Pick a preset, type any number of minutes (up to a day) or count everything since your last ascension${Number.isFinite(P().actualRatio()) ? ` — now ×${P().actualRatio().toFixed(2)} your raw CpS` : ''}.</div></div><span class="ca-pp-chips">${actualWindowPick()}</span></div>` +
       `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('cookie', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Clicks averaged over</div><div class="ca-row-desc">The CpS + clicking mode counts your clicks a second over this much of your latest play — now ${P().clicksOver(Math.max(1, Number(S.get('ppClickWindow')) || 60)).toFixed(1)} a second.</div></div><span class="ca-pp-chips">${pick('ppClickWindow')}</span></div>` +
       `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('building', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Minimum bulk</div><div class="ca-row-desc">What the buyers (an Auto buyer profile on auto bulk, buy.best) buy a building in — with Round to multiples on, up to the next multiple of it. Auto: ×10 with Round to multiples, else ×1. Now: ×${CA.Shop.minBulk()}${CA.Shop.roundUp() ? ', rounded up' : ''}.</div></div><span class="ca-pp-chips">${CA.Shop.MIN_BULKS.map(bulkChip).join('')}</span></div>` +
       `<div class="ca-row ca-row-option"><span class="ca-row-ico">${I('dollar', 16)}</span><div class="ca-row-text"><div class="ca-row-name">Best = what you can afford</div><div class="ca-row-desc">The green building is the best you can buy now; what you can’t afford yet shows red.</div></div>${C().toggle(!!S.get('ppOnlyBuyable'), 'data-pp-opt="ppOnlyBuyable"', 'Best = what you can afford')}</div>` +

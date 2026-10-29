@@ -76,7 +76,7 @@ The Stats page (until v3.47.0 two pages, Graphs and Stats) has five tabs. **Cook
   wrinklers…) — and the
   multipliers between them: what clicking adds (2 ÷ 1), what effects & golden cookies add (3 ÷ 2), and the total
   (3 ÷ 1). Now and averaged over the last 1, 5, 15 minutes, 1 and 3 hours of active play.
-- **Actual CpS** — everything that moved the bank each second, in categories you pick with chips: **building CpS**,
+- **Bank flows** (called Actual CpS before the Actual income tab) — everything that moved the bank each second, in categories you pick with chips: **building CpS**,
   **clicking**, **drops** (Lucky!, chains, storms, reindeer… and wrath losses), **stock trades** (bought / sold),
   **buildings** (bought / sold), **upgrades**, **other** (wrinklers, sugar lumps, spells, Santa, the dragon… —
   whatever's left, so these always add up to exactly what the bank did), and **stock equity** (off by default; see
@@ -91,8 +91,18 @@ The Stats page (until v3.47.0 two pages, Graphs and Stats) has five tabs. **Cook
   broker's cut), at a sale it falls by exactly what the bank received, and in between it moves with the prices. It
   sits outside the bank, so with it on the Cookie bank chart becomes bank + stocks.
 - **Cookie bank** — the same, added up from the start of this session or the window: how the bank got where it is.
-  It shares every setting with Actual CpS (chips on either chart change both). With all categories, gains and
+  It shares every setting with Bank flows (chips on either chart change both). With all categories, gains and
   losses on, the added-up chart traces the real bank exactly (dashed line).
+
+**Actual income tab** — what you really baked each second, the income payback periods by actual income count in.
+A card on top picks the **Actual income window** (the same option as on the Payback page: 15m, 30m, 1h, 3h, or
+**Since ascension**) and says what it comes to now. Then the **Actual income** chart: stacked bars by source
+(production with every effect on, clicking, golden cookies & reindeer, other: wrinklers, spells…), a dashed Unbuffed
+CpS line, a **payback** line at the income payback periods use now and an average line; windows from 1m to 7d, All
+and Since last ascension, smoothing, log scale, % of total, effect lanes and markers. Its figures: the income for
+payback, the window's average, that average × raw CpS and the golden cookies' share. Below it, a table of each source
+and the actual income averaged over the last 1m, 5m, 15m, 1h, 3h, 12h and since the last ascension, with × raw CpS.
+Its ☆ puts the chart on the left panel as the **Actual income** widget.
 
 **Prestige tab** — a **prestige target**: type a number (1–999) and pick a magnitude (thousand, million, …) to see
 levels and cookies to go, when you'll get there at your actual CpS over the Prestige chart's window (its 15m … All
@@ -538,8 +548,9 @@ the mode says what the income is and what a purchase adds to it:
   raw CpS × actual ÷ raw CpS. Until a minute is recorded, CpS; with less than the window recorded, the average of
   what there is.
 
-**One actual-income window** (Options → **Actual income over**): the presets 15 min, 30 min (the default), 1 h and
-3 h, or any number of minutes typed in its box (1 minute to a day). Every actual income follows it: the Actual
+**One actual-income window** (Options → **Actual income over**, also on Stats → Actual income): the presets 15m,
+30m (the default), 1h and 3h, **Since ascension** (all your play since the last ascension; all recorded play before
+the first), or any number of minutes typed in its box (1 minute to a day). Every actual income follows it: the Actual
 income mode (its chip names the window), the tooltips' Income and Payback period by actual income lines, and
 `payback.actualIncome()`. 15 min follows what you're doing now (a combo, an active stretch); 3 h smooths out a
 lucky streak.
@@ -987,6 +998,9 @@ for production and one for prestige (see **Copies** below). Macro buttons are th
   over them: each plant effect now as the game's Garden information adds it up (golden cookie frequency, ticked to
   start, CpS, golden cookie gains…), plants, mature plants and the time to the next tick. The charts show the same
   window, X axis and choices as on the Garden page; hover them for the details.
+- **Actual income** — the Stats page's Actual income chart, live: what you really bake by source, with the line at
+  the income payback periods count in. It shows the window, smoothing and scale picked on Stats → Actual income (its
+  ☆ there adds it); its settings show or hide the legend.
 - **Manager** — what the active manager is doing; it takes that manager's name as its title. Its settings pick the
   parts: **Stages** (a strip: done ✓, the one it's on lit with its name, still to come), **Now** (the stage, how
   long it's been on it, its profiles in ✓ or still waiting ⌛, and a warning while the Manager macro is off; under

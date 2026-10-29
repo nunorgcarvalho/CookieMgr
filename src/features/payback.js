@@ -339,7 +339,7 @@ CA.Payback = (() => {
   //   cps           the CpS the game shows now, buffs and all (Cookie Monster's; the default)
   //   cpsClicking   CpS + your clicks a second (over the last ppClickWindow seconds) × a click
   //   actualIncome  what you've actually taken in (the Recorder's baked cookies) over the last
-  //                 ppActualWindow minutes of play — the one actual-income window everything uses —
+  //                 ppActualWindow minutes of play (or since the last ascension) — the one actual-income window everything uses —
   //                 projected forward; a gain is its raw gain × actual ÷ raw CpS (take in 10× your
   //                 raw CpS and what it adds counts 10×)
   // "raw", "clicking" and "actual" name them too (and the retired fixed windows' names — actual15m,
@@ -412,11 +412,25 @@ CA.Payback = (() => {
   const ACTUAL_WINDOW_MAX = 24 * 60;
   const ACTUAL_PRESETS = ['15', '30', '60', '180'];
   const windowMinutes = (v) => (v === '' || v === null || !Number.isFinite(Number(v)) ? 30 : Math.min(ACTUAL_WINDOW_MAX, Math.max(1, Math.round(Number(v)))));
-  /** Minutes as a window reads: 45 min, 1 h, 1.5 h. */
-  const windowText = (mins) => (mins < 60 ? `${mins} min` : `${+(mins / 60).toFixed(2)} h`);
-  const actualWindow = () => windowMinutes(CA.Settings.get('ppActualWindow')) * 60;
-  /** Sets the actual-income window, in minutes (kept to 1 minute – 24 hours, whole minutes). */
-  const setActualWindow = (mins) => CA.Settings.set('ppActualWindow', String(windowMinutes(mins)));
+  // or 'run': since the last ascension (all recorded play before the first one) — any length, the
+  // Recorder's coarser frames further back; in steps of 5 s, so its memo below holds
+  const SINCE_ASCENSION = 'run';
+  const sinceAscension = () => CA.Settings.get('ppActualWindow') === SINCE_ASCENSION;
+  function runSeconds() {
+    const R = CA.Recorder;
+    const run = CA.Ascension && CA.Ascension.runStart();
+    const frames = R && typeof R.frames === 'function' ? R.frames() : [];
+    const from = run ? run.a : frames.length ? frames[0].a - (frames[0].dt || 1) * 1000 : NaN;
+    const secs = R && Number.isFinite(from) ? (R.activeNow() - from) / 1000 : 0;
+    return Math.max(60, Math.ceil(secs / 5) * 5);
+  }
+  /** Minutes as a window reads: 45m, 1h, 1.5h. */
+  const windowText = (mins) => (mins < 60 ? `${mins}m` : `${+(mins / 60).toFixed(2)}h`);
+  const actualWindow = () => (sinceAscension() ? runSeconds() : windowMinutes(CA.Settings.get('ppActualWindow')) * 60);
+  /** The Actual income window as it reads: "30m", "1.5h", "since ascension". */
+  const actualWindowText = () => (sinceAscension() ? 'since ascension' : windowText(actualWindow() / 60));
+  /** Sets the actual-income window, in minutes (kept to 1 minute – 24 hours, whole minutes) or 'run': since the last ascension. */
+  const setActualWindow = (mins) => CA.Settings.set('ppActualWindow', mins === SINCE_ASCENSION ? SINCE_ASCENSION : String(windowMinutes(mins)));
   /** A window in seconds from minutes (none, or not a number: the Actual income window). */
   const minutesWindow = (mins) => (mins === undefined || mins === null || mins === '' || !(Number(mins) > 0) ? actualWindow() : Math.max(1, Number(mins)) * 60);
   /** What a click is worth now (the game's). */
@@ -866,13 +880,14 @@ CA.Payback = (() => {
       group: 'payback',
       icon: 'graphs',
       name: 'Actual income over',
-      desc: 'Every actual income — the Actual income payback mode, the tooltips’ Income and Payback period by actual income lines, payback.actualIncome() — averages what you took in over this much of your latest play: any number of minutes, up to a day (on the Payback page).',
+      desc: 'Every actual income — the Actual income payback mode, the tooltips’ Income and Payback period by actual income lines, payback.actualIncome() — averages what you took in over this much of your latest play: any number of minutes up to a day, or everything since your last ascension (on the Payback page and Stats → Actual income).',
       default: '30',
-      // the presets, and the window you typed when it's none of them
+      // the presets, the window you typed when it's none of them, and since the last ascension
       get choices() {
-        const now = String(windowMinutes(CA.Settings.get('ppActualWindow')));
-        const list = ACTUAL_PRESETS.includes(now) ? ACTUAL_PRESETS : ACTUAL_PRESETS.concat(now).sort((a, b) => a - b);
-        return list.map((v) => ({ v, label: windowText(Number(v)) }));
+        const set = CA.Settings.get('ppActualWindow');
+        const now = String(windowMinutes(set));
+        const list = ACTUAL_PRESETS.includes(now) || set === SINCE_ASCENSION ? ACTUAL_PRESETS : ACTUAL_PRESETS.concat(now).sort((a, b) => a - b);
+        return list.map((v) => ({ v, label: windowText(Number(v)) })).concat({ v: SINCE_ASCENSION, label: 'Since last ascension' });
       },
     });
     CA.Settings.defineOption({
@@ -996,7 +1011,7 @@ CA.Payback = (() => {
     PV('payback.clickRate', 'clicks a second, averaged as the CpS + clicking mode counts them (the option’s window)', [], () => clicksOver(clickWindow()));
     PV('payback.perClick', 'what a click on the big cookie is worth now', [], perClick);
     PV('payback.actualIncome', 'cookies a second you actually took in over the last minutes of play — none: the Actual income window (the Payback page’s option). NaN: under a minute recorded; with less than the window recorded, what there is', ['minutes'], (mins) => (incomeOver(minutesWindow(mins)) || { actual: NaN }).actual);
-    PV('payback.actualWindow', 'the Actual income window, in seconds (the option’s)', [], actualWindow);
+    PV('payback.actualWindow', 'the Actual income window, in seconds (the option’s; since the last ascension: the play since then)', [], actualWindow);
     PV('payback.clickWindow', 'how many seconds the CpS + clicking mode averages your clicks over (the option’s)', [], clickWindow);
     PV('payback.actualRatio', 'your actual income (over the Actual income window) as a multiple of your raw CpS: what the Actual income mode scales gains by (NaN: too little recorded)', [], actualRatio);
     PV('payback.allUpgrades', 'the payback period of “Buy all upgrades”: every store upgrade the bank affords, cheapest first, bought at once and measured together (seconds; NaN: it would buy nothing)', [], () => allUpgrades().pp);
@@ -1009,5 +1024,5 @@ CA.Payback = (() => {
     V('actualIncome', 'cookies a second you actually took in over about the last seconds of play (at least 5 minutes; NaN: too little recorded)', ['seconds'], (p) => (actualIncome(Number(p) || 0) || { actual: NaN }).actual);
   }
 
-  return { init, modes, mode: currentMode, actualWindow, setActualWindow, windowText, ACTUAL_PRESETS, modeOf, income, bank, parts, ppOf, buildingWorth, actualRatio, clicksOver, incomeOver, isSwitch, ppActual, actualIncome, calls: () => calls, table, ranking, best, buy, buyBuilding, buyUpgrade, buyUpgrades, buildingBonus, upgradeWorth, upgradesWorth, allUpgrades, pp, timeTo, sumPrice, clickRate, nextAchievement, storeUpgrades, measureAll, COLOURS, BULKS };
+  return { init, modes, mode: currentMode, actualWindow, actualWindowText, setActualWindow, windowText, ACTUAL_PRESETS, SINCE_ASCENSION, modeOf, income, bank, parts, ppOf, buildingWorth, actualRatio, clicksOver, incomeOver, isSwitch, ppActual, actualIncome, calls: () => calls, table, ranking, best, buy, buyBuilding, buyUpgrade, buyUpgrades, buildingBonus, upgradeWorth, upgradesWorth, allUpgrades, pp, timeTo, sumPrice, clickRate, nextAchievement, storeUpgrades, measureAll, COLOURS, BULKS };
 })();

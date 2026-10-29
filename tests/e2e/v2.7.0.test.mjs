@@ -106,7 +106,7 @@ assert([...doc.querySelectorAll('[data-ev-list] .ca-ev-cookies')].some((el) => e
 CA.UI.Widgets.add('stats');
 CA.UI.Widgets.tick();
 const st = doc.querySelector('#CookieMgrWidgets .ca-w:not(.ca-w-bare) [data-w-body]').textContent;
-['CpS + clicking', 'Actual CpS', 'Run started', 'Upgrades', 'Prestige level', 'Achievements', 'All time baked'].forEach((l) => assert(st.includes(l), `quick stats: ${l}`));
+['CpS + clicking', 'Actual income', 'Run started', 'Upgrades', 'Prestige level', 'Achievements', 'All time baked'].forEach((l) => assert(st.includes(l), `quick stats: ${l}`));
 assert(/3h 00m ago/.test(st) && /12/.test(st) && /34/.test(st) && /max/.test(st), `quick stats values (${st})`);
 
 clearInterval(loop);
