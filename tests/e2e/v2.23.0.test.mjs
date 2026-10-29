@@ -98,8 +98,9 @@ Game.Notify('Exploded a wrinkler', 'Found <b>12 cookies</b>!');
 assert(!Game.NotesById[2].tooltip, 'others are left alone');
 
 // ---- SeasonCompletion keeps the elders pledged by default
-// (v4.0: the pledging is the Elder Pledge macro's; Nunix late game switches it on once the drops (Halloween's too) are in)
-assert(CA.Managers.find('nunixLateGame').stages.slice(2).every((st) => st.macros.elderPledge === 'on'), 'the elders are kept pledged after Halloween by default');
+// (v4.0: the pledging is the Elder Pledge macro's; Nunix late game switches it on once the drops (Halloween's too) are in;
+// stages keep only their changes, so read what each runs with)
+assert((() => { const n = CA.Managers.find('nunixLateGame'); return n.stages.slice(2).every((st, i) => CA.Managers.effective(n, i + 2).macros.elderPledge === 'on'); })(), 'the elders are kept pledged after Halloween by default');
 
 assert(g.errors.length === 0, 'no runtime errors' + (g.errors.length ? `: ${g.errors.slice(0, 3).join(' | ')}` : ''));
 done();

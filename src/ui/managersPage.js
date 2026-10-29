@@ -9,9 +9,10 @@
 //   Code       what the Manager macro runs: the shown manager as code — written from its stages, or
 //              by you (Save makes it yours; the stage editor is then off until Back to stages); its
 //              last pass's lines lit while it runs
-//   Stages     the manager being edited (the active one unless you pick another): each stage's
-//              name, its macros (click a chip: left as it is → on → off), their settings (left as
-//              it is, or a value the stage sets), its profiles, and its
+//   Stages     the manager being edited (the active one unless you pick another), as rules: stage 1
+//              sets things up, each later stage lists only what it changes (the rest carries over —
+//              its "Carries over" line says what): macros it switches on and off (click a chip to
+//              flip it, × to drop it, the "+" lists to add one), macro settings, profiles, and its
 //              "until" condition in the macro language (the last stage lasts for good)
 
 CA.UI = CA.UI || {};
@@ -124,79 +125,135 @@ CA.UI.ManagersPage = (() => {
 
   // ---- stages -------------------------------------------------------------------------------------
 
-  function macroChips(m, i) {
-    const s = m.stages[i];
-    const macros = CA.Macros.list().filter((x) => x.mode !== 'once' && x.id !== G().MACRO);
+  const macroList = () => CA.Macros.list().filter((x) => x.mode !== 'once' && x.id !== G().MACRO);
+  const sectionOf = (x) => (SECTION_TITLES[x.section || ''] != null ? x.section || '' : '');
+  /** Options grouped by the Macros page's sections: items [{ x, v, label, off }]. */
+  function grouped(items) {
     const groups = {};
-    macros.forEach((x) => {
-      const k = SECTION_TITLES[x.section || ''] != null ? x.section || '' : '';
-      (groups[k] = groups[k] || []).push(x);
-    });
+    items.forEach((it) => (groups[sectionOf(it.x)] = groups[sectionOf(it.x)] || []).push(it));
     return SECTION_ORDER.filter((k) => groups[k])
+      .map((k) => `<optgroup label="${esc(SECTION_TITLES[k])}">${groups[k].map((it) => `<option value="${esc(it.v)}"${it.off ? ' disabled' : ''}>${esc(it.label)}</option>`).join('')}</optgroup>`)
+      .join('');
+  }
+  const x = (act, attrs, tip) => `<button type="button" class="ca-mgr-x" data-mgr-act="${act}" ${attrs} data-tip="${esc(tip)}">×</button>`;
+
+  /** The macros a stage switches one way: chips (click: the other way; ×: no change) and a list to add one. */
+  function switchRule(m, i, to) {
+    const s = m.stages[i];
+    const was = i ? G().effective(m, i - 1).macros : {};
+    const at = `data-id="${esc(m.id)}" data-i="${i}"`;
+    const chips = Object.keys(s.macros)
+      .filter((id) => s.macros[id] === to && CA.Macros.get(id))
+      .map((id) => {
+        const mc = CA.Macros.get(id);
+        return (
+          `<span class="ca-mgr-macro ${to}">` +
+          `<button type="button" class="ca-mgr-flip" data-mgr-act="flip" ${at} data-macro="${esc(id)}" data-tip="${esc(`${mc.name}: switched ${to} here — click: switch it ${to === 'on' ? 'off' : 'on'} instead`)}">${CA.UI.MacrosPage.icon(mc, true)}<span>${esc(mc.name)}</span></button>` +
+          x('unmacro', `${at} data-macro="${esc(id)}"`, i ? 'No change here: as the stage before has it' : 'Leave it as it is') +
+          '</span>'
+        );
+      })
+      .join('');
+    const items = macroList().map((mc) => ({ x: mc, v: mc.id, label: `${mc.name}${was[mc.id] === to ? ` (already ${to})` : s.macros[mc.id] ? ` (switched ${s.macros[mc.id]} here)` : ''}`, off: was[mc.id] === to || !!s.macros[mc.id] }));
+    const add = `<select class="ca-mgr-add" data-mgr-addmacro="${esc(m.id)}" data-i="${i}" data-to="${to}"><option value="">+ switch ${to}…</option>${grouped(items)}</select>`;
+    return `<div class="ca-mgr-rule"><span class="ca-mgr-rule-name">Switch ${to}</span><div class="ca-mgr-macros">${chips || '<span class="ca-hint">—</span>'}${add}</div></div>`;
+  }
+
+  /** A setting's choices (yes / no for a switch). */
+  const choices = (p) => (p.type === 'bool' ? [{ v: 'true', label: 'yes' }, { v: 'false', label: 'no' }] : typeof p.options === 'function' ? p.options() : p.options || []);
+  /** A macro setting's field: its value as the stage sets it. */
+  function inputField(m, i, id, p, cur) {
+    const attrs = `data-mgr-input="${esc(m.id)}" data-i="${i}" data-macro="${esc(id)}" data-key="${esc(p.key)}" data-type="${p.type || 'select'}"`;
+    if (p.type === 'number') return `<input type="number" step="any" ${attrs} value="${esc(cur)}">`;
+    const list = choices(p);
+    const missing = !list.some((o) => String(o.v) === String(cur)) ? `<option value="${esc(cur)}" selected>${esc(cur)}</option>` : '';
+    return `<select ${attrs}>${missing}${list.map((o) => `<option value="${esc(o.v)}"${String(o.v) === String(cur) ? ' selected' : ''}>${esc(o.label)}</option>`).join('')}</select>`;
+  }
+  const settable = (mc) => (mc.inputs || []).filter((p) => typeof p.get !== 'function');
+  /** How a setting's value reads: its option's label (yes / no for a switch). */
+  function valueLabel(p, v) {
+    const o = choices(p).find((x) => String(x.v) === String(v));
+    return o ? o.label : String(v);
+  }
+
+  /** The macro settings a stage sets: one row each (×: no change), and a list to add one. */
+  function settingRule(m, i) {
+    const s = m.stages[i];
+    const rows = [];
+    Object.keys(s.inputs).forEach((id) => {
+      const mc = CA.Macros.get(id);
+      if (!mc) return;
+      Object.keys(s.inputs[id]).forEach((k) => {
+        const p = settable(mc).find((q) => q.key === k);
+        if (!p) return;
+        rows.push(
+          `<label class="ca-field ca-mgr-input set" data-tip="${esc(`${mc.name}: ${p.label}`)}"><span><b>${esc(mc.name)}</b> · ${esc(p.label)}</span>${inputField(m, i, id, p, s.inputs[id][k])}` +
+            `${x('uninput', `data-id="${esc(m.id)}" data-i="${i}" data-macro="${esc(id)}" data-key="${esc(k)}"`, 'No change here')}</label>`
+        );
+      });
+    });
+    const items = [];
+    macroList().forEach((mc) => settable(mc).forEach((p) => items.push({ x: mc, v: `${mc.id}|${p.key}`, label: `${mc.name} · ${p.label}`, off: !!(s.inputs[mc.id] && s.inputs[mc.id][p.key] !== undefined) })));
+    const add = `<select class="ca-mgr-add" data-mgr-addinput="${esc(m.id)}" data-i="${i}"><option value="">+ a setting…</option>${grouped(items)}</select>`;
+    return `<div class="ca-mgr-rule"><span class="ca-mgr-rule-name">Settings</span><div class="ca-mgr-inputs">${rows.join('')}${add}</div></div>`;
+  }
+
+  const profilesOf = (k) => {
+    try {
+      return G().P[k].list();
+    } catch (e) {
+      return [];
+    }
+  };
+  /** The profiles a stage puts in: one row each (×: no change), and a list to add one. */
+  function profileRule(m, i) {
+    const s = m.stages[i];
+    const rows = G()
+      .KINDS.filter((k) => s.profiles[k])
       .map((k) => {
-        const chips = groups[k]
-          .map((x) => {
-            const to = s.macros[x.id] || '';
-            const tip = to === 'on' ? 'switched on in this stage — click: off' : to === 'off' ? 'switched off in this stage — click: left as it is' : 'left as it is — click: on';
-            return `<button type="button" class="ca-mgr-macro ${to || 'leave'}" data-mgr-act="macro" data-id="${esc(m.id)}" data-i="${i}" data-macro="${esc(x.id)}" data-tip="${esc(`${x.name}: ${tip}`)}">${CA.UI.MacrosPage.icon(x, true)}<span>${esc(x.name)}</span>${to ? `<i>${to}</i>` : ''}</button>`;
-          })
-          .join('');
-        return `<div class="ca-mgr-group"><span class="ca-mgr-group-name">${esc(SECTION_TITLES[k])}</span>${chips}</div>`;
-      })
-      .join('');
-  }
-
-  /** The settings of the macros this stage switches on (each: left as it is, or a value it sets). */
-  function inputFields(m, i) {
-    const s = m.stages[i];
-    const fields = [];
-    // a group switched on (the Upgrade unlocker): its macros' settings too
-    const on = [];
-    Object.keys(s.macros)
-      .filter((id) => s.macros[id] === 'on')
-      .forEach((id) => {
-        const x = CA.Macros.get(id);
-        on.push(...(x && x.mode === 'group' ? x.members : [id]));
-      });
-    [...new Set(on.concat(Object.keys(s.inputs)))]
-      .forEach((id) => {
-        const x = CA.Macros.get(id);
-        if (!x) return;
-        (x.inputs || [])
-          .filter((p) => typeof p.get !== 'function')
-          .forEach((p) => {
-            const cur = s.inputs[id] && s.inputs[id][p.key] !== undefined ? s.inputs[id][p.key] : '';
-            const attrs = `data-mgr-input="${esc(m.id)}" data-i="${i}" data-macro="${esc(id)}" data-key="${esc(p.key)}" data-type="${p.type || 'select'}"`;
-            let field;
-            if (p.type === 'number') field = `<input type="number" step="any" ${attrs} value="${esc(cur)}" placeholder="as it is">`;
-            else {
-              const list = p.type === 'bool' ? [{ v: 'true', label: 'yes' }, { v: 'false', label: 'no' }] : typeof p.options === 'function' ? p.options() : p.options || [];
-              const opts = `<option value=""${cur === '' ? ' selected' : ''}>left as it is</option>` + list.map((o) => `<option value="${esc(o.v)}"${cur !== '' && String(o.v) === String(cur) ? ' selected' : ''}>${esc(o.label)}</option>`).join('');
-              field = `<select ${attrs}>${opts}</select>`;
-            }
-            fields.push(`<label class="ca-field ca-mgr-input${cur !== '' ? ' set' : ''}" data-tip="${esc(`${x.name}: ${p.label}`)}"><span><b>${esc(x.name)}</b> · ${esc(p.label)}</span>${field}</label>`);
-          });
-      });
-    return fields.join('');
-  }
-
-  function profileFields(m, i) {
-    const s = m.stages[i];
-    return G()
-      .KINDS.map((k) => {
         const kind = G().P[k];
-        let list = [];
-        try {
-          list = kind.list();
-        } catch (e) {
-          list = [];
-        }
-        const cur = s.profiles[k] || '';
-        const missing = cur && !list.some((p) => p.id === cur) ? `<option value="${esc(cur)}" selected>${esc(cur)} (missing)</option>` : '';
-        const opts = `<option value=""${cur ? '' : ' selected'}>left as it is</option>${missing}` + list.map((p) => `<option value="${esc(p.id)}"${p.id === cur ? ' selected' : ''}>${esc(p.name)}</option>`).join('');
-        return `<label class="ca-field ca-mgr-prof">${I(kind.icon, 12)}<span>${esc(kind.label)}</span><select data-mgr-profile="${esc(m.id)}" data-i="${i}" data-kind="${k}">${opts}</select></label>`;
-      })
-      .join('');
+        const list = profilesOf(k);
+        const cur = s.profiles[k];
+        const missing = !list.some((p) => p.id === cur) ? `<option value="${esc(cur)}" selected>${esc(cur)} (missing)</option>` : '';
+        const opts = missing + list.map((p) => `<option value="${esc(p.id)}"${p.id === cur ? ' selected' : ''}>${esc(p.name)}</option>`).join('');
+        return `<label class="ca-field ca-mgr-prof set">${I(kind.icon, 12)}<span>${esc(kind.label)}</span><select data-mgr-profile="${esc(m.id)}" data-i="${i}" data-kind="${k}">${opts}</select>${x('unprofile', `data-id="${esc(m.id)}" data-i="${i}" data-kind="${k}"`, 'No change here')}</label>`;
+      });
+    const free = G().KINDS.filter((k) => !s.profiles[k]);
+    const add = free.length ? `<select class="ca-mgr-add" data-mgr-addprofile="${esc(m.id)}" data-i="${i}"><option value="">+ a profile…</option>${free.map((k) => `<option value="${k}">${esc(G().P[k].label)}</option>`).join('')}</select>` : '';
+    return `<div class="ca-mgr-rule"><span class="ca-mgr-rule-name">Profiles</span><div class="ca-mgr-profs">${rows.join('')}${add}</div></div>`;
+  }
+
+  /** What a later stage starts with: the stages before it, added up (a line, opened for the list). */
+  function carryHtml(m, i) {
+    if (!i) return '';
+    const e = G().effective(m, i - 1);
+    const names = (to) =>
+      Object.keys(e.macros)
+        .filter((id) => e.macros[id] === to && CA.Macros.get(id))
+        .map((id) => CA.Macros.get(id).name);
+    const on = names('on');
+    const off = names('off');
+    const sets = [];
+    Object.keys(e.inputs).forEach((id) => {
+      const mc = CA.Macros.get(id);
+      if (!mc) return;
+      Object.keys(e.inputs[id]).forEach((k) => {
+        const p = settable(mc).find((q) => q.key === k) || { key: k, label: k };
+        sets.push(`${mc.name} · ${p.label}: ${valueLabel(p, e.inputs[id][k])}`);
+      });
+    });
+    const profs = G()
+      .KINDS.filter((k) => e.profiles[k])
+      .map((k) => `${G().P[k].label}: ${(profilesOf(k).find((p) => p.id === e.profiles[k]) || { name: e.profiles[k] }).name}`);
+    const line = (label, xs) => (xs.length ? `<div><em>${label}</em> ${xs.map(esc).join(' · ')}</div>` : '');
+    return (
+      `<details class="ca-mgr-carry"><summary>Carries over from stage ${i}: ${on.length} on, ${off.length} off, ${sets.length} setting${sets.length === 1 ? '' : 's'}, ${profs.length} profile${profs.length === 1 ? '' : 's'}</summary>` +
+      line('On:', on) +
+      line('Off:', off) +
+      line('Settings:', sets) +
+      line('Profiles:', profs) +
+      '</details>'
+    );
   }
 
   function stageHtml(m, i) {
@@ -205,7 +262,6 @@ CA.UI.ManagersPage = (() => {
     const w = G().where();
     const here = w && w.manager === m && w.started && w.index === i;
     const problem = G().untilProblem(s.until);
-    const inputs = inputFields(m, i);
     const until = last
       ? '<div class="ca-mgr-until"><span class="ca-hint">The last stage: it lasts for good.</span></div>'
       : `<label class="ca-mgr-until"><span>Until</span><input type="text" spellcheck="false" class="ca-code-input${problem ? ' bad' : ''}" value="${esc(s.until)}" placeholder="a condition, e.g. season.complete(christmas)" data-mgr-until="${esc(m.id)}" data-i="${i}">` +
@@ -219,12 +275,15 @@ CA.UI.ManagersPage = (() => {
       '<span class="ca-dprof-acts">' +
       C().button('▲', `data-mgr-act="up" data-id="${esc(m.id)}" data-i="${i}" data-tip="Move up"${i ? '' : ' disabled'}`, 'ca-btn-small') +
       C().button('▼', `data-mgr-act="down" data-id="${esc(m.id)}" data-i="${i}" data-tip="Move down"${last ? ' disabled' : ''}`, 'ca-btn-small') +
-      C().button(`${I('plus', 12)} After`, `data-mgr-act="addStage" data-id="${esc(m.id)}" data-i="${i}" data-tip="A new stage after this one (a copy of it)"`, 'ca-btn-small') +
+      C().button(`${I('plus', 12)} After`, `data-mgr-act="addStage" data-id="${esc(m.id)}" data-i="${i}" data-tip="A new stage after this one (it changes nothing until you add to it)"`, 'ca-btn-small') +
       C().button('Delete', `data-mgr-act="delStage" data-id="${esc(m.id)}" data-i="${i}" data-arm-label="Delete this stage?"${m.stages.length > 1 ? '' : ' disabled'}`, 'ca-btn-small ca-btn-off') +
       '</span></div>' +
-      `<div class="ca-mgr-sub">Macros</div><div class="ca-mgr-macros">${macroChips(m, i)}</div>` +
-      (inputs ? `<div class="ca-mgr-sub">Their settings</div><div class="ca-mgr-inputs">${inputs}</div>` : '') +
-      `<div class="ca-mgr-sub">Profiles</div><div class="ca-mgr-profs">${profileFields(m, i)}</div>` +
+      carryHtml(m, i) +
+      `<div class="ca-mgr-sub">${i ? 'What it changes' : 'What it sets up'}</div>` +
+      switchRule(m, i, 'on') +
+      switchRule(m, i, 'off') +
+      settingRule(m, i) +
+      profileRule(m, i) +
       until +
       '</div>'
     );
@@ -243,7 +302,7 @@ CA.UI.ManagersPage = (() => {
       );
     return (
       '<div class="ca-card">' +
-      C().cardHead(`Stages · ${esc(m.name)}`, 'sortList', '<div class="ca-card-meta"><span class="ca-hint">a stage switches its macros once on entering it, then puts its profiles in</span></div>') +
+      C().cardHead(`Stages · ${esc(m.name)}`, 'sortList', '<div class="ca-card-meta"><span class="ca-hint">stage 1 sets things up; each stage after it only changes things, the rest carries over</span></div>') +
       `<div class="ca-mgr-stages">${m.stages.map((s, i) => stageHtml(m, i)).join('')}</div>` +
       '</div>'
     );
@@ -274,7 +333,7 @@ CA.UI.ManagersPage = (() => {
       `<div class="ca-hint ca-mgr-codehint">What the Manager macro runs each second. ${mine ? 'You wrote it: the stage editor is off until you go back to the stages.' : 'The stage editor writes it; change it and Save to make it yours.'}</div>` +
       (codeError ? `<div class="ca-editor-error">${esc(codeError)}</div>` : '') +
       '<div class="ca-ed-layout"><div class="ca-editor-body">' +
-      CA.UI.CodeEditor.html('manager', src, { title: `${m.name}, as code`, hint: 'a block per stage · manager.entering(): its first pass · manager.profile(kind, id) · manager.next()' }) +
+      CA.UI.CodeEditor.html('manager', src, { title: `${m.name}, as code`, hint: 'a block per stage · manager.arriving(N): stage N’s first pass · manager.profile(kind, id) · manager.next()' }) +
       '</div>' +
       CA.UI.CodeEditor.libraryHtml('manager', { first: ['Managers', 'Macros', 'Values'] }) +
       '</div></div>'
@@ -347,12 +406,21 @@ CA.UI.ManagersPage = (() => {
       case 'seeds':
         G().resetSeeds();
         break;
-      case 'macro': {
+      case 'flip': {
         const m = G().find(d.id);
         const cur = (m && m.stages[i] && m.stages[i].macros[d.macro]) || '';
-        G().setStageMacro(d.id, i, d.macro, cur === '' ? 'on' : cur === 'on' ? 'off' : '');
+        G().setStageMacro(d.id, i, d.macro, cur === 'on' ? 'off' : 'on');
         break;
       }
+      case 'unmacro':
+        G().setStageMacro(d.id, i, d.macro, '');
+        break;
+      case 'uninput':
+        G().setStageInput(d.id, i, d.macro, d.key, '');
+        break;
+      case 'unprofile':
+        G().setStageProfile(d.id, i, d.kind, '');
+        break;
       case 'up':
         G().moveStage(d.id, i, -1);
         break;
@@ -406,7 +474,26 @@ CA.UI.ManagersPage = (() => {
     else if (d.mgrStageName) G().updateStage(d.mgrStageName, Number(d.i), { name: t.value });
     else if (d.mgrUntil) G().updateStage(d.mgrUntil, Number(d.i), { until: t.value });
     else if (d.mgrProfile) G().setStageProfile(d.mgrProfile, Number(d.i), d.kind, t.value);
-    else if (d.mgrInput) {
+    else if (d.mgrAddmacro) {
+      if (!t.value) return;
+      G().setStageMacro(d.mgrAddmacro, Number(d.i), t.value, d.to);
+    } else if (d.mgrAddinput) {
+      if (!t.value) return;
+      // a new setting starts at what the stage would have anyway (or the macro's own value)
+      const [id, key] = t.value.split('|');
+      const mgr = G().find(d.mgrAddinput);
+      const i = Number(d.i);
+      const was = i ? (G().effective(mgr, i - 1).inputs[id] || {})[key] : undefined;
+      const mc = CA.Macros.get(id);
+      G().setStageInput(d.mgrAddinput, i, id, key, was !== undefined ? was : CA.Macros.inputsOf(mc)[key]);
+    } else if (d.mgrAddprofile) {
+      if (!t.value) return;
+      const mgr = G().find(d.mgrAddprofile);
+      const i = Number(d.i);
+      const was = i ? G().effective(mgr, i - 1).profiles[t.value] : '';
+      const pick = profilesOf(t.value).find((p) => p.id !== was);
+      if (pick) G().setStageProfile(d.mgrAddprofile, i, t.value, pick.id);
+    } else if (d.mgrInput) {
       const v = t.value === '' ? '' : d.type === 'bool' ? t.value === 'true' : d.type === 'number' ? Number(t.value) : t.value;
       G().setStageInput(d.mgrInput, Number(d.i), d.macro, d.key, v);
     }

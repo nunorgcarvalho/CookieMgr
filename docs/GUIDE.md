@@ -394,6 +394,82 @@ it). Modifiers work (`Shift + G`): click a key chip and press the new key (`Esc`
 
 ### Managers
 
+A **manager** plays an ascension for you in **stages**. Stage 1 sets things up: it switches macros on or off,
+sets their settings (Research's "stop before", SeasonCompletion's last season…) and puts in the Auto buyer, Pantheon,
+dragon, Grimoire and garden profiles it names. Each stage after it lists only what it **changes**; everything else
+carries over, until a later stage changes it back. A stage lasts **until** a condition in the macro language holds
+(the last stage lasts for good). Moving on to a stage makes only its own changes, once, so a macro you flipped by
+hand stays flipped; jumping to a stage (clicking it in the strip) sets up the stages before it too. Profiles are
+retried each pass until they're in, then left alone; where stages name the same kind, the latest stage's wins.
+These are **ascension managers**: ascending starts them over at stage 1. Managers saved earlier (each stage a
+full list) are turned into changes when loaded, and run as before.
+
+The **Managers** page has:
+
+- **Manager**: the **Manager** macro's switch and which manager is active, its stages in a strip (the one it's on
+  is lit; click one to go there), what it moves on once, and what it still has to put in.
+- **Managers**: rename, scope, **Use**, **Duplicate**, **Delete**, **New manager** and **Put Nunix late game back**.
+- **Stages**: for the shown manager, a card per stage with its rules. Later stages start with a folded **Carries
+  over from stage N** line (open it to see everything in force). Then **Switch on** and **Switch off** chips (click a
+  chip to flip it, × to drop it), **Settings** and **Profiles** rows (× drops one), each with a "+" list to add a
+  rule, and **Until**. A new stage changes nothing until you add to it; deleting a stage hands its changes to the
+  next one, so the stages after it run as before.
+- **Code**: a manager is code. The stage editor writes it, a block per stage, and the Manager macro runs it each
+  second. Change it and Save to make it yours (the stage editor is then off until **Back to stages**).
+
+**Nunix late game** comes seeded and active:
+
+1. **Shimmering veil**, while it lasts: golden and wrath cookies and reindeer clicked, but not the big cookie
+   (clicking it breaks the veil); the Auto buyer, the Upgrade unlocker (Santa, research, Auto dragon, Pet the dragon,
+   Fortunes and cheap upgrades), SeasonCompletion, wrinklers and sugar lumps. Research goes all the way, stopping
+   before the Elder Pact, so the Grandmapocalypse keeps going for the drops. No garden, Grimoire or stock market.
+   Pantheon wrinklers, dragon drops.
+2. **Drops**: once the veil breaks, the big cookie is clicked too, until Christmas's upgrades, Easter, Halloween and
+   Valentine's day are in.
+3. **Reindeer**: Christmas again for its cookies, with the elders pledged and Dragon drops & flight.
+4. **Golden cookie combos**, for good: the Auto buyer's Golden cookie combos profile, 8 nursetulips together +
+   clover combos in the garden, the golden Pantheon, Dragonflight & Harvest, and Force the Hand of Fate on combos.
+
+The Auto buyer buys by payback, so it doesn't buy research or upgrades that give no CpS; the Upgrade unlocker does.
+
+Words: `manager.active()`, `manager.stage()`, `manager.stageName()`, `manager.entering()`, `manager.arriving(stage)`,
+`manager.stages()`, `manager.list()`. Actions: `manager.use(manager)`, `manager.goTo(stage)`, `manager.next()`,
+`manager.profile(kind, profile)`, `macro.setting(macro, key, value)`. `switch on a, b, c` switches several macros in
+one line, and `veil()` tells whether the Shimmering veil is up.
+
+### Payback periods
+
+cookieMgr works payback periods out itself — the numbers Cookie Monster shows, without Cookie Monster. What a
+purchase adds is asked of the game: cookieMgr makes the change (one more building, ten, a hundred, an upgrade
+bought), runs the game's own CpS calculation, reads the result and undoes it — so the numbers are exact for any game
+version, and it counts the achievements the purchase would win (their milk makes kittens stronger), as Cookie Monster
+does. The payback period is Cookie Monster's: **time until you can afford it + price ÷ the CpS it adds**. Colors
+follow Cookie Monster's too: blue (better than the best building), green (the best building), yellow / orange / red
+(within the 10 / 20 / 30 best building payback periods, counting ×1, ×10 and ×100), purple (worse), gray (never pays
+back). It's checked against Cookie Monster itself in the real game (the simulator's parity test): every building at
+×1, ×10 and ×100 and every upgrade in the store, the same to the last digit.
+
+Payback periods read in time units: seconds, then minutes, hours, days and years, the next unit only once the
+number passes 999 (999 s, then 16.7 min), so they keep three digits. **Payback periods in** (the Payback page's
+Options) switches them back to plain seconds, Cookie Monster's way (999, 1K).
+
+**Pet the dragon** gets the dragon's four drops (Dragon scale, claw, fang, teddy bear): each pet has a 1 in 20 chance,
+and which one drops depends only on the quarter of the hour, in an order fixed per run. It learns that order by petting
+(it never reads your save's seed): in a quarter it hasn't tried, or whose drop you're still missing, it opens the dragon,
+pets it until something drops (200 pets with nothing: that quarter's drop is one you have), and closes it again; its
+button says what this quarter-hour gives, as far as it knows, and when the next quarter worth trying comes. Needs dragon level 8 and the "Pet the dragon" upgrade.
+
+**Running** at the top of the page is a strip with a chip per running macro (warmer the busier it is — click one to
+find its card, × to stop it) and **Stop all**. A running macro's card shows, for each of its actions, how many things
+it has done and when it last did something (or that it can't run right now).
+
+**Hotkeys** — every macro can have one; one key can trigger several macros at once (binding a key that's in use shares
+it). Modifiers work (`Shift + G`): click a key chip and press the new key (`Esc` cancels, `Backspace` clears).
+
+**Favorites** — the ★ on a macro gives it its own button on the left panel (see Widgets).
+
+### Managers
+
 A **manager** plays an ascension for you in **stages**. Each stage switches macros on or off, sets their settings
 (Research's "stop before", SeasonCompletion's last season…), puts in the Auto buyer, Pantheon, dragon, Grimoire and
 garden profiles it names, then lasts **until** a condition in the macro language holds (the last stage lasts for

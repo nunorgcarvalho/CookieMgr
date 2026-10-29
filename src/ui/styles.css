@@ -8809,17 +8809,6 @@ body.ca-has-storebar #products {
   flex-direction: column;
   gap: 4px;
 }
-#CookieMgrMenu .ca-mgr-group {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px;
-}
-#CookieMgrMenu .ca-mgr-group-name {
-  width: 150px;
-  font-size: 10px;
-  color: #a39477;
-}
 #CookieMgrMenu .ca-mgr-macro {
   display: inline-flex;
   align-items: center;
@@ -8911,6 +8900,81 @@ body.ca-has-storebar #products {
 }
 #CookieMgrMenu .ca-mgr-input input {
   width: 70px;
+}
+/* Manager stage rules: a stage as rules (what it sets up / changes), the rest carrying over */
+#CookieMgrMenu .ca-mgr-rule {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 4px 0;
+  border-top: 1px solid rgba(255, 220, 150, 0.06);
+}
+#CookieMgrMenu .ca-mgr-rule-name {
+  flex: none;
+  width: 80px;
+  padding-top: 3px;
+  font-size: 10px;
+  color: #a39477;
+}
+#CookieMgrMenu .ca-mgr-rule .ca-mgr-macros,
+#CookieMgrMenu .ca-mgr-rule .ca-mgr-inputs,
+#CookieMgrMenu .ca-mgr-rule .ca-mgr-profs {
+  flex: 1 1 auto;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+#CookieMgrMenu .ca-mgr-macro {
+  cursor: default;
+}
+#CookieMgrMenu .ca-mgr-flip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+#CookieMgrMenu .ca-mgr-x {
+  padding: 0 2px;
+  font: inherit;
+  font-size: 11px;
+  line-height: 1;
+  color: inherit;
+  opacity: 0.55;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+#CookieMgrMenu .ca-mgr-x:hover {
+  opacity: 1;
+}
+#CookieMgrMenu select.ca-mgr-add {
+  max-width: 170px;
+  font-size: 10px;
+  color: #b9ab93;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px dashed rgba(255, 220, 150, 0.25);
+}
+#CookieMgrMenu .ca-mgr-carry {
+  margin: 4px 0 2px;
+  font-size: 10px;
+  color: #93866f;
+}
+#CookieMgrMenu .ca-mgr-carry summary {
+  cursor: pointer;
+}
+#CookieMgrMenu .ca-mgr-carry div {
+  margin: 3px 0 0 12px;
+  line-height: 1.5;
+}
+#CookieMgrMenu .ca-mgr-carry em {
+  font-style: normal;
+  color: #b9ab93;
 }
 #CookieMgrMenu .ca-mgr-codehint {
   padding: 6px 14px 0;
