@@ -59,6 +59,8 @@ CA.Seasons = (() => {
     const drops = dropsOf(s, part);
     return { have: drops.filter(has).length, of: drops.length };
   }
+  /** The drops of a season still to get, in the game's order. */
+  const missing = (s, part = 'all') => dropsOf(s, part).filter((n) => !has(n));
 
   /** Buys every one of a season's drops that's in the store and affordable. Returns how many. */
   function buyDrops(s, part = 'all') {
@@ -320,5 +322,5 @@ CA.Seasons = (() => {
     });
   }
 
-  return { init, SEASONS, dropsOf, complete, progress, DEFAULT_SOURCE };
+  return { init, SEASONS, dropsOf, complete, progress, missing, DEFAULT_SOURCE };
 })();

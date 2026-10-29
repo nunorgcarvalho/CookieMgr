@@ -18,12 +18,14 @@ const value = (id, ...args) => CA.Script.VALUES.find((v) => v.id === id).get(...
 // ---- Nunix late game, as changes ----
 const nunix = G.find('nunixLateGame');
 const [s1, s2, s3] = nunix.stages;
-assert(Object.keys(s2.macros).join() === 'elderPledge' && Object.keys(s2.profiles).join() === 'dragon', 'Reindeer: the pledge and the dragon');
+assert(Object.keys(s2.macros).sort().join() === 'elderPledge,fthofOnClickFrenzy,golden,wrath' && s2.profiles.pantheon === 'golden' && s2.profiles.buyer === 'combos' && s2.profiles.garden === 'tulipCombos' && s2.profiles.dragon === 'dropsFlight', 'Reindeer: the pledge, and golden cookie combos already — all but the dragon');
+assert(JSON.stringify(s3.macros) === '{}' && JSON.stringify(s3.profiles) === '{"dragon":"dragonFlightHarvest"}', 'Golden cookie combos: only the dragon’s Harvest');
 assert(s1.macros.reindeer === 'on' && s1.macros.bigCookie === 'on' && s1.macros.upgradeUnlocker === 'on', 'stage 1: the big cookie and reindeer clicked; the Upgrade unlocker on');
 assert(s1.macros.golden === 'off' && s1.macros.wrath === 'off', 'stage 1: no golden or wrath cookies (Scorn makes them all wrath)');
 assert(s1.inputs.research.stopBefore === 'none' && s1.macros.elderPledge === 'off', 'all the research, the Elder Pact too; no pledge (the Grandmapocalypse, for the drops)');
-assert(['gardener', 'fthofOnClickFrenzy', 'stockTrader'].every((id) => s1.macros[id] === 'off'), 'no garden, spells or stocks at first');
-assert(s3.macros.golden === 'on' && s3.macros.wrath === 'on', 'Golden cookie combos: golden and wrath cookies on again');
+assert(['fthofOnClickFrenzy', 'stockTrader'].every((id) => s1.macros[id] === 'off'), 'no spells or stocks at first');
+assert(s1.macros.gardener === 'on' && s1.profiles.garden === 'weedFarm' && s3.macros.gardener === undefined && s2.profiles.garden === 'tulipCombos', 'the garden a weed farm until Reindeer puts the tulips in');
+assert(s2.macros.golden === 'on' && s2.macros.wrath === 'on', 'Reindeer: golden and wrath cookies on again');
 const e3 = G.effective(nunix, 2);
 assert(e3.macros.reindeer === 'on' && e3.macros.bigCookie === 'on' && e3.macros.golden === 'on' && e3.macros.elderPledge === 'on' && e3.macros.gardener === 'on' && e3.profiles.buyer === 'combos' && e3.profiles.pantheon === 'golden', 'what stage 3 runs with: everything before it, and its own changes');
 assert(e3.inputs.research.stopBefore === 'none', 'settings carry over too');
@@ -32,7 +34,7 @@ assert(e3.inputs.research.stopBefore === 'none', 'settings carry over too');
 const code = G.codeOf(nunix);
 assert(!CA.Script.compile(code).errors.length, 'the code reads fine');
 assert(code.split('\n').length < 55, `short: a stage lists only its changes (${code.split('\n').length} lines)`);
-assert(/if manager\.stage\(\) >= 2:\n {2}if manager\.arriving\(2\):\n {4}switch on elderPledge\n/.test(code), 'stage 2’s block: the pledge on');
+assert(/if manager\.stage\(\) >= 2:\n {2}if manager\.arriving\(2\):\n {4}switch on elderPledge, /.test(code), 'stage 2’s block: the pledge on');
 assert((code.match(/switch on autoBuyer/g) || []).length === 1, 'stage 1’s setup is written once');
 
 // ---- running: changes carry over; moving on runs only the new stage's changes ----
@@ -129,6 +131,39 @@ assert(!M.isOn('lumps'), 'a name (or a watch) isn’t what it does: nothing set 
 G.revert('nunixLateGame');
 G.step();
 assert(M.inputsOf(M.get('research')).stopBefore === 'none' && M.isOn('lumps'), 'Revert to default: set up again, as it comes');
+
+// ---- a save whose Nunix kept the garden off until the combos: the weed farm from the start ----
+const weeds = JSON.parse(snap);
+const nw = JSON.parse(JSON.stringify(G.SEEDS[0]));
+nw.stages[0].macros.gardener = 'off';
+delete nw.stages[0].profiles.garden;
+nw.stages[2].macros.gardener = 'on';
+weeds.managers = { managers: [nw], active: 'nunixLateGame' };
+S.load(JSON.stringify(weeds));
+const nwl = G.find('nunixLateGame');
+assert(nwl.stages[0].macros.gardener === 'on' && nwl.stages[0].profiles.garden === 'weedFarm' && nwl.stages[2].macros.gardener === undefined && nwl.stages[1].macros.gardener === undefined && !G.isEdited('nunixLateGame'), 'saved Nunix: the weed farm while the garden isn’t ready, as seeded now');
+const kept = JSON.parse(snap);
+const nk = JSON.parse(JSON.stringify(nw));
+nk.stages[0].profiles.garden = 'maxEffects';
+kept.managers = { managers: [nk], active: 'nunixLateGame' };
+S.load(JSON.stringify(kept));
+assert(G.find('nunixLateGame').stages[0].macros.gardener === 'off', 'one with a garden profile of yours in Drops: left as it is');
+S.load(snap);
+
+// ---- a save whose Nunix kept golden cookies for its last stage: they start with Reindeer ----
+const pan = JSON.parse(snap);
+const np = JSON.parse(JSON.stringify(G.SEEDS[0]));
+np.stages[0].macros.gardener = 'off';
+delete np.stages[0].profiles.garden;
+np.stages[1].macros = { elderPledge: 'on' };
+np.stages[1].profiles = { dragon: 'dropsFlight' };
+np.stages[1].watch = np.stages[1].watch.slice(0, 1);
+np.stages[2].macros = { golden: 'on', wrath: 'on', gardener: 'on', fthofOnClickFrenzy: 'on' };
+np.stages[2].profiles = { buyer: 'combos', pantheon: 'golden', dragon: 'dragonFlightHarvest', grimoire: 'default', garden: 'tulipCombos' };
+pan.managers = { managers: [np], active: 'nunixLateGame' };
+S.load(JSON.stringify(pan));
+const npl = G.find('nunixLateGame');
+assert(npl.stages[1].profiles.pantheon === 'golden' && npl.stages[1].macros.golden === 'on' && npl.stages[2].profiles.pantheon === undefined && !G.isEdited('nunixLateGame'), 'saved Nunix (as seeded before): golden cookie combos from Reindeer and the weed farm, as seeded now');
 S.load(snap);
 
 // (the page: tests/e2e/manager-stage-tabs.test.mjs)

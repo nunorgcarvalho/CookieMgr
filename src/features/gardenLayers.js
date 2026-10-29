@@ -454,6 +454,21 @@ else:
     S().set(LAYERS.profile.opt, id);
     if (picked('template') === 'current' && !opts.lazy && CA.Garden.captureCurrent) CA.Garden.captureCurrent();
   }
+  /**
+   * The seeds a profile plants that the garden can't yet (not unlocked), by name: [] when it can plant them
+   * all (or plants what's there already), null with no garden.
+   */
+  function missingSeeds(id) {
+    const M = CA.Util.minigame('Farm');
+    if (!M || !M.plot) return null;
+    const plants = M.plants || {};
+    const p = get('profile', id);
+    const seeds = p && get('seeds', p.data.seeds);
+    if (!seeds || seeds.live) return [];
+    return Object.values(seeds.data.map || {})
+      .filter((key, i, all) => all.indexOf(key) === i && plants[key] && !plants[key].unlocked)
+      .map((key) => NAMES[key] || plants[key].name);
+  }
   /** Whether the four picks differ from the loaded profile's. */
   function profileChanged() {
     const p = get('profile', picked('profile'));
@@ -651,6 +666,7 @@ else:
     picks,
     pick,
     loadProfile,
+    missingSeeds,
     profileChanged,
     saveProfile,
     newProfile,

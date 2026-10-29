@@ -63,7 +63,7 @@ assert(nunix().stages[1].macros.elderPledge === 'on', 'a “still off” one, cl
 // ---- the library ----
 const row = (id) => q(`.ca-mgr-libgroup:not(.ca-mgr-libtop) [data-mgr-act="lib"][data-macro="${id}"]`);
 assert(q('.ca-mgr-libtop') && q('.ca-mgr-libgroup') === q('.ca-mgr-libtop') && qa('.ca-mgr-libtop .ca-mgr-librow').length === 8, 'Most used first (eight)');
-assert(row('autoBuyer').classList.contains('on') && row('gardener').classList.contains('off'), 'each row says how it stands in this stage');
+assert(row('autoBuyer').classList.contains('on') && row('stockTrader').classList.contains('off'), 'each row says how it stands in this stage');
 click(row('fortune'));
 assert(nunix().stages[1].macros.fortune === 'on', 'a row clicked: on from this stage');
 click(row('fortune'));
@@ -101,6 +101,10 @@ assert(!nunix().stages[1].inputs.research, 'undone');
 // ---- profiles: a card per kind ----
 assert(qa('.ca-mgr-pcard').length === G.KINDS.length, 'a card per kind of profile');
 const pick = (k) => q(`[data-mgr-profile][data-kind="${k}"]`);
+// (Reindeer sets every kind: two of them back to as before, for the picks below)
+change(pick('buyer'), '');
+change(pick('grimoire'), '');
+assert(!nunix().stages[1].profiles.buyer && !nunix().stages[1].profiles.grimoire, '“as before” picked: no change here');
 assert(/as before · Payback/.test(pick('buyer').options[0].textContent) && pick('buyer').value === '', 'stage 2’s Auto buyer: as before');
 assert(/Mind Over Matter/.test(pick('dragon').closest('.ca-mgr-pcard').querySelector('.ca-mgr-snap').textContent), 'the dragon’s auras, at a glance');
 change(pick('grimoire'), 'default');

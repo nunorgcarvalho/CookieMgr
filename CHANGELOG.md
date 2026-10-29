@@ -2,6 +2,39 @@
 
 ## Unreleased
 
+## 4.19.0 — 2026-10-29
+
+- **Nunix late game: golden cookies as soon as the drops are in.** Reindeer now switches to golden cookie combos
+  straight away: golden and wrath cookies clicked again, the Golden cookie combos buyer, the golden Pantheon (no
+  wrinklers are left for Scorn once the elders are pledged), Force the Hand of Fate on combos and the garden on
+  8 nursetulips together + clover combos. Only the dragon waits: it keeps Mind Over Matter & Dragonflight for the
+  reindeer drops, and the last stage now just swaps in Dragonflight & Harvest. Reindeer watches the combo, the
+  magic for FtHoF and what the buyer buys next too.
+- **Nunix late game: the garden is a weed farm until it's ready.** Drops switches the Auto-gardener on with the
+  **Weed farm** garden profile (a bare plot on fertilizer: mature weeds and any new seed that springs up are
+  harvested, so mutations can unlock seeds) instead of leaving the garden off.
+- **Managers: a garden profile waits for its seeds.** A manager's garden profile whose seeds aren't unlocked yet
+  (or with no garden yet, or after an ascension) puts the Weed farm in meanwhile, and goes in once they are; the
+  Manager widget says what it's waiting for.
+- A saved, unedited Nunix late game picks all this up on load.
+
+## 4.18.0 — 2026-10-29
+
+- **Manager widget:** with only a few of a season's drops left, "Next stage when" names them, each with its icon,
+  instead of counting them. In Nunix late game's Reindeer stage it lists the reindeer cookies still to get
+  ("Christmas complete · 3 left": Bell biscuits, …) rather than 19/22; the ones in the store to buy are bright.
+
+## 4.17.1 — 2026-10-29
+
+- **README:** the Manager widget picture and bullet show its new Auto buyer row.
+
+## 4.17.0 — 2026-10-29
+
+- **Manager widget: Auto buyer row.** A new part, on by default right under the stages, shows while the stage has
+  the Auto buyer on (even with the Manager macro off): the last three things the Auto buyer bought and what it buys
+  next — its name, price, payback period, when you can afford it and a bar — updating live. Hover a picture for
+  its card; click the row for the Payback page.
+
 ## 4.16.2 — 2026-10-29
 
 - **Ascension lines:** just the lavender line on the chart; the “Ascension” label shows only when you hover it.
