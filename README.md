@@ -84,7 +84,7 @@ the page. [See every page with a screenshot](#pages).
 <td width="50%" valign="top">
 <b>Payback</b><br>
 <img src="docs/readme/payback.png" alt="The Payback page" width="100%">
-<ul><li>An exact payback period for every building and upgrade</li><li>The Auto buyer: a queue, profiles with rules, and a bank reserve</li><li>Payback measured by CpS, clicking, or what you actually took in over the last 15 min, 1 h or 3 h</li><li>Buy all upgrades in one click, ranked in the queue by its own payback period</li></ul>
+<ul><li>An exact payback period for every building and upgrade</li><li>The Auto buyer: a queue, profiles with rules, and a bank reserve</li><li>Payback measured by CpS, clicking, or what you actually took in over a window you set (30 min by default; 15 min, 1 h, 3 h or any time)</li><li>Buy all upgrades in one click, ranked in the queue by its own payback period</li></ul>
 </td>
 <td width="50%" valign="top">
 <b>Garden</b><br>
@@ -120,7 +120,7 @@ the page. [See every page with a screenshot](#pages).
 <td width="50%" valign="top">
 <b>Statistics</b><br>
 <img src="docs/readme/statistics.png" alt="The Statistics page" width="100%">
-<ul><li>Choose the lines the store's tooltips show</li><li>Write your own statistics, with a live preview, in code colored by where each word comes from</li><li>Pick how payback is measured</li></ul>
+<ul><li>Choose the lines the store's tooltips show and save them as layouts, with a built-in Default</li><li>Write your own statistics, with a live preview, in code colored by where each word comes from</li><li>Pick how payback is measured</li></ul>
 </td>
 <td width="50%" valign="top">
 <b>Macros</b><br>

@@ -56,11 +56,11 @@ CA.Stats = (() => {
       group: 'Production',
       name: 'Bonus income',
       label: 'Bonus income',
-      desc: 'the CpS it adds, and its share of your CpS',
+      desc: 'the raw CpS it adds (no golden cookie effects), and its share of your raw CpS',
       scope: 'item',
       format: 'text',
-      source: `# the CpS it adds, and what share of your CpS that is
-gain = item.gain()
+      source: `# the raw CpS it adds, and what share of your raw CpS that is
+gain = item.rawGain()
 if item.kind() == "upgrade" and gain == 0:
   return
 sign = ""
@@ -70,8 +70,8 @@ if item.kind() == "building":
 elif gain > 0:
   sign = "+"
 share = ""
-if cps() > 0:
-  share = " (" + fmt.pct(gain / cps(), 2) + ")"
+if rawCps() > 0:
+  share = " (" + fmt.pct(gain / rawCps(), 2) + ")"
 return sign + fmt.number(gain) + "/s" + share`,
     },
     {
@@ -98,7 +98,7 @@ if m > 0:
       group: 'Production',
       name: 'Income, actual income',
       label: 'Income, actual income',
-      desc: 'what it adds to what you’ve really been taking in: its bonus income (and a clicking upgrade’s clicks) scaled by your actual income (the Actual income mode; once a minute of play is recorded)',
+      desc: 'what it adds to what you’ve really been taking in: its bonus income (and a clicking upgrade’s clicks) scaled by your actual income over the Payback page’s Actual income window (once a minute of play is recorded)',
       scope: 'item',
       format: 'text',
       source: `g = item.gainIn("actual")
@@ -111,7 +111,7 @@ if known(g) and g > 0:
       group: 'Payback',
       name: 'Payback period, actual income',
       label: 'Payback period, actual income',
-      desc: 'the payback period by what you’ve really been taking in (the Actual income mode; once a minute of play is recorded)',
+      desc: 'the payback period by what you’ve really been taking in over the Payback page’s Actual income window (once a minute of play is recorded)',
       scope: 'item',
       format: 'payback',
       source: `a = item.paybackIn("actual")
@@ -171,43 +171,17 @@ rate = payback.clickRate()
 income = cps() + rate * payback.perClick()
 return item.gain() + item.clickGain() * rate`,
     },
-    // actual income at three set depths: the last 15 minutes, hour and 3 hours of play
-    ...[
-      ['actualIncome15m', 15, 'Actual, 15 min', 'the last 15 minutes of play: what you’ve been doing just now'],
-      ['actualIncome1h', 60, 'Actual, 1 h', 'the last hour of play'],
-      ['actualIncome3h', 180, 'Actual, 3 h', 'the last 3 hours of play: your longer habits, a lucky streak smoothed out'],
-    ].map(([id, mins, label, over]) => ({
-      id,
-      group: 'Payback modes',
-      mode: true,
-      name: `Actual income, ${label.slice(8)}`,
-      label,
-      desc: `Payback periods count in what you’ve actually been taking in — everything baked: production, clicking, golden cookies, wrinklers — averaged over ${over}, projected forward. A purchase’s gain scales the same way: what it adds to your raw CpS × your actual income ÷ your raw CpS. Needs a minute of play recorded (until then CpS); with less than ${label.slice(8)} recorded, it averages what there is.`,
-      scope: 'item',
-      format: 'number',
-      source: `# a payback mode: income is what payback periods count in, the return what the item adds to it
-# what you actually took in (everything baked) over the last ${mins} minutes of play, projected forward
-a = payback.actualIncome(${mins})
-if not known(a) or rawCps() <= 0:
-  return
-income = a
-# what it adds scales the same way: its raw gain × actual ÷ raw CpS
-gain = item.rawGain()
-if item.kind() == "upgrade" and item.clickGain() > 0 and cps() > 0:
-  gain = gain + item.clickGain() * clickRate() * rawCps() / cps()
-return gain * a / rawCps()`,
-    })),
     {
       id: 'actualIncome',
       group: 'Payback modes',
       mode: true,
-      name: 'Actual income, your window',
-      label: 'Actual, custom',
-      desc: 'Payback periods count in what you’ve actually been taking in — everything baked: production, clicking, golden cookies, wrinklers — averaged over as much of your latest play as the Payback page’s “Actual income over” option says (30 minutes at first; 5 minutes to 3 hours), projected forward. A purchase’s gain scales the same way: what it adds to your raw CpS × your actual income ÷ your raw CpS. Needs a minute of play recorded; until then CpS.',
+      name: 'Actual income',
+      label: 'Actual income',
+      desc: 'Payback periods count in what you’ve actually been taking in — everything baked: production, clicking, golden cookies, wrinklers — averaged over the Payback page’s Actual income window (30 minutes at first; 15 min, 30 min, 1 h, 3 h or any time up to a day), projected forward. A purchase’s gain scales the same way: what it adds to your raw CpS × your actual income ÷ your raw CpS. Needs a minute of play recorded (until then CpS); with less than the window recorded, it averages what there is.',
       scope: 'item',
       format: 'number',
       source: `# a payback mode: income is what payback periods count in, the return what the item adds to it
-# what you actually took in (everything baked) over the option's window, projected forward
+# what you actually took in (everything baked) over the Actual income window, projected forward
 a = payback.actualIncome()
 if not known(a) or rawCps() <= 0:
   return
@@ -218,7 +192,19 @@ if item.kind() == "upgrade" and item.clickGain() > 0 and cps() > 0:
   gain = gain + item.clickGain() * clickRate() * rawCps() / cps()
 return gain * a / rawCps()`,
     },
-    { id: 'paybackRaw', group: 'Payback', name: 'Payback, raw CpS', label: 'Payback, raw CpS', desc: 'the payback period by your raw CpS (no golden cookie effects)', scope: 'item', format: 'payback', source: 'return item.paybackIn("raw")' },
+    {
+      id: 'paybackRaw',
+      group: 'Payback',
+      name: 'Payback, raw CpS',
+      label: 'Payback period',
+      desc: 'the payback period by your raw CpS (no golden cookie effects) — in its payback color while the payback mode is Raw CpS',
+      scope: 'item',
+      format: 'payback',
+      source: `p = item.paybackIn("raw")
+if payback.mode() == "rawCps":
+  color = item.color()
+return p`,
+    },
     { id: 'paybackCps', group: 'Payback', name: 'Payback, CpS', label: 'Payback, CpS', desc: 'the payback period by the CpS the game shows (Cookie Monster’s)', scope: 'item', format: 'payback', source: 'return item.paybackIn("cps")' },
     { id: 'paybackClicking', group: 'Payback', name: 'Payback, CpS + clicking', label: 'Payback, CpS + clicking', desc: 'the payback period by your CpS plus your clicking', scope: 'item', format: 'payback', source: 'return item.paybackIn("clicking")' },
     {

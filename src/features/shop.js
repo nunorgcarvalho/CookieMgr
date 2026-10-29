@@ -21,6 +21,9 @@
 // It wraps each building's buy() (the store calls it with no amount) and sell() (the store's sell
 // mode calls it with exactly Game.buyBulk), and the two price functions the store shows prices with
 // (getSumPrice, getReverseSumPrice). Explicit amounts from anything else are left alone.
+//
+// **Start at the minimum bulk** — the game starts every session at ×1. With a minimum bulk of ×10 or
+// ×100 (set, or auto with Round to multiples), the store starts at it instead (option startAtMinBulk).
 
 CA.Shop = (() => {
   const SORTS = [
@@ -123,6 +126,29 @@ CA.Shop = (() => {
     wrapped.add(b);
   }
 
+  /** Selects the store's ×1 / ×10 / ×100, as its buttons do (without the click sound). */
+  function selectBulk(n) {
+    Game.buyBulk = n;
+    [
+      ['storeBulk1', 1],
+      ['storeBulk10', 10],
+      ['storeBulk100', 100],
+      ['storeBulkMax', -1],
+    ].forEach(([id, v]) => {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle('selected', v === n);
+    });
+    Game.storeToRefresh = 1;
+  }
+  /** At the start of a session: the store at the minimum bulk, when that's ×10 or ×100 and the store is still at its ×1. */
+  function startBulk() {
+    if (!CA.Settings.get('startAtMinBulk') || Game.buyMode !== 1 || Game.buyBulk !== 1) return false;
+    const m = minBulk();
+    if (m !== 10 && m !== 100) return false;
+    selectBulk(m);
+    return true;
+  }
+
   function refreshStore() {
     Object.values(Game.Objects || {}).forEach((b) => b && typeof b.refresh === 'function' && b.refresh());
   }
@@ -167,11 +193,20 @@ CA.Shop = (() => {
       desc: 'A small toolbar along the bottom of the store: building sort and rounding to multiples.',
       default: true,
     });
+    CA.Settings.defineOption({
+      key: 'startAtMinBulk',
+      group: 'store',
+      icon: 'building',
+      name: 'Start at the minimum bulk',
+      desc: 'The game starts every session at ×1: with a minimum bulk of ×10 or ×100, the store starts at it instead.',
+      default: true,
+    });
     CA.Settings.defineOption({ key: 'storeSort', group: 'store-hidden', name: 'Building sort', desc: '', default: 'default' });
     Object.values(Game.Objects || {}).forEach(wrap);
     CA.Events.on('settings', (k) => k === 'roundUpBulk' && refreshStore());
     CA.Events.on('settings', (k) => k === 'minBulk' && CA.Events.emit('shop'));
+    setTimeout(startBulk, 0); // once the save's settings are in: the game loads them right after init
   }
 
-  return { init, SORTS, canSort, sort, setSort, order, roundUp, setRoundUp, amountFor, minBulk, buyAmount, setMinBulk, MIN_BULKS };
+  return { init, SORTS, canSort, sort, setSort, order, roundUp, setRoundUp, amountFor, minBulk, buyAmount, setMinBulk, MIN_BULKS, startBulk };
 })();

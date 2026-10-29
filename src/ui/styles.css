@@ -2854,7 +2854,8 @@
 
 /* the auto-gardener: a profile bar, four slots, the selected one in detail (v3.3) */
 #CookieMgrMenu .ca-gardener select,
-#CookieMgrMenu .ca-gardener .ca-gname {
+#CookieMgrMenu .ca-gardener .ca-gname,
+#CookieMgrMenu .ca-ttprofs .ca-gname {
   font: 12px Tahoma, Arial, sans-serif;
   color: #f0e2c0;
   background: rgba(0, 0, 0, 0.45);
@@ -3763,6 +3764,25 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-overview-brand span {
   font-size: 11px;
   color: #a39477;
+}
+#CookieMgrMenu .ca-overview-brand .ca-update-note {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+  padding: 1px 7px 1px 5px;
+  border: 1px solid rgba(120, 220, 120, 0.45);
+  border-radius: 9px;
+  background: rgba(60, 160, 60, 0.18);
+  color: #b8f0a8;
+  white-space: nowrap;
+}
+#CookieMgrMenu .ca-overview-brand .ca-update-note[hidden] {
+  display: none;
+}
+#CookieMgrMenu .ca-overview-brand .ca-update-note a {
+  color: #fff3c4;
+  text-decoration: underline;
 }
 #CookieMgrMenu .ca-overview .ca-stats {
   flex: 1 1 360px;
@@ -6318,6 +6338,17 @@ body.ca-has-storebar #products {
   border-radius: 4px;
   padding: 3px 6px;
 }
+/* the actual-income window's own minutes, after its preset chips */
+#CookieMgrMenu .ca-pp-window {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #b8a888;
+}
+#CookieMgrMenu .ca-pp-window .ca-pp-num {
+  width: 52px;
+}
 
 /* the Auto buyer's cards, at the top of the Payback page (ui/autoBuyerCard.js) */
 #CookieMgrMenu .ca-ab-hero {
@@ -7868,6 +7899,21 @@ body.ca-has-storebar #products {
   display: flex;
   gap: 6px;
   padding: 8px 14px 10px;
+}
+
+/* Store tooltip layouts: the built-in Default and yours, above the lines of the one in use */
+#CookieMgrMenu .ca-ttprofs {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+#CookieMgrMenu .ca-ttprofs .ca-dprof-foot {
+  align-items: center;
+}
+#CookieMgrMenu .ca-ttprof-fixed {
+  display: inline-block;
+  width: 150px;
+  padding: 3px 0;
+  font-weight: bold;
+  color: #f3e6c8;
 }
 
 /* Pantheon: profiles, a row each (v3.31) */

@@ -103,7 +103,8 @@ CA.AutoBuyer = (() => {
       skip: !!x.skip,
       reserve: Math.max(0, Number(x.reserve) || 0),
       banks: BANKS.map((b) => b.id).filter((id) => Array.isArray(x.banks) && x.banks.includes(id)),
-      mode: typeof x.mode === 'string' ? x.mode : '',
+      // the Actual 15 min / 1 h / 3 h modes are one Actual income now (its window: core/settings.js)
+      mode: typeof x.mode !== 'string' ? '' : /^actualIncome(15m|1h|3h)$/.test(x.mode) ? 'actualIncome' : x.mode,
       rules: (Array.isArray(x.rules) ? x.rules : []).slice(0, 50).map(cleanRule),
     };
   }

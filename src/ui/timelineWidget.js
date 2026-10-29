@@ -122,9 +122,12 @@ CA.UI.TimelineWidget = (() => {
     const effects = parts.includes('bars') ? CA.Timers.buffsWithGolden() : [];
     const wait = d.wait;
     const showChart = parts.includes('chart') && wait;
-    if (showChart && axis === 'cycle') return CA.UI.SpawnView.cycleChart('golden', d, effects, { width, height: 74, hover: false, lane: 13 });
+    // the numbers already shown above it: the graph doesn't write them again
+    const nums = parts.includes('numbers') ? numsOf(inst) : [];
+    const shown = { expected: nums.includes('next'), window: nums.includes('window') };
+    if (showChart && axis === 'cycle') return CA.UI.SpawnView.cycleChart('golden', d, effects, { width, height: 74, hover: false, lane: 13, shown });
     if (showChart || effects.length) {
-      const opts = { width, height: 74, hover: false, lane: 13, plot: !!showChart, next: !!wait && (showChart || parts.includes('numbers')) };
+      const opts = { width, height: 74, hover: false, lane: 13, plot: !!showChart, next: !!wait && (showChart || parts.includes('numbers')), shown };
       if (!showChart) opts.span = Math.max(10, ...effects.map((e) => e.secs)) * 1.05;
       return CA.UI.SpawnView.chart('golden', showChart ? wait : opts.next ? wait : null, effects, opts);
     }

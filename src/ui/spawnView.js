@@ -54,7 +54,8 @@ CA.UI.SpawnView = (() => {
    * w: the wait (CA.Timers distribution's), or null (nothing coming / on screen: the effects alone).
    * opts (the widgets'): width (drawn at the size it's shown: text unstretched), height (of the plot),
    * plot (false: the bars alone), next (false: no next-cookie bar), span (seconds the axis covers —
-   * default the 99.9% of the wait, or the longest effect), hover (false: no readout), lane (bar height).
+   * default the 99.9% of the wait, or the longest effect), hover (false: no readout), lane (bar height),
+   * shown ({ window }: numbers the widget already shows beside it — the next-cookie bar leaves its window out).
    */
   function chart(type, w, effects = [], opts = {}) {
     const WW = opts.width || W;
@@ -111,7 +112,7 @@ CA.UI.SpawnView = (() => {
         `<rect class="wait" x="${x0}" y="${ly(0)}" width="${(X(w.soonest) - x0).toFixed(2)}" height="${bh}"/>` +
         `<rect class="open" x="${X(w.soonest).toFixed(2)}" y="${ly(0)}" width="${Math.max(0, X(w.latest) - X(w.soonest)).toFixed(2)}" height="${bh}"/>` +
         `<line x1="${X(w.mean).toFixed(2)}" x2="${X(w.mean).toFixed(2)}" y1="${ly(0)}" y2="${ly(0) + bh}"/>` +
-        `<text x="${x0 + 3}" y="${ly(0) + bh - 2}">${short ? 'next' : `next ${LABEL[type]}`} · ${when(w.soonest)}–${when(w.latest)}${more(w.latest)}</text></g>`;
+        `<text x="${x0 + 3}" y="${ly(0) + bh - 2}">${short ? 'next' : `next ${LABEL[type]}`}${(opts.shown || {}).window ? '' : ` · ${when(w.soonest)}–${when(w.latest)}${more(w.latest)}`}</text></g>`;
     effects.forEach((b, i) => {
       const y = ly(i + (showNext ? 1 : 0));
       const gc = Number.isFinite(b.golden) ? ` · ${short ? 'GC' : 'golden cookie before it ends'} ${pc(b.golden)}` : '';
@@ -148,7 +149,8 @@ CA.UI.SpawnView = (() => {
    * the chance one has come by then (0 → 100%); dashed lines at the expected moment and across at the
    * curve's height there; the now line where the cycle is,
    * its height labeled — and under it, on the same axis, each effect running (golden cookies).
-   * d: CA.Timers.distribution's (not spawned). opts: width, height, hover, lane — as chart()'s.
+   * d: CA.Timers.distribution's (not spawned). opts: width, height, hover, lane — as chart()'s; shown
+   * ({ expected }: the widget shows the expected wait beside it — the expected line's label leaves it out).
    */
   function cycleChart(type, d, effects = [], opts = {}) {
     const WW = opts.width || W;
@@ -203,7 +205,7 @@ CA.UI.SpawnView = (() => {
       const exRight = ex > x0 + (x1 - x0) * 0.8;
       plotSvg += `<g class="ca-sp-expect"><line x1="${ex.toFixed(2)}" x2="${ex.toFixed(2)}" y1="${y1}" y2="${y0}"/></g>`;
       labels +=
-        `<g class="ca-sp-expect"><text x="${(ex + (exRight ? -4 : 4)).toFixed(2)}" y="${(y1 + 9).toFixed(2)}" text-anchor="${exRight ? 'end' : 'start'}">expected · ${when(d.wait.mean)}</text></g>`;
+        `<g class="ca-sp-expect"><text x="${(ex + (exRight ? -4 : 4)).toFixed(2)}" y="${(y1 + 9).toFixed(2)}" text-anchor="${exRight ? 'end' : 'start'}">expected${(opts.shown || {}).expected ? '' : ` · ${when(d.wait.mean)}`}</text></g>`;
     }
     // the time axis: since the last one left
     const step = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200].find((s) => span / s <= Math.max(3, Math.floor((x1 - x0) / 100))) || 7200;

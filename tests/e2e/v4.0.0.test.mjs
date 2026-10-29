@@ -34,7 +34,7 @@ assert(un.members.every((id) => M.isOn(id)) && !M.isOn('autoBuyer'), 'switching 
 M.set('upgradeUnlocker', false, { silent: true });
 assert(un.members.every((id) => !M.isOn(id)), 'and off');
 assert([drops, reindeer, combos].every((st) => st.macros.upgradeUnlocker === 'on' && st.macros.autoBuyer === 'on'), 'every stage: the Upgrade unlocker and the Auto buyer');
-assert(drops.inputs.research.stopBefore === 'Elder Pact', 'the research up to the Elder Pact (the Grandmapocalypse, for Halloween)');
+assert(drops.inputs.research.stopBefore === 'none', 'all the research (the Elder Pact puts up the Pledge Reindeer buys)');
 assert(drops.macros.elderPledge === 'off' && reindeer.macros.elderPledge === 'on' && reindeer.profiles.dragon === 'dropsFlight', 'Reindeer: the elders pledged, dragon drops & flight');
 assert(G.untilProblem(reindeer.until) === '' && reindeer.until === 'season.complete(christmas)', 'Reindeer lasts until Christmas is complete');
 assert(drops.macros.autoBuyer === 'on' && drops.macros.seasonCompletion === 'on', 'Drops: the Auto buyer and SeasonCompletion');
@@ -77,7 +77,7 @@ assert(G.step() > 0, 'the first pass enters stage 1');
 assert(value('manager.stage') === 1 && value('manager.stageName') === 'Drops', 'manager.stage() 1, Drops');
 assert(M.isOn('bigCookie') && M.isOn('reindeer') && !M.isOn('golden') && !M.isOn('wrath') && M.isOn('autoBuyer') && M.isOn('seasonCompletion') && M.isOn('santa'), 'it switched the macros (the Upgrade unlocker’s too)');
 assert(CA.AutoBuyer.activeProfile() === 'payback', 'and the buyer profile');
-assert(M.inputsOf(M.get('research')).stopBefore === 'Elder Pact' && M.inputsOf(M.get('seasonCompletion')).then === 'fools', 'and the macros’ settings');
+assert(M.inputsOf(M.get('research')).stopBefore === 'none' && M.inputsOf(M.get('seasonCompletion')).then === 'fools', 'and the macros’ settings');
 // you flip one by hand: it stays flipped (macros switch once, on entering)
 M.set('bigCookie', false, { silent: true });
 G.step();
@@ -141,7 +141,7 @@ assert(G.find('nunixLateGame').stages[0].until.includes('season.complete'), 'Nun
 const code = G.codeOf(G.find('nunixLateGame'));
 assert(!CA.Script.compile(code).errors.length, 'Nunix late game, as code, reads fine');
 // (v4.1: a block for the stage and the ones after it, its first pass manager.arriving(N))
-assert(/if manager\.stage\(\) >= 1:\n {2}if manager\.arriving\(1\):\n {4}macro\.setting\(research, stopBefore, "Elder Pact"\)/.test(code) && /\n {4}switch off golden, wrath\b/.test(code), 'a block per stage: its first pass sets settings and switches macros');
+assert(/if manager\.stage\(\) >= 1:\n {2}if manager\.arriving\(1\):\n {4}macro\.setting\(research, stopBefore, none\)/.test(code) && /\n {4}switch off golden, wrath\b/.test(code), 'a block per stage: its first pass sets settings and switches macros');
 assert(/\n {4}switch on autoBuyer, upgradeUnlocker, /.test(code) && code.split('\n').length < 70, 'switches on one line, split by commas (the whole manager in under 70 lines)');
 assert(/manager\.profile\(buyer, combos\)/.test(code) && /if manager\.stage\(\) == 2:\n {4}if season\.complete\(christmas\):\n {6}manager\.next\(\)/.test(code), 'its profiles, and its until moving it on');
 assert(M.sourceOf(M.get('manager')) === code, 'the Manager macro runs that code');
@@ -201,7 +201,7 @@ assert(/Nunix late game/.test(menu().textContent), 'the page shows Nunix late ga
 assert(menu().querySelectorAll('[data-mgr-act="tab"]').length === 3, 'its three stages (a tab each)');
 click(menu().querySelector('[data-mgr-act="tab"][data-i="0"]'));
 const rs = menu().querySelector('[data-mgr-input][data-macro="research"][data-key="stopBefore"]') || menu().querySelector('[data-mgr-act="pick"][data-macro="research"].sel');
-assert(rs && (rs.value || rs.dataset.v) === 'Elder Pact', 'Research’s setting, set by the stage');
+assert(rs && (rs.value || rs.dataset.v) === 'none', 'Research’s setting, set by the stage');
 // (stage tabs: × drops a setting, a chip click flips a macro)
 click(rs.closest('.ca-mgr-set').querySelector('[data-mgr-act="uninput"]'));
 assert(!G.find('nunixLateGame').stages[0].inputs.research, 'a setting back to left as it is');

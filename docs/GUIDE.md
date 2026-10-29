@@ -450,7 +450,8 @@ card puts the widget on the left panel.
 1. **Drops**: the big cookie clicked from the start, and reindeer, but not golden or wrath cookies (Scorn, in the
    Pantheon's Diamond slot, makes every golden cookie a wrath cookie); the Auto buyer, the Upgrade unlocker (Santa,
    research, Auto dragon, Pet the dragon, Fortunes and cheap upgrades), SeasonCompletion, wrinklers and sugar lumps.
-   Research goes all the way, stopping before the Elder Pact, so the Grandmapocalypse keeps going for the drops. No
+   Research goes all the way, the Elder Pact too: it keeps the Grandmapocalypse going (wrinklers come more often at its
+   last stage) and puts the Elder Pledge up for sale for Reindeer. No
    garden, Grimoire or stock market. Pantheon wrinklers, dragon drops. Until Christmas's upgrades, Easter, Halloween
    and Valentine's day are in.
 2. **Reindeer**: Christmas again for its cookies, with the elders pledged and Dragon drops & flight.
@@ -459,9 +460,10 @@ card puts the widget on the left panel.
 
 The Auto buyer buys by payback, so it doesn't buy research or upgrades that give no CpS; the Upgrade unlocker does.
 
-Its stages watch: Santa's level, the Easter eggs, the research (how far along, and the next one) (Drops); the reindeer cookies and the next reindeer (Reindeer); the combo
+Its stages watch: the research (how far along, and the next one) (Drops); the next reindeer (Reindeer); the combo
 on, the magic for Force the Hand of Fate, what the Auto buyer buys next and how much of the garden is mature (Golden
-cookie combos).
+cookie combos). The seasons' drops (Santa's gifts, the Easter eggs, the reindeer cookies) aren't watched: the
+widget's **Next stage when** counts them already.
 
 Words: `manager.active()`, `manager.stage()`, `manager.stageName()`, `manager.entering()`, `manager.arriving(stage)`,
 `manager.stages()`, `manager.list()`. Actions: `manager.use(manager)`, `manager.goTo(stage)`, `manager.next()`,
@@ -509,13 +511,16 @@ the mode says what the income is and what a purchase adds to it:
 - **CpS** (the default) — the CpS the game shows now, buffs included: Cookie Monster's.
 - **CpS + clicking** — CpS plus your clicks a second (over the last minute; Options: 10 s to 15 min) × what a click is
   worth; a purchase's gain counts what it adds to your clicks.
-- **Actual, 15 min / 1 h / 3 h** — what you've actually been taking in (clicking, golden cookies, wrinklers,
-  everything baked, as the Recorder measures it) over the last 15 minutes, hour or 3 hours of play, projected
-  forward; a purchase's gain is what it adds to your raw CpS × actual ÷ raw CpS. Until a minute is recorded, CpS;
-  with less than the window recorded, the average of what there is. 15 min follows what you're doing now (a combo,
-  an active stretch); 3 h smooths out a lucky streak.
-- **Actual, custom** — the same over a window you pick (Options → Actual income over: 5 minutes to 3 hours; 30
-  minutes at first).
+- **Actual income** — what you've actually been taking in (clicking, golden cookies, wrinklers, everything baked,
+  as the Recorder measures it) over your latest play, projected forward; a purchase's gain is what it adds to your
+  raw CpS × actual ÷ raw CpS. Until a minute is recorded, CpS; with less than the window recorded, the average of
+  what there is.
+
+**One actual-income window** (Options → **Actual income over**): the presets 15 min, 30 min (the default), 1 h and
+3 h, or any number of minutes typed in its box (1 minute to a day). Every actual income follows it: the Actual
+income mode (its chip names the window), the tooltips' Income and Payback period by actual income lines, and
+`payback.actualIncome()`. 15 min follows what you're doing now (a combo, an active stretch); 3 h smooths out a
+lucky streak.
 
 The mode is the add-on's: the colors, the store's sort and tooltips, the best buy and the buyers all follow it. Each
 chip shows that mode's income now; hover a cell for its period's parts ("5m to afford + 20m to earn back").
@@ -524,17 +529,16 @@ chip shows that mode's income now; hover a cell for its period's parts ("5m to a
 each one's code sets `income` and returns what the item adds to it. Change a built-in one, copy it, or write your own
 (Shows as: a payback mode) and it's a chip here. The parts are words too: `item.timeToAfford(mode)`,
 `item.earnBack(mode)`, `item.gainIn(mode)`, `item.paybackIn(mode)`, `item.rawGain()`, `payback.income(mode)`,
-`payback.bank()` (mode: a mode's code name — `rawCps`, `cps`, `cpsClicking`, `actualIncome15m`, `actualIncome1h`,
-`actualIncome3h`, `actualIncome` (custom), yours — or `raw`, `clicking`, `actual15m`, `actual1h`, `actual3h`,
-`actual`; none: the mode in use). `payback.actualIncome(minutes)` is what you took in a second over the last minutes
-of play (none: the custom window).
+`payback.bank()` (mode: a mode's code name — `rawCps`, `cps`, `cpsClicking`, `actualIncome`, yours — or `raw`,
+`clicking`, `actual`; none: the mode in use). `payback.actualIncome(minutes)` is what you took in a second over the
+last minutes of play (none: the Actual income window).
 
 In the **store** itself (Settings → Store, each can be turned off): each building's price shows in its payback
 color for what a click buys now (×1, ×10, ×100, or to the next multiple with Round to multiples on), each upgrade
-has a colored dot in its corner, and under the game's own building and upgrade tooltips a cookieMgr block adds the
-CpS it adds (and its share of your CpS), its payback period (and by actual income, once a minute of play is
-recorded), when you can afford it (green now, red not yet), a building's share of your production, how many more win
-its next achievement (in the payback color of buying that many) and the next upgrade more of it unlocks —
+has a colored dot in its corner, and under the game's own building and upgrade tooltips a cookieMgr block adds, in
+its Default layout, the raw CpS it adds (and its share of your raw CpS) and its payback period by raw CpS (in its
+payback color while the payback mode is Raw CpS), the income it adds and its payback period by actual income (once a minute of play is recorded), a building's share of your production, the next
+upgrade more of it unlocks and how many more win its next achievement (in the payback color of buying that many) —
 and, with **Warnings** on, a colored "!" on the item and a ⚠ line in its tooltip when a warning applies: by default,
 when buying it would take your bank below what a Lucky! (in a Frenzy too) or Conjure Baked Goods needs to pay its
 most. Warnings are statistics too (below): change a bank warning's `keep` (how many times that bank to keep), turn
@@ -543,9 +547,15 @@ one off, or write your own.
 **Which lines that block shows, and in what order, is yours to choose** — on the **Settings** page, **Store & tooltips** tab (see
 [Statistics](#statistics)): add a line (a built-in statistic, one of yours, or **any value word** that takes the building
 or upgrade, or nothing: `building.toNextAchievement`, `clickRate`, `golden.expected`, `golden.interval`…), drag it into place, rename a
-word's line and choose how its value reads, remove it; **Reset** goes back to Cookie Monster's layout. A line with
+word's line and choose how its value reads, remove it; **Reset** goes back to the Default's lines. A line with
 nothing to say (no wins, too little recorded) is left out; a word that doesn't fit the tooltip (one taking an upgrade,
 in a building's) too. The Payback page keeps the block's two switches.
+
+**Layouts** keep more than one set of lines: the built-in **Default** (always there, can't be deleted; once you change
+it, **Revert to default** brings it back) and yours — **Save as a new layout** copies the lines in use under a name of
+its own. **Use** switches the tooltips to a layout (the one in use shows **In use**), and the lines below are always
+the layout in use's, so a change is saved to it. Macros switch them too: `tooltips.profile(name)`, with
+`tooltips.activeProfile`, `tooltips.profileActive(name)` and `tooltips.profiles`.
 
 **Every line is a statistic**: a few lines of algorithmic code (the language of [Macros](#macros)) that only read the
 game and end with `return` — in a tooltip, `item` is the building or upgrade hovered and the `item.*` words read it
@@ -582,6 +592,9 @@ if cookies() >= need and after < need:
 
 **Upgrades: best first** orders the store's upgrades by color, then payback period
 (switches last). The store's **Best buy** sort ranks buildings by what a click buys — or the minimum bulk, if more.
+The game starts every session at ×1; with a minimum bulk of ×10 or ×100, **Start at the minimum bulk** (Settings →
+Store & tooltips, on by default) starts the store at it instead. The tooltips' cookieMgr lines follow the buy amount
+selected (×1, ×10, ×100, rounded up with Round to multiples).
 
 ### Statistics
 
@@ -931,7 +944,9 @@ for production and one for prestige (see **Copies** below). Macro buttons are th
   - **Stats**, each on or off: Expected wait, Within minute %, Window, Frequency (one every …, on average),
     Multiplier (× vs nothing helping), Median wait. Hover one for what it means (the same text as on the Stats page).
   - **Graph**: the odds of the next one, over **This cycle** (a line sweeping across it) or **From now** (a
-    timeline with its window and mean).
+    timeline with its window and mean). With the Stats over it, the graph doesn't write their numbers again: the
+    expected line is labeled "expected" when Expected wait is on, and the next cookie's bar leaves out its window
+    when Window is on.
   - **Effects**: a bar per effect running on the graph's axis, with its time left and the chance a golden cookie
     comes before it ends.
   - **Frequency Factors**: a bar for each upgrade, plant, spirit or aura making them come more often, on a log scale
@@ -952,9 +967,10 @@ for production and one for prestige (see **Copies** below). Macro buttons are th
   window, X axis and choices as on the Garden page; hover them for the details.
 - **Manager** — what the active manager is doing; it takes that manager's name as its title. Its settings pick the
   parts: **Stages** (a strip: done ✓, the one it's on lit with its name, still to come), **Now** (the stage, how
-  long it's been on it, its profiles in ✓ or still waiting ⌛, and a warning while the Manager macro is off),
-  **Next stage when** (each condition of the stage's **Until**, ticked once it holds, with a season's drops
-  counted on a bar: "Christmas upgrades 12/21"), **Watching** (the stage's own numbers, from its watch list on the
+  long it's been on it, its profiles in ✓ or still waiting ⌛, and a warning while the Manager macro is off; under
+  the strip, only how long: the strip names the stage), **Next stage when** (each condition of the stage's
+  **Until**, ticked once it holds, with a season's drops counted on a bar: "Christmas upgrades 12/21"; left out on
+  the last stage under the strip), **Watching** (the stage's own numbers, from its watch list on the
   Managers page), **Macros** (the macros the stage switched on, pulsing while they work, dim if you switched one
   off; hover for what they did) and **Lately** (the last things those macros did). Click the strip or the stage to
   open the Managers page.
@@ -1070,8 +1086,9 @@ multipliers) as structured data, not just a text summary — for future use.
 
 ### Staying up to date
 
-cookieMgr checks GitHub every 15 minutes for a newer build and, if there is one, shows a notification with a one-click
-reload — it never updates itself silently. It can't hot-swap itself in place without a page reload (see the note at
+cookieMgr checks GitHub every 5 minutes (and as you open Settings) for a newer build and, if there is one, shows a
+notification with a one-click reload, and a **New version vX available · Reload** note under the version number on
+Settings → General — it never updates itself silently. It can't hot-swap itself in place without a page reload (see the note at
 the top of `src/core/update.js` for why), so a click (or just refreshing normally) is always how an update actually
 applies. Turn this off in Settings if you'd rather check manually.
 

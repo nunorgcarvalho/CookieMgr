@@ -48,7 +48,7 @@ w.Date.now = Date.now;
 const later = () => (offset += 6000); // past the 5 s memo
 
 // ---- the modes there are; the default is cps, as before
-assert(P.modes().map((m) => m.id).join() === 'rawCps,cps,cpsClicking,actualIncome15m,actualIncome1h,actualIncome3h,actualIncome', `the modes (actual-income depths: + actual income over 15 min, 1 h, 3 h) (${P.modes().map((m) => m.id)})`);
+assert(P.modes().map((m) => m.id).join() === 'rawCps,cps,cpsClicking,actualIncome', `the modes (one actual income, on the one window) (${P.modes().map((m) => m.id)})`);
 assert(CA.Settings.get('ppMode') === 'cps' && P.mode().id === 'cps' && value('payback.mode') === 'cps', 'the default: cps');
 const modeStat = CA.Stats.get('cpsClicking');
 assert(modeStat && modeStat.mode && modeStat.group === 'Payback modes' && modeStat.label === 'CpS + clicking' && /income =/.test(modeStat.source), 'each mode is a statistic: label, description, code that sets income');
@@ -145,7 +145,7 @@ CA.Settings.set('ppMode', 'cps');
 CA.UI.Menu.openPage('payback');
 await sleep(100);
 const chips = () => [...doc.querySelectorAll('[data-pp-mode]')];
-assert(chips().map((b) => b.dataset.ppMode).join() === 'rawCps,cps,cpsClicking,actualIncome15m,actualIncome1h,actualIncome3h,actualIncome', 'a chip a mode, at the top of the page');
+assert(chips().map((b) => b.dataset.ppMode).join() === 'rawCps,cps,cpsClicking,actualIncome', 'a chip a mode, at the top of the page');
 assert(chips().find((b) => b.classList.contains('on')).dataset.ppMode === 'cps', 'the one in use is on');
 assert(chips().every((b) => b.dataset.tip && /\/s/.test(b.textContent)), 'each explains itself and shows its income now');
 chips()[0].click();
@@ -157,14 +157,14 @@ const win = doc.querySelector('[data-pp-pick="ppActualWindow"][data-v="15"]');
 win.click();
 await sleep(50);
 assert(CA.Settings.get('ppActualWindow') === '15', 'the Options card sets the actual-income window');
-assert(CA.Settings.definitions().find((d) => d.key === 'ppMode').choices.length === 7, 'the Settings page lists the modes');
+assert(CA.Settings.definitions().find((d) => d.key === 'ppMode').choices.length === 4, 'the Settings page lists the modes');
 
 // ---- edit modes: the Statistics page, on its Payback modes shelf
 doc.querySelector('[data-pp-editmodes]').click();
 await sleep(100);
 const cards = () => [...doc.querySelectorAll('[data-st-card]')].map((c) => c.dataset.stCard);
 assert(CA.UI.Menu.currentTab() === 'tooltips', 'edit modes: the Statistics page');
-assert(cards().join() === 'rawCps,cps,cpsClicking,actualIncome15m,actualIncome1h,actualIncome3h,actualIncome', `the Payback modes shelf (${cards()})`);
+assert(cards().join() === 'rawCps,cps,cpsClicking,actualIncome', `the Payback modes shelf (${cards()})`);
 const use = doc.querySelector('[data-st-mode="cpsClicking"]');
 use.click();
 await sleep(50);

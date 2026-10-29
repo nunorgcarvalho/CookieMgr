@@ -29,10 +29,10 @@
 // hotkey and macro.set like any other. One seeded manager, Nunix late game:
 //   Drops                  the big cookie clicked from the start, but not golden or wrath cookies (Scorn
 //                          makes them all wrath cookies); reindeer; the Auto buyer spending freely
-//                          (Payback), the Upgrade unlocker (Santa, research up to the Elder Pact, the dragon
-//                          trained and petted, fortunes, cheap upgrades), SeasonCompletion, wrinklers and
-//                          sugar lumps; no garden, spells, stocks or Elder Pledge (the Grandmapocalypse's
-//                          wrinklers drop Halloween's cookies); Pantheon wrinklers, dragon drops — until
+//                          (Payback), the Upgrade unlocker (Santa, all the research, the dragon trained and
+//                          petted, fortunes, cheap upgrades), SeasonCompletion, wrinklers and sugar lumps;
+//                          no garden, spells, stocks or Elder Pledge (the Grandmapocalypse's wrinklers drop
+//                          Halloween's cookies); Pantheon wrinklers, dragon drops — until
 //                          Christmas's upgrades, Easter, Halloween and Valentine's are in
 //   Reindeer               Christmas again for its cookies: + the elders pledged, dragon drops & flight
 //   Golden cookie combos   for good: the buyer ranks by actual income and never dips below the Lucky! and
@@ -140,17 +140,17 @@ CA.Managers = (() => {
             stockTrader: 'off',
           },
           inputs: {
-            // all the research but the last (SeasonCompletion ends on Business day, and wrinklers are
-            // popped once they've eaten, as those macros do anyway)
-            research: { stopBefore: 'Elder Pact' },
+            // all the research, the Elder Pact too: it deepens the Grandmapocalypse (more wrinklers come
+            // at its third stage) and unlocks the Elder Pledge Reindeer buys (SeasonCompletion ends on
+            // Business day, and wrinklers are popped once they've eaten, as those macros do anyway)
+            research: { stopBefore: 'none' },
           },
           profiles: { buyer: 'payback', pantheon: 'wrinklers', dragon: 'drops' },
           until: 'season.complete(christmas, upgrades) and season.complete(easter) and season.complete(halloween) and season.complete(valentines)',
+          // (not Santa or the Easter eggs: the "until" counts the seasons' drops already)
           watch: [
-            { label: 'Santa', value: '[santaLevel(), 14]', format: 'progress' },
-            { label: 'Easter eggs', value: '[owned(easter), total(easter)]', format: 'progress' },
-            // the research, up to the Elder Pact (8 of the 9), and the one it's on
-            { label: 'Research', value: '[researchOwned(), 8]', format: 'progress' },
+            // the research (all 9), and the one it's on
+            { label: 'Research', value: '[researchOwned(), 9]', format: 'progress' },
             { label: 'Next research', value: 'researchNext()', format: 'auto' },
           ],
         },
@@ -160,8 +160,8 @@ CA.Managers = (() => {
           inputs: {},
           profiles: { dragon: 'dropsFlight' },
           until: 'season.complete(christmas)',
+          // (not the reindeer cookies: the "until" counts Christmas's drops already)
           watch: [
-            { label: 'Reindeer cookies', value: '[owned(christmas, cookies), total(christmas, cookies)]', format: 'progress' },
             { label: 'Next reindeer in', value: 'reindeer.expected()', format: 'time' },
           ],
         },
@@ -680,11 +680,33 @@ CA.Managers = (() => {
     const obj = (x) => (x && typeof x === 'object' ? { ...x } : {});
     return { id: String(r.id || ''), stage: Math.max(0, Number(r.stage) || 0), resets: Number.isFinite(Number(r.resets)) ? Number(r.resets) : -1, since: Number(r.since) || 0, entering: !!r.entering, entered: false, jumped: !!r.jumped, put: obj(r.put), waiting: obj(r.waiting), want: {} };
   }
-  /** A seeded manager saved before the Manager widget (its stages without a watch list): the seed's, stage by stage name. */
+  // the seeds' watches that repeated what the stage's "until" already counts (the Manager widget shows both):
+  // taken out of saves that still have them, as seeded
+  const RETIRED_WATCH = [
+    { label: 'Santa', value: '[santaLevel(), 14]' },
+    { label: 'Easter eggs', value: '[owned(easter), total(easter)]' },
+    { label: 'Reindeer cookies', value: '[owned(christmas, cookies), total(christmas, cookies)]' },
+  ];
+  const retired = (x) => x && RETIRED_WATCH.some((r) => r.label === x.label && r.value === x.value);
+  /**
+   * A seeded manager saved before the Manager widget (its stages without a watch list): the seed's, stage by
+   * stage name; one saved with the watches since retired: without them.
+   */
   function withSeedWatch(m) {
     const seed = SEEDS.find((x) => x.id === m.id);
     if (!seed || !Array.isArray(m.stages)) return m;
-    return { ...m, stages: m.stages.map((st) => (st && typeof st === 'object' && !Array.isArray(st.watch) ? { ...st, watch: (seed.stages.find((x) => x.name === st.name) || {}).watch || [] } : st)) };
+    const watchOf = (st) => (!Array.isArray(st.watch) ? (seed.stages.find((x) => x.name === st.name) || {}).watch || [] : st.watch.filter((x) => !retired(x)));
+    return { ...m, stages: m.stages.map((st) => (st && typeof st === 'object' ? withAllResearch(m, { ...st, watch: watchOf(st) }) : st)) };
+  }
+  /**
+   * Nunix late game saved when its Drops stage stopped the research before the Elder Pact (which then held
+   * for good, so Reindeer's Elder Pledge never came up for sale): all the research, as seeded now.
+   */
+  function withAllResearch(m, st) {
+    if (m.id !== 'nunixLateGame' || st.name !== 'Drops') return st;
+    const r = st.inputs && st.inputs.research;
+    const out = r && r.stopBefore === 'Elder Pact' ? { ...st, inputs: { ...st.inputs, research: { ...r, stopBefore: 'none' } } } : st;
+    return { ...out, watch: out.watch.map((x) => (x.label === 'Research' && x.value === '[researchOwned(), 8]' ? { ...x, value: '[researchOwned(), 9]' } : x)) };
   }
   function load(data) {
     if (data && Array.isArray(data.managers)) {

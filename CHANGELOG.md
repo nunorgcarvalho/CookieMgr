@@ -2,6 +2,71 @@
 
 ## Unreleased
 
+## 4.16.1 — 2026-10-29
+
+- **README:** the Payback picture shows the single Actual income mode, and the Payback tile names its 30 min default window.
+
+## 4.16.0 — 2026-10-29
+
+- **New version available:** once a newer cookieMgr release is out, Settings shows "New version vX available ·
+  Reload" under the version number on Settings → General, with a link that reloads the page onto it.
+- **Update check every 5 minutes** (was 15), plus a check as the Settings page opens (at most once a minute).
+
+## 4.15.0 — 2026-10-29
+
+- **One actual-income window:** the Actual, 15 min / 1 h / 3 h payback modes are gone; there's one **Actual income**
+  mode, and one setting for how far back every actual income looks — Payback page → Options → **Actual income
+  over**: presets 15 min, 30 min, 1 h, 3 h, or any number of minutes typed in (1 minute to a day). The mode's chip
+  names its window, and the tooltips' Income and Payback period by actual income lines and `payback.actualIncome()`
+  follow it too. A save in one of the old modes (or an Auto buyer profile ranking by one) keeps its window.
+
+## 4.14.2 — 2026-10-29
+
+- **Fixed:** Nunix late game stopped its research before the Elder Pact for good, so its buying stalled there and the
+  Reindeer stage's Elder Pledge never came up for sale (the game only offers the Pledge once the Pact is bought). It
+  now buys all the research from the start: the Pact keeps the Grandmapocalypse going (wrinklers come more often at
+  its last stage) and puts the Pledge up for Reindeer. Saved copies of Nunix late game are updated; the Drops
+  stage's Research watch counts all 9.
+
+## 4.14.1 — 2026-10-29
+
+- **Guide:** the store section explains Start at the minimum bulk and tooltips that follow the buy amount.
+
+## 4.14.0 — 2026-10-29
+
+- **Start at the minimum bulk:** the game starts every session at ×1; with a minimum bulk of ×10 or ×100 (set on
+  the store toolbar's ≥ button or the Payback page, or auto with Round to multiples on), the store now starts at it
+  instead. New option *Start at the minimum bulk* (Settings → Store & tooltips), on by default.
+- The store tooltips' cookieMgr lines follow the buy amount selected (×1, ×10, ×100, rounded up with Round to
+  multiples).
+
+## 4.13.1 — 2026-10-29
+
+- **README:** the Manager widget picture shows the trimmed widget (no Santa, Easter egg and reindeer lines).
+- **README:** the Statistics tile mentions saved tooltip layouts with a built-in Default.
+
+## 4.13.0 — 2026-10-29
+
+- **Tooltip layouts:** the store tooltip's lines can be saved as layouts, like the other profiles. The built-in
+  **Default** is always there and can't be deleted (once changed, **Revert to default**); **Save as a new layout**
+  copies the lines in use under a name. **Use** / **In use** and trash cans as everywhere else, and the line editor
+  below edits the layout in use. Macros: `tooltips.profile(name)`, `tooltips.activeProfile`,
+  `tooltips.profileActive(name)`, `tooltips.profiles`. A layout you had already changed stays as the Default, edited.
+- **Default tooltip lines:** Bonus income, Payback period, Income by actual income, Payback period by actual income,
+  Share of production, Next upgrade, Next achievement (Affordable and Wins are still there to add). The plain
+  **Bonus income** and **Payback period** lines are by raw CpS: Bonus income is the raw CpS an item adds (and its
+  share of your raw CpS), and the Default's Payback period is the raw CpS one ("Payback, raw CpS", now labelled
+  "Payback period", in its payback color while the payback mode is Raw CpS).
+
+## 4.12.2 — 2026-10-29
+
+- **Manager widget:** no information twice. Nunix late game's stages no longer watch Santa, the Easter eggs or
+  the reindeer cookies (Next stage when already counts the seasons' drops; saves lose those three watches too);
+  under the Stages strip, Now only says how long it has been on the stage (the strip names it), and on the last
+  stage Next stage when is left out.
+- **Golden cookies widget:** with the Stats shown, the graph doesn't repeat them: the expected line reads
+  "expected" when Expected wait is on, and the next cookie's bar leaves out its window when Window is on.
+
 ## 4.12.1 — 2026-10-29
 
 - **README:** new Stats screenshot (the Since last ascension window) and Statistics screenshot (the Income line, the
