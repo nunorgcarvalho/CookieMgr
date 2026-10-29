@@ -101,6 +101,10 @@ assert(!nunix().stages[1].inputs.research, 'undone');
 // ---- profiles: a card per kind ----
 assert(qa('.ca-mgr-pcard').length === G.KINDS.length, 'a card per kind of profile');
 const pick = (k) => q(`[data-mgr-profile][data-kind="${k}"]`);
+// (Reindeer sets every kind: two of them back to as before, for the picks below)
+change(pick('buyer'), '');
+change(pick('grimoire'), '');
+assert(!nunix().stages[1].profiles.buyer && !nunix().stages[1].profiles.grimoire, '“as before” picked: no change here');
 assert(/as before · Payback/.test(pick('buyer').options[0].textContent) && pick('buyer').value === '', 'stage 2’s Auto buyer: as before');
 assert(/Mind Over Matter/.test(pick('dragon').closest('.ca-mgr-pcard').querySelector('.ca-mgr-snap').textContent), 'the dragon’s auras, at a glance');
 change(pick('grimoire'), 'default');
