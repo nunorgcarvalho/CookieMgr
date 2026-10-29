@@ -220,6 +220,9 @@ CA.UI.AutoBuyerCard = (() => {
       `<span class="ca-pp-chips">${B()
         .BANKS.map((b) => chip('data-ab-bank', b.id, esc(b.label), p.banks.includes(b.id), `Also keep ${b.tip}`))
         .join('')}</span></div>` +
+      (p.banks.includes('gardenRounds')
+        ? `<div class="ca-ab-row"><span class="ca-ab-lbl">Rounds margin</span><input type="number" min="0" step="0.05" class="ca-pp-num" value="${p.roundsMargin}" data-ab-f="roundsMargin" data-tip="${esc('1: just one round; 0: the tulips only')}"><span class="ca-hint">× a round of golden clovers that Garden rounds keeps, on top of the nursetulips’ round while they aren’t all planted — the buyer spends what’s above it</span></div>`
+        : '') +
       `<div class="ca-ab-row"><span class="ca-ab-lbl"></span><span class="ca-hint" data-ab-keep>${keepHtml(p)}</span></div>` +
       `<div class="ca-ab-row"><span class="ca-ab-lbl">Rank by</span><select data-ab-f="mode">${modes}</select><span class="ca-hint">the payback period the queue sorts on</span></div>` +
       `<div class="ca-ab-row ca-ab-rules-head"><span class="ca-ab-lbl">Rules</span><span class="ca-hint">top to bottom: what it applies to → what it does, when its condition holds. “never” and a reached cap stop there.</span></div>` +
@@ -311,6 +314,7 @@ CA.UI.AutoBuyerCard = (() => {
     if (d.abF === 'name') B().update(p.id, { name: el.value.trim() || p.name });
     else if (d.abF === 'cheapBulk') B().update(p.id, { cheapBulk: Math.max(0, Number(el.value) || 0) });
     else if (d.abF === 'reserve') B().update(p.id, { reserve: Math.max(0, Number(el.value) || 0) });
+    else if (d.abF === 'roundsMargin') B().update(p.id, { roundsMargin: Math.max(0, Number(el.value) || 0) });
     else if (d.abF === 'mode') B().update(p.id, { mode: el.value });
     else if (d.abRule !== undefined) {
       const v = d.k === 'what' || d.k === 'effect' || d.k === 'when' ? el.value : Number(el.value);

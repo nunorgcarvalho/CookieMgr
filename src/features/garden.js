@@ -398,6 +398,62 @@ CA.Garden = (() => {
     }, 0);
   }
 
+  /**
+   * How much an effect raises seed prices now: CpS ÷ unbuffed CpS (1: no effect; a Frenzy 7, a
+   * Clot 0.5). The game prices a seed in minutes of the CpS it shows, effects counted.
+   */
+  function priceBoost() {
+    const u = Game.unbuffedCps || 0;
+    return u > 0 && Game.cookiesPs > 0 ? Game.cookiesPs / u : 1;
+  }
+  /** A seed's price (M.getCost) — with `unbuffed`, at the unbuffed CpS (the price once the effects are over). */
+  function seedPrice(M, me, unbuffed) {
+    const c = typeof M.getCost === 'function' ? M.getCost(me) : 0;
+    if (!unbuffed || priceBoost() === 1) return c;
+    // the CpS part divided out; the floor (costM) stays
+    return Math.max(c / priceBoost(), Math.min(c, me.costM || 0));
+  }
+  /**
+   * Cookies to plant a whole round of one seed: every tile the layout has it for, from scratch (none:
+   * every seed — layoutCost). `unbuffed`: at the prices without effects.
+   */
+  function roundCost(seed, unbuffed) {
+    const M = minigame();
+    if (!M) return 0;
+    const p = active();
+    return tilesOf(M).reduce((sum, [x, y]) => {
+      const k = wantAt(p, x, y);
+      const me = k && (!seed || k === seed) ? M.plants[k] : null;
+      return me ? sum + seedPrice(M, me, unbuffed) : sum;
+    }, 0);
+  }
+  /**
+   * Seeds planted ahead of the rest, as a round of their own (the Tulip and clover rounds gardener's
+   * tulips): each boosts the plants around it, so it goes down first.
+   */
+  const FIRST_SEEDS = ['nursetulip'];
+  /** The rounds reserve's default margin: the other seeds' round × this (a quarter on top). */
+  const ROUNDS_MARGIN = 1.25;
+  /**
+   * What the Auto buyer's "Garden rounds" bank keeps (unbuffed prices): a round of the seeds that go
+   * first while any of their tiles isn't planted with them, plus `margin` × a round of every other
+   * seed of the layout. Seed prices are minutes of CpS, so CpS bought doesn't bring a round any closer
+   * (it raises its price as much): the bank goes to the rounds first, the buyer spends what's above.
+   */
+  function roundsReserve(margin = ROUNDS_MARGIN) {
+    const M = minigame();
+    if (!M) return 0;
+    const p = active();
+    const seeds = new Set();
+    tilesOf(M).forEach(([x, y]) => wantAt(p, x, y) && seeds.add(wantAt(p, x, y)));
+    let keep = 0;
+    seeds.forEach((k) => {
+      if (!FIRST_SEEDS.includes(k)) keep += Math.max(0, Number(margin) || 0) * roundCost(k, true);
+      else if (layoutCensus(k).planted < layoutCensus(k).tiles) keep += roundCost(k, true);
+    });
+    return keep;
+  }
+
   /** Plants on the plot now: { planted, mature, young, empty, off } (empty: unlocked tiles with nothing). */
   function census() {
     const M = minigame();
@@ -574,6 +630,8 @@ CA.Garden = (() => {
     V('garden.offProfile', 'tiles that aren’t as the layout has them', () => census().off);
     V('garden.layoutTiles', 'tiles the layout has a seed for', () => layoutCensus().tiles);
     V('garden.layoutCost', 'cookies to replant the whole layout from scratch (every tile it has a seed for)', () => layoutCost());
+    V('garden.priceBoost', 'how much effects raise seed prices now: CpS ÷ unbuffed CpS (1: none; a Frenzy 7)', () => Math.round(priceBoost() * 1000) / 1000);
+    V('garden.roundsReserve', 'what the Auto buyer’s Garden rounds bank keeps: the nursetulips’ round while they aren’t all planted, plus 1.25 × the other seeds’ round (unbuffed prices)', () => roundsReserve());
     V('garden.layoutMature', 'the layout’s own plants that are mature', () => layoutCensus().mature);
     V('garden.layoutYoung', 'the layout’s own plants still growing', () => layoutCensus().young);
     V('garden.layoutYoungShare', 'share of the layout’s own plants not mature yet (0–1)', () => {
@@ -585,6 +643,7 @@ CA.Garden = (() => {
     ofSeed('garden.seedTiles', 'tiles the layout has this seed for', (c) => c.tiles);
     ofSeed('garden.seedMature', 'the layout’s plants of this seed that are mature', (c) => c.mature);
     ofSeed('garden.seedYoung', 'the layout’s plants of this seed still growing', (c) => c.young);
+    CA.Script.defineValue({ id: 'garden.roundCost', desc: 'cookies to plant a whole round of a seed: every tile the layout has it for, at today’s prices (none: every seed)', params: ['seed'], get: (seed) => roundCost(String(seed || '')) });
     CA.Script.defineValue({
       id: 'garden.isUnlocked',
       desc: 'whether you’ve unlocked a seed',
@@ -755,6 +814,10 @@ CA.Garden = (() => {
     defaultRules,
     census,
     layoutCost,
+    roundCost,
+    roundsReserve,
+    priceBoost,
+    ROUNDS_MARGIN,
     compileRules,
     serialize,
     load,

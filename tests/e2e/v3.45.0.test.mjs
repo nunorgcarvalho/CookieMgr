@@ -76,7 +76,7 @@ const menu = () => doc.getElementById('CookieMgrMenu');
 B.use('payback');
 CA.UI.Menu.openPage('payback');
 await sleep(50);
-assert(menu().querySelectorAll('[data-ab-bank]').length === 4, 'a chip a bank');
+assert(menu().querySelectorAll('[data-ab-bank]').length === 5, 'a chip a bank');
 assert(menu().querySelector('[data-ab-bank="conjure"]').classList.contains('on'), 'picked banks are on');
 click(menu().querySelector('[data-ab-bank="garden"]'));
 assert(B.find('payback').banks.includes('garden'), 'a chip picks a bank');

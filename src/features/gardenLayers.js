@@ -152,12 +152,18 @@ if garden.layoutYoung() > 0 and garden.layoutMature() == 0:
 # before a quick tick once too few of them are left. (Simulated — the real game, Farm level 8 (6×5),
 # 8 nursetulips, 1000 h × 3: golden cookies +84.8% on average against +83.6% for golden clover
 # combos, at CpS ×0.886; every nursetulip mature 25% of the time, in stretches of ~1.8 h, up to +149%.)
+# Each round goes down whole or not at all: it waits for the cookies to plant all of it, and for
+# effects to end (a seed costs minutes of the CpS the game shows: a Frenzy makes it 7 times dearer).
+# The tulips go first: no clover round starts while a tulip round is due.
 tulip = nursetulip   # the seed replanted as one round, apart from the clovers
 clover = goldenClover   # the seed of the clover rounds
 tulipReplantBelow = 0.5   # replant the tulips once fewer than this share of their tiles hold a mature one
 replantBelow = 0.75   # start a new clover round once fewer than this share of their tiles hold a mature one
 replantAtTick = true   # when a new clover round is planted — true: fertilizer first, the old clovers kept working until the next tick, the round planted in its last plantWindow seconds; false: at once
 plantWindow = 15   # (replantAtTick only) the last seconds before the tick, when the new clover round is planted
+wholeRounds = true   # start a round only once the bank covers all of it (garden.roundCost) — false: plant what it can afford
+tulipsFirst = true   # no clover round while a tulip round is due (it waits for the tulips to go down)
+waitOutEffects = true   # no new round while an effect makes seeds dearer (garden.priceBoost() above 1: a Frenzy…)
 unlockNewSeeds = true   # a seed you haven't unlocked yet: let it grow, harvest it once mature (that unlocks it)
 if unlockNewSeeds:
   garden.harvestNew()
@@ -165,8 +171,13 @@ if unlockNewSeeds:
 for tile in garden.tiles():
   if garden.wantAt(tile) != "" and garden.isOff(tile) and not garden.isEmpty(tile) and not (unlockNewSeeds and garden.isNew(tile)):
     garden.harvest(tile)
-# the tulips: a new round once none is growing and fewer than tulipReplantBelow are mature — at once
-if garden.seedYoung(tulip) == 0 and garden.seedMature(tulip) < tulipReplantBelow * garden.seedTiles(tulip):
+# whether a round may go down now: no effect on the prices, and the cookies for all of it
+pricesOk = not waitOutEffects or garden.priceBoost() <= 1
+# the tulips: a new round is due once none is growing and fewer than tulipReplantBelow are mature
+tulipDue = garden.seedYoung(tulip) == 0 and garden.seedMature(tulip) < tulipReplantBelow * garden.seedTiles(tulip)
+tulipReady = pricesOk and (not wholeRounds or cookies >= garden.roundCost(tulip))
+# …planted at once, all of it
+if tulipDue and tulipReady:
   for tile in garden.tiles():
     if garden.wantAt(tile) == tulip and not garden.isEmpty(tile):
       garden.harvest(tile)
@@ -174,8 +185,11 @@ if garden.seedYoung(tulip) == 0 and garden.seedMature(tulip) < tulipReplantBelow
 # while a tulip round is still young, fill any tile it couldn't plant (not enough cookies at the time)
 if garden.seedYoung(tulip) > 0 and garden.seedMature(tulip) == 0:
   garden.plantEmpty(tulip)
-# the clovers: a new round is due once none is growing and too few are mature
-if garden.seedYoung(clover) == 0 and garden.seedMature(clover) < replantBelow * garden.seedTiles(clover):
+# the clovers: a new round may go down once the tulips are (tulipsFirst), and the cookies left cover it
+tulipDue = garden.seedYoung(tulip) == 0 and garden.seedMature(tulip) < tulipReplantBelow * garden.seedTiles(tulip)
+cloverReady = pricesOk and (not wholeRounds or cookies >= garden.roundCost(clover)) and not (tulipsFirst and tulipDue)
+# …and is due once none is growing and too few are mature
+if cloverReady and garden.seedYoung(clover) == 0 and garden.seedMature(clover) < replantBelow * garden.seedTiles(clover):
   # fertilizer: the next tick within 3 minutes, and quick ticks while the round grows
   garden.soil(fertilizer)
   # planted now — or, with replantAtTick, in the last seconds before that tick (at once when there's
@@ -207,8 +221,8 @@ if garden.seedYoung(clover) > 0 and garden.seedMature(clover) == 0:
     {
       id: 'tulipRounds',
       name: 'Tulip and clover rounds',
-      desc: 'Nursetulips and golden clovers, each replanted all together on rounds of its own. The tulips once fewer than half are mature, the clovers as the Full-garden replanter does — so the tulips are mature at the same time, boosting the clovers around them.',
-      data: () => ({ rules: TULIP_GARDENER, knobs: { tulipReplantBelow: PCT, replantBelow: PCT, replantAtTick: TOGGLE, plantWindow: SECONDS, unlockNewSeeds: TOGGLE } }),
+      desc: 'Nursetulips and golden clovers, each replanted all together on rounds of its own. The tulips first, once fewer than half are mature, the clovers as the Full-garden replanter does — so the tulips are mature at the same time, boosting the clovers around them. A round goes down whole, once the bank covers it and no effect makes seeds dearer.',
+      data: () => ({ rules: TULIP_GARDENER, knobs: { tulipReplantBelow: PCT, replantBelow: PCT, replantAtTick: TOGGLE, plantWindow: SECONDS, wholeRounds: TOGGLE, tulipsFirst: TOGGLE, waitOutEffects: TOGGLE, unlockNewSeeds: TOGGLE } }),
     },
     { id: 'weeds', name: 'Weed collector', desc: 'Keeps the garden bare so weeds and fungi spring up; harvests old meddleweed (for brown mold and crumbspore) and new seeds once mature, clears everything else. Plants nothing.', data: () => ({ rules: WEED_GARDENER, knobs: { oldWeedOver: PCT } }) },
     {

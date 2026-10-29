@@ -44,7 +44,7 @@ assert(drops.profiles.pantheon === 'wrinklers' && drops.profiles.dragon === 'dro
 assert(combos.macros.gardener === 'on' && combos.macros.fthofOnClickFrenzy === 'on' && combos.macros.autoBuyer === 'on', 'Combos: the garden still on, FtHoF joins the Auto buyer');
 assert(combos.profiles.buyer === 'combos', 'Combos: the Golden cookie combos buyer profile');
 const bc = CA.AutoBuyer.find('combos');
-assert(bc && bc.mode === 'actualIncome' && bc.banks.join() === 'lucky,garden' && bc.reserve === 0, 'which ranks by actual income and keeps the Lucky! and garden replant banks');
+assert(bc && bc.mode === 'actualIncome' && bc.banks.join() === 'lucky,gardenRounds' && bc.reserve === 0, 'which ranks by actual income and keeps the Lucky! and garden rounds banks');
 const bp = CA.AutoBuyer.find('payback');
 assert(bp.banks.length === 0 && bp.reserve === 0, 'Drops spends freely (Payback: no reserve, no banks)');
 const snapshot = CA.Settings.serialize();

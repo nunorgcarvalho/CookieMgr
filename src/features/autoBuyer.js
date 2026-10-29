@@ -14,8 +14,10 @@
 //   skip        only what it can afford now (else it saves up for the front)
 //   reserve     minutes of unbuffed CpS it never spends
 //   banks       more banks it keeps, each picked on or off: lucky, conjure, luckyFrenzy (what a
-//               golden cookie or the spell needs to pay its most) and garden (replanting the whole
-//               layout). The highest of these and the minutes is what it keeps (buyer.reserve).
+//               golden cookie or the spell needs to pay its most), garden (replanting the whole
+//               layout) and gardenRounds (the garden's rounds: the nursetulips' while due, plus
+//               roundsMargin × the golden clovers' — features/garden.js roundsReserve). The highest
+//               of these and the minutes is what it keeps (buyer.reserve).
 //   rules       top to bottom, each { what it applies to, what it does, when (code, optional) }:
 //                 first   jumps the queue (the ones that do are ordered by payback period)
 //                 weight  multiplies its payback period by k (below 1: preferred; above: put off)
@@ -57,6 +59,12 @@ CA.AutoBuyer = (() => {
     { id: 'conjure', label: 'Conjure', tip: 'what Conjure Baked Goods needs to pay its most (bank.conjure)', get: () => GM().conjure().bank },
     { id: 'luckyFrenzy', label: 'Frenzy Lucky!', tip: 'what a Lucky! in a Frenzy needs to pay its most (bank.luckyFrenzy)', get: () => GM().lucky(true).bank },
     { id: 'garden', label: 'Garden replant', tip: 'what replanting the whole garden layout costs (garden.layoutCost)', get: () => (CA.Garden.minigame() ? CA.Garden.layoutCost() : 0) },
+    {
+      id: 'gardenRounds',
+      label: 'Garden rounds',
+      tip: 'what the garden’s rounds need, at unbuffed prices: the nursetulips’ round while they aren’t all planted, plus the margin × a round of the other seeds (golden clovers) — seeds cost minutes of CpS, so CpS bought doesn’t bring a round closer; the buyer spends what’s above (garden.roundsReserve)',
+      get: (p) => (CA.Garden.minigame() ? CA.Garden.roundsReserve(p.roundsMargin) : 0),
+    },
   ];
 
   /** The rule profiles that buy upgrades come with (v3.50): lots of upgrades affordable → buy them all at once. */
@@ -66,8 +74,9 @@ CA.AutoBuyer = (() => {
     { id: 'buildings', name: 'Buildings only', kinds: { building: true, upgrade: false, allUpgrades: false }, bulk: 'auto', cheapBulk: 1, skip: false, reserve: 0, banks: [], mode: '', rules: [] },
     { id: 'upgrades', name: 'Upgrades only', kinds: { building: false, upgrade: true, allUpgrades: true }, bulk: 'auto', cheapBulk: 1, skip: false, reserve: 0, banks: [], mode: '', rules: [cleanRule(BULK_RULE)] },
     // v4.0: what Nunix late game buys with once it plays for golden cookie combos — ranked by actual
-    // income, never below what a Lucky! and a garden replant need
-    { id: 'combos', name: 'Golden cookie combos', kinds: { building: true, upgrade: true, allUpgrades: true }, bulk: 'auto', cheapBulk: 1, skip: false, reserve: 0, banks: ['lucky', 'garden'], mode: 'actualIncome', rules: [cleanRule(BULK_RULE)] },
+    // income, never below what a Lucky! and the garden's rounds need (the tulips first, the clovers'
+    // round with a quarter on top: CpS bought only raises their price)
+    { id: 'combos', name: 'Golden cookie combos', kinds: { building: true, upgrade: true, allUpgrades: true }, bulk: 'auto', cheapBulk: 1, skip: false, reserve: 0, banks: ['lucky', 'gardenRounds'], roundsMargin: 1.25, mode: 'actualIncome', rules: [cleanRule(BULK_RULE)] },
   ];
   const copy = (x) => JSON.parse(JSON.stringify(x));
   let profiles = copy(SEEDS);
@@ -103,6 +112,8 @@ CA.AutoBuyer = (() => {
       skip: !!x.skip,
       reserve: Math.max(0, Number(x.reserve) || 0),
       banks: BANKS.map((b) => b.id).filter((id) => Array.isArray(x.banks) && x.banks.includes(id)),
+      // the Garden rounds bank's margin: × a round of the golden clovers (the default: a quarter on top)
+      roundsMargin: x.roundsMargin === undefined || !Number.isFinite(Number(x.roundsMargin)) ? CA.Garden.ROUNDS_MARGIN : Math.max(0, Number(x.roundsMargin)),
       // the Actual 15 min / 1 h / 3 h modes are one Actual income now (its window: core/settings.js)
       mode: typeof x.mode !== 'string' ? '' : /^actualIncome(15m|1h|3h)$/.test(x.mode) ? 'actualIncome' : x.mode,
       rules: (Array.isArray(x.rules) ? x.rules : []).slice(0, 50).map(cleanRule),
@@ -143,7 +154,7 @@ CA.AutoBuyer = (() => {
     changed();
     return p;
   }
-  /** Changes a profile's fields (name, kinds, bulk, cheapBulk, skip, reserve, banks, mode, rules); returns it. */
+  /** Changes a profile's fields (name, kinds, bulk, cheapBulk, skip, reserve, banks, roundsMargin, mode, rules); returns it. */
   function update(id, fields) {
     const i = profiles.findIndex((p) => p.id === id);
     if (i < 0) return null;
@@ -276,7 +287,7 @@ CA.AutoBuyer = (() => {
     const parts = [];
     if (p.reserve > 0) parts.push({ id: 'cps', label: `${p.reserve} min of CpS`, amount: reserveOf(p.reserve) });
     BANKS.filter((b) => p.banks.includes(b.id)).forEach((b) => {
-      const v = Number(b.get());
+      const v = Number(b.get(p));
       parts.push({ id: b.id, label: b.label, amount: Number.isFinite(v) ? Math.max(0, v) : 0 });
     });
     const top = parts.reduce((m, q) => (!m || q.amount > m.amount ? q : m), null);
@@ -453,6 +464,8 @@ CA.AutoBuyer = (() => {
     if (data && Array.isArray(data.profiles) && data.profiles.length) {
       profiles = data.profiles.map((raw, i) => {
         const p = cleanProfile(raw, i);
+        // Golden cookie combos saved before the Garden rounds bank: its garden replant becomes that
+        if (p.id === 'combos' && raw && raw.roundsMargin === undefined && p.banks.join() === 'lucky,garden') p.banks = ['lucky', 'gardenRounds'];
         // saved before Buy all upgrades (v3.50): one that buys upgrades gets its rule
         const old = !(raw && raw.kinds && typeof raw.kinds === 'object' && 'allUpgrades' in raw.kinds);
         if (old && p.kinds.upgrade && p.rules.length < 50) p.rules.push(cleanRule(BULK_RULE));
