@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 4.12.1 — 2026-10-29
+
+- **README:** new Stats screenshot (the Since last ascension window) and Statistics screenshot (the Income line, the
+  per-click line now an optional statistic); the Stats summary mentions ascension lines.
+
 ## 4.12.0 — 2026-10-29
 
 - **Ascension lines:** every chart (Stats, Garden, Stock market, Grimoire) draws a bold lavender line with an
