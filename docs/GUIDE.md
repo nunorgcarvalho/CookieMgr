@@ -456,9 +456,10 @@ card puts the widget on the left panel.
 
 The Auto buyer buys by payback, so it doesn't buy research or upgrades that give no CpS; the Upgrade unlocker does.
 
-Its stages watch: Santa's level, the Easter eggs, the research (how far along, and the next one) (Drops); the reindeer cookies and the next reindeer (Reindeer); the combo
+Its stages watch: the research (how far along, and the next one) (Drops); the next reindeer (Reindeer); the combo
 on, the magic for Force the Hand of Fate, what the Auto buyer buys next and how much of the garden is mature (Golden
-cookie combos).
+cookie combos). The seasons' drops (Santa's gifts, the Easter eggs, the reindeer cookies) aren't watched: the
+widget's **Next stage when** counts them already.
 
 Words: `manager.active()`, `manager.stage()`, `manager.stageName()`, `manager.entering()`, `manager.arriving(stage)`,
 `manager.stages()`, `manager.list()`. Actions: `manager.use(manager)`, `manager.goTo(stage)`, `manager.next()`,
@@ -928,7 +929,9 @@ for production and one for prestige (see **Copies** below). Macro buttons are th
   - **Stats**, each on or off: Expected wait, Within minute %, Window, Frequency (one every …, on average),
     Multiplier (× vs nothing helping), Median wait. Hover one for what it means (the same text as on the Stats page).
   - **Graph**: the odds of the next one, over **This cycle** (a line sweeping across it) or **From now** (a
-    timeline with its window and mean).
+    timeline with its window and mean). With the Stats over it, the graph doesn't write their numbers again: the
+    expected line is labeled "expected" when Expected wait is on, and the next cookie's bar leaves out its window
+    when Window is on.
   - **Effects**: a bar per effect running on the graph's axis, with its time left and the chance a golden cookie
     comes before it ends.
   - **Frequency Factors**: a bar for each upgrade, plant, spirit or aura making them come more often, on a log scale
@@ -949,9 +952,10 @@ for production and one for prestige (see **Copies** below). Macro buttons are th
   window, X axis and choices as on the Garden page; hover them for the details.
 - **Manager** — what the active manager is doing; it takes that manager's name as its title. Its settings pick the
   parts: **Stages** (a strip: done ✓, the one it's on lit with its name, still to come), **Now** (the stage, how
-  long it's been on it, its profiles in ✓ or still waiting ⌛, and a warning while the Manager macro is off),
-  **Next stage when** (each condition of the stage's **Until**, ticked once it holds, with a season's drops
-  counted on a bar: "Christmas upgrades 12/21"), **Watching** (the stage's own numbers, from its watch list on the
+  long it's been on it, its profiles in ✓ or still waiting ⌛, and a warning while the Manager macro is off; under
+  the strip, only how long: the strip names the stage), **Next stage when** (each condition of the stage's
+  **Until**, ticked once it holds, with a season's drops counted on a bar: "Christmas upgrades 12/21"; left out on
+  the last stage under the strip), **Watching** (the stage's own numbers, from its watch list on the
   Managers page), **Macros** (the macros the stage switched on, pulsing while they work, dim if you switched one
   off; hover for what they did) and **Lately** (the last things those macros did). Click the strip or the stage to
   open the Managers page.

@@ -146,9 +146,8 @@ CA.Managers = (() => {
           },
           profiles: { buyer: 'payback', pantheon: 'wrinklers', dragon: 'drops' },
           until: 'season.complete(christmas, upgrades) and season.complete(easter) and season.complete(halloween) and season.complete(valentines)',
+          // (not Santa or the Easter eggs: the "until" counts the seasons' drops already)
           watch: [
-            { label: 'Santa', value: '[santaLevel(), 14]', format: 'progress' },
-            { label: 'Easter eggs', value: '[owned(easter), total(easter)]', format: 'progress' },
             // the research, up to the Elder Pact (8 of the 9), and the one it's on
             { label: 'Research', value: '[researchOwned(), 8]', format: 'progress' },
             { label: 'Next research', value: 'researchNext()', format: 'auto' },
@@ -160,8 +159,8 @@ CA.Managers = (() => {
           inputs: {},
           profiles: { dragon: 'dropsFlight' },
           until: 'season.complete(christmas)',
+          // (not the reindeer cookies: the "until" counts Christmas's drops already)
           watch: [
-            { label: 'Reindeer cookies', value: '[owned(christmas, cookies), total(christmas, cookies)]', format: 'progress' },
             { label: 'Next reindeer in', value: 'reindeer.expected()', format: 'time' },
           ],
         },
@@ -680,11 +679,23 @@ CA.Managers = (() => {
     const obj = (x) => (x && typeof x === 'object' ? { ...x } : {});
     return { id: String(r.id || ''), stage: Math.max(0, Number(r.stage) || 0), resets: Number.isFinite(Number(r.resets)) ? Number(r.resets) : -1, since: Number(r.since) || 0, entering: !!r.entering, entered: false, jumped: !!r.jumped, put: obj(r.put), waiting: obj(r.waiting), want: {} };
   }
-  /** A seeded manager saved before the Manager widget (its stages without a watch list): the seed's, stage by stage name. */
+  // the seeds' watches that repeated what the stage's "until" already counts (the Manager widget shows both):
+  // taken out of saves that still have them, as seeded
+  const RETIRED_WATCH = [
+    { label: 'Santa', value: '[santaLevel(), 14]' },
+    { label: 'Easter eggs', value: '[owned(easter), total(easter)]' },
+    { label: 'Reindeer cookies', value: '[owned(christmas, cookies), total(christmas, cookies)]' },
+  ];
+  const retired = (x) => x && RETIRED_WATCH.some((r) => r.label === x.label && r.value === x.value);
+  /**
+   * A seeded manager saved before the Manager widget (its stages without a watch list): the seed's, stage by
+   * stage name; one saved with the watches since retired: without them.
+   */
   function withSeedWatch(m) {
     const seed = SEEDS.find((x) => x.id === m.id);
     if (!seed || !Array.isArray(m.stages)) return m;
-    return { ...m, stages: m.stages.map((st) => (st && typeof st === 'object' && !Array.isArray(st.watch) ? { ...st, watch: (seed.stages.find((x) => x.name === st.name) || {}).watch || [] } : st)) };
+    const watchOf = (st) => (!Array.isArray(st.watch) ? (seed.stages.find((x) => x.name === st.name) || {}).watch || [] : st.watch.filter((x) => !retired(x)));
+    return { ...m, stages: m.stages.map((st) => (st && typeof st === 'object' ? { ...st, watch: watchOf(st) } : st)) };
   }
   function load(data) {
     if (data && Array.isArray(data.managers)) {
