@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 4.6.0 — 2026-10-29
+
+- **Hotkeys:** the small button beside a hotkey chip now puts the key back to its default (↺), instead of removing
+  it. It shows only when the key differs from its default; hover it to see the default. Backspace while rebinding
+  still leaves a macro with no key.
+- **Managers page:** each widget watch stays on one line, even in a narrow panel. The label and format shrink, and
+  the code takes the rest. The format list reads **as it is · a time · a share · progress**; hover it for what each
+  means.
+- **Nunix late game** drops the Shimmering veil stage: it clicks the big cookie from the start and goes straight
+  into the seasons, in three stages: **Drops**, **Reindeer**, **Golden cookie combos**. Drops and Reindeer don't
+  click golden or wrath cookies (Scorn, in the Pantheon's Diamond slot, makes every golden cookie a wrath cookie);
+  Golden cookie combos clicks them again. **Put Nunix late game back** on the Managers page to get the new stages.
+
 ## 4.5.1 — 2026-10-29
 
 - **README:** the Managers screenshot shows the stage editor (a tab per stage, the macro library beside it).
