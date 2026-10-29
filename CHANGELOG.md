@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 4.9.2 — 2026-10-29
+
+- **Fixed:** levelling Santa (the Santa macro, SeasonCompletion) put up the game's Santa/dragon menu, empty and stuck,
+  when no menu was open: the game redraws it after every level, and its × did nothing. It's closed again now; a
+  menu you had open stays open.
+
 ## 4.9.1 — 2026-10-29
 
 - **README:** new Managers, Manager widget (with the research watches), Pantheon, Dragon and Payback screenshots
