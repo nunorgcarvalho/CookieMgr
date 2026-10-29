@@ -67,12 +67,12 @@ Game.dragonAura = 10; // someone switched to Dragonflight by hand
 P.slotGod(P.gods.labor, 1);
 pass();
 assert(auras() === 'Dragon Guts + Dragonflight' && temple() === 'scorn,labor,', `Easter, same stage: a switch by hand stays (${auras()}; ${temple()})`);
-CA.Managers.goTo(2); // Drops (no Shimmering veil here, so its stage passes straight on)
+CA.Managers.goTo(1); // Drops again
 pass();
 assert(auras() === 'Dragon Guts + Mind Over Matter' && temple() === 'scorn,,', `going into the stage again puts its profiles back (${auras()}; ${temple()})`);
 ['Egg', 'Ghost cookie'].forEach((n) => owned.add(n));
 pass();
-assert(auras() === 'Dragon Guts + Mind Over Matter' && CA.Managers.where().index === 1, 'Valentine’s day: still the drops stage');
+assert(auras() === 'Dragon Guts + Mind Over Matter' && CA.Managers.where().index === 0, 'Valentine’s day: still the drops stage');
 
 // ---- the second Christmas: reindeer only, Dragonflight in for Dragon Guts
 owned.add('Heart biscuit');
