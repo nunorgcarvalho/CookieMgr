@@ -443,14 +443,15 @@ card puts the widget on the left panel.
 **Nunix late game** comes seeded and active:
 
 1. **Shimmering veil**, while it lasts: golden and wrath cookies and reindeer clicked, but not the big cookie
-   (clicking it breaks the veil); the Auto buyer, the Upgrade unlocker (Santa, research, Auto dragon, Pet the dragon,
+   (clicking any of them breaks the veil, so the first golden cookie clicked ends this stage); the Auto buyer, the Upgrade unlocker (Santa, research, Auto dragon, Pet the dragon,
    Fortunes and cheap upgrades), SeasonCompletion, wrinklers and sugar lumps. Research goes all the way, stopping
    before the Elder Pact, so the Grandmapocalypse keeps going for the drops. No garden, Grimoire or stock market.
    Pantheon wrinklers, dragon drops.
-2. **Drops**: once the veil breaks, the big cookie is clicked too, until Christmas's upgrades, Easter, Halloween and
+2. **Drops**: once the veil breaks, the big cookie is clicked too, and golden and wrath cookies no longer are
+   (Scorn, in the Pantheon's Diamond slot, makes every golden cookie a wrath cookie), until Christmas's upgrades, Easter, Halloween and
    Valentine's day are in.
 3. **Reindeer**: Christmas again for its cookies, with the elders pledged and Dragon drops & flight.
-4. **Golden cookie combos**, for good: the Auto buyer's Golden cookie combos profile, 8 nursetulips together +
+4. **Golden cookie combos**, for good: golden and wrath cookies clicked again, the Auto buyer's Golden cookie combos profile, 8 nursetulips together +
    clover combos in the garden, the golden Pantheon, Dragonflight & Harvest, and Force the Hand of Fate on combos.
 
 The Auto buyer buys by payback, so it doesn't buy research or upgrades that give no CpS; the Upgrade unlocker does.

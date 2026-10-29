@@ -40,7 +40,7 @@ assert(drops.macros.elderPledge === 'off' && reindeer.macros.elderPledge === 'on
 assert(G.untilProblem(reindeer.until) === '' && reindeer.until === 'season.complete(christmas)', 'Reindeer lasts until Christmas is complete');
 assert(drops.macros.autoBuyer === 'on' && drops.macros.seasonCompletion === 'on', 'Drops: the Auto buyer and SeasonCompletion');
 assert(drops.macros.gardener === 'off' && drops.macros.stockTrader === 'off' && drops.macros.fthofOnClickFrenzy === 'off', 'Drops: no garden, stocks or FtHoF');
-assert(['golden', 'wrath', 'reindeer', 'wrinklers', 'lumps'].every((id) => drops.macros[id] === 'on'), 'Drops: shimmers, wrinklers, lumps');
+assert(['reindeer', 'wrinklers', 'lumps'].every((id) => drops.macros[id] === 'on') && drops.macros.golden === 'off' && drops.macros.wrath === 'off', 'Drops: reindeer, wrinklers, lumps — not golden cookies (Scorn makes them wrath)');
 assert(drops.profiles.pantheon === 'wrinklers' && drops.profiles.dragon === 'drops' && drops.profiles.buyer === 'payback', 'Drops: Pantheon wrinklers, dragon drops, Payback buyer');
 assert(combos.macros.gardener === 'on' && combos.macros.fthofOnClickFrenzy === 'on' && combos.macros.autoBuyer === 'on', 'Combos: the garden and FtHoF join the Auto buyer');
 assert(combos.profiles.buyer === 'combos', 'Combos: the Golden cookie combos buyer profile');

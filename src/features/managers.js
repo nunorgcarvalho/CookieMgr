@@ -117,7 +117,7 @@ CA.Managers = (() => {
     {
       id: 'nunixLateGame',
       name: 'Nunix late game',
-      desc: 'Keeps the Shimmering veil as long as it lasts, clicking everything but the big cookie; then the big cookie too while it hunts every season’s drops in the Grandmapocalypse, the Auto buyer spending freely and the Upgrade unlocker on; then Christmas again for the reindeer cookies, the elders pledged; then golden cookie combos for good: the buyer ranks by actual income and keeps the Lucky! and garden replant banks, with the garden, the golden Pantheon, Dragonflight & Harvest and Force the Hand of Fate on combos.',
+      desc: 'Keeps the Shimmering veil as long as it lasts, clicking everything but the big cookie; then (the first golden cookie clicked breaks it) the big cookie, not golden cookies (Scorn makes them all wrath cookies), while it hunts every season’s drops in the Grandmapocalypse, the Auto buyer spending freely and the Upgrade unlocker on; then Christmas again for the reindeer cookies, the elders pledged; then golden cookie combos for good, golden cookies clicked again: the buyer ranks by actual income and keeps the Lucky! and garden replant banks, with the garden, the golden Pantheon, Dragonflight & Harvest and Force the Hand of Fate on combos.',
       scope: 'ascension',
       v: 2,
       stages: [
@@ -153,7 +153,9 @@ CA.Managers = (() => {
         },
         {
           name: 'Drops',
-          macros: { bigCookie: 'on' },
+          // clicking a golden cookie broke the veil; from here Scorn (the Pantheon's wrinklers profile)
+          // makes every golden cookie a wrath cookie, so they're left alone until the combos
+          macros: { bigCookie: 'on', golden: 'off', wrath: 'off' },
           inputs: {},
           profiles: {},
           until: 'season.complete(christmas, upgrades) and season.complete(easter) and season.complete(halloween) and season.complete(valentines)',
@@ -176,7 +178,7 @@ CA.Managers = (() => {
         },
         {
           name: 'Golden cookie combos',
-          macros: { gardener: 'on', fthofOnClickFrenzy: 'on' },
+          macros: { golden: 'on', wrath: 'on', gardener: 'on', fthofOnClickFrenzy: 'on' },
           inputs: {},
           profiles: { buyer: 'combos', pantheon: 'golden', dragon: 'dragonFlightHarvest', grimoire: 'default', garden: 'tulipCombos' },
           until: '',

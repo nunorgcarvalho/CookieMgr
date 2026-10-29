@@ -17,13 +17,13 @@ const value = (id, ...args) => CA.Script.VALUES.find((v) => v.id === id).get(...
 // ---- Nunix late game, as changes ----
 const nunix = G.find('nunixLateGame');
 const [s1, s2, s3] = nunix.stages;
-assert(Object.keys(s2.macros).join() === 'bigCookie' && s2.macros.bigCookie === 'on', 'Drops only changes the big cookie: on');
+assert(Object.keys(s2.macros).sort().join() === 'bigCookie,golden,wrath' && s2.macros.bigCookie === 'on' && s2.macros.golden === 'off', 'Drops changes the big cookie (on) and golden / wrath cookies (off: Scorn)');
 assert(Object.keys(s3.macros).join() === 'elderPledge' && Object.keys(s3.profiles).join() === 'dragon', 'Reindeer: the pledge and the dragon');
 assert(s1.macros.reindeer === 'on' && s1.macros.bigCookie === 'off' && s1.macros.upgradeUnlocker === 'on', 'stage 1: reindeer clicked, not the big cookie; the Upgrade unlocker on');
 assert(s1.inputs.research.stopBefore === 'Elder Pact' && s1.macros.elderPledge === 'off', 'research up to the Elder Pact, no pledge (the Grandmapocalypse, for the drops)');
 assert(['gardener', 'fthofOnClickFrenzy', 'stockTrader'].every((id) => s1.macros[id] === 'off'), 'no garden, spells or stocks at first');
 const e4 = G.effective(nunix, 3);
-assert(e4.macros.reindeer === 'on' && e4.macros.bigCookie === 'on' && e4.macros.gardener === 'on' && e4.profiles.buyer === 'combos' && e4.profiles.pantheon === 'golden', 'what stage 4 runs with: everything before it, and its own changes');
+assert(e4.macros.reindeer === 'on' && e4.macros.bigCookie === 'on' && e4.macros.golden === 'on' && e4.macros.wrath === 'on' && e4.macros.gardener === 'on' && e4.profiles.buyer === 'combos' && e4.profiles.pantheon === 'golden', 'what stage 4 runs with: everything before it, and its own changes');
 assert(e4.inputs.research.stopBefore === 'Elder Pact', 'settings carry over too');
 
 // ---- its code ----
