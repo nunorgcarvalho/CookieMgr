@@ -383,8 +383,8 @@ follow Cookie Monster's too: blue (better than the best building), green (the be
 back). It's checked against Cookie Monster itself in the real game (the simulator's parity test): every building at
 ×1, ×10 and ×100 and every upgrade in the store, the same to the last digit.
 
-Payback periods read in time units: seconds, then minutes, hours, days and years, the next unit only once the
-number passes 999 (999 s, then 16.7 min), so they keep three digits. **Payback periods in** (the Payback page's
+Payback periods read in short time units, the largest two that apply: 45s, 16m 40s, 3h 12m, 2d 5h. Days are the
+largest unit (from 100 days, days alone: 365d). **Payback periods in** (the Payback page's
 Options) switches them back to plain seconds, Cookie Monster's way (999, 1K).
 
 **Pet the dragon** gets the dragon's four drops (Dragon scale, claw, fang, teddy bear): each pet has a 1 in 20 chance,

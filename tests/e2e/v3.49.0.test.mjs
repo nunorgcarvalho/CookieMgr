@@ -1,5 +1,5 @@
-// v3.49.0: payback periods read in time units by default — seconds, then minutes, hours, days,
-// years, the next unit only past 999 (999 s, then 16.7 min) — with a Payback page option for the
+// v3.49.0: payback periods read in time units by default — since payback-short-units, the largest
+// two of s/m/h/d (45s, 16m 40s, 3h 12m, 2d 5h; days the largest unit) — with a Payback page option for the
 // old plain seconds (Cookie Monster's 999, 1K).
 import { boot, sleep, makeAssert, click } from '../harness/game.mjs';
 import { cpsModel } from '../harness/cps.mjs';
@@ -15,19 +15,22 @@ const F = CA.Format;
 // ---- the formatter ----
 assert(CA.Settings.get('ppUnits') === 'time', 'time units by default');
 const cases = [
-  [0, '0 s'],
-  [0.5, '0.5 s'],
-  [12.34, '12.3 s'],
-  [999, '999 s'],
-  [999.4, '999 s'],
-  [999.6, '16.7 min'],
-  [1000, '16.7 min'],
-  [59940, '999 min'],
-  [60000, '16.7 h'],
-  [999 * 3600, '999 h'],
-  [1000 * 3600, '41.7 d'],
-  [1000 * 86400, '2.74 y'],
-  [5000 * 365 * 86400, '5K y'],
+  [0, '0s'],
+  [0.5, '0.5s'],
+  [9.94, '9.9s'],
+  [12.34, '12s'],
+  [59.4, '59s'],
+  [59.6, '1m'],
+  [1000, '16m 40s'],
+  [3599.6, '1h'],
+  [11520, '3h 12m'],
+  [86399, '1d'],
+  [2 * 86400 + 5 * 3600, '2d 5h'],
+  [99 * 86400 + 23.6 * 3600, '100d'],
+  [365 * 86400, '365d'],
+  [12345 * 86400, '12,345d'],
+  [5e6 * 86400, '5M d'],
+  [-90, '-1m 30s'],
   [Infinity, '∞'],
 ];
 for (const [v, want] of cases) assert(F.payback(v) === want, `${v} s → ${want} (${F.payback(v)})`);
@@ -39,7 +42,7 @@ assert(F.payback(Infinity) === '∞', '∞ either way');
 CA.Settings.set('ppUnits', 'time');
 
 // ---- statistics and the script word use it ----
-assert(CA.Stats.format(1000, 'payback') === '16.7 min', `the payback format (${CA.Stats.format(1000, 'payback')})`);
+assert(CA.Stats.format(1000, 'payback') === '16m 40s', `the payback format (${CA.Stats.format(1000, 'payback')})`);
 
 // ---- the Payback page: its option, and the tables in units ----
 const spec = { Cursor: [15, 0.1], Grandma: [100, 1], Farm: [1100, 8] };
@@ -54,11 +57,11 @@ const chips = () => [...page().querySelectorAll('[data-pp-pick="ppUnits"]')];
 assert(chips().length === 2, 'Payback periods in: two chips');
 assert(chips().find((c) => c.dataset.v === 'time').classList.contains('on'), 'time units on');
 const cells = () => [...page().querySelectorAll('[data-pp-buildings] b')].map((b) => b.textContent);
-assert(cells().some((t) => t !== '∞') && cells().every((t) => /^(∞|[\d.]+K? (s|min|h|d|y))$/.test(t)), `building cells in units (${cells().slice(0, 4)})`);
+assert(cells().some((t) => t !== '∞') && cells().every((t) => /^(∞|[\d.,]+[smhd]( \d+[smh])?)$/.test(t)), `building cells in units (${cells().slice(0, 4)})`);
 click(w, chips().find((c) => c.dataset.v === 'seconds'));
 await sleep(50);
 assert(CA.Settings.get('ppUnits') === 'seconds', 'the chip sets seconds');
-assert(cells().every((t) => !/ (s|min|h|d|y)$/.test(t)), `building cells in plain seconds (${cells().slice(0, 4)})`);
+assert(cells().every((t) => !/[smhd]$/.test(t)), `building cells in plain seconds (${cells().slice(0, 4)})`);
 
 done();
 process.exit();
