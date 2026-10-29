@@ -60,6 +60,17 @@ assert(past[2].classList.contains('hot') && /Bought just now/.test(past[2].inner
 assert(/paid/.test(past[0].querySelector('.ca-wpop').textContent), 'a past one’s card: what it paid');
 assert(next().classList.contains('can'), 'next: affordable now');
 
+// ---- long names stay compact: the next one's full name on hover; Buy all upgrades' card names a few, then how many more ----
+assert(row().querySelector('.ca-wbuy-text b').getAttribute('data-tip') === row().querySelector('.ca-wbuy-text b').textContent, 'the next name: its full name on hover');
+const nx = B.next;
+const many = Array.from({ length: 9 }, (_, i) => `Pure pitch-black chocolate butter biscuit ${i + 1}`);
+B.next = (...a) => ({ ...nx(...a), kind: 'allUpgrades', names: many });
+Wd.tick();
+const covers = next().querySelector('.ca-wbuy-covers');
+assert(covers && /biscuit 4,? /.test(`${covers.textContent} `) && !/biscuit 5/.test(covers.textContent) && /and 5 more/.test(covers.textContent), `its card: four names, then 5 more (${covers && covers.textContent})`);
+B.next = nx;
+Wd.tick();
+
 // ---- click: the Payback page ----
 click(w, next());
 assert(CA.Settings.get('tab') === 'payback', 'click opens the Payback page');

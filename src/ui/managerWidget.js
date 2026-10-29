@@ -218,7 +218,7 @@ CA.UI.ManagerWidget = (() => {
     if (!rows.length) return '<div class="ca-mw-dim">Its macros haven’t done anything yet.</div>';
     return rows
       .slice(0, ACTIVITY)
-      .map((r) => `<div class="ca-mw-act${Date.now() - r.t < HOT_MS ? ' hot' : ''}">${CA.UI.MacrosPage.icon(r.m, true)}<span data-tip="${esc(r.m.name)}">${esc(what(r))}</span><em>${ago(r.t)}</em></div>`)
+      .map((r) => `<div class="ca-mw-act${Date.now() - r.t < HOT_MS ? ' hot' : ''}">${CA.UI.MacrosPage.icon(r.m, true)}<span data-tip="${esc(`${r.m.name}: ${what(r)}`)}">${esc(what(r))}</span><em>${ago(r.t)}</em></div>`)
       .join('');
   }
 

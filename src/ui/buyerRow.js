@@ -41,11 +41,17 @@ CA.UI.BuyerRow = (() => {
     return x.label || x.name;
   }
   const count = (x) => (x.kind === 'building' && x.n > 1 ? `<em>${x.n}</em>` : '');
-  const row = (k, v) => `<span class="ca-wpop-row"><span class="ca-wpop-name">${k}</span><span class="ca-wpop-val">${v}</span></span>`;
+  const row = (k, v, cls = '') => `<span class="ca-wpop-row${cls}"><span class="ca-wpop-name">${k}</span><span class="ca-wpop-val">${v}</span></span>`;
   const head = (x, sub) => `<span class="ca-wpop-head">${picture(x)}<b>${esc(nameOf(x))}</b></span><span class="ca-wpop-sub">${esc(sub)}</span>`;
   const pop = (inner) => `<span class="ca-wpop ca-wt">${inner}<span class="ca-wpop-foot">click to open the Payback page</span></span>`;
-  /** The upgrades Buy all upgrades covers, by name. */
-  const covers = (x) => (x.kind === 'allUpgrades' && (x.names || []).length ? row('upgrades', esc(x.names.map((n) => (Game.Upgrades && Game.Upgrades[n] && Game.Upgrades[n].dname) || n).join(', '))) : '');
+  /** The upgrades Buy all upgrades covers, by name: the first few, wrapping in the card, then how many more. */
+  const COVERS = 4;
+  function covers(x) {
+    const names = x.kind === 'allUpgrades' ? (x.names || []).map((n) => (Game.Upgrades && Game.Upgrades[n] && Game.Upgrades[n].dname) || n) : [];
+    if (!names.length) return '';
+    const more = names.length - COVERS;
+    return row('upgrades', esc(names.slice(0, more > 1 ? COVERS : names.length).join(', ')) + (more > 1 ? ` <i>and ${more} more</i>` : ''), ' ca-wbuy-covers');
+  }
 
   function nextHtml(p) {
     const f = B().next();
@@ -68,7 +74,7 @@ CA.UI.BuyerRow = (() => {
       `<span class="ca-wbuy-item ca-wbuy-next${pct >= 1 ? ' can' : ''}" data-pop aria-label="${esc(`Next: ${nameOf(f)}`)}">${picture(f)}${count(f)}` +
       pop(head(f, `Next for the Auto buyer · ${p.name} profile`) + rows) +
       '</span>' +
-      `<span class="ca-wbuy-text"><b>${esc(nameOf(f))}</b>` +
+      `<span class="ca-wbuy-text"><b data-tip="${esc(nameOf(f))}">${esc(nameOf(f))}</b>` +
       `<span>${F().short(f.price)} · PP ${esc(F().payback(f.pp))}</span>` +
       `<span class="ca-wbuy-when"><span class="ca-wbuy-bar${pct >= 1 ? ' can' : ''}"><i style="width:${(pct * 100).toFixed(1)}%"></i></span>` +
       `${pct >= 1 ? '<i class="ok">affordable now</i>' : `<i>${esc(when)}</i>`}</span></span>`
