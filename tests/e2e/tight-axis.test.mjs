@@ -27,12 +27,18 @@ const E = CA.UI.Plot.get('gardenEffects');
 const scale = () => (E.tick(), E.last().scale);
 let s = scale();
 assert(s.yMin < -11.4 && s.yMin > -15, `the axis ends just under the CpS dip (${s.yMin.toFixed(1)}%)`);
-assert(s.yMax >= 60 && s.ticks[0] === 0 && s.ticks.every((t) => t >= s.yMin && t <= s.yMax), `ticks from 0 up, all on the axis (${s.ticks.join(', ')})`);
+assert(
+  s.yMax >= 60 && s.ticks[0] === 0 && s.ticks.every((t) => t >= s.yMin && t <= s.yMax),
+  `ticks from 0 up, all on the axis (${s.ticks.join(', ')})`
+);
 
 // mostly below zero, a small rise above it: the same, flipped
 only({ cps: 0.4, goldenCookieFreq: 1.05 });
 s = scale();
-assert(s.yMax > 5 && s.yMax < 10 && s.yMin <= -60 && s.ticks[s.ticks.length - 1] === 0, `a small rise: the axis ends just over it (${s.yMin.toFixed(1)} to ${s.yMax.toFixed(1)}; ${s.ticks.join(', ')})`);
+assert(
+  s.yMax > 5 && s.yMax < 10 && s.yMin <= -60 && s.ticks[s.ticks.length - 1] === 0,
+  `a small rise: the axis ends just over it (${s.yMin.toFixed(1)} to ${s.yMax.toFixed(1)}; ${s.ticks.join(', ')})`
+);
 
 // both sides big: round ticks both ways, as before
 only({ cps: 0.5, goldenCookieFreq: 1.6 });
