@@ -589,6 +589,9 @@ if cookies() >= need and after < need:
 
 **Upgrades: best first** orders the store's upgrades by color, then payback period
 (switches last). The store's **Best buy** sort ranks buildings by what a click buys — or the minimum bulk, if more.
+The game starts every session at ×1; with a minimum bulk of ×10 or ×100, **Start at the minimum bulk** (Settings →
+Store & tooltips, on by default) starts the store at it instead. The tooltips' cookieMgr lines follow the buy amount
+selected (×1, ×10, ×100, rounded up with Round to multiples).
 
 ### Statistics
 
