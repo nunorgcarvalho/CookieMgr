@@ -25,6 +25,7 @@ CA.SimpleLook = (() => {
 
   /** Brings the game's prefs in line with the option. */
   function apply() {
+    wrapDraw();
     const prefs = Game.prefs;
     if (!prefs) return;
     const was = remembered();
@@ -42,6 +43,29 @@ CA.SimpleLook = (() => {
     refreshOptions();
   }
 
+  /** Game.DrawBackground without the glow behind the big cookie while the option is on. */
+  function wrapDraw() {
+    if (typeof Game.DrawBackground !== 'function' || Game.DrawBackground.__caSimpleLook) return;
+    CA.Util.wrap(Game, 'DrawBackground', (original, args, self) => {
+      const ctx = Game.LeftBackground;
+      const shine = Game.Loader && Game.Loader.assets && Game.Loader.assets['shine.png'];
+      if (!on() || !ctx || !shine) return original.apply(self, args);
+      const own = Object.prototype.hasOwnProperty.call(ctx, 'drawImage');
+      const draw = ctx.drawImage;
+      ctx.drawImage = function (img) {
+        if (img === shine) return undefined;
+        return draw.apply(this, arguments);
+      };
+      try {
+        return original.apply(self, args);
+      } finally {
+        if (own) ctx.drawImage = draw;
+        else delete ctx.drawImage;
+      }
+    });
+    Game.DrawBackground.__caSimpleLook = true;
+  }
+
   function toggle() {
     CA.Settings.set('simpleLook', !on());
   }
@@ -52,7 +76,7 @@ CA.SimpleLook = (() => {
       group: 'general',
       icon: 'sparkle',
       name: 'Simple cookie background',
-      desc: 'Turns off the extras around the big cookie: the circling cursors, falling cookies and season snow, the cookies and numbers clicks pop out, the flares and the milk. The background stays; turning it off puts the game’s own settings back.',
+      desc: 'Turns off the extras around the big cookie: the circling cursors, falling cookies and season snow, the cookies and numbers clicks pop out, the flares, the white glow and the milk. The background stays; turning it off puts the game’s own settings back.',
       default: false,
     });
     CA.Settings.defineOption({ key: 'simpleLookWas', group: 'ui', name: 'Game settings before Simple cookie background', desc: '', default: '' });
