@@ -6,7 +6,7 @@
 //                Buy all upgrades as one row, the upgrades it buys on hover),
 //                payback period in its color, score, price, when, the rules that touched it — the first
 //                ten (all on "show all"), then what's held back, grayed, with why
-//   Profile      the active profile: name, what it buys, the bulk, save up or skip, the reserve
+//   Profile      the active profile: name, what it buys, the bulk, cheap ×100, save up or skip, the reserve
 //                (minutes of CpS and banks — the highest is kept), what it ranks by, and its rules
 //                (what → does, when …), reordered with ↑ ↓
 //
@@ -214,6 +214,7 @@ CA.UI.AutoBuyerCard = (() => {
       `<div class="ca-ab-row"><span class="ca-ab-lbl">Building bulk</span><span class="ca-pp-chips">${B()
         .BULKS.map((b) => chip('data-ab-bulk', b, b === 'auto' ? 'auto' : `×${b}`, p.bulk === b, b === 'auto' ? `The store’s minimum bulk (Options below), rounded up with Round to multiples — now ×${CA.Shop.minBulk()}` : ''))
         .join('')}</span></div>` +
+      `<div class="ca-ab-row"><span class="ca-ab-lbl">Cheap ×100</span><input type="number" min="0" step="0.5" class="ca-pp-num" value="${p.cheapBulk}" data-ab-f="cheapBulk" data-tip="${esc('0: off')}"><span class="ca-hint">s of unbuffed CpS — a building whose next 100 cost less, and the budget affords, is bought 100 at a time ahead of the queue, whatever its payback period (0: off)</span></div>` +
       `<div class="ca-ab-row"><span class="ca-ab-lbl">Can’t afford</span><span class="ca-pp-chips">${chip('data-ab-skip', 0, 'save up for the front', !p.skip)}${chip('data-ab-skip', 1, 'skip to what I can afford', p.skip)}</span></div>` +
       `<div class="ca-ab-row"><span class="ca-ab-lbl">Bank reserve</span><input type="number" min="0" step="1" class="ca-pp-num" value="${p.reserve}" data-ab-f="reserve"><span class="ca-hint">minutes of unbuffed CpS</span>` +
       `<span class="ca-pp-chips">${B()
@@ -308,6 +309,7 @@ CA.UI.AutoBuyerCard = (() => {
     const p = B().find();
     if (!p) return true;
     if (d.abF === 'name') B().update(p.id, { name: el.value.trim() || p.name });
+    else if (d.abF === 'cheapBulk') B().update(p.id, { cheapBulk: Math.max(0, Number(el.value) || 0) });
     else if (d.abF === 'reserve') B().update(p.id, { reserve: Math.max(0, Number(el.value) || 0) });
     else if (d.abF === 'mode') B().update(p.id, { mode: el.value });
     else if (d.abRule !== undefined) {

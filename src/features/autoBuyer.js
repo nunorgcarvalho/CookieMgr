@@ -8,6 +8,9 @@
 //               every store upgrade the budget affords, cheapest first, measured as one purchase —
 //               features/payback.js allUpgrades); buildings in a bulk (auto: the store's minimum bulk,
 //               rounded up with Round to multiples — what the old buyers bought) or ×1 / ×10 / ×100
+//   cheap ×100  seconds of unbuffed CpS (0: off; default 1): a building whose next 100 cost less than
+//               that, and that the budget affords, is bought 100 at a time ahead of the queue — no
+//               ranking by payback period for what costs next to nothing
 //   skip        only what it can afford now (else it saves up for the front)
 //   reserve     minutes of unbuffed CpS it never spends
 //   banks       more banks it keeps, each picked on or off: lucky, conjure, luckyFrenzy (what a
@@ -57,12 +60,12 @@ CA.AutoBuyer = (() => {
   /** The rule profiles that buy upgrades come with (v3.50): lots of upgrades affordable → buy them all at once. */
   const BULK_RULE = { what: 'allUpgrades', effect: 'first', when: 'payback.allUpgradesCount(buyer.budget()) >= 20' };
   const SEEDS = [
-    { id: 'payback', name: 'Payback', kinds: { building: true, upgrade: true, allUpgrades: true }, bulk: 'auto', skip: false, reserve: 0, banks: [], mode: '', rules: [cleanRule(BULK_RULE)] },
-    { id: 'buildings', name: 'Buildings only', kinds: { building: true, upgrade: false, allUpgrades: false }, bulk: 'auto', skip: false, reserve: 0, banks: [], mode: '', rules: [] },
-    { id: 'upgrades', name: 'Upgrades only', kinds: { building: false, upgrade: true, allUpgrades: true }, bulk: 'auto', skip: false, reserve: 0, banks: [], mode: '', rules: [cleanRule(BULK_RULE)] },
+    { id: 'payback', name: 'Payback', kinds: { building: true, upgrade: true, allUpgrades: true }, bulk: 'auto', cheapBulk: 1, skip: false, reserve: 0, banks: [], mode: '', rules: [cleanRule(BULK_RULE)] },
+    { id: 'buildings', name: 'Buildings only', kinds: { building: true, upgrade: false, allUpgrades: false }, bulk: 'auto', cheapBulk: 1, skip: false, reserve: 0, banks: [], mode: '', rules: [] },
+    { id: 'upgrades', name: 'Upgrades only', kinds: { building: false, upgrade: true, allUpgrades: true }, bulk: 'auto', cheapBulk: 1, skip: false, reserve: 0, banks: [], mode: '', rules: [cleanRule(BULK_RULE)] },
     // v4.0: what Nunix late game buys with once it plays for golden cookie combos — ranked by actual
     // income, never below what a Lucky! and a garden replant need
-    { id: 'combos', name: 'Golden cookie combos', kinds: { building: true, upgrade: true, allUpgrades: true }, bulk: 'auto', skip: false, reserve: 0, banks: ['lucky', 'garden'], mode: 'actualIncome', rules: [cleanRule(BULK_RULE)] },
+    { id: 'combos', name: 'Golden cookie combos', kinds: { building: true, upgrade: true, allUpgrades: true }, bulk: 'auto', cheapBulk: 1, skip: false, reserve: 0, banks: ['lucky', 'garden'], mode: 'actualIncome', rules: [cleanRule(BULK_RULE)] },
   ];
   const copy = (x) => JSON.parse(JSON.stringify(x));
   let profiles = copy(SEEDS);
@@ -93,6 +96,8 @@ CA.AutoBuyer = (() => {
       // Buy all upgrades (v3.50): a profile saved before it buys it when it buys upgrades
       kinds: { building: kinds.building !== false, upgrade: kinds.upgrade !== false, allUpgrades: kinds.allUpgrades === undefined ? kinds.upgrade !== false : !!kinds.allUpgrades },
       bulk: BULKS.includes(x.bulk) ? x.bulk : BULKS.includes(Number(x.bulk)) ? Number(x.bulk) : 'auto',
+      // cheap ×100: a profile saved before it gets the default (1 s)
+      cheapBulk: x.cheapBulk === undefined ? 1 : Math.max(0, Number(x.cheapBulk) || 0),
       skip: !!x.skip,
       reserve: Math.max(0, Number(x.reserve) || 0),
       banks: BANKS.map((b) => b.id).filter((id) => Array.isArray(x.banks) && x.banks.includes(id)),
@@ -135,7 +140,7 @@ CA.AutoBuyer = (() => {
     changed();
     return p;
   }
-  /** Changes a profile's fields (name, kinds, bulk, skip, reserve, banks, mode, rules); returns it. */
+  /** Changes a profile's fields (name, kinds, bulk, cheapBulk, skip, reserve, banks, mode, rules); returns it. */
   function update(id, fields) {
     const i = profiles.findIndex((p) => p.id === id);
     if (i < 0) return null;
@@ -206,6 +211,8 @@ CA.AutoBuyer = (() => {
     if (r.effect === 'cap') return `up to ${r.n} owned`;
     return `weight ×${r.k}`;
   }
+  /** The cheap ×100 badge a building it takes gets. */
+  const cheapBulkText = (p) => `cheap: ×100 under ${p.cheapBulk} s`;
   const ruleText = (r) => `${whatText(r)} → ${effectText(r)}${r.when ? ` when ${r.when}` : ''}`;
 
   function matches(r, x) {
@@ -323,8 +330,14 @@ CA.AutoBuyer = (() => {
       else held.push({ ...all, key: thingKey(all), score: NaN, first: false, rules: [], why: all.n ? 'affords only one upgrade: the same as buying it' : 'affords no upgrades', colour: 'gray' });
     }
     const rules = p.rules.filter((r) => r.on);
+    // cheap ×100: what the next 100 of a building may cost at most (0: off)
+    const cheap = p.cheapBulk > 0 ? rawCps() * p.cheapBulk : 0;
     ranked.forEach((r0) => {
       let r = { ...r0, key: thingKey(r0), score: r0.pp, first: false, rules: [] };
+      if (cheap > 0 && r.kind === 'building') {
+        const price = P().sumPrice(buildingNamed(r.name), 100);
+        if (price <= cheap && price <= b) r = { ...(r.n === 100 ? r : resized(r, 100, p)), key: r.key, first: true, rules: [cheapBulkText(p)] };
+      }
       let why = Number.isFinite(r.pp) ? '' : 'never pays back';
       for (const rule of rules) {
         if (!matches(rule, r) || !when(rule, r.key)) continue;
@@ -527,7 +540,7 @@ CA.AutoBuyer = (() => {
       desc: 'Buys the front of the queue on the Payback page: its active profile ranks every building and upgrade by payback period, then its rules (buy first, weights, caps, never). Replaces Best building and Best upgrade.',
       icon: { ico: 'dollar' },
       mode: 'flow',
-      every: 500,
+      every: 50,
       defaultSource: '# Buy the front of the Auto buyer’s queue (the Payback page): the active profile ranks every\n# building and upgrade by payback period, then by its rules. buyer.budget(): the bank less\n# the profile’s reserve.\nforever:\n  pick = buyer.next()\n  if pick != "" and pp.price(pick) <= buyer.budget():\n    pp.buy(pick)\n',
       readiness: () => readiness(),
       holdRepeat: true,
@@ -553,6 +566,7 @@ CA.AutoBuyer = (() => {
         desc: `Ranks ${kinds.length ? kinds.map((k) => ({ building: 'buildings', upgrade: 'upgrades', allUpgrades: 'Buy all upgrades' })[k] || k).join(', ') : 'nothing'} by payback period (${mode}) into one queue, and the Auto buyer buys the front.`,
         rows: [
           ['bulk', p.bulk === 'auto' ? 'auto' : `×${p.bulk}`],
+          ['cheap ×100', p.cheapBulk > 0 ? `next 100 under ${p.cheapBulk} s of CpS` : 'off'],
           ['reserve', reserveParts(p.id).length ? reserveParts(p.id).map((x) => x.label).join(', ') : 'none'],
           ['rules', String(p.rules.length)],
           ['front now', front ? front.name : '—'],
