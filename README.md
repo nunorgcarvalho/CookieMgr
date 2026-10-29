@@ -77,7 +77,7 @@ the page. [See every page with a screenshot](#pages).
 <td width="50%" valign="top">
 <b>Stats</b><br>
 <img src="docs/readme/stats.png" alt="The Stats page" width="100%">
-<ul><li>Cookies per second, where every cookie came from, your bank and prestige, charted and kept between sessions</li><li>Zoom and look back; Frenzy and other effects shaded behind the chart</li><li>Your income outside CpS, by source</li><li>Golden cookie odds, Lucky! banks, what-ifs for spirits and auras, what's left to collect</li></ul>
+<ul><li>Cookies per second, where every cookie came from, your bank and prestige, charted and kept between sessions</li><li>Zoom and look back, or since your last ascension (ascensions are marked on every chart); Frenzy and other effects shaded behind it</li><li>Your income outside CpS, by source</li><li>Golden cookie odds, Lucky! banks, what-ifs for spirits and auras, what's left to collect</li></ul>
 </td>
 </tr>
 <tr>
