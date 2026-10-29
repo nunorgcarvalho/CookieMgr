@@ -277,6 +277,15 @@ CA.UI.Plot = (() => {
       });
   }
 
+  /** A linear axis with values on both sides of zero, one side smaller than a tick step of the other:
+   *  1 when the small side is below zero, −1 when it's above, 0 otherwise. */
+  function tightSide(lo, hi) {
+    if (!(lo < 0 && hi > 0)) return 0;
+    if (-lo < CA.UI.Chart.niceStep((hi * 1.08) / 4)) return 1;
+    if (hi < CA.UI.Chart.niceStep((-lo * 1.08) / 4)) return -1;
+    return 0;
+  }
+
   /** Round tick values inside [lo, hi] for a log axis: whole powers of ten when the range is
    *  wide, 1-2-5 or finer steps as it narrows, evenly spaced round numbers when very narrow. */
   function logTicks(lo, hi) {
@@ -660,6 +669,18 @@ CA.UI.Plot = (() => {
         yMin = 0;
         yMax = Math.ceil(top / step) * step;
         for (let t = 0; t <= yMax * 1.0001; t += step) ticks.push(t);
+      } else if (tightSide(minV, maxV)) {
+        // a small dip to one side of zero (a nursetulip's −11% CpS beside +60% golden cookie frequency) only
+        // stretches the axis as far as it goes: the ticks come from the big side, and the axis ends just past
+        // the small side's furthest value instead of a whole step beyond it (−20%, −50%)
+        const s = tightSide(minV, maxV);
+        const big = Math.max(maxV, -minV) * 1.08;
+        const step = CA.UI.Chart.niceStep(big / 4);
+        const far = Math.ceil(big / step) * step;
+        const near = s * (s > 0 ? minV : maxV) - far * 0.04; // the small side, as a negative number
+        yMin = s > 0 ? near : -far;
+        yMax = s > 0 ? far : -near;
+        for (let t = Math.ceil(yMin / step) * step; t <= yMax + step * 0.0001; t += step) ticks.push(Math.abs(t) < step * 1e-9 ? 0 : t);
       } else {
         ({ yMin, yMax, ticks } = CA.UI.Chart.niceLinearScale(minV, maxV));
       }
