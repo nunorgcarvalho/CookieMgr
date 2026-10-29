@@ -84,11 +84,19 @@ const star = page().querySelector('.ca-wstar');
 assert(star && !Wd.hasPreset(CA.UI.ManagerWidget.PRESET), 'the Manager card has a ☆');
 click(w, star);
 assert(Wd.hasPreset(CA.UI.ManagerWidget.PRESET), '☆ puts the widget on the left panel');
-eq(page().querySelectorAll('.ca-mgr-watch').length, nunix.stages.reduce((n, st) => n + st.watch.length, 0), 'a row per watched value');
+// (stage tabs: the shown stage's watches, folded away until opened)
+click(w, page().querySelector('[data-mgr-act="tab"][data-i="0"]'));
+assert(!page().querySelector('[data-mgr-watchbox]').open, 'folded away at first');
+click(w, page().querySelector('[data-mgr-watchbox] > summary'));
+CA.UI.Menu.render();
+assert(page().querySelector('[data-mgr-watchbox]').open, 'opened, it stays open');
+eq(page().querySelectorAll('.ca-mgr-watch').length, nunix.stages[0].watch.length, 'a row per watched value');
 click(w, page().querySelector('[data-mgr-act="addWatch"][data-i="0"]'));
 eq(G.find('nunixLateGame').stages[0].watch.length, 4, '+ Watch a value');
-const input = page().querySelector('[data-mgr-watch][data-i="0"][data-j="3"][data-field="value"]');
+// the value is a line of code (its words hover like the editor's)
+const input = page().querySelector('[data-code-ed="watch:0:3"] [data-code]');
 input.value = 'lumps()';
+input.dispatchEvent(new w.Event('input', { bubbles: true }));
 input.dispatchEvent(new w.Event('change', { bubbles: true }));
 const label = page().querySelector('[data-mgr-watch][data-i="0"][data-j="3"][data-field="label"]');
 label.value = 'Lumps';

@@ -139,9 +139,9 @@ CA.Managers = (() => {
             stockTrader: 'off',
           },
           inputs: {
-            research: { stopBefore: 'Elder Pact' }, // all the research but the last
-            seasonCompletion: { then: 'fools' },
-            wrinklers: { fed: true },
+            // all the research but the last (SeasonCompletion ends on Business day, and wrinklers are
+            // popped once they've eaten, as those macros do anyway)
+            research: { stopBefore: 'Elder Pact' },
           },
           profiles: { buyer: 'payback', pantheon: 'wrinklers', dragon: 'drops' },
           until: 'not veil()',
