@@ -40,6 +40,8 @@
 //   buyer.buyNext(profile)        (action) buys the front when the budget covers it
 //   buyer.profile(profile)        (action) makes a profile the active one
 //   buy.allUpgrades()             (action) the game's "Buy all upgrades" (Inspired checklist), without needing it
+// What it bought last (buyer.buyNext, or pp.buy of what buyer.next named) is kept: recentBought(), newest first —
+// the widgets' Auto buyer corner (ui/buyerCorner.js).
 // A thing is "building:Cursor", "upgrade:Kitten helpers" or "allUpgrades" — what pp.best returns; pp.kind, pp.price,
 // pp.of and pp.buy take it (features/autoBuy.js).
 
@@ -387,8 +389,21 @@ CA.AutoBuyer = (() => {
     if (!p || !f || f.price > budget(p.id) || f.price > (Game.cookies || 0)) return 0;
     const got = P().buy(f);
     memo = null;
+    if (got > 0) noteBought(f, p);
     return got > 0 ? 1 : 0;
   }
+
+  // what it bought last (the widgets' corner): [{ t, key, kind, name, n, label, names, price, pp, gain, profile }], newest first
+  const BOUGHT_MAX = 8;
+  let bought = [];
+  /** Keeps a thing of its queue as just bought (buyer.buyNext, or pp.buy of what buyer.next named). */
+  function noteBought(f, p0) {
+    const p = p0 || find();
+    const { key, kind, name, n, label, names, price, pp, gain } = f;
+    bought = [{ t: Date.now(), key, kind, name, n, label, names, price, pp, gain, profile: p ? p.name : '' }].concat(bought).slice(0, BOUGHT_MAX);
+  }
+  /** What the Auto buyer bought last, newest first. */
+  const recentBought = () => bought.slice();
   /** For buttons: what the buyer buys next, and whether it can now (`upgrade`: the upgrade it names, to show with its icon). */
   function readiness(x) {
     const p = find(x);
@@ -577,5 +592,5 @@ CA.AutoBuyer = (() => {
     },
   });
 
-  return { init, allUpgrades, buyAllUpgrades, list, find, use, create, update, remove, addRule, setRule, removeRule, moveRule, activeProfile, queue, next, buyNext, readiness, budget, keepOf, reserveParts, thingOf, ruleText, whatText, effectText, whenProblem, reserveOf, WHATS, EFFECTS, BULKS, BANKS, SEEDS, BULK_RULE };
+  return { init, allUpgrades, buyAllUpgrades, list, find, use, create, update, remove, addRule, setRule, removeRule, moveRule, activeProfile, queue, next, buyNext, noteBought, recentBought, readiness, budget, keepOf, reserveParts, thingOf, ruleText, whatText, effectText, whenProblem, reserveOf, WHATS, EFFECTS, BULKS, BANKS, SEEDS, BULK_RULE };
 })();

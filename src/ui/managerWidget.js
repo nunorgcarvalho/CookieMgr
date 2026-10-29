@@ -12,6 +12,9 @@
 //              (dim: off now); hover one for what its actions have done
 //   activity   the last few things those macros did, newest first
 //
+// While the stage has the Auto buyer on (itself, or in a group), the title bar's top-right shows what it
+// bought last and buys next (ui/buyerCorner.js).
+//
 // It always follows the active manager; its title is that manager's name. Click the strip or the stage
 // to open the Managers page. The Managers page's ☆ puts one on the left panel.
 
@@ -192,6 +195,17 @@ CA.UI.ManagerWidget = (() => {
       .join('');
   }
 
+  /** Whether the stage it's on (or starts at) switches the Auto buyer on (itself, or a group with it) —
+   *  shown even while the Manager macro is off: what the buyer would buy. */
+  function runsBuyer() {
+    const w = G().where();
+    if (!w) return false;
+    return stageOn(now(w)).some((id) => {
+      const m = CA.Macros.get(id);
+      return id === 'autoBuyer' || (m.mode === 'group' && (m.members || []).includes('autoBuyer'));
+    });
+  }
+
   const PART_HTML = { stages: stagesHtml, now: nowHtml, until: untilHtml, watch: watchHtml, macros: macrosHtml, activity: activityHtml };
   const NONE = '<div class="ca-mw-dim">No manager is active — pick one on the Managers page.</div>';
 
@@ -224,6 +238,7 @@ CA.UI.ManagerWidget = (() => {
       width: 260,
       resize: 'free',
       html,
+      buyer: runsBuyer,
       nameOf: () => (G().current() ? G().current().name : 'Manager'),
       settings: [{ key: 'stats', label: 'Show', type: 'multi', default: DEFAULT_PARTS, options: () => PARTS.map((p) => ({ ...p, sample: sample(p.v) })) }],
     });
@@ -232,5 +247,5 @@ CA.UI.ManagerWidget = (() => {
   /** A watched value as the widget writes it (HTML): "7 / 21", "12 min", "yes". */
   const watchText = (x) => watchValue(x).text;
 
-  return { init, html, watchText, PARTS, DEFAULT_PARTS, PRESET };
+  return { init, html, runsBuyer, watchText, PARTS, DEFAULT_PARTS, PRESET };
 })();

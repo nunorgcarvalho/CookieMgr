@@ -958,6 +958,10 @@ for production and one for prestige (see **Copies** below). Macro buttons are th
   Managers page), **Macros** (the macros the stage switched on, pulsing while they work, dim if you switched one
   off; hover for what they did) and **Lately** (the last things those macros did). Click the strip or the stage to
   open the Managers page.
+  While the stage has the **Auto buyer** on (even with the Manager macro off), the title bar's top-right shows
+  the last three things it bought (small, the newest flashing as it lands) and what it buys next (a bar under it
+  fills as you save up; green once you can afford it). Hover one for its price, payback period, +CpS, and when you
+  can afford it (or how long ago it was bought); click it for the Payback page.
 
 **Stars:** a ☆ next to a chart or a section adds its ready-made widget in one click, as a macro's ★ gives it a
 button: the Garden page's Growth and Effects charts (a Chart widget each) and the golden cookie frequency row on the
