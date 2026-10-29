@@ -1063,8 +1063,9 @@ multipliers) as structured data, not just a text summary — for future use.
 
 ### Staying up to date
 
-cookieMgr checks GitHub every 15 minutes for a newer build and, if there is one, shows a notification with a one-click
-reload — it never updates itself silently. It can't hot-swap itself in place without a page reload (see the note at
+cookieMgr checks GitHub every 5 minutes (and as you open Settings) for a newer build and, if there is one, shows a
+notification with a one-click reload, and a **New version vX available · Reload** note under the version number on
+Settings → General — it never updates itself silently. It can't hot-swap itself in place without a page reload (see the note at
 the top of `src/core/update.js` for why), so a click (or just refreshing normally) is always how an update actually
 applies. Turn this off in Settings if you'd rather check manually.
 

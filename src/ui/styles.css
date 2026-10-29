@@ -3764,6 +3764,25 @@ body.ca-has-storebar #products {
   font-size: 11px;
   color: #a39477;
 }
+#CookieMgrMenu .ca-overview-brand .ca-update-note {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+  padding: 1px 7px 1px 5px;
+  border: 1px solid rgba(120, 220, 120, 0.45);
+  border-radius: 9px;
+  background: rgba(60, 160, 60, 0.18);
+  color: #b8f0a8;
+  white-space: nowrap;
+}
+#CookieMgrMenu .ca-overview-brand .ca-update-note[hidden] {
+  display: none;
+}
+#CookieMgrMenu .ca-overview-brand .ca-update-note a {
+  color: #fff3c4;
+  text-decoration: underline;
+}
 #CookieMgrMenu .ca-overview .ca-stats {
   flex: 1 1 360px;
 }

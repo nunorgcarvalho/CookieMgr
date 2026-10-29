@@ -139,6 +139,16 @@ CA.UI.Menu = (() => {
     );
   }
 
+  /** "New version vX available · Reload" under the version, when CA.Update has found a newer release. */
+  function updateNote() {
+    const v = CA.Update.available();
+    if (!v) return '<span class="ca-update-note" data-ca-update-note hidden></span>';
+    return (
+      `<span class="ca-update-note" data-ca-update-note data-tip="${CA.Util.escapeHtml(`You're on v${CA.VERSION}. Reloading the page loads v${v} — cookieMgr can't safely update itself without a reload.`)}">` +
+      `${CA.UI.Icons.html('refresh', 12)}New version v${v} available &middot; <a href="javascript:void(0)" data-ca="reload">Reload</a></span>`
+    );
+  }
+
   /** At-a-glance tiles at the top of the Settings page. */
   function overviewCard() {
     const tile = CA.UI.Plot.fmt.tile;
@@ -147,7 +157,7 @@ CA.UI.Menu = (() => {
     const placed = CA.UI.Widgets.list().length;
     return (
       '<div class="ca-card ca-overview">' +
-      `<div class="ca-overview-brand"><span class="ca-overview-logo">${C.icon({ icon: CA.ICON })}</span><div><b>cookieMgr</b><span>v${CA.VERSION}</span></div></div>` +
+      `<div class="ca-overview-brand"><span class="ca-overview-logo">${C.icon({ icon: CA.ICON })}</span><div><b>cookieMgr</b><span>v${CA.VERSION}</span>${updateNote()}</div></div>` +
       '<div class="ca-stats">' +
       tile('Recording', CA.Settings.get('trackHistory') ? 'on' : 'off', '<span data-ca-history-short></span>') +
       tile('Macros running', String(running), C.link('Macros', 'clickers')) +
@@ -332,7 +342,10 @@ CA.UI.Menu = (() => {
     group: 'custom',
     open: (sub) => openSettingsTab(sub),
     html: () => settingsPage(),
-    parts: [{ mount: (root) => CA.UI.TooltipsPage.mount(root), unmount: () => CA.UI.TooltipsPage.unmount(), tick() {} }],
+    parts: [
+      { mount: (root) => CA.UI.TooltipsPage.mount(root), unmount: () => CA.UI.TooltipsPage.unmount(), tick() {} },
+      { mount: () => CA.Update.checkSoon(), unmount() {}, tick() {} },
+    ],
   });
 
   let mounted = null; // the page whose mount() ran for the current render
@@ -509,6 +522,9 @@ CA.UI.Menu = (() => {
         CA.Settings.resetHotkeys();
         CA.Util.notify('cookieMgr', 'Hotkeys reset to defaults.', CA.ICON, 2);
         break;
+      case 'reload':
+        location.reload(); // a newer cookieMgr loads with the page (CA.Update)
+        break;
       case 'cm-load':
         CA.Util.sound('snd/tick.mp3');
         CA.CookieMonster.load();
@@ -586,6 +602,11 @@ CA.UI.Menu = (() => {
     });
     CA.Events.on('integrations', () => {
       if (isOpen() && currentTab() === 'settings') render();
+    });
+    // a newer release was found: show it under the version without re-rendering the page
+    CA.Events.on('update', () => {
+      const note = isOpen() && currentTab() === 'settings' && document.querySelector('#CookieMgrMenu [data-ca-update-note]');
+      if (note) note.outerHTML = updateNote();
     });
   }
 
