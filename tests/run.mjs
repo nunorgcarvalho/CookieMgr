@@ -9,6 +9,9 @@
 //   npm test -- --jobs=4         how many files run at once (default: half the cores, at most 6; or TEST_JOBS)
 //   npm test -- --no-retry       a file that fails counts as failed (by default it gets one more
 //                                run, alone, after the others — passing then, it's reported as flaky)
+//   npm test -- --shard=2/4      only the 2nd quarter of the files (CI runs the quarters side by side), split
+//                                by how long each file takes (tests/timings.json) so the quarters end together
+//   npm test -- --save-timings   after a full run, write each file's time to tests/timings.json
 //
 // A test file is a plain script: it boots the fake game (tests/harness/game.mjs), checks things
 // with makeAssert(), and ends with done() — which prints "ALL CHECKS PASSED" and exits 0, or the
@@ -26,10 +29,25 @@ const args = process.argv.slice(2);
 const verbose = args.includes('--verbose');
 const filters = args.filter((a) => !a.startsWith('--')).map((a) => a.toLowerCase());
 const TIMEOUT_MS = 180 * 1000;
-// how many files at once: half the cores (6 at most) — jsdom games and the simulator's real one are
-// CPU-heavy, and timing-sensitive tests flaked with every core busy. --jobs=N or TEST_JOBS=N to choose.
+// how many files at once: one per core (8 at most) — the files spend a good part of their time waiting
+// (sleep, waitFor), so fewer leaves cores idle; a timing-sensitive check that fails under load is run again
+// alone below. --jobs=N or TEST_JOBS=N to choose.
 const jobsArg = (args.find((a) => a.startsWith('--jobs=')) || '').slice(7) || process.env.TEST_JOBS;
-const JOBS = Math.max(1, Number(jobsArg) || Math.max(2, Math.min(6, Math.floor(os.cpus().length / 2))));
+const JOBS = Math.max(1, Number(jobsArg) || Math.max(2, Math.min(8, os.cpus().length)));
+const shardArg = (args.find((a) => a.startsWith('--shard=')) || '').slice(8);
+const [SHARD, SHARDS] = shardArg ? shardArg.split('/').map(Number) : [1, 1];
+if (!(SHARDS >= 1 && SHARD >= 1 && SHARD <= SHARDS)) {
+  console.error(`--shard=${shardArg}: expected i/n, 1 ≤ i ≤ n`);
+  process.exit(1);
+}
+// seconds each file took (npm test -- --save-timings): the slow ones start first, and the shards get equal shares
+const TIMINGS = path.join(DIR, 'timings.json');
+let timings = {};
+try {
+  timings = JSON.parse(fs.readFileSync(TIMINGS, 'utf8'));
+} catch (e) {
+  timings = {};
+}
 
 function find(dir) {
   return fs
@@ -44,9 +62,24 @@ const order = (a, b) => {
   return ka[0] - kb[0] || ka[1] - kb[1] || ka[2] - kb[2];
 };
 const rel = (f) => path.relative(DIR, f).replace(/\\/g, '/');
-const files = find(DIR)
+const matching = find(DIR)
   .filter((f) => !filters.length || filters.some((w) => rel(f).toLowerCase().includes(w)))
   .sort(order);
+// a file not timed yet (a new one) counts as an average one
+const known = Object.values(timings).sort((a, b) => a - b);
+const typical = known.length ? known[known.length >> 1] : 1;
+const cost = (f) => timings[rel(f)] ?? typical;
+// longest first, each onto the shard with the least so far: every shard gets the same files wherever it runs
+const shares = Array.from({ length: SHARDS }, () => ({ secs: 0, files: [] }));
+[...matching]
+  .sort((a, b) => cost(b) - cost(a) || order(a, b))
+  .forEach((f) => {
+    const s = shares.reduce((m, x) => (x.secs < m.secs ? x : m));
+    s.secs += cost(f);
+    s.files.push(f);
+  });
+const files = shares[SHARD - 1].files;
+if (SHARDS > 1) console.log(`Shard ${SHARD}/${SHARDS}: ${files.length} of ${matching.length} files (~${Math.round(shares[SHARD - 1].secs)} s of tests)`);
 if (!files.length) {
   console.error(`No test files match ${filters.join(', ')}`);
   process.exit(1);
@@ -101,7 +134,8 @@ function run(file, again = false) {
 }
 
 const t0 = Date.now();
-const queue = files.slice();
+// slowest first, so a long file doesn't start last and run on alone
+const queue = files.slice().sort((a, b) => cost(b) - cost(a));
 await Promise.all(
   Array.from({ length: Math.min(JOBS, queue.length) }, async () => {
     while (queue.length) await run(queue.shift());
@@ -128,4 +162,13 @@ console.log(
 if (skipped.length) console.log(color(33, `skipped — couldn't run here (in CI they must):\n${skipped.map((r) => `  ${rel(r.file)}: ${r.skipped}`).join('\n')}`));
 if (flaky.length) console.log(color(33, `flaky — failed side by side, passed alone (wait with waitFor, not sleep):\n${flaky.map((f) => `  ${rel(f)}`).join('\n')}`));
 if (failed.length) console.log(failed.map((r) => `  ${rel(r.file)}`).join('\n'));
+if (args.includes('--save-timings')) {
+  // a full run only (no filter, no shard), so files that no longer exist drop out
+  if (filters.length || SHARDS > 1) console.log(color(33, '--save-timings: only after a full run (no filter, no --shard)'));
+  else {
+    const out = Object.fromEntries(results.sort((a, b) => order(a.file, b.file)).map((r) => [rel(r.file), Math.round(r.secs * 10) / 10]));
+    fs.writeFileSync(TIMINGS, JSON.stringify(out, null, 2) + '\n');
+    console.log(`Wrote ${rel(TIMINGS)}`);
+  }
+}
 process.exit(failed.length ? 1 : 0);

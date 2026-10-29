@@ -53,14 +53,17 @@ assert(CA.Settings.optionsIn('stocks').find((d) => d.key === 'bankToolbar').name
 
 // ---- macros: built-ins as cards, yours as rows
 CA.UI.Menu.openPage('clickers');
-const mp = page('clickers');
+let mp = page('clickers');
 assert(mp.querySelectorAll('.ca-mtile').length >= 10 && mp.querySelector('.ca-mtile[data-macro-row="bigCookie"]'), 'built-in macros as cards');
 assert(mp.querySelector('.ca-mtile[data-macro-row="lumps"] select[data-macro-param], .ca-mtile[data-macro-row="lumps"] select[data-macro-input]'), 'cards keep their choices'); // v3: an input of its code
 CA.Macros.set('golden', true);
 CA.UI.MacrosPage.sync(mp);
 const gtile = mp.querySelector('.ca-mtile[data-macro-row="golden"]');
 assert(gtile.classList.contains('on') && gtile.querySelector('.ca-switch.on'), 'cards follow on/off');
+CA.UI.Menu.close(); // 300 runs with the menu open would re-sync its page 300 times (slow in jsdom)
 for (let i = 0; i < 300; i++) CA.Macros.runOnce('bigCookie');
+CA.UI.Menu.openPage('clickers');
+mp = page('clickers');
 CA.UI.MacrosPage.sync(mp);
 const meter = mp.querySelector('.ca-mtile[data-macro-row="bigCookie"] [data-macro-heat]');
 assert(/h[3-5]/.test(meter.className) && parseFloat(meter.firstChild.style.width) >= 60, `activity meter (${meter.className}, ${meter.firstChild.style.width})`);

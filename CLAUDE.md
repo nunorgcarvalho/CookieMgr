@@ -19,3 +19,11 @@ none of them clash over it.
 - Don't push tags: the workflow tags `vX.Y.Z` / `sim-vX.Y.Z` and publishes the GitHub release.
 
 CI enforces this (`node scripts/changes.mjs check origin/main`); `npm run changes` previews the next release.
+
+## Testing: what you touched locally, everything in CI
+
+CI runs the full suite on every push (four shards, ~1.5 min). Locally, run `npm run lint` and
+`npm test -- contract <feature words>` (e.g. `npm test -- contract garden`), not the whole suite, before each push.
+Run everything (`npm test`) only for changes to `src/core/`, `tests/harness/` or `build.mjs`, or to chase a CI
+failure; don't re-run it after merging `main`. Keep new tests quick: `waitFor` instead of long sleeps, and close
+the menu around loops that fire hundreds of events. See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
