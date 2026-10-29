@@ -649,7 +649,7 @@ CA.UI.Graphs = (() => {
    *  in active play — the whole recorded history when the window is All. */
   function etaRate() {
     const w = Number(S().get('plot.prestige.win')) || 0;
-    const asc = w === P().SINCE_ASCENSION && CA.Ascension ? CA.Ascension.last() : null;
+    const asc = w === P().SINCE_ASCENSION && CA.Ascension ? CA.Ascension.runStart() : null;
     if (asc) {
       const r = recent(Math.max(1, (CA.Recorder.activeNow() - asc.a) / SEC));
       return r && { actual: r.actual, label: 'at the actual CpS since your last ascension' };
