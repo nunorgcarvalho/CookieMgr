@@ -473,7 +473,7 @@
       0 0 12px 2px rgba(255, 215, 106, 0.55);
   }
 }
-#CookieMgrMenu .ca-key-clear {
+#CookieMgrMenu .ca-key-revert {
   width: 18px;
   height: 18px;
   margin-left: 3px;
@@ -490,15 +490,15 @@
     opacity 0.15s,
     background 0.15s;
 }
-#CookieMgrMenu .ca-row:hover .ca-key-clear {
+#CookieMgrMenu .ca-row:hover .ca-key-revert {
   opacity: 0.8;
 }
-#CookieMgrMenu .ca-key-clear:hover {
+#CookieMgrMenu .ca-key-revert:hover {
   color: #fff;
-  background: rgba(255, 80, 80, 0.35);
+  background: rgba(255, 255, 255, 0.15);
 }
-#CookieMgrMenu .ca-hotkey.unset .ca-key-clear,
-#CookieMgrMenu .ca-hotkey.capturing .ca-key-clear {
+#CookieMgrMenu .ca-hotkey.default .ca-key-revert,
+#CookieMgrMenu .ca-hotkey.capturing .ca-key-revert {
   visibility: hidden;
 }
 
@@ -9319,18 +9319,33 @@ body.ca-has-storebar #products {
   gap: 6px;
   margin-top: 8px;
 }
+/* one line per watch: the label and format shrink, the code takes the rest */
 #CookieMgrMenu .ca-mgr-watch {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 6px;
   width: 100%;
 }
 #CookieMgrMenu .ca-mgr-watch .ca-gname {
-  width: 150px;
+  flex: 0 1 140px;
+  min-width: 70px;
+  width: auto;
+}
+#CookieMgrMenu .ca-mgr-watch .ca-code-line {
+  flex: 1 1 160px;
+  min-width: 90px;
 }
 #CookieMgrMenu .ca-mgr-watch select {
-  width: 190px;
+  flex: 0 1 100px;
+  min-width: 70px;
+  width: auto;
+}
+#CookieMgrMenu .ca-mgr-watch [data-mgr-watch-now] {
+  flex: 0 0 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 #CookieMgrMenu .ca-mgr-codehint {
   padding: 6px 14px 0;

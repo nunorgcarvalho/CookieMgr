@@ -23,7 +23,7 @@ assert(nunix.stages.every((st) => Array.isArray(st.watch) && st.watch.length), '
 nunix.stages.forEach((st) =>
   G.watchOf(st).forEach((x) => assert(!x.error, `${st.name}: ${x.label} (${x.value}) works out${x.error ? `: ${x.error}` : ''}`))
 );
-const reindeerWatch = G.watchOf(nunix.stages[2])[0];
+const reindeerWatch = G.watchOf(nunix.stages[1])[0];
 assert(Array.isArray(reindeerWatch.value) && reindeerWatch.value.length === 2 && reindeerWatch.format === 'progress', 'Reindeer cookies: [have, of]');
 
 // ---- an until taken apart ----
@@ -31,7 +31,8 @@ const has = Game.Has;
 Game.Has = (n) => n === 'Shimmering veil [off]' || has(n);
 const veil = G.untilParts('not veil()');
 assert(veil && veil.parts.length === 1 && !veil.parts[0].ok && /not veil\(\) \(now yes\)/.test(veil.parts[0].text), `not veil(): ${veil && veil.parts[0].text}`);
-const drops = G.untilParts(nunix.stages[1].until);
+Game.Has = has;
+const drops = G.untilParts(nunix.stages[0].until);
 eq(drops.join, 'and', 'Drops: all of');
 eq(drops.parts.length, 4, 'Drops: four seasons');
 assert(drops.parts.every((p) => Number.isFinite(p.have) && Number.isFinite(p.of)), 'each counts its drops');
@@ -47,16 +48,16 @@ G.step();
 const inst = Wd.add('manager');
 assert(inst && Wd.labelOf(inst) === 'Nunix late game', 'the widget is named after the manager');
 let h = CA.UI.ManagerWidget.html(inst);
-assert(/ca-mw-st on[^>]*>1<em>Shimmering veil<\/em>/.test(h), 'the strip lights stage 1 with its name');
+assert(/ca-mw-st on[^>]*>1<em>Drops<\/em>/.test(h), 'the strip lights stage 1 with its name');
 assert(/The Manager macro is off/.test(h), 'it says while the Manager macro is off');
-assert(/not veil\(\)/.test(h) && /Next golden cookie in/.test(h), 'what moves it on, and what it watches');
+assert(/0 of 4|[1-4] of 4/.test(h) && /ca-mw-bar/.test(h) && /Grandmapocalypse/.test(h), 'what moves it on (how many of its four conditions hold, with bars), and what it watches');
 assert(/ca-mw-mac/.test(h) && !/ca-mw-act/.test(h), 'the macros it switched on; not the activity by default');
-Game.Has = has;
+G.goTo(2);
 G.step();
 h = CA.UI.ManagerWidget.html(inst);
-assert(/ca-mw-st done[^>]*>✓/.test(h) && /<em>Drops<\/em>/.test(h), 'the veil broke: stage 1 done, Drops lit');
-assert(/0 of 4|[1-4] of 4/.test(h) && /ca-mw-bar/.test(h), 'Drops: how many of its four conditions hold, with bars');
-G.goTo(4);
+assert(/ca-mw-st done[^>]*>✓/.test(h) && /ca-mw-st on[^>]*>2<em>Reindeer<\/em>/.test(h), 'on to stage 2: stage 1 done, Reindeer lit');
+assert(/Next reindeer in/.test(h), 'Reindeer: its watches');
+G.goTo(3);
 G.step();
 h = CA.UI.ManagerWidget.html(inst);
 assert(/The last stage/.test(h) && /Combo on/.test(h), 'the last stage lasts; Combos watches the combo');
@@ -113,7 +114,7 @@ const S = CA.Settings;
 const saved = JSON.parse(S.serialize());
 S.load(JSON.stringify(saved));
 eq(G.find('nunixLateGame').stages[0].watch.length, 0, 'an emptied list stays empty');
-eq(G.find('nunixLateGame').stages[1].watch.length, 3, 'the others kept');
+eq(G.find('nunixLateGame').stages[1].watch.length, 2, 'the others kept');
 saved.managers.managers.forEach((m) => m.stages.forEach((st) => delete st.watch));
 S.load(JSON.stringify(saved));
 assert(G.find('nunixLateGame').stages.every((st, i) => st.watch.length === G.SEEDS[0].stages[i].watch.length), 'a save from v4.0: Nunix’s stages get their watch lists');

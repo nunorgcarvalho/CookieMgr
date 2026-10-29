@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+## 4.7.0 — 2026-10-29
+
+- **Auto buyer, cheap ×100:** a profile setting (seconds of unbuffed CpS, default 1; 0 turns it off). A building
+  whose next 100 cost less than that, and that the budget affords, is bought 100 at a time ahead of the queue,
+  whatever its payback period. Saved profiles get it at 1 s. The queue marks those rows "cheap: ×100 under N s".
+- **Auto buyer:** runs every 0.05 s by default (was 0.5 s), so a run of cheap buys clears quickly. A speed you set
+  yourself on the Macros page is kept.
+
+## 4.6.0 — 2026-10-29
+
+- **Hotkeys:** the small button beside a hotkey chip now puts the key back to its default (↺), instead of removing
+  it. It shows only when the key differs from its default; hover it to see the default. Backspace while rebinding
+  still leaves a macro with no key.
+- **Managers page:** each widget watch stays on one line, even in a narrow panel. The label and format shrink, and
+  the code takes the rest. The format list reads **as it is · a time · a share · progress**; hover it for what each
+  means.
+- **Nunix late game** drops the Shimmering veil stage: it clicks the big cookie from the start and goes straight
+  into the seasons, in three stages: **Drops**, **Reindeer**, **Golden cookie combos**. Drops and Reindeer don't
+  click golden or wrath cookies (Scorn, in the Pantheon's Diamond slot, makes every golden cookie a wrath cookie);
+  Golden cookie combos clicks them again. **Put Nunix late game back** on the Managers page to get the new stages.
+
 ## 4.5.1 — 2026-10-29
 
 - **README:** the Managers screenshot shows the stage editor (a tab per stage, the macro library beside it).

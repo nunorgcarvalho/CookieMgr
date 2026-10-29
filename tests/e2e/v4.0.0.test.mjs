@@ -19,14 +19,13 @@ const value = (id, ...args) => CA.Script.VALUES.find((v) => v.id === id).get(...
 const nunix = G.find('nunixLateGame');
 assert(nunix && nunix.name === 'Nunix late game', 'Nunix late game is seeded');
 assert(G.current() === nunix && value('manager.active') === 'nunixLateGame', 'and active');
-assert(nunix.stages.map((s) => s.name).join() === 'Shimmering veil,Drops,Reindeer,Golden cookie combos', 'four stages: Shimmering veil, Drops, Reindeer, Golden cookie combos');
+assert(nunix.stages.map((s) => s.name).join() === 'Drops,Reindeer,Golden cookie combos', 'three stages: Drops, Reindeer, Golden cookie combos');
 // (v4.1: a stage keeps only what it changes — these are what each runs with, the ones before it added up)
-const [veil, drops, reindeer, combos] = nunix.stages.map((st, i) => ({ ...G.effective(nunix, i), until: st.until }));
-// the veil's stage: golden and wrath cookies clicked (their upgrades), not the big cookie
-// (v4.1: reindeer clicked from the start too)
-assert(veil.macros.golden === 'on' && veil.macros.wrath === 'on' && veil.macros.bigCookie === 'off' && veil.macros.reindeer === 'on', 'Shimmering veil: golden and wrath cookies and reindeer, no big cookie');
-assert(veil.until === 'not veil()' && G.untilProblem(veil.until) === '', 'until the veil breaks');
-assert(drops.macros.bigCookie === 'on' && drops.macros.reindeer === 'on', 'then Drops clicks the big cookie too');
+const [drops, reindeer, combos] = nunix.stages.map((st, i) => ({ ...G.effective(nunix, i), until: st.until }));
+// no Shimmering veil stage: the big cookie clicked from the start, golden and wrath cookies not until the combos
+// (Scorn makes them all wrath cookies)
+assert(drops.macros.bigCookie === 'on' && drops.macros.reindeer === 'on' && drops.macros.golden === 'off' && drops.macros.wrath === 'off', 'Drops clicks the big cookie and reindeer, not golden cookies');
+assert(combos.macros.golden === 'on' && combos.macros.wrath === 'on', 'Golden cookie combos clicks them again');
 // the Upgrade unlocker: one switch for Santa, research, the dragon, fortunes and cheap upgrades
 const un = M.get('upgradeUnlocker');
 assert(un && un.mode === 'group' && un.members.join() === 'santa,research,autoDragon,petDragon,fortune,cheapUpgrades', 'the Upgrade unlocker groups them');
@@ -34,13 +33,13 @@ M.set('upgradeUnlocker', true, { silent: true });
 assert(un.members.every((id) => M.isOn(id)) && !M.isOn('autoBuyer'), 'switching it on switches them on (not the Auto buyer)');
 M.set('upgradeUnlocker', false, { silent: true });
 assert(un.members.every((id) => !M.isOn(id)), 'and off');
-assert([veil, drops, reindeer, combos].every((st) => st.macros.upgradeUnlocker === 'on' && st.macros.autoBuyer === 'on'), 'every stage: the Upgrade unlocker and the Auto buyer');
+assert([drops, reindeer, combos].every((st) => st.macros.upgradeUnlocker === 'on' && st.macros.autoBuyer === 'on'), 'every stage: the Upgrade unlocker and the Auto buyer');
 assert(drops.inputs.research.stopBefore === 'Elder Pact', 'the research up to the Elder Pact (the Grandmapocalypse, for Halloween)');
 assert(drops.macros.elderPledge === 'off' && reindeer.macros.elderPledge === 'on' && reindeer.profiles.dragon === 'dropsFlight', 'Reindeer: the elders pledged, dragon drops & flight');
 assert(G.untilProblem(reindeer.until) === '' && reindeer.until === 'season.complete(christmas)', 'Reindeer lasts until Christmas is complete');
 assert(drops.macros.autoBuyer === 'on' && drops.macros.seasonCompletion === 'on', 'Drops: the Auto buyer and SeasonCompletion');
 assert(drops.macros.gardener === 'off' && drops.macros.stockTrader === 'off' && drops.macros.fthofOnClickFrenzy === 'off', 'Drops: no garden, stocks or FtHoF');
-assert(['golden', 'wrath', 'reindeer', 'wrinklers', 'lumps'].every((id) => drops.macros[id] === 'on'), 'Drops: shimmers, wrinklers, lumps');
+assert(['reindeer', 'wrinklers', 'lumps'].every((id) => drops.macros[id] === 'on') && drops.macros.golden === 'off' && drops.macros.wrath === 'off', 'Drops: reindeer, wrinklers, lumps — not golden cookies (Scorn makes them wrath)');
 assert(drops.profiles.pantheon === 'wrinklers' && drops.profiles.dragon === 'drops' && drops.profiles.buyer === 'payback', 'Drops: Pantheon wrinklers, dragon drops, Payback buyer');
 assert(combos.macros.gardener === 'on' && combos.macros.fthofOnClickFrenzy === 'on' && combos.macros.autoBuyer === 'on', 'Combos: the garden and FtHoF join the Auto buyer');
 assert(combos.profiles.buyer === 'combos', 'Combos: the Golden cookie combos buyer profile');
@@ -71,37 +70,35 @@ assert(M.get('santa') && /santa\.upgrade/.test(M.sourceOf(M.get('santa'))), 'a S
 const has = Game.Has;
 Game.Has = (n) => n === 'Shimmering veil [off]' || has(n); // the veil is up
 assert(value('veil') === true, 'veil(): the Shimmering veil is up');
-M.set('bigCookie', true, { silent: true });
+Game.Has = has;
+M.set('bigCookie', false, { silent: true });
+M.set('golden', true, { silent: true });
 assert(G.step() > 0, 'the first pass enters stage 1');
-assert(value('manager.stage') === 1 && value('manager.stageName') === 'Shimmering veil', 'manager.stage() 1, Shimmering veil');
-assert(!M.isOn('bigCookie') && M.isOn('reindeer') && M.isOn('golden') && M.isOn('wrath') && M.isOn('autoBuyer') && M.isOn('seasonCompletion') && M.isOn('santa'), 'it switched the macros (the Upgrade unlocker’s too)');
+assert(value('manager.stage') === 1 && value('manager.stageName') === 'Drops', 'manager.stage() 1, Drops');
+assert(M.isOn('bigCookie') && M.isOn('reindeer') && !M.isOn('golden') && !M.isOn('wrath') && M.isOn('autoBuyer') && M.isOn('seasonCompletion') && M.isOn('santa'), 'it switched the macros (the Upgrade unlocker’s too)');
 assert(CA.AutoBuyer.activeProfile() === 'payback', 'and the buyer profile');
 assert(M.inputsOf(M.get('research')).stopBefore === 'Elder Pact' && M.inputsOf(M.get('seasonCompletion')).then === 'fools', 'and the macros’ settings');
 // you flip one by hand: it stays flipped (macros switch once, on entering)
-M.set('bigCookie', true, { silent: true });
-G.step();
-assert(M.isOn('bigCookie'), 'a macro flipped by hand stays flipped');
 M.set('bigCookie', false, { silent: true });
-
-// the veil breaks: on to Drops, the big cookie and reindeer clicked
-Game.Has = has;
 G.step();
-assert(value('manager.stage') === 2 && M.isOn('bigCookie') && M.isOn('reindeer'), 'the veil broke: stage 2, the big cookie and reindeer on');
+assert(!M.isOn('bigCookie'), 'a macro flipped by hand stays flipped');
+M.set('bigCookie', true, { silent: true });
+
 // until: a condition of your own moves it on
-G.updateStage('nunixLateGame', 1, { until: 'cookies() > 1000' });
+G.updateStage('nunixLateGame', 0, { until: 'cookies() > 1000' });
 Game.cookies = 10;
 G.step();
-assert(value('manager.stage') === 2, 'until not yet: still stage 2');
+assert(value('manager.stage') === 1, 'until not yet: still stage 1');
 Game.cookies = 5000;
 G.step();
-assert(value('manager.stage') === 3 && M.isOn('elderPledge') && !M.isOn('gardener'), 'until holds: stage 3, the elders pledged');
-G.goTo(4);
+assert(value('manager.stage') === 2 && M.isOn('elderPledge') && !M.isOn('gardener') && !M.isOn('golden'), 'until holds: stage 2, the elders pledged');
+G.goTo(3);
 G.step();
-assert(value('manager.stage') === 4 && M.isOn('gardener') && M.isOn('fthofOnClickFrenzy'), 'stage 4: garden and FtHoF on');
-assert(CA.AutoBuyer.activeProfile() === 'combos', 'stage 4: the combos buyer profile');
+assert(value('manager.stage') === 3 && M.isOn('gardener') && M.isOn('fthofOnClickFrenzy') && M.isOn('golden') && M.isOn('wrath'), 'stage 3: garden, FtHoF, golden and wrath cookies on');
+assert(CA.AutoBuyer.activeProfile() === 'combos', 'stage 3: the combos buyer profile');
 assert(CA.GardenLayers.picked('profile') === 'tulipCombos', 'the garden profile is in');
 G.step();
-assert(value('manager.stage') === 4, 'the last stage lasts');
+assert(value('manager.stage') === 3, 'the last stage lasts');
 assert(G.untilProblem('cookies( >') !== '', 'a broken until is reported');
 
 // goTo, and a new ascension starts it over
@@ -109,7 +106,6 @@ CA.Actions.run('manager.goTo', { stage: 1 });
 assert(value('manager.stage') === 1, 'manager.goTo(1)');
 G.goTo(3);
 Game.cookies = 10;
-Game.Has = (n) => n === 'Shimmering veil [off]' || has(n);
 Game.resets = (Game.resets || 0) + 1;
 G.step();
 assert(value('manager.stage') === 1, 'a new ascension: back to stage 1');
@@ -118,17 +114,16 @@ CA.Events.emit('ascend');
 assert(!G.where().started, 'the ascend event resets it too');
 G.step();
 assert(value('manager.stage') === 1, '…and the next pass is stage 1');
-Game.Has = has;
 
 // ---- profiles of managers ----
 const copy = G.add(null, 'nunixLateGame');
-assert(copy.name === 'Nunix late game (copy)' && copy.stages.length === 4, 'duplicate');
-G.addStage(copy.id, 3);
-G.setStageMacro(copy.id, 4, 'lumps', 'off');
-G.setStageProfile(copy.id, 4, 'grimoire', 'savingUp');
-assert(copy.stages.length === 5 && copy.stages[4].macros.lumps === 'off' && copy.stages[4].profiles.grimoire === 'savingUp', 'a fifth stage, edited');
-G.moveStage(copy.id, 4, -1);
-assert(copy.stages[3].profiles.grimoire === 'savingUp', 'moved up');
+assert(copy.name === 'Nunix late game (copy)' && copy.stages.length === 3, 'duplicate');
+G.addStage(copy.id, 2);
+G.setStageMacro(copy.id, 3, 'lumps', 'off');
+G.setStageProfile(copy.id, 3, 'grimoire', 'savingUp');
+assert(copy.stages.length === 4 && copy.stages[3].macros.lumps === 'off' && copy.stages[3].profiles.grimoire === 'savingUp', 'a fourth stage, edited');
+G.moveStage(copy.id, 3, -1);
+assert(copy.stages[2].profiles.grimoire === 'savingUp', 'moved up');
 CA.Actions.run('manager.use', { manager: copy.id });
 assert(value('manager.active') === copy.id, 'manager.use');
 
@@ -137,18 +132,18 @@ const S = CA.Settings;
 const saved = S.serialize();
 G.remove(copy.id);
 S.load(saved);
-assert(G.find(copy.id) && G.find(copy.id).stages.length === 5 && value('manager.active') === copy.id, 'saved and loaded');
+assert(G.find(copy.id) && G.find(copy.id).stages.length === 4 && value('manager.active') === copy.id, 'saved and loaded');
 G.use('nunixLateGame');
 G.resetSeeds();
-assert(G.find('nunixLateGame').stages[1].until.includes('season.complete'), 'Put Nunix late game back');
+assert(G.find('nunixLateGame').stages[0].until.includes('season.complete'), 'Put Nunix late game back');
 
 // ---- a manager is code ----
 const code = G.codeOf(G.find('nunixLateGame'));
 assert(!CA.Script.compile(code).errors.length, 'Nunix late game, as code, reads fine');
 // (v4.1: a block for the stage and the ones after it, its first pass manager.arriving(N))
-assert(/if manager\.stage\(\) >= 1:\n {2}if manager\.arriving\(1\):\n {4}macro\.setting\(research, stopBefore, "Elder Pact"\)/.test(code) && /\n {4}switch off bigCookie\b/.test(code), 'a block per stage: its first pass sets settings and switches macros');
+assert(/if manager\.stage\(\) >= 1:\n {2}if manager\.arriving\(1\):\n {4}macro\.setting\(research, stopBefore, "Elder Pact"\)/.test(code) && /\n {4}switch off golden, wrath\b/.test(code), 'a block per stage: its first pass sets settings and switches macros');
 assert(/\n {4}switch on autoBuyer, upgradeUnlocker, /.test(code) && code.split('\n').length < 70, 'switches on one line, split by commas (the whole manager in under 70 lines)');
-assert(/manager\.profile\(buyer, combos\)/.test(code) && /if manager\.stage\(\) == 3:\n {4}if season\.complete\(christmas\):\n {6}manager\.next\(\)/.test(code), 'its profiles, and its until moving it on');
+assert(/manager\.profile\(buyer, combos\)/.test(code) && /if manager\.stage\(\) == 2:\n {4}if season\.complete\(christmas\):\n {6}manager\.next\(\)/.test(code), 'its profiles, and its until moving it on');
 assert(M.sourceOf(M.get('manager')) === code, 'the Manager macro runs that code');
 assert(/line \d+/.test(G.setCode('nunixLateGame', 'if manager.stage( == 1:')), 'code with a problem isn’t saved');
 const mine = `if manager.stage() == 1:\n  if manager.entering():\n    switch on lumps\n  if cookies() > 100:\n    manager.next()\nif manager.stage() == 2:\n  manager.profile(grimoire, savingUp)\n`;
@@ -187,7 +182,7 @@ const hsrc = 'manager.use(nunixLateGame)\nmanager.profile(garden, tulipCombos)\n
 assert(hover(hsrc, 1, 'nunixLateGame').kind === 'manager' && hover(hsrc, 1, 'nunixLateGame').title === 'Nunix late game', 'a manager’s id: its card');
 assert(hover(hsrc, 2, 'tulipCombos').kind === 'profile.garden' && hover(hsrc, 4, 'drops').kind === 'profile.dragon', 'manager.profile: the profile of the kind it names');
 assert(hover(hsrc, 3, 'stopBefore').kind === 'setting' && hover(hsrc, 3, 'stopBefore').title === 'Stop before', 'macro.setting: the macro’s setting');
-assert(hover(code, code.split('\n').findIndex((x) => x.includes('not veil()')) + 1, 'veil').kind === 'value', 'veil(): a value');
+assert(hover('if not veil():\n  manager.next()', 1, 'veil').kind === 'value', 'veil(): a value');
 
 // ---- the sidebar ----
 const pages = CA.UI.Pages.list().slice().sort((a, b) => a.order - b.order);
@@ -203,24 +198,24 @@ const menu = () => doc.getElementById('CookieMgrMenu');
 CA.UI.Menu.openPage('managers');
 await sleep(50);
 assert(/Nunix late game/.test(menu().textContent), 'the page shows Nunix late game');
-assert(menu().querySelectorAll('[data-mgr-act="tab"]').length === 4, 'its four stages (a tab each)');
+assert(menu().querySelectorAll('[data-mgr-act="tab"]').length === 3, 'its three stages (a tab each)');
 click(menu().querySelector('[data-mgr-act="tab"][data-i="0"]'));
 const rs = menu().querySelector('[data-mgr-input][data-macro="research"][data-key="stopBefore"]') || menu().querySelector('[data-mgr-act="pick"][data-macro="research"].sel');
 assert(rs && (rs.value || rs.dataset.v) === 'Elder Pact', 'Research’s setting, set by the stage');
 // (stage tabs: × drops a setting, a chip click flips a macro)
 click(rs.closest('.ca-mgr-set').querySelector('[data-mgr-act="uninput"]'));
 assert(!G.find('nunixLateGame').stages[0].inputs.research, 'a setting back to left as it is');
-assert(menu().querySelector('.ca-mgr-chip.off [data-mgr-act="flip"][data-macro="bigCookie"]'), 'Big cookie: off in a chip');
+assert(menu().querySelector('.ca-mgr-chip.off [data-mgr-act="flip"][data-macro="golden"]'), 'Golden cookies: off in a chip');
 click(menu().querySelector('.ca-mgr-chip [data-mgr-act="flip"][data-i="0"][data-macro="lumps"]'));
 assert(G.find('nunixLateGame').stages[0].macros.lumps === 'off', 'clicking a chip: on → off');
 click(menu().querySelector('[data-mgr-act="goto"][data-i="2"]'));
 assert(value('manager.stage') === 3, 'a stage chip goes there');
 const ta = menu().querySelector('[data-mgr-code] [data-code]');
 assert(ta && ta.value === G.codeOf(G.find('nunixLateGame')), 'the Code card: what the Manager runs');
-ta.value = ta.value.replace('switch on bigCookie', 'switch on bigCookie, stockTrader');
+ta.value = ta.value.replace('switch on elderPledge', 'switch on elderPledge, stockTrader');
 ta.dispatchEvent(new w.Event('input', { bubbles: true }));
 click(menu().querySelector('[data-mgr-act="saveCode"]'));
-assert(typeof G.find('nunixLateGame').code === 'string' && /switch on bigCookie, stockTrader/.test(G.find('nunixLateGame').code), 'Save makes the code yours');
+assert(typeof G.find('nunixLateGame').code === 'string' && /switch on elderPledge, stockTrader/.test(G.find('nunixLateGame').code), 'Save makes the code yours');
 assert(!menu().querySelector('.ca-mgr-lib') && menu().querySelector('[data-mgr-act="uncode"]'), 'the stage editor is off, Back to stages instead');
 const back = menu().querySelector('[data-mgr-act="uncode"]');
 click(back);

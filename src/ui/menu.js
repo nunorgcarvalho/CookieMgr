@@ -415,6 +415,10 @@ CA.UI.Menu = (() => {
       const isCapturing = capturing === id;
       wrap.classList.toggle('capturing', isCapturing);
       wrap.classList.toggle('unset', !combo && !isCapturing);
+      wrap.classList.toggle('default', CA.Settings.isDefaultHotkey(id));
+      const def = (CA.Hotkeys.get(id) || {}).defaultKey;
+      const revert = wrap.querySelector('.ca-key-revert');
+      if (revert) revert.dataset.tip = `Back to its default key (${def ? CA.Hotkeys.format(def) : 'none'})`;
       key.textContent = isCapturing ? 'Press a key…' : combo ? CA.Hotkeys.format(combo) : 'Set key';
     });
   }
@@ -496,9 +500,9 @@ CA.UI.Menu = (() => {
         else CA.Hotkeys.startCapture(id, onBound);
         break;
       }
-      case 'unbind':
+      case 'revert-hotkey':
         CA.Util.sound('snd/tick.mp3');
-        CA.Settings.setHotkey(t.dataset.action, '');
+        CA.Settings.resetHotkey(t.dataset.action);
         break;
       case 'reset-hotkeys':
         CA.Util.sound('snd/tick.mp3');

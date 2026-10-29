@@ -7,7 +7,7 @@
 //   until      what moves it on: each condition of the stage's "until", ticked once it holds, a season's
 //              drops counted with a bar (Christmas upgrades 12/21) — so you see how far it is
 //   watch      the stage's own numbers: its watch list (Managers page, under each stage) — Nunix late
-//              game's are the veil's Easter eggs and Santa, the reindeer cookies, the combo and magic…
+//              game's are the drops' Santa and Easter eggs, the reindeer cookies, the combo and magic…
 //   macros     the macros on in this stage (its own and those carried over), pulsing while they work
 //              (dim: off now); hover one for what its actions have done
 //   activity   the last few things those macros did, newest first
