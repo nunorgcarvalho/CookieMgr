@@ -298,6 +298,20 @@ CA.Managers = (() => {
     if (!m || m.id === active) return 0;
     active = m.id;
     run = cleanRun(null);
+    on();
+    changed();
+    return 1;
+  }
+  /** The Manager macro on (picking a manager, or setting one up again, is to have it run). */
+  const on = () => CA.Macros && CA.Macros.get(MACRO) && !CA.Macros.isOn(MACRO) && CA.Macros.set(MACRO, true);
+  /**
+   * The active manager set up again on its next pass, as it is: its stage's settings, switches and profiles (the
+   * stages before it too), whatever was flipped by hand since — and the Manager macro on.
+   */
+  function setUp() {
+    if (!current()) return 0;
+    if (run.id === active) run.sig = '';
+    on();
     changed();
     return 1;
   }
@@ -336,11 +350,14 @@ CA.Managers = (() => {
     return !!seed && JSON.stringify(clean(m)) !== JSON.stringify(clean(seed));
   }
   /** A built-in back as it comes (where it is in the list, and active or not, kept). */
-  function revert(id) {
+  function revert(id, { quiet = false } = {}) {
     const i = managers.findIndex((x) => x.id === id);
     const seed = builtinOf(id);
     if (i < 0 || !seed) return false;
     managers[i] = copy(seed);
+    // the one at work: set up again (quiet: the Manager macro left as it is)
+    if (id === active && !quiet) setUp();
+    else if (id === active && run.id === active) run.sig = '';
     changed();
     return true;
   }
@@ -358,7 +375,7 @@ CA.Managers = (() => {
   /** Every built-in back as it comes (yours are kept). */
   function resetSeeds() {
     managers = withBuiltins(managers);
-    SEEDS.forEach((s) => revert(s.id));
+    SEEDS.forEach((s) => revert(s.id, { quiet: true }));
     changed();
   }
 
@@ -648,6 +665,7 @@ CA.Managers = (() => {
     const m = current();
     if (!m) return false;
     if (run.id !== m.id || (m.scope === 'ascension' && run.resets !== resets())) enter(0);
+    sync();
     return true;
   }
   /** After a pass: its first pass is over (unless it just moved on, so the next is the new stage's first). */
@@ -690,7 +708,6 @@ CA.Managers = (() => {
   /** One pass of the active manager's code, by hand (the Manager macro runs it each second). Returns what it did. */
   function step() {
     if (!ready()) return 0;
-    sync();
     const { flow, errors } = compiledOf(current());
     if (errors.length) return 0;
     const F = CA.Macros.runPass(flow);
@@ -1001,5 +1018,5 @@ CA.Managers = (() => {
       },
     });
 
-  return { init, list, find, current, use, add, update, remove, resetSeeds, revert, isBuiltin, isEdited, addStage, updateStage, setStageMacro, setStageInput, setStageProfile, setStageWatch, removeStage, moveStage, untilProblem, untilHolds, untilParts, watchOf, codeOf, sourceOf, setCode, step, enter, goTo, where, readiness, lastPass: () => lastPass, P, KINDS, SCOPES, SEEDS, MACRO, UNLOCKER, FORMATS, effective };
+  return { init, list, find, current, use, setUp, add, update, remove, resetSeeds, revert, isBuiltin, isEdited, addStage, updateStage, setStageMacro, setStageInput, setStageProfile, setStageWatch, removeStage, moveStage, untilProblem, untilHolds, untilParts, watchOf, codeOf, sourceOf, setCode, step, enter, goTo, where, readiness, lastPass: () => lastPass, P, KINDS, SCOPES, SEEDS, MACRO, UNLOCKER, FORMATS, effective };
 })();

@@ -4,7 +4,7 @@
 // before it too. Nunix late game clicks the big cookie and reindeer from the start (golden cookies only in
 // the combos) and buys all the research, the Elder Pact too (Reindeer's Elder Pledge comes with it).
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
-import { boot, sleep, makeAssert } from '../harness/game.mjs';
+import { boot, sleep, waitFor, makeAssert } from '../harness/game.mjs';
 
 const { assert, done } = makeAssert();
 const g = boot({ idb: { factory: new IDBFactory(), IDBKeyRange } });
@@ -131,6 +131,24 @@ assert(!M.isOn('lumps'), 'a name (or a watch) isn’t what it does: nothing set 
 G.revert('nunixLateGame');
 G.step();
 assert(M.inputsOf(M.get('research')).stopBefore === 'none' && M.isOn('lumps'), 'Revert to default: set up again, as it comes');
+// set up again, unedited (Revert to default, or the Set up again button): what was flipped by hand, back; the Manager macro on
+M.set('bigCookie', false, { silent: true });
+M.set('lumps', false, { silent: true });
+M.set('manager', false, { silent: true });
+G.revert('nunixLateGame');
+assert(M.isOn('manager'), 'Revert to default: the Manager macro on');
+G.step();
+assert(M.isOn('bigCookie') && M.isOn('lumps'), 'Revert to default, nothing edited: set up again all the same');
+M.set('bigCookie', false, { silent: true });
+M.set('manager', false, { silent: true });
+G.setUp();
+G.step();
+assert(M.isOn('bigCookie') && M.isOn('manager'), 'Set up again: the same');
+// …as the Manager macro runs it (its own passes, not G.step)
+M.set('bigCookie', false, { silent: true });
+G.revert('nunixLateGame');
+assert(await waitFor(() => M.isOn('bigCookie'), 3000), 'the Manager macro’s own pass sets it up again');
+M.set('manager', false, { silent: true });
 
 // ---- a save whose Nunix kept the garden off until the combos: the weed farm from the start ----
 const weeds = JSON.parse(snap);
