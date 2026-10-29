@@ -35,8 +35,6 @@
 // legacy: { oldTypeId: (saved) => settings } — saved widgets of a type it replaced load as this one (migrate()).
 // iconOf(inst): an icon of its own per widget (a chart's: its chart's); nameOf(inst): a name of its own
 // (a Statistic widget's: its statistic's).
-// buyer(inst): true while the widget runs the Auto buyer — its title bar's top-right then shows what the
-// buyer bought last and buys next, live (ui/buyerCorner.js).
 // live(inst, body) runs after each render and refresh, for a widget that draws into its own nodes
 // (a chart's canvas); removed(inst) when it's taken away.
 //
@@ -334,7 +332,6 @@ CA.UI.Widgets = (() => {
       `<div class="ca-w${w.collapsed ? ' collapsed' : ''}${w.h ? ' sized' : ''}${bg < 1 ? ' ca-w-clear' : ''}${glow(w)}" data-widget="${w.id}" style="${fs}${bg < 1 ? `;--wbg:${bg}` : ''};width:${w.w || t.width}px${w.h && !w.collapsed ? `;height:${w.h}px` : ''}">` +
       '<div class="ca-w-head" data-w-drag>' +
       `${I(t.iconOf ? t.iconOf(w) : t.icon, 12)}<span class="ca-w-title">${esc(nameOf(w))}</span>` +
-      (t.buyer ? `<span class="ca-wbuy" data-w-buyer>${buyerHtml(t, w)}</span>` : '') +
       `<button type="button" class="ca-w-btn" data-w-settings aria-label="Settings">${I('settings', 10)}</button>` +
       `<button type="button" class="ca-w-btn" data-w-collapse aria-label="${w.collapsed ? 'Expand' : 'Collapse'}">${w.collapsed ? '▸' : '▾'}</button>` +
       `<button type="button" class="ca-w-btn" data-w-remove aria-label="Remove widget">${I('close', 10)}</button>` +
@@ -343,15 +340,6 @@ CA.UI.Widgets = (() => {
       (w.collapsed ? '' : RESIZE) +
       '</div>'
     );
-  }
-
-  /** The Auto buyer's corner of a widget that runs it ("" while it doesn't). */
-  function buyerHtml(t, w) {
-    try {
-      return t.buyer && t.buyer(w) ? CA.UI.BuyerCorner.html() : '';
-    } catch (e) {
-      return '';
-    }
   }
 
   function safeHtml(t, w) {
@@ -426,11 +414,9 @@ CA.UI.Widgets = (() => {
     if (!layer || !layer.isConnected) return render();
     if (!S().get('widgetsShown') || (press && press.moved)) return;
     widgets.forEach((w) => {
-      const t = typeById[w.type];
-      const corner = t && t.buyer ? layer.querySelector(`[data-widget="${w.id}"] [data-w-buyer]`) : null;
-      if (corner) CA.UI.Dom.morph(corner, buyerHtml(t, w));
       if (w.collapsed) return;
       const body = layer.querySelector(`[data-widget="${w.id}"] [data-w-body]`);
+      const t = typeById[w.type];
       if (body && t) CA.UI.Dom.morph(body, safeHtml(t, w));
       live(w);
     });

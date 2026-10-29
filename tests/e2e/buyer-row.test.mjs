@@ -1,6 +1,6 @@
-// The Auto buyer's corner: a widget that runs the Auto buyer (the Manager widget while its stage has it
-// on) shows, top-right of its title bar, the last three things it bought and what it buys next — each
-// with a card on hover (price, payback period, +CpS, when affordable) — refreshed live.
+// The Manager widget's Auto buyer row: while its stage has the Auto buyer on (even with the Manager macro off),
+// a row under the stages shows the last three things it bought and what it buys next — name, price, payback
+// period, when, a bar — each picture with a card on hover, refreshed live.
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
 import { boot, sleep, makeAssert, click } from '../harness/game.mjs';
 import { cpsModel } from '../harness/cps.mjs';
@@ -24,24 +24,27 @@ Game.cookies = 0;
 Game.CalculateGains();
 B.update('payback', { cheapBulk: 0 });
 
-// ---- a stage with the Auto buyer on: the corner shows ----
+// ---- a stage with the Auto buyer on: the row shows ----
 CA.Macros.set('manager', false, { silent: true });
 G.goTo(1);
 G.step();
 assert(!CA.Macros.isOn('manager') && CA.UI.ManagerWidget.runsBuyer(), 'Nunix stage 1 runs the Auto buyer: shown even while the Manager macro is off');
 const inst = Wd.add('manager');
 Wd.render();
-const corner = () => doc.querySelector(`[data-widget="${inst.id}"] .ca-w-head [data-w-buyer]`);
-assert(corner(), 'a corner in the title bar');
-const next = () => corner().querySelector('.ca-wbuy-next');
+const row = () => doc.querySelector(`[data-widget="${inst.id}"] .ca-mw-p-buyer`);
+assert(row(), 'a row of its own');
+assert(row().previousElementSibling && row().previousElementSibling.classList.contains('ca-mw-p-stages'), 'right under the stages');
+const next = () => row().querySelector('.ca-wbuy-next');
 const f = B.next();
 assert(f && next() && /Next for the Auto buyer/.test(next().innerHTML), `what it buys next (${f && f.label})`);
+const text = row().querySelector('.ca-wbuy-text').textContent;
+assert(text.includes(f.label) && /PP/.test(text) && /in /.test(text) && row().querySelector('.ca-wbuy-bar'), `beside it: name, price, PP, when, a bar (${text})`);
 const card = next().querySelector('.ca-wpop').textContent;
 assert(/price/.test(card) && /payback period/.test(card) && /affordable/.test(card) && /in /.test(card), `its card: price, payback period, when (${card})`);
 assert(!next().classList.contains('can'), 'not affordable yet');
-assert(corner().querySelectorAll('.ca-wbuy-past').length === 0, 'nothing bought yet');
+assert(row().querySelectorAll('.ca-wbuy-past').length === 0 && /nothing bought yet/.test(row().textContent), 'nothing bought yet');
 
-// ---- it buys: the purchases land in the corner, live ----
+// ---- it buys: the purchases land in the row, live ----
 Game.cookies = 1e12;
 let n = 0;
 for (let i = 0; i < 4; i++) n += B.buyNext();
@@ -51,7 +54,7 @@ const key = CA.Script.VALUES.find((v) => v.id === 'buyer.next').get();
 CA.Actions.get('pp.buy').run({ thing: key });
 assert(B.recentBought().length === 5 && B.recentBought()[0].key === key, `pp.buy(buyer.next()) counts (${key})`);
 Wd.tick();
-const past = corner().querySelectorAll('.ca-wbuy-past');
+const past = row().querySelectorAll('.ca-wbuy-past');
 assert(past.length === 3, `the last three (${past.length})`);
 assert(past[2].classList.contains('hot') && /Bought just now/.test(past[2].innerHTML), 'the newest on the right, flashing');
 assert(/paid/.test(past[0].querySelector('.ca-wpop').textContent), 'a past one’s card: what it paid');
@@ -61,20 +64,21 @@ assert(next().classList.contains('can'), 'next: affordable now');
 click(w, next());
 assert(CA.Settings.get('tab') === 'payback', 'click opens the Payback page');
 
-// ---- a stage without it: no corner ----
+// ---- a stage without it: no row ----
 const eff = G.effective;
 G.effective = (m, i) => ({ ...eff(m, i), macros: { golden: 'on' } });
 assert(!CA.UI.ManagerWidget.runsBuyer(), 'a stage that leaves the Auto buyer off: no');
 Wd.tick();
-assert(corner().innerHTML === '', 'and its corner is empty');
+assert(!row(), 'and no row');
 G.effective = eff;
 Wd.tick();
-assert(corner().querySelector('.ca-wbuy-next'), 'back on: shown again');
+assert(row().querySelector('.ca-wbuy-next'), 'back on: shown again');
 
-// ---- widgets that don't run it have none ----
-const stats = Wd.add('stats');
-Wd.render();
-assert(!doc.querySelector(`[data-widget="${stats.id}"] [data-w-buyer]`), 'a Quick stats widget has no corner');
+// ---- a part of its own in the settings ----
+inst.stats = ['stages', 'now'];
+Wd.tick();
+assert(!row(), 'unpicked: not shown');
+assert(CA.UI.ManagerWidget.PARTS.some((p) => p.v === 'buyer') && CA.UI.ManagerWidget.DEFAULT_PARTS.includes('buyer'), 'a part, on by default');
 
 assert(g.errors.length === 0, `no runtime errors (${g.errors.join('; ')})`);
 done();

@@ -10,12 +10,12 @@
 //              the last stage under the strip: nothing moves it on)
 //   watch      the stage's own numbers: its watch list (Managers page, under each stage) — Nunix late
 //              game's are the research, the next reindeer, the combo and magic… (not what the "until" counts)
+//   buyer      while the stage has the Auto buyer on (itself, or in a group; even with the Manager macro
+//              off): the last three things it bought and what it buys next, big — price, payback period, when,
+//              a bar (ui/buyerRow.js); hover a picture for more
 //   macros     the macros on in this stage (its own and those carried over), pulsing while they work
 //              (dim: off now); hover one for what its actions have done
 //   activity   the last few things those macros did, newest first
-//
-// While the stage has the Auto buyer on (itself, or in a group), the title bar's top-right shows what it
-// bought last and buys next (ui/buyerCorner.js).
 //
 // It always follows the active manager; its title is that manager's name. Click the strip or the stage
 // to open the Managers page. The Managers page's ☆ puts one on the left panel.
@@ -32,13 +32,14 @@ CA.UI.ManagerWidget = (() => {
 
   const PARTS = [
     { v: 'stages', label: 'Stages', tip: 'Its stages in a strip: done, the one it’s on, still to come' },
+    { v: 'buyer', label: 'Auto buyer', tip: 'While the stage has the Auto buyer on: the last three things it bought and what it buys next' },
     { v: 'now', label: 'Now', tip: 'The stage it’s on, for how long, and its profiles: in, or what they still wait for' },
     { v: 'until', label: 'Next stage when', tip: 'What moves it on: each condition of the stage’s “until”, ticked once it holds' },
     { v: 'watch', label: 'Watching', tip: 'The stage’s own numbers (its watch list, on the Managers page)' },
     { v: 'macros', label: 'Macros', tip: 'The macros the stage switched on, pulsing while they work' },
     { v: 'activity', label: 'Lately', tip: 'The last things those macros did' },
   ];
-  const DEFAULT_PARTS = ['stages', 'now', 'until', 'watch', 'macros'];
+  const DEFAULT_PARTS = ['stages', 'buyer', 'now', 'until', 'watch', 'macros'];
   const partsOf = (inst) => (Array.isArray(inst.stats) ? inst.stats.filter((v) => PARTS.some((p) => p.v === v)) : DEFAULT_PARTS);
 
   const ago = (t) => (Date.now() - t < 2000 ? 'just now' : `${F().span((Date.now() - t) / 1000)} ago`);
@@ -213,7 +214,10 @@ CA.UI.ManagerWidget = (() => {
     });
   }
 
-  const PART_HTML = { stages: stagesHtml, now: nowHtml, until: untilHtml, watch: watchHtml, macros: macrosHtml, activity: activityHtml };
+  /** The Auto buyer row ("" while the stage doesn't run it: the part isn't drawn). */
+  const buyerHtml = () => (runsBuyer() ? CA.UI.BuyerRow.html() : '');
+
+  const PART_HTML = { stages: stagesHtml, buyer: buyerHtml, now: nowHtml, until: untilHtml, watch: watchHtml, macros: macrosHtml, activity: activityHtml };
   const NONE = '<div class="ca-mw-dim">No manager is active — pick one on the Managers page.</div>';
 
   function html(inst) {
@@ -232,7 +236,8 @@ CA.UI.ManagerWidget = (() => {
   // the settings' samples: each part as the widget draws it now
   const sample = (p) => () => {
     const w = G().where();
-    return `<div class="ca-mw"><div class="ca-mw-part ca-mw-p-${p}">${w ? PART_HTML[p](w) : NONE}</div></div>`;
+    const x = w ? PART_HTML[p](w) : NONE;
+    return `<div class="ca-mw"><div class="ca-mw-part ca-mw-p-${p}">${x || '<div class="ca-mw-dim">Shows while the stage has the Auto buyer on.</div>'}</div></div>`;
   };
 
   /** The Managers page's ☆: the widget with its default parts. */
@@ -250,7 +255,6 @@ CA.UI.ManagerWidget = (() => {
       width: 260,
       resize: 'free',
       html,
-      buyer: runsBuyer,
       nameOf: () => (G().current() ? G().current().name : 'Manager'),
       settings: [{ key: 'stats', label: 'Show', type: 'multi', default: DEFAULT_PARTS, options: () => PARTS.map((p) => ({ ...p, sample: sample(p.v) })) }],
     });

@@ -1,17 +1,18 @@
-// The **Auto buyer's corner**: on a widget that runs the Auto buyer (features/autoBuyer.js) — the Manager
-// widget while its stage has the Auto buyer on — the top-right of its title bar shows what the buyer did
-// and will do, live:
+// The **Auto buyer row**: the Manager widget's "Auto buyer" part (ui/managerWidget.js), shown while the stage has
+// the Auto buyer (features/autoBuyer.js) on — even with the Manager macro off, as what it would buy. Live:
 //
-//   ▫ ▫ ▫ ▣    the last three things it bought (small, oldest left; the newest flashes as it lands), then
-//              what it buys next (with a bar under it filling as you save for it)
+//   AUTO BUYER                                   Payback profile
+//   ▫ ▫ ▫ ›  ▣  10 × Farm
+//              2.4 M · PP 8.5 min
+//              ▬▬▬▬▬▬▬▭▭▭ in 7s  (the bank's way to it, green once affordable)
 //
-// Hover one for its card: the next purchase's price, payback period, +CpS, when you can afford it and the
-// reserve it keeps; a past one's price, payback period, +CpS and how long ago. Click it for the Payback page.
-// A widget type opts in with buyer(inst) → true while the Auto buyer is part of it (ui/widgets.js draws it).
+// The last three things it bought (oldest left; the newest flashes as it lands), then what it buys next,
+// big, with its price, payback period, when you can afford it and a bar. Hover a picture for its card (price,
+// payback period, +CpS, when / how long ago, the reserve, the rules); click anything for the Payback page.
 
 CA.UI = CA.UI || {};
 
-CA.UI.BuyerCorner = (() => {
+CA.UI.BuyerRow = (() => {
   const I = (n, s) => CA.UI.Icons.html(n, s);
   const esc = (s) => CA.Util.escapeHtml(s);
   const B = () => CA.AutoBuyer;
@@ -46,18 +47,13 @@ CA.UI.BuyerCorner = (() => {
   /** The upgrades Buy all upgrades covers, by name. */
   const covers = (x) => (x.kind === 'allUpgrades' && (x.names || []).length ? row('upgrades', esc(x.names.map((n) => (Game.Upgrades && Game.Upgrades[n] && Game.Upgrades[n].dname) || n).join(', '))) : '');
 
-  function nextHtml() {
-    const p = B().find();
+  function nextHtml(p) {
     const f = B().next();
-    if (!f) {
-      const why = B().readiness().text;
-      return `<span class="ca-wbuy-item ca-wbuy-next none" data-w-open="payback" data-pop aria-label="Auto buyer: nothing to buy">${I('dollar', 11)}${pop(`<span class="ca-wpop-head"><b>Auto buyer: nothing to buy</b></span><span class="ca-wpop-sub">${esc(why)}</span>`)}</span>`;
-    }
+    if (!f) return `<span class="ca-wbuy-item ca-wbuy-next none">${I('dollar', 14)}</span><span class="ca-wbuy-text"><b>Nothing to buy</b><span>${esc(B().readiness().text)}</span></span>`;
     const keep = B().keepOf(p.id);
     const top = B().reserveParts(p.id).find((q) => q.wins);
     const need = f.price + keep;
-    const bank = Game.cookies || 0;
-    const pct = need > 0 ? Math.max(0, Math.min(1, bank / need)) : 1;
+    const pct = need > 0 ? Math.max(0, Math.min(1, (Game.cookies || 0) / need)) : 1;
     const wait = P().timeTo(need);
     const when = pct >= 1 ? 'now' : Number.isFinite(wait) ? `in ${F().span(wait)}` : 'not at this income';
     const rows =
@@ -69,22 +65,24 @@ CA.UI.BuyerCorner = (() => {
       (f.rules && f.rules.length ? row('rules', esc(f.rules.join(', '))) : '') +
       covers(f);
     return (
-      `<span class="ca-wbuy-item ca-wbuy-next${pct >= 1 ? ' can' : ''}" data-w-open="payback" data-pop aria-label="${esc(`Auto buyer next: ${nameOf(f)}`)}">` +
-      `${picture(f)}${count(f)}<span class="ca-wbuy-bar"><i style="width:${(pct * 100).toFixed(1)}%"></i></span>` +
+      `<span class="ca-wbuy-item ca-wbuy-next${pct >= 1 ? ' can' : ''}" data-pop aria-label="${esc(`Next: ${nameOf(f)}`)}">${picture(f)}${count(f)}` +
       pop(head(f, `Next for the Auto buyer · ${p.name} profile`) + rows) +
-      '</span>'
+      '</span>' +
+      `<span class="ca-wbuy-text"><b>${esc(nameOf(f))}</b>` +
+      `<span>${F().short(f.price)} · PP ${esc(F().payback(f.pp))}</span>` +
+      `<span class="ca-wbuy-when"><span class="ca-wbuy-bar${pct >= 1 ? ' can' : ''}"><i style="width:${(pct * 100).toFixed(1)}%"></i></span>` +
+      `${pct >= 1 ? '<i class="ok">affordable now</i>' : `<i>${esc(when)}</i>`}</span></span>`
     );
   }
 
   function pastHtml() {
-    return B()
-      .recentBought()
-      .slice(0, PAST)
-      .reverse()
+    const done = B().recentBought().slice(0, PAST).reverse();
+    if (!done.length) return '<span class="ca-wbuy-none">nothing bought yet</span>';
+    return done
       .map((x) => {
         const rows = row('paid', F().beautify(x.price)) + row('payback period', esc(F().payback(x.pp))) + (Number.isFinite(x.gain) ? row('CpS', `+${F().short(x.gain)}/s`) : '') + covers(x);
         return (
-          `<span class="ca-wbuy-item ca-wbuy-past${Date.now() - x.t < HOT_MS ? ' hot' : ''}" data-w-open="payback" data-pop aria-label="${esc(`Auto buyer bought ${nameOf(x)}`)}">` +
+          `<span class="ca-wbuy-item ca-wbuy-past${Date.now() - x.t < HOT_MS ? ' hot' : ''}" data-pop aria-label="${esc(`Bought ${nameOf(x)}`)}">` +
           `${picture(x)}${count(x)}` +
           pop(head(x, `Bought ${ago(x.t)}${x.profile ? ` · ${x.profile} profile` : ''}`) + rows) +
           '</span>'
@@ -93,10 +91,16 @@ CA.UI.BuyerCorner = (() => {
       .join('');
   }
 
-  /** The corner's HTML (the inside of the title bar's [data-w-buyer]). */
+  /** The row's HTML. */
   function html() {
     try {
-      return pastHtml() + nextHtml();
+      const p = B().find();
+      return (
+        `<div class="ca-wbuy" data-w-open="payback">` +
+        `<div class="ca-mw-head"><span>Auto buyer</span><em>${esc(p ? `${p.name} profile` : '')}</em></div>` +
+        `<div class="ca-wbuy-line"><span class="ca-wbuy-past-list" data-tip="What it bought last (newest on the right)">${pastHtml()}</span><span class="ca-wbuy-arrow">›</span>${p ? nextHtml(p) : ''}</div>` +
+        '</div>'
+      );
     } catch (e) {
       return ''; // the game isn't ready yet: drawn on the next refresh
     }

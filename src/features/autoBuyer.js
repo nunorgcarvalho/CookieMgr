@@ -41,7 +41,7 @@
 //   buyer.profile(profile)        (action) makes a profile the active one
 //   buy.allUpgrades()             (action) the game's "Buy all upgrades" (Inspired checklist), without needing it
 // What it bought last (buyer.buyNext, or pp.buy of what buyer.next named) is kept: recentBought(), newest first —
-// the widgets' Auto buyer corner (ui/buyerCorner.js).
+// the Manager widget's Auto buyer row (ui/buyerRow.js).
 // A thing is "building:Cursor", "upgrade:Kitten helpers" or "allUpgrades" — what pp.best returns; pp.kind, pp.price,
 // pp.of and pp.buy take it (features/autoBuy.js).
 

@@ -102,7 +102,7 @@ const MODULES = [
   'ui/minigameTips.js',
   'ui/ascendTip.js',
   'ui/autoBuyerCard.js',
-  'ui/buyerCorner.js',
+  'ui/buyerRow.js',
   'ui/paybackPage.js',
   'ui/managersPage.js',
   'ui/statEditor.js',
