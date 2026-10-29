@@ -47,6 +47,18 @@ CA.Ascension = (() => {
     return all.length ? all[all.length - 1] : null;
   }
 
+  /**
+   * When this run's play began ({ t, a }): the game's run start (Game.startDate, set when the player
+   * leaves the ascension screen) when it follows the last ascension, else the ascension itself; null
+   * before the first ascension. The "Since last ascension" window starts here.
+   */
+  function runStart() {
+    const l = last();
+    if (!l) return null;
+    const start = Number(Game.startDate) || 0;
+    return start > l.t && start - l.t < DAY && start <= Date.now() ? { t: start, a: CA.Recorder.activeAt(start) } : l;
+  }
+
   function init() {
     CA.Util.wrap(Game, 'Ascend', (original, args, self) => {
       const result = original.apply(self, args);
@@ -56,5 +68,5 @@ CA.Ascension = (() => {
     setInterval(watchdog, 500);
   }
 
-  return { inProgress, times, last, init };
+  return { inProgress, times, last, runStart, init };
 })();

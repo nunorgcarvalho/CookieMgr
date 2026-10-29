@@ -793,9 +793,10 @@ CA.UI.GardenPage = (() => {
    * for it (xAxis — ticks counted back from now).
    */
   function stateBars(v) {
-    const all = H().list();
-    if (!all.length) return { bars: [] };
     const place = placeOf(v);
+    // Since last ascension: only this run's snapshots (the last run's garden was cleared)
+    const all = v.runFrom > -Infinity ? H().list().filter((s) => place(s.t) >= v.runFrom) : H().list();
+    if (!all.length) return { bars: [] };
     const pos = all.map((s) => place(s.t));
     if (v.opt('axis') !== 'ticks') {
       const bars = [];

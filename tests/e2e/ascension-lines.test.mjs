@@ -45,20 +45,38 @@ assert(tip && /Ascension/.test(tip.textContent) && /A new run began here/.test(t
 // ---- the window: Since last ascension
 const chip = card().querySelector(`[data-plot-set="plot.cps.win"][data-val="${CA.UI.Plot.SINCE_ASCENSION}"]`);
 assert(chip && chip.textContent === 'Since last ascension', 'a Since last ascension chip');
-// (a while ago: the shortest window is a minute)
-seen.t -= 10 * 60 * 1000;
-seen.a -= 10 * 60 * 1000;
-Game.startDate = seen.t + 20 * 1000;
+// a while ago: the last run's history (big CpS) up to it, this run's (small) after the run began
+const fr = CA.Recorder.frames();
+const tmpl = fr[fr.length - 1];
+const now = Date.now();
+const act = CA.Recorder.activeNow();
+seen.t = now - 10 * 60 * 1000;
+seen.a = act - 10 * 60 * 1000;
+Game.startDate = seen.t + 20 * 1000; // left the ascension screen 20 s later
+const frame = (t, cps, dt = 5) => ({ ...tmpl, t, a: act - (now - t), dt, cps, base: cps, click: 0 });
+const syn = [];
+for (let t = now - 20 * 60 * 1000; t < seen.t; t += 5000) syn.push(frame(t, 1e12));
+for (let t = Game.startDate + 5000; t < now - 3000; t += 5000) syn.push(frame(t, 1000));
+// older history is merged into wide frames: one that began before the run counts as the last run's
+syn.push(frame(Game.startDate + 60 * 1000, 1e12, 120));
+syn.sort((x, y) => x.t - y.t);
+fr.splice(0, fr.length, ...syn);
 click(w, chip);
 P.tick();
 let v = L().v;
-assert(v.x0 < seen.t && seen.t - v.x0 < 0.05 * v.W && Math.abs(v.x1 - Date.now()) < 2000, 'the window: from just before the ascension to now');
-assert(L().ascRects.length === 1, 'its line, just in from the left edge');
+assert(Math.abs(v.x0 - Game.startDate) < 1000 && Math.abs(v.x1 - Date.now()) < 2000, 'the window: from the run’s start to now');
+assert(v.frames.length > 50 && v.frames.every((f) => f.t - f.dt * 1000 >= Game.startDate - 1000), 'only this run’s frames, not even part of the last run’s');
+assert(L().data.bars.every((b) => b.parts.cps < 1e6) && P.last().scale.yMax < 1e5, `the scale: this run’s CpS only (top ${P.last().scale.yMax})`);
+CA.Settings.set('plot.cps.win', 900);
+P.tick();
+assert(L().ascRects.length === 1 && P.last().scale.yMax > 1e11, 'a 15 min window: the line, and the last run too');
+click(w, chip);
+P.tick();
 // the active-time axis too
 CA.Settings.set('graphActiveTime', true);
 P.tick();
 v = L().v;
-assert(v.active && v.x0 < seen.a && seen.a - v.x0 < 0.05 * v.W, 'active time: from the ascension’s active time');
+assert(v.active && Math.abs(v.x0 - CA.Recorder.activeAt(Game.startDate)) < 1000 && v.frames.every((f) => f.cps < 1e6), 'active time: from the run’s start too');
 CA.Settings.set('graphActiveTime', false);
 // no ascension known: all history
 const prev = Game.resets;

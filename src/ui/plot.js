@@ -105,7 +105,7 @@ CA.UI.Plot = (() => {
 
   // the simulator's GUI (sim/gui/server.mjs) loads this file without core/ascension.js
   const ascensions = () => (CA.Ascension ? CA.Ascension.times() : []);
-  const lastAscension = () => (CA.Ascension ? CA.Ascension.last() : null);
+  const runStart = () => (CA.Ascension ? CA.Ascension.runStart() : null);
 
   const niceUp = (ms) => NICE_MS.find((n) => n >= ms) || NICE_MS[NICE_MS.length - 1];
 
@@ -412,9 +412,9 @@ CA.UI.Plot = (() => {
       if (zoomW) return zoomW;
       const s = opt('win');
       if (s > 0) return s * SEC;
-      const asc = s === SINCE_ASCENSION ? lastAscension() : null;
-      // the ascension a little in from the left edge, so its line shows (none yet: all history)
-      if (asc) return Math.max(60 * SEC, (ax.now - asc[ax.key]) / 0.97);
+      // from the start of this run (none yet: all history)
+      const run = s === SINCE_ASCENSION ? runStart() : null;
+      if (run) return Math.max(60 * SEC, ax.now - run[ax.key]);
       const min = ax.min;
       return min == null ? 60 * SEC : Math.max(60 * SEC, ax.now - min);
     }
@@ -506,6 +506,11 @@ CA.UI.Plot = (() => {
       const frames = CA.Recorder.frames();
       const lo = Math.max(0, CA.Recorder.lowerBound(x0, ax.key) - 1);
       const hi = Math.min(frames.length, CA.Recorder.lowerBound(x1, ax.key) + 1);
+      // Since last ascension: nothing recorded before this run, not even part of a frame (older
+      // history is merged into wider frames) — the last run's figures would set the scale
+      const run = opt('win') === SINCE_ASCENSION ? runStart() : null;
+      const runFrom = run ? run[ax.key] - SEC : -Infinity;
+      const inRun = (list) => (run ? list.filter((f) => f[ax.key] - (f.dt || 1) * SEC >= runFrom) : list);
       const v = {
         key: ax.key,
         active: ax.key === 'a',
@@ -516,7 +521,8 @@ CA.UI.Plot = (() => {
         live: view.isLive(),
         bucket,
         smoothMs: spec.smooth !== false ? (opt('smooth') || 0) * SEC : 0,
-        frames: frames.slice(lo, hi),
+        frames: inRun(frames.slice(lo, hi)),
+        runFrom, // Since last ascension: where this run began on the axis (else -Infinity)
         tAt: ax.tAt,
         xAt: ax.xAt,
         opt,
@@ -524,7 +530,7 @@ CA.UI.Plot = (() => {
         /** Same, but starting at `from` (< x0) — for plots that look back before the window. */
         bucketizeFrom: (fields, from) => {
           const lo2 = Math.max(0, CA.Recorder.lowerBound(from, ax.key) - 1);
-          return bucketize(frames.slice(lo2, hi), ax.key, from, x1, bucket, fields);
+          return bucketize(inRun(frames.slice(lo2, hi)), ax.key, from, x1, bucket, fields);
         },
       };
       return v;
@@ -920,7 +926,7 @@ CA.UI.Plot = (() => {
         .filter((e) => Number.isFinite(e.x) && e.x >= v.x0 && e.x <= v.x1);
     }
 
-    /** A bold line at each ascension, over everything else, with an "Ascension" tag at its top. */
+    /** A bold line at each ascension, over everything else; hovering it names it (hoverTip). */
     function drawAscensions(plot, v, xOf) {
       const out = [];
       ascensionsIn(v).forEach((e) => {
@@ -937,21 +943,6 @@ CA.UI.Plot = (() => {
         ctx.strokeStyle = ASC_COLOR;
         ctx.lineWidth = 2;
         ctx.stroke();
-        // the tag, on whichever side has room
-        ctx.font = 'bold 9px Tahoma, Arial, sans-serif';
-        const label = 'Ascension';
-        const tw = ctx.measureText(label).width + 8;
-        const right = x + 2 + tw <= plot.x + plot.w;
-        const tx = right ? x + 2 : x - 2 - tw;
-        if (right || tx >= plot.x) {
-          ctx.fillStyle = ASC_COLOR;
-          roundRect(tx, plot.y, tw, 13, 3);
-          ctx.fill();
-          ctx.fillStyle = '#1d1636';
-          ctx.textAlign = 'left';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(label, tx + 4, plot.y + 7);
-        }
         ctx.restore();
         out.push({ x, t: e.t });
       });

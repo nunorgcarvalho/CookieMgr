@@ -56,10 +56,11 @@ The Stats page (until v3.47.0 two pages, Graphs and Stats) has five tabs. **Cook
 - **Scrollable:** shift-drag (or scroll sideways) to look back; **Pause** / **Jump to live**. Every choice is remembered.
 - **Effect shading** behind the chart for every golden-cookie effect (Frenzy, Click frenzy, Elder frenzy, Dragonflight,
   Clot, …), stacked in lanes (each with the effect's own icon) when they overlap, and **event markers** for golden/wrath cookies, reindeer and stock trades.
-- **Ascension lines:** a bold lavender line tagged "Ascension" wherever you ascended, on every chart (the garden ticks
-  axis too); hover it for when. An ascension from before cookieMgr was loaded is found from the game's run start.
-- **Since last ascension:** a window chip on every chart, from your last ascension to now (all history before your
-  first one). On the Prestige chart the prestige ETAs then use your actual CpS since that ascension.
+- **Ascension lines:** a bold lavender line wherever you ascended, on every chart (the garden ticks axis too); hover
+  it to see "Ascension" and when. An ascension from before cookieMgr was loaded is found from the game's run start.
+- **Since last ascension:** a window chip on every chart, from the start of this run (when you left the ascension
+  screen) to now, with nothing from the last run (all history before your first ascension). On the Prestige chart
+  the prestige ETAs then use your actual CpS over this run.
 - **One hover readout** that follows the x axis: the time; every effect active there, each with what it multiplies,
   and — two or more — all of them combined (the overall boost to CpS and clicks); then the bar's figures. Over an
   effect lane (highlighted) or an event marker its details are added as a section of the same box, and a stretch the
