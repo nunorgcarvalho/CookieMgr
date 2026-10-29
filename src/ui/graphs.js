@@ -109,7 +109,7 @@ CA.UI.Graphs = (() => {
     const type = CA.EventLog.types()[ev.type] || {};
     let h = `<div class="ca-tip-head">${swatch(type.color || '#fff')}${CA.UI.C.withUpgrade(ev.title, ev.data && ev.data.upgrade)}<span>${clock(ev.t, true)}</span></div>`;
     if (ev.text) h += `<div class="ca-tip-note">${esc(ev.text)}</div>`;
-    if (ev.type !== 'ascend' && Math.abs(ev.cookies) >= 1)
+    if (Math.abs(ev.cookies) >= 1)
       h += row('transparent', ev.cookies >= 0 ? 'Cookies gained' : 'Cookies spent', (ev.cookies >= 0 ? '+' : '−') + beautify(Math.abs(ev.cookies)));
     return h;
   }
@@ -127,7 +127,6 @@ CA.UI.Graphs = (() => {
       .map((e) => ({
         x: v.active ? e.a : e.t,
         color: (CA.EventLog.types()[e.type] || {}).color || '#fff',
-        line: e.type === 'ascend',
         tip: () => eventTip(e),
       }));
   }
@@ -185,7 +184,7 @@ CA.UI.Graphs = (() => {
           lines: { base: P().linePoints(bars, (b) => b.v.base) },
           hlines: Number.isFinite(avg) ? [{ v: avg, label: `avg ${F().beautify(avg)}/s` }] : [],
           intervals: ivs,
-          markers: markers(v, ['golden', 'wrath', 'reindeer', 'ascend'], ivs),
+          markers: markers(v, ['golden', 'wrath', 'reindeer'], ivs),
           legendExtra: effectLegend(ivs),
           avg,
         };
@@ -456,7 +455,7 @@ CA.UI.Graphs = (() => {
           },
           hlines: Number.isFinite(avg) && parts.length ? [{ v: avg, label: `avg ${F().signed(avg)}/s`, color: 'rgba(255,200,120,0.7)' }] : [],
           intervals: ivs,
-          markers: markers(v, ['golden', 'wrath', 'reindeer', 'ascend'], ivs),
+          markers: markers(v, ['golden', 'wrath', 'reindeer'], ivs),
           empty: ledgerEmpty(),
           raw,
           parts,
@@ -537,7 +536,7 @@ CA.UI.Graphs = (() => {
             net: bars.map((b) => ({ x: b.x1, x0: b.x0, x1: b.x1, v: Object.values(b.parts).reduce((n, y) => n + (y || 0), 0) })),
             bank: actual,
           },
-          markers: markers(v, ['ascend'], []),
+          markers: [],
           empty: ledgerEmpty(),
           bank0,
           bars0: bars,
@@ -585,7 +584,7 @@ CA.UI.Graphs = (() => {
             prestige: P().linePoints(bars, (b) => b.v.prestige),
           },
           hlines: showTarget ? [{ v: target, label: `target ${F().beautify(target, 0)}`, color: 'rgba(201,188,255,0.85)' }] : [],
-          markers: markers(v, ['ascend'], []),
+          markers: [],
           zero: false,
         };
       },
@@ -632,7 +631,7 @@ CA.UI.Graphs = (() => {
         return {
           series: [{ key: 'gain', name: 'Levels per hour', color: '#c9bcff', type: 'bar' }],
           bars: out,
-          markers: markers(v, ['ascend'], []),
+          markers: [],
           gained,
           secs,
         };
@@ -650,6 +649,11 @@ CA.UI.Graphs = (() => {
    *  in active play — the whole recorded history when the window is All. */
   function etaRate() {
     const w = Number(S().get('plot.prestige.win')) || 0;
+    const asc = w === P().SINCE_ASCENSION && CA.Ascension ? CA.Ascension.last() : null;
+    if (asc) {
+      const r = recent(Math.max(1, (CA.Recorder.activeNow() - asc.a) / SEC));
+      return r && { actual: r.actual, label: 'at the actual CpS since your last ascension' };
+    }
     const r = recent(w > 0 ? w : 1e10);
     if (!r) return null;
     return { actual: r.actual, label: w > 0 ? `at the actual CpS of the last ${F().windowLabel(w)}` : 'at the actual CpS of all recorded play' };

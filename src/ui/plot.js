@@ -18,6 +18,9 @@
 // core/recorder.js) — the global "Active time" toggle (setting graphActiveTime). In active-time
 // mode stretches where the game wasn't running simply don't exist on the axis; a thin dashed
 // line marks where one was cut out, and axis labels still show the wall-clock time there.
+//
+// Every chart draws a bold line at each ascension (CA.Ascension.times) — history spans runs — and
+// offers a "Since last ascension" window (win = SINCE_ASCENSION) next to its other windows.
 
 CA.UI = CA.UI || {};
 
@@ -36,7 +39,9 @@ CA.UI.Plot = (() => {
   const SEC = 1000;
   const SESSION_START = Date.now();
   const NICE_MS = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 10800, 21600, 43200, 86400, 172800].map((s) => s * SEC);
-  const WINDOW_LABELS = { 60: '1m', 300: '5m', 900: '15m', 3600: '1h', 10800: '3h', 43200: '12h', 86400: '1d', 604800: '7d', 0: 'All' };
+  const SINCE_ASCENSION = -1; // the window that starts at the last ascension
+  const ASC_COLOR = '#c9bcff'; // the event log's ascension color
+  const WINDOW_LABELS = { [SINCE_ASCENSION]: 'Since last ascension', 60: '1m', 300: '5m', 900: '15m', 3600: '1h', 10800: '3h', 43200: '12h', 86400: '1d', 604800: '7d', 0: 'All' };
   const SMOOTH = [0, 5, 15, 60, 300, 900, 3600];
   const SMOOTH_LABELS = { 0: 'Off', 5: '5s', 15: '15s', 60: '1m', 300: '5m', 900: '15m', 3600: '1h' };
 
@@ -97,6 +102,10 @@ CA.UI.Plot = (() => {
       xAt: (t) => t,
     };
   }
+
+  // the simulator's GUI (sim/gui/server.mjs) loads this file without core/ascension.js
+  const ascensions = () => (CA.Ascension ? CA.Ascension.times() : []);
+  const lastAscension = () => (CA.Ascension ? CA.Ascension.last() : null);
 
   const niceUp = (ms) => NICE_MS.find((n) => n >= ms) || NICE_MS[NICE_MS.length - 1];
 
@@ -403,6 +412,9 @@ CA.UI.Plot = (() => {
       if (zoomW) return zoomW;
       const s = opt('win');
       if (s > 0) return s * SEC;
+      const asc = s === SINCE_ASCENSION ? lastAscension() : null;
+      // the ascension a little in from the left edge, so its line shows (none yet: all history)
+      if (asc) return Math.max(60 * SEC, (ax.now - asc[ax.key]) / 0.97);
       const min = ax.min;
       return min == null ? 60 * SEC : Math.max(60 * SEC, ax.now - min);
     }
@@ -420,7 +432,8 @@ CA.UI.Plot = (() => {
       // a widget's copy: the chart and its legend, both drawn by this module (morph leaves them be)
       if (spec.compact)
         return `<div class="ca-graph-mini" data-plot="${id}"><canvas class="ca-graph" data-plot-canvas data-keep></canvas><div class="ca-legend" data-plot-legend data-keep></div></div>`;
-      const wins = spec.windows || [300];
+      const wins = (spec.windows || [300]).concat(spec.sinceAscension === false ? [] : [SINCE_ASCENSION]);
+      const winTip = (s) => (s === SINCE_ASCENSION ? 'From your last ascension to now (all history when there hasn’t been one)' : '');
       const star = spec.widget ? CA.UI.C.widgetStar({ type: 'chart', plot: id }, spec.widgetName || spec.title) : '';
       let h =
         `<div class="ca-card ca-graph-card" data-plot="${id}">` +
@@ -428,7 +441,7 @@ CA.UI.Plot = (() => {
         (spec.note ? `<div class="ca-card-note">${spec.note}</div>` : '') +
         (spec.stats ? '<div class="ca-stats" data-plot-stats></div>' : '') +
         '<div class="ca-toolbar">' +
-        `<div class="ca-chipgroup" data-tip="How much history to show">${wins.map((s) => setChip('win', s, windowLabel(s))).join('')}</div>` +
+        `<div class="ca-chipgroup" data-tip="How much history to show">${wins.map((s) => setChip('win', s, windowLabel(s), winTip(s))).join('')}</div>` +
         (spec.toggleGroups || [])
           .map(
             (g) =>
@@ -880,7 +893,9 @@ CA.UI.Plot = (() => {
         evRects.push({ m, x, y });
       });
 
-      layout = { plot, xOf, yOf, v, data, bars, laneRects, evRects, gapRects, hoverIv: null, hoverBar: null, chartH, byKey };
+      const ascRects = drawAscensions(plot, v, xOf);
+
+      layout = { plot, xOf, yOf, v, data, bars, laneRects, evRects, gapRects, ascRects, hoverIv: null, hoverBar: null, chartH, byKey };
 
       const dragging = (panCtl && panCtl.isDragging()) || !!sel;
       if (!dragging && hover && hover.x >= plot.x && hover.x <= plot.x + plot.w && hover.y >= 0 && hover.y <= h) drawHover(w, h);
@@ -894,6 +909,53 @@ CA.UI.Plot = (() => {
         const msg = !S().get('trackHistory') ? 'History recording is off (Settings)' : data.empty || 'Collecting data…';
         axisText(msg, plot.x + plot.w / 2, plot.y + plot.h / 2, 'rgba(230,220,200,0.6)');
       }
+    }
+
+    /** Where each ascension falls on this chart's x axis (a custom axis places a time with its at(t)). */
+    function ascensionsIn(v) {
+      const place = v.custom ? (typeof v.custom.at === 'function' ? (e) => v.custom.at(e.t) : null) : (e) => (v.active ? e.a : e.t);
+      if (!place) return [];
+      return ascensions()
+        .map((e) => ({ x: place(e), t: e.t }))
+        .filter((e) => Number.isFinite(e.x) && e.x >= v.x0 && e.x <= v.x1);
+    }
+
+    /** A bold line at each ascension, over everything else, with an "Ascension" tag at its top. */
+    function drawAscensions(plot, v, xOf) {
+      const out = [];
+      ascensionsIn(v).forEach((e) => {
+        const x = Math.round(xOf(e.x)) + 0.5;
+        if (x < plot.x - 1 || x > plot.x + plot.w + 1) return;
+        ctx.save();
+        ctx.lineCap = 'butt';
+        ctx.strokeStyle = 'rgba(0,0,0,0.6)'; // a dark edge: clear over bright bars too
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(x, plot.y);
+        ctx.lineTo(x, plot.y + plot.h);
+        ctx.stroke();
+        ctx.strokeStyle = ASC_COLOR;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        // the tag, on whichever side has room
+        ctx.font = 'bold 9px Tahoma, Arial, sans-serif';
+        const label = 'Ascension';
+        const tw = ctx.measureText(label).width + 8;
+        const right = x + 2 + tw <= plot.x + plot.w;
+        const tx = right ? x + 2 : x - 2 - tw;
+        if (right || tx >= plot.x) {
+          ctx.fillStyle = ASC_COLOR;
+          roundRect(tx, plot.y, tw, 13, 3);
+          ctx.fill();
+          ctx.fillStyle = '#1d1636';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(label, tx + 4, plot.y + 7);
+        }
+        ctx.restore();
+        out.push({ x, t: e.t });
+      });
+      return out;
     }
 
     /** The stretch being picked: a shaded band, and how long it is. */
@@ -1147,12 +1209,18 @@ CA.UI.Plot = (() => {
     function hoverTip(x, bar, hitEv, hitLane) {
       const effects = effectsTip(x, hitLane && hitLane.iv);
       const body = barBody(x, bar);
+      // an ascension line right under the cursor
+      const asc = (layout.ascRects || []).find((r) => Math.abs(r.x - hover.x) <= 4);
       let h = barHead(x, bar) + effects + (effects && body.html ? '<div class="ca-tip-sec"></div>' : '') + body.html;
-      if (!effects && !body.any) h += '<div class="ca-tip-note">No data here.</div>';
+      if (!effects && !body.any && !asc) h += '<div class="ca-tip-note">No data here.</div>';
       else if (body.any && layout.v.smoothMs > 0) h += `<div class="ca-tip-note">Averaged over the ${windowLabel(layout.v.smoothMs / SEC)} around this point</div>`;
       // the lane / marker right under the cursor: its details, as a section
       if (hitLane && hitLane.iv.tip) h += `<div class="ca-tip-sec">${hitLane.iv.tip()}</div>`;
       if (hitEv && hitEv.m.tip) h += `<div class="ca-tip-sec">${hitEv.m.tip()}</div>`;
+      if (asc) {
+        const ago = (Date.now() - asc.t) / SEC;
+        h += `<div class="ca-tip-sec"><div class="ca-tip-head">${swatch(ASC_COLOR)}Ascension<span>${dayClock(asc.t)}</span></div><div class="ca-tip-note">A new run began here, ${span(ago)} ago.</div></div>`;
+      }
       // the game off within this bar (active-time axis): one line
       const g = gapAt(x, bar);
       if (g) h += `<div class="ca-tip-note ca-tip-off">Game off for ${span(g.away / SEC)} here (${clock(g.from)} – ${clock(g.to)}), left out of this axis</div>`;
@@ -1532,6 +1600,7 @@ CA.UI.Plot = (() => {
     axis,
     fmt: { beautify, signed, short, clock, span, tile, row, swatch, windowLabel, joinFigures },
     SEC,
+    SINCE_ASCENSION,
     SESSION_START, // "this session" = since cookieMgr was loaded in this tab
   };
 })();
