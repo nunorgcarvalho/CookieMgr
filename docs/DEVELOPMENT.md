@@ -7,8 +7,9 @@ The repo is [nunorgcarvalho/cookieMgr](https://github.com/nunorgcarvalho/cookieM
 (**Settings → Pages → Deploy from a branch**). The live build is
 `https://nunorgcarvalho.github.io/cookieMgr/dist/CookieMgr.js`.
 
-To ship an update: edit `src/`, run `npm run build`, commit (including `dist/`), push. Players get it the next time they
-load the game and click the bookmarklet.
+To ship an update: open a pull request with the change and a changelog fragment (see [Releasing](#releasing)). When it
+merges, the Release workflow bumps the version, rebuilds `dist/` on `main` and tags it; players get it the next time
+they load the game and click the bookmarklet.
 
 ## Building and testing
 
@@ -16,7 +17,7 @@ The bundle has no dependencies; the tests and the linter need `npm install` once
 
 ```sh
 npm run build   # src/ -> dist/CookieMgr.js
-npm run check   # fail if dist/ is out of date (CI runs this)
+npm run check   # fail if dist/ is out of date (true on main after each release; PRs don't commit dist/)
 npm test        # build, then every test suite (CI runs this too) — npm test -- garden: only those
 npm run lint    # ESLint (CI runs this too)
 npm run watch   # rebuild on every change
@@ -26,7 +27,7 @@ npm run serve   # watch + serve dist/ at http://localhost:8080 for testing
 The tests boot the built bundle inside a fake Cookie Clicker (jsdom) and use it like a player would. **Contract
 tests** check everything registered — every page, widget type, action, condition, value, library entry, option and
 built-in macro — so a new one is covered as soon as it exists; **unit** tests cover the algorithmic language; and
-each release has an **end-to-end** suite (`tests/e2e/vX.Y.Z.test.mjs`). See [tests/README.md](../tests/README.md).
+each feature has an **end-to-end** suite (`tests/e2e/<feature>.test.mjs`; older ones are named by version). See [tests/README.md](../tests/README.md).
 
 With `npm run serve` running, use this dev bookmarklet to test local changes (Chrome may ask to allow access to local
 network devices the first time):
@@ -186,7 +187,39 @@ If you add a file, add it to `MODULES` in `build.mjs` in the right order.
 - **Layers:** `core/` and `features/` never use `CA.UI` (formatting is `CA.Format`); `core/` doesn't use features. The
   source contract test checks it, along with no `title=` tooltips, no `scrollIntoView`, and no unused CSS.
 
-CI (`.github/workflows/ci.yml`) fails a push if `dist/CookieMgr.js` does not match `src/` or a test fails, so build and `npm test` before committing.
+CI (`.github/workflows/ci.yml`) builds `dist/` from `src/`, lints and runs every test; on a pull request it also checks
+the [release rules](#releasing). Run `npm test` and `npm run lint` before pushing.
+
+## Releasing
+
+Versions are written after the merge, never in a pull request, so parallel pull requests don't clash over them.
+
+**In a pull request:**
+
+- Add a changelog fragment, `changes/<feature>.md` (simulator changes: `sim/changes/<feature>.md`):
+
+  ```md
+  ---
+  bump: minor
+  ---
+
+  - **Manager widget:** the stage a manager is in, what moves it on, and the macros at work.
+  ```
+
+  `bump` is `major`, `minor` (a feature) or `patch` (a fix, docs, screenshots); the body is the CHANGELOG text. See
+  [changes/README.md](../changes/README.md).
+- Don't touch the version (`package.json`, `package-lock.json`, `SIM_VERSION`), `CHANGELOG.md`, `sim/CHANGELOG.md` or
+  `dist/` (build it locally to test, but leave it out: `git checkout origin/main -- dist`).
+- Name things after the feature, not a version: `tests/e2e/<feature>.test.mjs`, screenshots under
+  `docs/pr/<feature>/`, CSS and code comments `/* manager widget: … */`. Title the PR without a version.
+- CI's "Pull request rules" step (`node scripts/changes.mjs check origin/main`) fails the PR otherwise.
+- Updating a branch from `main` never conflicts over versions: merge or rebase, nothing to re-bump.
+
+**On merge** (`.github/workflows/release.yml`, `node scripts/changes.mjs release`): the biggest bump among the waiting
+fragments sets the next version; their text (oldest first) becomes its `CHANGELOG.md` section and they're deleted;
+`package.json`, `package-lock.json` and `dist/` are updated; the workflow commits `vX.Y.Z: <PR title>`, pushes the tag
+`vX.Y.Z` (`sim-vX.Y.Z` for the simulator) and publishes a GitHub release. A merge without a fragment only rebuilds
+`dist/`. `node scripts/changes.mjs next` previews the next release.
 
 ## Simulator
 

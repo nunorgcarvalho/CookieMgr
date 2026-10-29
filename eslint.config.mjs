@@ -41,7 +41,7 @@ export default [
     rules: { 'no-unused-vars': ['error', { args: 'none', caughtErrors: 'none' }] },
   },
   {
-    files: ['tests/**/*.mjs', 'sim/**/*.mjs', 'build.mjs', 'eslint.config.mjs'],
+    files: ['tests/**/*.mjs', 'sim/**/*.mjs', 'build.mjs', 'scripts/**/*.mjs', 'eslint.config.mjs'],
     languageOptions: { ecmaVersion: 2022, sourceType: 'module', globals: { ...globals.node } },
     rules: { 'no-unused-vars': ['error', { args: 'none', caughtErrors: 'none' }] },
   },

@@ -65,8 +65,9 @@ test what's recorded), `withPantheon`, `withGrimoire`, `localStorageSeed`, `full
   on first use (`sim/.game/`); where they can't be downloaded the files say SKIPPED and the runner lists
   them as skipped (not passed) — in CI that's a failure. `sim/host.test.mjs` needs no game: what the simulator starts
   of CookieMgr is read from `src/main.js`'s init list.
-- **`e2e/vX.Y.Z.test.mjs`** — one per release: what that release added or changed, end to end. The
-  CHANGELOG entry of the same version says what each one is about. v3.0.0 has several
+- **`e2e/<feature>.test.mjs`** — one per feature: what it added or changed, end to end. Older suites are named by
+  the release that brought them (`e2e/vX.Y.Z.test.mjs`; the CHANGELOG entry of that version says what each is
+  about); new ones are named after the feature, since the version is only known after the merge. v3.0.0 has several
   (`v3.0.0-stocks`, `-garden`, `-builtins`, `-pantheon`).
 - **Side by side** — when code replaces JavaScript (the built-ins in v3), a test runs the old and the new on hundreds
   of random states and requires the same outcome (`v3.0.0-stocks`: the autobuyer on 400 random markets;
@@ -76,6 +77,6 @@ test what's recorded), `withPantheon`, `withGrimoire`, `localStorageSeed`, `full
 
 1. Register it (`CA.Actions.register`, `CA.UI.Pages.register`, `CA.Script.defineValue`…) — the
    contract tests pick it up.
-2. Write `e2e/vX.Y.Z.test.mjs` for the release: the behavior, the UI, and save → reload.
+2. Write `e2e/<feature>.test.mjs` for it: the behavior, the UI, and save → reload.
 3. When a later release changes the behavior on purpose, update the older test's expectation and
    say why in a comment (`// v2.26: …`).
