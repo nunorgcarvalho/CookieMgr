@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 4.21.1 — 2026-10-29
+
+- **README and guide:** Settings mentions the Simple cookie background option.
+
 ## 4.21.0 — 2026-10-29
 
 - **Simple cookie background:** a new option on Settings → General (off by default, with an optional hotkey) that
