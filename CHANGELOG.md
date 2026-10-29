@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 4.23.1 — 2026-10-29
+
+- **README:** the Payback picture shows payback periods in the short units (57m 34s, 2h 34m).
+
 ## 4.23.0 — 2026-10-29
 
 - **Payback periods in short time units:** the largest two that apply, in lowercase ms, s, m, h, d and y, wherever a
