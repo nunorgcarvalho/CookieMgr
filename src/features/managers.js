@@ -187,7 +187,6 @@ CA.Managers = (() => {
   // where the active manager is: its stage, the ascension it's for (Game.resets), and the profiles
   // of the stage still to put in
   let run = cleanRun(null);
-  let fixes = []; // one-off fixes to a game's settings already made (saved): 'researchPact'
 
   // ---- managers -----------------------------------------------------------------------------
 
@@ -315,8 +314,6 @@ CA.Managers = (() => {
     const seed = builtinOf(id);
     if (i < 0 || !seed) return false;
     managers[i] = copy(seed);
-    // the one at work: its stage sets up again, as it comes (its settings, switches and profiles)
-    if (id === active && run.id === id) enter(run.stage, true);
     changed();
     return true;
   }
@@ -573,7 +570,7 @@ CA.Managers = (() => {
   /** The macros a stage switches, that exist (one you deleted is skipped). */
   const stageMacros = (s) => Object.keys(s.macros).filter((id) => CA.Macros.get(id) && CA.Macros.get(id).mode !== 'once');
   // jumped: reached by manager.goTo (so the stages before it set up again), not by moving on
-  const fresh = (id, stage, jumped) => ({ id, stage, resets: resets(), since: Date.now(), entering: true, entered: false, jumped: !!jumped, put: {}, waiting: {}, want: {} });
+  const fresh = (id, stage, jumped) => ({ id, stage, resets: resets(), since: Date.now(), entering: true, entered: false, jumped: !!jumped, put: {}, waiting: {}, want: {}, sig: '' });
   let lastPass = null; // the last pass of the manager's code: { t, lines, trace, at, error, done }
 
   /** Goes into stage i (0 = the first) of the active manager: its next pass is that stage's first. */
@@ -586,6 +583,31 @@ CA.Managers = (() => {
     CA.EventLog.add({ type: 'manager', title: `${m.name}: ${st ? st.name : `stage ${at + 1}`}`, text: `stage ${at + 1} of ${m.stages.length}`, data: { manager: m.id, stage: at + 1 } });
     changed();
     return 1;
+  }
+  /** What a manager does, as one short string: its stages' switches, settings, profiles and untils (or its code) — not names or watches. */
+  function sigOf(m) {
+    const str = typeof m.code === 'string' ? m.code : JSON.stringify(m.stages.map((st) => [st.macros, st.inputs, st.profiles, st.until]));
+    let h = 0;
+    for (let k = 0; k < str.length; k++) h = (Math.imul(h, 31) + str.charCodeAt(k)) | 0;
+    return `${str.length}:${(h >>> 0).toString(36)}`;
+  }
+  /**
+   * Before a pass: the manager at work changed since its stage set up (an edit, Revert to default, an update to a
+   * built-in, a save from before it): its stage sets up again, as it is now — the stages before it too, as a jump
+   * does (settings, switches and profiles; a macro flipped by hand is flipped back) — and its "until" moves it on
+   * from there. A stage it no longer has: its last.
+   */
+  function sync() {
+    const m = current();
+    const sig = sigOf(m);
+    if (run.sig === sig) return;
+    run.sig = sig;
+    if (run.entering) return; // setting up anyway
+    run.stage = Math.min(run.stage, m.stages.length - 1);
+    run.entering = true;
+    run.jumped = run.stage > 0;
+    run.put = {};
+    run.waiting = {};
   }
   /** Before a pass: a new manager or a new ascension starts at stage 1. False: no manager. */
   function ready() {
@@ -634,7 +656,7 @@ CA.Managers = (() => {
   /** One pass of the active manager's code, by hand (the Manager macro runs it each second). Returns what it did. */
   function step() {
     if (!ready()) return 0;
-    fixResearchStop();
+    sync();
     const { flow, errors } = compiledOf(current());
     if (errors.length) return 0;
     const F = CA.Macros.runPass(flow);
@@ -682,7 +704,7 @@ CA.Managers = (() => {
   function cleanRun(r) {
     r = r && typeof r === 'object' ? r : {};
     const obj = (x) => (x && typeof x === 'object' ? { ...x } : {});
-    return { id: String(r.id || ''), stage: Math.max(0, Number(r.stage) || 0), resets: Number.isFinite(Number(r.resets)) ? Number(r.resets) : -1, since: Number(r.since) || 0, entering: !!r.entering, entered: false, jumped: !!r.jumped, put: obj(r.put), waiting: obj(r.waiting), want: {} };
+    return { id: String(r.id || ''), stage: Math.max(0, Number(r.stage) || 0), resets: Number.isFinite(Number(r.resets)) ? Number(r.resets) : -1, since: Number(r.since) || 0, entering: !!r.entering, entered: false, jumped: !!r.jumped, put: obj(r.put), waiting: obj(r.waiting), want: {}, sig: typeof r.sig === 'string' ? r.sig : '' };
   }
   // the seeds' watches that repeated what the stage's "until" already counts (the Manager widget shows both):
   // taken out of saves that still have them, as seeded
@@ -712,23 +734,7 @@ CA.Managers = (() => {
     const out = r && r.stopBefore === 'Elder Pact' ? { ...st, inputs: { ...st.inputs, research: { ...r, stopBefore: 'none' } } } : st;
     return { ...out, watch: out.watch.map((x) => (x.label === 'Research' && x.value === '[researchOwned(), 8]' ? { ...x, value: '[researchOwned(), 9]' } : x)) };
   }
-  /**
-   * A game where Nunix late game set the Research macro to stop before the Elder Pact (before it bought all the
-   * research): the macro keeps that setting, as the manager sets it only on a stage's first pass — so, once,
-   * all of it, when Nunix runs a stage that wants all of it.
-   */
-  function fixResearchStop() {
-    if (fixes.includes('researchPact') || active !== 'nunixLateGame' || run.id !== active) return;
-    const m = current();
-    const want = m && m.stages[run.stage] ? (effective(m, run.stage).inputs.research || {}).stopBefore : null;
-    if (want !== 'none') return;
-    fixes.push('researchPact');
-    const R = CA.Macros.get('research');
-    if (R && CA.Macros.inputsOf(R).stopBefore === 'Elder Pact') CA.Macros.setInput('research', 'stopBefore', 'none');
-    changed();
-  }
   function load(data) {
-    fixes = data && Array.isArray(data.fixes) ? data.fixes.filter((x) => typeof x === 'string') : [];
     if (data && Array.isArray(data.managers)) {
       managers = withBuiltins(data.managers.filter((m) => m && m.id).map((m) => clean(withSeedWatch(m))));
       active = typeof data.active === 'string' && (data.active === '' || managers.some((m) => m.id === data.active)) ? data.active : managers.length ? managers[0].id : '';
@@ -740,7 +746,7 @@ CA.Managers = (() => {
     }
     changed();
   }
-  const serialize = () => ({ managers, active, run, fixes });
+  const serialize = () => ({ managers, active, run });
 
   // ---- building blocks ----------------------------------------------------------------------------
 

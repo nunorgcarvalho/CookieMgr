@@ -103,19 +103,32 @@ const drops = G.find('nunixLateGame').stages[0];
 assert(drops.inputs.research.stopBefore === 'none' && drops.watch[0].value === '[researchOwned(), 9]' && !G.isEdited('nunixLateGame'), 'saved Nunix: all the research, as seeded now');
 S.load(snap);
 
-// ---- a game Nunix had set to stop before the Elder Pact: the Research macro's setting too, once ----
+// ---- the manager at work keeps in step with what it says ----
 G.goTo(1);
 G.step();
+G.step();
+// a game from before (its stage set up when Drops still stopped before the Elder Pact): set up again, as it is now
 M.setInput('research', 'stopBefore', 'Elder Pact');
 const pact2 = JSON.parse(S.serialize());
-delete pact2.managers.fixes;
+delete pact2.managers.run.sig;
 S.load(JSON.stringify(pact2));
 G.step();
-assert(M.inputsOf(M.get('research')).stopBefore === 'none', 'Research: all of it (it kept the old stop, set on the stage’s first pass)');
+assert(M.inputsOf(M.get('research')).stopBefore === 'none' && value('manager.stage') === 1, 'a save from before: its stage set up again (Research: all of it)');
 M.setInput('research', 'stopBefore', 'Elder Pact');
 S.load(S.serialize());
 G.step();
-assert(M.inputsOf(M.get('research')).stopBefore === 'Elder Pact', 'once: set by hand afterwards, it stays');
+assert(M.inputsOf(M.get('research')).stopBefore === 'Elder Pact', 'nothing changed: a setting changed by hand stays');
+// an edit to it: the stage sets up again
+G.setStageInput('nunixLateGame', 0, 'research', 'stopBefore', 'One mind');
+G.step();
+assert(M.inputsOf(M.get('research')).stopBefore === 'One mind', 'an edit to the stage it’s on: applied on the next pass');
+M.set('lumps', false, { silent: true });
+G.updateStage('nunixLateGame', 0, { name: 'Drops!' });
+G.step();
+assert(!M.isOn('lumps'), 'a name (or a watch) isn’t what it does: nothing set up again');
+G.revert('nunixLateGame');
+G.step();
+assert(M.inputsOf(M.get('research')).stopBefore === 'none' && M.isOn('lumps'), 'Revert to default: set up again, as it comes');
 S.load(snap);
 
 // (the page: tests/e2e/manager-stage-tabs.test.mjs)

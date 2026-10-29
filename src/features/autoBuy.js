@@ -313,7 +313,8 @@ CA.AutoBuy = (() => {
           label: 'Stop before',
           type: 'select',
           default: 'One mind',
-          options: () => [{ v: 'none', label: 'never — buy it all' }].concat(RESEARCH.map((r) => ({ v: r, label: r === 'One mind' ? 'One mind (starts the Grandmapocalypse)' : r }))),
+          // the research in order, then "never" (all of it) last
+          options: () => RESEARCH.map((r) => ({ v: r, label: r === 'One mind' ? 'One mind (starts the Grandmapocalypse)' : r })).concat([{ v: 'none', label: 'never — buy it all' }]),
         },
       ],
       describe: (p) => (p.stopBefore && p.stopBefore !== 'none' ? `Buy research (up to before ${p.stopBefore})` : 'Buy all research'),

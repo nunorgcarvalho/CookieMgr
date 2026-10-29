@@ -247,19 +247,20 @@ CA.UI.ManagersPage = (() => {
   /** Whether a setting picks an upgrade (Research's "stop before"): its choices are upgrades. */
   const picksUpgrade = (p) => p.type !== 'number' && p.type !== 'bool' && choices(p).filter((o) => o.v !== 'none').length > 1 && choices(p).every((o) => o.v === 'none' || upgradeOf(o.v));
 
-  /** An upgrade pick: the upgrades in order as icons (hover: the upgrade's card); the picked one and those after it are skipped. */
+  /** An upgrade pick: the upgrades in order as icons (hover: the upgrade's card), then "all"; the picked one and those after it are skipped. */
   function upgradePicker(m, i, id, p, cur) {
     const list = choices(p);
     const at = list.findIndex((o) => String(o.v) === String(cur));
+    const stops = at >= 0 && !!upgradeOf(list[at].v); // stops at an upgrade (not "all")
     const tiles = list
       .map((o, j) => {
         const u = upgradeOf(o.v);
         const attrs = `data-mgr-act="pick" data-id="${esc(m.id)}" data-i="${i}" data-macro="${esc(id)}" data-key="${esc(p.key)}" data-v="${esc(o.v)}"`;
-        const cls = `ca-mgr-uptile${j === at ? ' sel' : ''}${u && at > 0 && j >= at ? ' skip' : ''}`;
+        const cls = `ca-mgr-uptile${j === at ? ' sel' : ''}${u && stops && j >= at ? ' skip' : ''}`;
         return u ? `<button type="button" class="${cls}" ${attrs} ${CA.UpgradeInfo.attrs(u.name)}>${CA.UpgradeInfo.sprite(u.icon, 'ca-mgr-upico')}</button>` : `<button type="button" class="${cls} all" ${attrs} data-tip="${esc(o.label)}">all</button>`;
       })
       .join('');
-    const name = at > 0 ? list[at].label : '';
+    const name = stops ? list[at].label : '';
     return `<div class="ca-mgr-uppick">${tiles}</div><div class="ca-mgr-upcap">${name ? `Up to, not including, <b>${esc(name)}</b> — click another to stop there (hover one for what it does)` : 'All of it — click one to stop before it'}</div>`;
   }
 
