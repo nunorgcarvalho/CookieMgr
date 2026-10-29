@@ -542,9 +542,13 @@ the mode says what the income is and what a purchase adds to it:
 - **CpS** (the default) — the CpS the game shows now, buffs included: Cookie Monster's.
 - **CpS + clicking** — CpS plus your clicks a second (over the last minute; Options: 10 s to 15 min) × what a click is
   worth; a purchase's gain counts what it adds to your clicks.
-- **Actual income** — what you've actually been taking in (clicking, golden cookies, wrinklers, everything baked, as
-  the Recorder measures it) over the last 30 minutes of play (Options: 5 minutes to 3 hours), projected forward; a
-  purchase's gain is what it adds to your raw CpS × actual ÷ raw CpS. Until a minute is recorded, CpS.
+- **Actual, 15 min / 1 h / 3 h** — what you've actually been taking in (clicking, golden cookies, wrinklers,
+  everything baked, as the Recorder measures it) over the last 15 minutes, hour or 3 hours of play, projected
+  forward; a purchase's gain is what it adds to your raw CpS × actual ÷ raw CpS. Until a minute is recorded, CpS;
+  with less than the window recorded, the average of what there is. 15 min follows what you're doing now (a combo,
+  an active stretch); 3 h smooths out a lucky streak.
+- **Actual, custom** — the same over a window you pick (Options → Actual income over: 5 minutes to 3 hours; 30
+  minutes at first).
 
 The mode is the add-on's: the colors, the store's sort and tooltips, the best buy and the buyers all follow it. Each
 chip shows that mode's income now; hover a cell for its period's parts ("5m to afford + 20m to earn back").
@@ -553,8 +557,10 @@ chip shows that mode's income now; hover a cell for its period's parts ("5m to a
 each one's code sets `income` and returns what the item adds to it. Change a built-in one, copy it, or write your own
 (Shows as: a payback mode) and it's a chip here. The parts are words too: `item.timeToAfford(mode)`,
 `item.earnBack(mode)`, `item.gainIn(mode)`, `item.paybackIn(mode)`, `item.rawGain()`, `payback.income(mode)`,
-`payback.bank()` (mode: a mode's code name — `rawCps`, `cps`, `cpsClicking`, `actualIncome`, yours — or `raw`,
-`clicking`, `actual`; none: the mode in use).
+`payback.bank()` (mode: a mode's code name — `rawCps`, `cps`, `cpsClicking`, `actualIncome15m`, `actualIncome1h`,
+`actualIncome3h`, `actualIncome` (custom), yours — or `raw`, `clicking`, `actual15m`, `actual1h`, `actual3h`,
+`actual`; none: the mode in use). `payback.actualIncome(minutes)` is what you took in a second over the last minutes
+of play (none: the custom window).
 
 In the **store** itself (Settings → Store, each can be turned off): each building's price shows in its payback
 color for what a click buys now (×1, ×10, ×100, or to the next multiple with Round to multiples on), each upgrade
