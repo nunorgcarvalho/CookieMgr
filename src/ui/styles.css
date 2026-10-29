@@ -9643,6 +9643,47 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-wsample .ca-mw-cond .ca-mw-bar {
   grid-column: 2 / 4;
 }
+/* a season's last few drops, named: the reindeer cookies still to get */
+#CookieMgrWidgets .ca-mw-cond .ca-mw-left,
+#CookieMgrMenu .ca-wsample .ca-mw-cond .ca-mw-left {
+  grid-column: 2 / 4;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  margin: 2px 0 1px;
+}
+#CookieMgrWidgets .ca-mw-leftitem,
+#CookieMgrMenu .ca-wsample .ca-mw-leftitem {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: #93866f;
+  white-space: nowrap;
+}
+#CookieMgrWidgets .ca-mw-leftitem.store,
+#CookieMgrMenu .ca-wsample .ca-mw-leftitem.store {
+  color: #ffeab0;
+}
+#CookieMgrWidgets .ca-mw-leftico,
+#CookieMgrMenu .ca-wsample .ca-mw-leftico {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  overflow: hidden;
+  opacity: 0.6;
+}
+#CookieMgrWidgets .ca-mw-leftitem.store .ca-mw-leftico,
+#CookieMgrMenu .ca-wsample .ca-mw-leftitem.store .ca-mw-leftico {
+  opacity: 1;
+}
+#CookieMgrWidgets .ca-mw-leftico span,
+#CookieMgrMenu .ca-wsample .ca-mw-leftico span {
+  display: block;
+  width: 48px;
+  height: 48px;
+  transform: scale(0.3333);
+  transform-origin: 0 0;
+}
 #CookieMgrWidgets .ca-mw-bar,
 #CookieMgrMenu .ca-wsample .ca-mw-bar {
   display: block;
