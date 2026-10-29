@@ -9008,6 +9008,7 @@ body.ca-has-storebar #products {
 }
 #CookieMgrMenu .ca-code-gutter {
   cursor: default;
+}
 /* Manager widget: what the active manager is doing */
 #CookieMgrWidgets .ca-mw,
 #CookieMgrMenu .ca-wsample .ca-mw {
