@@ -7,6 +7,7 @@
 //                                                     { kind, id, from, to, ctx } or null
 //   CA.ScriptWords.explain(source, line, col, opts)   its info (CA.Words.lookup), with from / to: the
 //                                                     columns it spans; null when there's nothing to say
+//   CA.ScriptWords.words(text, { decl, vars })        every word of a line: [{ from, to, kind, id }]
 //
 // A choice's kind: its param's `word` (a kind, or fn(v, params) → { kind, id }), a value's
 // `paramWords` ({ param: kind }), else by the param's key: profile → 'profile.<the call's prefix>'
@@ -145,6 +146,48 @@ CA.ScriptWords = (() => {
     return BY_KEY[p.key] ? { kind: BY_KEY[p.key], id: v } : null;
   }
 
+  /** What token i of a line is: [kind, id, ctx extras], or null. decl: declared(source). */
+  function kindAt(toks, i, text, decl, opts) {
+    const t = toks[i];
+    const prev = toks[i - 1];
+    const next = toks[i + 1];
+    if (t.t === 'num') return /[a-z]/i.test(text.slice(t.col, t.end)) ? ['number', text.slice(t.col, t.end), { value: t.v, unit: t.unit }] : null;
+    if (t.t === 'op' || t.t === 'p') return null;
+    const v = t.v;
+    // switch on <macro>
+    if (prev && prev.t === 'id' && (prev.v === 'on' || prev.v === 'off') && toks[i - 2] && toks[i - 2].v === 'switch') return ['macro', v, { switch: prev.v }];
+    if (t.t === 'id' && S().KEYWORDS.includes(v) && !(next && next.v === '(')) return ['keyword', v];
+    if (t.t === 'id' && (v === 'true' || v === 'false')) return ['keyword', v];
+    const { vars, defs } = decl;
+    if (t.t === 'id' && next && next.t === 'p' && next.v === '(') {
+      if (prev && prev.v === 'def') return ['function', v, { def: defs[v] }];
+      if (CA.Actions.get(v)) return ['action', v, { args: argsAt(toks, i, CA.Actions.get(v)) }];
+      if (CA.Conditions.get(v)) return ['condition', v, { args: argsAt(toks, i, CA.Conditions.get(v)) }];
+      if (S().isValue(v)) return ['value', v, { args: argsAt(toks, i, valueDef(v)) }];
+      if (defs[v]) return ['function', v, { def: defs[v] }];
+      return ['unknown', v];
+    }
+    // key=… inside a call: that param
+    const enc = enclosing(toks, i);
+    if (enc && t.t === 'id' && next && next.t === 'op' && next.v === '=') {
+      const def = callDef(enc.call);
+      const p = paramsOf(def).find((x) => x.key === v);
+      return p ? ['param', v, { call: enc.call, param: p }] : null;
+    }
+    if (t.t === 'id' && (vars[v] || (opts.vars || []).includes(v))) return ['variable', v, { decl: vars[v], given: (opts.vars || []).includes(v) }];
+    if (enc) {
+      const def = callDef(enc.call);
+      const ps = paramsOf(def);
+      const p = enc.key ? ps.find((x) => x.key === enc.key) : ps[enc.index];
+      const ck = choiceKind(enc.call, def, p, v, def ? argsAt(toks, enc.at, def) : {});
+      return [ck ? ck.kind : 'choice', ck ? ck.id : v, { call: enc.call, param: p, index: enc.index, value: v, choice: true }];
+    }
+    if (t.t === 'id' && CA.Actions.get(v)) return ['action', v];
+    if (t.t === 'id' && CA.Conditions.get(v)) return ['condition', v];
+    if (t.t === 'id' && S().isValue(v)) return ['value', v];
+    return ['choice', v, { value: v }];
+  }
+
   /**
    * The word at `line` (from 1), `col` (from 0) of the code: { kind, id, from, to, ctx }, or null
    * (a space, a comment, a bracket). opts.vars: names the code is given (item, thing).
@@ -156,47 +199,24 @@ CA.ScriptWords = (() => {
     const toks = tokens(text);
     const i = toks.findIndex((t) => col >= t.col && col < t.end);
     if (i < 0) return null;
-    const t = toks[i];
-    const prev = toks[i - 1];
-    const next = toks[i + 1];
-    const base = { from: t.col, to: t.end };
-    const ctx = { line, source, text };
-    const out = (kind, id, more) => ({ kind, id, ...base, ctx: { ...ctx, ...(more || {}) } });
-    if (t.t === 'num') return /[a-z]/i.test(text.slice(t.col, t.end)) ? out('number', text.slice(t.col, t.end), { value: t.v, unit: t.unit }) : null;
-    if (t.t === 'op' || t.t === 'p') return null;
-    const v = t.v;
-    // switch on <macro>
-    if (prev && prev.t === 'id' && (prev.v === 'on' || prev.v === 'off') && toks[i - 2] && toks[i - 2].v === 'switch') return out('macro', v, { switch: prev.v });
-    if (t.t === 'id' && S().KEYWORDS.includes(v) && !(next && next.v === '(')) return out('keyword', v);
-    if (t.t === 'id' && (v === 'true' || v === 'false')) return out('keyword', v);
-    const { vars, defs } = declared(source);
-    if (t.t === 'id' && next && next.t === 'p' && next.v === '(') {
-      if (prev && prev.v === 'def') return out('function', v, { def: defs[v] });
-      if (CA.Actions.get(v)) return out('action', v, { args: argsAt(toks, i, CA.Actions.get(v)) });
-      if (CA.Conditions.get(v)) return out('condition', v, { args: argsAt(toks, i, CA.Conditions.get(v)) });
-      if (S().isValue(v)) return out('value', v, { args: argsAt(toks, i, valueDef(v)) });
-      if (defs[v]) return out('function', v, { def: defs[v] });
-      return out('unknown', v);
-    }
-    // key=… inside a call: that param
-    const enc = enclosing(toks, i);
-    if (enc && t.t === 'id' && next && next.t === 'op' && next.v === '=') {
-      const def = callDef(enc.call);
-      const p = paramsOf(def).find((x) => x.key === v);
-      return p ? out('param', v, { call: enc.call, param: p }) : null;
-    }
-    if (t.t === 'id' && (vars[v] || (opts.vars || []).includes(v))) return out('variable', v, { decl: vars[v], given: (opts.vars || []).includes(v) });
-    if (enc) {
-      const def = callDef(enc.call);
-      const ps = paramsOf(def);
-      const p = enc.key ? ps.find((x) => x.key === enc.key) : ps[enc.index];
-      const ck = choiceKind(enc.call, def, p, v, def ? argsAt(toks, enc.at, def) : {});
-      return out(ck ? ck.kind : 'choice', ck ? ck.id : v, { call: enc.call, param: p, index: enc.index, value: v, choice: true });
-    }
-    if (t.t === 'id' && CA.Actions.get(v)) return out('action', v);
-    if (t.t === 'id' && CA.Conditions.get(v)) return out('condition', v);
-    if (t.t === 'id' && S().isValue(v)) return out('value', v);
-    return out('choice', v, { value: v });
+    const k = kindAt(toks, i, text, declared(source), opts);
+    return k ? { kind: k[0], id: k[1], from: toks[i].col, to: toks[i].end, ctx: { line, source, text, ...(k[2] || {}) } } : null;
+  }
+
+  /**
+   * Every word of one line: [{ from, to, kind, id }] — what the code editors color by. opts.decl:
+   * declared(the whole code), for its variables and named blocks; opts.vars: names it's given.
+   */
+  function words(text, opts = {}) {
+    const toks = tokens(String(text || ''));
+    const decl = opts.decl || { vars: {}, defs: {} };
+    const out = [];
+    toks.forEach((t, i) => {
+      if (t.t !== 'id') return;
+      const k = kindAt(toks, i, text, decl, opts);
+      if (k) out.push({ from: t.col, to: t.end, kind: k[0], id: k[1] });
+    });
+    return out;
   }
 
   /** What the word at line / col is (CA.Words info, plus from / to), or null. */
@@ -322,13 +342,21 @@ CA.ScriptWords = (() => {
         }
       }
       const desc = String(v.desc || '').replace(/([^.!?…)])$/, '$1.');
+      const origin = S().originOf(id);
+      const o = S().ORIGINS[origin] || {};
+      // a statistic: its code is what it is
+      const st = /^stat\./.test(id) && CA.Stats ? CA.Stats.all().find((x) => `stat.${x.key}` === id) : null;
+      const sort = v.list ? ' · a list' : v.bool ? ' · yes / no' : '';
       return {
         title: id,
-        tag: v.group ? `Value · ${v.group}` : v.list ? 'Value · a list' : v.bool ? 'Value · yes / no' : 'Value',
+        tag: `${o.what || 'Value'}${v.group && !st ? ` · ${v.group}` : sort}`,
+        origin,
         sig: `${id}(${(v.params || []).join(', ')})`,
         desc: desc ? desc[0].toUpperCase() + desc.slice(1) : '',
         rows,
-        note: v.context ? 'Only in a statistic about an item: the hovered building or upgrade.' : '',
+        how: v.how || '',
+        code: st ? st.source : '',
+        note: [o.desc ? `${o.desc[0].toUpperCase()}${o.desc.slice(1)}.` : '', v.context ? 'Only in a statistic about an item: the hovered building or upgrade.' : ''].filter(Boolean).join(' '),
       };
     },
   });
@@ -430,5 +458,5 @@ CA.ScriptWords = (() => {
     },
   });
 
-  return { at, explain, declared, tokens };
+  return { at, explain, words, declared, tokens };
 })();

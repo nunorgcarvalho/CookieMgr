@@ -25,7 +25,8 @@
 // (owned(christmas, upgrades) >= total(christmas, upgrades), cookies() > 0.1 * cps() * 60,
 // season == easter), a variable on its own, joined with and / or / not and brackets. Values add up
 // with + - * / %. Numbers can be written 1e12, 25K, 2.5M, 3B, 1T…
-// Values: see VALUES below (and any recorded state: state(cookies)).
+// Values: see VALUES below (and any recorded state: state(cookies)). Each comes from somewhere: the game,
+// cookieMgr, a statistic, or it's a function (originOf, below); a value may say how it's worked out (how).
 //
 // Every block keeps the line it came from, so a running macro can show where it is.
 //
@@ -87,6 +88,42 @@ CA.Script = (() => {
   );
   const valueById = {};
   VALUES.forEach((v) => (valueById[v.id] = v));
+
+  // ---- where a value comes from (the code editors color each by it) --------------------------------
+  //   game       read straight from the game: what it has or shows (cookies, a stock's price, a tile's plant)
+  //   cookieMgr  worked out by cookieMgr: payback periods, golden cookie odds, banks, its profiles…
+  //   stat       a built-in statistic (stat.*)        mine  a statistic you wrote
+  //   function   works on what it's given (fmt.number(x), count(list))
+  // A value can say its own (origin: …); else it's the game's when listed here, cookieMgr's otherwise.
+  const GAME_VALUES = new Set(
+    (
+      'cookies cps rawCps magic lumps santaLevel veil elderWrath researchOwned owned total building buildings ' +
+      'shimmers shimmer.type shimmer.isWrath shimmer.life wrinklers wrinkler.isShiny wrinkler.isFed wrinkler.sucked ' +
+      'lump.isRipe lump.isMature lump.ripeIn autosave.in buff.timeLeft upgrades upgrade.price upgrade.owned ' +
+      'building.price building.priceOf missing.upgrades missing.achievements spell.cost spell.failChance fthof.backfireChance ' +
+      'pantheon.gods pantheon.god pantheon.slotOf pantheon.isSlotted pantheon.swaps dragon.level dragon.aura dragon.canPet ' +
+      'garden.tickIn garden.plants garden.mature garden.empty garden.isUnlocked garden.soilAvailable garden.tiles garden.plantAt ' +
+      'garden.age garden.isMature garden.isNew garden.isEmpty garden.seeds garden.seedCost ' +
+      'stocks stock.mode stock.price stock.resting stock.held stock.max stock.room stock.delta stock.cost stock.brokers stock.maxBrokers stock.brokerPrice'
+    ).split(' ')
+  );
+  const FUNCTIONS = new Set(['count', 'finite', 'known']);
+  const ORIGINS = {
+    game: { name: 'Game', what: 'Game value', desc: 'read straight from the game' },
+    cookieMgr: { name: 'cookieMgr', what: 'cookieMgr value', desc: 'worked out by cookieMgr' },
+    stat: { name: 'Statistic', what: 'Statistic', desc: 'a built-in statistic: code you can read and change' },
+    mine: { name: 'Your statistic', what: 'Your statistic', desc: 'a statistic you wrote' },
+    function: { name: 'Function', what: 'Function', desc: 'works on what you give it' },
+  };
+  /** Where a value comes from: 'game', 'cookieMgr', 'stat', 'mine' or 'function' ('' when it isn't a value). */
+  function originOf(id) {
+    const v = valueById[id];
+    if (!v) return '';
+    if (v.origin) return v.origin;
+    if (GAME_VALUES.has(id)) return 'game';
+    if (FUNCTIONS.has(id) || /^fmt\./.test(id)) return 'function';
+    return 'cookieMgr';
+  }
 
   // ---- tokens ---------------------------------------------------------------------------------
 
@@ -1012,7 +1049,7 @@ CA.Script = (() => {
     const snippet = (id, def) => `${id}(${argText(def, {}) || ((def && def.params) || []).map((p) => (p.default !== undefined && p.default !== '' ? litText(p.default) : p.key)).join(', ')})`;
     if (!stat) CA.Actions.all().filter((a) => !a.hidden).forEach((a) => items.push({ kind: 'action', id: a.id, sig: sig(a.id, a), desc: a.name, group: a.group, icon: a.icon, insert: snippet(a.id, a) }));
     CA.Conditions.all().forEach((c) => items.push({ kind: 'condition', id: c.id, sig: sig(c.id, c), desc: c.name, group: 'Conditions', icon: c.icon, insert: snippet(c.id, c) }));
-    VALUES.filter((v) => !v.hidden && (stat || !v.context)).forEach((v) => items.push({ kind: 'value', id: v.id, sig: `${v.id}(${(v.params || []).join(', ')})`, desc: v.desc, group: v.group ? `Values · ${v.group}` : 'Values', icon: 'graphs', insert: `${v.id}(${(v.params || []).join(', ')})` }));
+    VALUES.filter((v) => !v.hidden && (stat || !v.context)).forEach((v) => items.push({ kind: 'value', id: v.id, origin: originOf(v.id), sig: `${v.id}(${(v.params || []).join(', ')})`, desc: v.desc, group: v.group ? `Values · ${v.group}` : 'Values', icon: 'graphs', insert: `${v.id}(${(v.params || []).join(', ')})` }));
     [
       ['repeat until …:', 'run the block each pass until something holds', 'repeat until cookies() >= 1e12:\n  '],
       ['while …:', 'run the block each pass while something holds', 'while buff(Frenzy):\n  '],
@@ -1086,8 +1123,10 @@ CA.Script = (() => {
   defineLookup({ name: 'Building', uses: ['building(name)'], items: () => Object.keys((typeof Game !== 'undefined' && Game.Objects) || {}).map((n) => ({ v: n, label: n })) });
 
   /** Adds a value conditions can compare (e.g. the garden's): { id, desc, params, get(...args) }. */
+  let rev = 0; // goes up when the values change (a statistic added, renamed, deleted)
   function defineValue(v) {
     if (valueById[v.id]) return valueById[v.id];
+    rev++;
     VALUES.push(v);
     valueById[v.id] = v;
     return v;
@@ -1096,10 +1135,11 @@ CA.Script = (() => {
   function removeValue(id) {
     const v = valueById[id];
     if (!v) return;
+    rev++;
     delete valueById[id];
     VALUES.splice(VALUES.indexOf(v), 1);
   }
   const isValue = (id) => !!valueById[id];
 
-  return { compile, evaluate, value: valueOf, resolve, exprText, decompile, library, lookups, defineLookup, litText, defineValue, removeValue, isValue, runStat, VALUES, KEYWORDS, tokenize };
+  return { compile, evaluate, value: valueOf, resolve, exprText, decompile, library, lookups, defineLookup, litText, defineValue, removeValue, isValue, originOf, ORIGINS, revision: () => rev, runStat, VALUES, KEYWORDS, tokenize };
 })();

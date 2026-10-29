@@ -791,7 +791,7 @@
   display: none;
   position: fixed;
   z-index: 100000;
-  max-width: 340px;
+  max-width: 100%;
   min-width: 150px;
   padding: 7px 10px;
   pointer-events: none;
@@ -5028,7 +5028,7 @@ body.ca-has-storebar #products {
   z-index: 100001;
   display: none;
   pointer-events: auto;
-  max-width: 340px;
+  max-width: 100%;
   padding: 5px 6px;
   font-size: 11px;
   color: #e6dcc6;
@@ -7520,7 +7520,7 @@ body.ca-has-storebar #products {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  max-width: 340px;
+  max-width: 100%;
   padding: 5px 9px;
   border-radius: 4px;
   background: rgba(0, 0, 0, 0.45);
@@ -8943,4 +8943,124 @@ body.ca-has-storebar #products {
 }
 #CookieMgrMenu .ca-code-gutter {
   cursor: default;
+}
+
+/* ---------- v4.1: code colored by where each word comes from (ui/codeEditor.js LEGEND) ---------- */
+
+/* game: cyan · cookieMgr: lilac · statistic: pink (yours: dotted underline) · function: white italic ·
+   macro / profile: yellow · action: green · condition: blue · keyword: orange */
+#CookieMgrMenu :is(.ca-code-hl, .ca-hl, .ca-se-tr code) .hv-game,
+#CookieMgrMenu :is(.ca-code-hl, .ca-hl, .ca-se-tr code) .hg,
+#CookieMgrLayer :is(.ca-word-sig, .ca-word-code) :is(.hv-game, .hg),
+#CookieMgrLayer .ca-word-tag.hv-game {
+  color: #6fe6ef;
+}
+#CookieMgrMenu :is(.ca-code-hl, .ca-hl, .ca-se-tr code) .hv-cookieMgr,
+#CookieMgrLayer :is(.ca-word-sig, .ca-word-code) .hv-cookieMgr,
+#CookieMgrLayer .ca-word-tag.hv-cookieMgr {
+  color: #c9aaff;
+}
+#CookieMgrMenu :is(.ca-code-hl, .ca-hl, .ca-se-tr code) :is(.hv-stat, .hv-mine),
+#CookieMgrLayer :is(.ca-word-sig, .ca-word-code) :is(.hv-stat, .hv-mine),
+#CookieMgrLayer .ca-word-tag:is(.hv-stat, .hv-mine) {
+  color: #ff9ad5;
+}
+#CookieMgrMenu :is(.ca-code-hl, .ca-hl, .ca-se-tr code) span.hv-mine,
+#CookieMgrLayer :is(.ca-word-sig, .ca-word-code) span.hv-mine {
+  text-decoration: underline dotted rgba(255, 154, 213, 0.8);
+  text-underline-offset: 3px;
+}
+#CookieMgrMenu :is(.ca-code-hl, .ca-hl, .ca-se-tr code) .hv-function,
+#CookieMgrLayer :is(.ca-word-sig, .ca-word-code) .hv-function,
+#CookieMgrLayer .ca-word-tag.hv-function {
+  color: #f6f1e7;
+  font-style: italic;
+}
+#CookieMgrMenu :is(.ca-code-hl, .ca-hl, .ca-se-tr code) .hm,
+#CookieMgrLayer :is(.ca-word-sig, .ca-word-code) .hm {
+  color: #f2d36b;
+}
+#CookieMgrMenu :is(.ca-code-hl, .ca-hl, .ca-se-tr code) .ho,
+#CookieMgrLayer :is(.ca-word-sig, .ca-word-code) .ho {
+  color: #c9bda4;
+}
+#CookieMgrMenu .ca-hl .ha,
+#CookieMgrLayer .ca-word-code .ha {
+  color: #9be89b;
+}
+#CookieMgrMenu .ca-hl .hq,
+#CookieMgrLayer .ca-word-code .hq {
+  color: #8fc3ea;
+}
+#CookieMgrMenu .ca-hl .hk,
+#CookieMgrLayer .ca-word-code .hk {
+  color: #ffb86b;
+}
+#CookieMgrMenu .ca-hl .hn,
+#CookieMgrLayer .ca-word-code .hn {
+  color: #ff9a8a;
+}
+#CookieMgrMenu .ca-hl .hs,
+#CookieMgrLayer .ca-word-code .hs {
+  color: #e6c07b;
+}
+#CookieMgrMenu .ca-hl .hi,
+#CookieMgrLayer .ca-word-code .hi {
+  color: #d8cbb0;
+}
+#CookieMgrLayer .ca-word-code .hc {
+  color: #7b8a6a;
+  font-style: italic;
+}
+/* the legend: under each editor, atop the Statistics catalog */
+#CookieMgrMenu .ca-code-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 3px 12px;
+  margin: 6px 0 2px;
+  font-size: 11px;
+}
+#CookieMgrMenu .ca-code-key {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  cursor: help;
+  white-space: nowrap;
+}
+#CookieMgrMenu .ca-code-key i {
+  font-style: normal;
+  font-size: 9px;
+  text-decoration: none;
+}
+#CookieMgrMenu .ca-code-key span.hk {
+  font-weight: bold;
+}
+#CookieMgrMenu .ca-code-key-more {
+  color: #93866f;
+  font-style: italic;
+}
+/* a statistic's code on its hover card */
+#CookieMgrLayer .ca-word-code {
+  margin: 6px 0 2px;
+  padding: 4px 6px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.4);
+  font: 11px/15px Consolas, 'Cascadia Mono', Menlo, Monaco, monospace;
+  color: #e8d7b0;
+  white-space: pre;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+/* a value's tag on its card: in its origin's color */
+#CookieMgrLayer .ca-word-tag {
+  opacity: 1;
+}
+#CookieMgrLayer .ca-word-how {
+  color: #cfc3a8;
+  font-size: 11px;
+}
+#CookieMgrLayer .ca-word-how b {
+  color: #c9aaff;
 }
