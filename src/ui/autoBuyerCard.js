@@ -3,12 +3,13 @@
 //   Auto buyer   its on/off switch (the autoBuyer macro), what it buys next (a bar filling as you save
 //                for it), the profiles (click one to make it active), the payback mode, Buy all upgrades
 //   Queue        the active profile's queue: place, what (icon, name; an upgrade's info card on hover;
-//                Buy all upgrades as one row, the upgrades it buys on hover),
-//                payback period in its color, score, price, when, the rules that touched it — the first
+//                Buy all upgrades as one row, the upgrades it buys on hover; what it keeps — Lucky! bank,
+//                garden replant… — as rows of their own, in their place), payback period in its color,
+//                implied payback period, score (0–100), price, when, the rules that touched it — the first
 //                ten (all on "show all"), then what's held back, grayed, with why
-//   Profile      the active profile: name, what it buys, the bulk, cheap ×100, save up or skip, the reserve
-//                (minutes of CpS and banks — the highest is kept), what it ranks by, and its rules
-//                (what → does, when …), reordered with ↑ ↓
+//   Profile      the active profile: name, what it buys, the bulk, cheap ×100, save up or skip, what it keeps
+//                (minutes of CpS and banks) and each one's priority (first, or a score), what it ranks by,
+//                and its rules (what → does, when …), reordered with ↑ ↓
 //
 // The first two follow the game every second (sync); the profile editor redraws only when it changes,
 // so typing into it isn't interrupted.
@@ -26,10 +27,19 @@ CA.UI.AutoBuyerCard = (() => {
   let showAll = false;
 
   const ppText = (v) => F().payback(v);
+  const dash = '<span class="ca-hint">—</span>';
+  /** A score, 0–100, with a little bar. */
+  const scoreHtml = (v) => (Number.isFinite(v) ? `<span class="ca-ab-score"><span class="ca-ab-score-bar"><i style="width:${v.toFixed(0)}%"></i></span>${Math.round(v)}</span>` : dash);
+  /** What a threshold of the queue is drawn with. */
+  const BANK_ICONS = { cps: 'clock', lucky: 'sparkle', luckyFrenzy: 'bolt', conjure: 'wizard', garden: 'leaf' };
+  const bankIcon = (id, size = 13) => I(BANK_ICONS[id] || 'dollar', size);
+  /** A threshold's tip: what it is, and why it's where it is. */
+  const bankTip = (x) => `${x.detail ? `${x.detail} — ` : ''}keeps ${F().beautify(x.price)} in the bank: ${B().whyText(x)}${x.kept ? ' (kept now)' : ''}`;
   const sprite = (pos) => `<span class="ca-pp-ico" style="background-image:url(${CA.Util.res('img/icons.png')});background-position:${-pos[0] * 48}px ${-pos[1] * 48}px"></span>`;
   /** A queue entry's name: a building's icon and name, an upgrade's (hoverable: its info card). */
   function thingName(x) {
     if (x.kind === 'upgrade') return CA.UpgradeInfo.ref(x.name);
+    if (x.kind === 'bank') return `<span class="ca-ab-thing" data-tip="${esc(bankTip(x))}">${bankIcon(x.name)}${esc(x.label)}</span>`;
     if (x.kind === 'allUpgrades') {
       const names = (x.names || []).map((n) => (Game.Upgrades && Game.Upgrades[n] && Game.Upgrades[n].dname) || n);
       const tip = names.length ? `The game’s Buy all upgrades: ${names.join(', ')} — bought at once, their payback period measured together` : 'The game’s Buy all upgrades: every store upgrade the budget affords';
@@ -46,19 +56,34 @@ CA.UI.AutoBuyerCard = (() => {
 
   // ---- the Auto buyer card ----
 
+  /** The thresholds kept ahead of a thing in the queue (what it may only spend above). */
+  const keptAhead = (q, f) => q.items.slice(0, Math.max(0, q.items.indexOf(f))).filter((y) => y.kind === 'bank');
+  const bar = (pct) => `<span class="ca-ab-bar"><i style="width:${(pct * 100).toFixed(1)}%"></i></span>`;
   function nextHtml() {
-    const p = B().find();
-    const f = B().next();
+    const q = B().queue();
+    const f = q.next;
+    const w = q.wait;
+    const cookies = Game.cookies || 0;
+    // saving up for something it keeps (a Lucky! bank, the garden's replant…): that first, then what's next
+    if (w && w.kind === 'bank') {
+      const pct = w.price > 0 ? Math.max(0, Math.min(1, cookies / w.price)) : 1;
+      return (
+        '<div class="ca-ab-next saving">' +
+        `<div class="ca-ab-next-text"><b>Saving for: ${thingName(w)}</b>` +
+        `<span class="ca-hint">${F().beautify(w.price)} · ${(pct * 100).toFixed(0)}% · in ${when(w.price)} · ${esc(B().whyText(w, q))}${w.detail ? ` · ${esc(w.detail)}` : ''}</span>` +
+        `${bar(pct)}${f ? `<span class="ca-hint ca-ab-then">then: ${thingName(f)} · score ${Number.isFinite(f.score) ? Math.round(f.score) : f.first ? 'first' : '—'} · ${F().short(f.price)}</span>` : ''}</div></div>`
+      );
+    }
     if (!f) return `<div class="ca-ab-next"><div class="ca-ab-next-text"><b>Nothing to buy</b><span class="ca-hint">${esc(B().readiness().text)}</span></div></div>`;
-    const keep = B().keepOf(p.id);
-    const top = B().reserveParts(p.id).find((q) => q.wins);
+    const keep = q.keep;
+    const ahead = keptAhead(q, f);
     const need = f.price + keep;
-    const pct = need > 0 ? Math.max(0, Math.min(1, (Game.cookies || 0) / need)) : 1;
+    const pct = need > 0 ? Math.max(0, Math.min(1, cookies / need)) : 1;
     return (
       `<div class="ca-ab-next${pct >= 1 ? ' can' : ''}">` +
       `<div class="ca-ab-next-text"><b>Next: ${thingName(f)}</b>` +
-      `<span class="ca-hint">PP ${ppText(f.pp)} · +${F().short(f.gain)}/s · ${F().beautify(f.price)} · ${pct >= 1 ? 'affordable now' : `in ${when(need)}`}${keep > 0 ? ` · keeps ${F().short(keep)} in the bank (${esc(top.label)})` : ''}</span>` +
-      `<span class="ca-ab-bar"><i style="width:${(pct * 100).toFixed(1)}%"></i></span></div></div>`
+      `<span class="ca-hint">${f.first ? '' : `score ${Number.isFinite(f.score) ? Math.round(f.score) : '—'} · `}${esc(B().whyText(f, q))} · PP ${ppText(f.pp)} · +${F().short(f.gain)}/s · ${F().beautify(f.price)} · ${pct >= 1 ? 'affordable now' : `in ${when(need)}`}${keep > 0 ? ` · keeps ${F().short(keep)} in the bank (${esc(ahead.map((y) => y.label.replace(/^Keep /, '')).join(', '))})` : ''}</span>` +
+      `${bar(pct)}</div></div>`
     );
   }
   function profileChips() {
@@ -103,33 +128,39 @@ CA.UI.AutoBuyerCard = (() => {
   function buyerCard() {
     return (
       '<div class="ca-card ca-ab">' +
-      C().cardHead('Auto buyer', 'dollar', `<div class="ca-card-meta"><span class="ca-hint">buys the front of the queue — the ${C().link('Auto buyer macro', 'clickers')}</span></div>`) +
+      C().cardHead('Auto buyer', 'dollar', `<div class="ca-card-meta"><span class="ca-hint">buys what’s next in the queue — the ${C().link('Auto buyer macro', 'clickers')}</span></div>`) +
       `<div data-ab-buyer>${buyerHtml()}</div></div>`
     );
   }
 
   // ---- the queue ----
 
-  function row(x, i, t) {
+  function row(x, i, t, q) {
     const held = i < 0;
+    const bank = x.kind === 'bank';
     const colour = x.colour || (t ? t.colourOf(x.pp, x.price) : 'gray');
     const can = x.price <= (Game.cookies || 0);
-    const score = held ? '—' : x.first ? 'first' : ppText(x.score);
+    const score = held ? dash : x.first ? '<span class="ca-ab-first">first</span>' : scoreHtml(x.score);
     // a held row's last rule is the one that held it: its why says it in full
     const rules = held && (x.rules || []).length && x.why.includes(x.rules[x.rules.length - 1]) ? x.rules.slice(0, -1) : x.rules || [];
     const badges = rules.map((r) => `<span class="ca-ab-badge ${badgeClass(r)}">${esc(r)}</span>`).join('') + (held ? `<span class="ca-ab-why">${esc(x.why)}</span>` : '');
+    const cls = [q && x === q.next ? 'front' : '', q && x === q.wait && bank ? 'saving' : '', held ? 'held' : '', bank ? 'bank' : '', bank && x.kept ? 'kept' : ''].filter(Boolean).join(' ');
+    // when the buyer could buy it: its price above what's kept ahead of it
+    const ahead = q && !held ? q.items.slice(0, Math.max(0, i)).reduce((m, y) => (y.kind === 'bank' ? Math.max(m, y.price) : m), 0) : 0;
+    const whenText = held ? '' : bank && x.kept ? '✓ kept' : when(x.price + (bank ? 0 : ahead));
     return (
-      `<tr class="${i === 0 ? 'front' : ''}${held ? ' held' : ''}">` +
+      `<tr class="${cls}">` +
       `<td class="n">${held ? '–' : i + 1}</td>` +
       `<td>${thingName(x)}</td>` +
-      `<td class="n"><span class="ca-pp-dot ${colour}"></span>${ppText(x.pp)}</td>` +
+      `<td class="n">${bank ? dash : `<span class="ca-pp-dot ${colour}"></span>${ppText(x.pp)}`}</td>` +
+      `<td class="n">${held || !Number.isFinite(x.ipp) ? dash : ppText(x.ipp)}</td>` +
       `<td class="n">${score}</td>` +
       `<td class="n">${F().short(x.price)}</td>` +
-      `<td class="${can ? 'ca-ab-can' : ''}">${held ? '' : when(x.price)}</td>` +
+      `<td class="${can && x.price + (bank ? 0 : ahead) <= (Game.cookies || 0) ? 'ca-ab-can' : ''}"${ahead > 0 && !bank ? ` data-tip="${esc(`keeping ${F().short(ahead)} in the bank ahead of it`)}"` : ''}>${whenText}</td>` +
       `<td class="ca-ab-badges">${badges}</td></tr>`
     );
   }
-  const badgeClass = (r) => (/^buy first|^cheap/.test(r) ? 'first' : /^weight/.test(r) ? 'weight' : /^up to/.test(r) ? 'cap' : 'never');
+  const badgeClass = (r) => (/^priority/.test(r) ? 'prio' : /^buy first|^cheap/.test(r) ? 'first' : /^weight/.test(r) ? 'weight' : /^up to/.test(r) ? 'cap' : 'never');
   function queueHtml() {
     const q = B().queue();
     if (!q.profile) return '<div class="ca-card-note">No profile.</div>';
@@ -137,17 +168,24 @@ CA.UI.AutoBuyerCard = (() => {
     // the colors: the full table's scale (worked out at most a second ago — the page shows it anyway)
     const t = P().table({ staleMs: 1000 });
     const more = q.items.length - shown.length;
+    const tips = {
+      pp: 'its payback period: the time to afford it plus the time to earn its price back',
+      ipp: 'its implied payback period: the payback period after the rules’ weights — what the queue sorts on. A priority placed at a score: the payback period that score stands for',
+      score: 'its score, 0–100: 100 for the best payback period in the queue, 10 points less for each doubling of it (90: twice as long, 80: four times). “first”: ahead of the ranking (a priority, a buy-first rule, cheap ×100)',
+    };
     return (
-      '<div class="ca-ab-scroll"><table class="ca-ab-queue"><thead><tr><th>#</th><th>What</th><th class="n">PP</th><th class="n" data-tip="its payback period after the rules’ weights — the queue’s order">Score</th><th class="n">Price</th><th>When</th><th>Rules</th></tr></thead><tbody>' +
-      (shown.length ? shown.map((x, i) => row(x, i, t)).join('') : `<tr><td colspan="7" class="ca-hint">Nothing in the queue${q.profile.skip ? ' you can afford' : ''}.</td></tr>`) +
-      (more > 0 ? `<tr><td colspan="7"><a class="ca-link" data-ab-act="all-rows" role="link" tabindex="0">${more} more — show all</a></td></tr>` : showAll && q.items.length > SHOW ? `<tr><td colspan="7"><a class="ca-link" data-ab-act="all-rows" role="link" tabindex="0">show the first ${SHOW}</a></td></tr>` : '') +
-      q.held.map((x) => row(x, -1, t)).join('') +
+      `<div class="ca-ab-scroll"><table class="ca-ab-queue"><thead><tr><th>#</th><th>What</th><th class="n" data-tip="${esc(tips.pp)}">PP</th><th class="n" data-tip="${esc(tips.ipp)}">Implied PP</th><th class="n" data-tip="${esc(tips.score)}">Score</th><th class="n">Price</th><th>When</th><th>Rules</th></tr></thead><tbody>` +
+      (shown.length ? shown.map((x, i) => row(x, i, t, q)).join('') : `<tr><td colspan="8" class="ca-hint">Nothing in the queue${q.profile.skip ? ' you can afford' : ''}.</td></tr>`) +
+      (more > 0 ? `<tr><td colspan="8"><a class="ca-link" data-ab-act="all-rows" role="link" tabindex="0">${more} more — show all</a></td></tr>` : showAll && q.items.length > SHOW ? `<tr><td colspan="8"><a class="ca-link" data-ab-act="all-rows" role="link" tabindex="0">show the first ${SHOW}</a></td></tr>` : '') +
+      q.held.map((x) => row(x, -1, t, q)).join('') +
       '</tbody></table></div>'
     );
   }
   function queueMeta() {
     const q = B().queue();
-    return q.profile ? `${esc(q.profile.name)} · ${q.items.length} in the queue${q.held.length ? `, ${q.held.length} held back` : ''} · hover an upgrade for its card` : '';
+    const things = q.items.filter((x) => x.kind !== 'bank').length;
+    const banks = q.items.length - things;
+    return q.profile ? `${esc(q.profile.name)} · ${things} in the queue${banks ? `, ${banks} kept in the bank` : ''}${q.held.length ? `, ${q.held.length} held back` : ''} · score 100 = the best payback period` : '';
   }
   function queueCard() {
     return (
@@ -194,13 +232,34 @@ CA.UI.AutoBuyerCard = (() => {
       '</span></div>'
     );
   }
-  /** The reserve's thresholds now, the highest (what it keeps) in bold. */
+  /** The reserve's thresholds now, the highest (the most it keeps) in bold. */
   function keepHtml(p) {
     const parts = B().reserveParts(p.id);
     if (!parts.length) return 'no reserve: it may spend the whole bank';
-    return `keeps the highest — so the bank never drops below any of them: ${parts
-      .map((q) => (q.wins ? `<b>${esc(q.label)} ${F().beautify(q.amount)}</b>` : `${esc(q.label)} ${F().beautify(q.amount)}`))
-      .join(' · ')}`;
+    const list = parts.map((q) => (q.wins ? `<b>${esc(q.label)} ${F().beautify(q.amount)}</b>` : `${esc(q.label)} ${F().beautify(q.amount)}`)).join(' · ');
+    return parts.every((q) => q.at === 'first')
+      ? `keeps the highest — so the bank never drops below any of them: ${list}`
+      : `keeps them in the queue, each in its place — what scores below one waits until the bank covers it: ${list}`;
+  }
+  const placeLabel = (v) => (v === 'first' ? 'first — before anything' : `after what scores ${v}+`);
+  /** Each threshold's priority: where it sits in the queue. */
+  function priorityRows(p) {
+    const parts = B().reserveParts(p.id);
+    if (!parts.length) return '';
+    return parts
+      .map((t) => {
+        const at = t.at;
+        const places = B().PLACES.includes(at) ? B().PLACES : B().PLACES.concat([at]);
+        const d = t.id === 'garden' && CA.Garden.minigame() ? CA.Garden.layoutSeeds() : [];
+        const detail = d.length ? `${d.reduce((m, x) => m + x.n, 0)} seeds: ${d.map((x) => `${x.n} ${x.name}`).join(', ')}` : '';
+        return (
+          `<div class="ca-ab-row ca-ab-prio"><span class="ca-ab-lbl"></span>${bankIcon(t.id)}<b>${esc(t.label)}</b><span class="ca-hint">${F().beautify(t.amount)}</span>` +
+          `<select data-ab-at="${esc(t.id)}" data-tip="${esc('Where it sits in the queue. First: nothing is bought until the bank covers it (and nothing spends into it). After a score: what scores that or more is bought ahead of it — and may spend into it; the rest waits until it’s kept.')}">${places.map((v) => opt(v, placeLabel(v), at)).join('')}</select>` +
+          (detail ? `<span class="ca-hint">${esc(detail)}</span>` : '') +
+          '</div>'
+        );
+      })
+      .join('');
   }
   function editorHtml() {
     const p = B().find();
@@ -216,7 +275,7 @@ CA.UI.AutoBuyerCard = (() => {
         .join('')}</span></div>` +
       `<div class="ca-ab-row"><span class="ca-ab-lbl">Cheap ×100</span><input type="number" min="0" step="0.5" class="ca-pp-num" value="${p.cheapBulk}" data-ab-f="cheapBulk" data-tip="${esc('0: off')}"><span class="ca-hint">s of unbuffed CpS — a building whose next 100 cost less, and the budget affords, is bought 100 at a time ahead of the queue, whatever its payback period (0: off)</span></div>` +
       `<div class="ca-ab-row"><span class="ca-ab-lbl">Can’t afford</span><span class="ca-pp-chips">${chip('data-ab-skip', 0, 'save up for the front', !p.skip)}${chip('data-ab-skip', 1, 'skip to what I can afford', p.skip)}</span></div>` +
-      `<div class="ca-ab-row"><span class="ca-ab-lbl">Bank reserve</span><input type="number" min="0" step="1" class="ca-pp-num" value="${p.reserve}" data-ab-f="reserve"><span class="ca-hint">minutes of unbuffed CpS</span>` +
+      `<div class="ca-ab-row"><span class="ca-ab-lbl">Keeps</span><input type="number" min="0" step="1" class="ca-pp-num" value="${p.reserve}" data-ab-f="reserve"><span class="ca-hint">minutes of unbuffed CpS</span>` +
       `<span class="ca-pp-chips">${B()
         .BANKS.map((b) => chip('data-ab-bank', b.id, esc(b.label), p.banks.includes(b.id), `Also keep ${b.tip}`))
         .join('')}</span></div>` +
@@ -224,6 +283,7 @@ CA.UI.AutoBuyerCard = (() => {
         ? `<div class="ca-ab-row"><span class="ca-ab-lbl">Rounds margin</span><input type="number" min="0" step="0.05" class="ca-pp-num" value="${p.roundsMargin}" data-ab-f="roundsMargin" data-tip="${esc('1: just one round; 0: the tulips only')}"><span class="ca-hint">× a round of golden clovers that Garden rounds keeps, on top of the nursetulips’ round while they aren’t all planted — the buyer spends what’s above it</span></div>`
         : '') +
       `<div class="ca-ab-row"><span class="ca-ab-lbl"></span><span class="ca-hint" data-ab-keep>${keepHtml(p)}</span></div>` +
+      priorityRows(p) +
       `<div class="ca-ab-row"><span class="ca-ab-lbl">Rank by</span><select data-ab-f="mode">${modes}</select><span class="ca-hint">the payback period the queue sorts on</span></div>` +
       `<div class="ca-ab-row ca-ab-rules-head"><span class="ca-ab-lbl">Rules</span><span class="ca-hint">top to bottom: what it applies to → what it does, when its condition holds. “never” and a reached cap stop there.</span></div>` +
       `<div class="ca-ab-rules">${p.rules.map((r, i) => ruleRow(p, r, i)).join('') || '<div class="ca-card-note">No rules: the queue is the payback ranking as it is.</div>'}</div>` +
@@ -308,7 +368,7 @@ CA.UI.AutoBuyerCard = (() => {
   function onChange(e) {
     const el = e.target;
     const d = el.dataset || {};
-    if (d.abF === undefined && d.abRule === undefined) return false;
+    if (d.abF === undefined && d.abRule === undefined && d.abAt === undefined) return false;
     const p = B().find();
     if (!p) return true;
     if (d.abF === 'name') B().update(p.id, { name: el.value.trim() || p.name });
@@ -316,6 +376,7 @@ CA.UI.AutoBuyerCard = (() => {
     else if (d.abF === 'reserve') B().update(p.id, { reserve: Math.max(0, Number(el.value) || 0) });
     else if (d.abF === 'roundsMargin') B().update(p.id, { roundsMargin: Math.max(0, Number(el.value) || 0) });
     else if (d.abF === 'mode') B().update(p.id, { mode: el.value });
+    else if (d.abAt !== undefined) B().update(p.id, { at: { ...p.at, [d.abAt]: el.value === 'first' ? 'first' : Number(el.value) } });
     else if (d.abRule !== undefined) {
       const v = d.k === 'what' || d.k === 'effect' || d.k === 'when' ? el.value : Number(el.value);
       B().setRule(p.id, Number(d.abRule), { [d.k]: v });
@@ -324,5 +385,5 @@ CA.UI.AutoBuyerCard = (() => {
     return true;
   }
 
-  return { html, sync, onClick, onChange, thingName };
+  return { html, sync, onClick, onChange, thingName, bankIcon, scoreHtml };
 })();

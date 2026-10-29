@@ -7,8 +7,11 @@
 //              ▬▬▬▬▬▬▬▭▭▭ in 7s  (the bank's way to it, green once affordable)
 //
 // The last three things it bought (oldest left; the newest flashes as it lands), then what it buys next,
-// big, with its price, payback period, when you can afford it and a bar. Hover a picture for its card (price,
-// payback period, +CpS, when / how long ago, the reserve, the rules); click anything for the Payback page.
+// big, with its price, payback period, score, when you can afford it and a bar. Hover a picture for its card
+// (price, payback period, score, why it's next, +CpS, when / how long ago, what's kept ahead of it, the rules);
+// click anything for the Payback page. While it saves up for something it keeps first (a Lucky! bank, the
+// garden's replant…), that's what's shown — "Saving: Garden replant", how far along, why it comes first —
+// with what it buys after it.
 
 CA.UI = CA.UI || {};
 
@@ -53,11 +56,42 @@ CA.UI.BuyerRow = (() => {
     return row('upgrades', esc(names.slice(0, more > 1 ? COVERS : names.length).join(', ')) + (more > 1 ? ` <i>and ${more} more</i>` : ''), ' ca-wbuy-covers');
   }
 
+  /** A threshold's picture (what the Payback page's queue draws it with). */
+  const bankPicture = (x) => `<span class="ca-wbuy-ico">${CA.UI.AutoBuyerCard.bankIcon(x.name, 18)}</span>`;
+  const scoreText = (x) => (x.first ? 'first' : Number.isFinite(x.score) ? String(Math.round(x.score)) : '—');
+
+  /** Saving up for a threshold the bank doesn't cover yet: that, how far along, why it comes first, and what's after it. */
+  function savingHtml(p, q, w) {
+    const f = q.next;
+    const cookies = Game.cookies || 0;
+    const pct = w.price > 0 ? Math.max(0, Math.min(1, cookies / w.price)) : 1;
+    const wait = P().timeTo(w.price);
+    const when = Number.isFinite(wait) ? `in ${F().span(wait)}` : 'not at this income';
+    const title = `Saving: ${w.label.replace(/^Keep /, '')}`;
+    const rows =
+      row('keeps', F().beautify(w.price)) +
+      row('saved', `${(pct * 100).toFixed(0)}%`) +
+      row('kept', when) +
+      row('why first', esc(B().whyText(w, q))) +
+      (w.detail ? row('plants', esc(w.detail), ' ca-wbuy-covers') : '') +
+      (f ? row('then', `${esc(nameOf(f))} <i>(${F().short(f.price)} · score ${scoreText(f)})</i>`) : '');
+    return (
+      `<span class="ca-wbuy-item ca-wbuy-next saving" data-pop aria-label="${esc(title)}">${bankPicture(w)}` +
+      `<span class="ca-wpop ca-wt"><span class="ca-wpop-head">${bankPicture(w)}<b>${esc(title)}</b></span><span class="ca-wpop-sub">${esc(`The Auto buyer keeps this before buying more · ${p.name} profile`)}</span>${rows}<span class="ca-wpop-foot">click to open the Payback page</span></span>` +
+      '</span>' +
+      `<span class="ca-wbuy-text"><b data-tip="${esc(title)}">${esc(title)}</b>` +
+      `<span>${F().short(w.price)} · ${w.at === 'first' ? 'kept first' : `before scores under ${w.at}`}${f ? ` · then ${esc(nameOf(f))}` : ''}</span>` +
+      `<span class="ca-wbuy-when"><span class="ca-wbuy-bar saving"><i style="width:${(pct * 100).toFixed(1)}%"></i></span><i>${esc(when)}</i></span></span>`
+    );
+  }
+
   function nextHtml(p) {
+    const q = B().queue();
+    if (q.wait && q.wait.kind === 'bank') return savingHtml(p, q, q.wait);
     const f = B().next();
     if (!f) return `<span class="ca-wbuy-item ca-wbuy-next none">${I('dollar', 14)}</span><span class="ca-wbuy-text"><b>Nothing to buy</b><span>${esc(B().readiness().text)}</span></span>`;
-    const keep = B().keepOf(p.id);
-    const top = B().reserveParts(p.id).find((q) => q.wins);
+    const keep = q.keep;
+    const ahead = q.items.slice(0, Math.max(0, q.items.indexOf(f))).filter((y) => y.kind === 'bank');
     const need = f.price + keep;
     const pct = need > 0 ? Math.max(0, Math.min(1, (Game.cookies || 0) / need)) : 1;
     const wait = P().timeTo(need);
@@ -65,9 +99,11 @@ CA.UI.BuyerRow = (() => {
     const rows =
       row('price', F().beautify(f.price)) +
       row('payback period', esc(F().payback(f.pp))) +
+      row('score', `${scoreText(f)}${Number.isFinite(f.ipp) && f.ipp !== f.pp ? ` <i>(implied PP ${esc(F().payback(f.ipp))})</i>` : ''}`) +
+      row('why next', esc(B().whyText(f, q))) +
       (Number.isFinite(f.gain) ? row('CpS', `+${F().short(f.gain)}/s`) : '') +
       row('affordable', when) +
-      (keep > 0 ? row('keeps in the bank', `${F().short(keep)}${top ? ` <i>(${esc(top.label)})</i>` : ''}`) : '') +
+      (keep > 0 ? row('keeps in the bank', `${F().short(keep)}${ahead.length ? ` <i>(${esc(ahead.map((y) => y.label.replace(/^Keep /, '')).join(', '))})</i>` : ''}`) : '') +
       (f.rules && f.rules.length ? row('rules', esc(f.rules.join(', '))) : '') +
       covers(f);
     return (
@@ -75,9 +111,9 @@ CA.UI.BuyerRow = (() => {
       pop(head(f, `Next for the Auto buyer · ${p.name} profile`) + rows) +
       '</span>' +
       `<span class="ca-wbuy-text"><b data-tip="${esc(nameOf(f))}">${esc(nameOf(f))}</b>` +
-      `<span>${F().short(f.price)} · PP ${esc(F().payback(f.pp))}</span>` +
+      `<span>${F().short(f.price)} · PP ${esc(F().payback(f.pp))} · score ${scoreText(f)}</span>` +
       `<span class="ca-wbuy-when"><span class="ca-wbuy-bar${pct >= 1 ? ' can' : ''}"><i style="width:${(pct * 100).toFixed(1)}%"></i></span>` +
-      `${pct >= 1 ? '<i class="ok">affordable now</i>' : `<i>${esc(when)}</i>`}</span></span>`
+      `${pct >= 1 ? '<i class="ok">affordable now</i>' : `<i>${esc(when)}${keep > 0 ? ' (after what it keeps)' : ''}</i>`}</span></span>`
     );
   }
 
