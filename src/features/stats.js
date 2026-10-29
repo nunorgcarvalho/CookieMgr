@@ -635,6 +635,7 @@ if cookies() >= need and after < need:
       desc: `the statistic “${s.label}”${s.desc ? ` — ${s.desc}` : ''}`,
       params: s.scope === 'game' ? [] : ['item'],
       group: 'Statistics',
+      origin: s.builtin ? 'stat' : 'mine',
       get: (name) => valueOf(get(s.id) || s, name),
     });
   }
@@ -646,7 +647,9 @@ if cookies() >= need and after < need:
     V('item.kind', 'what the item is: building or upgrade', () => (cur ? cur.kind : ''));
     V('item.price', 'what it costs (for a building: what a click buys)', () => (r() ? r().price : NaN));
     V('item.gain', 'the CpS it adds (an upgrade’s clicks not counted)', () => (r() ? r().bonus : NaN));
-    V('item.payback', 'its payback period (seconds; in the payback mode in use)', () => (r() ? r().pp : NaN));
+    V('item.payback', 'its payback period (seconds; in the payback mode in use) — the number behind its payback color', () => (r() ? r().pp : NaN), {
+      how: 'time to afford it, max(price − bank, 0) ÷ income, plus time to earn its price back, price ÷ gain — income and gain as the payback mode has them (payback.mode())',
+    });
     // its payback period's parts, in a payback mode ("raw", "cps", "clicking", "actual"; none: the one in use)
     const worth = () => {
       if (!r()) return null;

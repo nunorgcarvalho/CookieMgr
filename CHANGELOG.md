@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## 4.1.0 — 2026-10-29
+
+- **Code colored by where each word comes from.** In every code editor (macros, statistics, managers, the
+  gardener), the Statistics page and the library beside the editor, a value's color says what it is: **cyan** read
+  straight from the game (`cookies()`, `stock.price(…)`, and the game's names: buildings, spells, effects),
+  **lilac** worked out by cookieMgr (`item.payback()`, `golden.expected()`, banks, the Auto buyer's queue),
+  **pink** a statistic (`stat.…`; yours are underlined), **white italic** a function (`fmt.number(x)`,
+  `count(list)`), **yellow** a macro or profile named in ( ). Actions stay green, conditions blue, keywords orange.
+  A legend under each editor and atop the Statistics page says so (hover a name for what it covers).
+- **Every word links to more.** A value's hover card says where it comes from (game value, cookieMgr value,
+  statistic, function) and, for a payback period, how it's worked out. A statistic's card shows its code and opens
+  it. Values, actions and conditions link to the page they're about: payback periods to the payback modes (how
+  income and gain are counted), golden cookie odds and banks to Stats → Golden cookies, prestige to Stats →
+  Prestige, timers and wrinklers to Stats → Misc, garden, Grimoire, Pantheon, dragon, stock market, managers,
+  macros and widgets words to their pages. The library's words and the Statistics page's `stat.…(item)` and
+  Values list are hoverable too.
+
 ## 4.0.2 — 2026-10-29
 
 - **Code editor:** the code now fills its column, at least as tall as the library beside it, instead of stopping

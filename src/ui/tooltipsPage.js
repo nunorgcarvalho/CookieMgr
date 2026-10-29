@@ -267,9 +267,10 @@ CA.UI.TooltipsPage = (() => {
 
   function codeHtml(src) {
     const lines = String(src).split('\n');
-    const hl = (ls) => ls.map((l) => CA.UI.CodeEditor.highlightLine(l)).join('\n');
+    const all = CA.UI.CodeEditor.highlightCode(src, ['item']);
+    const hl = (ls, first = 0) => all.slice(first, first + ls.length).join('\n');
     // data-code-view: hovering a word shows what it is (ui/codeEditor.js); the whole code, for its variables
-    const pre = (ls, first = 0) => `<pre class="ca-code-hl ca-st-code" data-code-view="${esc(src)}" data-code-vars="item"${first ? ` data-code-first="${first}"` : ''}>${hl(ls)}</pre>`;
+    const pre = (ls, first = 0) => `<pre class="ca-code-hl ca-st-code" data-code-view="${esc(src)}" data-code-vars="item"${first ? ` data-code-first="${first}"` : ''}>${hl(ls, first)}</pre>`;
     if (lines.length <= CODE_LINES) return pre(lines);
     return `<details class="ca-st-more"><summary>${pre(lines.slice(0, CODE_LINES - 1))}<span>${lines.length - CODE_LINES + 1} more lines</span></summary>${pre(lines.slice(CODE_LINES - 1), CODE_LINES - 1)}</details>`;
   }
@@ -298,7 +299,7 @@ CA.UI.TooltipsPage = (() => {
       (s.builtin
         ? ''
         : `<button type="button" class="ca-chip ca-chip-danger" data-st-del="${esc(s.id)}" data-arm-label="Delete it?" data-tip="Delete this statistic (its tooltip lines go too)">${I('trash', 11)} Delete</button>`) +
-      `<code class="ca-st-call" data-tip="Use it in a macro or another statistic">${esc(call)}</code>` +
+      `<code class="ca-st-call ca-hl" data-code-view="${esc(call)}" data-code-vars="item">${CA.UI.CodeEditor.highlightLine(call, { vars: ['item'] })}</code>` +
       '</div></div>'
     );
   }
@@ -373,6 +374,7 @@ CA.UI.TooltipsPage = (() => {
       .map((x) => CA.Script.VALUES.find((v) => v.id === x.id))
       .filter((v) => v && matchesQuery(`${v.id} ${v.desc}`));
   }
+  const sigOf = (v) => `${v.id}(${(v.params || []).join(', ')})`;
   function valuesHtml() {
     const by = {};
     valuesShown().forEach((v) => (by[valueGroup(v)] = by[valueGroup(v)] || []).push(v));
@@ -389,7 +391,7 @@ CA.UI.TooltipsPage = (() => {
             by[g]
               .map(
                 (v) =>
-                  `<div class="ca-vl-row"><code>${esc(`${v.id}(${(v.params || []).join(', ')})`)}</code><span class="ca-vl-desc">${esc(v.desc || '')}</span><b data-vl-val="${esc(v.id)}">${wordNow(v)}</b></div>`
+                  `<div class="ca-vl-row"><code class="ca-hl" data-code-view="${esc(sigOf(v))}">${CA.UI.CodeEditor.highlightLine(sigOf(v))}</code><span class="ca-vl-desc">${esc(v.desc || '')}</span><b data-vl-val="${esc(v.id)}">${wordNow(v)}</b></div>`
               )
               .join('')
         )
@@ -437,6 +439,7 @@ CA.UI.TooltipsPage = (() => {
           ? 'Values are for the previewed building (an upgrade’s: the best upgrade). ☆ puts one on the left panel as a widget.'
           : 'Every word a statistic can read, as the code editor lists them; its value now for the previewed building.'
       }</div>` +
+      CA.UI.CodeEditor.legendHtml() +
       `<div data-st-body>${tab === 'stats' ? catalogHtml() : valuesHtml()}</div>` +
       '</div>'
     );

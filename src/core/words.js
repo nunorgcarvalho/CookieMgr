@@ -11,7 +11,9 @@
 //
 // An info: { title, tag (what it is: "Action · Shimmers"), sig (how it's written), desc, rows:
 // [[label, value]], note (a line in italics), card: { pop, data } (a popup another part draws: the
-// upgrade info card is { pop: 'upgrade', data: { upgrade } }) } — all optional but the title.
+// upgrade info card is { pop: 'upgrade', data: { upgrade } }), origin (a value's: where it comes from,
+// CA.Script.originOf — the card's tag takes its color), how (how it's worked out), code (a statistic's: its code, shown on the card) }
+// — all optional but the title.
 // ctx: where the word was written ({ call, param, args, line, source }, features/script.js wordAt).
 //
 // Profiles are kinds named 'profile.<family>' (buyer, dragon, pantheon, grimoire): a code line names
