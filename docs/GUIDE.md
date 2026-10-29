@@ -414,7 +414,9 @@ The **Managers** page has:
 
 - **Manager**: the **Manager** macro's switch and which manager is active, its stages in a strip (the one it's on
   is lit; click one to go there), what it moves on once, and what it still has to put in.
-- **Managers**: rename, scope, **Use**, **Duplicate**, **Delete**, **New manager** and **Put Nunix late game back**.
+- **Managers**: rename, scope, **Use**, **Duplicate**, **Delete** and **New manager**. Built-in managers (marked
+  **built-in**, like Nunix late game) are always there and can't be deleted; once you change one, **Revert to
+  default** puts it back as it comes.
 - **Stages**: for the shown manager, a **tab per stage** (the one it's on has a dot; **+** adds one), the picked
   stage beside a **macro library**. A stage shows what's in force there, with its own changes marked:
   - **At work**: the macros on (new here: marked **NEW**). Click a chip to switch it the other way here; × takes it
@@ -454,7 +456,7 @@ card puts the widget on the left panel.
 
 The Auto buyer buys by payback, so it doesn't buy research or upgrades that give no CpS; the Upgrade unlocker does.
 
-Its stages watch: Santa's level, the Easter eggs and the Grandmapocalypse (Drops); the reindeer cookies and the next reindeer (Reindeer); the combo
+Its stages watch: Santa's level, the Easter eggs, the research (how far along, and the next one) (Drops); the reindeer cookies and the next reindeer (Reindeer); the combo
 on, the magic for Force the Hand of Fate, what the Auto buyer buys next and how much of the garden is mature (Golden
 cookie combos).
 

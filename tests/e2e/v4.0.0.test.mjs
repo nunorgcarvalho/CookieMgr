@@ -134,8 +134,8 @@ G.remove(copy.id);
 S.load(saved);
 assert(G.find(copy.id) && G.find(copy.id).stages.length === 4 && value('manager.active') === copy.id, 'saved and loaded');
 G.use('nunixLateGame');
-G.resetSeeds();
-assert(G.find('nunixLateGame').stages[0].until.includes('season.complete'), 'Put Nunix late game back');
+G.revert('nunixLateGame');
+assert(G.find('nunixLateGame').stages[0].until.includes('season.complete'), 'Nunix late game reverted to default');
 
 // ---- a manager is code ----
 const code = G.codeOf(G.find('nunixLateGame'));

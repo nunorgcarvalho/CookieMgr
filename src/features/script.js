@@ -53,6 +53,7 @@ CA.Script = (() => {
     { id: 'veil', bool: true, desc: 'whether the Shimmering veil is up (clicking the big cookie, a golden cookie or a reindeer can break it)', get: () => typeof Game.Has === 'function' && !!Game.Has('Shimmering veil [off]') },
     { id: 'elderWrath', desc: 'the Grandmapocalypse’s stage (0 none … 3 angered)', get: () => Game.elderWrath || 0 },
     { id: 'researchOwned', desc: 'research upgrades owned (of 9)', get: () => (CA.AutoBuy ? CA.AutoBuy.RESEARCH.filter(has).length : 0) },
+    { id: 'researchNext', desc: 'the next research upgrade, in the order the game gives them ("": all done)', get: () => (CA.AutoBuy ? CA.AutoBuy.RESEARCH.find((n) => !has(n)) || '' : '') },
     {
       id: 'owned',
       desc: 'how many of a season’s drops you own — part: all, upgrades or cookies',
@@ -97,7 +98,7 @@ CA.Script = (() => {
   // A value can say its own (origin: …); else it's the game's when listed here, cookieMgr's otherwise.
   const GAME_VALUES = new Set(
     (
-      'cookies cps rawCps magic lumps santaLevel veil elderWrath researchOwned owned total building buildings ' +
+      'cookies cps rawCps magic lumps santaLevel veil elderWrath researchOwned researchNext owned total building buildings ' +
       'shimmers shimmer.type shimmer.isWrath shimmer.life wrinklers wrinkler.isShiny wrinkler.isFed wrinkler.sucked ' +
       'lump.isRipe lump.isMature lump.ripeIn autosave.in buff.timeLeft upgrades upgrade.price upgrade.owned ' +
       'building.price building.priceOf missing.upgrades missing.achievements spell.cost spell.failChance fthof.backfireChance ' +
