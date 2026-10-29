@@ -1,12 +1,12 @@
 // The Cast tiers card on the Grimoire page: when "Force the Hand of Fate on combos" casts.
 //
-//   Profiles    a tab each (the one in use lit; click one to use it), Copy / New / Delete; the profile
+//   Profiles    a tab each (the one in use lit; click one to use it), Copy / New / a trash can; the profile
 //               in use: its name, its id (for grimoire.profile(id)), and Time left — how long every
 //               effect of a combo must still last
 //   Magic bar   magic now, the spell's cost (hatched: below it nothing casts), a mark per tier
 //   Tiers       lowest threshold first: name, threshold slider (0% the spell's cost, 100% full), the magic
 //               that is, how long a cast there takes to refill back to it, whether it's casting or
-//               waiting, Delete; its combos as icons (full names on hover; drag one onto another tier
+//               waiting, a trash can; its combos as icons (full names on hover; drag one onto another tier
 //               to move it), + Add combo opens the effect picker
 //
 // The logic and the saved profiles are features/castTiers.js; the Grimoire page (ui/wizardPage.js)
@@ -54,7 +54,7 @@ CA.UI.CastTiers = (() => {
       `<div class="ca-ct-profiles"><span class="ca-ct-lbl">Profile</span>${tabs}<span class="ca-ct-acts">` +
       C().button(`${I('plus', 12)} Copy`, 'data-ct-act="copy" data-tip="A new profile, a copy of this one"', 'ca-btn-small') +
       C().button(`${I('plus', 12)} New`, 'data-ct-act="new" data-tip="A new profile: the two tiers, no combos yet"', 'ca-btn-small') +
-      (T().list().length > 1 ? C().button('Delete', `data-ct-act="delprof" data-id="${esc(p.id)}" data-arm-label="Delete this profile?"`, 'ca-btn-small ca-btn-off') : '') +
+      (T().list().length > 1 ? C().trash(`data-ct-act="delprof" data-id="${esc(p.id)}"`, 'Delete this profile?', 'Delete this profile') : '') +
       '</span></div>' +
       '<div class="ca-ct-setup">' +
       `<input type="text" class="ca-gname" maxlength="40" value="${esc(p.name)}" data-ct-name aria-label="Profile name"><code data-tip="Its id, for macros: grimoire.profile(${esc(p.id)})">${esc(p.id)}</code>` +
@@ -119,7 +119,7 @@ CA.UI.CastTiers = (() => {
       `<span class="ca-ct-recharge" data-ct-recharge data-tip="After a cast at ${t.pct}%, how long magic takes to climb back to ${t.pct}% (at today’s maximum)">${rechargeText(t.pct)}</span>` +
       '</div>' +
       `<span class="ca-ct-acts"><span data-ct-status>${statusHtml(p, i, d)}</span>` +
-      C().button('Delete', `data-ct-act="deltier" data-tier="${i}" data-arm-label="Delete this tier?"`, 'ca-btn-small ca-btn-off') +
+      C().trash(`data-ct-act="deltier" data-tier="${i}"`, 'Delete this tier?', 'Delete this tier') +
       '</span></div>' +
       `<div class="ca-ct-combos">${chips || '<span class="ca-hint">No combos yet — add one, or drag one here.</span>'}` +
       `<button type="button" class="ca-ct-add" data-ct-act="pick" data-tier="${i}">${I('plus', 11)} Add combo</button></div>` +

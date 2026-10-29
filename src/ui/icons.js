@@ -29,6 +29,7 @@ CA.UI.Icons = (() => {
     pause: '<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>',
     plus: '<path d="M11 4h2v7h7v2h-7v7h-2v-7H4v-2h7z"/>',
     copy: '<rect x="8" y="8" width="13" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M5 16H4.5A1.5 1.5 0 0 1 3 14.5v-10A1.5 1.5 0 0 1 4.5 3h10A1.5 1.5 0 0 1 16 4.5V5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+    check: '<path d="M9.5 16.6 4.9 12l-1.6 1.6 6.2 6.2L20.7 8.6 19.1 7z"/>',
     trash: '<path d="M9 3h6l1 2h4v2H4V5h4zM6 9h12l-1 12H7z"/>',
     edit: '<path d="M4 17.5V20h2.5L17 9.5 14.5 7zM19.7 6.8a1 1 0 0 0 0-1.4l-1.1-1.1a1 1 0 0 0-1.4 0l-1.3 1.3 2.5 2.5z"/>',
     open: '<path d="M14 3h7v7h-2V6.4l-8.3 8.3-1.4-1.4L17.6 5H14zM5 5h6v2H7v10h10v-4h2v6H5z"/>',

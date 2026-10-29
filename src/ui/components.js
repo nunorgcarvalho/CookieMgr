@@ -41,6 +41,21 @@ CA.UI.C = (() => {
     return `<button type="button" class="ca-btn ${extraClass}" ${attrs}>${label}</button>`;
   }
 
+  /**
+   * A profile's Use button — or, on the one in use, an "In use" badge in its place, so a list of
+   * profiles (aura, Pantheon, widget layouts, managers…) has one way to read and switch them.
+   * `attrs` are the button's data-… attributes; `tip` says what Use would do (switches it takes…).
+   */
+  function useButton(on, attrs, tip = '', disabled = false) {
+    if (on) return `<span class="ca-inuse"${tip ? ` data-tip="${esc(tip)}"` : ''}>${CA.UI.Icons.html('check', 11)} In use</span>`;
+    return button(`${CA.UI.Icons.html('play', 11)} Use`, `${attrs}${tip ? ` data-tip="${esc(tip)}"` : ''}${disabled ? ' disabled' : ''}`, 'ca-btn-small ca-btn-use');
+  }
+
+  /** A trash can for deleting something: two clicks, the first arms it and asks `ask`. */
+  function trash(attrs, ask = 'Delete it?', tip = 'Delete') {
+    return button(CA.UI.Icons.html('trash', 13), `${attrs} data-arm-label="${esc(ask)}" data-tip="${esc(tip)}" aria-label="${esc(tip)}"`, 'ca-btn-small ca-btn-off ca-btn-trash');
+  }
+
   /** Card header: optional leading icon (from ui/icons.js), title, optional right-hand `meta` HTML. */
   function cardHead(title, iconName, meta = '') {
     const ico = iconName ? CA.UI.Icons.html(iconName, 15, 'ca-card-ico') : '';
@@ -83,5 +98,5 @@ CA.UI.C = (() => {
     return at < 0 ? t : t.slice(0, at) + CA.UpgradeInfo.ref(u.name) + t.slice(at + shown.length);
   }
 
-  return { icon, toggle, hotkey, button, cardHead, esc, link, gameLink, widgetStar, starTip, withUpgrade };
+  return { icon, toggle, hotkey, button, useButton, trash, cardHead, esc, link, gameLink, widgetStar, starTip, withUpgrade };
 })();

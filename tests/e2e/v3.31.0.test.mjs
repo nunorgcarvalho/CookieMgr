@@ -66,9 +66,13 @@ P.swaps = 3;
 CA.UI.Menu.openPage('pantheon');
 const page = () => doc.querySelector('[data-page="pantheon"]');
 const rows = () => [...page().querySelectorAll('[data-pp-row]')];
-assert(rows().length === 2 && /needs 1 swap/.test(rows()[0].textContent) && /needs 3 swaps/.test(rows()[1].textContent), `rows and their states (${rows().map((r) => r.textContent.replace(/\s+/g, ' ')).join(' | ')})`);
+// the swaps a profile takes are on its Use button's tip; the one slotted shows an In use badge instead
+const useTip = (r) => (r.querySelector('[data-pp-act="use"]') || { dataset: {} }).dataset.tip || '';
+const inUse = (r) => !!r.querySelector('.ca-inuse') && !r.querySelector('[data-pp-act="use"]');
+assert(rows().length === 2 && /1 worship swap$/.test(useTip(rows()[0])) && /3 worship swaps/.test(useTip(rows()[1])) && !inUse(rows()[0]), `rows and their Use tips (${rows().map(useTip).join(' | ')})`);
+assert(rows().every((r) => r.querySelector('[data-pp-act="delete"].ca-btn-trash')), 'a trash can each');
 click(w, rows()[0].querySelector('[data-pp-act="use"]'));
-assert(keys() === 'scorn,,' && rows()[0].classList.contains('on') && /in use/.test(rows()[0].textContent), 'Use');
+assert(keys() === 'scorn,,' && rows()[0].classList.contains('on') && inUse(rows()[0]), 'Use: In use in its place');
 // change a slot; a spirit picked twice leaves its other slot
 const sel = (row, i) => row.querySelector(`[data-pp-slot][data-i="${i}"]`);
 const change = (el, v) => {
@@ -81,7 +85,7 @@ assert(PA.profileOf('golden').slots.join('/') === 'ruin/seasons/', `a slot picke
 change(rows()[1].querySelector('[data-pp-name]'), 'Golden 2');
 assert(PA.profileOf('golden').name === 'Golden 2' && PA.profileOf('golden 2').id === 'golden' && val('pantheon.profileSwaps("golden 2") == 2'), 'renamed; found by its new name');
 click(w, page().querySelector('[data-pp-act="current"]'));
-assert(rows().length === 3 && PA.profiles()[2].slots.join('/') === 'scorn//' && /in use/.test(rows()[2].textContent), 'From current');
+assert(rows().length === 3 && PA.profiles()[2].slots.join('/') === 'scorn//' && inUse(rows()[2]), 'From current');
 click(w, page().querySelector('[data-pp-act="new"]'));
 assert(rows().length === 4 && PA.profiles()[3].slots.join('/') === '//', 'New profile: empty');
 const del = () => rows()[3].querySelector('[data-pp-act="delete"]');
@@ -94,7 +98,7 @@ assert(rows().length === 3, 'deleted');
 P.swaps = 3;
 PA.slot('asceticism', 'diamond');
 await sleep(1200);
-assert(!rows()[0].classList.contains('on') && /needs 1 swap/.test(rows()[0].textContent), 'slots changed elsewhere: the page redraws');
+assert(!rows()[0].classList.contains('on') && /1 worship swap$/.test(useTip(rows()[0])), 'slots changed elsewhere: the page redraws');
 
 // ---- saved with the game
 Game.WriteSave();

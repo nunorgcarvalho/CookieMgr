@@ -4,8 +4,8 @@
 //   Manager    the Manager macro's switch, the active manager, and where it is: its stages in a
 //              strip (the one it's on lit; click one to go there), what the stage still has to
 //              put in, and what moves it on
-//   Managers   one row per manager: its name (and id, for manager.use), its scope, Use, Duplicate
-//              and Delete; New manager, and Put Nunix late game back
+//   Managers   one row per manager: its name (and id, for manager.use), its scope, Duplicate,
+//              Use (In use on the active one) and a trash can; New manager, and Put Nunix late game back
 //   Code       what the Manager macro runs: the shown manager as code — written from its stages, or
 //              by you (Save makes it yours; the stage editor is then off until Back to stages); its
 //              last pass's lines lit while it runs
@@ -112,12 +112,12 @@ CA.UI.ManagersPage = (() => {
       `<div class="ca-row ca-dprof ca-mgr-row${isActive ? ' on' : ''}${isShown ? ' ca-mgr-shown' : ''}">` +
       `<div class="ca-dprof-name"><input type="text" class="ca-gname" maxlength="40" value="${esc(m.name)}" data-mgr-name="${esc(m.id)}" aria-label="Manager name"><code data-tip="Its id, for macros: manager.use(${esc(m.id)})">${esc(m.id)}</code></div>` +
       `<label class="ca-field" data-tip="Legacy managers, which carry on across ascensions, come later"><span>Scope</span><select data-mgr-scope="${esc(m.id)}">${scope}</select></label>` +
-      `<span class="ca-pill${isActive ? ' on' : ''}">${isActive ? 'active · ' : ''}${m.stages.length} stage${m.stages.length === 1 ? '' : 's'}</span>` +
+      `<span class="ca-hint">${m.stages.length} stage${m.stages.length === 1 ? '' : 's'}</span>` +
       '<span class="ca-dprof-acts">' +
       C().button('Stages', `data-mgr-act="show" data-id="${esc(m.id)}"`, `ca-btn-small${isShown ? ' on' : ''}`) +
-      C().button('Use', `data-mgr-act="use" data-id="${esc(m.id)}"`, 'ca-btn-small ca-btn-run') +
       C().button('Duplicate', `data-mgr-act="dup" data-id="${esc(m.id)}"`, 'ca-btn-small') +
-      C().button('Delete', `data-mgr-act="delete" data-id="${esc(m.id)}" data-arm-label="Delete this manager?"`, 'ca-btn-small ca-btn-off') +
+      C().useButton(isActive, `data-mgr-act="use" data-id="${esc(m.id)}"`, isActive ? 'The active manager' : 'Make it the active manager') +
+      C().trash(`data-mgr-act="delete" data-id="${esc(m.id)}"`, 'Delete this manager?', 'Delete this manager') +
       '</span>' +
       (m.desc ? `<div class="ca-mgr-desc">${esc(m.desc)}</div>` : '') +
       '</div>'
@@ -417,7 +417,7 @@ CA.UI.ManagersPage = (() => {
       C().button('◀', `data-mgr-act="up" data-id="${id}" data-i="${i}" data-tip="Move it earlier"${i ? '' : ' disabled'}`, 'ca-btn-small') +
       C().button('▶', `data-mgr-act="down" data-id="${id}" data-i="${i}" data-tip="Move it later"${last ? ' disabled' : ''}`, 'ca-btn-small') +
       C().button(`${I('plus', 12)} After`, `data-mgr-act="addStage" data-id="${id}" data-i="${i}" data-tip="A new stage after this one (it changes nothing until you add to it)"`, 'ca-btn-small') +
-      C().button('Delete', `data-mgr-act="delStage" data-id="${id}" data-i="${i}" data-arm-label="Delete this stage?"${m.stages.length > 1 ? '' : ' disabled'}`, 'ca-btn-small ca-btn-off') +
+      C().trash(`data-mgr-act="delStage" data-id="${id}" data-i="${i}"${m.stages.length > 1 ? '' : ' disabled'}`, 'Delete this stage?', 'Delete this stage') +
       '</span></div>' +
       macrosHtml(m, i) +
       settingsHtml(m, i) +

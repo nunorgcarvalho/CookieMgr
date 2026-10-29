@@ -259,6 +259,52 @@
   border-color: rgba(130, 235, 120, 0.5);
 }
 
+/* A profile's Use button, or its "In use" badge in the same place (CA.UI.C.useButton), and the trash
+   can (CA.UI.C.trash) — the same in every list of profiles */
+#CookieMgrMenu .ca-use-slot {
+  display: inline-flex;
+}
+#CookieMgrMenu .ca-btn-use,
+#CookieMgrMenu .ca-inuse {
+  min-width: 72px;
+  justify-content: center;
+}
+#CookieMgrMenu .ca-btn-use {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+#CookieMgrMenu .ca-inuse {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  box-sizing: border-box;
+  padding: 3px 10px;
+  border-radius: 3px;
+  font: bold 11px 'Merriweather', Georgia, serif;
+  font-variant: small-caps;
+  white-space: nowrap;
+  color: #eaffde;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);
+  background: linear-gradient(#3f8a35, #24561e);
+  border: 1px solid;
+  border-color: #b8f0a0 #3c7a2c #2c5e20 #8fd078;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.6),
+    0 0 9px rgba(120, 230, 100, 0.3);
+  cursor: default;
+}
+#CookieMgrMenu .ca-btn-trash {
+  padding: 3px 7px;
+  line-height: 0;
+}
+#CookieMgrMenu .ca-btn-trash .ca-ico {
+  vertical-align: 0;
+}
+#CookieMgrMenu .ca-btn-trash.ca-armed {
+  line-height: normal;
+}
+
 /* Rows */
 #CookieMgrMenu .ca-row {
   display: flex;

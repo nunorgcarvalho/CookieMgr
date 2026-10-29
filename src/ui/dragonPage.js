@@ -3,8 +3,8 @@
 //   Dragon         its level, the aura in each slot (and what it does; click a slot to switch it),
 //                  what the next level takes, and a Train button
 //   Auto dragon    the built-in Auto dragon and Pet the dragon macros
-//   Aura profiles  one row per profile: its name, an aura for each slot (click one to pick), whether it's in, Use and
-//                  Delete; New profile (empty) and From current (the auras in now). Macros use a
+//   Aura profiles  one row per profile: its name, an aura for each slot (click one to pick), Use (or In use,
+//                  when its auras are in) and a trash can; New profile (empty) and From current (the auras in now). Macros use a
 //                  profile with dragon.profile(id) — the id is under its name.
 //
 // Picking an aura opens the aura picker under what it's for: every aura with the game's icon and
@@ -69,17 +69,18 @@ CA.UI.DragonPage = (() => {
 
   // ---- profiles --------------------------------------------------------------------------------
 
-  function statusPill(p) {
+  /** A profile's Use button (an "In use" badge when its auras are in); its tip says what Use takes. */
+  function useHtml(p) {
     const s = D().status(p);
-    if (!s) return '';
+    const attrs = `data-dragon-act="use" data-id="${esc(p.id)}"`;
+    if (!s) return C().useButton(false, attrs, '', true);
     const later = s.untrained.length ? `${s.untrained.join(' and ')} not trained yet` : '';
-    const pill = (text, tip, on) => `<span class="ca-pill${on ? ' on' : ''}"${tip ? ` data-tip="${esc(tip)}"` : ''}>${text}${later ? ' *' : ''}</span>`;
-    if (!s.slots) return pill('no slot yet', ['The first aura slot opens at dragon level 5', later].filter(Boolean).join(' · '));
-    if (D().isActive(p)) return pill('in use', later, true);
-    if (!s.wanted.some((id) => id > 0)) return pill('nothing to put in', later);
+    if (!s.slots) return C().useButton(false, attrs, ['No aura slot yet: the first opens at dragon level 5', later].filter(Boolean).join(' · '), true);
+    if (D().isActive(p)) return C().useButton(true, attrs, later);
+    if (!s.wanted.some((id) => id > 0)) return C().useButton(false, attrs, ['Nothing to put in', later].filter(Boolean).join(' · '), true);
     const b = D().switchCost();
-    const cost = b ? `Each switch costs 1 ${b.single || b.name}` : 'Switching is free: you own no buildings';
-    return pill(`${s.switches} switch${s.switches === 1 ? '' : 'es'}`, [cost, later].filter(Boolean).join(' · '));
+    const cost = b ? `${s.switches} switch${s.switches === 1 ? '' : 'es'}, each costs 1 ${b.single || b.name}` : 'Free: you own no buildings';
+    return C().useButton(false, attrs, [`Put its auras in — ${cost}`, later].filter(Boolean).join(' · '));
   }
 
   // ---- the aura picker ------------------------------------------------------------------------
@@ -153,10 +154,9 @@ CA.UI.DragonPage = (() => {
       `<div class="ca-dprof-name"><input type="text" class="ca-gname" maxlength="40" value="${esc(p.name)}" data-dragon-name="${esc(p.id)}" aria-label="Profile name"><code data-tip="Its id, for macros: dragon.profile(${esc(p.id)})">${esc(p.id)}</code></div>` +
       auraChip(p, 0) +
       auraChip(p, 1) +
-      `<span data-dragon-status="${esc(p.id)}">${statusPill(p)}</span>` +
       '<span class="ca-dprof-acts">' +
-      C().button('Use', `data-dragon-act="use" data-id="${esc(p.id)}"`, 'ca-btn-small ca-btn-run') +
-      C().button('Delete', `data-dragon-act="delete" data-id="${esc(p.id)}" data-arm-label="Delete this profile?"`, 'ca-btn-small ca-btn-off') +
+      `<span class="ca-use-slot" data-dragon-status="${esc(p.id)}">${useHtml(p)}</span>` +
+      C().trash(`data-dragon-act="delete" data-id="${esc(p.id)}"`, 'Delete this profile?', 'Delete this profile') +
       '</span></div>' +
       (picking && picking.profile === p.id ? profilePicker(p, picking.i) : '')
     );
@@ -209,7 +209,7 @@ CA.UI.DragonPage = (() => {
     root.querySelectorAll('[data-dragon-status]').forEach((el) => {
       const p = D().find(el.dataset.dragonStatus);
       if (!p) return;
-      CA.UI.Dom.morph(el, statusPill(p));
+      CA.UI.Dom.morph(el, useHtml(p));
       el.closest('.ca-dprof').classList.toggle('on', D().isActive(p));
     });
     CA.UI.MacrosPage.sync(root);

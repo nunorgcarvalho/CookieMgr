@@ -878,7 +878,7 @@ CA.UI.Widgets = (() => {
       if (row.classList.contains('on') === on) return;
       row.classList.toggle('on', on);
       CA.UI.Dom.morph(st, profileStatus(p));
-      row.querySelectorAll('[data-wp-act="use"],[data-wp-act="save"]').forEach((b) => (b.disabled = on));
+      row.querySelectorAll('[data-wp-act="save"]').forEach((b) => (b.disabled = on));
     });
   }
 
@@ -1131,7 +1131,8 @@ CA.UI.Widgets = (() => {
     if (btn) parts.push(`${btn} macro button${btn === 1 ? '' : 's'}`);
     return parts.join(' · ');
   }
-  const profileStatus = (p) => (profileActive(p.id) ? '<span class="ca-pill on">on the panel</span>' : '');
+  /** A layout's Use button — "In use" while it's the one on the panel. */
+  const profileStatus = (p) => CA.UI.C.useButton(profileActive(p.id), `data-wp-act="use" data-id="${esc(p.id)}"`, profileActive(p.id) ? 'It’s the layout on the panel' : 'Put this layout on the panel');
 
   function profileRow(p) {
     const C = CA.UI.C;
@@ -1144,10 +1145,9 @@ CA.UI.Widgets = (() => {
       `<input type="text" class="ca-gname" maxlength="40" value="${esc(p.name)}" data-wp-name="${esc(p.id)}" data-tip="the layout’s name — macros use it, or its id: ${esc(p.id)}">` +
       `<code>${esc(profileSummary(list))}</code></div>` +
       '<span class="ca-pprof-end">' +
-      `<span data-wp-status="${esc(p.id)}">${profileStatus(p)}</span>` +
-      C.button(`${I('play', 12)} Use`, `data-wp-act="use" data-id="${esc(p.id)}"${on ? ' disabled' : ''}`, 'ca-btn-small') +
       C.button(`${I('save', 12)} Save`, `data-wp-act="save" data-id="${esc(p.id)}" data-arm-label="Replace it?" data-tip="Save the layout on the panel now over this one"${on ? ' disabled' : ''}`, 'ca-btn-small') +
-      C.button('Delete', `data-wp-act="delete" data-id="${esc(p.id)}" data-arm-label="Delete it?"`, 'ca-btn-small ca-btn-off') +
+      `<span class="ca-use-slot" data-wp-status="${esc(p.id)}">${profileStatus(p)}</span>` +
+      C.trash(`data-wp-act="delete" data-id="${esc(p.id)}"`, 'Delete it?', 'Delete this layout') +
       '</span></div>'
     );
   }
