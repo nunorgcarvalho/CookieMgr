@@ -60,13 +60,13 @@ h = CA.UI.ManagerWidget.html(inst);
 assert(/The Manager macro is off/.test(h), 'it says while the Manager macro is off');
 assert(/0 of 4|[1-4] of 4/.test(h) && /ca-mw-bar/.test(h) && /Research/.test(h) && /Next research/.test(h), 'what moves it on (how many of its four conditions hold, with bars), and what it watches (the research)');
 {
-  // the research: how far along (up to the Elder Pact), and the next one
+  // the research: how far along (all 9), and the next one
   const val = (id) => CA.Script.VALUES.find((v) => v.id === id).get();
   const before = Game.Has;
   Game.Has = (n) => ['Specialized chocolate chips', 'Designer cocoa beans', 'Ritual rolling pins'].includes(n) || before(n);
   const rw = G.watchOf(nunix.stages[0]).find((x) => x.label === 'Research');
   const nx = G.watchOf(nunix.stages[0]).find((x) => x.label === 'Next research');
-  assert(JSON.stringify(rw.value) === '[3,8]' && rw.format === 'progress', `Research: 3 of 8 (${JSON.stringify(rw.value)})`);
+  assert(JSON.stringify(rw.value) === '[3,9]' && rw.format === 'progress', `Research: 3 of 9 (${JSON.stringify(rw.value)})`);
   assert(nx.value === 'Underworld ovens' && val('researchNext') === 'Underworld ovens', `Next research: Underworld ovens (${nx.value})`);
   Game.Has = (n) => CA.AutoBuy.RESEARCH.includes(n) || before(n);
   assert(val('researchNext') === '', 'all done: ""');

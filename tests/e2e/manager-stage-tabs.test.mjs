@@ -23,7 +23,7 @@ R.forEach((n, i) => (Game.Upgrades[n] = { name: n, dname: n, icon: [i, 9], desc:
 
 // ---- Nunix: no settings the macros have anyway ----
 const nunix = () => G.find('nunixLateGame');
-assert(JSON.stringify(nunix().stages[0].inputs) === '{"research":{"stopBefore":"Elder Pact"}}', 'Nunix sets only Research’s stop (not the wrinkler wait, not the last season)');
+assert(JSON.stringify(nunix().stages[0].inputs) === '{"research":{"stopBefore":"none"}}', 'Nunix sets only Research’s stop (not the wrinkler wait, not the last season)');
 assert(M.inputsOf(M.get('seasonCompletion')).then === 'fools' && M.inputsOf(M.get('wrinklers')).fed === true, 'SeasonCompletion ends on Business day, wrinklers wait to be fed: by themselves');
 
 // ---- the page ----
@@ -87,14 +87,14 @@ click(q('[data-mgr-act="tab"][data-i="0"]'));
 assert(q('.ca-mgr-tab.sel').dataset.i === '0', 'a tab click shows that stage');
 const tiles = qa('.ca-mgr-uptile');
 assert(tiles.length === R.length + 1 && tiles.slice(1).every((t) => t.dataset.popLive === 'upgrade'), 'Research: “all”, then each research’s icon (hover: its card)');
-assert(q('.ca-mgr-uptile.sel').dataset.v === 'Elder Pact', 'the stop picked');
+assert(q('.ca-mgr-uptile.sel').dataset.v === 'none', 'the stop picked (none: all of it)');
 click(q('.ca-mgr-uptile[data-v="One mind"]'));
 assert(nunix().stages[0].inputs.research.stopBefore === 'One mind', 'click one: stop there');
 assert(qa('.ca-mgr-uptile.skip').length === 5, 'it and the ones after it: skipped');
 click(q('[data-mgr-act="tab"][data-i="1"]'));
 assert(/as before/.test(q('.ca-mgr-set').textContent) && !q('.ca-mgr-set.here'), 'stage 2: the setting carried over (as before)');
-click(q('.ca-mgr-uptile[data-v="none"]'));
-assert(nunix().stages[1].inputs.research.stopBefore === 'none' && q('.ca-mgr-set.here [data-mgr-act="uninput"]'), 'changed here: marked, × undoes');
+click(q('.ca-mgr-uptile[data-v="Elder Pact"]'));
+assert(nunix().stages[1].inputs.research.stopBefore === 'Elder Pact' && q('.ca-mgr-set.here [data-mgr-act="uninput"]'), 'changed here: marked, × undoes');
 click(q('.ca-mgr-set.here [data-mgr-act="uninput"]'));
 assert(!nunix().stages[1].inputs.research, 'undone');
 
