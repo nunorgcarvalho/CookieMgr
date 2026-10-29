@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 4.7.2 — 2026-10-29
+
+- **README:** the Managers screenshot, the Manager widget picture and the Managers summary show Nunix late game's
+  three stages.
+
 ## 4.7.1 — 2026-10-29
 
 - **Faster tests and CI:** CI runs the tests in four shards side by side (about 1.5 min instead of 6); locally
