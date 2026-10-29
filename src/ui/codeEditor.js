@@ -99,7 +99,12 @@ CA.UI.CodeEditor = (() => {
       `<div class="ca-lib-group ca-lib-pinned"><div class="ca-lib-ghead">${I('star', 11)} Pinned</div>${
         pinned.length ? pinned.map(([it, i]) => row(it, i)).join('') : '<div class="ca-lib-empty">★ an item to keep it here</div>'
       }</div>` +
-      names.map((g) => `<div class="ca-lib-group"><div class="ca-lib-ghead">${esc(g)}</div>${groups[g].map(([it, i]) => row(it, i)).join('')}</div>`).join('') +
+      names
+        .map(
+          (g) =>
+            `<div class="ca-lib-group"><div class="ca-lib-ghead">${esc(g)}</div>${groups[g].map(([it, i]) => row(it, i)).join('')}</div>`
+        )
+        .join('') +
       '</div></aside>'
     );
   }
@@ -107,7 +112,37 @@ CA.UI.CodeEditor = (() => {
   // ---- the code ---------------------------------------------------------------------------
 
   // syntax coloring (one line at a time)
-  const KW = new Set(['if', 'elif', 'else', 'for', 'in', 'def', 'repeat', 'until', 'while', 'times', 'forever', 'parallel', 'branch', 'wait', 'seconds', 'second', 'minutes', 'minute', 'stop', 'log', 'switch', 'on', 'off', 'and', 'or', 'not', 'true', 'false', 'return']);
+  const KW = new Set([
+    'if',
+    'elif',
+    'else',
+    'for',
+    'in',
+    'def',
+    'repeat',
+    'until',
+    'while',
+    'times',
+    'forever',
+    'parallel',
+    'branch',
+    'wait',
+    'seconds',
+    'second',
+    'minutes',
+    'minute',
+    'stop',
+    'log',
+    'switch',
+    'on',
+    'off',
+    'and',
+    'or',
+    'not',
+    'true',
+    'false',
+    'return',
+  ]);
   function highlightLine(line) {
     let out = '';
     let i = 0;
@@ -142,7 +177,8 @@ CA.UI.CodeEditor = (() => {
     const bad = new Set(errors.map((e) => e.line));
     return {
       gutter: lines.map((_, i) => `<span class="${bad.has(i + 1) ? 'err' : ''}">${i + 1}</span>`).join(''),
-      hl: lines.map((l, i) => `<span class="ca-hl-line${bad.has(i + 1) ? ' err' : ''}">${highlightLine(l) || ' '}</span>`).join('\n') + '\n',
+      hl:
+        lines.map((l, i) => `<span class="ca-hl-line${bad.has(i + 1) ? ' err' : ''}">${highlightLine(l) || ' '}</span>`).join('\n') + '\n',
       status: errors.length
         ? `<div class="ca-code-bad">${I('close', 11)} ${errors.length} problem${errors.length === 1 ? '' : 's'}</div>` +
           errors
@@ -196,7 +232,11 @@ CA.UI.CodeEditor = (() => {
   function refresh(ta) {
     const ed = editorOf(ta);
     if (!ed) return;
-    const v = view(ta.value, (ed.dataset.codeVars || '').split(',').filter(Boolean), compileOpts(ed.dataset.codeMode, ed.dataset.codeItem !== undefined));
+    const v = view(
+      ta.value,
+      (ed.dataset.codeVars || '').split(',').filter(Boolean),
+      compileOpts(ed.dataset.codeMode, ed.dataset.codeItem !== undefined)
+    );
     const hl = ed.querySelector('[data-code-hl]');
     if (hl) hl.innerHTML = v.hl;
     const gut = ed.querySelector('[data-code-gutter]');
@@ -363,12 +403,25 @@ CA.UI.CodeEditor = (() => {
         }
         return;
       }
+      // the code's box is taller than its lines: a click below them puts the caret at the end
+      if (t.classList && t.classList.contains('ca-code')) {
+        const ta = t.querySelector('[data-code]');
+        if (ta) {
+          ta.focus({ preventScroll: true });
+          if (ta.setSelectionRange) ta.setSelectionRange(ta.value.length, ta.value.length);
+        }
+        return;
+      }
       const go = t.closest && t.closest('[data-code-goto]');
       if (go) {
         const ta = editorOf(go) && editorOf(go).querySelector('[data-code]');
         const n = Number(go.dataset.codeGoto);
         if (ta && n > 0) {
-          const pos = ta.value.split('\n').slice(0, n - 1).join('\n').length + (n > 1 ? 1 : 0);
+          const pos =
+            ta.value
+              .split('\n')
+              .slice(0, n - 1)
+              .join('\n').length + (n > 1 ? 1 : 0);
           ta.focus({ preventScroll: true });
           if (ta.setSelectionRange) ta.setSelectionRange(pos, pos);
         }
@@ -435,7 +488,9 @@ CA.UI.CodeEditor = (() => {
       const el = document.elementFromPoint(x, y);
       t.style.pointerEvents = was;
       hl.style.pointerEvents = '';
-      return el && el.parentElement && hl.contains(el) && el.closest('.ca-hl-line') !== el && el.matches('span:not(.ca-hl-line)') ? el : null;
+      return el && el.parentElement && hl.contains(el) && el.closest('.ca-hl-line') !== el && el.matches('span:not(.ca-hl-line)')
+        ? el
+        : null;
     }
     const el = t.closest && t.closest('[data-code-view] span');
     return el || null;
@@ -478,7 +533,9 @@ CA.UI.CodeEditor = (() => {
   function cardHtml(info, open) {
     return (
       `<div class="ca-tip-head">${esc(info.title)}<span>${esc(info.tag || '')}</span></div>` +
-      (info.sig && info.sig.toLowerCase() !== String(info.title).toLowerCase() ? `<div class="ca-word-sig"><code>${highlightLine(info.sig)}</code></div>` : '') +
+      (info.sig && info.sig.toLowerCase() !== String(info.title).toLowerCase()
+        ? `<div class="ca-word-sig"><code>${highlightLine(info.sig)}</code></div>`
+        : '') +
       (info.desc ? `<div class="ca-word-desc">${esc(info.desc)}</div>` : '') +
       (info.rows || []).map(([k, v]) => `<div class="ca-tip-row"><b>${esc(k)}</b><span>${esc(v)}</span></div>`).join('') +
       (info.note ? `<div class="ca-tip-note">${esc(info.note)}</div>` : '') +
@@ -538,7 +595,12 @@ CA.UI.CodeEditor = (() => {
       const follow = () => {
         const now = document.querySelector(`#CookieMgrMenu ${sel}`) || el;
         const r = now.getBoundingClientRect();
-        Object.assign(ring.style, { left: `${r.left - 3}px`, top: `${r.top - 3}px`, width: `${r.width + 6}px`, height: `${r.height + 6}px` });
+        Object.assign(ring.style, {
+          left: `${r.left - 3}px`,
+          top: `${r.top - 3}px`,
+          width: `${r.width + 6}px`,
+          height: `${r.height + 6}px`,
+        });
       };
       follow();
       const t = setInterval(follow, 40);
@@ -601,7 +663,11 @@ CA.UI.CodeEditor = (() => {
       const ed = editorOf(s.span);
       const ta = ed && ed.querySelector('[data-code]');
       if (ta) {
-        const pos = ta.value.split('\n').slice(0, s.open.line - 1).join('\n').length + (s.open.line > 1 ? 1 : 0);
+        const pos =
+          ta.value
+            .split('\n')
+            .slice(0, s.open.line - 1)
+            .join('\n').length + (s.open.line > 1 ? 1 : 0);
         ta.focus({ preventScroll: true });
         if (ta.setSelectionRange) ta.setSelectionRange(pos, pos);
       }
@@ -710,12 +776,29 @@ CA.UI.CodeEditor = (() => {
     const q = (s) => String(s).replace(/["\\]/g, '\\$&');
     defineOpen('macro', (id) => {
       const m = CA.Macros.get(id) || CA.Macros.list().find((x) => x.name.toLowerCase() === String(id).toLowerCase());
-      return m ? { label: m.mode === 'flow' || !m.builtin ? 'Edit it on the Macros page' : 'Open it on the Macros page', go: () => CA.UI.MacrosPage.edit(m.id) } : null;
+      return m
+        ? {
+            label: m.mode === 'flow' || !m.builtin ? 'Edit it on the Macros page' : 'Open it on the Macros page',
+            go: () => CA.UI.MacrosPage.edit(m.id),
+          }
+        : null;
     });
-    defineOpen('profile.buyer', prof('payback', (id) => `[data-ab-use="${q(id)}"]`));
-    defineOpen('profile.dragon', prof('dragon', (id) => `[data-dragon-prof="${q(id)}"]`));
-    defineOpen('profile.pantheon', prof('pantheon', (id) => `[data-pp-row="${q(id)}"]`));
-    defineOpen('profile.grimoire', prof('wizard', (id) => `.ca-ct-prof[data-id="${q(id)}"]`));
+    defineOpen(
+      'profile.buyer',
+      prof('payback', (id) => `[data-ab-use="${q(id)}"]`)
+    );
+    defineOpen(
+      'profile.dragon',
+      prof('dragon', (id) => `[data-dragon-prof="${q(id)}"]`)
+    );
+    defineOpen(
+      'profile.pantheon',
+      prof('pantheon', (id) => `[data-pp-row="${q(id)}"]`)
+    );
+    defineOpen(
+      'profile.grimoire',
+      prof('wizard', (id) => `.ca-ct-prof[data-id="${q(id)}"]`)
+    );
     defineOpen('spell', () => ({ label: 'Open the Grimoire page', page: 'wizard' }));
     defineOpen('spirit', () => ({ label: 'Open the Pantheon page', page: 'pantheon' }));
     defineOpen('aura', () => ({ label: 'Open the Dragon page', page: 'dragon' }));
@@ -766,5 +849,24 @@ CA.UI.CodeEditor = (() => {
     setInterval(placeChip, 1000); // follows the panel; gone when it closes
   }
 
-  return { init, html, libraryHtml, bind, setLive, insert, insertInline, refresh, view, highlightLine, cardHtml, placeOf, showCard, hideCard, defineOpen, guard, goBack, trail: () => trail.slice() };
+  return {
+    init,
+    html,
+    libraryHtml,
+    bind,
+    setLive,
+    insert,
+    insertInline,
+    refresh,
+    view,
+    highlightLine,
+    cardHtml,
+    placeOf,
+    showCard,
+    hideCard,
+    defineOpen,
+    guard,
+    goBack,
+    trail: () => trail.slice(),
+  };
 })();

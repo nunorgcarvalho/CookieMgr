@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 4.0.2 — 2026-10-29
+
+- **Code editor:** the code now fills its column, at least as tall as the library beside it, instead of stopping
+  at a short fixed height with empty space underneath (Managers, Macros, Statistics and Garden editors). Longer
+  code scrolls inside it; searching the library no longer changes its height. A click below the last line puts
+  the caret at the end of the code.
+
 ## 4.0.1 — 2026-10-29
 
 - **README:** a Managers screenshot and summary, a new Macros screenshot (a manager running 15 macros), and the

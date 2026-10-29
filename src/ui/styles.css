@@ -558,7 +558,9 @@
 #CookieMgrMenu .ca-btn.ca-armed {
   color: #fff;
   background: #8a2a22;
-  box-shadow: 0 0 0 1px #e5484d, 0 0 8px rgba(229, 72, 77, 0.6);
+  box-shadow:
+    0 0 0 1px #e5484d,
+    0 0 8px rgba(229, 72, 77, 0.6);
 }
 #CookieMgrMenu .ca-btn-lg {
   padding: 10px 20px;
@@ -1195,7 +1197,10 @@
 #CookieMgrMenu .ca-search input {
   flex: 1;
   min-width: 0;
-  font: 12px Tahoma, Arial, sans-serif;
+  font:
+    12px Tahoma,
+    Arial,
+    sans-serif;
   color: #f0e2c0;
   background: transparent;
   border: none;
@@ -1449,7 +1454,10 @@
 #CookieMgrMenu .ca-editor input[type='text'],
 #CookieMgrMenu .ca-editor input[type='number'],
 #CookieMgrMenu .ca-editor select {
-  font: 12px Tahoma, Arial, sans-serif;
+  font:
+    12px Tahoma,
+    Arial,
+    sans-serif;
   color: #f0e2c0;
   background: rgba(0, 0, 0, 0.45);
   border: 1px solid rgba(255, 220, 150, 0.25);
@@ -1516,9 +1524,7 @@
   box-sizing: border-box;
   max-width: calc(100% - 4px);
   color: #e8d7b0;
-  background:
-    linear-gradient(to bottom, rgba(70, 45, 22, 0.92), rgba(28, 18, 9, 0.92)),
-    #1c120a;
+  background: linear-gradient(to bottom, rgba(70, 45, 22, 0.92), rgba(28, 18, 9, 0.92)), #1c120a;
   border: 1px solid;
   border-color: #ece2b6 #875526 #733726 #dfbc9a;
   border-radius: 6px;
@@ -2273,7 +2279,10 @@
 }
 #CookieMgrMenu .ca-target input[type='number'],
 #CookieMgrMenu .ca-target select {
-  font: 13px Tahoma, Arial, sans-serif;
+  font:
+    13px Tahoma,
+    Arial,
+    sans-serif;
   color: #f0e2c0;
   background: rgba(0, 0, 0, 0.45);
   border: 1px solid rgba(255, 220, 150, 0.3);
@@ -2622,7 +2631,10 @@
 }
 #CookieMgrMenu .ca-weditor input[type='text'],
 #CookieMgrMenu .ca-weditor input[type='number'] {
-  font: 12px Tahoma, Arial, sans-serif;
+  font:
+    12px Tahoma,
+    Arial,
+    sans-serif;
   color: #f0e2c0;
   background: rgba(0, 0, 0, 0.45);
   border: 1px solid rgba(255, 220, 150, 0.25);
@@ -2639,7 +2651,10 @@
   margin-top: 5px;
 }
 #CookieMgrMenu .ca-macro-options select {
-  font: 11px Tahoma, Arial, sans-serif;
+  font:
+    11px Tahoma,
+    Arial,
+    sans-serif;
   color: #f0e2c0;
   background: rgba(0, 0, 0, 0.45);
   border: 1px solid rgba(255, 220, 150, 0.25);
@@ -2708,7 +2723,10 @@
   right: 1px;
   bottom: 1px;
   padding: 0 2px;
-  font: bold 9px/11px Tahoma, Arial, sans-serif;
+  font:
+    bold 9px/11px Tahoma,
+    Arial,
+    sans-serif;
   color: #ffe9a8;
   background: rgba(0, 0, 0, 0.65);
   border-radius: 3px;
@@ -2722,7 +2740,10 @@
   right: 1px;
   bottom: 1px;
   padding: 0 2px;
-  font: bold 9px/11px Tahoma, Arial, sans-serif;
+  font:
+    bold 9px/11px Tahoma,
+    Arial,
+    sans-serif;
   color: #e8dcc4;
   background: rgba(0, 0, 0, 0.7);
   border-radius: 3px;
@@ -2809,7 +2830,10 @@
 /* the auto-gardener: a profile bar, four slots, the selected one in detail (v3.3) */
 #CookieMgrMenu .ca-gardener select,
 #CookieMgrMenu .ca-gardener .ca-gname {
-  font: 12px Tahoma, Arial, sans-serif;
+  font:
+    12px Tahoma,
+    Arial,
+    sans-serif;
   color: #f0e2c0;
   background: rgba(0, 0, 0, 0.45);
   border: 1px solid rgba(255, 220, 150, 0.25);
@@ -2856,13 +2880,18 @@
   min-width: 0;
   padding: 7px 8px;
   text-align: left;
-  font: 12px Tahoma, Arial, sans-serif;
+  font:
+    12px Tahoma,
+    Arial,
+    sans-serif;
   color: #e8dcc0;
   cursor: pointer;
   border: 1px solid rgba(255, 220, 150, 0.14);
   border-radius: 6px;
   background: rgba(0, 0, 0, 0.28);
-  transition: border-color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
 }
 #CookieMgrMenu .ca-gslot:hover {
   border-color: rgba(160, 230, 100, 0.4);
@@ -2905,7 +2934,10 @@
   height: 15px;
   padding: 0 2px;
   border-radius: 3px;
-  font: bold 10px Tahoma, Arial, sans-serif;
+  font:
+    bold 10px Tahoma,
+    Arial,
+    sans-serif;
   color: #1a120a;
   background: var(--lc);
 }
@@ -2947,7 +2979,10 @@
   align-items: center;
   gap: 3px;
   padding: 2px 6px;
-  font: 11px Tahoma, Arial, sans-serif;
+  font:
+    11px Tahoma,
+    Arial,
+    sans-serif;
   color: #e8dcc0;
   cursor: pointer;
   border: 1px solid rgba(255, 220, 150, 0.2);
@@ -2986,9 +3021,14 @@
   position: absolute;
   right: 2px;
   bottom: 1px;
-  font: bold 10px Tahoma, Arial, sans-serif;
+  font:
+    bold 10px Tahoma,
+    Arial,
+    sans-serif;
   color: var(--lc);
-  text-shadow: 0 0 2px #000, 0 0 2px #000;
+  text-shadow:
+    0 0 2px #000,
+    0 0 2px #000;
 }
 #CookieMgrMenu .ca-gcell .ca-gs {
   zoom: 0.6;
@@ -3010,7 +3050,10 @@
   align-items: center;
   gap: 5px;
   padding: 3px 8px 3px 4px;
-  font: 12px Tahoma, Arial, sans-serif;
+  font:
+    12px Tahoma,
+    Arial,
+    sans-serif;
   color: #e8dcc0;
   cursor: pointer;
   border: 1px solid rgba(255, 220, 150, 0.18);
@@ -3065,7 +3108,10 @@
   align-items: center;
   gap: 2px;
   padding: 4px 2px;
-  font: 11px Tahoma, Arial, sans-serif;
+  font:
+    11px Tahoma,
+    Arial,
+    sans-serif;
   line-height: 1.15;
   text-align: center;
   color: #f0e2c0;
@@ -3110,7 +3156,10 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font: bold 12px Tahoma, Arial, sans-serif;
+  font:
+    bold 12px Tahoma,
+    Arial,
+    sans-serif;
   color: #9fe06a;
 }
 #CookieMgrMenu .ca-knobs-head .ca-hint {
@@ -3134,7 +3183,10 @@
   color: #f0e2c0;
 }
 #CookieMgrMenu .ca-knob-label code {
-  font: 10px Consolas, Menlo, monospace;
+  font:
+    10px Consolas,
+    Menlo,
+    monospace;
   color: rgba(232, 220, 192, 0.45);
 }
 #CookieMgrMenu .ca-knob-ctl {
@@ -3155,7 +3207,10 @@
 }
 #CookieMgrMenu .ca-knob-num input {
   width: 58px;
-  font: 12px Tahoma, Arial, sans-serif;
+  font:
+    12px Tahoma,
+    Arial,
+    sans-serif;
   color: #f0e2c0;
   background: rgba(0, 0, 0, 0.45);
   border: 1px solid rgba(255, 220, 150, 0.25);
@@ -3209,7 +3264,10 @@
 #CookieMgrMenu .ca-knob-cfg-panel input,
 #CookieMgrMenu .ca-knob-cfg-panel select {
   width: 56px;
-  font: 11px Tahoma, Arial, sans-serif;
+  font:
+    11px Tahoma,
+    Arial,
+    sans-serif;
   color: #f0e2c0;
   background: rgba(0, 0, 0, 0.45);
   border: 1px solid rgba(255, 220, 150, 0.25);
@@ -3315,7 +3373,10 @@ body.ca-has-storebar #products {
   opacity: 0.55;
 }
 #CookieMgrStoreBar .ca-sb-txt {
-  font: bold 11px/1 Tahoma, Arial, sans-serif;
+  font:
+    bold 11px/1 Tahoma,
+    Arial,
+    sans-serif;
 }
 
 /* ---------- v2.13: macro activity rings, spell readiness, Grimoire target ---------- */
@@ -3433,7 +3494,10 @@ body.ca-has-storebar #products {
   box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.15);
 }
 #CookieMgrMenu .ca-slot-gem {
-  font: bold 10px Tahoma, Arial, sans-serif;
+  font:
+    bold 10px Tahoma,
+    Arial,
+    sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.12em;
 }
@@ -3646,7 +3710,10 @@ body.ca-has-storebar #products {
   flex: none;
   max-width: 230px;
   margin-top: 1px;
-  font: 12px Tahoma, Arial, sans-serif;
+  font:
+    12px Tahoma,
+    Arial,
+    sans-serif;
   color: #f0e2c0;
   background: rgba(0, 0, 0, 0.45);
   border: 1px solid rgba(255, 220, 150, 0.25);
@@ -3697,9 +3764,7 @@ body.ca-has-storebar #products {
   flex-wrap: wrap;
   align-items: stretch;
   gap: 0;
-  background:
-    radial-gradient(ellipse at 0% 0%, rgba(255, 210, 110, 0.14), transparent 60%),
-    rgba(0, 0, 0, 0.38);
+  background: radial-gradient(ellipse at 0% 0%, rgba(255, 210, 110, 0.14), transparent 60%), rgba(0, 0, 0, 0.38);
 }
 #CookieMgrMenu .ca-overview-brand {
   display: flex;
@@ -3807,53 +3872,204 @@ body.ca-has-storebar #products {
 }
 
 /* widget picker: shelves of tiles (v3.20) */
-#CookieMgrMenu .ca-wpick { display: flex; flex-wrap: wrap; gap: 4px 18px; padding: 2px 12px 8px; }
-#CookieMgrMenu .ca-wshelf { width: 100%; min-width: 0; padding: 4px 0 6px; }
+#CookieMgrMenu .ca-wpick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  padding: 2px 12px 8px;
+}
+#CookieMgrMenu .ca-wshelf {
+  width: 100%;
+  min-width: 0;
+  padding: 4px 0 6px;
+}
 #CookieMgrMenu .ca-wshelf-head {
-  display: flex; align-items: center; gap: 8px; margin: 6px 0 2px; padding-left: 2px;
-  font-family: 'Merriweather', Georgia, serif; font-variant: small-caps; font-size: 14px; letter-spacing: 0.02em; color: #e9d8ad;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 2px;
+  padding-left: 2px;
+  font-family: 'Merriweather', Georgia, serif;
+  font-variant: small-caps;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  color: #e9d8ad;
   text-shadow: 0 1px 2px #000;
 }
-#CookieMgrMenu .ca-wshelf-head::after { content: ''; flex: 1; height: 1px; margin-left: 4px; background: linear-gradient(to right, rgba(255, 220, 150, 0.35), rgba(255, 220, 150, 0)); }
-#CookieMgrMenu .ca-wshelf-head .ca-wshelf-ico { flex: none; width: 48px; height: 48px; background: url(img/icons.png) var(--bgp); transform: scale(0.5); margin: -12px -14px -12px -12px; filter: drop-shadow(0 1px 1px #000); }
-#CookieMgrMenu .ca-wshelf-tiles { display: flex; flex-wrap: wrap; gap: 6px 4px; }
+#CookieMgrMenu .ca-wshelf-head::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  margin-left: 4px;
+  background: linear-gradient(to right, rgba(255, 220, 150, 0.35), rgba(255, 220, 150, 0));
+}
+#CookieMgrMenu .ca-wshelf-head .ca-wshelf-ico {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  background: url(img/icons.png) var(--bgp);
+  transform: scale(0.5);
+  margin: -12px -14px -12px -12px;
+  filter: drop-shadow(0 1px 1px #000);
+}
+#CookieMgrMenu .ca-wshelf-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 4px;
+}
 
 /* a tile: the game's own icon in a frame (square = a framed panel, round = a round dial), name, one line */
 #CookieMgrMenu .ca-wtile {
-  position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px;
-  width: 112px; padding: 10px 4px 8px; border-radius: 8px; cursor: pointer; text-align: center;
-  background: transparent; box-shadow: inset 0 0 0 1px transparent;
-  transition: background 0.15s, box-shadow 0.15s, transform 0.15s;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 112px;
+  padding: 10px 4px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  background: transparent;
+  box-shadow: inset 0 0 0 1px transparent;
+  transition:
+    background 0.15s,
+    box-shadow 0.15s,
+    transform 0.15s;
 }
-#CookieMgrMenu .ca-wtile:hover { background: radial-gradient(ellipse at 50% 20%, rgba(255, 210, 110, 0.14), rgba(255, 210, 110, 0.02) 70%); box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.28); transform: translateY(-1px); }
-#CookieMgrMenu .ca-wtile.placed { background: radial-gradient(ellipse at 50% 20%, rgba(255, 211, 106, 0.1), rgba(0, 0, 0, 0.2) 75%); box-shadow: inset 0 0 0 1px rgba(255, 211, 106, 0.35); }
+#CookieMgrMenu .ca-wtile:hover {
+  background: radial-gradient(ellipse at 50% 20%, rgba(255, 210, 110, 0.14), rgba(255, 210, 110, 0.02) 70%);
+  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.28);
+  transform: translateY(-1px);
+}
+#CookieMgrMenu .ca-wtile.placed {
+  background: radial-gradient(ellipse at 50% 20%, rgba(255, 211, 106, 0.1), rgba(0, 0, 0, 0.2) 75%);
+  box-shadow: inset 0 0 0 1px rgba(255, 211, 106, 0.35);
+}
 
 /* the crate: 48px game icon on a dark backing, framed like a store upgrade */
-#CookieMgrMenu .ca-wcrate { position: relative; width: 48px; height: 48px; margin: 6px; background: rgba(0, 0, 0, 0.45); }
-#CookieMgrMenu .ca-wcrate::before { content: ''; position: absolute; left: -6px; top: -6px; width: 60px; height: 60px; background: url(img/upgradeFrame.png) 0 0; z-index: 2; pointer-events: none; }
-#CookieMgrMenu .ca-wtile:hover .ca-wcrate::before, #CookieMgrMenu .ca-wtile.placed .ca-wcrate::before { background-position: 60px 0; }
-#CookieMgrMenu .ca-wcrate > i { position: absolute; inset: 0; background: url(img/icons.png) var(--bgp); }
-#CookieMgrMenu .ca-wcrate > i.ca-wcrate-plant { background-image: url(img/gardenPlants.png); }
-#CookieMgrMenu .ca-wcrate > i.ca-wcrate-svg { display: flex; align-items: center; justify-content: center; background: none; color: #ffd98a; filter: drop-shadow(0 2px 2px #000); }
+#CookieMgrMenu .ca-wcrate {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  margin: 6px;
+  background: rgba(0, 0, 0, 0.45);
+}
+#CookieMgrMenu .ca-wcrate::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: -6px;
+  width: 60px;
+  height: 60px;
+  background: url(img/upgradeFrame.png) 0 0;
+  z-index: 2;
+  pointer-events: none;
+}
+#CookieMgrMenu .ca-wtile:hover .ca-wcrate::before,
+#CookieMgrMenu .ca-wtile.placed .ca-wcrate::before {
+  background-position: 60px 0;
+}
+#CookieMgrMenu .ca-wcrate > i {
+  position: absolute;
+  inset: 0;
+  background: url(img/icons.png) var(--bgp);
+}
+#CookieMgrMenu .ca-wcrate > i.ca-wcrate-plant {
+  background-image: url(img/gardenPlants.png);
+}
+#CookieMgrMenu .ca-wcrate > i.ca-wcrate-svg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  color: #ffd98a;
+  filter: drop-shadow(0 2px 2px #000);
+}
 /* round dial: a disc with a ring, like the widget itself */
-#CookieMgrMenu .ca-wcrate.round { border-radius: 50%; background: radial-gradient(circle at 50% 50%, rgba(40, 24, 10, 0.95) 58%, rgba(0, 0, 0, 0.7) 100%); box-shadow: 0 3px 8px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(0, 0, 0, 0.7); }
-#CookieMgrMenu .ca-wcrate.round::before { background: none; border-radius: 50%; box-shadow: inset 0 0 0 3px var(--ring, #ffd36a), 0 0 0 1px rgba(0,0,0,.6); opacity: 0.85; }
-#CookieMgrMenu .ca-wtile:hover .ca-wcrate.round::before, #CookieMgrMenu .ca-wtile.placed .ca-wcrate.round::before { opacity: 1; box-shadow: inset 0 0 0 3px var(--ring, #ffd36a), 0 0 10px var(--ring, #ffd36a), 0 0 0 1px rgba(0,0,0,.6); }
-#CookieMgrMenu .ca-wcrate.round > i { transform: scale(0.8); }
+#CookieMgrMenu .ca-wcrate.round {
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, rgba(40, 24, 10, 0.95) 58%, rgba(0, 0, 0, 0.7) 100%);
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(0, 0, 0, 0.7);
+}
+#CookieMgrMenu .ca-wcrate.round::before {
+  background: none;
+  border-radius: 50%;
+  box-shadow:
+    inset 0 0 0 3px var(--ring, #ffd36a),
+    0 0 0 1px rgba(0, 0, 0, 0.6);
+  opacity: 0.85;
+}
+#CookieMgrMenu .ca-wtile:hover .ca-wcrate.round::before,
+#CookieMgrMenu .ca-wtile.placed .ca-wcrate.round::before {
+  opacity: 1;
+  box-shadow:
+    inset 0 0 0 3px var(--ring, #ffd36a),
+    0 0 10px var(--ring, #ffd36a),
+    0 0 0 1px rgba(0, 0, 0, 0.6);
+}
+#CookieMgrMenu .ca-wcrate.round > i {
+  transform: scale(0.8);
+}
 /* the corner badge: ✓ / ×2 when placed (a count of starred macros on Macro buttons) */
 #CookieMgrMenu .ca-wtag {
-  position: absolute; right: -9px; top: -9px; z-index: 3; min-width: 18px; height: 18px; padding: 0 4px; box-sizing: border-box;
-  display: flex; align-items: center; justify-content: center; border-radius: 9px;
-  font: bold 11px/1 Tahoma, Arial, sans-serif; color: #2a1a08; background: linear-gradient(#b9f07a, #6fbf2e); box-shadow: 0 1px 3px #000, inset 0 0 0 1px rgba(255,255,255,.4);
+  position: absolute;
+  right: -9px;
+  top: -9px;
+  z-index: 3;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  font:
+    bold 11px/1 Tahoma,
+    Arial,
+    sans-serif;
+  color: #2a1a08;
+  background: linear-gradient(#b9f07a, #6fbf2e);
+  box-shadow:
+    0 1px 3px #000,
+    inset 0 0 0 1px rgba(255, 255, 255, 0.4);
 }
 /* the action pill: on the crate's bottom edge, only while hovered */
 #CookieMgrMenu .ca-wadd {
-  position: absolute; left: 50%; bottom: -8px; z-index: 3; transform: translate(-50%, 3px); padding: 3px 9px; border-radius: 9px; white-space: nowrap;
-  font: bold 10px Tahoma, Arial, sans-serif; color: #2a1a08; background: linear-gradient(#ffe9a8, #e2b24e); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.4);
-  opacity: 0; pointer-events: none; transition: opacity 0.15s, transform 0.15s;
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  z-index: 3;
+  transform: translate(-50%, 3px);
+  padding: 3px 9px;
+  border-radius: 9px;
+  white-space: nowrap;
+  font:
+    bold 10px Tahoma,
+    Arial,
+    sans-serif;
+  color: #2a1a08;
+  background: linear-gradient(#ffe9a8, #e2b24e);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.8),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.15s,
+    transform 0.15s;
 }
-#CookieMgrMenu .ca-wtile:hover .ca-wadd { opacity: 1; transform: translate(-50%, 0); }
-#CookieMgrMenu .ca-wadd.remove { background: linear-gradient(#ffb0a0, #d9583f); color: #3a0d05; }
+#CookieMgrMenu .ca-wtile:hover .ca-wadd {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+#CookieMgrMenu .ca-wadd.remove {
+  background: linear-gradient(#ffb0a0, #d9583f);
+  color: #3a0d05;
+}
 /* a placed kind that takes more: a small Add under the tile, shown while hovered */
 #CookieMgrMenu .ca-wtile-add {
   position: absolute;
@@ -3863,26 +4079,93 @@ body.ca-has-storebar #products {
   font-size: 10px;
   opacity: 0;
   transform: translate(-50%, 3px);
-  transition: opacity 0.15s, transform 0.15s;
+  transition:
+    opacity 0.15s,
+    transform 0.15s;
 }
-#CookieMgrMenu .ca-wtile:hover .ca-wtile-add { opacity: 1; transform: translate(-50%, 0); }
+#CookieMgrMenu .ca-wtile:hover .ca-wtile-add {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
 /* a tile lights up with its widgets on the panel (hover either) */
-#CookieMgrMenu .ca-wtile.linked { background: radial-gradient(ellipse at 50% 20%, rgba(255, 210, 110, 0.14), rgba(255, 210, 110, 0.02) 70%); box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.4); }
-#CookieMgrMenu .ca-wtile-name { font-size: 12px; font-weight: bold; color: #f3e5c3; line-height: 1.2; }
-#CookieMgrMenu .ca-wtile-sub { font-size: 10px; line-height: 1.3; color: #a39477; }
-#CookieMgrMenu .ca-wtile:hover .ca-wtile-sub { color: #c9b891; }
-#CookieMgrMenu .ca-wpick-foot { display: flex; align-items: center; gap: 14px; padding: 6px 14px 8px; font-size: 10.5px; color: #8e8064; border-top: 1px solid rgba(255, 255, 255, 0.06); }
-#CookieMgrMenu .ca-wpick-foot .ca-wkey { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
-#CookieMgrMenu .ca-wpick-foot .ca-wkey i { display: inline-block; width: 10px; height: 10px; box-shadow: inset 0 0 0 1.5px #c9b891; }
-#CookieMgrMenu .ca-wpick-foot .ca-wkey i.round { border-radius: 50%; }
-#CookieMgrMenu .ca-wpick-foot .ca-wkey.hint { flex: 1; white-space: normal; }
+#CookieMgrMenu .ca-wtile.linked {
+  background: radial-gradient(ellipse at 50% 20%, rgba(255, 210, 110, 0.14), rgba(255, 210, 110, 0.02) 70%);
+  box-shadow: inset 0 0 0 1px rgba(255, 220, 150, 0.4);
+}
+#CookieMgrMenu .ca-wtile-name {
+  font-size: 12px;
+  font-weight: bold;
+  color: #f3e5c3;
+  line-height: 1.2;
+}
+#CookieMgrMenu .ca-wtile-sub {
+  font-size: 10px;
+  line-height: 1.3;
+  color: #a39477;
+}
+#CookieMgrMenu .ca-wtile:hover .ca-wtile-sub {
+  color: #c9b891;
+}
+#CookieMgrMenu .ca-wpick-foot {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 6px 14px 8px;
+  font-size: 10.5px;
+  color: #8e8064;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+#CookieMgrMenu .ca-wpick-foot .ca-wkey {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+#CookieMgrMenu .ca-wpick-foot .ca-wkey i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  box-shadow: inset 0 0 0 1.5px #c9b891;
+}
+#CookieMgrMenu .ca-wpick-foot .ca-wkey i.round {
+  border-radius: 50%;
+}
+#CookieMgrMenu .ca-wpick-foot .ca-wkey.hint {
+  flex: 1;
+  white-space: normal;
+}
 
 /* the hover popup: full description */
-#CookieMgrMenu .ca-wtile .ca-wpop { display: none; }
-#CookieMgrLayer .ca-wpop.ca-wtip { width: 240px; }
-#CookieMgrLayer .ca-wtip-head { display: flex; align-items: center; gap: 7px; margin-bottom: 4px; font-size: 12px; font-weight: bold; color: #fff; }
-#CookieMgrLayer .ca-wtip-head .ca-wshape { margin-left: auto; font-weight: normal; font-size: 9.5px; color: #c9b891; text-transform: uppercase; letter-spacing: 0.05em; }
-#CookieMgrLayer .ca-wtip-act { margin-top: 5px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,.1); font-size: 10px; color: #ffd36a; }
+#CookieMgrMenu .ca-wtile .ca-wpop {
+  display: none;
+}
+#CookieMgrLayer .ca-wpop.ca-wtip {
+  width: 240px;
+}
+#CookieMgrLayer .ca-wtip-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #fff;
+}
+#CookieMgrLayer .ca-wtip-head .ca-wshape {
+  margin-left: auto;
+  font-weight: normal;
+  font-size: 9.5px;
+  color: #c9b891;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+#CookieMgrLayer .ca-wtip-act {
+  margin-top: 5px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 10px;
+  color: #ffd36a;
+}
 
 /* styled hover tips (instead of the browser's own) */
 #CookieMgrTip {
@@ -4146,7 +4429,10 @@ body.ca-has-storebar #products {
 }
 #CookieMgrMenu .ca-macro-options input[type='number'] {
   width: 70px;
-  font: 11px Tahoma, Arial, sans-serif;
+  font:
+    11px Tahoma,
+    Arial,
+    sans-serif;
   color: #f0e2c0;
   background: rgba(0, 0, 0, 0.45);
   border: 1px solid rgba(255, 220, 150, 0.25);
@@ -4309,7 +4595,10 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-wf-input select {
   flex: 1;
   min-width: 0;
-  font: 12px Tahoma, Arial, sans-serif;
+  font:
+    12px Tahoma,
+    Arial,
+    sans-serif;
   color: #f0e2c0;
   background: rgba(0, 0, 0, 0.45);
   border: 1px solid rgba(255, 220, 150, 0.25);
@@ -4346,9 +4635,7 @@ body.ca-has-storebar #products {
   max-height: 300px;
   border-radius: 6px;
   overflow: hidden;
-  background:
-    radial-gradient(ellipse at 50% 40%, rgba(90, 140, 200, 0.18), transparent 70%),
-    linear-gradient(to bottom, #1b2533, #0e131b);
+  background: radial-gradient(ellipse at 50% 40%, rgba(90, 140, 200, 0.18), transparent 70%), linear-gradient(to bottom, #1b2533, #0e131b);
   box-shadow:
     inset 0 0 0 1px rgba(255, 220, 150, 0.2),
     inset 0 0 12px rgba(0, 0, 0, 0.6);
@@ -4410,7 +4697,10 @@ body.ca-has-storebar #products {
   align-items: center;
   gap: 5px;
   margin: 0 0 3px 2px;
-  font: bold 10px Tahoma, Arial, sans-serif;
+  font:
+    bold 10px Tahoma,
+    Arial,
+    sans-serif;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #a39477;
@@ -4458,7 +4748,10 @@ body.ca-has-storebar #products {
   min-width: 20px;
   height: 20px;
   padding: 0 5px;
-  font: bold 11px Tahoma, Arial, sans-serif;
+  font:
+    bold 11px Tahoma,
+    Arial,
+    sans-serif;
   color: #b9ab93;
   background: none;
   border: none;
@@ -4493,7 +4786,10 @@ body.ca-has-storebar #products {
   align-items: center;
   gap: 5px;
   padding: 3px 4px 3px 5px;
-  font: 11px Tahoma, Arial, sans-serif;
+  font:
+    11px Tahoma,
+    Arial,
+    sans-serif;
   color: #f3e5c3;
   background: none;
   border: none;
@@ -4565,7 +4861,10 @@ body.ca-has-storebar #products {
   min-width: 0;
 }
 #CookieMgrMenu .ca-editor2 input.ca-ed-name {
-  font: bold 15px 'Merriweather', Georgia, serif;
+  font:
+    bold 15px 'Merriweather',
+    Georgia,
+    serif;
   color: #ffeab0;
   background: transparent;
   border: none;
@@ -4605,7 +4904,10 @@ body.ca-has-storebar #products {
   gap: 2px;
   padding: 7px 9px;
   text-align: left;
-  font: 11px Tahoma, Arial, sans-serif;
+  font:
+    11px Tahoma,
+    Arial,
+    sans-serif;
   color: #c9bba0;
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 220, 150, 0.12);
@@ -4731,9 +5033,12 @@ body.ca-has-storebar #products {
   color: #8fc3ea;
 }
 #CookieMgrMenu .ca-editor2 select,
-#CookieMgrMenu .ca-editor2 input[type="text"],
-#CookieMgrMenu .ca-editor2 input[type="number"] {
-  font: 12px Tahoma, Arial, sans-serif;
+#CookieMgrMenu .ca-editor2 input[type='text'],
+#CookieMgrMenu .ca-editor2 input[type='number'] {
+  font:
+    12px Tahoma,
+    Arial,
+    sans-serif;
   color: #f0e2c0;
   background: rgba(0, 0, 0, 0.45);
   border: 1px solid rgba(255, 220, 150, 0.25);
@@ -4815,7 +5120,7 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-weditor .ca-weditor-sec-head {
   color: color-mix(in srgb, var(--wt) 70%, #93866f);
 }
-#CookieMgrMenu .ca-weditor .ca-wf-input input[type="range"] {
+#CookieMgrMenu .ca-weditor .ca-wf-input input[type='range'] {
   accent-color: var(--wt);
 }
 #CookieMgrMenu .ca-wpresets {
@@ -5071,7 +5376,12 @@ body.ca-has-storebar #products {
   padding: 3px 6px;
   border-radius: 3px;
   background: rgba(0, 0, 0, 0.4);
-  font: 11px/16px Consolas, 'Cascadia Mono', Menlo, Monaco, monospace;
+  font:
+    11px/16px Consolas,
+    'Cascadia Mono',
+    Menlo,
+    Monaco,
+    monospace;
   color: #e8d7b0;
   white-space: pre-wrap;
   word-break: break-word;
@@ -5150,12 +5460,18 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-code-live {
   padding: 6px 8px;
   border-radius: 5px;
-  font: 11px/1.4 Consolas, Menlo, monospace;
+  font:
+    11px/1.4 Consolas,
+    Menlo,
+    monospace;
   background: rgba(125, 255, 138, 0.06);
   box-shadow: inset 3px 0 0 #7dff8a;
 }
 #CookieMgrMenu .ca-code-live-head {
-  font: bold 10px Tahoma, Arial, sans-serif;
+  font:
+    bold 10px Tahoma,
+    Arial,
+    sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: #7dff8a;
@@ -5174,7 +5490,10 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-code-help pre {
   margin: 6px 0 0;
   padding: 8px 10px;
-  font: 11px/1.5 Consolas, Menlo, monospace;
+  font:
+    11px/1.5 Consolas,
+    Menlo,
+    monospace;
   color: #d8cbb0;
   white-space: pre;
   overflow-x: auto;
@@ -5186,7 +5505,10 @@ body.ca-has-storebar #products {
   margin-top: 3px;
   padding: 3px 6px;
   border-radius: 4px;
-  font: 10px/1.35 Consolas, Menlo, monospace;
+  font:
+    10px/1.35 Consolas,
+    Menlo,
+    monospace;
   color: #a39477;
   background: rgba(0, 0, 0, 0.25);
 }
@@ -5219,7 +5541,10 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-lib-head input {
   flex: 1;
   min-width: 0;
-  font: 11.5px Tahoma, Arial, sans-serif;
+  font:
+    11.5px Tahoma,
+    Arial,
+    sans-serif;
   color: #f0e2c0;
   background: rgba(0, 0, 0, 0.45);
   border: 1px solid rgba(255, 220, 150, 0.25);
@@ -5292,7 +5617,10 @@ body.ca-has-storebar #products {
   color: #ffb86b;
 }
 #CookieMgrMenu .ca-lib-ins code {
-  font: 11px Consolas, Menlo, monospace;
+  font:
+    11px Consolas,
+    Menlo,
+    monospace;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -5384,7 +5712,10 @@ body.ca-has-storebar #products {
 }
 #CookieMgrMenu input.ca-every-num {
   width: 64px;
-  font: 11px Tahoma, Arial, sans-serif;
+  font:
+    11px Tahoma,
+    Arial,
+    sans-serif;
   color: #f0e2c0;
   background: rgba(0, 0, 0, 0.45);
   border: 1px solid rgba(255, 220, 150, 0.25);
@@ -5449,7 +5780,10 @@ body.ca-has-storebar #products {
 }
 #CookieMgrMenu .ca-lib-uses {
   margin-left: 4px;
-  font: 9.5px Consolas, Menlo, monospace;
+  font:
+    9.5px Consolas,
+    Menlo,
+    monospace;
   text-transform: none;
   letter-spacing: 0;
   color: #7d7262;
@@ -5553,7 +5887,9 @@ body.ca-has-storebar #products {
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.8), 0 0 4px rgba(0, 0, 0, 0.8);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.8),
+    0 0 4px rgba(0, 0, 0, 0.8);
   pointer-events: none;
 }
 .ca-pp-bg-blue {
@@ -5587,7 +5923,10 @@ body.ca-has-storebar #products {
   border-top: 1px solid rgba(255, 220, 150, 0.25);
   background: rgba(0, 0, 0, 0.35);
   border-radius: 0 0 4px 4px;
-  font: 11px Tahoma, Arial, sans-serif;
+  font:
+    11px Tahoma,
+    Arial,
+    sans-serif;
 }
 #tooltip .ca-tt-head,
 #CookieMgrAscendTip .ca-tt-head,
@@ -5670,9 +6009,14 @@ body.ca-has-storebar #products {
   height: 12px;
   border-radius: 50%;
   color: #000;
-  font: bold 10px/12px Tahoma, Arial, sans-serif;
+  font:
+    bold 10px/12px Tahoma,
+    Arial,
+    sans-serif;
   text-align: center;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.8), 0 0 4px rgba(0, 0, 0, 0.8);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.8),
+    0 0 4px rgba(0, 0, 0, 0.8);
   pointer-events: none;
 }
 
@@ -5936,7 +6280,12 @@ body.ca-has-storebar #products {
   padding: 5px 8px;
   border-radius: 4px;
   background: rgba(0, 0, 0, 0.35);
-  font: 11px/1.45 Consolas, 'Cascadia Mono', Menlo, Monaco, monospace;
+  font:
+    11px/1.45 Consolas,
+    'Cascadia Mono',
+    Menlo,
+    Monaco,
+    monospace;
 }
 #CookieMgrMenu .ca-st-more summary {
   list-style: none;
@@ -5971,7 +6320,12 @@ body.ca-has-storebar #products {
 }
 #CookieMgrMenu .ca-st-call {
   margin-left: auto;
-  font: 10px Consolas, 'Cascadia Mono', Menlo, Monaco, monospace;
+  font:
+    10px Consolas,
+    'Cascadia Mono',
+    Menlo,
+    Monaco,
+    monospace;
   color: #6fe6ef;
   opacity: 0.8;
 }
@@ -6019,7 +6373,12 @@ body.ca-has-storebar #products {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font: 11px Consolas, 'Cascadia Mono', Menlo, Monaco, monospace;
+  font:
+    11px Consolas,
+    'Cascadia Mono',
+    Menlo,
+    Monaco,
+    monospace;
   color: #6fe6ef;
 }
 #CookieMgrMenu .ca-vl-desc {
@@ -6130,7 +6489,9 @@ body.ca-has-storebar #products {
   background: rgba(0, 0, 0, 0.3);
   box-shadow: inset 3px 0 0 var(--c);
   opacity: 0.75;
-  transition: opacity 0.15s, background 0.15s;
+  transition:
+    opacity 0.15s,
+    background 0.15s;
 }
 #CookieMgrMenu .ca-pp-cell.can {
   opacity: 1;
@@ -6200,7 +6561,10 @@ body.ca-has-storebar #products {
   border-radius: 6px;
   cursor: pointer;
   color: var(--c);
-  font: bold 10px Tahoma, Arial, sans-serif;
+  font:
+    bold 10px Tahoma,
+    Arial,
+    sans-serif;
   background: rgba(0, 0, 0, 0.35);
   box-shadow: inset 0 0 0 2px var(--c);
   opacity: 0.7;
@@ -6245,7 +6609,10 @@ body.ca-has-storebar #products {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font: bold 11px Tahoma, Arial, sans-serif;
+  font:
+    bold 11px Tahoma,
+    Arial,
+    sans-serif;
   color: #e8d9b5;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -6265,7 +6632,10 @@ body.ca-has-storebar #products {
 }
 #CookieMgrMenu .ca-pp-num {
   width: 60px;
-  font: 12px Tahoma, Arial, sans-serif;
+  font:
+    12px Tahoma,
+    Arial,
+    sans-serif;
   color: #f0e2c0;
   background: rgba(0, 0, 0, 0.45);
   border: 1px solid rgba(255, 220, 150, 0.25);
@@ -6282,7 +6652,10 @@ body.ca-has-storebar #products {
   flex-wrap: wrap;
 }
 #CookieMgrMenu .ca-ab-state {
-  font: bold 11px Tahoma, Arial, sans-serif;
+  font:
+    bold 11px Tahoma,
+    Arial,
+    sans-serif;
   color: #9a8a70;
   text-transform: uppercase;
   min-width: 26px;
@@ -6339,7 +6712,10 @@ body.ca-has-storebar #products {
 }
 #CookieMgrMenu .ca-ab-lbl {
   min-width: 96px;
-  font: bold 11px Tahoma, Arial, sans-serif;
+  font:
+    bold 11px Tahoma,
+    Arial,
+    sans-serif;
   color: #e8d9b5;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -6362,7 +6738,10 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-ab-queue {
   width: 100%;
   border-collapse: collapse;
-  font: 12px Tahoma, Arial, sans-serif;
+  font:
+    12px Tahoma,
+    Arial,
+    sans-serif;
   font-variant-numeric: tabular-nums;
   color: #f0e2c0;
 }
@@ -6458,7 +6837,10 @@ body.ca-has-storebar #products {
   flex-direction: column;
 }
 #CookieMgrMenu .ca-ab-mini {
-  font: 10px Tahoma, Arial, sans-serif;
+  font:
+    10px Tahoma,
+    Arial,
+    sans-serif;
   line-height: 1;
   color: #e8d9b5;
   background: none;
@@ -6496,7 +6878,10 @@ body.ca-has-storebar #products {
 #CookieMgrMenu [data-ab-editor] select,
 #CookieMgrMenu [data-ab-editor] .ca-gname,
 #CookieMgrMenu .ca-ab-code {
-  font: 12px Tahoma, Arial, sans-serif;
+  font:
+    12px Tahoma,
+    Arial,
+    sans-serif;
   color: #f0e2c0;
   background: rgba(0, 0, 0, 0.45);
   border: 1px solid rgba(255, 220, 150, 0.25);
@@ -6684,9 +7069,7 @@ body.ca-has-storebar #products {
   border: 1px solid;
   border-color: #ece2b6 #875526 #733726 #dfbc9a;
   border-radius: 6px;
-  background:
-    linear-gradient(to bottom, rgba(70, 45, 22, 0.92), rgba(28, 18, 9, 0.92)),
-    #1c120a;
+  background: linear-gradient(to bottom, rgba(70, 45, 22, 0.92), rgba(28, 18, 9, 0.92)), #1c120a;
   box-shadow:
     0 4px 14px rgba(0, 0, 0, 0.7),
     inset 0 1px 0 rgba(255, 255, 255, 0.15);
@@ -6926,7 +7309,9 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-wsample .ca-et-none {
   font-size: 11px;
   color: #b5a78f;
-  text-shadow: 0 0 2px #000, 0 1px 1px #000;
+  text-shadow:
+    0 0 2px #000,
+    0 1px 1px #000;
 }
 
 /* ---------- alerts: a screen flash (features/alerts.js) ---------- */
@@ -7000,7 +7385,10 @@ body.ca-has-storebar #products {
 }
 #CookieMgrMenu .ca-sp-chart text,
 #CookieMgrWidgets .ca-sp-chart text {
-  font: 10px Tahoma, Arial, sans-serif;
+  font:
+    10px Tahoma,
+    Arial,
+    sans-serif;
   fill: #a89a83;
 }
 #CookieMgrMenu .ca-sp-mean text,
@@ -7178,7 +7566,10 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-sp-factor,
 #CookieMgrWidgets .ca-sp-factor {
   border: 1px solid rgba(255, 224, 102, 0.3);
-  font: 11px Tahoma, Arial, sans-serif;
+  font:
+    11px Tahoma,
+    Arial,
+    sans-serif;
   cursor: pointer;
 }
 #CookieMgrMenu .ca-sp-factor.off,
@@ -7229,7 +7620,10 @@ body.ca-has-storebar #products {
   border-radius: 3px;
   background: rgba(0, 0, 0, 0.72);
   color: #e8dcc4;
-  font: bold 9px Tahoma, Arial, sans-serif;
+  font:
+    bold 9px Tahoma,
+    Arial,
+    sans-serif;
   line-height: 12px;
   pointer-events: none;
   z-index: 2;
@@ -7852,7 +8246,10 @@ body.ca-has-storebar #products {
 }
 #CookieMgrMenu .ca-pprof .ca-gname,
 #CookieMgrMenu .ca-pprof select {
-  font: 12px Tahoma, Arial, sans-serif;
+  font:
+    12px Tahoma,
+    Arial,
+    sans-serif;
   color: #f0e2c0;
   background: rgba(0, 0, 0, 0.45);
   border: 1px solid rgba(255, 220, 150, 0.25);
@@ -7899,11 +8296,15 @@ body.ca-has-storebar #products {
 }
 #CookieMgrMenu .ca-aura-slot[data-dragon-act] {
   cursor: pointer;
-  transition: box-shadow 0.15s, background 0.15s;
+  transition:
+    box-shadow 0.15s,
+    background 0.15s;
 }
 #CookieMgrMenu .ca-aura-slot[data-dragon-act]:hover,
 #CookieMgrMenu .ca-aura-slot.picking {
-  box-shadow: inset 0 0 0 1px rgba(255, 190, 120, 0.8), 0 0 10px rgba(255, 160, 80, 0.25);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 190, 120, 0.8),
+    0 0 10px rgba(255, 160, 80, 0.25);
 }
 /* a profile's aura: a chip that opens the picker */
 #CookieMgrMenu .ca-aura-chip {
@@ -7912,7 +8313,10 @@ body.ca-has-storebar #products {
   gap: 6px;
   width: 170px;
   padding: 3px 8px 3px 4px;
-  font: 12px Tahoma, Arial, sans-serif;
+  font:
+    12px Tahoma,
+    Arial,
+    sans-serif;
   color: #f0e2c0;
   text-align: left;
   background: rgba(0, 0, 0, 0.45);
@@ -7951,7 +8355,10 @@ body.ca-has-storebar #products {
   justify-content: space-between;
   gap: 8px;
   padding: 0 2px 6px;
-  font: bold 12px Tahoma, Arial, sans-serif;
+  font:
+    bold 12px Tahoma,
+    Arial,
+    sans-serif;
   color: #ffb27a;
 }
 #CookieMgrMenu .ca-aura-grid {
@@ -7965,7 +8372,10 @@ body.ca-has-storebar #products {
   gap: 8px;
   padding: 6px 8px;
   text-align: left;
-  font: 12px Tahoma, Arial, sans-serif;
+  font:
+    12px Tahoma,
+    Arial,
+    sans-serif;
   color: #f0e2c0;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 220, 150, 0.12);
@@ -8140,7 +8550,10 @@ body.ca-has-storebar #products {
   padding: 4px 13px;
   border-radius: 14px;
   cursor: pointer;
-  font: bold 13px 'Merriweather', Georgia, serif;
+  font:
+    bold 13px 'Merriweather',
+    Georgia,
+    serif;
   color: #b9ac94;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -8320,7 +8733,10 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-ct-tname {
   width: 150px;
   padding: 2px 6px;
-  font: bold 14px 'Merriweather', Georgia, serif;
+  font:
+    bold 14px 'Merriweather',
+    Georgia,
+    serif;
   color: #f0e2c0;
   background: transparent;
   border: 1px solid transparent;
@@ -8652,7 +9068,10 @@ body.ca-has-storebar #products {
   overflow: hidden;
   padding: 5px 7px 6px;
   border-radius: 5px;
-  font: 11px Tahoma, Arial, sans-serif;
+  font:
+    11px Tahoma,
+    Arial,
+    sans-serif;
   color: #e8d7b0;
   background: linear-gradient(to bottom, rgba(70, 45, 22, 0.92), rgba(28, 18, 9, 0.92));
   box-shadow: inset 0 0 0 1px rgba(255, 230, 180, 0.12);
@@ -8914,4 +9333,33 @@ body.ca-has-storebar #products {
 }
 #CookieMgrMenu .ca-mgr-codehint {
   padding: 6px 14px 0;
+}
+
+/* ---------- v4.0.2: the code editor fills its column, at least as tall as the library ---------- */
+/* The editor's column stretches to the library's height (a fixed 640px, so searching it doesn't
+   resize the code), and the code takes whatever room its column has left; longer code scrolls. */
+#CookieMgrMenu .ca-ed-layout {
+  align-items: stretch;
+}
+#CookieMgrMenu .ca-ed-layout > .ca-ed-lib {
+  height: 640px;
+}
+#CookieMgrMenu .ca-ed-layout > .ca-editor-body {
+  display: flex;
+  flex-direction: column;
+}
+#CookieMgrMenu .ca-ed-layout .ca-ed-code {
+  flex: 1 1 auto;
+}
+#CookieMgrMenu .ca-ed-layout .ca-code {
+  flex: 1 1 0;
+  min-height: 380px;
+  max-height: none;
+}
+/* below its last line, the code's box still puts the caret in (ui/codeEditor.js) */
+#CookieMgrMenu .ca-code {
+  cursor: text;
+}
+#CookieMgrMenu .ca-code-gutter {
+  cursor: default;
 }
