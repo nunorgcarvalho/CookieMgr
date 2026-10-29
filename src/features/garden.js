@@ -474,6 +474,108 @@ CA.Garden = (() => {
     return keep;
   }
 
+  // ---- planting as purchases (the Auto buyer's queue) ---------------------------------------------
+
+  /** A number the active gardener sets at its top (`replantBelow = 0.75`), else `def`. */
+  function gardenerNumber(name, def) {
+    const m = new RegExp(`^${name}\\s*=\\s*([0-9.]+)`, 'm').exec(rulesOf() || '');
+    return m && Number.isFinite(Number(m[1])) ? Number(m[1]) : def;
+  }
+  const STAGE_MULT = [0, 0.1, 0.25, 0.5, 1];
+  /**
+   * The garden's golden cookie frequency and CpS factors for a grid of [seed, stage] (null: empty), on
+   * clay — the game's computeBoostPlot and computeEffs (minigameGarden.js), for the plants that move
+   * golden cookies (clovers, nursetulips' boost and their −2% CpS, and the few others).
+   */
+  function effsOf(M, grid) {
+    const soil = (M.soils && M.soils.clay && M.soils.clay.effMult) || 1.25;
+    const boost = grid.map((row) => row.map(() => 1));
+    grid.forEach((row, y) =>
+      row.forEach((t, x) => {
+        if (!t || t[0] !== 'nursetulip') return;
+        const m = soil * STAGE_MULT[t[1]];
+        for (let yy = Math.max(0, y - 1); yy < Math.min(SIZE, y + 2); yy++) for (let xx = Math.max(0, x - 1); xx < Math.min(SIZE, x + 2); xx++) if (xx !== x || yy !== y) boost[yy][xx] *= 1 + 0.2 * m;
+      })
+    );
+    let freq = 1;
+    let cps = 1;
+    grid.forEach((row, y) =>
+      row.forEach((t, x) => {
+        if (!t) return;
+        const m = soil * STAGE_MULT[t[1]] * boost[y][x];
+        const k = t[0];
+        if (k === 'goldenClover') freq += 0.03 * m;
+        else if (k === 'clover' || k === 'shimmerlily' || k === 'greenRot') freq += 0.01 * m;
+        else if (k === 'foolBolete') freq += 0.02 * m;
+        else if (k === 'drowsyfern') freq *= 1 - 0.1 * m;
+        if (k === 'nursetulip' || k === 'queenbeet' || k === 'shriekbulb') cps *= 1 - 0.02 * m;
+      })
+    );
+    return { freq, cps };
+  }
+  /** The plot as a grid of [seed, stage 4] — every plant counted grown — with `seed` on `tiles` ("x,y" set) too. */
+  function grownGrid(M, seed, tiles) {
+    const grid = [];
+    for (let y = 0; y < SIZE; y++) {
+      grid.push([]);
+      for (let x = 0; x < SIZE; x++) {
+        const me = unlockedTile(M, x, y) ? plantAt(M, x, y) : null;
+        grid[y].push(tiles && tiles.has(`${x},${y}`) ? [seed, 4] : me ? [me.key, 4] : null);
+      }
+    }
+    return grid;
+  }
+  /**
+   * What the gardener would plant now, as purchases — one per seed of the layout:
+   *   round   a new round is due (none growing, fewer than its replant share mature): the old ones
+   *           harvested, every tile of the seed planted
+   *   fill    tiles of the seed without it while its round is still growing (or nothing of it is
+   *           mature): those tiles planted
+   * Each { seed, name, icon, n, price (today's), round, first (a seed that goes first), freq, cps }:
+   * freq / cps, the garden's golden cookie frequency and CpS once it's grown, × (against what's
+   * planted now, grown).
+   */
+  function plantings() {
+    const M = minigame();
+    if (!M) return [];
+    const p = active();
+    const base = effsOf(M, grownGrid(M));
+    return layoutSeeds().flatMap((s) => {
+      const me = M.plants[s.key];
+      if (!me || !me.unlocked) return [];
+      const c = layoutCensus(s.key);
+      const first = FIRST_SEEDS.includes(s.key);
+      const below = first ? gardenerNumber('tulipReplantBelow', 0.5) : gardenerNumber('replantBelow', 0.75);
+      const round = c.planted > 0 && c.young === 0 && c.mature < below * c.tiles;
+      const fill = !round && s.missing > 0 && (c.young > 0 || c.mature === 0);
+      if (!round && !fill) return [];
+      const tiles = new Set();
+      tilesOf(M).forEach(([x, y]) => {
+        if (wantAt(p, x, y) !== s.key) return;
+        const at = plantAt(M, x, y);
+        if (round || !at || at.key !== s.key) tiles.add(`${x},${y}`);
+      });
+      const e = effsOf(M, grownGrid(M, s.key, tiles));
+      return [{ seed: s.key, name: s.name, icon: me.icon, n: tiles.size, price: tiles.size * s.cost, round, first, freq: e.freq / base.freq, cps: e.cps / base.cps }];
+    });
+  }
+  /** Plants what plantings() has for a seed (a round: the old ones harvested first); how many it planted. */
+  function plantFor(seed) {
+    const x0 = plantings().find((x) => x.seed === seed);
+    const M = minigame();
+    if (!x0 || !M) return 0;
+    const p = active();
+    let n = 0;
+    tilesOf(M).forEach(([x, y]) => {
+      if (wantAt(p, x, y) !== seed) return;
+      const at = plantAt(M, x, y);
+      if (at && (x0.round || at.key !== seed)) harvestTile(M, x, y);
+      if (!plantAt(M, x, y) && plant(M, M.plants[seed], x, y)) n++;
+    });
+    if (n) count('planted', n);
+    return n;
+  }
+
   /** Plants on the plot now: { planted, mature, young, empty, off } (empty: unlocked tiles with nothing). */
   function census() {
     const M = minigame();
@@ -835,6 +937,8 @@ CA.Garden = (() => {
     census,
     layoutCost,
     layoutSeeds,
+    plantings,
+    plantFor,
     roundCost,
     roundsReserve,
     priceBoost,

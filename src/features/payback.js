@@ -792,7 +792,7 @@ CA.Payback = (() => {
     return u.bought ? 1 : 0;
   }
   /** Buys a ranking entry; how many things it bought. */
-  const buy = (x) => (!x || x.kind === 'bank' ? 0 : x.kind === 'building' ? buyBuilding(x.name, x.n) : x.kind === 'allUpgrades' ? buyUpgrades(x.names) : buyUpgrade(x.name));
+  const buy = (x) => (!x || x.kind === 'bank' ? 0 : x.kind === 'garden' ? CA.Garden.plantFor(x.name) : x.kind === 'building' ? buyBuilding(x.name, x.n) : x.kind === 'allUpgrades' ? buyUpgrades(x.names) : buyUpgrade(x.name));
 
   // ---- the next building-count achievement (the store's "Achievement" sort) -------------------------
 

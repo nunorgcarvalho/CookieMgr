@@ -7,7 +7,11 @@
 //   buys        buildings and/or upgrades, and "Buy all upgrades" as one thing (the game's button:
 //               every store upgrade the budget affords, cheapest first, measured as one purchase —
 //               features/payback.js allUpgrades); buildings in a bulk (auto: the store's minimum bulk,
-//               rounded up with Round to multiples — what the old buyers bought) or ×1 / ×10 / ×100
+//               rounded up with Round to multiples — what the old buyers bought) or ×1 / ×10 / ×100;
+//               and the garden: what the gardener plants next (features/garden.js plantings — a
+//               seed's empty tiles while its round grows, or a new round once one is due), its gain
+//               the golden cookie income the grown plants add (Actual income less CpS + clicking,
+//               × the garden's golden cookie frequency gain) — bought by planting it
 //   cheap ×100  seconds of unbuffed CpS (0: off; default 1): a building whose next 100 cost less than
 //               that, and that the budget affords, is bought 100 at a time ahead of the queue — no
 //               ranking by payback period for what costs next to nothing
@@ -120,7 +124,7 @@ CA.AutoBuyer = (() => {
     // v4.0: what Nunix late game buys with once it plays for golden cookie combos — ranked by actual
     // income, never below what a Lucky! and the garden's rounds need (the tulips first, the clovers'
     // round with a quarter on top: CpS bought only raises their price)
-    { id: 'combos', name: 'Golden cookie combos', kinds: { building: true, upgrade: true, allUpgrades: true }, bulk: 'auto', cheapBulk: 1, skip: false, reserve: 0, banks: ['lucky', 'gardenRounds'], roundsMargin: 1.25, mode: 'actualIncome', rules: [cleanRule(BULK_RULE)] },
+    { id: 'combos', name: 'Golden cookie combos', kinds: { building: true, upgrade: true, allUpgrades: true, garden: true }, bulk: 'auto', cheapBulk: 1, skip: false, reserve: 0, banks: ['lucky', 'gardenRounds'], roundsMargin: 1.25, mode: 'actualIncome', rules: [cleanRule(BULK_RULE)] },
   ].map(cleanProfile);
   const copy = (x) => JSON.parse(JSON.stringify(x));
   let profiles = copy(SEEDS);
@@ -149,7 +153,10 @@ CA.AutoBuyer = (() => {
       id: String(x.id || `p${i + 1}`).slice(0, 40),
       name: String(x.name || `Profile ${i + 1}`).slice(0, 40),
       // Buy all upgrades (v3.50): a profile saved before it buys it when it buys upgrades
-      kinds: { building: kinds.building !== false, upgrade: kinds.upgrade !== false, allUpgrades: kinds.allUpgrades === undefined ? kinds.upgrade !== false : !!kinds.allUpgrades },
+      kinds: { building: kinds.building !== false, upgrade: kinds.upgrade !== false, allUpgrades: kinds.allUpgrades === undefined ? kinds.upgrade !== false : !!kinds.allUpgrades,
+        // the garden: Golden cookie combos saved before it plants (its Garden rounds bank is for it)
+        garden: kinds.garden === undefined ? x.id === 'combos' && Array.isArray(x.banks) && x.banks.includes('gardenRounds') : !!kinds.garden,
+      },
       bulk: BULKS.includes(x.bulk) ? x.bulk : BULKS.includes(Number(x.bulk)) ? Number(x.bulk) : 'auto',
       // cheap ×100: a profile saved before it gets the default (1 s)
       cheapBulk: x.cheapBulk === undefined ? 1 : Math.max(0, Number(x.cheapBulk) || 0),
@@ -393,7 +400,7 @@ CA.AutoBuyer = (() => {
     const kinds = kindsOf(p);
     const kind = kinds.length === 2 ? 'all' : kinds[0];
     const thresholds = reserveParts(p.id).filter((t) => t.amount > 0);
-    if (!kind && !p.kinds.allUpgrades) return walk(p, thresholds.map((t) => bankItem(t, NaN)), [], NaN);
+    if (!kind && !p.kinds.allUpgrades && !p.kinds.garden) return walk(p, thresholds.map((t) => bankItem(t, NaN)), [], NaN);
     // a mode that isn't there (deleted) or not ready yet (actual income, under a minute recorded): the one in use
     const mode = p.mode && P().modeOf(p.mode) && Number.isFinite(P().income(p.mode)) ? p.mode : undefined;
     // what anything may spend at most: the bank less the thresholds placed first (one placed at a
@@ -408,6 +415,7 @@ CA.AutoBuyer = (() => {
       if (all.n >= 2) ranked.push(all);
       else held.push({ ...all, key: thingKey(all), ipp: NaN, score: NaN, first: false, rules: [], why: all.n ? 'affords only one upgrade: the same as buying it' : 'affords no upgrades', colour: 'gray' });
     }
+    if (p.kinds.garden) gardenThings().forEach((g) => (g.why ? held : ranked).push(g));
     const rules = p.rules.filter((r) => r.on);
     // cheap ×100: what the next 100 of a building may cost at most (0: off)
     const cheap = p.cheapBulk > 0 ? rawCps() * p.cheapBulk : 0;
@@ -483,6 +491,33 @@ CA.AutoBuyer = (() => {
       });
     return walk(p, out, held, bestOk);
   }
+  /** The thresholds kept for the garden: what garden things may spend into. */
+  const GARDEN_BANKS = ['garden', 'gardenRounds'];
+  /** Whether a threshold row of the queue holds a thing back (the garden's own banks don't hold garden things). */
+  const holdsBack = (bank, x) => bank.kind === 'bank' && !(x && x.kind === 'garden' && GARDEN_BANKS.includes(bank.name));
+  /**
+   * What the gardener plants next, as things to buy (garden:<seed>): its price today, its gain the
+   * income its grown plants add — the golden cookie part of the Actual income (less CpS + clicking)
+   * × the frequency gain, and CpS + clicking × the CpS change (nursetulips: −2% each). Held while
+   * there's no Actual income yet, while an effect makes seeds dearer, and (clovers) while the
+   * nursetulips have planting to do: they go first.
+   */
+  function gardenThings() {
+    const G = CA.Garden;
+    if (!G.minigame()) return [];
+    const list = G.plantings();
+    const base = P().income('cpsClicking');
+    const golden = Math.max(0, P().income('actualIncome') - base);
+    const dear = G.priceBoost() > 1.001;
+    const tulips = list.some((x) => x.first);
+    return list.map((x) => {
+      const gain = golden * (x.freq - 1) + base * (x.cps - 1);
+      const t = { kind: 'garden', name: x.seed, n: x.n, label: `${x.round ? 'Replant' : 'Plant'} ${x.n} ${x.name}`, icon: x.icon, round: x.round, price: x.price, gain, bonus: gain, pp: gain > 0 ? x.price / gain : Infinity };
+      t.key = thingKey(t);
+      const why = !Number.isFinite(golden) ? 'waits for a minute of Actual income (what golden cookies bring in)' : dear ? 'an effect makes seeds dearer: waits it out' : tulips && !x.first ? 'the nursetulips go first' : '';
+      return why ? { ...t, ipp: NaN, score: NaN, first: false, rules: [], why } : t;
+    });
+  }
   /** A threshold as a thing in the queue: what it keeps as its price, kept once the bank covers it. */
   function bankItem(t, best) {
     const first = t.at === 'first';
@@ -507,6 +542,7 @@ CA.AutoBuyer = (() => {
   /** Walks a queue from the front: what's kept, what it's saving for, what it buys next (see the top). */
   function walk(p, items, held, best) {
     let keep = 0;
+    let keepG = 0; // what's kept ahead of a garden thing: the garden's own banks are for it
     let wait = null;
     let nextOne = null;
     const cookies = Game.cookies || 0;
@@ -514,11 +550,16 @@ CA.AutoBuyer = (() => {
       if (x.kind === 'bank') {
         if (!wait && cookies < x.price) wait = x;
         keep = Math.max(keep, x.price);
+        if (!GARDEN_BANKS.includes(x.name)) keepG = Math.max(keepG, x.price);
         continue;
       }
-      if (p.skip && x.price + keep > cookies) continue;
+      if (p.skip && x.price + (x.kind === 'garden' ? keepG : keep) > cookies) continue;
       nextOne = x;
       break;
+    }
+    if (nextOne && nextOne.kind === 'garden') {
+      keep = keepG;
+      if (wait && wait.kind === 'bank' && GARDEN_BANKS.includes(wait.name)) wait = null;
     }
     if (!wait && nextOne && nextOne.price + keep > cookies) wait = nextOne;
     // what's kept ahead of next (or of all, when nothing is next)
@@ -762,5 +803,5 @@ CA.AutoBuyer = (() => {
     },
   });
 
-  return { init, allUpgrades, buyAllUpgrades, list, find, use, create, update, remove, addRule, setRule, removeRule, moveRule, activeProfile, queue, next, waitingFor, whyText, buyNext, noteBought, recentBought, readiness, budget, keepOf, keepFirst, reserveParts, thingOf, ruleText, whatText, effectText, whenProblem, reserveOf, scoreOf, ippOf, WHATS, EFFECTS, BULKS, BANKS, THRESHOLDS, PLACES, SEEDS, BULK_RULE };
+  return { init, allUpgrades, buyAllUpgrades, list, find, use, create, update, remove, addRule, setRule, removeRule, moveRule, activeProfile, queue, next, waitingFor, whyText, buyNext, noteBought, recentBought, readiness, budget, keepOf, keepFirst, reserveParts, thingOf, ruleText, whatText, effectText, whenProblem, reserveOf, scoreOf, ippOf, WHATS, EFFECTS, BULKS, BANKS, THRESHOLDS, PLACES, SEEDS, BULK_RULE, GARDEN_BANKS, holdsBack };
 })();
