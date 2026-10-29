@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 4.10.0 — 2026-10-29
+
+- **Golden cookie on screen:** the Golden cookies widget and the Stats page's Next golden cookie card keep their stats,
+  graph and effect bars while one is on screen, held still at the beginning of the next cycle (what comes once it
+  leaves), under a "Golden cookie present" overlay, instead of switching to a one-line "on screen" message.
+
 ## 4.9.3 — 2026-10-29
 
 - **Fixed:** in the Manager widget with Background on Faint or None, the current stage's name (e.g. “Drops”) on its
