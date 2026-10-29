@@ -42,28 +42,28 @@ G.goTo(2);
 CA.UI.Menu.openPage('managers');
 await sleep(50);
 assert(q('.ca-mgr-page'), 'the page is one dark block (its fields styled dark)');
-assert(qa('[data-mgr-act="tab"]').length === 4 && q('.ca-mgr-tabadd'), 'a tab per stage, and + for one more');
+assert(qa('[data-mgr-act="tab"]').length === 3 && q('.ca-mgr-tabadd'), 'a tab per stage, and + for one more');
 assert(q('.ca-mgr-tab.sel').dataset.i === '1' && q('.ca-mgr-tab.run .ca-mgr-dot'), 'it opens on the stage it’s on (a dot on its tab)');
-assert(q('.ca-mgr-panelhead [data-mgr-stage-name]').value === 'Drops', 'that stage beside the library');
+assert(q('.ca-mgr-panelhead [data-mgr-stage-name]').value === 'Reindeer', 'that stage beside the library');
 
 // ---- macros at work: the change marked, the rest carried; × takes one out ----
 const chip = (id) => q(`.ca-mgr-chip [data-mgr-act="flip"][data-macro="${id}"]`);
-assert(chip('bigCookie').closest('.ca-mgr-chip').classList.contains('new'), 'Drops: the big cookie, new here');
+assert(chip('elderPledge').closest('.ca-mgr-chip').classList.contains('new'), 'Reindeer: the pledge, new here');
 assert(chip('reindeer') && !chip('reindeer').closest('.ca-mgr-chip').classList.contains('new'), 'reindeer: on, carried over');
 assert(/Still off:/.test(q('.ca-mgr-still').textContent), 'what’s still off, in a line');
 click(chip('reindeer').closest('.ca-mgr-chip').querySelector('[data-mgr-act="drop"]'));
 assert(nunix().stages[1].macros.reindeer === 'off' && G.effective(nunix(), 2).macros.reindeer === 'off', '× on a carried one: off from this stage on');
 click(q('.ca-mgr-chip.off [data-mgr-act="drop"][data-macro="reindeer"]'));
 assert(nunix().stages[1].macros.reindeer === undefined, '× on “switched off here”: undone');
-click(chip('bigCookie').closest('.ca-mgr-chip').querySelector('[data-mgr-act="drop"]'));
-assert(nunix().stages[1].macros.bigCookie === undefined, '× on a new one: not switched on here');
-click(q('.ca-mgr-still [data-macro="bigCookie"]'));
-assert(nunix().stages[1].macros.bigCookie === 'on', 'a “still off” one, clicked: on from here');
+click(chip('elderPledge').closest('.ca-mgr-chip').querySelector('[data-mgr-act="drop"]'));
+assert(nunix().stages[1].macros.elderPledge === undefined, '× on a new one: not switched on here');
+click(q('.ca-mgr-still [data-macro="elderPledge"]'));
+assert(nunix().stages[1].macros.elderPledge === 'on', 'a “still off” one, clicked: on from here');
 
 // ---- the library ----
 const row = (id) => q(`.ca-mgr-libgroup:not(.ca-mgr-libtop) [data-mgr-act="lib"][data-macro="${id}"]`);
 assert(q('.ca-mgr-libtop') && q('.ca-mgr-libgroup') === q('.ca-mgr-libtop') && qa('.ca-mgr-libtop .ca-mgr-librow').length === 8, 'Most used first (eight)');
-assert(row('autoBuyer').classList.contains('on') && row('elderPledge').classList.contains('off'), 'each row says how it stands in this stage');
+assert(row('autoBuyer').classList.contains('on') && row('gardener').classList.contains('off'), 'each row says how it stands in this stage');
 click(row('fortune'));
 assert(nunix().stages[1].macros.fortune === 'on', 'a row clicked: on from this stage');
 click(row('fortune'));
@@ -132,10 +132,10 @@ assert(CA.UI.CodeEditor.placeOf(span).source === 'cookies() > 1', 'a word in it 
 
 // ---- stage actions keep the tab on the stage ----
 click(q('[data-mgr-act="addStage"][data-i="1"]:not(.ca-mgr-tab)'));
-assert(nunix().stages.length === 5 && q('.ca-mgr-tab.sel').dataset.i === '2', '+ After: the new stage shown');
+assert(nunix().stages.length === 4 && q('.ca-mgr-tab.sel').dataset.i === '2', '+ After: the new stage shown');
 click(q('.ca-mgr-panelhead [data-mgr-act="delStage"]'));
 click(q('.ca-mgr-panelhead [data-mgr-act="delStage"]'));
-assert(nunix().stages.length === 4, 'deleted (asked first)');
+assert(nunix().stages.length === 3, 'deleted (asked first)');
 
 M.list().forEach((m) => M.isOn(m.id) && M.set(m.id, false, { silent: true }));
 assert(g.errors.length === 0, 'no runtime errors' + (g.errors.length ? `: ${g.errors.slice(0, 3).join(' | ')}` : ''));

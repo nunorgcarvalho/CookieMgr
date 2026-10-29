@@ -27,12 +27,12 @@ CA.UI.C = (() => {
     );
   }
 
-  /** Hotkey chip: click to rebind, small × to clear. */
+  /** Hotkey chip: click to rebind, small ↺ back to its default key. */
   function hotkey(actionId) {
     return (
       `<span class="ca-hotkey" data-hotkey="${esc(actionId)}">` +
-      `<button type="button" class="ca-key" data-ca="bind" data-action="${esc(actionId)}" data-tip="Click, then press a key to rebind"></button>` +
-      `<button type="button" class="ca-key-clear" data-ca="unbind" data-action="${esc(actionId)}" data-tip="Remove hotkey">&times;</button>` +
+      `<button type="button" class="ca-key" data-ca="bind" data-action="${esc(actionId)}" data-tip="Click, then press a key to rebind (Backspace: no key)"></button>` +
+      `<button type="button" class="ca-key-revert" data-ca="revert-hotkey" data-action="${esc(actionId)}" data-tip="Back to its default key">&#8634;</button>` +
       '</span>'
     );
   }

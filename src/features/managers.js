@@ -27,19 +27,18 @@
 //
 // The built-in macro `manager` runs the active manager's code each second, so it has a switch, a
 // hotkey and macro.set like any other. One seeded manager, Nunix late game:
-//   Shimmering veil        everything clicked but the big cookie (it breaks the veil): golden and wrath
-//                          cookies and reindeer; the Auto buyer spending freely (Payback), the Upgrade
-//                          unlocker (Santa, research up to the Elder Pact, the dragon trained and petted,
-//                          fortunes, cheap upgrades), SeasonCompletion, wrinklers and sugar lumps; no
-//                          garden, spells, stocks or Elder Pledge (the Grandmapocalypse's wrinklers drop
-//                          Halloween's cookies); Pantheon wrinklers, dragon drops — until the veil breaks
-//   Drops                  + the big cookie — until Christmas's upgrades, Easter, Halloween and
-//                          Valentine's are in
+//   Drops                  the big cookie clicked from the start, but not golden or wrath cookies (Scorn
+//                          makes them all wrath cookies); reindeer; the Auto buyer spending freely
+//                          (Payback), the Upgrade unlocker (Santa, research up to the Elder Pact, the dragon
+//                          trained and petted, fortunes, cheap upgrades), SeasonCompletion, wrinklers and
+//                          sugar lumps; no garden, spells, stocks or Elder Pledge (the Grandmapocalypse's
+//                          wrinklers drop Halloween's cookies); Pantheon wrinklers, dragon drops — until
+//                          Christmas's upgrades, Easter, Halloween and Valentine's are in
 //   Reindeer               Christmas again for its cookies: + the elders pledged, dragon drops & flight
 //   Golden cookie combos   for good: the buyer ranks by actual income and never dips below the Lucky! and
 //                          garden replant banks (buyer profile combos); + the Auto-gardener (8
 //                          nursetulips together + clover combos), Pantheon golden, dragon Dragonflight &
-//                          Harvest, and FtHoF on combos
+//                          Harvest, FtHoF on combos, and golden and wrath cookies clicked again
 //
 //   For algorithmic code:
 //     manager.use(manager)            makes a manager the active one (an action; its id or name)
@@ -60,10 +59,10 @@ CA.Managers = (() => {
   const SCOPES = [{ v: 'ascension', label: 'This ascension' }];
   const KINDS = ['buyer', 'pantheon', 'dragon', 'grimoire', 'garden'];
   const FORMATS = [
-    { v: 'auto', label: 'as it is' },
-    { v: 'time', label: 'a time (seconds)' },
-    { v: 'percent', label: 'a share (0–1)' },
-    { v: 'progress', label: 'progress ([have, of] or 0–100)' },
+    { v: 'auto', label: 'as it is', tip: 'the value as it is' },
+    { v: 'time', label: 'a time', tip: 'a time: the value in seconds' },
+    { v: 'percent', label: 'a share', tip: 'a share: the value from 0 to 1, shown as a percentage' },
+    { v: 'progress', label: 'progress', tip: 'progress, with a bar: [have, of], or 0–100' },
   ];
   const WATCH_MAX = 8;
 
@@ -117,22 +116,24 @@ CA.Managers = (() => {
     {
       id: 'nunixLateGame',
       name: 'Nunix late game',
-      desc: 'Keeps the Shimmering veil as long as it lasts, clicking everything but the big cookie; then the big cookie too while it hunts every season’s drops in the Grandmapocalypse, the Auto buyer spending freely and the Upgrade unlocker on; then Christmas again for the reindeer cookies, the elders pledged; then golden cookie combos for good: the buyer ranks by actual income and keeps the Lucky! and garden replant banks, with the garden, the golden Pantheon, Dragonflight & Harvest and Force the Hand of Fate on combos.',
+      desc: 'Clicks the big cookie from the start, not golden cookies (Scorn makes them all wrath cookies), while it hunts every season’s drops in the Grandmapocalypse, the Auto buyer spending freely and the Upgrade unlocker on; then Christmas again for the reindeer cookies, the elders pledged; then golden cookie combos for good, golden cookies clicked again: the buyer ranks by actual income and keeps the Lucky! and garden replant banks, with the garden, the golden Pantheon, Dragonflight & Harvest and Force the Hand of Fate on combos.',
       scope: 'ascension',
       v: 2,
       stages: [
         {
-          name: 'Shimmering veil',
+          name: 'Drops',
           macros: {
             autoBuyer: 'on',
             upgradeUnlocker: 'on', // Santa, research, the dragon trained and petted, fortunes, cheap upgrades
             seasonCompletion: 'on',
-            golden: 'on',
-            wrath: 'on',
+            bigCookie: 'on',
             reindeer: 'on',
             wrinklers: 'on',
             lumps: 'on',
-            bigCookie: 'off', // clicking it breaks the Shimmering veil
+            // Scorn (the Pantheon's wrinklers profile) makes every golden cookie a wrath cookie, so
+            // they're left alone until the combos
+            golden: 'off',
+            wrath: 'off',
             elderPledge: 'off', // the Grandmapocalypse: its wrinklers drop Halloween's cookies
             gardener: 'off',
             fthofOnClickFrenzy: 'off',
@@ -144,23 +145,11 @@ CA.Managers = (() => {
             research: { stopBefore: 'Elder Pact' },
           },
           profiles: { buyer: 'payback', pantheon: 'wrinklers', dragon: 'drops' },
-          until: 'not veil()',
-          watch: [
-            { label: 'Next golden cookie in', value: 'golden.expected()', format: 'time' },
-            { label: 'Easter eggs', value: '[owned(easter), total(easter)]', format: 'progress' },
-            { label: 'Santa', value: '[santaLevel(), 14]', format: 'progress' },
-          ],
-        },
-        {
-          name: 'Drops',
-          macros: { bigCookie: 'on' },
-          inputs: {},
-          profiles: {},
           until: 'season.complete(christmas, upgrades) and season.complete(easter) and season.complete(halloween) and season.complete(valentines)',
           watch: [
             { label: 'Santa', value: '[santaLevel(), 14]', format: 'progress' },
+            { label: 'Easter eggs', value: '[owned(easter), total(easter)]', format: 'progress' },
             { label: 'Grandmapocalypse', value: 'elderWrath()', format: 'auto' },
-            { label: 'Next golden cookie in', value: 'golden.expected()', format: 'time' },
           ],
         },
         {
@@ -176,7 +165,7 @@ CA.Managers = (() => {
         },
         {
           name: 'Golden cookie combos',
-          macros: { gardener: 'on', fthofOnClickFrenzy: 'on' },
+          macros: { golden: 'on', wrath: 'on', gardener: 'on', fthofOnClickFrenzy: 'on' },
           inputs: {},
           profiles: { buyer: 'combos', pantheon: 'golden', dragon: 'dragonFlightHarvest', grimoire: 'default', garden: 'tulipCombos' },
           until: '',
