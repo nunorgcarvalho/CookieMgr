@@ -139,14 +139,23 @@ CA.UI.Menu = (() => {
     );
   }
 
-  /** "New version vX available · Reload" under the version, when CA.Update has found a newer release. */
+  /** Under the version: a green "Up to date" once an update check has answered, which turns into a red
+   *  "New version vX available · Reload" when CA.Update finds a newer release. */
   function updateNote() {
     const v = CA.Update.available();
-    if (!v) return '<span class="ca-update-note" data-ca-update-note hidden></span>';
-    return (
-      `<span class="ca-update-note" data-ca-update-note data-tip="${CA.Util.escapeHtml(`You're on v${CA.VERSION}. Reloading the page loads v${v} — cookieMgr can't safely update itself without a reload.`)}">` +
-      `${CA.UI.Icons.html('refresh', 12)}New version v${v} available &middot; <a href="javascript:void(0)" data-ca="reload">Reload</a></span>`
-    );
+    if (v) {
+      return (
+        `<span class="ca-update-note ca-update-new" data-ca-update-note data-tip="${CA.Util.escapeHtml(`You're on v${CA.VERSION}. Reloading the page loads v${v} — cookieMgr can't safely update itself without a reload.`)}">` +
+        `${CA.UI.Icons.html('refresh', 12)}New version v${v} available &middot; <a href="javascript:void(0)" data-ca="reload">Reload</a></span>`
+      );
+    }
+    if (CA.Update.status() === 'current') {
+      return (
+        `<span class="ca-update-note ca-update-current" data-ca-update-note data-tip="${CA.Util.escapeHtml(`v${CA.VERSION} is the latest release. cookieMgr checks GitHub every 5 minutes and when Settings opens.`)}">` +
+        `${CA.UI.Icons.html('check', 12)}Up to date</span>`
+      );
+    }
+    return '<span class="ca-update-note" data-ca-update-note hidden></span>';
   }
 
   /** At-a-glance tiles at the top of the Settings page. */
@@ -609,7 +618,7 @@ CA.UI.Menu = (() => {
     CA.Events.on('integrations', () => {
       if (isOpen() && currentTab() === 'settings') render();
     });
-    // a newer release was found: show it under the version without re-rendering the page
+    // an update check answered (up to date, or a newer release): show it under the version without re-rendering the page
     CA.Events.on('update', () => {
       const note = isOpen() && currentTab() === 'settings' && document.querySelector('#CookieMgrMenu [data-ca-update-note]');
       if (note) note.outerHTML = updateNote();
