@@ -2,7 +2,7 @@
 // changes, and the rest carries over until a later stage changes it back. The code has a block per
 // stage for it and every stage after it (manager.arriving(N) on its first pass); a jump runs the blocks
 // before it too. Nunix late game clicks the big cookie and reindeer from the start (golden cookies only in
-// the combos) and researches up to the Elder Pact.
+// the combos) and buys all the research, the Elder Pact too (Reindeer's Elder Pledge comes with it).
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
 import { boot, sleep, makeAssert } from '../harness/game.mjs';
 
@@ -21,12 +21,12 @@ const [s1, s2, s3] = nunix.stages;
 assert(Object.keys(s2.macros).join() === 'elderPledge' && Object.keys(s2.profiles).join() === 'dragon', 'Reindeer: the pledge and the dragon');
 assert(s1.macros.reindeer === 'on' && s1.macros.bigCookie === 'on' && s1.macros.upgradeUnlocker === 'on', 'stage 1: the big cookie and reindeer clicked; the Upgrade unlocker on');
 assert(s1.macros.golden === 'off' && s1.macros.wrath === 'off', 'stage 1: no golden or wrath cookies (Scorn makes them all wrath)');
-assert(s1.inputs.research.stopBefore === 'Elder Pact' && s1.macros.elderPledge === 'off', 'research up to the Elder Pact, no pledge (the Grandmapocalypse, for the drops)');
+assert(s1.inputs.research.stopBefore === 'none' && s1.macros.elderPledge === 'off', 'all the research, the Elder Pact too; no pledge (the Grandmapocalypse, for the drops)');
 assert(['gardener', 'fthofOnClickFrenzy', 'stockTrader'].every((id) => s1.macros[id] === 'off'), 'no garden, spells or stocks at first');
 assert(s3.macros.golden === 'on' && s3.macros.wrath === 'on', 'Golden cookie combos: golden and wrath cookies on again');
 const e3 = G.effective(nunix, 2);
 assert(e3.macros.reindeer === 'on' && e3.macros.bigCookie === 'on' && e3.macros.golden === 'on' && e3.macros.elderPledge === 'on' && e3.macros.gardener === 'on' && e3.profiles.buyer === 'combos' && e3.profiles.pantheon === 'golden', 'what stage 3 runs with: everything before it, and its own changes');
-assert(e3.inputs.research.stopBefore === 'Elder Pact', 'settings carry over too');
+assert(e3.inputs.research.stopBefore === 'none', 'settings carry over too');
 
 // ---- its code ----
 const code = G.codeOf(nunix);
@@ -84,6 +84,17 @@ S.load(JSON.stringify(old));
 const mine = G.find('mine');
 assert(mine && JSON.stringify(mine.stages[1].macros) === '{"bigCookie":"on"}' && JSON.stringify(mine.stages[1].profiles) === '{"buyer":"combos"}' && !Object.keys(mine.stages[1].inputs).length, 'v4.0 stages become changes');
 assert(G.effective(mine, 1).macros.autoBuyer === 'on' && G.effective(mine, 1).inputs.research.stopBefore === 'none', 'and run as they did');
+S.load(snap);
+
+// ---- a save whose Nunix stopped the research before the Elder Pact (so Reindeer's pledge never came up): all of it ----
+const pact = JSON.parse(snap);
+const nx = JSON.parse(JSON.stringify(G.SEEDS[0]));
+nx.stages[0].inputs.research.stopBefore = 'Elder Pact';
+nx.stages[0].watch[0].value = '[researchOwned(), 8]';
+pact.managers = { managers: [nx], active: 'nunixLateGame' };
+S.load(JSON.stringify(pact));
+const drops = G.find('nunixLateGame').stages[0];
+assert(drops.inputs.research.stopBefore === 'none' && drops.watch[0].value === '[researchOwned(), 9]' && !G.isEdited('nunixLateGame'), 'saved Nunix: all the research, as seeded now');
 S.load(snap);
 
 // (the page: tests/e2e/manager-stage-tabs.test.mjs)
