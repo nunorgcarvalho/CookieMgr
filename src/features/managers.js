@@ -31,13 +31,15 @@
 //                          makes them all wrath cookies); reindeer; the Auto buyer spending freely
 //                          (Payback), the Upgrade unlocker (Santa, all the research, the dragon trained and
 //                          petted, fortunes, cheap upgrades), SeasonCompletion, wrinklers and sugar lumps;
-//                          no garden, spells, stocks or Elder Pledge (the Grandmapocalypse's wrinklers drop
-//                          Halloween's cookies); Pantheon wrinklers, dragon drops — until
+//                          the garden a weed farm (the Auto-gardener harvests mature weeds and new seeds:
+//                          the garden isn't ready for combos yet); no spells, stocks or Elder Pledge (the
+//                          Grandmapocalypse's wrinklers drop Halloween's cookies); Pantheon wrinklers,
+//                          dragon drops — until
 //                          Christmas's upgrades, Easter, Halloween and Valentine's are in
 //   Reindeer               Christmas again for its cookies: + the elders pledged, dragon drops & flight
 //   Golden cookie combos   for good: the buyer ranks by actual income and never dips below the Lucky! and
-//                          garden replant banks (buyer profile combos); + the Auto-gardener (8
-//                          nursetulips together + clover combos), Pantheon golden, dragon Dragonflight &
+//                          garden replant banks (buyer profile combos); the garden on 8 nursetulips
+//                          together + clover combos, Pantheon golden, dragon Dragonflight &
 //                          Harvest, FtHoF on combos, and golden and wrath cookies clicked again
 //
 //   For algorithmic code:
@@ -116,7 +118,7 @@ CA.Managers = (() => {
     {
       id: 'nunixLateGame',
       name: 'Nunix late game',
-      desc: 'Clicks the big cookie from the start, not golden cookies (Scorn makes them all wrath cookies), while it hunts every season’s drops in the Grandmapocalypse, the Auto buyer spending freely and the Upgrade unlocker on; then Christmas again for the reindeer cookies, the elders pledged; then golden cookie combos for good, golden cookies clicked again: the buyer ranks by actual income and keeps the Lucky! and garden replant banks, with the garden, the golden Pantheon, Dragonflight & Harvest and Force the Hand of Fate on combos.',
+      desc: 'Clicks the big cookie from the start, not golden cookies (Scorn makes them all wrath cookies), while it hunts every season’s drops in the Grandmapocalypse, the Auto buyer spending freely and the Upgrade unlocker on, the garden a weed farm (mature weeds and new seeds harvested); then Christmas again for the reindeer cookies, the elders pledged; then golden cookie combos for good, golden cookies clicked again: the buyer ranks by actual income and keeps the Lucky! and garden replant banks, with the garden on tulip and clover combos, the golden Pantheon, Dragonflight & Harvest and Force the Hand of Fate on combos.',
       scope: 'ascension',
       v: 2,
       stages: [
@@ -135,7 +137,9 @@ CA.Managers = (() => {
             golden: 'off',
             wrath: 'off',
             elderPledge: 'off', // the Grandmapocalypse: its wrinklers drop Halloween's cookies
-            gardener: 'off',
+            // the garden isn't ready for the combos yet: the weed farm harvests mature weeds and the
+            // new seeds that spring up (until stage 3 puts the tulips and clovers in)
+            gardener: 'on',
             fthofOnClickFrenzy: 'off',
             stockTrader: 'off',
           },
@@ -145,7 +149,7 @@ CA.Managers = (() => {
             // Business day, and wrinklers are popped once they've eaten, as those macros do anyway)
             research: { stopBefore: 'none' },
           },
-          profiles: { buyer: 'payback', pantheon: 'wrinklers', dragon: 'drops' },
+          profiles: { buyer: 'payback', pantheon: 'wrinklers', dragon: 'drops', garden: 'weedFarm' },
           until: 'season.complete(christmas, upgrades) and season.complete(easter) and season.complete(halloween) and season.complete(valentines)',
           // (not Santa or the Easter eggs: the "until" counts the seasons' drops already)
           watch: [
@@ -167,7 +171,7 @@ CA.Managers = (() => {
         },
         {
           name: 'Golden cookie combos',
-          macros: { golden: 'on', wrath: 'on', gardener: 'on', fthofOnClickFrenzy: 'on' },
+          macros: { golden: 'on', wrath: 'on', fthofOnClickFrenzy: 'on' },
           inputs: {},
           profiles: { buyer: 'combos', pantheon: 'golden', dragon: 'dragonFlightHarvest', grimoire: 'default', garden: 'tulipCombos' },
           until: '',
@@ -708,9 +712,30 @@ CA.Managers = (() => {
     const out = r && r.stopBefore === 'Elder Pact' ? { ...st, inputs: { ...st.inputs, research: { ...r, stopBefore: 'none' } } } : st;
     return { ...out, watch: out.watch.map((x) => (x.label === 'Research' && x.value === '[researchOwned(), 8]' ? { ...x, value: '[researchOwned(), 9]' } : x)) };
   }
+  /**
+   * Nunix late game saved when the garden waited, off, for its Golden cookie combos stage: the weed farm
+   * from the first stage, as seeded now (the combos stage then only changes the profile).
+   */
+  function withWeedFarm(m) {
+    if (m.id !== 'nunixLateGame' || !Array.isArray(m.stages)) return m;
+    const drops = m.stages.find((st) => st && st.name === 'Drops');
+    if (!drops || !drops.macros || drops.macros.gardener !== 'off' || (drops.profiles && drops.profiles.garden)) return m;
+    return {
+      ...m,
+      stages: m.stages.map((st) => {
+        if (st === drops) return { ...st, macros: { ...st.macros, gardener: 'on' }, profiles: { ...st.profiles, garden: 'weedFarm' } };
+        if (st && st.name === 'Golden cookie combos' && st.macros && st.macros.gardener === 'on') {
+          const macros = { ...st.macros };
+          delete macros.gardener;
+          return { ...st, macros };
+        }
+        return st;
+      }),
+    };
+  }
   function load(data) {
     if (data && Array.isArray(data.managers)) {
-      managers = withBuiltins(data.managers.filter((m) => m && m.id).map((m) => clean(withSeedWatch(m))));
+      managers = withBuiltins(data.managers.filter((m) => m && m.id).map((m) => clean(withWeedFarm(withSeedWatch(m)))));
       active = typeof data.active === 'string' && (data.active === '' || managers.some((m) => m.id === data.active)) ? data.active : managers.length ? managers[0].id : '';
       run = cleanRun(data.run);
     } else {

@@ -22,7 +22,8 @@ assert(Object.keys(s2.macros).join() === 'elderPledge' && Object.keys(s2.profile
 assert(s1.macros.reindeer === 'on' && s1.macros.bigCookie === 'on' && s1.macros.upgradeUnlocker === 'on', 'stage 1: the big cookie and reindeer clicked; the Upgrade unlocker on');
 assert(s1.macros.golden === 'off' && s1.macros.wrath === 'off', 'stage 1: no golden or wrath cookies (Scorn makes them all wrath)');
 assert(s1.inputs.research.stopBefore === 'none' && s1.macros.elderPledge === 'off', 'all the research, the Elder Pact too; no pledge (the Grandmapocalypse, for the drops)');
-assert(['gardener', 'fthofOnClickFrenzy', 'stockTrader'].every((id) => s1.macros[id] === 'off'), 'no garden, spells or stocks at first');
+assert(['fthofOnClickFrenzy', 'stockTrader'].every((id) => s1.macros[id] === 'off'), 'no spells or stocks at first');
+assert(s1.macros.gardener === 'on' && s1.profiles.garden === 'weedFarm' && s3.macros.gardener === undefined && s3.profiles.garden === 'tulipCombos', 'the garden a weed farm until the combos put the tulips in');
 assert(s3.macros.golden === 'on' && s3.macros.wrath === 'on', 'Golden cookie combos: golden and wrath cookies on again');
 const e3 = G.effective(nunix, 2);
 assert(e3.macros.reindeer === 'on' && e3.macros.bigCookie === 'on' && e3.macros.golden === 'on' && e3.macros.elderPledge === 'on' && e3.macros.gardener === 'on' && e3.profiles.buyer === 'combos' && e3.profiles.pantheon === 'golden', 'what stage 3 runs with: everything before it, and its own changes');
@@ -95,6 +96,24 @@ pact.managers = { managers: [nx], active: 'nunixLateGame' };
 S.load(JSON.stringify(pact));
 const drops = G.find('nunixLateGame').stages[0];
 assert(drops.inputs.research.stopBefore === 'none' && drops.watch[0].value === '[researchOwned(), 9]' && !G.isEdited('nunixLateGame'), 'saved Nunix: all the research, as seeded now');
+S.load(snap);
+
+// ---- a save whose Nunix kept the garden off until the combos: the weed farm from the start ----
+const weeds = JSON.parse(snap);
+const nw = JSON.parse(JSON.stringify(G.SEEDS[0]));
+nw.stages[0].macros.gardener = 'off';
+delete nw.stages[0].profiles.garden;
+nw.stages[2].macros.gardener = 'on';
+weeds.managers = { managers: [nw], active: 'nunixLateGame' };
+S.load(JSON.stringify(weeds));
+const nwl = G.find('nunixLateGame');
+assert(nwl.stages[0].macros.gardener === 'on' && nwl.stages[0].profiles.garden === 'weedFarm' && nwl.stages[2].macros.gardener === undefined && !G.isEdited('nunixLateGame'), 'saved Nunix: the weed farm while the garden isn’t ready, as seeded now');
+const kept = JSON.parse(snap);
+const nk = JSON.parse(JSON.stringify(nw));
+nk.stages[0].profiles.garden = 'maxEffects';
+kept.managers = { managers: [nk], active: 'nunixLateGame' };
+S.load(JSON.stringify(kept));
+assert(G.find('nunixLateGame').stages[0].macros.gardener === 'off', 'one with a garden profile of yours in Drops: left as it is');
 S.load(snap);
 
 // (the page: tests/e2e/manager-stage-tabs.test.mjs)

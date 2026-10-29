@@ -451,8 +451,9 @@ card puts the widget on the left panel.
    Pantheon's Diamond slot, makes every golden cookie a wrath cookie); the Auto buyer, the Upgrade unlocker (Santa,
    research, Auto dragon, Pet the dragon, Fortunes and cheap upgrades), SeasonCompletion, wrinklers and sugar lumps.
    Research goes all the way, the Elder Pact too: it keeps the Grandmapocalypse going (wrinklers come more often at its
-   last stage) and puts the Elder Pledge up for sale for Reindeer. No
-   garden, Grimoire or stock market. Pantheon wrinklers, dragon drops. Until Christmas's upgrades, Easter, Halloween
+   last stage) and puts the Elder Pledge up for sale for Reindeer. The garden isn't ready for combos yet, so it's a
+   **Weed farm**: the Auto-gardener harvests mature weeds and any new seed that springs up (a mutation can unlock
+   one). No Grimoire or stock market. Pantheon wrinklers, dragon drops. Until Christmas's upgrades, Easter, Halloween
    and Valentine's day are in.
 2. **Reindeer**: Christmas again for its cookies, with the elders pledged and Dragon drops & flight.
 3. **Golden cookie combos**, for good: golden and wrath cookies clicked again, the Auto buyer's Golden cookie combos profile, 8 nursetulips together +

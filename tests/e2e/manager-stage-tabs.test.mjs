@@ -63,7 +63,7 @@ assert(nunix().stages[1].macros.elderPledge === 'on', 'a “still off” one, cl
 // ---- the library ----
 const row = (id) => q(`.ca-mgr-libgroup:not(.ca-mgr-libtop) [data-mgr-act="lib"][data-macro="${id}"]`);
 assert(q('.ca-mgr-libtop') && q('.ca-mgr-libgroup') === q('.ca-mgr-libtop') && qa('.ca-mgr-libtop .ca-mgr-librow').length === 8, 'Most used first (eight)');
-assert(row('autoBuyer').classList.contains('on') && row('gardener').classList.contains('off'), 'each row says how it stands in this stage');
+assert(row('autoBuyer').classList.contains('on') && row('stockTrader').classList.contains('off'), 'each row says how it stands in this stage');
 click(row('fortune'));
 assert(nunix().stages[1].macros.fortune === 'on', 'a row clicked: on from this stage');
 click(row('fortune'));
