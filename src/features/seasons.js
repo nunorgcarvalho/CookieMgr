@@ -79,7 +79,14 @@ CA.Seasons = (() => {
     const cost = Math.pow((Game.santaLevel || 0) + 1, (Game.santaLevel || 0) + 1);
     if (Game.cookies <= cost) return 0;
     const before = Game.santaLevel;
+    const prevTab = Game.specialTab;
     Game.UpgradeSanta();
+    // the game redraws the Santa/dragon menu after a level whatever is open: with none, that puts up an
+    // empty one whose × does nothing (its close only acts while a tab is set), so close it again
+    if (!prevTab && typeof Game.ToggleSpecialMenu === 'function') {
+      Game.specialTab = 'santa';
+      Game.ToggleSpecialMenu(0);
+    }
     return Game.santaLevel > before ? 1 : 0;
   }
 
