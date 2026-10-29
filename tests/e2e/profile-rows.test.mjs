@@ -54,10 +54,13 @@ await sleep(30);
 assert(!D.find('dragonFlightHarvest') && !row('dragonFlightHarvest'), 'and deletes on the second click');
 
 // ---- managers: the same Use / In use and trash can
+const yours = CA.Managers.add('Mine');
 CA.UI.Menu.openPage('managers');
 await sleep(50);
 const m = doc.querySelector('.ca-mgr-row');
-assert(m.querySelector('.ca-inuse, [data-mgr-act="use"]') && m.querySelector('[data-mgr-act="delete"].ca-btn-trash'), 'a manager row: Use or In use, and a trash can');
+const mine = doc.querySelector(`[data-mgr-name="${yours.id}"]`).closest('.ca-mgr-row');
+assert(m.querySelector('.ca-inuse, [data-mgr-act="use"]') && mine.querySelector('[data-mgr-act="use"]') && mine.querySelector('[data-mgr-act="delete"].ca-btn-trash'), 'a manager row: Use or In use, and a trash can');
+assert(!m.querySelector('[data-mgr-act="delete"]'), 'a built-in (Nunix late game): no trash can');
 assert(!/active ·/.test(m.textContent), 'no "active ·" pill');
 
 assert(g.errors.length === 0, 'no runtime errors' + (g.errors.length ? `: ${g.errors.slice(0, 3).join(' | ')}` : ''));
