@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 4.25.1 — 2026-10-29
+
+- **README:** the Payback picture shows the priority score and implied payback period, the Stats picture its Actual income tab, and the Payback, Stats and Widgets tiles mention them.
+
 ## 4.25.0 — 2026-10-29
 
 - **Actual income tab** on the Stats page: what you really baked each second by source (production, clicking, golden
