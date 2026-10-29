@@ -60,10 +60,10 @@ CA.Managers = (() => {
   const SCOPES = [{ v: 'ascension', label: 'This ascension' }];
   const KINDS = ['buyer', 'pantheon', 'dragon', 'grimoire', 'garden'];
   const FORMATS = [
-    { v: 'auto', label: 'as it is' },
-    { v: 'time', label: 'a time (seconds)' },
-    { v: 'percent', label: 'a share (0–1)' },
-    { v: 'progress', label: 'progress ([have, of] or 0–100)' },
+    { v: 'auto', label: 'as it is', tip: 'the value as it is' },
+    { v: 'time', label: 'a time', tip: 'a time: the value in seconds' },
+    { v: 'percent', label: 'a share', tip: 'a share: the value from 0 to 1, shown as a percentage' },
+    { v: 'progress', label: 'progress', tip: 'progress, with a bar: [have, of], or 0–100' },
   ];
   const WATCH_MAX = 8;
 

@@ -9319,18 +9319,33 @@ body.ca-has-storebar #products {
   gap: 6px;
   margin-top: 8px;
 }
+/* one line per watch: the label and format shrink, the code takes the rest */
 #CookieMgrMenu .ca-mgr-watch {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 6px;
   width: 100%;
 }
 #CookieMgrMenu .ca-mgr-watch .ca-gname {
-  width: 150px;
+  flex: 0 1 140px;
+  min-width: 70px;
+  width: auto;
+}
+#CookieMgrMenu .ca-mgr-watch .ca-code-line {
+  flex: 1 1 160px;
+  min-width: 90px;
 }
 #CookieMgrMenu .ca-mgr-watch select {
-  width: 190px;
+  flex: 0 1 100px;
+  min-width: 70px;
+  width: auto;
+}
+#CookieMgrMenu .ca-mgr-watch [data-mgr-watch-now] {
+  flex: 0 0 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 #CookieMgrMenu .ca-mgr-codehint {
   padding: 6px 14px 0;

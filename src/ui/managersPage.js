@@ -384,14 +384,14 @@ CA.UI.ManagersPage = (() => {
     const rows = s.watch
       .map((w, j) => {
         const fmts = G()
-          .FORMATS.map((f) => `<option value="${f.v}"${w.format === f.v ? ' selected' : ''}>${esc(f.label)}</option>`)
+          .FORMATS.map((f) => `<option value="${f.v}" title="${esc(f.tip)}"${w.format === f.v ? ' selected' : ''}>${esc(f.label)}</option>`)
           .join('');
         const v = now[j] || {};
         return (
           '<div class="ca-mgr-watch">' +
           `<input type="text" class="ca-gname" maxlength="40" placeholder="label" value="${esc(w.label)}" ${at(j)} data-field="label" aria-label="Label">` +
           CA.UI.CodeEditor.lineHtml(`watch:${i}:${j}`, w.value, { placeholder: 'a value, e.g. santaLevel()', bad: !!v.error && !!w.value }) +
-          `<select ${at(j)} data-field="format" aria-label="Shown as">${fmts}</select>` +
+          `<select ${at(j)} data-field="format" aria-label="Shown as" data-tip="${esc(`Shown as ${(G().FORMATS.find((f) => f.v === w.format) || G().FORMATS[0]).tip}`)}">${fmts}</select>` +
           `<span data-mgr-watch-now="${j}">${watchNow(v)}</span>` +
           x('delWatch', `data-id="${esc(m.id)}" data-i="${i}" data-j="${j}"`, 'Stop watching it') +
           '</div>'
