@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 4.22.0 — 2026-10-29
+
+- **Up to date badge:** the version at the top of Settings now says "Up to date" in green once an update check finds
+  nothing newer, and turns into the red "New version vX available · Reload" when a newer release is out.
+
 ## 4.21.4 — 2026-10-29
 
 - **README:** the Managers picture shows Nunix late game as it is now: the Auto-gardener at work in Drops and Research going all the way.
