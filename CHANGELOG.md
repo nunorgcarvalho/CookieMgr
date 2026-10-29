@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 4.5.1 — 2026-10-29
+
+- **README:** the Managers screenshot shows the stage editor (a tab per stage, the macro library beside it).
+
 ## 4.5.0 — 2026-10-29
 
 - **Managers page, a tab per stage.** The stage editor is now tabs (1, 2, 3…, + for one more; a dot on the stage
