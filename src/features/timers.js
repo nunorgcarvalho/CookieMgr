@@ -184,7 +184,8 @@ CA.Timers = (() => {
    * when the last one left), cdf(secs since it left) → the chance one has come by then, by (cdf now) }, wait (waitFrom — from now), factors (what's making them more frequent now),
    * frequency (how many times more often than with no factors at all — 1 / Π factors),
    * next: { min, max, mean } (a fresh cycle at today's factors), override ('chain' | 'hoard' | ''),
-   * wrathChance (the next golden cookie being a wrath cookie) }.
+   * wrathChance (the next golden cookie being a wrath cookie), start (one on screen: { cycle, wait } of the
+   * cycle that starts when it leaves, at today's factors — the charts hold still at its beginning; else null) }.
    */
   function distribution(type, bins = 120) {
     const me = Game.shimmerTypes && Game.shimmerTypes[type];
@@ -203,6 +204,7 @@ CA.Timers = (() => {
       if (Game.hasGod && Game.hasGod('scorn')) wrathChance = 1;
       else wrathChance = [0, 1 / 3, 2 / 3, 1][Math.max(0, Math.min(3, Game.elderWrath || 0))];
     }
+    const fresh = { time: 0, minTime: nmin, maxTime: nmax };
     return {
       type,
       spawned: !!me.spawned,
@@ -211,9 +213,10 @@ CA.Timers = (() => {
       factors,
       // how many times more often they come than with nothing at all (no upgrades, garden, spirits, aura…)
       frequency: 1 / factors.reduce((a, x) => a * x.k, 1),
-      next: { min: nmin / f, max: nmax / f, mean: waitFrom({ time: 0, minTime: nmin, maxTime: nmax }, 2).mean },
+      next: { min: nmin / f, max: nmax / f, mean: waitFrom(fresh, 2).mean },
       override,
       wrathChance,
+      start: me.spawned ? { cycle: { min: nmin / f, max: nmax / f, elapsed: 0, cdf: cycleCdf(fresh), by: 0 }, wait: waitFrom(fresh, bins) } : null,
     };
   }
   /** The mean wait of a fresh cycle with some of today's factors left out (names) — the what-if. */

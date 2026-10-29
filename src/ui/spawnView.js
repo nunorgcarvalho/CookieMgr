@@ -20,6 +20,9 @@
 //
 // chart() — the wait from now (density, bands, the next one's window) — is the Golden timeline
 // widget's.
+//
+// One on screen: the card and the widgets keep their layout, held at the beginning of the cycle that starts
+// when it leaves (atStart), under a "Golden cookie present" overlay (presentHtml).
 
 CA.UI = CA.UI || {};
 
@@ -178,7 +181,7 @@ CA.UI.SpawnView = (() => {
     let labels =
       // the expected moment's height: far right, under its line
       `<text class="ca-sp-ylab ca-sp-hp" x="${x1 - 2}" y="${(Y(hp) + 11).toFixed(2)}" text-anchor="end">${pc(hp)}</text>` +
-      (y0 - y1 >= 60 && Y(c.by) - y1 > 24 ? `<text class="ca-sp-ylab" x="${x0 + 2}" y="${(y1 + 8).toFixed(2)}">100%</text>` : ''); // a short chart (a widget): the dashed line's alone
+      (y0 - y1 >= 60 && Y(c.by) - y1 > 24 && nx > x0 + 40 ? `<text class="ca-sp-ylab" x="${x0 + 2}" y="${(y1 + 8).toFixed(2)}">100%</text>` : ''); // a short chart (a widget), or the now line at the start (its time is there): the dashed line's alone
     let plotSvg =
       `<path class="ca-sp-swept" d="${area}"/>` +
       // dashed, across: the curve's height at the expected moment (where the expected line meets it)
@@ -259,9 +262,19 @@ CA.UI.SpawnView = (() => {
     );
   }
 
+  /**
+   * One on screen: the distribution as it stands at the beginning of the cycle that starts when it leaves
+   * (its cycle and wait, at today's factors), so the charts and numbers hold still there instead of
+   * disappearing — `present` set, `spawned` cleared. Otherwise (or null) as it is.
+   */
+  const atStart = (d) => (d && d.spawned && d.start ? { ...d, spawned: false, present: true, cycle: d.start.cycle, wait: d.start.wait } : d);
+
+  /** The overlay over a chart (or widget) held at its beginning while one is on screen. */
+  const presentHtml = (type) => `<div class="ca-sp-present" data-tip="${esc(`A ${LABEL[type]} is on screen — pop it! What's shown is the next one, from when it leaves.`)}"><span>${type === 'golden' ? 'Golden cookie' : 'Reindeer'} present</span></div>`;
+
   /** A type's card body (the Stats page). */
   function html(type) {
-    const d = T().distribution(type, 120);
+    const d = atStart(T().distribution(type, 120));
     const name = LABEL[type];
     if (!d) return `<div class="ca-card-note">No ${name} coming: ${type === 'golden' ? 'the Golden switch is on (switch it off and they come again).' : 'reindeer only run at Christmas.'}</div>`;
     const { tile } = CA.UI.Plot.fmt;
@@ -281,7 +294,8 @@ CA.UI.SpawnView = (() => {
         ? `<div class="ca-sp-note">From the next one, on average <b>${when(d.next.mean)}</b> — without ${esc(without[type].join(', '))}: <b>${when(whatIf)}</b> (${whatIf > d.next.mean ? '+' : '−'}${when(Math.abs(whatIf - d.next.mean))})</div>`
         : '';
     // the effects that ran since the last one left (ended ones too: the chart's window); on screen, those running
-    const effects = type !== 'golden' ? [] : d.spawned ? T().buffs() : T().effectsSince(d.cycle.elapsed);
+    // (one on screen: those running, from the beginning of the next cycle)
+    const effects = type !== 'golden' ? [] : d.present ? T().buffs() : T().effectsSince(d.cycle.elapsed);
     const override = d.override === 'chain' ? 'A cookie chain is going: the next comes within seconds.' : d.override === 'hoard' ? 'Gold hoard: they come almost at once.' : d.override === 'season' ? 'Reindeer season: they come almost at once.' : '';
     // golden cookies: always, with the ☆ that puts a Golden cookies widget showing the multiplier, the
     // frequency and what's helping on the left panel
@@ -294,22 +308,16 @@ CA.UI.SpawnView = (() => {
     const freqTile =
       tile('Multiplier', `×${mx(d.frequency)}`, d.factors.length ? 'vs nothing helping' : 'nothing helping yet', type === 'golden' ? CA.StatInfo.desc('golden.frequency') : '') +
       tile('Frequency', when(d.next.mean), `between ${type === 'golden' ? 'golden cookies' : 'reindeer'}, on average`, type === 'golden' ? CA.StatInfo.desc('golden.interval') : '');
-    if (d.spawned)
-      return (
-        `<div class="ca-stats">${tile(`Next ${name}`, 'on screen', 'pop it! — the timer starts again when it leaves')}${freqTile}${wrath}</div>` +
-        (effects.length ? `<div class="ca-sp-chips">${effects.map((b) => `<span class="ca-sp-chip">${esc(b.name)} <b>${when(b.secs)}</b></span>`).join('')}</div>` : '') +
-        (override ? `<div class="ca-sp-note">${override}</div>` : '') +
-        freq
-      );
     const w = d.wait;
+    const chartHtml = cycleChart(type, d, effects);
     return (
       '<div class="ca-stats">' +
-      tile('Expected wait', when(w.mean), 'on average, from now', type === 'golden' ? CA.StatInfo.desc('golden.wait') : '') +
-      tile('Odds so far', pc(d.cycle.by), `one has come by ${when(d.cycle.elapsed)}`) +
+      tile('Expected wait', when(w.mean), d.present ? 'on average, from when it leaves' : 'on average, from now', type === 'golden' ? CA.StatInfo.desc('golden.wait') : '') +
+      tile('Odds so far', pc(d.cycle.by), d.present ? `one is on screen: ${name === 'reindeer' ? 'catch' : 'pop'} it!` : `one has come by ${when(d.cycle.elapsed)}`) +
       freqTile +
       wrath +
       '</div>' +
-      cycleChart(type, d, effects) +
+      (d.present ? `<div class="ca-sp-held">${chartHtml}${presentHtml(type)}</div>` : chartHtml) +
       (override ? `<div class="ca-sp-note">${override}</div>` : '') +
       freq
     );
@@ -342,5 +350,5 @@ CA.UI.SpawnView = (() => {
     return true;
   }
 
-  return { html, chart, cycleChart, onMove, onLeave, onClick };
+  return { html, chart, cycleChart, atStart, presentHtml, onMove, onLeave, onClick };
 })();
