@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 4.9.1 — 2026-10-29
+
+- **README:** new Managers, Manager widget (with the research watches), Pantheon, Dragon and Payback screenshots
+  showing the In use badges and trash cans; the Managers summary says Nunix late game is built in.
+
 ## 4.9.0 — 2026-10-29
 
 - **Managers page: built-in managers.** Nunix late game is built in: it's always on the list, marked **built-in**,
