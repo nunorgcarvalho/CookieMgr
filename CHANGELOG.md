@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 4.21.4 — 2026-10-29
+
+- **README:** the Managers picture shows Nunix late game as it is now: the Auto-gardener at work in Drops and Research going all the way.
+
 ## 4.21.3 — 2026-10-29
 
 - **Manager widget:** long upgrade names stay compact in the Auto buyer row. Buy all upgrades' card lists the
