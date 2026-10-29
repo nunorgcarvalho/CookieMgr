@@ -170,8 +170,13 @@ CA.AutoBuy = (() => {
       for (let i = 0; i < PETS && !(drop = got()); i++) Game.ClickSpecialPic();
       drop = got();
     } finally {
-      Game.specialTab = prevTab;
-      if (typeof Game.ToggleSpecialMenu === 'function') Game.ToggleSpecialMenu(prevTab ? 1 : 0);
+      // the game's close only acts while a tab is set (it clears Game.specialTab itself): close before
+      // restoring '', or the dragon stays on screen, never redrawn and with an × that does nothing
+      if (typeof Game.ToggleSpecialMenu !== 'function') Game.specialTab = prevTab;
+      else if (prevTab) {
+        Game.specialTab = prevTab;
+        Game.ToggleSpecialMenu(1);
+      } else Game.ToggleSpecialMenu(0);
       Game.volume = vol;
       if (Game.prefs) Game.prefs.particles = parts;
     }

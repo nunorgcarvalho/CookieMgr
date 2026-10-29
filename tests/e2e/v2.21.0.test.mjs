@@ -147,7 +147,11 @@ Game.Has = (n) => owned.has(n);
 Game.HasUnlocked = (n) => unlocked.has(n);
 Game.specialTab = '';
 let menuOn = 0;
-Game.ToggleSpecialMenu = (on) => (menuOn = on ? 1 : 0);
+// as the game's: closing only acts while a tab is set, and clears it (main.js ToggleSpecialMenu)
+Game.ToggleSpecialMenu = (on) => {
+  if (on) menuOn = 1;
+  else if (Game.specialTab !== '') (Game.specialTab = ''), (menuOn = 0);
+};
 let pets = 0;
 const quarter = Math.floor(new Date().getMinutes() / 15);
 const dueNow = ['Dragon teddy bear', 'Dragon fang', 'Dragon claw', 'Dragon scale'][quarter];
