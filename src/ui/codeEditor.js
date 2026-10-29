@@ -363,6 +363,15 @@ CA.UI.CodeEditor = (() => {
         }
         return;
       }
+      // the code's box is taller than its lines: a click below them puts the caret at the end
+      if (t.classList && t.classList.contains('ca-code')) {
+        const ta = t.querySelector('[data-code]');
+        if (ta) {
+          ta.focus({ preventScroll: true });
+          if (ta.setSelectionRange) ta.setSelectionRange(ta.value.length, ta.value.length);
+        }
+        return;
+      }
       const go = t.closest && t.closest('[data-code-goto]');
       if (go) {
         const ta = editorOf(go) && editorOf(go).querySelector('[data-code]');

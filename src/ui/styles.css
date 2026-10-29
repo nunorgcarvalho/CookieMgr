@@ -8915,3 +8915,32 @@ body.ca-has-storebar #products {
 #CookieMgrMenu .ca-mgr-codehint {
   padding: 6px 14px 0;
 }
+
+/* ---------- v4.0.2: the code editor fills its column, at least as tall as the library ---------- */
+/* The editor's column stretches to the library's height (a fixed 640px, so searching it doesn't
+   resize the code), and the code takes whatever room its column has left; longer code scrolls. */
+#CookieMgrMenu .ca-ed-layout {
+  align-items: stretch;
+}
+#CookieMgrMenu .ca-ed-layout > .ca-ed-lib {
+  height: 640px;
+}
+#CookieMgrMenu .ca-ed-layout > .ca-editor-body {
+  display: flex;
+  flex-direction: column;
+}
+#CookieMgrMenu .ca-ed-layout .ca-ed-code {
+  flex: 1 1 auto;
+}
+#CookieMgrMenu .ca-ed-layout .ca-code {
+  flex: 1 1 0;
+  min-height: 380px;
+  max-height: none;
+}
+/* below its last line, the code's box still puts the caret in (ui/codeEditor.js) */
+#CookieMgrMenu .ca-code {
+  cursor: text;
+}
+#CookieMgrMenu .ca-code-gutter {
+  cursor: default;
+}
