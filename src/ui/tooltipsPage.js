@@ -2,7 +2,9 @@
 // the warnings, the payback modes, yours — to browse, edit and write. The store tooltip's layout is a
 // card on the Settings page (layoutCard; this module's handlers run there too).
 //
-//   In the store tooltip   (Settings) the layout (ui/storeInsight.js lines), in order — a row per line in fixed
+//   In the store tooltip   (Settings) the layouts (ui/storeInsight.js profiles): the built-in Default
+//                          (Revert to default once changed) and yours — Use / In use, rename, trash, Save
+//                          as a new layout. Then the lines of the one in use, in order — a row per line in fixed
 //                          columns: its name, what it's about, its value now, how a word reads, ↑ ↓ ✕
 //                          (or drag a row); add a built-in, one of yours or any value word; Reset — and
 //                          two live previews drawn by the tooltip's own code: a building you pick, and
@@ -144,7 +146,43 @@ CA.UI.TooltipsPage = (() => {
     return (
       `<div class="ca-tl-cols"><span></span><span>#</span><span>line</span><span>about</span><span>now <em>${esc(pb ? pb.dname || pb.name : '')}</em></span><span></span><span></span><span></span><span></span></div>` +
       `<div class="ca-tl-list">${rows || '<div class="ca-card-note">No lines: the block is left out.</div>'}</div>` +
-      `<div class="ca-tl-tools">${add}${SI().isDefault() ? '' : '<button type="button" class="ca-btn ca-btn-small" data-tl-reset data-tip="Back to Cookie Monster’s layout">Reset</button>'}</div>`
+      `<div class="ca-tl-tools">${add}${SI().isDefault() ? '' : '<button type="button" class="ca-btn ca-btn-small" data-tl-reset data-tip="Back to the Default’s lines as they come">Reset</button>'}</div>`
+    );
+  }
+
+  // ---- the layouts: the lines saved under a name, the built-in Default first ----------------------
+
+  function profileRow(p) {
+    const on = SI().profileActive(p.id);
+    const edited = p.builtin && SI().defaultEdited();
+    const n = p.lines.length;
+    return (
+      `<div class="ca-row ca-dprof ca-ttprof${on ? ' on' : ''}" data-tp-row="${esc(p.id)}">` +
+      '<div class="ca-dprof-name">' +
+      (p.builtin
+        ? `<span class="ca-ttprof-fixed">${esc(p.name)}</span>`
+        : `<input type="text" class="ca-gname" maxlength="40" value="${esc(p.name)}" data-tp-name="${esc(p.id)}" aria-label="Layout name" data-tip="the layout’s name — macros use it, or its id: ${esc(p.id)}">`) +
+      `<code>${n} line${n === 1 ? '' : 's'}</code></div>` +
+      (p.builtin
+        ? `<span class="ca-pill" data-tip="Comes with cookieMgr: always here, can’t be deleted${edited ? '; you changed it' : ''}">built-in${edited ? ' · edited' : ''}</span>`
+        : '') +
+      '<span class="ca-dprof-acts">' +
+      C().useButton(on, `data-tp-act="use" data-id="${esc(p.id)}"`, on ? 'The layout the store’s tooltips show — the lines below are its' : 'Show this layout in the store’s tooltips') +
+      (p.builtin
+        ? edited
+          ? C().button(`${I('refresh', 12)} Revert to default`, `data-tp-act="revert" data-id="${esc(p.id)}" data-arm-label="Back to the built-in?" data-tip="Undo your changes: back to the lines it comes with"`, 'ca-btn-small')
+          : ''
+        : C().trash(`data-tp-act="delete" data-id="${esc(p.id)}"`, 'Delete this layout?', 'Delete this layout')) +
+      '</span></div>'
+    );
+  }
+  function profilesHtml() {
+    return (
+      `<div class="ca-list">${SI().profiles().map(profileRow).join('')}</div>` +
+      '<div class="ca-dprof-foot">' +
+      C().button(`${I('plus', 12)} Save as a new layout`, 'data-tp-act="new" data-tip="A copy of the lines in use, under a name of its own — then change it"', 'ca-btn-small') +
+      '<span class="ca-hint">The lines below are the layout in use’s: a change is saved to it. Macros: tooltips.profile(name).</span>' +
+      '</div>'
     );
   }
 
@@ -219,6 +257,7 @@ CA.UI.TooltipsPage = (() => {
         'search',
         '<div class="ca-card-meta"><span class="ca-hint">the lines cookieMgr adds under the store’s tooltips, in order — drag a row, or hover it for what it shows</span></div>'
       ) +
+      `<div class="ca-ttprofs" data-tp-list>${profilesHtml()}</div>` +
       '<div class="ca-tl">' +
       `<div data-tl-lines>${linesHtml()}</div>` +
       `<div class="ca-tl-preview" data-tl-preview>${previewHtml()}</div>` +
@@ -464,6 +503,7 @@ CA.UI.TooltipsPage = (() => {
   function refresh() {
     if (!root || !root.isConnected) return;
     [
+      ['[data-tp-list]', profilesHtml],
       ['[data-tl-lines]', linesHtml],
       ['[data-tl-preview]', previewHtml],
       ['[data-tl-warns]', warnsHtml],
@@ -523,6 +563,18 @@ CA.UI.TooltipsPage = (() => {
         }
         return list;
       });
+    }
+    const tp = e.target.closest('[data-tp-act]');
+    if (tp) {
+      e.stopPropagation();
+      const { tpAct: act, id } = tp.dataset;
+      if ((act === 'delete' || act === 'revert') && !CA.UI.Dom.armed(tp)) return;
+      if (act === 'use') SI().useProfile(id);
+      else if (act === 'new') SI().addProfile();
+      else if (act === 'delete') SI().removeProfile(id);
+      else if (act === 'revert') SI().revertDefault();
+      CA.Util.sound('snd/tick.mp3');
+      return refresh();
     }
     const tl = e.target.closest('[data-tl-up],[data-tl-down],[data-tl-del],[data-tl-reset]');
     if (tl) {
@@ -629,6 +681,10 @@ CA.UI.TooltipsPage = (() => {
       return editLines((list) =>
         list.concat([v.startsWith('w:') ? { word: v.slice(2), fmt: 'auto' } : v.startsWith('s:') ? { stat: v.slice(2) } : v])
       );
+    }
+    if (d.tpName !== undefined) {
+      SI().renameProfile(d.tpName, el.value);
+      return refresh();
     }
     if (d.tlFmt !== undefined) {
       const i = Number(d.tlFmt);

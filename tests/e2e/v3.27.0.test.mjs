@@ -44,10 +44,11 @@ const goTo = async (id) => {
   CA.UI.Menu.openPage(id);
   await sleep(30);
 };
+CA.UI.StoreInsight.setLines(['bonus', 'actualGain', 'payback', 'actual', 'afford', 'share', 'next', 'nextUpgrade', 'wins']); // the lines before tooltip layouts changed the Default
 await goTo('settings:store');
 const page = () => doc.querySelector(`[data-page="${pageId}"]`);
 const rows = () => [...page().querySelectorAll('[data-tl-lines] .ca-tl-row')];
-assert(rows().length === SI.DEFAULT_LINES.length, `a row per line (${rows().length})`);
+assert(rows().length === SI.lines().length, `a row per line (${rows().length})`);
 assert(rows().every((r) => r.children.length === 9), 'every row: the same nine columns (grip, #, name, about, now, format, ↑ ↓ ✕)');
 assert(page().querySelector('.ca-tl-cols'), 'column heads');
 const valOf = (id) => {
@@ -113,7 +114,7 @@ search.value = '';
 search.dispatchEvent(new w.Event('input', { bubbles: true }));
 // in the tooltip, one click
 const tt = (id) => card(id).querySelector(`[data-st-tt="${id}"]`);
-assert(tt('payback').classList.contains('on') && !tt('bulks').classList.contains('on'), 'which are in the tooltip');
+assert(tt('paybackRaw').classList.contains('on') && !tt('bulks').classList.contains('on'), 'which are in the tooltip');
 click(w, tt('bulks'));
 assert(SI.lines()[SI.lines().length - 1] === 'bulks' && tt('bulks').classList.contains('on'), 'add one: at the end');
 assert(/Payback ×1 \/ 10 \/ 100/.test(Game.Objects.Farm.tooltip()), 'the tooltip has it');

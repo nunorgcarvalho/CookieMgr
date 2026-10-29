@@ -157,27 +157,111 @@ CA.UI.StoreInsight = (() => {
   // id ('payback'…), yours as { stat: id } — and value words as { word, fmt, label } (one taking the
   // building / an upgrade, or nothing: a statistic that is just that word). Each line is worked out
   // about the building or upgrade hovered; one with nothing to say (no wins, nothing recorded yet), or
-  // about the other kind, is left out. The default is Cookie Monster's layout.
+  // about the other kind, is left out. The default: DEFAULT_LINES.
   const ST = () => CA.Stats;
   /** The built-in lines, for the editor: [{ id, name, desc, scope }]. */
   const LINES = CA.Stats.BUILTINS.filter((b) => !b.warn).map((b) => ({ id: b.id, name: b.name, desc: b.desc, scope: b.scope }));
   const LINE = Object.fromEntries(LINES.map((l) => [l.id, l]));
-  /** Cookie Monster's layout (its bank warnings are their own option). */
-  const DEFAULT_LINES = ['bonus', 'actualGain', 'payback', 'actual', 'afford', 'share', 'next', 'nextUpgrade', 'wins'];
+  /** The Default layout (the bank warnings are their own option): what it adds and how soon it pays back —
+   *  by raw CpS, then by actual income — its share of production, then what's next. */
+  const DEFAULT_LINES = ['bonus', 'paybackRaw', 'actualGain', 'actual', 'share', 'nextUpgrade', 'next'];
   /** How a word's value is shown. */
   const FORMATS = CA.Stats.FORMATS.filter((f) => ['auto', 'number', 'time', 'chance'].includes(f.id));
 
   const entryOk = (x) => (typeof x === 'string' ? !!LINE[x] : !!x && (typeof x.word === 'string' || typeof x.stat === 'string'));
-  /** The block's lines, in order: built-in ids, { stat } and { word, fmt, label } entries. */
+  const cleanLines = (v) => (Array.isArray(v) ? v.filter(entryOk) : DEFAULT_LINES.slice());
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+  // ---- layouts: the lines saved under a name --------------------------------------------------
+  //
+  // The built-in Default is always there and can't be deleted: DEFAULT_LINES as it comes,
+  // or as you changed it (option storeTooltipLines, null as it comes) — Revert to default undoes that.
+  // Yours: option storeTooltipProfiles ([{ id, name, lines }]). The one in use: storeTooltipProfile
+  // (its id; 'default' or gone: the Default). Editing the lines edits the layout in use.
+  const DEFAULT_ID = 'default';
+  const profileName = (n, fallback) => String(n == null ? '' : n).trim().slice(0, 40) || fallback;
+  function savedProfiles() {
+    const v = S('storeTooltipProfiles');
+    return (Array.isArray(v) ? v : [])
+      .filter((p) => p && typeof p.id === 'string' && p.id && p.id !== DEFAULT_ID)
+      .map((p) => ({ id: p.id, name: profileName(p.name, 'Layout'), lines: cleanLines(p.lines) }));
+  }
+  const saveProfiles = (list) => CA.Settings.set('storeTooltipProfiles', list.map((p) => ({ id: p.id, name: p.name, lines: p.lines.slice() })));
+  /** Every layout, the Default first: [{ id, name, lines, builtin }]. */
+  const profiles = () => [{ id: DEFAULT_ID, name: 'Default', lines: cleanLines(S('storeTooltipLines')), builtin: true }, ...savedProfiles()];
+  /** A layout from its id or its name (any case), or null. */
+  function profileOf(x) {
+    if (x == null || x === '') return null;
+    const all = profiles();
+    const k = String(x).trim().toLowerCase();
+    return all.find((p) => p.id === String(x)) || all.find((p) => p.name.toLowerCase() === k) || null;
+  }
+  /** The id of the layout in use. */
+  function activeProfile() {
+    const id = S('storeTooltipProfile');
+    return savedProfiles().some((p) => p.id === id) ? id : DEFAULT_ID;
+  }
+  const profileActive = (x) => {
+    const p = profileOf(x);
+    return !!p && p.id === activeProfile();
+  };
+  /** Uses a layout (its id or its name): whether it changed anything. */
+  function useProfile(x) {
+    const p = profileOf(x);
+    if (!p || p.id === activeProfile()) return false;
+    CA.Settings.set('storeTooltipProfile', p.id);
+    return true;
+  }
+  /** A new layout of the lines in use, now in use itself: its id. */
+  function addProfile(name) {
+    const list = savedProfiles();
+    let id = `tt${Date.now().toString(36)}`;
+    while (list.some((p) => p.id === id)) id += 'x';
+    let n = list.length + 1;
+    while (list.some((p) => p.name === `Layout ${n}`)) n++;
+    list.push({ id, name: profileName(name, `Layout ${n}`), lines: lines() });
+    saveProfiles(list);
+    CA.Settings.set('storeTooltipProfile', id);
+    return id;
+  }
+  function renameProfile(id, name) {
+    const list = savedProfiles();
+    const p = list.find((x) => x.id === id);
+    if (!p) return false;
+    p.name = profileName(name, p.name);
+    saveProfiles(list);
+    return true;
+  }
+  /** Deletes one of yours (the Default can't be): the one in use goes back to the Default. */
+  function removeProfile(id) {
+    const list = savedProfiles();
+    if (!list.some((p) => p.id === id)) return false;
+    const was = activeProfile();
+    saveProfiles(list.filter((p) => p.id !== id));
+    if (was === id) CA.Settings.set('storeTooltipProfile', DEFAULT_ID);
+    return true;
+  }
+  /** Whether the Default isn't as it comes any more. */
+  const defaultEdited = () => !same(cleanLines(S('storeTooltipLines')), DEFAULT_LINES);
+  /** The Default back as it comes (DEFAULT_LINES). */
+  function revertDefault() {
+    CA.Settings.set('storeTooltipLines', null);
+  }
+
+  /** The block's lines (the layout in use's), in order: built-in ids, { stat } and { word, fmt, label } entries. */
   function lines() {
-    const v = S('storeTooltipLines');
-    if (!Array.isArray(v)) return DEFAULT_LINES.slice();
-    return v.filter(entryOk);
+    const id = activeProfile();
+    if (id === DEFAULT_ID) return cleanLines(S('storeTooltipLines'));
+    return savedProfiles().find((p) => p.id === id).lines;
   }
+  /** New lines for the layout in use (null: the Default's DEFAULT_LINES). */
   function setLines(list) {
-    CA.Settings.set('storeTooltipLines', Array.isArray(list) ? list.slice() : null);
+    const id = activeProfile();
+    if (id === DEFAULT_ID) return CA.Settings.set('storeTooltipLines', Array.isArray(list) ? list.slice() : null);
+    saveProfiles(savedProfiles().map((p) => (p.id === id ? { ...p, lines: cleanLines(list) } : p)));
   }
-  const isDefault = () => !Array.isArray(S('storeTooltipLines'));
+  /** Whether the lines in use are the Default's as it comes. */
+  const isDefault = () => same(lines(), DEFAULT_LINES);
 
   /** Whether a word can be a line in a tooltip of this kind: it takes a building / an upgrade, or nothing. */
   function wordFits(v, kind) {
@@ -258,6 +342,8 @@ CA.UI.StoreInsight = (() => {
     D('storeTooltips', 'search', 'Payback in tooltips', 'Under the game’s building and upgrade tooltips: the CpS it adds, its payback period, when you can afford it, its share of production, the next achievement.');
     CA.Settings.defineOption({ key: 'storeUpgradeSort', group: 'store', icon: 'sortList', name: 'Upgrades: best first', desc: 'The store lists its upgrades by payback period (best first, in color groups) instead of by price.', default: false });
     CA.Settings.defineOption({ key: 'storeTooltipLines', group: 'store-hidden', name: 'Tooltip lines', desc: '', default: null });
+    CA.Settings.defineOption({ key: 'storeTooltipProfiles', group: 'store-hidden', name: 'Tooltip layouts', desc: '', default: null });
+    CA.Settings.defineOption({ key: 'storeTooltipProfile', group: 'store-hidden', name: 'Tooltip layout in use', desc: '', default: 'default' });
     // off by default since the tooltip's lines became yours to choose: Cookie Monster's layout, without them)
     CA.Settings.defineOption({ key: 'storeWarnings', group: 'store', icon: 'bell', name: 'Warnings', desc: 'A small colored “!” on anything a warning is about — by default, whose purchase would take your bank below what a Lucky! (red), Conjure Baked Goods (orange) or a Lucky! in a Frenzy (yellow) needs to pay its most — and one line in its tooltip saying which, and by how much. Which warnings: the Tooltips page.', default: false });
     CA.Settings.defineOption({ key: 'storeWarningList', group: 'store-hidden', name: 'Warnings', desc: '', default: null });
@@ -272,7 +358,23 @@ CA.UI.StoreInsight = (() => {
     }, 500);
     CA.Events.on('settings', (k) => (k === 'storeColours' || k === 'storeUpgradeSort' || k === 'storeWarnings' || k === 'storeWarningList' || k === null) && paint());
     CA.Events.on('stats', () => paint());
+
+    // code: tooltips.profile(name) puts a saved tooltip layout in use
+    const V = (id, desc, get, more) => CA.Script.defineValue({ id, desc, get, ...(more || {}) });
+    V('tooltips.profiles', 'a list: every store tooltip layout (its id), the Default first', () => profiles().map((p) => p.id), { list: true });
+    V('tooltips.activeProfile', 'the store tooltip layout in use (its id: "default" for the Default)', () => activeProfile());
+    V('tooltips.profileActive', 'whether a store tooltip layout is the one in use (its id or name)', (x) => profileActive(x), { params: ['profile'], bool: true });
+    CA.Actions.register({
+      id: 'tooltips.profile',
+      name: 'Use a tooltip layout',
+      icon: 'search',
+      group: 'Store',
+      unit: 'switched',
+      params: [{ key: 'profile', label: 'Layout', type: 'select', default: DEFAULT_ID, options: () => profiles().map((p) => ({ v: p.id, label: p.name })) }],
+      run: (p) => (useProfile(p.profile) ? 1 : 0),
+    });
   }
 
-  return { init, paint, buildingBlock, upgradeBlock, warnings, warningList, setWarnings, warningsDefault, DEFAULT_WARNINGS, LINES, DEFAULT_LINES, FORMATS, lines, setLines, isDefault, words, statOf };
+  return { init, paint, buildingBlock, upgradeBlock, warnings, warningList, setWarnings, warningsDefault, DEFAULT_WARNINGS, LINES, DEFAULT_LINES, FORMATS, lines, setLines, isDefault, words, statOf,
+    DEFAULT_ID, profiles, profileOf, activeProfile, profileActive, useProfile, addProfile, renameProfile, removeProfile, defaultEdited, revertDefault };
 })();
