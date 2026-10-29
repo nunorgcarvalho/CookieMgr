@@ -1,102 +1,101 @@
-// v4.1.0: payback modes by actual income at three set depths — Actual, 15 min / 1 h / 3 h
-// (actualIncome15m, actualIncome1h, actualIncome3h; short names actual15m, actual1h, actual3h): what
-// you took in over the last 15 minutes, hour or 3 hours of play. The old Actual income mode stays,
-// as Actual, custom, on the ppActualWindow option. payback.actualIncome(minutes) takes a window.
-import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
+// v4.1.0: code is colored by where each word comes from — the game (cookies(), a building's name),
+// cookieMgr (item.payback(), golden.expected()), a statistic (built-in, or yours: underlined), a
+// function (fmt.number), a macro or profile — with a legend under every editor and atop the Statistics
+// page. Every value, action and condition's card links somewhere to read more: a statistic's shows its
+// code and opens it; a payback value's says how it's worked out and opens the payback modes.
 import { boot, sleep, makeAssert } from '../harness/game.mjs';
-import { cpsModel } from '../harness/cps.mjs';
 
 const { assert, done } = makeAssert();
-const g = boot({ idb: { factory: new IDBFactory(), IDBKeyRange } });
-const { window: w, Game } = g;
-const CA = w.CookieMgr;
+const g = boot();
+const { window: w, errors } = g;
 const doc = w.document;
-await sleep(400);
-const P = CA.Payback;
-const near = (a, b, tol = 1e-9) => Math.abs(a - b) <= tol * Math.max(1, Math.abs(b));
-const value = (id, ...args) => CA.Script.VALUES.find((v) => v.id === id).get(...args);
+const CA = w.CookieMgr;
+await sleep(300);
+const S = CA.Script;
 
-const spec = { Cursor: [15, 0.1], Grandma: [100, 1], Farm: [1100, 8] };
-Object.keys(spec).forEach((n, i) => {
-  Object.assign(Game.Objects[n], { id: i, basePrice: spec[n][0], free: 0, amount: 5, locked: false });
-});
-Game.UpgradesInStore = [];
-cpsModel(Game, { base: 1000, each: Object.fromEntries(Object.keys(spec).map((n) => [n, spec[n][1]])) });
-Game.CpsAchievements = [];
-Game.cookies = 50;
-Game.CalculateGains();
-Game.computedMouseCps = Game.mouseCps();
-const RAW = Game.cookiesPsRaw;
+// ---- where values come from ----
+assert(S.originOf('cookies') === 'game' && S.originOf('stock.price') === 'game' && S.originOf('garden.plantAt') === 'game', 'cookies(), stock.price(), garden.plantAt(): the game’s');
+assert(S.originOf('item.payback') === 'cookieMgr' && S.originOf('golden.expected') === 'cookieMgr' && S.originOf('buyer.next') === 'cookieMgr', 'item.payback(), golden.expected(), buyer.next(): cookieMgr’s');
+assert(S.originOf('stat.payback') === 'stat', 'stat.payback(): a built-in statistic');
+assert(S.originOf('fmt.number') === 'function' && S.originOf('count') === 'function' && S.originOf('finite') === 'function', 'fmt.number(), count(), finite(): functions');
+assert(S.originOf('nope') === '', 'not a value: no origin');
+const mine = CA.Stats.add({ label: 'Doubled payback', scope: 'item', source: 'return item.payback() * 2' });
+assert(S.originOf(`stat.${mine.key}`) === 'mine', 'a statistic you wrote: yours');
+// every game value named is a value (a renamed one would quietly turn cookieMgr's)
+const all = S.VALUES.map((v) => v.id);
+assert(all.every((id) => ['game', 'cookieMgr', 'stat', 'mine', 'function'].includes(S.originOf(id))), 'every value has an origin');
+assert(all.filter((id) => S.originOf(id) === 'game').length >= 60, `many are the game’s (${all.filter((id) => S.originOf(id) === 'game').length})`);
 
-// the Recorder, stubbed: the shorter the window, the more you took in (a combo just now)
-const R = CA.Recorder;
-let recorded = 1e6;
-const ratio = (secs) => (secs <= 900 ? 20 : secs <= 3600 ? 8 : secs <= 10800 ? 3 : 5);
-R.recent = (secs) => ({ actual: ratio(secs) * RAW, secs: Math.min(secs, recorded), cps: RAW, clickRate: 0 });
-const realNow = Date.now;
-let offset = 0;
-Date.now = () => realNow() + offset;
-w.Date.now = Date.now;
-const later = () => (offset += 6000); // past the 5 s memo
+// ---- the colors ----
+const hl = (line) => CA.UI.CodeEditor.highlightLine(line);
+const cls = (html, word) => (new RegExp(`<span class="([^"]+)">${word.replace(/[.()]/g, '\\$&')}</span>`).exec(html) || [])[1];
+let h = hl('x = cookies() + item.payback() + stat.payback(item)');
+assert(cls(h, 'cookies') === 'hv hv-game', `cookies: game (${cls(h, 'cookies')})`);
+assert(cls(h, 'item.payback') === 'hv hv-cookieMgr', 'item.payback: cookieMgr');
+assert(cls(h, 'stat.payback') === 'hv hv-stat', 'stat.payback: a statistic');
+h = hl(`return fmt.number(stat.${mine.key}(item))`);
+assert(cls(h, 'fmt.number') === 'hv hv-function' && cls(h, `stat.${mine.key}`) === 'hv hv-mine' && cls(h, 'return') === 'hk', 'fmt.number: a function; yours: yours; return: a keyword');
+h = hl('buyer.profile(payback)');
+assert(cls(h, 'buyer.profile') === 'ha' && cls(h, 'payback') === 'hm', 'buyer.profile: an action; payback inside it: a profile');
+h = hl('switch on bigCookie');
+assert(cls(h, 'bigCookie') === 'hm', 'switch on bigCookie: a macro');
+h = hl('if buff(Frenzy) and building(Farm) > 5:');
+assert(cls(h, 'buff') === 'hq' && cls(h, 'Frenzy') === 'hg' && cls(h, 'Farm') === 'hg' && cls(h, 'building') === 'hv hv-game', 'buff: a condition; Frenzy, Farm: the game’s names');
 
-// ---- the modes
-const ids = ['actualIncome15m', 'actualIncome1h', 'actualIncome3h'];
-assert(P.modes().map((m) => m.id).join() === `rawCps,cps,cpsClicking,${ids.join()},actualIncome`, `three more modes, before the custom one (${P.modes().map((m) => m.id)})`);
-assert(ids.map((id) => P.modeOf(id).label).join() === 'Actual, 15 min,Actual, 1 h,Actual, 3 h', 'labelled by their window');
-assert(P.modeOf('actualIncome').label === 'Actual, custom', 'the old one: Actual, custom');
-assert(P.modeOf('actual15m').id === ids[0] && P.modeOf('actual1h').id === ids[1] && P.modeOf('actual3h').id === ids[2] && P.modeOf('actual').id === 'actualIncome', 'short names');
-assert(ids.every((id) => CA.Stats.get(id).mode && CA.Stats.get(id).group === 'Payback modes'), 'each is a statistic on the Payback modes shelf');
+// ---- the cards ----
+let i = CA.ScriptWords.explain('x = item.payback()', 1, 6, { vars: ['item'] });
+assert(i && i.origin === 'cookieMgr' && /^cookieMgr value/.test(i.tag) && /Worked out by cookieMgr/.test(i.note), `item.payback: a cookieMgr value (${i && i.tag})`);
+assert(/price ÷ gain/.test(i.how) && /ca-word-how/.test(CA.UI.CodeEditor.cardHtml(i, null)), '… and how it’s worked out');
+i = CA.ScriptWords.explain('x = cookies()', 1, 5);
+assert(i.origin === 'game' && /^Game value/.test(i.tag) && /straight from the game/.test(i.note), 'cookies: a game value');
+i = CA.ScriptWords.explain('x = stat.payback(item)', 1, 6, { vars: ['item'] });
+assert(i.origin === 'stat' && /item\.payback\(\)/.test(i.code), 'a statistic’s card carries its code');
+let html = CA.UI.CodeEditor.cardHtml(i, null);
+assert(/ca-word-code/.test(html) && /hv-cookieMgr/.test(html) && /ca-word-tag hv-stat/.test(html), 'and shows it, colored, under a tag in its color');
 
-// ---- each reads its own window, whatever the option says
-CA.Settings.set('ppActualWindow', '30');
-later();
-assert(near(P.income('actual15m'), 20 * RAW) && near(P.income('actual1h'), 8 * RAW) && near(P.income('actual3h'), 3 * RAW), 'income over 15 min, 1 h, 3 h');
-assert(near(P.income('actual'), 8 * RAW), 'the custom one: the option’s 30 minutes');
-CA.Settings.set('ppActualWindow', '180');
-later();
-assert(near(P.income('actual'), 3 * RAW) && near(P.income('actual15m'), 20 * RAW), 'the option moves the custom one only');
-
-// ---- payback periods and gains scale by each one's ratio
-const farm = () => P.table().buildings[1].Farm;
-const raw = farm().bonus;
-[['actualIncome15m', 20], ['actualIncome1h', 8], ['actualIncome3h', 3]].forEach(([id, k]) => {
-  CA.Settings.set('ppMode', id);
-  later();
-  const row = farm();
-  assert(row.mode === id && near(row.gain, k * raw), `${id}: the gain is ${k}× its raw gain`);
-  assert(near(row.pp, (row.price - 50) / (k * RAW) + row.price / row.gain), `${id}: the payback period in that income`);
-});
-const c = CA.Stats.contextOf('Farm', 'building');
-const inMode = (m) => CA.Stats.about(c, () => value('item.paybackIn', m));
-assert(inMode('actual15m') < inMode('actual1h') && inMode('actual1h') < inMode('actual3h'), 'item.paybackIn takes them: more income, shorter');
-
-// ---- the word
-assert(near(value('payback.actualIncome', 15), 20 * RAW) && near(value('payback.actualIncome', 180), 3 * RAW), 'payback.actualIncome(minutes)');
-assert(near(value('payback.actualIncome'), 3 * RAW), 'payback.actualIncome(): the custom window');
-const compiled = CA.Script.compile('return payback.actualIncome(60)', { mode: 'stat' });
-assert(!compiled.errors.length, 'it compiles with a window');
-
-// ---- too little recorded: not ready; under the window, what there is
-recorded = 30;
-later();
-assert(P.mode().id === 'cps', 'under a minute recorded: cps until it is');
-recorded = 1200;
-later();
-assert(P.mode().id === 'actualIncome3h' && near(P.income(), 3 * RAW), '20 minutes recorded: the 3 h mode averages what there is');
-
-// ---- the Payback page: a chip each
-CA.UI.Menu.openPage('payback');
-await sleep(100);
-const chips = () => [...doc.querySelectorAll('[data-pp-mode]')];
-assert(ids.every((id) => chips().some((b) => b.dataset.ppMode === id)), 'a chip each on the Payback page');
-chips()
-  .find((b) => b.dataset.ppMode === 'actualIncome1h')
-  .click();
+// ---- the legend and the links ----
+CA.UI.Menu.openPage('clickers');
+CA.UI.MacrosPage.edit(null, { name: 'Demo', mode: 'flow', source: 'x = item.payback()\nwait until golden.expected() < 60\npp.buy()\ny = stat.payback(x)\nz = cookies()' });
 await sleep(50);
-assert(CA.Settings.get('ppMode') === 'actualIncome1h', 'clicking one picks it');
+const legend = doc.querySelector('[data-code-ed] [data-code-legend]');
+assert(legend && ['Game', 'cookieMgr', 'Statistic', 'Your statistic', 'Function', 'Macro / profile', 'Action', 'Condition', 'Keyword'].every((n) => legend.textContent.includes(n)), 'a legend under the editor');
+const card = () => doc.querySelector('#CookieMgrLayer .ca-word-tip');
+const word = (line, text) => [...doc.querySelectorAll('[data-code-ed] [data-code-hl] .ca-hl-line')[line - 1].querySelectorAll('span')].find((s) => s.textContent === text);
+const linkFor = (line, text) => {
+  CA.UI.CodeEditor.showCard(word(line, text));
+  return card().querySelector('[data-word-open]');
+};
+let link = linkFor(1, 'item.payback');
+assert(link && /payback modes/.test(link.textContent), `item.payback → the payback modes (${link && link.textContent})`);
+link = linkFor(2, 'golden.expected');
+assert(link && /Stats → Golden cookies/.test(link.textContent), `golden.expected → Stats → Golden cookies (${link && link.textContent})`);
+link = linkFor(3, 'pp.buy');
+assert(link && /Payback page/.test(link.textContent), 'pp.buy (an action) → the Payback page');
+link = linkFor(4, 'stat.payback');
+assert(link && /Open the statistic/.test(link.textContent), 'stat.payback → the statistic');
+link = linkFor(5, 'cookies');
+assert(link && /Stats → Cookies/.test(link.textContent), 'cookies → Stats → Cookies');
+// follow one: unsaved new macro → Don't save → the Statistics page on its payback modes
+CA.UI.CodeEditor.showCard(word(1, 'item.payback'));
+card().querySelector('[data-word-open]').dispatchEvent(new w.MouseEvent('click', { bubbles: true }));
+const discard = card().querySelector('[data-word-leave="discard"]');
+if (discard) discard.dispatchEvent(new w.MouseEvent('click', { bubbles: true }));
+await sleep(50);
+assert(CA.Settings.get('tab') === 'tooltips' && doc.querySelector('[data-st-filter="modes"].on'), 'the Statistics page, on Payback modes');
+CA.UI.CodeEditor.goBack();
+await sleep(50);
+CA.UI.MacrosPage.edit(null);
 
-Date.now = realNow;
-w.Date.now = realNow;
-assert(g.errors.length === 0, 'no runtime errors' + (g.errors.length ? `: ${g.errors.slice(0, 3).join(' | ')}` : ''));
+// ---- the library and the Statistics page ----
+CA.UI.Menu.openPage('tooltips');
+await sleep(50);
+assert(doc.querySelector('#CookieMgrMenu [data-code-legend]'), 'a legend atop the Statistics catalog');
+const call = doc.querySelector('.ca-st-call[data-code-view]');
+assert(call && call.querySelector('span.hv-stat, span.hv-mine'), 'a statistic’s stat.…(item) is colored and hoverable');
+CA.UI.TooltipsPage.showGroup && CA.UI.Menu.openPage('tooltips');
+html = CA.UI.CodeEditor.libraryHtml('x', { mode: 'stat' });
+assert(/ca-lib-o-game/.test(html) && /ca-lib-o-cookieMgr/.test(html) && /data-code-view="item\.payback\(\)"/.test(html), 'the library: rows by origin, each word hoverable');
+
+assert(errors.length === 0, `no errors (${errors.join(' | ')})`);
 done();
 process.exit();

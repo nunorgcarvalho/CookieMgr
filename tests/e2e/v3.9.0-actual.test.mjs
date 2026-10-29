@@ -104,7 +104,7 @@ assert(CA.Settings.get('ppMode') === 'actualIncome', 'clicking it: by actual inc
 const t = P.table();
 const row = t.buildings[1].Cursor;
 assert(cellPP() !== cps && cellPP() === CA.Format.payback(row.pp) && row.mode === 'actualIncome', `cells show the actual-income period (${cps} → ${cellPP()})`);
-assert(/by Actual, custom/.test(w.document.querySelector('.ca-pp-cell').dataset.tip), 'and say so in their tip'); // v4.1: the mode's label is Actual, custom
+assert(/by Actual, custom/.test(w.document.querySelector('.ca-pp-cell').dataset.tip), 'and say so in their tip'); // actual-income depths: the mode's label is Actual, custom
 CA.Settings.set('ppMode', 'cps');
 
 // ---- the store tooltip: a line

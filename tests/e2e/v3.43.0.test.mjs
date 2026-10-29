@@ -48,7 +48,7 @@ w.Date.now = Date.now;
 const later = () => (offset += 6000); // past the 5 s memo
 
 // ---- the modes there are; the default is cps, as before
-assert(P.modes().map((m) => m.id).join() === 'rawCps,cps,cpsClicking,actualIncome15m,actualIncome1h,actualIncome3h,actualIncome', `the modes (v4.1: + actual income over 15 min, 1 h, 3 h) (${P.modes().map((m) => m.id)})`);
+assert(P.modes().map((m) => m.id).join() === 'rawCps,cps,cpsClicking,actualIncome15m,actualIncome1h,actualIncome3h,actualIncome', `the modes (actual-income depths: + actual income over 15 min, 1 h, 3 h) (${P.modes().map((m) => m.id)})`);
 assert(CA.Settings.get('ppMode') === 'cps' && P.mode().id === 'cps' && value('payback.mode') === 'cps', 'the default: cps');
 const modeStat = CA.Stats.get('cpsClicking');
 assert(modeStat && modeStat.mode && modeStat.group === 'Payback modes' && modeStat.label === 'CpS + clicking' && /income =/.test(modeStat.source), 'each mode is a statistic: label, description, code that sets income');

@@ -16,6 +16,8 @@
 //                                                          library click itself (return true), else
 //                                                          the item is inserted into editor `key`
 //   CA.UI.CodeEditor.setLive(root, key, { lines, html })   lights up running lines, shows what it does
+//   CA.UI.CodeEditor.legendHtml()                          what the colors mean (under each editor,
+//                                                          atop the Statistics catalog)
 //
 // The code is a <textarea> lying exactly on a highlighted copy of itself — only the outer box
 // scrolls, so the caret can't drift from the text.
@@ -71,8 +73,9 @@ CA.UI.CodeEditor = (() => {
     const pins = favs();
     const fk = (it) => `${it.kind}:${it.id}`;
     const row = (it, i) =>
-      `<div class="ca-lib-row ca-lib-${it.kind}" data-lib-text="${esc(`${it.sig} ${it.desc} ${it.group}`.toLowerCase())}">` +
-      `<button type="button" class="ca-lib-ins" data-lib-insert="${i}" data-tip="Insert it">${I(it.icon || 'bolt', 12)}<code>${esc(it.sig)}</code></button>` +
+      `<div class="ca-lib-row ca-lib-${it.kind}${it.origin ? ` ca-lib-o-${it.origin}` : ''}" data-lib-text="${esc(`${it.sig} ${it.desc} ${it.group} ${it.origin ? CA.Script.ORIGINS[it.origin].name : ''}`.toLowerCase())}">` +
+      // a word's code is a code view: hovering it shows its card, which links to more
+      `<button type="button" class="ca-lib-ins" data-lib-insert="${i}">${I(it.icon || 'bolt', 12)}<code class="ca-hl"${it.kind === 'value' || it.kind === 'action' || it.kind === 'condition' ? ` data-code-view="${esc(it.sig)}"` : ''}>${it.kind === 'keyword' ? esc(it.sig) : highlightLine(it.sig)}</code></button>` +
       `<span class="ca-lib-desc">${esc(it.desc)}</span>` +
       `<button type="button" class="ca-iconbtn ca-lib-fav${pins.includes(fk(it)) ? ' on' : ''}" data-lib-fav="${esc(fk(it))}" data-tip="${pins.includes(fk(it)) ? 'Unpin' : 'Pin it at the top'}">${I(pins.includes(fk(it)) ? 'star' : 'starOutline', 11)}</button>` +
       '</div>';
@@ -106,12 +109,34 @@ CA.UI.CodeEditor = (() => {
 
   // ---- the code ---------------------------------------------------------------------------
 
-  // syntax coloring (one line at a time)
+  // syntax coloring (one line at a time). A word is colored by what it is and where it comes from
+  // (CA.ScriptWords.words): a value by its origin (CA.Script.originOf) — the game's, cookieMgr's, a
+  // statistic, yours, a function — and a name inside ( ) by what it names: cookieMgr's own (a macro,
+  // a profile) or the game's (a building, a spell…).
   const KW = new Set(['if', 'elif', 'else', 'for', 'in', 'def', 'repeat', 'until', 'while', 'times', 'forever', 'parallel', 'branch', 'wait', 'seconds', 'second', 'minutes', 'minute', 'stop', 'log', 'switch', 'on', 'off', 'and', 'or', 'not', 'true', 'false', 'return']);
-  function highlightLine(line) {
+  const MINE = new Set(['macro', 'manager', 'setting']); // and profile.*
+  const GAMES = new Set(['building', 'upgrade', 'spell', 'season', 'effect', 'spirit', 'aura']);
+  function wordClass(kind, id) {
+    if (kind === 'keyword') return 'hk';
+    if (kind === 'action') return 'ha';
+    if (kind === 'condition') return 'hq';
+    if (kind === 'value') return `hv hv-${CA.Script.originOf(id) || 'cookieMgr'}`;
+    if (MINE.has(kind) || /^profile\./.test(kind)) return 'hm';
+    if (GAMES.has(kind)) return 'hg';
+    return 'hi';
+  }
+  const fallbackClass = (w) => (KW.has(w) ? 'hk' : CA.Actions.get(w) ? 'ha' : CA.Conditions.get(w) ? 'hq' : CA.Script.isValue(w) ? `hv hv-${CA.Script.originOf(w)}` : 'hi');
+  /** One line of code, colored. opts: { decl: CA.ScriptWords.declared(the whole code), vars: names it's given }. */
+  function highlightLine(line, opts = {}) {
     let out = '';
     let i = 0;
     const span = (cls, t) => `<span class="${cls}">${esc(t)}</span>`;
+    const at = {};
+    try {
+      CA.ScriptWords.words(line, opts).forEach((w) => (at[w.from] = w));
+    } catch (e) {
+      /* colored by the word alone */
+    }
     while (i < line.length) {
       const rest = line.slice(i);
       let m;
@@ -123,8 +148,8 @@ CA.UI.CodeEditor = (() => {
       else if ((m = rest.match(/^\d+(?:\.\d+)?(?:e[+-]?\d+)?(?:qa|qi|k|m|b|t)?(?![A-Za-z_])/i))) out += span('hn', m[0]);
       else if ((m = rest.match(/^[A-Za-z_][\w.\-']*\w|^[A-Za-z_]/))) {
         const w = m[0];
-        const cls = KW.has(w) ? 'hk' : CA.Actions.get(w) ? 'ha' : CA.Conditions.get(w) ? 'hq' : CA.Script.isValue(w) ? 'hv' : 'hi';
-        out += span(cls, w);
+        const k = at[i];
+        out += span(k && k.to - k.from === w.length ? wordClass(k.kind, k.id) : fallbackClass(w), w);
       } else if ((m = rest.match(/^(>=|<=|==|!=|>|<|=)/))) out += span('ho', m[0]);
       else {
         m = [rest[0]];
@@ -134,6 +159,29 @@ CA.UI.CodeEditor = (() => {
     }
     return out;
   }
+  /** Every line of some code, colored (its variables known from the whole of it). */
+  const highlightCode = (src, vars = []) => {
+    const decl = CA.ScriptWords ? CA.ScriptWords.declared(src) : undefined; // the simulator's GUI has no ScriptWords
+    return String(src || '')
+      .split('\n')
+      .map((l) => highlightLine(l, { decl, vars }));
+  };
+
+  // what the colors mean: [class, name, what it is]
+  const LEGEND = [
+    ['hv hv-game', 'Game', 'Read straight from the game: cookies(), stock.price(…), a building’s or spell’s name'],
+    ['hv hv-cookieMgr', 'cookieMgr', 'Worked out by cookieMgr: payback periods, golden cookie odds, banks, item.payback()…'],
+    ['hv hv-stat', 'Statistic', 'A built-in statistic (stat.…): code you can open, read and change'],
+    ['hv hv-mine', 'Your statistic', 'A statistic you wrote'],
+    ['hv hv-function', 'Function', 'Works on what you give it: fmt.number(x), count(list), finite(x)'],
+    ['hm', 'Macro / profile', 'One of cookieMgr’s macros, managers or profiles, named in ( )'],
+    ['ha', 'Action', 'Does something: clicks, buys, casts, switches'],
+    ['hq', 'Condition', 'A yes / no check, after if, while, until'],
+    ['hk', 'Keyword', 'The language itself: if, for, wait, return…'],
+  ];
+  /** What the colors mean: a row of colored names, each with a tip. */
+  const legendHtml = () =>
+    `<div class="ca-code-legend ca-hl" data-code-legend>${LEGEND.map(([cls, name, tip]) => `<span class="ca-code-key" data-tip="${esc(tip)}"><i class="${cls}">●</i><span class="${cls}">${esc(name)}</span></span>`).join('')}<span class="ca-code-key-more">hover a word: what it is · its card links to more</span></div>`;
 
   /** The code's lines, colored; its problems. copts: how it compiles ({ mode: 'stat', item } for a statistic's). */
   function view(src, vars, copts = {}) {
@@ -142,7 +190,7 @@ CA.UI.CodeEditor = (() => {
     const bad = new Set(errors.map((e) => e.line));
     return {
       gutter: lines.map((_, i) => `<span class="${bad.has(i + 1) ? 'err' : ''}">${i + 1}</span>`).join(''),
-      hl: lines.map((l, i) => `<span class="ca-hl-line${bad.has(i + 1) ? ' err' : ''}">${highlightLine(l) || ' '}</span>`).join('\n') + '\n',
+      hl: highlightCode(src, vars).map((h, i) => `<span class="ca-hl-line${bad.has(i + 1) ? ' err' : ''}">${h || ' '}</span>`).join('\n') + '\n',
       status: errors.length
         ? `<div class="ca-code-bad">${I('close', 11)} ${errors.length} problem${errors.length === 1 ? '' : 's'}</div>` +
           errors
@@ -185,6 +233,7 @@ CA.UI.CodeEditor = (() => {
       '</div>' +
       `<div class="ca-code-status" data-code-status>${v.status}</div>` +
       '<div class="ca-code-live" data-code-live></div>' +
+      legendHtml() +
       `<details class="ca-code-help"><summary>How it reads</summary><pre>${esc(HELP)}</pre></details></div>`
     );
   }
@@ -486,11 +535,14 @@ CA.UI.CodeEditor = (() => {
   /** A word's card: what it is, how it's written, what it does, its live numbers, and where to open it. */
   function cardHtml(info, open) {
     return (
-      `<div class="ca-tip-head">${esc(info.title)}<span>${esc(info.tag || '')}</span></div>` +
+      `<div class="ca-tip-head">${esc(info.title)}<span class="${info.origin ? `ca-word-tag hv-${info.origin}` : ''}">${esc(info.tag || '')}</span></div>` +
       (info.sig && info.sig.toLowerCase() !== String(info.title).toLowerCase() ? `<div class="ca-word-sig"><code>${highlightLine(info.sig)}</code></div>` : '') +
       (info.desc ? `<div class="ca-word-desc">${esc(info.desc)}</div>` : '') +
+      (info.how ? `<div class="ca-word-desc ca-word-how"><b>How:</b> ${esc(info.how)}.</div>` : '') +
       (info.rows || []).map(([k, v]) => `<div class="ca-tip-row"><b>${esc(k)}</b><span>${esc(v)}</span></div>`).join('') +
       (info.note ? `<div class="ca-tip-note">${esc(info.note)}</div>` : '') +
+      // a statistic: its code (at most 8 lines)
+      (info.code ? `<pre class="ca-word-code">${highlightCode(info.code.split('\n').slice(0, 8).join('\n'), ['item']).join('\n')}${info.code.split('\n').length > 8 ? '\n…' : ''}</pre>` : '') +
       (open ? `<div class="ca-word-open"><button type="button" class="ca-word-go" data-word-open>${esc(open.label)} →</button></div>` : '')
     );
   }
@@ -533,7 +585,7 @@ CA.UI.CodeEditor = (() => {
   // ---- going to a word's place, and back ----------------------------------------------------------
 
   const tab = () => CA.Settings.get('tab');
-  const pageLabel = (id) => ((CA.UI.Pages.get && CA.UI.Pages.get(id)) || {}).label || id;
+  const pageLabel = (id) => (((CA.UI.Pages.resolve && CA.UI.Pages.resolve(id)) || {}).page || {}).label || id;
 
   /** Scrolls to `sel` on the page now showing, and flashes it. */
   function focusOn(sel) {
@@ -728,13 +780,13 @@ CA.UI.CodeEditor = (() => {
     defineOpen('spell', () => ({ label: 'Open the Grimoire page', page: 'wizard' }));
     defineOpen('spirit', () => ({ label: 'Open the Pantheon page', page: 'pantheon' }));
     defineOpen('aura', () => ({ label: 'Open the Dragon page', page: 'dragon' }));
-    // a statistic's word: its editor
+    // a statistic's word: its editor; any other action, condition or value: the page it's about
     defineOpen('value', (id) => {
       const m = /^stat\.(.+)$/.exec(id);
       const st = m && CA.Stats.all().find((x) => x.key === m[1]);
       return st
         ? {
-            label: 'Edit the statistic',
+            label: st.builtin ? 'Open the statistic (its code)' : 'Edit your statistic',
             go: () => {
               CA.UI.StatEditor.open(st.id);
               CA.UI.Menu.openPage('tooltips');
@@ -742,8 +794,43 @@ CA.UI.CodeEditor = (() => {
             },
             focus: '[data-stat-editor]',
           }
-        : null;
+        : pageFor(id);
     });
+    defineOpen('action', pageFor);
+    defineOpen('condition', pageFor);
+  }
+
+  // where a word of the language is about, by its name: [pattern, page (or 'page:tab'), a part of it to
+  // flash, what the link says]. Page 'modes': the payback modes, on the Statistics page.
+  const PAGE_OF = [
+    [/^(item\.(payback|paybackIn|gain|gainIn|rawGain|timeToAfford|earnBack|paybackOf)|payback\.(mode|modes|income|actualIncome|clickRate|perClick|actualRatio)|(building|upgrade)\.(gain|gainOf|payback|paybackIn|paybackOf)|timeTo|paybackActual|paybackActualRatio|actualIncome)$/, 'modes', '', 'How income and gain are counted: the payback modes'],
+    [/^(item\.|payback\.|pp\.|cm\.|buyer\.|best$|clickRate$|buy\.|building\.(buy|sell|price|priceOf|toNext)|upgrade\.)/, 'payback'],
+    [/^(golden\.|reindeer\.|buff\.(goldenChance|effectiveMult))/, 'graphs:golden', '[data-st-spawn]'],
+    [/^(bank\.|reward\.)/, 'graphs:golden', '[data-st-bank]'],
+    [/^prestige\./, 'graphs:prestige', '[data-st-prestige]'],
+    [/^(state|cookies|cps|rawCps)$/, 'graphs:cookies'],
+    [/^(lump\.ripeIn|autosave\.in|magic\.fullIn)$/, 'graphs:misc', '[data-st-timers]'],
+    [/^(wrinkler)/, 'graphs:misc', '[data-st-wrinklers]'],
+    [/^missing\./, 'graphs:misc', '[data-st-collection]'],
+    [/^garden\./, 'garden'],
+    [/^(grimoire\.|spell\.|fthof\.|magic$|spellAffordable$|magicPct$)/, 'wizard'],
+    [/^pantheon\./, 'pantheon'],
+    [/^dragon\./, 'dragon'],
+    [/^(stock\.|stocks)/, 'stocks'],
+    [/^manager\./, 'managers'],
+    [/^macro\./, 'clickers'],
+    [/^widgets\./, 'widgets'],
+  ];
+  const TAB_NAMES = { cookies: 'Cookies', golden: 'Golden cookies', prestige: 'Prestige', misc: 'Misc' };
+  /** The page a word is about: { label, page, focus } or null. */
+  function pageFor(id) {
+    const hit = PAGE_OF.find(([re]) => re.test(id));
+    if (!hit) return null;
+    const [, page, focus, label] = hit;
+    if (page === 'modes') return { label, go: () => CA.UI.TooltipsPage.showGroup('Payback modes') };
+    const r = CA.UI.Pages.resolve(page);
+    if (!r) return null;
+    return { label: label || `Open the ${r.page.label}${r.sub ? ` → ${TAB_NAMES[r.sub] || r.sub}` : ''} page`, page, focus: focus || undefined };
   }
 
   function init() {
@@ -775,5 +862,5 @@ CA.UI.CodeEditor = (() => {
     setInterval(placeChip, 1000); // follows the panel; gone when it closes
   }
 
-  return { init, html, libraryHtml, bind, setLive, insert, insertInline, refresh, view, highlightLine, cardHtml, placeOf, showCard, hideCard, defineOpen, guard, goBack, trail: () => trail.slice() };
+  return { init, html, libraryHtml, legendHtml, highlightCode, bind, setLive, insert, insertInline, refresh, view, highlightLine, cardHtml, placeOf, showCard, hideCard, defineOpen, guard, goBack, trail: () => trail.slice() };
 })();

@@ -943,9 +943,11 @@ CA.Payback = (() => {
     });
     const V = (id, desc, params, get, more) => CA.Script.defineValue({ id, desc, params, get, ...(more || {}) });
     const b1 = (n) => buildingNamed(n);
+    // how a payback period is worked out (the code editors' hover cards show it)
+    const HOW = 'time to afford it, max(price − bank, 0) ÷ income, plus time to earn its price back, price ÷ gain — income and gain as the payback mode has them (payback.mode())';
     V('building.price', 'what one more of a building costs now', ['building'], (n) => (b1(n) ? sumPrice(b1(n), 1) : NaN));
     V('building.gain', 'the CpS one more of a building adds (its bonus income)', ['building'], (n) => buildingBonus(n, 1));
-    V('building.payback', 'the payback period of one more of a building (seconds; in the payback mode in use)', ['building'], (n) => (b1(n) ? ppOf(sumPrice(b1(n), 1), buildingWorth(n, 1)) : Infinity));
+    V('building.payback', 'the payback period of one more of a building (seconds; in the payback mode in use)', ['building'], (n) => (b1(n) ? ppOf(sumPrice(b1(n), 1), buildingWorth(n, 1)) : Infinity), { how: HOW });
     V('building.paybackIn', 'the payback period of one more of a building in a payback mode: "raw", "cps", "clicking", "actual" or a mode statistic’s code name — none: the mode in use (seconds; NaN: not ready)', ['building', 'mode'], (n, m) => (b1(n) ? ppOf(sumPrice(b1(n), 1), buildingWorth(n, 1), m) : Infinity));
     V('building.priceOf', 'what n more of a building cost now', ['building', 'n'], (n, k) => (b1(n) ? sumPrice(b1(n), Math.max(1, Math.floor(k) || 1)) : NaN));
     V('building.gainOf', 'the CpS n more of a building add', ['building', 'n'], (n, k) => buildingBonus(n, Math.max(1, Math.floor(k) || 1)));
@@ -961,7 +963,7 @@ CA.Payback = (() => {
       if (isSwitch(u)) return NaN;
       const w = upgradeWorth(n);
       return u && w ? ppOf(upgradePrice(u), w) : Infinity;
-    });
+    }, { how: HOW });
     V('upgrade.paybackIn', 'the payback period of an upgrade in a payback mode: "raw", "cps", "clicking", "actual" or a mode statistic’s code name — none: the mode in use (seconds; NaN for a switch, or a mode not ready)', ['upgrade', 'mode'], (n, m) => {
       const u = upgradeNamed(n);
       if (isSwitch(u)) return NaN;

@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -20,8 +22,12 @@ jobs:
         with:
           path: sim/.game
           key: game-${{ hashFiles('sim/game/fetch.mjs') }}
-      - name: dist/CookieMgr.js is up to date
-        run: npm run check
+      # versions, CHANGELOG.md and dist/ are the Release workflow's (release.yml): a PR adds changes/<slug>.md
+      - name: Pull request rules (no version bumps, a changelog fragment)
+        if: github.event_name == 'pull_request'
+        run: node scripts/changes.mjs check origin/${{ github.base_ref }}
+      - name: Build dist/CookieMgr.js
+        run: npm run build
       - name: Bundle parses
         run: node --check dist/CookieMgr.js
       - name: Lint
