@@ -48,7 +48,13 @@ CA.UI.UpgradeTip = (() => {
       if (w) {
         const share = Game.cookiesPs > 0 && w.bonus > 0 ? ` (${((w.bonus / Game.cookiesPs) * 100).toFixed(2)}%)` : '';
         if (w.bonus > 0) row('Adds', `+${F().beautify(w.bonus)}/s${share}`);
-        if (w.mouse > 0) row('Per click', `+${F().beautify(w.mouse)} (≈ ${F().beautify(w.mouse * CA.Payback.clickRate())}/s at your clicking)`);
+        if (w.mouse > 0) {
+          // how much more a click makes, then the income that is at your clicking
+          const per = Number.isFinite(Game.computedMouseCps) ? Game.computedMouseCps : 0;
+          const r = per > 0 ? w.mouse / per : 0;
+          const more = !(per > 0) ? `+${F().beautify(w.mouse)}` : r >= 10 ? `+${F().beautify(r * 100)}%` : `+${(r * 100).toFixed(1)}%`;
+          row(w.bonus > 0 ? 'Adds by clicking' : 'Adds', `${more} per click (+${F().beautify(w.mouse * CA.Payback.clickRate())}/s)`);
+        }
         if (!(w.bonus > 0) && !(w.mouse > 0)) row('Adds', 'no CpS');
         row('Payback period', `${F().payback(w.pp)}${st === 'locked' ? ' <small>if you had it now</small>' : ''}`, w.colour ? `ca-pp-${w.colour}` : '');
         if (w.won && w.won.length) row('Wins', esc(w.won.join(', ')));
