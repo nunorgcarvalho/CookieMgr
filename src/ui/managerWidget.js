@@ -3,11 +3,13 @@
 //
 //   stages     its stages in a strip: done ✓, the one it's on (with its name), still to come
 //   now        the stage it's on, for how long, its profiles (in ✓, or what they still wait for), and a
-//              warning while the Manager macro is switched off
+//              warning while the Manager macro is switched off (under the strip: only for how long — the
+//              strip already names the stage and where it is)
 //   until      what moves it on: each condition of the stage's "until", ticked once it holds, a season's
-//              drops counted with a bar (Christmas upgrades 12/21) — so you see how far it is
+//              drops counted with a bar (Christmas upgrades 12/21) — so you see how far it is (left out on
+//              the last stage under the strip: nothing moves it on)
 //   watch      the stage's own numbers: its watch list (Managers page, under each stage) — Nunix late
-//              game's are the drops' Santa and Easter eggs, the reindeer cookies, the combo and magic…
+//              game's are the research, the next reindeer, the combo and magic… (not what the "until" counts)
 //   macros     the macros on in this stage (its own and those carried over), pulsing while they work
 //              (dim: off now); hover one for what its actions have done
 //   activity   the last few things those macros did, newest first
@@ -77,21 +79,26 @@ CA.UI.ManagerWidget = (() => {
     return chips ? `<div class="ca-mw-profs">${chips}</div>` : '';
   }
 
-  function nowHtml(w) {
+  function nowHtml(w, parts = []) {
     const on = CA.Macros.isOn(G().MACRO);
-    const when = !w.started ? 'starts at stage 1 on its next pass' : `stage ${w.index + 1} of ${w.of} · ${F().span(Math.max(0, (Date.now() - w.since) / 1000))}`;
+    const time = F().span(Math.max(0, (Date.now() - w.since) / 1000));
     const wait = w.pending.find((p) => p.waits);
+    // under the strip, which names the stage and where it is: only for how long
+    const head = parts.includes('stages')
+      ? `<span>${esc(w.started ? `On this stage for ${time}` : 'Starts at stage 1 on its next pass')}</span>`
+      : `<b>${esc(w.started ? w.stage.name : w.manager.stages[0].name)}</b><span>${esc(w.started ? `stage ${w.index + 1} of ${w.of} · ${time}` : 'starts at stage 1 on its next pass')}</span>`;
     return (
-      `<div class="ca-mw-now" data-w-open="managers"><b>${esc(w.started ? w.stage.name : w.manager.stages[0].name)}</b><span>${esc(when)}</span></div>` +
+      `<div class="ca-mw-now" data-w-open="managers">${head}</div>` +
       (on ? '' : `<div class="ca-mw-warn">${I('pause', 11)} The Manager macro is off — it isn’t running</div>`) +
       (w.started ? profilesHtml(w) : '') +
       (wait ? `<div class="ca-mw-dim">⌛ ${esc(wait.label)} waits for ${esc(wait.waits)}</div>` : '')
     );
   }
 
-  function untilHtml(w) {
+  function untilHtml(w, parts = []) {
     const head = (text, extra = '') => `<div class="ca-mw-head"><span>${text}</span>${extra}</div>`;
-    if (w.index >= w.of - 1) return head('The last stage') + '<div class="ca-mw-dim">It lasts for good.</div>';
+    // the last stage: the strip already shows it's the last, and nothing moves it on
+    if (w.index >= w.of - 1) return parts.includes('stages') ? '' : head('The last stage') + '<div class="ca-mw-dim">It lasts for good.</div>';
     if (w.coded) return head('Next stage when') + '<div class="ca-mw-dim">Its code (yours) moves it on.</div>';
     const until = w.stage.until || '';
     if (!until.trim()) return head('Next stage when') + '<div class="ca-mw-dim">No “until”: it stays here until you move it on.</div>';
@@ -199,7 +206,12 @@ CA.UI.ManagerWidget = (() => {
     const w = G().where();
     if (!w) return `<div class="ca-mw" data-w-open="managers">${NONE}</div>`;
     const parts = partsOf(inst);
-    const h = parts.map((p) => `<div class="ca-mw-part ca-mw-p-${p}">${PART_HTML[p](w)}</div>`).join('');
+    // each part leaves out what another part shown already says (the stage's name, that it's the last)
+    const h = parts
+      .map((p) => [p, PART_HTML[p](w, parts)])
+      .filter(([, x]) => x)
+      .map(([p, x]) => `<div class="ca-mw-part ca-mw-p-${p}">${x}</div>`)
+      .join('');
     return `<div class="ca-mw">${h || '<div class="ca-mw-dim">Pick what to show in its settings.</div>'}</div>`;
   }
 

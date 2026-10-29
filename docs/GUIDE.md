@@ -459,9 +459,10 @@ card puts the widget on the left panel.
 
 The Auto buyer buys by payback, so it doesn't buy research or upgrades that give no CpS; the Upgrade unlocker does.
 
-Its stages watch: Santa's level, the Easter eggs, the research (how far along, and the next one) (Drops); the reindeer cookies and the next reindeer (Reindeer); the combo
+Its stages watch: the research (how far along, and the next one) (Drops); the next reindeer (Reindeer); the combo
 on, the magic for Force the Hand of Fate, what the Auto buyer buys next and how much of the garden is mature (Golden
-cookie combos).
+cookie combos). The seasons' drops (Santa's gifts, the Easter eggs, the reindeer cookies) aren't watched: the
+widget's **Next stage when** counts them already.
 
 Words: `manager.active()`, `manager.stage()`, `manager.stageName()`, `manager.entering()`, `manager.arriving(stage)`,
 `manager.stages()`, `manager.list()`. Actions: `manager.use(manager)`, `manager.goTo(stage)`, `manager.next()`,
@@ -531,10 +532,10 @@ of play (none: the custom window).
 
 In the **store** itself (Settings → Store, each can be turned off): each building's price shows in its payback
 color for what a click buys now (×1, ×10, ×100, or to the next multiple with Round to multiples on), each upgrade
-has a colored dot in its corner, and under the game's own building and upgrade tooltips a cookieMgr block adds the
-CpS it adds (and its share of your CpS), its payback period (and by actual income, once a minute of play is
-recorded), when you can afford it (green now, red not yet), a building's share of your production, how many more win
-its next achievement (in the payback color of buying that many) and the next upgrade more of it unlocks —
+has a colored dot in its corner, and under the game's own building and upgrade tooltips a cookieMgr block adds, in
+its Default layout, the raw CpS it adds (and its share of your raw CpS) and its payback period by raw CpS (in its
+payback color while the payback mode is Raw CpS), the income it adds and its payback period by actual income (once a minute of play is recorded), a building's share of your production, the next
+upgrade more of it unlocks and how many more win its next achievement (in the payback color of buying that many) —
 and, with **Warnings** on, a colored "!" on the item and a ⚠ line in its tooltip when a warning applies: by default,
 when buying it would take your bank below what a Lucky! (in a Frenzy too) or Conjure Baked Goods needs to pay its
 most. Warnings are statistics too (below): change a bank warning's `keep` (how many times that bank to keep), turn
@@ -543,9 +544,15 @@ one off, or write your own.
 **Which lines that block shows, and in what order, is yours to choose** — on the **Settings** page, **Store & tooltips** tab (see
 [Statistics](#statistics)): add a line (a built-in statistic, one of yours, or **any value word** that takes the building
 or upgrade, or nothing: `building.toNextAchievement`, `clickRate`, `golden.expected`, `golden.interval`…), drag it into place, rename a
-word's line and choose how its value reads, remove it; **Reset** goes back to Cookie Monster's layout. A line with
+word's line and choose how its value reads, remove it; **Reset** goes back to the Default's lines. A line with
 nothing to say (no wins, too little recorded) is left out; a word that doesn't fit the tooltip (one taking an upgrade,
 in a building's) too. The Payback page keeps the block's two switches.
+
+**Layouts** keep more than one set of lines: the built-in **Default** (always there, can't be deleted; once you change
+it, **Revert to default** brings it back) and yours — **Save as a new layout** copies the lines in use under a name of
+its own. **Use** switches the tooltips to a layout (the one in use shows **In use**), and the lines below are always
+the layout in use's, so a change is saved to it. Macros switch them too: `tooltips.profile(name)`, with
+`tooltips.activeProfile`, `tooltips.profileActive(name)` and `tooltips.profiles`.
 
 **Every line is a statistic**: a few lines of algorithmic code (the language of [Macros](#macros)) that only read the
 game and end with `return` — in a tooltip, `item` is the building or upgrade hovered and the `item.*` words read it
@@ -931,7 +938,9 @@ for production and one for prestige (see **Copies** below). Macro buttons are th
   - **Stats**, each on or off: Expected wait, Within minute %, Window, Frequency (one every …, on average),
     Multiplier (× vs nothing helping), Median wait. Hover one for what it means (the same text as on the Stats page).
   - **Graph**: the odds of the next one, over **This cycle** (a line sweeping across it) or **From now** (a
-    timeline with its window and mean).
+    timeline with its window and mean). With the Stats over it, the graph doesn't write their numbers again: the
+    expected line is labeled "expected" when Expected wait is on, and the next cookie's bar leaves out its window
+    when Window is on.
   - **Effects**: a bar per effect running on the graph's axis, with its time left and the chance a golden cookie
     comes before it ends.
   - **Frequency Factors**: a bar for each upgrade, plant, spirit or aura making them come more often, on a log scale
@@ -952,9 +961,10 @@ for production and one for prestige (see **Copies** below). Macro buttons are th
   window, X axis and choices as on the Garden page; hover them for the details.
 - **Manager** — what the active manager is doing; it takes that manager's name as its title. Its settings pick the
   parts: **Stages** (a strip: done ✓, the one it's on lit with its name, still to come), **Now** (the stage, how
-  long it's been on it, its profiles in ✓ or still waiting ⌛, and a warning while the Manager macro is off),
-  **Next stage when** (each condition of the stage's **Until**, ticked once it holds, with a season's drops
-  counted on a bar: "Christmas upgrades 12/21"), **Watching** (the stage's own numbers, from its watch list on the
+  long it's been on it, its profiles in ✓ or still waiting ⌛, and a warning while the Manager macro is off; under
+  the strip, only how long: the strip names the stage), **Next stage when** (each condition of the stage's
+  **Until**, ticked once it holds, with a season's drops counted on a bar: "Christmas upgrades 12/21"; left out on
+  the last stage under the strip), **Watching** (the stage's own numbers, from its watch list on the
   Managers page), **Macros** (the macros the stage switched on, pulsing while they work, dim if you switched one
   off; hover for what they did) and **Lately** (the last things those macros did). Click the strip or the stage to
   open the Managers page.

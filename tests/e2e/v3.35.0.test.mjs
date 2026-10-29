@@ -55,6 +55,7 @@ const rows = (html) => {
   return Object.fromEntries([...d.querySelectorAll('.ca-tt-row')].map((r) => [r.firstChild.textContent, r.querySelector('b')]));
 };
 
+CA.UI.StoreInsight.setLines(['bonus', 'actualGain', 'payback', 'actual', 'afford', 'share', 'next', 'nextUpgrade', 'wins']); // the lines before tooltip layouts changed the Default
 // ---- colours: affordable now green, not red
 Game.cookies = 1e9;
 let r = rows(Game.Objects.Farm.tooltip());
