@@ -473,7 +473,7 @@
       0 0 12px 2px rgba(255, 215, 106, 0.55);
   }
 }
-#CookieMgrMenu .ca-key-clear {
+#CookieMgrMenu .ca-key-revert {
   width: 18px;
   height: 18px;
   margin-left: 3px;
@@ -490,15 +490,15 @@
     opacity 0.15s,
     background 0.15s;
 }
-#CookieMgrMenu .ca-row:hover .ca-key-clear {
+#CookieMgrMenu .ca-row:hover .ca-key-revert {
   opacity: 0.8;
 }
-#CookieMgrMenu .ca-key-clear:hover {
+#CookieMgrMenu .ca-key-revert:hover {
   color: #fff;
-  background: rgba(255, 80, 80, 0.35);
+  background: rgba(255, 255, 255, 0.15);
 }
-#CookieMgrMenu .ca-hotkey.unset .ca-key-clear,
-#CookieMgrMenu .ca-hotkey.capturing .ca-key-clear {
+#CookieMgrMenu .ca-hotkey.default .ca-key-revert,
+#CookieMgrMenu .ca-hotkey.capturing .ca-key-revert {
   visibility: hidden;
 }
 

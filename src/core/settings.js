@@ -78,6 +78,13 @@ CA.Settings = (() => {
     else hotkeyOverrides[id] = combo;
   }
 
+  /** Back to the key it comes with. */
+  function resetHotkey(id) {
+    delete hotkeyOverrides[id];
+    CA.Events.emit('hotkeys', id);
+  }
+  const isDefaultHotkey = (id) => !(id in hotkeyOverrides);
+
   function resetHotkeys() {
     hotkeyOverrides = {};
     CA.Events.emit('hotkeys', null);
@@ -243,6 +250,8 @@ CA.Settings = (() => {
     getHotkey,
     setHotkey,
     targetsForCombo,
+    resetHotkey,
+    isDefaultHotkey,
     resetHotkeys,
     registerSection,
     serialize,
