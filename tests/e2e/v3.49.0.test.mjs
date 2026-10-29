@@ -1,5 +1,5 @@
 // v3.49.0: payback periods read in time units by default — since payback-short-units, the largest
-// two of s/m/h/d (45s, 16m 40s, 3h 12m, 2d 5h; days the largest unit) — with a Payback page option for the
+// two of ms/s/m/h/d/y (500ms, 45s, 16m 40s, 3h 12m, 2d 5h, 1y 23d) — with a Payback page option for the
 // old plain seconds (Cookie Monster's 999, 1K).
 import { boot, sleep, makeAssert, click } from '../harness/game.mjs';
 import { cpsModel } from '../harness/cps.mjs';
@@ -16,7 +16,10 @@ const F = CA.Format;
 assert(CA.Settings.get('ppUnits') === 'time', 'time units by default');
 const cases = [
   [0, '0s'],
-  [0.5, '0.5s'],
+  [0.5, '500ms'],
+  [0.0042, '4.2ms'],
+  [0.9996, '1s'],
+  [1.5, '1.5s'],
   [9.94, '9.9s'],
   [12.34, '12s'],
   [59.4, '59s'],
@@ -26,10 +29,12 @@ const cases = [
   [11520, '3h 12m'],
   [86399, '1d'],
   [2 * 86400 + 5 * 3600, '2d 5h'],
-  [99 * 86400 + 23.6 * 3600, '100d'],
-  [365 * 86400, '365d'],
-  [12345 * 86400, '12,345d'],
-  [5e6 * 86400, '5M d'],
+  [200 * 86400, '200d'],
+  [365 * 86400, '1y'],
+  [388 * 86400, '1y 23d'],
+  [345 * 365 * 86400, '345y'],
+  [12345 * 365 * 86400, '12,345y'],
+  [5e6 * 365 * 86400, '5M y'],
   [-90, '-1m 30s'],
   [Infinity, '∞'],
 ];
@@ -57,11 +62,11 @@ const chips = () => [...page().querySelectorAll('[data-pp-pick="ppUnits"]')];
 assert(chips().length === 2, 'Payback periods in: two chips');
 assert(chips().find((c) => c.dataset.v === 'time').classList.contains('on'), 'time units on');
 const cells = () => [...page().querySelectorAll('[data-pp-buildings] b')].map((b) => b.textContent);
-assert(cells().some((t) => t !== '∞') && cells().every((t) => /^(∞|[\d.,]+[smhd]( \d+[smh])?)$/.test(t)), `building cells in units (${cells().slice(0, 4)})`);
+assert(cells().some((t) => t !== '∞') && cells().every((t) => /^(∞|[\d.,]+(ms|[smhdy])( \d+[smhd])?)$/.test(t)), `building cells in units (${cells().slice(0, 4)})`);
 click(w, chips().find((c) => c.dataset.v === 'seconds'));
 await sleep(50);
 assert(CA.Settings.get('ppUnits') === 'seconds', 'the chip sets seconds');
-assert(cells().every((t) => !/[smhd]$/.test(t)), `building cells in plain seconds (${cells().slice(0, 4)})`);
+assert(cells().every((t) => !/(ms|[smhdy])$/.test(t)), `building cells in plain seconds (${cells().slice(0, 4)})`);
 
 done();
 process.exit();
