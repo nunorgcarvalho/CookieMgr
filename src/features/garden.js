@@ -431,7 +431,7 @@ CA.Garden = (() => {
   const priceBoostLeft = () => CA.Payback.effectLeft();
   /**
    * Whether seeds are more expensive now for a while yet: an effect raises their price and has longer left than
-   * the Payback page's "Wait out effects up to" (3 m; frenzies back to back, in long combos) — so they're
+   * the Payback page's "Wait out effects up to" (10 m; frenzies back to back, in long combos) — so they're
    * bought at today's price. One that ends sooner is waited out (CA.Payback.waitingOut).
    */
   const pricesStayUp = () => priceBoost() > 1.001 && !CA.Payback.waitingOut();

@@ -1,6 +1,6 @@
 // Prices that scale with CpS look past a short effect: an upgrade priced in minutes of the CpS the game
 // shows (Wrinkler ambergris, the garden drops' cookies) or a seed costs 7 times as much in a Frenzy. An
-// effect that ends within the Payback option "Wait out effects up to" (180 s) is priced away — payback
+// effect that ends within the Payback option "Wait out effects up to" (600 s) is priced away — payback
 // periods, the queue and the garden banks count the price once it's over — and waited out: the Auto buyer
 // holds the thing, Buy all upgrades leaves it out. One with longer left is part of the price.
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
@@ -48,9 +48,9 @@ const frenzy = (secs) => {
 // ---- no effect: today's price
 let c = P.upgradeCost(amber);
 assert(near(c.price, 6e4) && !c.waits, `no effect: a minute of CpS (${c.price})`);
-assert(value('payback.waitingOut') === false && value('payback.effectBoost') === 1 && value('payback.effectWait') === 180, 'the words: not waiting out; boost 1; wait 180 s');
+assert(value('payback.waitingOut') === false && value('payback.effectBoost') === 1 && value('payback.effectWait') === 600, 'the words: not waiting out; boost 1; wait 600 s');
 
-// ---- a Frenzy ending within 3 m: priced away, waited out
+// ---- a Frenzy ending within 10 m: priced away, waited out
 frenzy(60);
 assert(near(amber.getPrice(), 42e4), 'the game asks 7 times as much in a Frenzy');
 c = P.upgradeCost(amber);
@@ -78,7 +78,7 @@ assert(q.items.concat(q.held).some((x) => x.key === 'upgrade:Wrinkler ambergris'
 // the option: wait out up to 20 m
 CA.Settings.set('ppEffectWait', 1200);
 assert(P.upgradeCost(amber).waits && value('payback.effectWait') === 1200, 'Wait out effects up to 1200 s: it waits again');
-CA.Settings.set('ppEffectWait', 180);
+CA.Settings.set('ppEffectWait', 600);
 
 // ---- the garden: Garden replant bank and the gardener follow the same rule
 M.plants.goldenClover.unlocked = 1;
@@ -101,7 +101,7 @@ CA.UI.Menu.openPage('payback');
 await sleep(50);
 const menu = w.document.getElementById('CookieMgrMenu');
 const input = menu.querySelector('[data-pp-num="ppEffectWait"]');
-assert(input && input.value === '180' && /waiting one out \(1m 00s left\)/.test(menu.textContent), 'Wait out effects up to, on the Payback page, saying it waits one out');
+assert(input && input.value === '600' && /waiting one out \(1m 00s left\)/.test(menu.textContent), 'Wait out effects up to, on the Payback page, saying it waits one out');
 input.value = '30';
 input.dispatchEvent(new w.Event('change', { bubbles: true }));
 assert(P.effectWait() === 30 && !P.waitingOut(), 'set there: 30 s, so 1 m of Frenzy is part of the price');

@@ -67,7 +67,7 @@ CA.Payback = (() => {
   // ---- prices that scale with CpS ----------------------------------------------------------------
   // Seeds, the Golden switch, the garden drops' cookies, Wrinkler ambergris cost minutes of the CpS the
   // game shows, effects counted: a Frenzy makes them 7 times more expensive. An effect that ends within
-  // the "Wait out effects" option (3 m) is priced away (the price once it's over) and waited out; one
+  // the "Wait out effects" option (10 m) is priced away (the price once it's over) and waited out; one
   // with longer left (frenzies back to back, in long combos) is part of the price.
 
   /** How much effects raise CpS-scaled prices now: CpS ÷ unbuffed CpS (1: none; a Frenzy 7, a Clot 0.5). */
@@ -81,7 +81,7 @@ CA.Payback = (() => {
     return Object.values(Game.buffs || {}).reduce((m, b) => (b && b.multCpS !== undefined && b.multCpS > 1 ? Math.max(m, (b.time || 0) / fps) : m), 0);
   }
   /** The longest an effect may have left to be waited out (the option, seconds). */
-  const EFFECT_WAIT = 180;
+  const EFFECT_WAIT = 600;
   const effectWait = () => {
     const v = Number(CA.Settings && CA.Settings.get('ppEffectWait'));
     return Number.isFinite(v) && v >= 0 ? v : EFFECT_WAIT;
@@ -1063,7 +1063,7 @@ CA.Payback = (() => {
     PV('payback.income', 'cookies a second in a payback mode — "raw", "cps", "clicking", "actual" or a mode statistic’s code name (none: the mode in use): what its payback periods count in (NaN: not ready)', ['mode'], (m) => income(m));
     PV('payback.effectBoost', 'how much effects raise what costs minutes of CpS (seeds, the Golden switch…): CpS ÷ unbuffed CpS (1: none; a Frenzy 7)', [], () => Math.round(effectBoost() * 1000) / 1000);
     PV('payback.effectLeft', 'seconds until the effects that raise CpS are over (0: none running)', [], () => Math.round(effectLeft() * 10) / 10);
-    PV('payback.effectWait', 'the longest an effect may have left to be waited out, in seconds (the Payback page’s “Wait out effects up to”, 180)', [], effectWait);
+    PV('payback.effectWait', 'the longest an effect may have left to be waited out, in seconds (the Payback page’s “Wait out effects up to”, 600)', [], effectWait);
     PV('payback.waitingOut', 'true while an effect raises what costs minutes of CpS and ends within payback.effectWait(): it’s priced as once the effect is over, and waited out', [], waitingOut);
     PV('payback.bank', 'cookies that count as the bank for payback periods: in hand, plus your wrinklers’ when that’s chosen', [], bank);
     PV('payback.clickRate', 'clicks a second, averaged as the CpS + clicking mode counts them (the option’s window)', [], () => clicksOver(clickWindow()));

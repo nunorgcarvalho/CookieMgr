@@ -163,7 +163,7 @@ replantAtTick = true   # when a new clover round is planted — true: fertilizer
 plantWindow = 15   # (replantAtTick only) the last seconds before the tick, when the new clover round is planted
 wholeRounds = true   # start a round only once the bank covers all of it (garden.roundCost) — false: plant what it can afford
 tulipsFirst = true   # no clover round while a tulip round is due (it waits for the tulips to go down)
-waitOutEffects = true   # no new round while an effect makes seeds more expensive and ends within the Payback page's "Wait out effects up to" (3 m: payback.effectWait()); one with longer left (frenzies back to back) isn't waited out: it plants at today's price
+waitOutEffects = true   # no new round while an effect makes seeds more expensive and ends within the Payback page's "Wait out effects up to" (10 m: payback.effectWait()); one with longer left (frenzies back to back) isn't waited out: it plants at today's price
 unlockNewSeeds = true   # a seed you haven't unlocked yet: let it grow, harvest it once mature (that unlocks it)
 if unlockNewSeeds:
   garden.harvestNew()
