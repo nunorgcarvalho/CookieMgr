@@ -387,14 +387,18 @@ CA.Garden = (() => {
     return c;
   }
 
-  /** Cookies to plant the whole layout from scratch: every tile it has a seed for, at today's seed prices. */
+  /**
+   * Cookies to plant the whole layout from scratch: every tile it has a seed for, at today's seed prices —
+   * an effect that ends soon priced away (CA.Payback.waitingOut).
+   */
   function layoutCost() {
     const M = minigame();
     if (!M || typeof M.getCost !== 'function') return 0;
     const p = active();
+    const unbuffed = !pricesStayUp();
     return tilesOf(M).reduce((sum, [x, y]) => {
       const me = M.plants[wantAt(p, x, y)];
-      return me ? sum + M.getCost(me) : sum;
+      return me ? sum + seedPrice(M, me, unbuffed) : sum;
     }, 0);
   }
 
@@ -422,23 +426,15 @@ CA.Garden = (() => {
    * How much an effect raises seed prices now: CpS ÷ unbuffed CpS (1: no effect; a Frenzy 7, a
    * Clot 0.5). The game prices a seed in minutes of the CpS it shows, effects counted.
    */
-  function priceBoost() {
-    const u = Game.unbuffedCps || 0;
-    return u > 0 && Game.cookiesPs > 0 ? Game.cookiesPs / u : 1;
-  }
+  const priceBoost = () => CA.Payback.effectBoost();
   /** Seconds until the effects that raise seed prices are over (0: none running). */
-  function priceBoostLeft() {
-    const fps = Game.fps || 30;
-    return Object.values(Game.buffs || {}).reduce((m, b) => (b && b.multCpS !== undefined && b.multCpS > 1 ? Math.max(m, (b.time || 0) / fps) : m), 0);
-  }
-  /** How long an effect may have left for the gardener to wait it out (the gardener's waitOutUpTo, s). */
-  const waitOutUpTo = () => gardenerNumber('waitOutUpTo', WAIT_OUT_UP_TO);
-  const WAIT_OUT_UP_TO = 120;
+  const priceBoostLeft = () => CA.Payback.effectLeft();
   /**
    * Whether seeds are more expensive now for a while yet: an effect raises their price and has longer left than
-   * the gardener waits out (frenzies back to back, in long combos) — so they're bought at today's price.
+   * the Payback page's "Wait out effects up to" (3 m; frenzies back to back, in long combos) — so they're
+   * bought at today's price. One that ends sooner is waited out (CA.Payback.waitingOut).
    */
-  const pricesStayUp = () => priceBoost() > 1.001 && priceBoostLeft() > waitOutUpTo();
+  const pricesStayUp = () => priceBoost() > 1.001 && !CA.Payback.waitingOut();
   /** A seed's price (M.getCost) — with `unbuffed`, at the unbuffed CpS (the price once the effects are over). */
   function seedPrice(M, me, unbuffed) {
     const c = typeof M.getCost === 'function' ? M.getCost(me) : 0;
