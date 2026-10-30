@@ -9,7 +9,8 @@
 //                 .ca-wpop / .ca-orb-pop); on hover a copy of it is shown in the layer, refreshed
 //                 while the mouse stays (the content behind it updates live); data-pop-live="key"
 //                 builds it instead from providePop(key, fn(el) → html) — an upgrade's info card
-//                 (ui/upgradeTip.js) for anything marked data-pop-live="upgrade" data-upgrade="<name>"
+//                 (ui/upgradeTip.js) for anything marked data-pop-live="upgrade" data-upgrade="<name>",
+//                 an achievement's (ui/achievementTip.js) for data-pop-live="achievement" data-achievement="<name>"
 //   chart tips    plots put their hover box in the layer too (float())
 
 CA.UI = CA.UI || {};

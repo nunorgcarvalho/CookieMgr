@@ -182,5 +182,5 @@ CA.Format = (() => {
     return (sec < 0 ? '-' : '') + inUnits(Math.abs(sec));
   }
 
-  return { short, beautify, signed, two, clock, span, payback, FORMATS, notation: kind };
+  return { short, beautify, signed, two, clock, span, units: inUnits, payback, FORMATS, notation: kind };
 })();
