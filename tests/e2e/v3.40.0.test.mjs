@@ -40,7 +40,7 @@ assert(prof && prof.builtin && prof.name === '8 nursetulips together + clover co
 assert(LY.list('profile').some((p) => p.id === 'goldenCombos'), 'next to Golden clover combos');
 LY.pick('profile', 'tulipCombos');
 const picks = LY.picks();
-assert(picks.gardener === 'tulipRounds' && picks.soil === 'clovers' && picks.template === 'tulipRows' && picks.seeds === 'goldenTulips', `it picks Tulip and clover rounds, Clovers grow together, Two rows of four, Golden clover + nursetulip (${JSON.stringify(picks)})`);
+assert(picks.gardener === 'tulipRounds' && picks.soil === 'tulips' && picks.template === 'tulipRows' && picks.seeds === 'goldenTulips', `it picks Tulip and clover rounds, Tulips grow then clay, Two rows of four, Golden clover + nursetulip (${JSON.stringify(picks)})`);
 const plot = G.active().plot;
 assert(TULIPS.every(([x, y]) => plot[y][x] === 'nursetulip') && CLOVERS.every(([x, y]) => plot[y][x] === 'goldenClover'), 'level 8: two rows of four nursetulips inside the plot, golden clovers on the other 22 tiles');
 assert(plot[0].every((k) => !k), 'nothing on the locked top row');
@@ -56,6 +56,8 @@ assert(soil() === 'fertilizer', 'fertilizer while the clovers grow');
 assert(val('garden.seedYoung(nursetulip) == 8') && val('garden.seedMature(nursetulip) == 0'), 'garden.seedYoung / seedMature');
 
 // ---- the clovers mature, the tulips still growing: clay — the tulips don't hold fertilizer on
+// (Clovers grow together, then clay; the profile's own soil rule since is Tulips grow, then clay)
+LY.pick('soil', 'clovers');
 CLOVERS.forEach(([x, y]) => set(x, y, 'goldenClover', 55));
 TULIPS.forEach(([x, y]) => set(x, y, 'nursetulip', 20));
 M.nextSoil = 0;
