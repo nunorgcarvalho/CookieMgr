@@ -458,7 +458,7 @@ CA.AutoBuyer = (() => {
     const order = (a, b2) => (a.ipp === b2.ipp ? a.pp - b2.pp || 0 : a.ipp - b2.ipp);
     items.sort((a, b2) => (a.first !== b2.first ? (a.first ? -1 : 1) : a.first ? (a.pp === b2.pp ? 0 : a.pp - b2.pp) : order(a, b2)));
     if (p.skip) {
-      // a capped bulk may have grown dearer than the budget; skip still means "only what it can afford"
+      // a capped bulk may have grown more expensive than the budget; skip still means "only what it can afford"
       for (let i = items.length - 1; i >= 0; i--) if (items[i].price > b) held.push({ ...items.splice(i, 1)[0], score: NaN, why: 'can’t afford it yet' });
     }
     // the score: against the best implied payback period of what's ranked by it (not "first")
@@ -499,7 +499,7 @@ CA.AutoBuyer = (() => {
    * What the gardener plants next, as things to buy (garden:<seed>): its price today, its gain the
    * income its grown plants add — the golden cookie part of the Actual income (less CpS + clicking, unbuffed)
    * × the frequency gain, and CpS + clicking × the CpS change (nursetulips: −2% each). Held while
-   * there's no Actual income yet, while an effect makes seeds dearer (one that ends within the gardener's
+   * there's no Actual income yet, while an effect makes seeds more expensive (one that ends within the gardener's
    * waitOutUpTo, 2 min), and (clovers) while the
    * nursetulips have planting to do: they go first.
    */
@@ -516,7 +516,7 @@ CA.AutoBuyer = (() => {
       const gain = golden * (x.freq - 1) + base * (x.cps - 1);
       const t = { kind: 'garden', name: x.seed, n: x.n, label: `${x.round ? 'Replant' : 'Plant'} ${x.n} ${x.name}`, icon: x.icon, round: x.round, price: x.price, gain, bonus: gain, pp: gain > 0 ? x.price / gain : Infinity };
       t.key = thingKey(t);
-      const why = !Number.isFinite(golden) ? 'waits for a minute of Actual income (what golden cookies bring in)' : dear ? 'an effect makes seeds dearer: waits it out' : tulips && !x.first ? 'the nursetulips go first' : '';
+      const why = !Number.isFinite(golden) ? 'waits for a minute of Actual income (what golden cookies bring in)' : dear ? 'an effect makes seeds more expensive: waits it out' : tulips && !x.first ? 'the nursetulips go first' : '';
       return why ? { ...t, ipp: NaN, score: NaN, first: false, rules: [], why } : t;
     });
   }

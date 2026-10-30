@@ -1,5 +1,5 @@
 // Nunix's garden rounds: the Tulip and clover rounds gardener plants each round whole — once the bank
-// covers all of it, and no effect makes seeds dearer — the nursetulips first (no clover round while a
+// covers all of it, and no effect makes seeds more expensive — the nursetulips first (no clover round while a
 // tulip round is due). The Auto buyer's Garden rounds bank keeps what those rounds need, at unbuffed
 // prices: the tulips' round while they aren't all planted, plus roundsMargin (1.25) × the clovers'
 // round; Golden cookie combos (Nunix's buyer profile) keeps it instead of the whole-layout replant.
@@ -64,7 +64,7 @@ assert(planted(CLOVERS, 'goldenClover') === 22, 'the tulips down, the bank cover
 // ---- an effect on the prices: no new round until it's over
 CLOVERS.forEach(([x, y]) => set(x, y, null));
 Game.cookies = 1e20;
-Game.cookiesPs = 7e10; // a Frenzy: seeds 7 times dearer
+Game.cookiesPs = 7e10; // a Frenzy: seeds 7 times more expensive
 assert(value('garden.priceBoost') === 7, 'garden.priceBoost: 7 in a Frenzy');
 G.tend();
 assert(planted(CLOVERS, 'goldenClover') === 0, 'a Frenzy on: the clover round waits');

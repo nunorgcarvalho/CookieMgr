@@ -435,7 +435,7 @@ CA.Garden = (() => {
   const waitOutUpTo = () => gardenerNumber('waitOutUpTo', WAIT_OUT_UP_TO);
   const WAIT_OUT_UP_TO = 120;
   /**
-   * Whether seeds are dearer now for a while yet: an effect raises their price and has longer left than
+   * Whether seeds are more expensive now for a while yet: an effect raises their price and has longer left than
    * the gardener waits out (frenzies back to back, in long combos) — so they're bought at today's price.
    */
   const pricesStayUp = () => priceBoost() > 1.001 && priceBoostLeft() > waitOutUpTo();

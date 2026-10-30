@@ -2,7 +2,7 @@
 // empty tiles while its round grows ("Plant 9 Golden clover"), or a new round once one is due ("Replant
 // 22 Golden clover"). Its gain is the golden cookie income the grown plants add (Actual income less CpS +
 // clicking, × the garden's golden cookie frequency gain). Garden things may spend the garden's own banks,
-// wait out effects that make seeds dearer, and the clovers wait for the nursetulips. And the Tulip and clover
+// wait out effects that make seeds more expensive, and the clovers wait for the nursetulips. And the Tulip and clover
 // rounds gardener fills a round's empty tiles while any of it still grows (a round half mature, half young
 // used to sit half planted).
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
@@ -102,7 +102,7 @@ Game.cookies = 1e15;
 Game.buffs = { Frenzy: { multCpS: 7 } };
 Game.CalculateGains();
 row = B.queue('combos').held.find((x) => x.key === 'garden:goldenClover');
-assert(row && /dearer/.test(row.why), `a Frenzy ending soon: held (${row && row.why})`);
+assert(row && /more expensive/.test(row.why), `a Frenzy ending soon: held (${row && row.why})`);
 // a Frenzy with longer left than the gardener waits out (frenzies back to back): today's price, not waited out
 Game.buffs = { Frenzy: { multCpS: 7, time: 900 * (Game.fps || 30) } };
 Game.CalculateGains();

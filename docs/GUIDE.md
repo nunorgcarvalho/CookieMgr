@@ -521,7 +521,7 @@ too: a seed's empty tiles while its round grows (*Plant 9 Golden clover*), or a 
 Golden clover*). Its payback period is its price over the golden cookie income the grown plants add — the Actual
 income less CpS + clicking, × how much they raise the garden's golden cookie frequency (nursetulips' boost counted).
 Buying it plants them. It may spend the garden's own banks (Garden replant, Garden rounds); it waits while an effect
-makes seeds dearer, and the clovers wait while the nursetulips have planting to do.
+makes seeds more expensive, and the clovers wait while the nursetulips have planting to do.
 Then the active **Profile**: what it buys (buildings, upgrades, Buy all upgrades, garden), the building bulk, save up or skip,
 what it **keeps** (minutes of unbuffed CpS, plus any of the **Lucky!**, **Conjure**, **Frenzy Lucky!**, **Garden
 replant** and **Garden rounds** banks) and each one's **priority**: **first** (the default — nothing is bought until the bank covers it, so
@@ -880,8 +880,8 @@ The gardeners:
   1000 h × 3): golden cookies +84.8% on average against +83.6% for Golden clover combos, at CpS ×0.886; every tulip
   mature 25% of the time, in stretches of about 1.8 h, up to +149%. Fertilizer for the tulips too drops it to +38%.
   Each round goes down whole or not at all (`wholeRounds`): it waits until the bank covers all of it, and until no
-  effect makes seeds dearer (`waitOutEffects`: a seed costs minutes of the CpS the game shows, so a Frenzy makes it 7
-  times dearer — `garden.priceBoost()`) and ends within `waitOutUpTo` (2 min; `garden.priceBoostLeft()`). One with
+  effect makes seeds more expensive (`waitOutEffects`: a seed costs minutes of the CpS the game shows, so a Frenzy makes it 7
+  times more expensive — `garden.priceBoost()`) and ends within `waitOutUpTo` (2 min; `garden.priceBoostLeft()`). One with
   longer left — frenzies back to back in long combos — isn't waited out: it plants at today's price, and the Garden
   rounds bank keeps today's price too. The tulips go first (`tulipsFirst`): no clover round starts while a tulip
   round is due. `garden.roundCost(seed)` is what a round costs. While a round is still growing it fills its empty

@@ -153,7 +153,7 @@ if garden.layoutYoung() > 0 and garden.layoutMature() == 0:
 # 8 nursetulips, 1000 h × 3: golden cookies +84.8% on average against +83.6% for golden clover
 # combos, at CpS ×0.886; every nursetulip mature 25% of the time, in stretches of ~1.8 h, up to +149%.)
 # Each round goes down whole or not at all: it waits for the cookies to plant all of it, and for
-# effects to end (a seed costs minutes of the CpS the game shows: a Frenzy makes it 7 times dearer).
+# effects to end (a seed costs minutes of the CpS the game shows: a Frenzy makes it 7 times more expensive).
 # The tulips go first: no clover round starts while a tulip round is due.
 tulip = nursetulip   # the seed replanted as one round, apart from the clovers
 clover = goldenClover   # the seed of the clover rounds
@@ -163,7 +163,7 @@ replantAtTick = true   # when a new clover round is planted — true: fertilizer
 plantWindow = 15   # (replantAtTick only) the last seconds before the tick, when the new clover round is planted
 wholeRounds = true   # start a round only once the bank covers all of it (garden.roundCost) — false: plant what it can afford
 tulipsFirst = true   # no clover round while a tulip round is due (it waits for the tulips to go down)
-waitOutEffects = true   # no new round while an effect makes seeds dearer (garden.priceBoost() above 1: a Frenzy…)…
+waitOutEffects = true   # no new round while an effect makes seeds more expensive (garden.priceBoost() above 1: a Frenzy…)…
 waitOutUpTo = 120   # …and ends within this many seconds; one with longer left (frenzies back to back) isn't waited out: it plants at today's price
 unlockNewSeeds = true   # a seed you haven't unlocked yet: let it grow, harvest it once mature (that unlocks it)
 if unlockNewSeeds:
@@ -223,7 +223,7 @@ if garden.seedYoung(clover) > 0:
     {
       id: 'tulipRounds',
       name: 'Tulip and clover rounds',
-      desc: 'Nursetulips and golden clovers, each replanted all together on rounds of its own. The tulips first, once fewer than half are mature, the clovers as the Full-garden replanter does — so the tulips are mature at the same time, boosting the clovers around them. A round goes down whole, once the bank covers it, and it waits out an effect that makes seeds dearer if it ends within 2 minutes.',
+      desc: 'Nursetulips and golden clovers, each replanted all together on rounds of its own. The tulips first, once fewer than half are mature, the clovers as the Full-garden replanter does — so the tulips are mature at the same time, boosting the clovers around them. A round goes down whole, once the bank covers it, and it waits out an effect that makes seeds more expensive if it ends within 2 minutes.',
       data: () => ({ rules: TULIP_GARDENER, knobs: { tulipReplantBelow: PCT, replantBelow: PCT, replantAtTick: TOGGLE, plantWindow: SECONDS, wholeRounds: TOGGLE, tulipsFirst: TOGGLE, waitOutEffects: TOGGLE, waitOutUpTo: { kind: 'number', min: 0, max: 3600, step: 10, unit: 's' }, unlockNewSeeds: TOGGLE } }),
     },
     { id: 'weeds', name: 'Weed collector', desc: 'Keeps the garden bare so weeds and fungi spring up; harvests old meddleweed (for brown mold and crumbspore) and new seeds once mature, clears everything else. Plants nothing.', data: () => ({ rules: WEED_GARDENER, knobs: { oldWeedOver: PCT } }) },
