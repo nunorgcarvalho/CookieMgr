@@ -426,6 +426,19 @@ CA.Garden = (() => {
     const u = Game.unbuffedCps || 0;
     return u > 0 && Game.cookiesPs > 0 ? Game.cookiesPs / u : 1;
   }
+  /** Seconds until the effects that raise seed prices are over (0: none running). */
+  function priceBoostLeft() {
+    const fps = Game.fps || 30;
+    return Object.values(Game.buffs || {}).reduce((m, b) => (b && b.multCpS !== undefined && b.multCpS > 1 ? Math.max(m, (b.time || 0) / fps) : m), 0);
+  }
+  /** How long an effect may have left for the gardener to wait it out (the gardener's waitOutUpTo, s). */
+  const waitOutUpTo = () => gardenerNumber('waitOutUpTo', WAIT_OUT_UP_TO);
+  const WAIT_OUT_UP_TO = 120;
+  /**
+   * Whether seeds are dearer now for a while yet: an effect raises their price and has longer left than
+   * the gardener waits out (frenzies back to back, in long combos) — so they're bought at today's price.
+   */
+  const pricesStayUp = () => priceBoost() > 1.001 && priceBoostLeft() > waitOutUpTo();
   /** A seed's price (M.getCost) — with `unbuffed`, at the unbuffed CpS (the price once the effects are over). */
   function seedPrice(M, me, unbuffed) {
     const c = typeof M.getCost === 'function' ? M.getCost(me) : 0;
@@ -468,8 +481,10 @@ CA.Garden = (() => {
     tilesOf(M).forEach(([x, y]) => wantAt(p, x, y) && seeds.add(wantAt(p, x, y)));
     let keep = 0;
     seeds.forEach((k) => {
-      if (!FIRST_SEEDS.includes(k)) keep += Math.max(0, Number(margin) || 0) * roundCost(k, true);
-      else if (layoutCensus(k).planted < layoutCensus(k).tiles) keep += roundCost(k, true);
+      // at the prices once the effects are over — or today's, while they stay up for longer than it waits
+      const unbuffed = !pricesStayUp();
+      if (!FIRST_SEEDS.includes(k)) keep += Math.max(0, Number(margin) || 0) * roundCost(k, unbuffed);
+      else if (layoutCensus(k).planted < layoutCensus(k).tiles) keep += roundCost(k, unbuffed);
     });
     return keep;
   }
@@ -752,6 +767,7 @@ CA.Garden = (() => {
     V('garden.offProfile', 'tiles that aren’t as the layout has them', () => census().off);
     V('garden.layoutTiles', 'tiles the layout has a seed for', () => layoutCensus().tiles);
     V('garden.layoutCost', 'cookies to replant the whole layout from scratch (every tile it has a seed for)', () => layoutCost());
+    V('garden.priceBoostLeft', 'seconds until the effects that raise seed prices are over (0: none running)', () => Math.round(priceBoostLeft() * 10) / 10);
     V('garden.priceBoost', 'how much effects raise seed prices now: CpS ÷ unbuffed CpS (1: none; a Frenzy 7)', () => Math.round(priceBoost() * 1000) / 1000);
     V('garden.roundsReserve', 'what the Auto buyer’s Garden rounds bank keeps: the nursetulips’ round while they aren’t all planted, plus 1.25 × the other seeds’ round (unbuffed prices)', () => roundsReserve());
     V('garden.layoutMature', 'the layout’s own plants that are mature', () => layoutCensus().mature);
@@ -942,6 +958,8 @@ CA.Garden = (() => {
     roundCost,
     roundsReserve,
     priceBoost,
+    priceBoostLeft,
+    pricesStayUp,
     ROUNDS_MARGIN,
     compileRules,
     serialize,

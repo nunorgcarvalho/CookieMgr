@@ -27,8 +27,8 @@ cpsModel(Game, { base: 1000, each: Object.fromEntries(Object.keys(spec).map((n) 
 Game.CpsAchievements = [];
 Game.CalculateGains();
 const CPS = Game.cookiesPs;
-// income: 5 × CpS actually taken in (4 × CpS of it golden cookies)
-CA.Recorder.recent = (secs) => ({ actual: 5 * CPS, secs: Math.min(secs || 600, 3600), cps: CPS, clickRate: 0 });
+// income: 50 × CpS actually taken in (49 × CpS of it golden cookies)
+CA.Recorder.recent = (secs) => ({ actual: 50 * CPS, secs: Math.min(secs || 600, 3600), cps: CPS, clickRate: 0 });
 M.plants.goldenClover.unlocked = 1;
 M.plants.nursetulip.unlocked = 1;
 G.use('tulipCombos');
@@ -78,7 +78,7 @@ B.use('combos');
 let q = B.queue('combos');
 let row = q.items.concat(q.held).find((x) => x.key === 'garden:goldenClover');
 assert(row && !row.why && row.label === 'Plant 9 Golden clover', `a queue row: ${row && row.label} ${row && row.why}`);
-const gain = 4 * CPS * (G.plantings()[0].freq - 1);
+const gain = 49 * CPS * (G.plantings()[0].freq - 1);
 assert(Math.abs(row.gain - gain) < 1e-6 * gain && Math.abs(row.pp - row.price / gain) < 1e-6 * row.pp, `its gain: golden income × the frequency gain (${row.gain} vs ${gain})`);
 assert(Number.isFinite(row.score), `scored (${row.score})`);
 assert(CA.Script.VALUES.find((v) => v.id === 'buyer.queue').get('combos').includes('garden:goldenClover'), 'buyer.queue lists it');
@@ -102,7 +102,20 @@ Game.cookies = 1e15;
 Game.buffs = { Frenzy: { multCpS: 7 } };
 Game.CalculateGains();
 row = B.queue('combos').held.find((x) => x.key === 'garden:goldenClover');
-assert(row && /dearer/.test(row.why), `a Frenzy: held (${row && row.why})`);
+assert(row && /dearer/.test(row.why), `a Frenzy ending soon: held (${row && row.why})`);
+// a Frenzy with longer left than the gardener waits out (frenzies back to back): today's price, not waited out
+Game.buffs = { Frenzy: { multCpS: 7, time: 900 * (Game.fps || 30) } };
+Game.CalculateGains();
+assert(Math.abs(CA.Script.VALUES.find((v) => v.id === 'garden.priceBoostLeft').get() - 900) < 1, 'garden.priceBoostLeft: 15 min');
+Game.cookies += 1; // a new queue (it's memoized for a moment on the bank)
+row = B.queue('combos').items.find((x) => x.key === 'garden:goldenClover');
+assert(row && Math.abs(row.price - 9 * 7 * CLOVER) < 9 * 7, `15 min of Frenzy left: in the queue at today's price (${row && row.price})`);
+assert(Math.abs(row.gain - 49 * CPS * (G.plantings()[0].freq - 1)) < 1e-6 * row.gain, 'its gain counts CpS + clicking without the Frenzy (the Frenzy is golden cookie income)');
+assert(Math.abs(G.roundsReserve() - 1.25 * 22 * 7 * CLOVER) < 1e-6 * G.roundsReserve(), 'the Garden rounds bank keeps today’s price too');
+Game.cookies = 1e15;
+G.tend();
+assert(count(CLOVERS, (x, y) => at(x, y) === 'goldenClover') === 22, 'the gardener plants rather than wait it out');
+stuck();
 Game.buffs = {};
 Game.CalculateGains();
 TULIPS.forEach(([x, y]) => set(x, y, null));

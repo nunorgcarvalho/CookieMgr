@@ -881,7 +881,9 @@ The gardeners:
   mature 25% of the time, in stretches of about 1.8 h, up to +149%. Fertilizer for the tulips too drops it to +38%.
   Each round goes down whole or not at all (`wholeRounds`): it waits until the bank covers all of it, and until no
   effect makes seeds dearer (`waitOutEffects`: a seed costs minutes of the CpS the game shows, so a Frenzy makes it 7
-  times dearer — `garden.priceBoost()`). The tulips go first (`tulipsFirst`): no clover round starts while a tulip
+  times dearer — `garden.priceBoost()`) and ends within `waitOutUpTo` (2 min; `garden.priceBoostLeft()`). One with
+  longer left — frenzies back to back in long combos — isn't waited out: it plants at today's price, and the Garden
+  rounds bank keeps today's price too. The tulips go first (`tulipsFirst`): no clover round starts while a tulip
   round is due. `garden.roundCost(seed)` is what a round costs. While a round is still growing it fills its empty
   tiles (a weed cleared, cookies short at the time), even with part of it mature already.
 - **Weed collector** — keeps the garden bare (with *Always fertilizer*: the most weeds), so meddleweed and fungi

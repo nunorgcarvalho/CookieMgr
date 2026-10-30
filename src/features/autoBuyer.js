@@ -497,18 +497,20 @@ CA.AutoBuyer = (() => {
   const holdsBack = (bank, x) => bank.kind === 'bank' && !(x && x.kind === 'garden' && GARDEN_BANKS.includes(bank.name));
   /**
    * What the gardener plants next, as things to buy (garden:<seed>): its price today, its gain the
-   * income its grown plants add — the golden cookie part of the Actual income (less CpS + clicking)
+   * income its grown plants add — the golden cookie part of the Actual income (less CpS + clicking, unbuffed)
    * × the frequency gain, and CpS + clicking × the CpS change (nursetulips: −2% each). Held while
-   * there's no Actual income yet, while an effect makes seeds dearer, and (clovers) while the
+   * there's no Actual income yet, while an effect makes seeds dearer (one that ends within the gardener's
+   * waitOutUpTo, 2 min), and (clovers) while the
    * nursetulips have planting to do: they go first.
    */
   function gardenThings() {
     const G = CA.Garden;
     if (!G.minigame()) return [];
     const list = G.plantings();
-    const base = P().income('cpsClicking');
+    // CpS + clicking without the effects running now (a Frenzy's ×7 is golden cookie income too)
+    const base = P().income('cpsClicking') / G.priceBoost();
     const golden = Math.max(0, P().income('actualIncome') - base);
-    const dear = G.priceBoost() > 1.001;
+    const dear = G.priceBoost() > 1.001 && !G.pricesStayUp();
     const tulips = list.some((x) => x.first);
     return list.map((x) => {
       const gain = golden * (x.freq - 1) + base * (x.cps - 1);
