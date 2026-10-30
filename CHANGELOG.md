@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 4.30.1 — 2026-10-30
+
+- **Guide:** Still to collect mentions the achievement info cards.
+
 ## 4.30.0 — 2026-10-30
 
 - **Achievement info cards:** hovering an achievement in Stats → Misc → Still to collect shows a card like the
