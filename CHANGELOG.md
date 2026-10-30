@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+## 4.29.0 — 2026-10-30
+
+- **Prices that scale with CpS** (seeds, the Golden switch, the garden drops' cookies, Wrinkler ambergris) look past a
+  short effect: one that ends within the new Payback option **Wait out effects up to** (600 s: 10 m) is priced away. Payback
+  periods, the store's colors, the Garden replant and Garden rounds banks and the Auto buyer's queue count the price once
+  it's over, and the Auto buyer and the gardener wait it out ("an effect makes it more expensive: waits it out"). An
+  effect with longer left (frenzies back to back) is part of the price, as before.
+- New words `payback.effectBoost()`, `payback.effectLeft()`, `payback.effectWait()`, `payback.waitingOut()`. The Tulip and
+  clover rounds gardener waits out effects ending within `payback.effectWait()`; its `waitOutUpTo` knob is gone (it was 120 s, now the option's 600 s).
+- **Tulips grow, then clay:** a soil rule for the Tulip and clover rounds gardener. It keeps fertilizer on while any
+  nursetulip is growing (and, with `cloversToo`, while a golden clover round grows) and switches to clay once they're
+  mature, so the tulips mature sooner and stay mature longer. *8 nursetulips together + clover combos* now picks it.
+  In simulation (level 8, 1000 h × 3) golden cookies are at +140% or more 17% of the time against 12% before, with a
+  lower average (+69.7% against +84.8%). *Clovers grow together, then clay* is still there for the best average.
+
 ## 4.28.0 — 2026-10-30
 
 - **Bank flows:** a **Game's CpS** chip hides the dashed line of the CpS the game shows (+ clicking), so the bars
