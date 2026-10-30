@@ -84,7 +84,7 @@ The Stats page (until v3.47.0 two pages, Graphs and Stats) has five tabs. **Cook
   building CpS, clicking and drops, the extra that CpS effects (Frenzy, Click frenzy…) add on top of their unboosted
   part, in a lighter shade — for drops, the share of the payout a CpS effect caused (none when Lucky! hit its
   bank-based cap). Window, smoothing, % of total, effect lanes with icons, and a dashed line for the CpS the game
-  shows. Below it, a table with one row per category, figures side by side — "(raw / boosted)", "(−bought / +sold)",
+  shows (+ clicking), which the **Game's CpS** chip hides, leaving the bars (e.g. building CpS alone) to set the axis. Below it, a table with one row per category, figures side by side — "(raw / boosted)", "(−bought / +sold)",
   "(raw)"… — now and averaged over the last 1 min – 3 h, then In / Out / Net.
 - **Stock equity** — what your stocks would sell for right now, in cookies (the same figure as the Sell all preview).
   As a category it shows equity going up and down: at a purchase it rises by about what the bank paid (minus the
@@ -102,6 +102,8 @@ CpS line, a **payback** line at the income payback periods use now and an averag
 and Since last ascension, smoothing, log scale, % of total, effect lanes and markers. Its figures: the income for
 payback, the window's average, that average × raw CpS and the golden cookies' share. Below it, a table of each source
 and the actual income averaged over the last 1m, 5m, 15m, 1h, 3h, 12h and since the last ascension, with × raw CpS.
+Click a source's row to show that source alone on the chart, its axis fitted to it and with its own average line
+(the widget follows); click it again, or the Actual income row, to show every source.
 Its ☆ puts the chart on the left panel as the **Actual income** widget.
 
 **Prestige tab** — a **prestige target**: type a number (1–999) and pick a magnitude (thousand, million, …) to see

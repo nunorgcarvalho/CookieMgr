@@ -2378,6 +2378,23 @@
 #CookieMgrMenu .ca-stages tr.sep td {
   border-top: 1px solid rgba(255, 217, 138, 0.25);
 }
+/* rows that pick what the chart shows (Actual income: one source alone) */
+#CookieMgrMenu .ca-stages tr.ca-pick {
+  cursor: pointer;
+}
+#CookieMgrMenu .ca-stages tr.ca-pick:hover td {
+  background: rgba(255, 217, 138, 0.07);
+}
+#CookieMgrMenu .ca-stages tr.ca-pick.on td {
+  background: rgba(255, 217, 138, 0.13);
+  color: #ffe9b8;
+}
+#CookieMgrMenu .ca-stages tr.ca-pick.off td {
+  opacity: 0.5;
+}
+#CookieMgrMenu .ca-legend-only {
+  color: #ffd98a;
+}
 
 /* ---------- v2.6: resizable widgets ---------- */
 
