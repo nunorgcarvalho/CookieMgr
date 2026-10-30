@@ -425,7 +425,8 @@ CA.AutoBuyer = (() => {
         const price = P().sumPrice(buildingNamed(r.name), 100);
         if (price <= cheap && price <= b) r = { ...(r.n === 100 ? r : resized(r, 100, p)), key: r.key, first: true, rules: [cheapBulkText(p)], why: 'cheap' };
       }
-      let why = Number.isFinite(r.pp) ? '' : 'never pays back';
+      // a CpS-scaled upgrade while a short effect runs: priced as once it's over, and waited out
+      let why = r.waits ? 'an effect makes it more expensive: waits it out' : Number.isFinite(r.pp) ? '' : 'never pays back';
       for (const rule of rules) {
         if (!matches(rule, r) || !when(rule, r.key)) continue;
         if (rule.effect === 'never') {
@@ -499,9 +500,8 @@ CA.AutoBuyer = (() => {
    * What the gardener plants next, as things to buy (garden:<seed>): its price today, its gain the
    * income its grown plants add — the golden cookie part of the Actual income (less CpS + clicking, unbuffed)
    * × the frequency gain, and CpS + clicking × the CpS change (nursetulips: −2% each). Held while
-   * there's no Actual income yet, while an effect makes seeds more expensive (one that ends within the gardener's
-   * waitOutUpTo, 2 min), and (clovers) while the
-   * nursetulips have planting to do: they go first.
+   * there's no Actual income yet, while an effect makes seeds more expensive and ends soon (payback.waitingOut:
+   * priced as once it's over), and (clovers) while the nursetulips have planting to do: they go first.
    */
   function gardenThings() {
     const G = CA.Garden;
@@ -514,7 +514,9 @@ CA.AutoBuyer = (() => {
     const tulips = list.some((x) => x.first);
     return list.map((x) => {
       const gain = golden * (x.freq - 1) + base * (x.cps - 1);
-      const t = { kind: 'garden', name: x.seed, n: x.n, label: `${x.round ? 'Replant' : 'Plant'} ${x.n} ${x.name}`, icon: x.icon, round: x.round, price: x.price, gain, bonus: gain, pp: gain > 0 ? x.price / gain : Infinity };
+      // an effect that ends soon: priced as once it's over (it's waited out)
+      const price = dear ? x.price / G.priceBoost() : x.price;
+      const t = { kind: 'garden', name: x.seed, n: x.n, label: `${x.round ? 'Replant' : 'Plant'} ${x.n} ${x.name}`, icon: x.icon, round: x.round, price, gain, bonus: gain, pp: gain > 0 ? price / gain : Infinity };
       t.key = thingKey(t);
       const why = !Number.isFinite(golden) ? 'waits for a minute of Actual income (what golden cookies bring in)' : dear ? 'an effect makes seeds more expensive: waits it out' : tulips && !x.first ? 'the nursetulips go first' : '';
       return why ? { ...t, ipp: NaN, score: NaN, first: false, rules: [], why } : t;

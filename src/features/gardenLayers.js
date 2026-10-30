@@ -146,10 +146,11 @@ if garden.layoutYoung() > 0 and garden.layoutMature() == 0:
   const TULIP_GARDENER = `# Tulip and clover rounds: two seeds, each planted and replanted as a round of its own. The
 # nursetulips (tulip) are replanted all together once fewer than half of them are mature, so they're
 # mature at the same time — each one makes the plants around it stronger, the most when it's mature.
-# The golden clovers (clover) run their own rounds as the Full-garden replanter does: fertilizer
-# while a round grows (the soil rule "Clovers grow together, then clay" counts the clovers only, so
-# young nursetulips don't hold fertilizer on), clay once it's mature, and a new round planted just
-# before a quick tick once too few of them are left. (Simulated — the real game, Farm level 8 (6×5),
+# The golden clovers (clover) run their own rounds as the Full-garden replanter does, a new round
+# planted just before a quick tick once too few of them are left. The soil rule picks the soil the
+# rest of the time: "Tulips grow, then clay" (the profile's) keeps fertilizer on while the tulips grow,
+# so they're mature sooner and longer; "Clovers grow together, then clay" follows the clovers only,
+# for the best average. (Simulated, soil by the clovers — the real game, Farm level 8 (6×5),
 # 8 nursetulips, 1000 h × 3: golden cookies +84.8% on average against +83.6% for golden clover
 # combos, at CpS ×0.886; every nursetulip mature 25% of the time, in stretches of ~1.8 h, up to +149%.)
 # Each round goes down whole or not at all: it waits for the cookies to plant all of it, and for
@@ -163,8 +164,7 @@ replantAtTick = true   # when a new clover round is planted — true: fertilizer
 plantWindow = 15   # (replantAtTick only) the last seconds before the tick, when the new clover round is planted
 wholeRounds = true   # start a round only once the bank covers all of it (garden.roundCost) — false: plant what it can afford
 tulipsFirst = true   # no clover round while a tulip round is due (it waits for the tulips to go down)
-waitOutEffects = true   # no new round while an effect makes seeds more expensive (garden.priceBoost() above 1: a Frenzy…)…
-waitOutUpTo = 120   # …and ends within this many seconds; one with longer left (frenzies back to back) isn't waited out: it plants at today's price
+waitOutEffects = true   # no new round while an effect makes seeds more expensive and ends within the Payback page's "Wait out effects up to" (10 m: payback.effectWait()); one with longer left (frenzies back to back) isn't waited out: it plants at today's price
 unlockNewSeeds = true   # a seed you haven't unlocked yet: let it grow, harvest it once mature (that unlocks it)
 if unlockNewSeeds:
   garden.harvestNew()
@@ -173,7 +173,7 @@ for tile in garden.tiles():
   if garden.wantAt(tile) != "" and garden.isOff(tile) and not garden.isEmpty(tile) and not (unlockNewSeeds and garden.isNew(tile)):
     garden.harvest(tile)
 # whether a round may go down now: no effect on the prices, and the cookies for all of it
-pricesOk = not waitOutEffects or garden.priceBoost() <= 1 or garden.priceBoostLeft() > waitOutUpTo
+pricesOk = not waitOutEffects or garden.priceBoost() <= 1 or garden.priceBoostLeft() > payback.effectWait()
 # the tulips: a new round is due once none is growing and fewer than tulipReplantBelow are mature
 tulipDue = garden.seedYoung(tulip) == 0 and garden.seedMature(tulip) < tulipReplantBelow * garden.seedTiles(tulip)
 tulipReady = pricesOk and (not wholeRounds or cookies >= garden.roundCost(tulip))
@@ -224,7 +224,7 @@ if garden.seedYoung(clover) > 0:
       id: 'tulipRounds',
       name: 'Tulip and clover rounds',
       desc: 'Nursetulips and golden clovers, each replanted all together on rounds of its own. The tulips first, once fewer than half are mature, the clovers as the Full-garden replanter does — so the tulips are mature at the same time, boosting the clovers around them. A round goes down whole, once the bank covers it, and it waits out an effect that makes seeds more expensive if it ends within 2 minutes.',
-      data: () => ({ rules: TULIP_GARDENER, knobs: { tulipReplantBelow: PCT, replantBelow: PCT, replantAtTick: TOGGLE, plantWindow: SECONDS, wholeRounds: TOGGLE, tulipsFirst: TOGGLE, waitOutEffects: TOGGLE, waitOutUpTo: { kind: 'number', min: 0, max: 3600, step: 10, unit: 's' }, unlockNewSeeds: TOGGLE } }),
+      data: () => ({ rules: TULIP_GARDENER, knobs: { tulipReplantBelow: PCT, replantBelow: PCT, replantAtTick: TOGGLE, plantWindow: SECONDS, wholeRounds: TOGGLE, tulipsFirst: TOGGLE, waitOutEffects: TOGGLE, unlockNewSeeds: TOGGLE } }),
     },
     { id: 'weeds', name: 'Weed collector', desc: 'Keeps the garden bare so weeds and fungi spring up; harvests old meddleweed (for brown mold and crumbspore) and new seeds once mature, clears everything else. Plants nothing.', data: () => ({ rules: WEED_GARDENER, knobs: { oldWeedOver: PCT } }) },
     {
@@ -255,11 +255,28 @@ else:
 `;
   const SOIL_CLOVERS = `# Clovers grow together, then clay: as "Grow together, then clay", counting one seed's plants only
 # (followSeed) — so plants on rounds of their own (nursetulips) don't keep fertilizer on while they
-# grow. (Simulated, 8 nursetulips at level 8: fertilizer for the tulips too drops golden cookies
-# from +84% to +38%.)
+# grow. (Simulated, 8 nursetulips together at level 8, 1000 h × 3: golden cookies +84.8% on average,
+# +140% or more 12% of the time; "Tulips grow, then clay" trades average for longer peaks.)
 followSeed = goldenClover   # the seed whose rounds pick the soil
 clayAt = 0.75   # switch to clay once this share of its tiles hold a mature plant
 if garden.seedYoung(followSeed) > 0 and garden.seedMature(followSeed) < clayAt * garden.seedTiles(followSeed):
+  garden.soil(fertilizer)
+else:
+  garden.soil(clay)
+`;
+  const SOIL_TULIPS = `# Tulips grow, then clay: fertilizer (quick ticks) while any nursetulip (followSeed) is still
+# growing, so they're mature sooner and for longer; clay (effects ×1.25) once they're all mature. With
+# cloversToo, fertilizer as well while a round of golden clovers grows (as "Clovers grow together, then
+# clay"). Simulated, 8 nursetulips together at level 8, 1000 h × 3 (golden cookies on average · the share
+# of the time at +140% or more · every tulip mature):
+#   soil by the clovers only        +84.8% · 12% · 25% of the time
+#   by the tulips only              +72.5% · 14% · 52%
+#   by either (cloversToo)          +69.7% · 17% · 38%
+followSeed = nursetulip   # the seed whose growing keeps fertilizer on
+cloversToo = true   # fertilizer as well while a round of the clovers grows
+cloverSeed = goldenClover   # (cloversToo) the seed of the clover rounds
+clayAt = 0.75   # (cloversToo) a clover round counts as grown once this share of its tiles hold a mature plant
+if garden.seedYoung(followSeed) > 0 or (cloversToo and garden.seedYoung(cloverSeed) > 0 and garden.seedMature(cloverSeed) < clayAt * garden.seedTiles(cloverSeed)):
   garden.soil(fertilizer)
 else:
   garden.soil(clay)
@@ -277,6 +294,7 @@ else:
     { id: 'effects', name: 'Fertilizer, then clay', desc: 'Fertilizer for a freshly planted garden, clay (effects ×1.25) the rest of the time.', data: () => ({ rules: SOIL_EFFECTS, knobs: { [FERTILIZER_VAR]: PCT } }) },
     { id: 'cohort', name: 'Grow together, then clay', desc: 'For the Full-garden replanter: fertilizer while a round grows, clay once most of it is mature.', data: () => ({ rules: SOIL_COHORT, knobs: { clayAt: PCT } }) },
     { id: 'clovers', name: 'Clovers grow together, then clay', desc: 'Fertilizer while a round of golden clovers grows, clay once most of it is mature — the nursetulips don’t count. For Tulip and clover rounds.', data: () => ({ rules: SOIL_CLOVERS, knobs: { clayAt: PCT } }) },
+    { id: 'tulips', name: 'Tulips grow, then clay', desc: 'Fertilizer while any nursetulip grows (and, with cloversToo, while a round of golden clovers grows), clay once they’re mature — the nursetulips mature sooner and stay mature longer: longer peaks, a lower average. For Tulip and clover rounds.', data: () => ({ rules: SOIL_TULIPS, knobs: { cloversToo: TOGGLE, clayAt: PCT } }) },
     { id: 'mutations', name: 'Fertilizer, then wood chips', desc: 'Fertilizer while the layout’s plants grow, wood chips (×3 mutation chances) once they’re mature.', data: () => ({ rules: SOIL_MUTATIONS, knobs: { growingOver: PCT } }) },
     { id: 'fertilizer', name: 'Always fertilizer', desc: 'Quickest ticks, the most weeds (×1.2); effects ×0.75.', data: () => ({ rules: fixedSoil('fertilizer', 'the quickest ticks and the most weeds') }) },
     { id: 'clay', name: 'Always clay', desc: 'Effects ×1.25; slow ticks.', data: () => ({ rules: fixedSoil('clay', 'effects ×1.25, slow ticks') }) },
@@ -340,8 +358,8 @@ else:
     {
       id: 'tulipCombos',
       name: '8 nursetulips together + clover combos',
-      desc: 'Two rows of four nursetulips replanted all together, golden clovers around them replanted all together on rounds of their own; the soil follows the clovers. A little more golden cookies than Golden clover combos on average, much higher peaks while the tulips are mature, CpS −11%.',
-      data: () => ({ gardener: 'tulipRounds', soil: 'clovers', template: 'tulipRows', seeds: 'goldenTulips' }),
+      desc: 'Two rows of four nursetulips replanted all together, golden clovers around them replanted all together on rounds of their own; fertilizer while the tulips or a clover round grow, clay once they’re mature. The longest high peaks (+140% or more 17% of the time), golden cookies +70% on average, CpS −12%.',
+      data: () => ({ gardener: 'tulipRounds', soil: 'tulips', template: 'tulipRows', seeds: 'goldenTulips' }),
     },
     { id: 'mutationHunt', name: 'Mutation hunt', desc: 'Two parents in rows, wood chips once they’re mature; new seeds kept until unlocked. Pick the recipe in Seeds.', data: () => ({ gardener: 'mutations', soil: 'mutations', template: 'rows', seeds: 'to-cronerice' }) },
     { id: 'juicyQueenbeet', name: 'Juicy queenbeet', desc: 'Rings of queenbeets on wood chips: each empty center can grow a Juicy queenbeet (a sugar lump).', data: () => ({ gardener: 'mutations', soil: 'mutations', template: 'rings', seeds: 'queenbeet' }) },

@@ -64,6 +64,51 @@ CA.Payback = (() => {
   }
   const upgradePrice = (u) => (typeof u.getPrice === 'function' ? u.getPrice() : u.basePrice || u.price || 0);
 
+  // ---- prices that scale with CpS ----------------------------------------------------------------
+  // Seeds, the Golden switch, the garden drops' cookies, Wrinkler ambergris cost minutes of the CpS the
+  // game shows, effects counted: a Frenzy makes them 7 times more expensive. An effect that ends within
+  // the "Wait out effects" option (10 m) is priced away (the price once it's over) and waited out; one
+  // with longer left (frenzies back to back, in long combos) is part of the price.
+
+  /** How much effects raise CpS-scaled prices now: CpS ÷ unbuffed CpS (1: none; a Frenzy 7, a Clot 0.5). */
+  function effectBoost() {
+    const u = Game.unbuffedCps || 0;
+    return u > 0 && Game.cookiesPs > 0 ? Game.cookiesPs / u : 1;
+  }
+  /** Seconds until the effects that raise CpS are over (0: none running). */
+  function effectLeft() {
+    const fps = Game.fps || 30;
+    return Object.values(Game.buffs || {}).reduce((m, b) => (b && b.multCpS !== undefined && b.multCpS > 1 ? Math.max(m, (b.time || 0) / fps) : m), 0);
+  }
+  /** The longest an effect may have left to be waited out (the option, seconds). */
+  const EFFECT_WAIT = 600;
+  const effectWait = () => {
+    const v = Number(CA.Settings && CA.Settings.get('ppEffectWait'));
+    return Number.isFinite(v) && v >= 0 ? v : EFFECT_WAIT;
+  };
+  /** Whether an effect raises CpS-scaled prices now and ends soon enough to wait out (they're priced without it). */
+  const waitingOut = () => effectBoost() > 1.001 && effectLeft() <= effectWait();
+  /** What `price()` gives once the effects are over: the game's own price function, asked at the unbuffed CpS. */
+  function unbuffedPrice(price) {
+    const keep = Game.cookiesPs;
+    try {
+      Game.cookiesPs = Game.unbuffedCps || keep;
+      return price();
+    } finally {
+      Game.cookiesPs = keep;
+    }
+  }
+  /**
+   * An upgrade's price as payback periods count it: { price, waits } — a CpS-scaled one while a short
+   * effect runs: its price once it's over, and waits (the buyers hold it until then).
+   */
+  function upgradeCost(u) {
+    const now = upgradePrice(u);
+    if (typeof u.priceFunc !== 'function' || typeof u.getPrice !== 'function' || !waitingOut()) return { price: now, waits: false };
+    const after = unbuffedPrice(() => u.getPrice());
+    return after < now * 0.999 ? { price: after, waits: true } : { price: now, waits: false };
+  }
+
   // ---- the hypothetical --------------------------------------------------------------------------
 
   const SPOOKY = ['Skull cookies', 'Ghost cookies', 'Bat cookies', 'Slime cookies', 'Pumpkin cookies', 'Eyeball cookies', 'Spider cookies'];
@@ -561,10 +606,11 @@ CA.Payback = (() => {
     const names = [];
     let price = 0;
     storeUpgrades()
-      .map((u) => ({ u, p: upgradePrice(u) }))
+      // not one a short effect makes more expensive: that one waits it out
+      .map((u) => ({ u, p: upgradePrice(u), waits: upgradeCost(u).waits }))
       .sort((a, b) => a.p - b.p)
-      .forEach(({ u, p }) => {
-        if (p > left || !measurable(u)) return;
+      .forEach(({ u, p, waits }) => {
+        if (p > left || waits || !measurable(u)) return;
         left -= p;
         price += p;
         names.push(u.name);
@@ -589,7 +635,7 @@ CA.Payback = (() => {
     if (opts.staleMs && memo && Date.now() - memo.at < opts.staleMs) return memo.t;
     const c = fresh();
     const m = currentMode();
-    const mk = [m.id, income(), modeMemo.at, Game.cookies, Game.cookiesPs, clickRate(), CA.Settings.get('ppWrinklers'), CA.Settings.get('ppOnlyBuyable'), CA.Settings.get('ppSecondsLowerLimit'), CA.Wrinklers ? CA.Wrinklers.bank('all') : 0].join('|');
+    const mk = [m.id, income(), modeMemo.at, Game.cookies, Game.cookiesPs, clickRate(), CA.Settings.get('ppWrinklers'), CA.Settings.get('ppOnlyBuyable'), CA.Settings.get('ppSecondsLowerLimit'), waitingOut(), CA.Wrinklers ? CA.Wrinklers.bank('all') : 0].join('|');
     if (memo && memo.c === c && memo.key === mk) return memo.t;
     memo = { c, key: mk, t: tableFrom(c), at: Date.now() };
     return memo.t;
@@ -640,10 +686,10 @@ CA.Payback = (() => {
     (Game.UpgradesInStore || []).forEach((u) => {
       if (isSwitch(u)) return switches.push(u.name);
       const w = upgradeWorth(u.name, c);
-      const price = upgradePrice(u);
+      const { price, waits } = upgradeCost(u);
       const x = w ? parts(price, w) : null;
       const v = x ? x.pp : Infinity;
-      upgrades[u.name] = { name: u.name, price, bonus: w ? w.bonus : 0, mouse: w ? w.mouse : 0, gain: x ? x.gain : 0, afford: x ? x.afford : timeTo(price), earn: x ? x.earn : Infinity, mode: currentMode().id, worth: w, pp: v, colour: colourOf(v, price), won: w ? w.won : [] };
+      upgrades[u.name] = { name: u.name, price, bonus: w ? w.bonus : 0, mouse: w ? w.mouse : 0, gain: x ? x.gain : 0, afford: x ? x.afford : timeTo(price), earn: x ? x.earn : Infinity, mode: currentMode().id, worth: w, pp: v, colour: colourOf(v, price), won: w ? w.won : [], waits };
     });
     return { buildings: rows, upgrades, switches, min, minBulk, colourOf };
   }
@@ -682,12 +728,12 @@ CA.Payback = (() => {
     const affordable = (price) => price <= budget;
     if (opts.skip && opts.top) {
       bs = bs.filter(([name, n]) => affordable(sumPrice(buildingNamed(name), n)));
-      us = us.filter((u) => affordable(upgradePrice(u)));
+      us = us.filter((u) => affordable(upgradeCost(u).price));
     }
     ensure(c, bs, []);
     if (opts.top && us.length) {
       const bestB = bs.reduce((m, [name, n]) => Math.min(m, ppOf(sumPrice(buildingNamed(name), n), buildingWorth(name, n, c), opts.mode)), Infinity);
-      if (Number.isFinite(bestB)) us = us.filter((u) => timeTo(upgradePrice(u), opts.mode) < bestB);
+      if (Number.isFinite(bestB)) us = us.filter((u) => timeTo(upgradeCost(u).price, opts.mode) < bestB);
     }
     ensure(
       c,
@@ -709,11 +755,11 @@ CA.Payback = (() => {
     us.forEach((u) => {
       const w = upgradeWorth(u.name, c);
       if (!w) return;
-      const price = upgradePrice(u);
+      const { price, waits } = upgradeCost(u);
       const x = parts(price, w, opts.mode);
       const v = x.pp;
       const row = t && t.upgrades[u.name];
-      out.push({ kind: 'upgrade', name: u.name, n: 1, label: u.dname || u.name, price, bonus: w.gain, gain: x.gain, pp: v, won: w.won || [], colour: row ? row.colour : t ? t.colourOf(v, price) : null, estimated: !(w.bonus > 0) && w.mouse > 0 });
+      out.push({ kind: 'upgrade', name: u.name, n: 1, label: u.dname || u.name, price, bonus: w.gain, gain: x.gain, pp: v, won: w.won || [], colour: row ? row.colour : t ? t.colourOf(v, price) : null, estimated: !(w.bonus > 0) && w.mouse > 0, ...(waits ? { waits } : {}) });
     });
     return out.filter((x) => (opts.all ? !Number.isNaN(x.pp) : Number.isFinite(x.pp)) && (!opts.skip || affordable(x.price))).sort((a, b) => (a.pp === b.pp ? 0 : a.pp - b.pp));
   }
@@ -791,8 +837,8 @@ CA.Payback = (() => {
     u.buy(1);
     return u.bought ? 1 : 0;
   }
-  /** Buys a ranking entry; how many things it bought. */
-  const buy = (x) => (!x || x.kind === 'bank' ? 0 : x.kind === 'garden' ? CA.Garden.plantFor(x.name) : x.kind === 'building' ? buyBuilding(x.name, x.n) : x.kind === 'allUpgrades' ? buyUpgrades(x.names) : buyUpgrade(x.name));
+  /** Buys a ranking entry; how many things it bought (none for one waiting out a short effect: upgradeCost). */
+  const buy = (x) => (!x || x.kind === 'bank' || x.waits ? 0 : x.kind === 'garden' ? CA.Garden.plantFor(x.name) : x.kind === 'building' ? buyBuilding(x.name, x.n) : x.kind === 'allUpgrades' ? buyUpgrades(x.names) : buyUpgrade(x.name));
 
   // ---- the next building-count achievement (the store's "Achievement" sort) -------------------------
 
@@ -921,6 +967,14 @@ CA.Payback = (() => {
       desc: 'Anything costing less than this many seconds of CpS shows as blue — worth buying whatever its payback period (0: off).',
       default: 0,
     });
+    CA.Settings.defineOption({
+      key: 'ppEffectWait',
+      group: 'payback',
+      icon: 'clock',
+      name: 'Wait out effects up to (seconds)',
+      desc: 'What costs minutes of CpS (seeds, the Golden switch, the garden drops’ cookies, Wrinkler ambergris) costs more in a Frenzy. An effect that ends within this many seconds is priced away and waited out: payback periods, the Auto buyer and the gardener count the price once it’s over. One with longer left (frenzies back to back) is part of the price.',
+      default: EFFECT_WAIT,
+    });
 
     const kinds = () => [
       { v: 'all', label: 'buildings and upgrades' },
@@ -992,13 +1046,13 @@ CA.Payback = (() => {
       const u = upgradeNamed(n);
       if (isSwitch(u)) return NaN;
       const w = upgradeWorth(n);
-      return u && w ? ppOf(upgradePrice(u), w) : Infinity;
+      return u && w ? ppOf(upgradeCost(u).price, w) : Infinity;
     }, { how: HOW });
     V('upgrade.paybackIn', 'the payback period of an upgrade in a payback mode: "raw", "cps", "clicking", "actual" or a mode statistic’s code name — none: the mode in use (seconds; NaN for a switch, or a mode not ready)', ['upgrade', 'mode'], (n, m) => {
       const u = upgradeNamed(n);
       if (isSwitch(u)) return NaN;
       const w = upgradeWorth(n);
-      return u && w ? ppOf(upgradePrice(u), w, m) : Infinity;
+      return u && w ? ppOf(upgradeCost(u).price, w, m) : Infinity;
     });
     V('best', 'what has the lowest payback period ("" when nothing does): kind building, upgrade or all', ['kind'], (k) => (best(k || 'all') || {}).name || '');
     V('clickRate', 'big cookie clicks per second (last 10 s)', [], clickRate);
@@ -1007,6 +1061,10 @@ CA.Payback = (() => {
     PV('payback.mode', 'the code name of the payback mode in use: rawCps, cps, cpsClicking, actualIncome or one of yours (the Payback page’s; cps while the one chosen isn’t ready)', [], () => currentMode().key);
     PV('payback.modes', 'the payback modes there are (the payback mode statistics), as a list of code names', [], () => modes().map((m) => m.key));
     PV('payback.income', 'cookies a second in a payback mode — "raw", "cps", "clicking", "actual" or a mode statistic’s code name (none: the mode in use): what its payback periods count in (NaN: not ready)', ['mode'], (m) => income(m));
+    PV('payback.effectBoost', 'how much effects raise what costs minutes of CpS (seeds, the Golden switch…): CpS ÷ unbuffed CpS (1: none; a Frenzy 7)', [], () => Math.round(effectBoost() * 1000) / 1000);
+    PV('payback.effectLeft', 'seconds until the effects that raise CpS are over (0: none running)', [], () => Math.round(effectLeft() * 10) / 10);
+    PV('payback.effectWait', 'the longest an effect may have left to be waited out, in seconds (the Payback page’s “Wait out effects up to”, 600)', [], effectWait);
+    PV('payback.waitingOut', 'true while an effect raises what costs minutes of CpS and ends within payback.effectWait(): it’s priced as once the effect is over, and waited out', [], waitingOut);
     PV('payback.bank', 'cookies that count as the bank for payback periods: in hand, plus your wrinklers’ when that’s chosen', [], bank);
     PV('payback.clickRate', 'clicks a second, averaged as the CpS + clicking mode counts them (the option’s window)', [], () => clicksOver(clickWindow()));
     PV('payback.perClick', 'what a click on the big cookie is worth now', [], perClick);
@@ -1024,5 +1082,5 @@ CA.Payback = (() => {
     V('actualIncome', 'cookies a second you actually took in over about the last seconds of play (at least 5 minutes; NaN: too little recorded)', ['seconds'], (p) => (actualIncome(Number(p) || 0) || { actual: NaN }).actual);
   }
 
-  return { init, modes, mode: currentMode, actualWindow, actualWindowText, setActualWindow, windowText, ACTUAL_PRESETS, SINCE_ASCENSION, modeOf, income, bank, parts, ppOf, buildingWorth, actualRatio, clicksOver, incomeOver, isSwitch, ppActual, actualIncome, calls: () => calls, table, ranking, best, buy, buyBuilding, buyUpgrade, buyUpgrades, buildingBonus, upgradeWorth, upgradesWorth, allUpgrades, pp, timeTo, sumPrice, clickRate, nextAchievement, storeUpgrades, measureAll, COLOURS, BULKS };
+  return { init, modes, mode: currentMode, actualWindow, actualWindowText, setActualWindow, windowText, ACTUAL_PRESETS, SINCE_ASCENSION, modeOf, income, bank, parts, ppOf, buildingWorth, actualRatio, clicksOver, incomeOver, isSwitch, ppActual, actualIncome, calls: () => calls, table, ranking, best, buy, buyBuilding, buyUpgrade, buyUpgrades, buildingBonus, upgradeWorth, upgradesWorth, allUpgrades, pp, timeTo, sumPrice, clickRate, nextAchievement, storeUpgrades, measureAll, effectBoost, effectLeft, effectWait, waitingOut, unbuffedPrice, upgradeCost, COLOURS, BULKS };
 })();
