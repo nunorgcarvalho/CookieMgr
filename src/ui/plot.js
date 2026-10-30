@@ -462,7 +462,7 @@ CA.UI.Plot = (() => {
               g.toggles
                 .map((t) =>
                   chip(
-                    (t.color ? `<i class="ca-sw" style="background:${t.color}"></i>` : '') + t.label,
+                    (t.color ? swatch(t.color, t.dash) : '') + t.label,
                     `data-plot-toggle="${t.setting}" data-pressed-key="${t.setting}"`,
                     t.title
                   )

@@ -239,13 +239,14 @@ CA.UI.Graphs = (() => {
     { s: 10800, label: '3 h' },
   ];
 
-  /** A table of measures × time spans; rows: { n?, x?, label, desc, color, fn(r), strong, mult, sign }. */
+  /** A table of measures × time spans; rows: { n?, x?, label, desc, color, fn(r), strong, mult, sign, cls, attrs }
+   *  (cls: more row classes, attrs: row attributes, e.g. what clicking it does). */
   function spansTable(rows, vals, cols = TABLE_COLS, cls = '') {
     let h = `<div class="ca-table-wrap"><table class="ca-table ca-stages${cls ? ' ' + cls : ''}"><thead><tr><th>Average over the last…</th>`;
     cols.forEach((c) => (h += `<th>${c.label}</th>`));
     h += '</tr></thead><tbody>';
     rows.forEach((r) => {
-      const cls = [r.strong ? 'strong' : '', r.mult ? 'mult' : '', r.sep ? 'sep' : '', r.desc ? '' : 'thin'].filter(Boolean).join(' ');
+      const cls = [r.strong ? 'strong' : '', r.mult ? 'mult' : '', r.sep ? 'sep' : '', r.desc ? '' : 'thin', r.cls || ''].filter(Boolean).join(' ');
       const badge = r.n
         ? `<span class="ca-stage-n" style="background:${r.color}">${r.n}</span>`
         : r.mult
@@ -253,7 +254,7 @@ CA.UI.Graphs = (() => {
           : r.sign
             ? `<span class="ca-stage-n ca-stage-x">${r.sign}</span>`
             : `<span class="ca-stage-n" style="background:${r.color || 'transparent'}"></span>`;
-      h += `<tr${cls ? ` class="${cls}"` : ''}><td>${badge}${esc(r.label)}${r.desc ? `<span class="ca-row-sub">${esc(r.desc)}</span>` : ''}</td>`;
+      h += `<tr${cls ? ` class="${cls}"` : ''}${r.attrs ? ' ' + r.attrs : ''}><td>${badge}${esc(r.label)}${r.desc ? `<span class="ca-row-sub">${esc(r.desc)}</span>` : ''}</td>`;
       vals.forEach((val) => (h += `<td>${val ? esc(r.fn(val)) : '—'}</td>`));
       h += '</tr>';
     });
@@ -351,7 +352,8 @@ CA.UI.Graphs = (() => {
     return out;
   }
 
-  const LEDGER_TOGGLES = () => [
+  // `shown`: the Bank flows chart's dashed line of the CpS the game shows can be switched off
+  const LEDGER_TOGGLES = (shown) => [
     {
       label: 'Include',
       toggles: CATS.map((c) => ({ setting: `cat.${c.id}`, label: c.name, color: c.color, title: `Include ${c.name.toLowerCase()}` })),
@@ -362,7 +364,7 @@ CA.UI.Graphs = (() => {
         { setting: 'actualGains', label: '▲ Gains', title: 'Cookies coming into the bank' },
         { setting: 'actualLosses', label: '▼ Losses', title: 'Cookies leaving the bank' },
         { setting: 'cpsBoosted', label: '✦ CpS-boosted', title: 'Show the extra that CpS effects (Frenzy, Click frenzy…) add to building CpS and clicking, on top of the unboosted part' },
-      ],
+      ].concat(shown ? [{ setting: 'actualShown', label: 'Game’s CpS', color: C_SHOWN, dash: true, title: 'The dashed line: the CpS the game shows, plus clicking (it counts every effect and your clicks). Off: only the bars, e.g. building CpS alone' }] : []),
     },
   ];
   const ledgerEmpty = () => (ledgerParts().length ? 'Collecting data…' : 'Pick some categories, and Gains and/or Losses.');
@@ -427,7 +429,7 @@ CA.UI.Graphs = (() => {
       unit: '/s',
       totalLabel: 'Net',
       tipFmt: (val) => (val < 0 ? '−' : '') + F().beautify(Math.abs(val)) + '/s',
-      toggleGroups: LEDGER_TOGGLES(),
+      toggleGroups: LEDGER_TOGGLES(true),
       build(v) {
         const parts = ledgerParts();
         const { gains, losses, cats } = ledgerView();
@@ -446,7 +448,7 @@ CA.UI.Graphs = (() => {
           secs += coverOf(b, 'lBuild');
         });
         const avg = secs ? sum / secs : NaN;
-        const showShown = gains && cats.some((c) => c.id === 'build' || c.id === 'click');
+        const showShown = gains && S().get('actualShown') !== false && cats.some((c) => c.id === 'build' || c.id === 'click');
         return {
           series: parts
             .map((x) => ({ key: x.key, name: x.name, color: x.color, type: 'bar', merge: x.merge }))
@@ -570,6 +572,8 @@ CA.UI.Graphs = (() => {
   /** The actual income payback periods use now: { actual, secs, window } or null (under a minute recorded). */
   const paybackIncome = () => (PB() ? PB().incomeOver(PB().actualWindow()) : null);
   const paybackWindowText = () => (PB() ? PB().actualWindowText() : '');
+  /** The source the chart shows alone (a click on its row in the table below), else null: all of them. */
+  const incomeOnly = () => SOURCES.find((x) => x.key === S().get('incomeOnly')) || null;
   /** Seconds of play since the last ascension (all recorded play before the first one). */
   function runSecs() {
     const run = CA.Ascension && CA.Ascension.runStart();
@@ -592,18 +596,23 @@ CA.UI.Graphs = (() => {
       build(v) {
         const raw = v.bucketize(INCOME_FIELDS.concat(['earned', 'base']));
         const ivs = effects(v);
+        // one source alone: only its bars, so the axis fits it, and its own average
+        const only = incomeOnly();
+        const shown = only ? [only] : SOURCES;
         const bars = raw.map((b) => {
           const o = {};
-          SOURCES.forEach((x) => (o[x.key] = rate(b, x.key)));
+          shown.forEach((x) => (o[x.key] = rate(b, x.key)));
           return { x0: b.x0, x1: b.x1, parts: o, raw: b };
         });
         let sum = 0;
+        let sumOnly = 0;
         let secs = 0;
         let base = 0;
         let baseSecs = 0;
         raw.forEach((b) => {
           if (Number.isFinite(b.v.earned)) {
             sum += b.v.earned;
+            if (only) sumOnly += b.v[only.key] || 0;
             secs += coverOf(b, 'earned');
           }
           if (Number.isFinite(b.v.base)) {
@@ -614,20 +623,25 @@ CA.UI.Graphs = (() => {
         const avg = secs ? sum / secs : NaN;
         const pb = paybackIncome();
         const hlines = [];
-        if (pb && Number.isFinite(pb.actual)) hlines.push({ v: pb.actual, label: `payback ${F().beautify(pb.actual)}/s · ${paybackWindowText()}`, color: 'rgba(120,220,255,0.85)' });
+        // (the payback line is all of the income: it'd squash one source alone)
+        if (!only && pb && Number.isFinite(pb.actual)) hlines.push({ v: pb.actual, label: `payback ${F().beautify(pb.actual)}/s · ${paybackWindowText()}`, color: 'rgba(120,220,255,0.85)' });
         // the window's average, unless it's (about) the payback line
-        if (Number.isFinite(avg) && !(pb && Math.abs(avg - pb.actual) <= 0.01 * Math.abs(pb.actual)))
+        if (only) {
+          if (secs) hlines.push({ v: sumOnly / secs, label: `avg ${F().beautify(sumOnly / secs)}/s`, color: 'rgba(255,200,120,0.7)' });
+        } else if (Number.isFinite(avg) && !(pb && Math.abs(avg - pb.actual) <= 0.01 * Math.abs(pb.actual)))
           hlines.push({ v: avg, label: `avg ${F().beautify(avg)}/s`, color: 'rgba(255,200,120,0.7)' });
+        // unbuffed CpS is what production is measured against; beside the other sources alone it'd only squash them
+        const withBase = !only || only.key === 'earnProduction';
         return {
-          series: SOURCES.map((x) => ({ key: x.key, name: x.name, color: x.color, type: 'bar' })).concat([
-            { key: 'base', name: 'Unbuffed CpS', color: C_BASE, type: 'line', dash: true, width: 1.4 },
-          ]),
+          series: shown
+            .map((x) => ({ key: x.key, name: x.name, color: x.color, type: 'bar' }))
+            .concat(withBase ? [{ key: 'base', name: 'Unbuffed CpS', color: C_BASE, type: 'line', dash: true, width: 1.4 }] : []),
           bars,
-          lines: { base: P().linePoints(raw, (b) => b.v.base) },
+          lines: withBase ? { base: P().linePoints(raw, (b) => b.v.base) } : {},
           hlines,
           intervals: ivs,
           markers: markers(v, ['golden', 'wrath', 'reindeer'], ivs),
-          legendExtra: effectLegend(ivs),
+          legendExtra: (only ? `<span class="ca-legend-item ca-legend-only">Only ${esc(only.name.toLowerCase())} · its row in the table shows all again</span>` : '') + effectLegend(ivs),
           raw,
           avg,
           base: baseSecs ? base / baseSecs : NaN,
@@ -673,9 +687,18 @@ CA.UI.Graphs = (() => {
       return fl && r ? { ...fl, base: r.base } : null;
     });
     const times = (a, b) => (b > 0 && Number.isFinite(a) ? `×${(a / b).toFixed(a / b >= 10 ? 1 : 2)}` : '—');
+    // a source's row shows it alone on the chart (again: all of them); the total's row, all of them
+    const only = incomeOnly();
+    const pick = (k, tip) => `data-income-only="${k}" data-tip="${esc(tip)}"`;
     return spansTable(
-      SOURCES.map((x) => ({ label: x.name, fn: (r) => beautify(r[x.key]) + '/s', color: x.color })).concat([
-        { label: 'Actual income', fn: (r) => beautify(r.earned) + '/s', strong: true, sign: '=', sep: true },
+      SOURCES.map((x) => ({
+        label: x.name,
+        fn: (r) => beautify(r[x.key]) + '/s',
+        color: x.color,
+        cls: 'ca-pick' + (only ? (only === x ? ' on' : ' off') : ''),
+        attrs: only === x ? pick('', 'Show every source on the chart again') : pick(x.key, `Show only ${x.name.toLowerCase()} on the chart, its axis fitted to it`),
+      })).concat([
+        { label: 'Actual income', fn: (r) => beautify(r.earned) + '/s', strong: true, sign: '=', sep: true, cls: 'ca-pick', attrs: pick('', 'Show every source on the chart') },
         { label: '× raw CpS', desc: 'actual income ÷ unbuffed CpS', fn: (r) => times(r.earned, r.base), mult: true },
       ]),
       vals,
@@ -917,6 +940,14 @@ CA.UI.Graphs = (() => {
   }
 
   function onClick(e) {
+    const only = e.target.closest('[data-income-only]');
+    if (only) {
+      e.stopPropagation();
+      CA.Util.sound('snd/tick.mp3');
+      S().set('incomeOnly', only.dataset.incomeOnly);
+      if (plots.income) plots.income.tick();
+      return;
+    }
     const win = e.target.closest('[data-income-window]');
     if (win && PB()) {
       e.stopPropagation();
@@ -981,6 +1012,8 @@ CA.UI.Graphs = (() => {
     S().defineOption({ key: 'actualGains', group: 'plot', name: 'Bank flows: gains', desc: '', default: true });
     S().defineOption({ key: 'actualLosses', group: 'plot', name: 'Bank flows: losses', desc: '', default: false });
     S().defineOption({ key: 'cpsBoosted', group: 'plot', name: 'Bank flows: CpS-boosted', desc: '', default: true });
+    S().defineOption({ key: 'actualShown', group: 'plot', name: 'Bank flows: game’s CpS line', desc: '', default: true });
+    S().defineOption({ key: 'incomeOnly', group: 'plot', name: 'Actual income: only this source', desc: '', default: '' });
     CATS.forEach((c) => S().defineOption({ key: `cat.${c.id}`, group: 'plot', name: `Bank flows: ${c.name}`, desc: '', default: !c.offByDefault }));
     S().defineOption({
       key: 'graphEffects',
