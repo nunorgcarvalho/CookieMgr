@@ -157,8 +157,8 @@ CA.UI.StatsPage = (() => {
       .map((n) => {
         const it = ((kind === 'achievement' ? Game.Achievements : Game.Upgrades) || {})[n];
         if (!it || !it.icon) return '';
-        // an upgrade: its info card on hover (ui/upgradeTip.js); an achievement: its name
-        return `<span class="ca-col-ico" ${kind === 'achievement' ? `data-tip="${esc(it.dname || n)}"` : CA.UpgradeInfo.attrs(it.name)}>${sprite(it.icon)}</span>`;
+        // its info card on hover (ui/upgradeTip.js, ui/achievementTip.js)
+        return `<span class="ca-col-ico" ${kind === 'achievement' ? CA.AchievementInfo.attrs(it.name) : CA.UpgradeInfo.attrs(it.name)}>${sprite(it.icon)}</span>`;
       })
       .join('');
   }

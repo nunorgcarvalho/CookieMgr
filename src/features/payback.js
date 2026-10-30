@@ -1082,5 +1082,7 @@ CA.Payback = (() => {
     V('actualIncome', 'cookies a second you actually took in over about the last seconds of play (at least 5 minutes; NaN: too little recorded)', ['seconds'], (p) => (actualIncome(Number(p) || 0) || { actual: NaN }).actual);
   }
 
-  return { init, modes, mode: currentMode, actualWindow, actualWindowText, setActualWindow, windowText, ACTUAL_PRESETS, SINCE_ASCENSION, modeOf, income, bank, parts, ppOf, buildingWorth, actualRatio, clicksOver, incomeOver, isSwitch, ppActual, actualIncome, calls: () => calls, table, ranking, best, buy, buyBuilding, buyUpgrade, buyUpgrades, buildingBonus, upgradeWorth, upgradesWorth, allUpgrades, pp, timeTo, sumPrice, clickRate, nextAchievement, storeUpgrades, measureAll, effectBoost, effectLeft, effectWait, waitingOut, unbuffedPrice, upgradeCost, COLOURS, BULKS };
+  return { init, modes, mode: currentMode, actualWindow, actualWindowText, setActualWindow, windowText, ACTUAL_PRESETS, SINCE_ASCENSION, modeOf, income, bank, parts, ppOf, buildingWorth, actualRatio, clicksOver, incomeOver, isSwitch, ppActual, actualIncome, calls: () => calls, table, ranking, best, buy, buyBuilding, buyUpgrade, buyUpgrades, buildingBonus, upgradeWorth, upgradesWorth, allUpgrades, pp, timeTo, sumPrice, clickRate, nextAchievement, storeUpgrades, measureAll, effectBoost, effectLeft, effectWait, waitingOut, unbuffedPrice, upgradeCost, COLOURS, BULKS,
+    // the count achievements of the game's own checks, [[count, name]] (features/achievementInfo.js reads them too)
+    ACHIEVS: { cursor: CURSOR_ACHIEVS, min: MIN_ACHIEVS, total: TOTAL_ACHIEVS, upgrades: UPGRADE_ACHIEVS } };
 })();
